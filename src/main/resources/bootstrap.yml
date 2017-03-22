@@ -1,0 +1,29 @@
+server:
+  port: ${PORT:8081}
+spring:
+  application:
+    # the name of the application represents the global identifier of this microservice.
+    name: business-process-service
+  cloud:
+    config:
+      uri: ${vcap.services.config-service.credentials.url:${CONFIG_SERVER_URI:http://localhost:8888}}
+      # failFast is disabled per default, so that the service can start standalone without config server.
+      # failFast should be enabled in production environments.
+      # it can be set via an environment variable or the config server
+      failFast: ${vcap.services.config-service.failFast:${CONFIG_SERVER_FAILFAST:false}}
+    discovery:
+      # by disabling the service discovery the application/service can be started in "standalone mode".
+      # service discovery is disabled by default and should be enabled (set to true) for the "cloud mode".
+      # it can be set via an environment variable or the config server
+      enabled: ${discovery.enabled:${DISCOVERY_ENABLED:false}}
+
+logstash:
+  uri: ${vcap.services.logstash-service.credentials.url:${LOGSTASH_URI:localhost:5000}}
+
+camunda:
+  bpm:
+    webapp:
+      index-redirect-enabled: false
+    admin-user:
+      id: kermit
+      password: superSecret

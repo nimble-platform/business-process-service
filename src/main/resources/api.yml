@@ -1,0 +1,38 @@
+# Example OpenAPI spec using YAML
+# Be aware that YAML has indentation based scoping.
+# https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md
+# Generate client & server code stubs using http://editor.swagger.io/#/
+swagger: '2.0'
+
+# This is your document metadata
+info:
+  version: "0.0.1"
+  title: Business Process API
+
+# Describe your paths here
+paths:
+  # This is the version path endpoint.
+  /version:
+    # This is a HTTP operation (GET)
+    get:
+      # Describe this verb here. Note: you can use markdown
+      description: |
+        get the name and version string
+      produces:
+      - application/json
+      responses:
+        # Response code
+        200:
+          description: Successful response
+          schema:
+            $ref: '#/definitions/Version'
+
+definitions:
+  Version:
+    title: Version Object
+    type: object
+    properties:
+      serviceId:
+        type: string
+      version:
+        type: string
