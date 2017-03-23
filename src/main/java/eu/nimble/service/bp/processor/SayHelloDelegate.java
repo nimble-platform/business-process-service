@@ -1,4 +1,4 @@
-package eu.nimble.service.bp;
+package eu.nimble.service.bp.processor;
 
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import org.camunda.bpm.engine.delegate.DelegateExecution;

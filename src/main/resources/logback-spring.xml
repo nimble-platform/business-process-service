@@ -38,6 +38,8 @@
         </encoder>
     </appender>
 
+    <logger name="eu.nimble.service.bp" level="DEBUG"/>
+
     <root level="INFO">
         <appender-ref ref="logstash"/>
         <appender-ref ref="CONSOLE"/>
