@@ -68,12 +68,24 @@
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-eureka</artifactId>
-            <!--<exclusions>-->
+            <exclusions>
+                <exclusion>
+                    <groupId>javax.ws.rs</groupId>
+                    <artifactId>jsr311-api</artifactId>
+                </exclusion>
                 <!--<exclusion>-->
-                    <!--<groupId>javax.ws.rs</groupId>-->
-                    <!--<artifactId>jsr311-api</artifactId>-->
+                    <!--<groupId>com.sun.jersey</groupId>-->
+                    <!--<artifactId>jersey-core</artifactId>-->
                 <!--</exclusion>-->
-            <!--</exclusions>-->
+                <!--<exclusion>-->
+                    <!--<groupId>com.sun.jersey</groupId>-->
+                    <!--<artifactId>jersey-client</artifactId>-->
+                <!--</exclusion>-->
+                <!--<exclusion>-->
+                    <!--<groupId>com.sun.jersey.contribs</groupId>-->
+                    <!--<artifactId>jersey-apache-client4</artifactId>-->
+                <!--</exclusion>-->
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.springframework.cloud</groupId>
@@ -114,10 +126,22 @@
             <artifactId>spring-boot-starter-tomcat</artifactId>
             <version>1.4.2.RELEASE</version>
         </dependency>
+
+        <!-- Missing dependencies of version collisions -->
         <dependency>
             <groupId>org.glassfish.hk2</groupId>
             <artifactId>hk2-utils</artifactId>
             <version>2.4.0</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.ws.rs</groupId>
+            <artifactId>javax.ws.rs-api</artifactId>
+            <version>2.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.ext</groupId>
+            <artifactId>jersey-entity-filtering</artifactId>
+            <version>2.25.1</version>
         </dependency>
 
         <!--SpringFox dependencies -->
@@ -131,7 +155,6 @@
             <artifactId>springfox-swagger-ui</artifactId>
             <version>${springfox.version}</version>
         </dependency>
-
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-joda</artifactId>
