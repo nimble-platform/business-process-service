@@ -14,7 +14,7 @@ public class VersionControllerTest {
 
     @Before
     public void setUp() {
-        vc = new VersionController();
+        vc = new VersionController("0.0.1", "business-process-service-test");
 
     }
 
