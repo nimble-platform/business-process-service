@@ -28,6 +28,8 @@ In addition the Business Process Service provides a proxy to the REST API from C
  docker run -p 8081:8085 nimbleplatform/business-process-service
  ```
  The according Dockerfile can be found at src/main/docker/Dockerfile.
+
+ Also you can reach the camunda cockpit available at http://localhost:8081/app/cockpit/default/ (kermit/superSecret)
  
 ### Get Version Request
  ```bash
