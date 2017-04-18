@@ -1,4 +1,4 @@
-FROM nimbleplatform/nimble-base
+FROM openjdk:8
 MAINTAINER Salzburg Research <nimble-srfg@salzburgresearch.at>
 VOLUME /tmp
 ARG finalName
