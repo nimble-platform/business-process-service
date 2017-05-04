@@ -58,11 +58,11 @@ In the following there are some examples for interacting with Camunda through th
 ```bash
  curl -X POST -H 'Content-Type:application/json' -d '{"variables": {}, "businessKey" : ""}' http://localhost:8081/rest/engine/default/process-definition/key/Sample/start
 ```
-* START 'Order' process (with parameters)
+* START 'Order' process (with parameters). In return get the process instance id
 ```bash
  curl -X POST -H 'Content-Type:application/json' -d '{"variables": {"buyer": {"value":"myBuyer","type":"String"}, "seller":{"value":"mySeller","type":"String"}, "order":{"value":"<Order><item>myProduct</item></Order>","type":"String"}}, "businessKey" : ""}' http://localhost:8081/rest/engine/default/process-definition/key/Order/start
 ```
-* GET a list of tasks for a specific process instance
+* GET the active (waiting) task information (including the task id) for a specific process instance
 ```bash
  curl http://localhost:8081/rest/engine/default/task?processInstanceId={processInstanceId}
 ```
