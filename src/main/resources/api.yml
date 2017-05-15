@@ -16,8 +16,7 @@ paths:
     # This is a HTTP operation (GET)
     get:
       # Describe this verb here. Note: you can use markdown
-      description: |
-        get the name and version string
+      summary: get the name and version string
       produces:
       - application/json
       responses:
@@ -26,8 +25,410 @@ paths:
           description: Successful response
           schema:
             $ref: '#/definitions/Version'
+  /businessprocess/content:
+    get:
+      summary: Get the business process definitions
+      operationId: getBusinessProcessDefinitions
+      produces:
+      - application/json
+      responses:
+        # Response code
+        200:
+          description: Successful response
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/BusinessProcess'
+    post:
+      summary: Add a new business process
+      operationId: addBusinessProcessDefinition
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/BusinessProcess'
+      responses:
+        # Response code
+        200:
+          description: BP added
+          schema:
+            $ref: '#/definitions/ApiResponse'
+  /businessprocess/content/{businessProcessID}:
+    get:
+      summary: Get the business process definitions
+      operationId: getBusinessProcessDefinition
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: businessProcessID
+        type: string
+        description: The id of the business process.
+        required: true
+      responses:
+        # Response code
+        200:
+          description: BP obtained
+          schema:
+            $ref: '#/definitions/BusinessProcess'
+    put:
+      description: Update a business process
+      operationId: updateBusinessProcessDefinition
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: businessProcessID
+        type: string
+        description: The id of the business process.
+        required: true
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/BusinessProcess'
+      responses:
+        # Response code
+        200:
+          description: BP updated
+          schema:
+            $ref: '#/definitions/ApiResponse'
+    delete:
+      description: Deletes a business process definition
+      operationId: deleteBusinessProcessDefinition
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: businessProcessID
+        type: string
+        required: true
+      responses:
+        # Response code
+        200:
+          description: BP deleted
+          schema:
+            $ref: '#/definitions/ApiResponse'
+
+  /businessprocess/preference:
+    post:
+      summary: Add a new partner business process sequence preference
+      operationId: addBusinessProcessPartnerPreference
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/BusinessProcessPreferences'
+      responses:
+        # Response code
+        200:
+          description: Partner Preference added
+          schema:
+            $ref: '#/definitions/ApiResponse'
+  /businessprocess/preference/partner/{partnerID}:
+    get:
+      summary: Get the business process preference of a partner
+      operationId: getBusinessProcessPartnerPreference
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: partnerID
+        type: string
+        description: The id of the partner.
+        required: true
+      responses:
+        # Response code
+        200:
+          description: Partner Preference obtained
+          schema:
+            $ref: '#/definitions/BusinessProcessPreferences'
+    put:
+      description: Update the business process preference of a partner
+      operationId: updateBusinessProcessPartnerPreference
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: partnerID
+        type: string
+        description: The id of the partner.
+        required: true
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/BusinessProcessPreferences'
+      responses:
+        # Response code
+        200:
+          description: Partner Preference updated
+          schema:
+            $ref: '#/definitions/ApiResponse'
+    delete:
+      description: Deletes the business process preference of a partner
+      operationId: deleteBusinessProcessPartnerPreference
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: partnerID
+        type: string
+        required: true
+      responses:
+        # Response code
+        200:
+          description: Partner Preference deleted
+          schema:
+            $ref: '#/definitions/ApiResponse'
+
+  /businessprocess/application:
+    post:
+      summary: Add a new partner business process application preference
+      operationId: addBusinessProcessPartnerApplicationPreference
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/BusinessProcessApplicationConfigurations'
+      responses:
+        # Response code
+        200:
+          description: Partner Preference added
+          schema:
+            $ref: '#/definitions/ApiResponse'
+
+  /businessprocess/application/partner/{partnerID}:
+    get:
+      summary: Get the business process application preference of a partner
+      operationId: getBusinessProcessPartnerApplicationPreference
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: partnerID
+        type: string
+        description: The id of the partner.
+        required: true
+      responses:
+        # Response code
+        200:
+          description: Partner Preference obtained
+          schema:
+            $ref: '#/definitions/BusinessProcessApplicationConfigurations'
+    put:
+      description: Update the business process application preference of a partner
+      operationId: updateBusinessProcessPartnerApplicationPreference
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: partnerID
+        type: string
+        description: The id of the partner.
+        required: true
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/BusinessProcessApplicationConfigurations'
+      responses:
+        # Response code
+        200:
+          description: Partner Preference updated
+          schema:
+            $ref: '#/definitions/ApiResponse'
+    delete:
+      description: Deletes the business process application preference of a partner
+      operationId: deleteBusinessProcessPartnerApplicationPreference
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: partnerID
+        type: string
+        required: true
+      responses:
+        # Response code
+        200:
+          description: Partner Preference deleted
+          schema:
+            $ref: '#/definitions/ApiResponse'
+
+  /businessprocess/start:
+    post:
+      summary: Start an instance of a business process
+      operationId: startBusinessProcessInstance
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/BusinessProcessInstanceInputMessage'
+      responses:
+        # Response code
+        200:
+          description: Business Process Instance Started
+          schema:
+            $ref: '#/definitions/BusinessProcessInstance'
+
+  /businessprocess/continue:
+    post:
+      summary: Send input to a waiting process instance (because of a human task)
+      operationId: continueBusinessProcessInstance
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/BusinessProcessInstanceInputMessage'
+      responses:
+        # Response code
+        200:
+          description: Business Process Instance Message sent successfully
+          schema:
+            $ref: '#/definitions/BusinessProcessInstance'
+
+  /businessprocess/document/{documentID}:
+    get:
+      summary: Get the business process document by id
+      operationId: getDocument
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: documentID
+        type: string
+        description: The id of the document.
+        required: true
+      responses:
+        # Response code
+        200:
+          description: Document obtained
+          schema:
+            $ref: '#/definitions/BusinessProcessDocument'
+
+  /businessprocess/document/partner/{partnerID}/type/{typeID}/status/{status}/source/{source}:
+    get:
+      summary: Get the business process documents
+      operationId: getDocuments
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: partnerID
+        type: string
+        description: The id of the partner.
+        required: true
+      - in: path
+        name: typeID
+        type: string
+        description: The type of the document (e.g. DocumentType object)
+        required: true
+      - in: path
+        name: status
+        type: string
+        description: The status of the document. (APPROVED, WAITINGRESPONSE, DENIED or PASTDUE)
+        required: true
+      - in: path
+        name: source
+        type: string
+        description: The source of the document (whether it is sent or received by the partner - SENT, RECEIVED).
+        required: true
+      responses:
+        # Response code
+        200:
+          description: Document obtained
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/BusinessProcessDocument'
+
+  /businessprocess/document/partner/{partnerID}/type/{typeID}/source/{source}:
+    get:
+      summary: Get the business process documents
+      operationId: getDocuments
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: partnerID
+        type: string
+        description: The id of the partner.
+        required: true
+      - in: path
+        name: typeID
+        type: string
+        description: The type of the document (e.g. DocumentType object)
+        required: true
+      - in: path
+        name: source
+        type: string
+        description: The source of the document (whether it is sent or received by the partner - SENT, RECEIVED).
+        required: true
+      responses:
+        # Response code
+        200:
+          description: Document obtained
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/BusinessProcessDocument'
+
+  /businessprocess/document/partner/{partnerID}/type/{typeID}:
+    get:
+      summary: Get the business process documents
+      operationId: getDocuments
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: partnerID
+        type: string
+        description: The id of the partner.
+        required: true
+      - in: path
+        name: typeID
+        type: string
+        description: The type of the document (e.g. DocumentType object)
+        required: true
+      responses:
+        # Response code
+        200:
+          description: Document obtained
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/BusinessProcessDocument'
 
 definitions:
+
   Version:
     title: Version Object
     type: object
@@ -35,4 +436,199 @@ definitions:
       serviceId:
         type: string
       version:
+        type: string
+
+  BusinessProcessPreferences:
+    title: Business Process Preferences Object of a partner for all other partners
+    type: object
+    properties:
+      preferences:
+        type: array
+        items:
+          $ref: '#/definitions/BusinessProcessPreference'
+
+  BusinessProcessType:
+    title: Business Process Type
+    type: string
+    description: The type of business process
+    enum:
+    - CATALOGUE
+    - NEGOTIATION
+    - ORDER
+    - REMITTANCEADVICE
+    - INVOICE
+    - TRACKING
+    - FULFILLMENT
+    - PRODUCTCONFIGURATION
+    - OTHER
+
+  BusinessProcessPreference:
+    title: Business Process Preference Object for a specific case (e.g. default or for a partner)
+    type: object
+    properties:
+      partner:
+        type: string
+        description: The value is DEFAULT or the partner ID for whom this preference is specified
+      processOrder:
+        type: array
+        items:
+          $ref: '#/definitions/BusinessProcessType'
+
+  BusinessProcess:
+    title: Business Process Object
+    type: object
+    properties:
+      businessProcessID:
+        type: string
+      businessProcessName:
+        type: string
+      businessProcessType:
+        $ref: '#/definitions/BusinessProcessType'
+      bpmnContent:
+        type: string
+
+  ExecutionConfiguration:
+    title: Execution Configuration Object
+    type: object
+    properties:
+      type:
+        type: string
+        enum:
+        - JAVA
+        - MICROSERVICE
+        - OTHER
+      URI:
+        type: string
+
+  ApplicationConfiguration:
+    title: Application Configuration Object for each activity in a business process
+    type: object
+    properties:
+      activityID:
+        type: string
+      name:
+        type: string
+      transactionName:
+        type: string
+        description: The transaction where the activity exist
+      type:
+        type: string
+        enum:
+        - DATAADAPTER
+        - DATACHANNEL
+        - DATAPROCESSOR
+      execution:
+        $ref: '#/definitions/ExecutionConfiguration'
+
+  BusinessProcessApplicationConfigurations:
+    title: Applications in Business Process Configuration Object
+    type: object
+    properties:
+      businessProcessID:
+        type: string
+      ApplicationConfigurations:
+        type: array
+        items:
+          $ref: '#/definitions/ApplicationConfiguration'
+
+  Variable:
+    title: Variable Object
+    type: object
+    properties:
+      value:
+        type: string
+      type:
+        type: string
+
+  BusinessProcessVariables:
+    title: Business Process Variables Object
+    type: object
+    properties:
+      businessProcessID:
+        $ref: '#/definitions/Variable'
+      initiatorID:
+        $ref: '#/definitions/Variable'
+      responderID:
+        $ref: '#/definitions/Variable'
+      content:
+        $ref: '#/definitions/Variable'
+
+  BusinessProcessInstanceInputMessage:
+    title: Business Process Input Message Object
+    type: object
+    properties:
+      variables:
+        $ref: '#/definitions/BusinessProcessVariables'
+      businessKey:
+        type: string
+
+  DocumentType:
+    title: Document Type
+    type: string
+    enum:
+    - CATALOGUE
+    - REQUESTFORQUOTATION
+    - QUOTATION
+    - ORDER
+    - ORDERRESPONSESIMPLE
+    - REMITTANCEADVICE
+    - INVOICE
+    - APPLICATIONRESPONSE
+    - TRANSPORTATIONSTATUS
+    - DESPATCHADVICE
+    - RECEIPTADVICE
+    - OTHER
+
+  BusinessProcessInstance:
+    title: Business Process Instance
+    type: object
+    properties:
+      businessProcessInstanceID:
+        type: string
+      businessProcessID:
+        type: string
+      redirectTo:
+        $ref: '#/definitions/DocumentType'
+      status:
+        type: string
+        enum:
+        - STARTED
+        - WAITING
+        - ABORTED
+        - COMPLETED
+
+  BusinessProcessDocument:
+    title: Business Process Document Object
+    type: object
+    properties:
+      documentID:
+        type: string
+      submissionDate:
+        type: string
+      type:
+        $ref: '#/definitions/DocumentType'
+      status:
+        type: string
+        enum:
+          - APPROVED
+          - WAITINGRESPONSE
+          - DENIED
+          - PASTDUE
+      businessProcessInstanceID:
+        type: string
+      initiatorID:
+        type: string
+      responderID:
+        type: string
+      content:
+        type: string
+
+  ApiResponse:
+    type: object
+    properties:
+      code:
+        type: integer
+      type:
+        type: string
+      message:
         type: string
