@@ -466,7 +466,7 @@ definitions:
     title: Business Process Preference Object for a specific case (e.g. default or for a partner)
     type: object
     properties:
-      partner:
+      partnerID:
         type: string
         description: The value is DEFAULT or the partner ID for whom this preference is specified
       processOrder:
@@ -526,7 +526,7 @@ definitions:
     properties:
       businessProcessID:
         type: string
-      ApplicationConfigurations:
+      applicationConfigurations:
         type: array
         items:
           $ref: '#/definitions/ApplicationConfiguration'
@@ -570,7 +570,7 @@ definitions:
     - REQUESTFORQUOTATION
     - QUOTATION
     - ORDER
-    - ORDERRESPONSESIMPLE
+    - ORDERRESPONSE
     - REMITTANCEADVICE
     - INVOICE
     - APPLICATIONRESPONSE

@@ -1,0 +1,139 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<xsd:complexType name="BusinessProcessPreferences_DAO">
+		<xsd:sequence>
+			<xsd:element name="preferences" type="BusinessProcessPreference_DAO" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="BusinessProcessPreference_DAO">
+		<xsd:sequence>
+			<xsd:element name="partnerID" type="xsd:string"/>
+			<xsd:element name="processOrder" type="BusinessProcessType" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:simpleType name="BusinessProcessType">
+		<xsd:restriction base="xsd:token">
+			<xsd:enumeration value="CATALOGUE"/>
+			<xsd:enumeration value="NEGOTIATION"/>
+			<xsd:enumeration value="ORDER"/>
+			<xsd:enumeration value="REMITTANCEADVICE"/>
+			<xsd:enumeration value="INVOICE"/>
+			<xsd:enumeration value="TRACKING"/>
+			<xsd:enumeration value="FULFILLMENT"/>
+			<xsd:enumeration value="PRODUCTCONFIGURATION"/>
+			<xsd:enumeration value="OTHER"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:complexType name="BusinessProcess_DAO">
+		<xsd:sequence>
+			<xsd:element name="businessProcessID" type="xsd:string"/>
+			<xsd:element name="URI" type="xsd:string"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:simpleType name="ApplicationExecutionType">
+		<xsd:restriction base="xsd:token">
+			<xsd:enumeration value="JAVA"/>
+			<xsd:enumeration value="MICROSERVICE"/>
+			<xsd:enumeration value="OTHER"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:complexType name="ExecutionConfiguration_DAO">
+		<xsd:sequence>
+			<xsd:element name="type" type="ApplicationExecutionType"/>
+			<xsd:element name="URI" type="xsd:string"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:simpleType name="ApplicationType">
+		<xsd:restriction base="xsd:token">
+			<xsd:enumeration value="DATAADAPTER"/>
+			<xsd:enumeration value="DATACHANNEL"/>
+			<xsd:enumeration value="DATAPROCESSOR"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:complexType name="ApplicationConfiguration_DAO">
+		<xsd:sequence>
+			<xsd:element name="activityID" type="xsd:string"/>
+			<xsd:element name="name" type="xsd:string"/>
+			<xsd:element name="transactionName" type="xsd:string"/>
+			<xsd:element name="type" type="ApplicationType"/>
+			<xsd:element name="execution" type="ExecutionConfiguration_DAO"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="BusinessProcessApplicationConfigurations_DAO">
+		<xsd:sequence>
+			<xsd:element name="businessProcessID" type="xsd:string"/>
+			<xsd:element name="applicationConfigurations" type="ApplicationConfiguration_DAO" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="Variable_DAO">
+		<xsd:sequence>
+			<xsd:element name="value" type="xsd:string"/>
+			<xsd:element name="type" type="xsd:string"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="BusinessProcessVariables_DAO">
+		<xsd:sequence>
+			<xsd:element name="businessProcessID" type="Variable_DAO"/>
+			<xsd:element name="initiatorID" type="Variable_DAO"/>
+			<xsd:element name="responderID" type="Variable_DAO"/>
+			<xsd:element name="content" type="Variable_DAO"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="BusinessProcessInstanceInputMessage_DAO">
+		<xsd:sequence>
+			<xsd:element name="variables" type="BusinessProcessVariables_DAO"/>
+			<xsd:element name="businessKey" type="xsd:string"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:simpleType name="DocumentType">
+		<xsd:restriction base="xsd:token">
+			<xsd:enumeration value="CATALOGUE"/>
+			<xsd:enumeration value="REQUESTFORQUOTATION"/>
+			<xsd:enumeration value="QUOTATION"/>
+			<xsd:enumeration value="ORDER"/>
+			<xsd:enumeration value="ORDERRESPONSE"/>
+			<xsd:enumeration value="REMITTANCEADVICE"/>
+			<xsd:enumeration value="INVOICE"/>
+			<xsd:enumeration value="APPLICATIONRESPONSE"/>
+			<xsd:enumeration value="TRANSPORTATIONSTATUS"/>
+			<xsd:enumeration value="DESPATCHADVICE"/>
+			<xsd:enumeration value="RECEIPTADVICE"/>
+			<xsd:enumeration value="OTHER"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="BusinessProcessInstanceStatus">
+		<xsd:restriction base="xsd:token">
+			<xsd:enumeration value="STARTED"/>
+			<xsd:enumeration value="WAITING"/>
+			<xsd:enumeration value="ABORTED"/>
+			<xsd:enumeration value="COMPLETED"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:complexType name="BusinessProcessInstance_DAO">
+		<xsd:sequence>
+			<xsd:element name="businessProcessInstanceID" type="xsd:string"/>
+			<xsd:element name="businessProcessID" type="xsd:string"/>
+			<xsd:element name="redirectTo" type="DocumentType"/>
+			<xsd:element name="status" type="BusinessProcessInstanceStatus"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:simpleType name="BusinessProcessDocumentStatus">
+		<xsd:restriction base="xsd:token">
+			<xsd:enumeration value="APPROVED"/>
+			<xsd:enumeration value="WAITINGRESPONSE"/>
+			<xsd:enumeration value="DENIED"/>
+			<xsd:enumeration value="PASTDUE"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:complexType name="BusinessProcessDocument_DAO">
+		<xsd:sequence>
+			<xsd:element name="documentID" type="xsd:string"/>
+			<xsd:element name="submissionDate" type="xsd:string"/>
+			<xsd:element name="type" type="DocumentType"/>
+			<xsd:element name="status" type="BusinessProcessDocumentStatus"/>
+			<xsd:element name="businessProcessInstanceID" type="xsd:string"/>
+			<xsd:element name="initiatorID" type="xsd:string"/>
+			<xsd:element name="responderID" type="xsd:string"/>
+			<xsd:element name="content" type="xsd:string"/>
+		</xsd:sequence>
+	</xsd:complexType>		
+</xsd:schema>

@@ -18,14 +18,15 @@
         <java.version>1.8</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
-        <logback.version>1.1.6
-        </logback.version> <!-- Version was set back due to bug: http://jira.qos.ch/browse/LOGBACK-1158 -->
+        <logback.version>1.1.6</logback.version> <!-- Version was set back due to bug: http://jira.qos.ch/browse/LOGBACK-1158 -->
         <timestamp>${maven.build.timestamp}</timestamp>
         <maven.build.timestamp.format>yyyy-MM-dd HH:mm</maven.build.timestamp.format>
         <springfox.version>2.5.0</springfox.version>
         <camunda-bpm-spring-boot-starter.version>2.0.0</camunda-bpm-spring-boot-starter.version>
         <default.package>eu.nimble.service.bp</default.package>
         <swagger.api.src>src/main/resources/api.yml</swagger.api.src>
+        <maven-jaxb2-plugin.version>0.13.1</maven-jaxb2-plugin.version>
+        <build-helper-plugin.version>3.0.0</build-helper-plugin.version>
     </properties>
 
     <parent>
@@ -180,11 +181,132 @@
             <artifactId>h2</artifactId>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>LATEST</version>
+        </dependency>
 
+        <!-- Hyperjaxb dependencies -->
+        <dependency>
+            <groupId>org.jvnet.hyperjaxb3</groupId>
+            <artifactId>hyperjaxb3-ejb-roundtrip</artifactId>
+            <version>0.6.1</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>log4j</groupId>
+                    <artifactId>log4j</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>eu.nimble.core.infrastructure.core</groupId>
+            <artifactId>utility</artifactId>
+            <version>0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>eu.nimble.services</groupId>
+            <artifactId>business-process-service</artifactId>
+            <version>0.0.1</version>
+            <type>jar</type>
+	    </dependency>
+	    <dependency>
+                    <groupId>org.jvnet.jaxb2.maven2</groupId>
+                    <artifactId>maven-jaxb2-plugin</artifactId>
+                    <version>${maven-jaxb2-plugin.version}</version>
+                </dependency>
     </dependencies>
     <build>
         <finalName>${project.artifactId}</finalName>
         <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>sql-maven-plugin</artifactId>
+                <version>1.5</version>
+                <dependencies>
+                    <!-- specify the dependent jdbc driver here -->
+                    <dependency>
+                        <groupId>org.postgresql</groupId>
+                        <artifactId>postgresql</artifactId>
+                        <version>LATEST</version>
+                    </dependency>
+                </dependencies>
+
+                <!-- common configuration shared by all executions -->
+                <configuration>
+                    <driver>org.postgresql.Driver</driver>
+                    <url>jdbc:postgresql://localhost:5432/camunda</url>
+                    <username>postgres</username>
+                    <password>postgres</password>
+                    <!-- You can comment out username/password configurations and
+                         have maven to look them up in your settings.xml using ${settingsKey}
+                    -->
+                    <settingsKey>sensibleKey</settingsKey>
+                    <!--all executions are ignored if -Dmaven.test.skip=true-->
+                    <skip>${maven.test.skip}</skip>
+                </configuration>
+
+                <executions>
+                    <execution>
+                        <id>create-db</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>execute</goal>
+                        </goals>
+                        <configuration>
+                            <url>jdbc:postgresql://localhost:5432/postgres</url>
+                            <autocommit>true</autocommit>
+                            <sqlCommand>create database camunda</sqlCommand>
+                            <onError>continue</onError>
+                        </configuration>
+                    </execution>
+
+                     <execution>
+                        <id>create-db-engine</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>execute</goal>
+                        </goals>
+                        <configuration>
+                            <url>jdbc:postgresql://localhost:5432/postgres</url>
+                            <autocommit>true</autocommit>
+                            <sqlCommand>create database businessprocessengine</sqlCommand>
+                            <onError>continue</onError>
+                        </configuration>
+                    </execution>
+
+                    <!--execution>
+                        <id>drop-db-before-test-if-any</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>execute</goal>
+                        </goals>
+                        <configuration>
+                            <url>jdbc:postgresql://localhost:5432/postgres</url>
+                            <autocommit>true</autocommit>
+                            <sqlCommand>drop database if exists camunda</sqlCommand>
+                            <onError>continue</onError>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>drop-db-engine-before-test-if-any</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>execute</goal>
+                        </goals>
+                        <configuration>
+                            <url>jdbc:postgresql://localhost:5432/postgres</url>
+                            <autocommit>true</autocommit>
+                            <sqlCommand>drop database if exists businessprocessengine</sqlCommand>
+                            <onError>continue</onError>
+                        </configuration>
+                    </execution-->
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
@@ -200,7 +322,70 @@
                 </executions>
             </plugin>
 
-            <plugin>
+	<plugin>
+                        <groupId>org.jvnet.jaxb2.maven2</groupId>
+                        <artifactId>maven-jaxb2-plugin</artifactId>
+                        <version>${maven-jaxb2-plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>generate.datamodel.xsd</id>
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>generate</goal>
+                                </goals>
+                                <configuration>
+                                    <schemaDirectory>src/main/schema</schemaDirectory>
+				    <generateDirectory>${project.build.directory}/generated-sources/java/src/main/java</generateDirectory>
+                                    <generatePackage>${default.package}.hyperjaxb.model</generatePackage>
+                                    <extension>true</extension>
+                                    <plugins>
+                                        <plugin>
+                                            <groupId>org.jvnet.hyperjaxb3</groupId>
+                                            <artifactId>hyperjaxb3-ejb-plugin</artifactId>
+                                            <version>0.6.1</version>
+                                        </plugin>
+                                        <plugin>
+                                            <groupId>org.jvnet.jaxb2_commons</groupId>
+                                            <artifactId>jaxb2-basics</artifactId>
+                                            <version>0.10.0</version>
+                                        </plugin>
+                                        <plugin>
+                                            <groupId>org.jvnet.jaxb2_commons</groupId>
+                                            <artifactId>jaxb2-basics-annotate</artifactId>
+                                            <version>1.0.2</version>
+                                        </plugin>
+                                    </plugins>
+                                    <args>
+                                        <arg>-Xannotate</arg>
+                                        <arg>-Xequals</arg>
+                                        <arg>-Xinheritance</arg>
+                                        <arg>-Xhyperjaxb3-ejb</arg>
+                                        <arg>-Xhyperjaxb3-ejb-roundtripTestClassName=RoundtripTest</arg>
+                                        <arg>-Xhyperjaxb3-ejb-persistenceUnitName=bp-data-model</arg>
+                                    </args>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>build-helper-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>add-source</id>
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>add-source</goal>
+                                </goals>
+                                <configuration>
+                                    <sources>
+					    <source>${project.build.directory}/generated-sources/java/src/main/java</source>
+                                    </sources>
+                                </configuration>
+                            </execution>
+                        </executions>
+		</plugin>
+		           <plugin>
                 <groupId>io.swagger</groupId>
                 <artifactId>swagger-codegen-maven-plugin</artifactId>
                 <version>2.2.1</version>
@@ -212,12 +397,12 @@
                         </goals>
                         <configuration>
                             <inputSpec>${swagger.api.src}</inputSpec>
-                            <language>spring</language>
+			    <language>spring</language>
+			    <output>${project.build.directory}/generated-sources/java</output>
                             <modelPackage>${default.package}.swagger.model</modelPackage>
                             <apiPackage>${default.package}.swagger.api</apiPackage>
                             <invokerPackage>${default.package}.swagger.invoker</invokerPackage>
                             <configOptions>
-                                <sourceFolder>src/gen/java/main</sourceFolder>
                                 <interfaceOnly>true</interfaceOnly>
                             </configOptions>
                         </configuration>
@@ -233,8 +418,22 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
-        </plugins>
+	</plugin>
+	    </plugins>
+	                   <resources>
+                    <resource>
+                        <directory>src/main/resources</directory>
+                        <excludes>
+                            <exclude>**/*.java</exclude>
+                        </excludes>
+                    </resource>
+                    <resource>
+			    <directory>${project.build.directory}/generated-sources/java/src/main/java</directory>
+                        <excludes>
+                            <exclude>**/*.java</exclude>
+                        </excludes>
+                    </resource>
+                </resources>
     </build>
 
     <profiles>
@@ -293,6 +492,6 @@
                 </dependency>
             </dependencies>
         </profile>
-    </profiles>
+        </profiles>
 
 </project>
