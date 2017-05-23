@@ -1,12 +1,13 @@
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
 	<xsd:complexType name="BusinessProcessPreferences_DAO">
 		<xsd:sequence>
+			<xsd:element name="partnerID" type="xsd:string"/>
 			<xsd:element name="preferences" type="BusinessProcessPreference_DAO" maxOccurs="unbounded"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	<xsd:complexType name="BusinessProcessPreference_DAO">
 		<xsd:sequence>
-			<xsd:element name="partnerID" type="xsd:string"/>
+			<xsd:element name="targetPartnerID" type="xsd:string"/>
 			<xsd:element name="processOrder" type="BusinessProcessType" maxOccurs="unbounded"/>
 		</xsd:sequence>
 	</xsd:complexType>
@@ -26,7 +27,9 @@
 	<xsd:complexType name="BusinessProcess_DAO">
 		<xsd:sequence>
 			<xsd:element name="businessProcessID" type="xsd:string"/>
-			<xsd:element name="URI" type="xsd:string"/>
+			<xsd:element name="businessProcessName" type="xsd:string"/>
+			<xsd:element name="businessProcessType" type="BusinessProcessType"/>
+			<xsd:element name="bpmnContent" type="xsd:string"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	<xsd:simpleType name="ApplicationExecutionType">
@@ -60,28 +63,23 @@
 	</xsd:complexType>
 	<xsd:complexType name="BusinessProcessApplicationConfigurations_DAO">
 		<xsd:sequence>
+			<xsd:element name="partnerID" type="xsd:string"/>
 			<xsd:element name="businessProcessID" type="xsd:string"/>
 			<xsd:element name="applicationConfigurations" type="ApplicationConfiguration_DAO" maxOccurs="unbounded"/>
 		</xsd:sequence>
 	</xsd:complexType>
-	<xsd:complexType name="Variable_DAO">
-		<xsd:sequence>
-			<xsd:element name="value" type="xsd:string"/>
-			<xsd:element name="type" type="xsd:string"/>
-		</xsd:sequence>
-	</xsd:complexType>
 	<xsd:complexType name="BusinessProcessVariables_DAO">
 		<xsd:sequence>
-			<xsd:element name="businessProcessID" type="Variable_DAO"/>
-			<xsd:element name="initiatorID" type="Variable_DAO"/>
-			<xsd:element name="responderID" type="Variable_DAO"/>
-			<xsd:element name="content" type="Variable_DAO"/>
+			<xsd:element name="businessProcessID" type="xsd:string"/>
+			<xsd:element name="initiatorID" type="xsd:string"/>
+			<xsd:element name="responderID" type="xsd:string"/>
+			<xsd:element name="content" type="xsd:string"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	<xsd:complexType name="BusinessProcessInstanceInputMessage_DAO">
 		<xsd:sequence>
 			<xsd:element name="variables" type="BusinessProcessVariables_DAO"/>
-			<xsd:element name="businessKey" type="xsd:string"/>
+			<xsd:element name="businessProcessInstanceID" type="xsd:string"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	<xsd:simpleType name="DocumentType">
@@ -112,7 +110,6 @@
 		<xsd:sequence>
 			<xsd:element name="businessProcessInstanceID" type="xsd:string"/>
 			<xsd:element name="businessProcessID" type="xsd:string"/>
-			<xsd:element name="redirectTo" type="DocumentType"/>
 			<xsd:element name="status" type="BusinessProcessInstanceStatus"/>
 		</xsd:sequence>
 	</xsd:complexType>

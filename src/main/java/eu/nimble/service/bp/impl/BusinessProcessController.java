@@ -1,9 +1,9 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.hyperjaxb.model.*;
-import eu.nimble.service.bp.impl.util.CamundaRestClient;
+import eu.nimble.service.bp.impl.util.CamundaEngine;
 import eu.nimble.service.bp.impl.util.DAOUtility;
-import eu.nimble.service.bp.impl.util.HibernateSwaggerConverter;
+import eu.nimble.service.bp.impl.util.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.swagger.api.BusinessprocessApi;
 import eu.nimble.service.bp.swagger.model.*;
 import eu.nimble.utility.HibernateUtility;
@@ -19,7 +19,7 @@ import java.util.List;
 public class BusinessProcessController implements BusinessprocessApi {
     @Override
     public ResponseEntity<ModelApiResponse> addBusinessProcessDefinition(BusinessProcess body) {
-        BusinessProcessDAO businessProcessDAO = HibernateSwaggerConverter.createBusinessProcess_DAO(body);
+        BusinessProcessDAO businessProcessDAO = HibernateSwaggerObjectMapper.createBusinessProcess_DAO(body);
         HibernateUtility.getInstance("bp-data-model").persist(businessProcessDAO);
 
         return getApiResponse();
@@ -27,22 +27,22 @@ public class BusinessProcessController implements BusinessprocessApi {
 
     @Override
     public ResponseEntity<ModelApiResponse> addBusinessProcessPartnerApplicationPreference(BusinessProcessApplicationConfigurations body) {
-        BusinessProcessApplicationConfigurationsDAO businessProcessApplicationConfigurationsDAO = HibernateSwaggerConverter.createBusinessProcessApplicationConfigurations_DAO(body);
+        BusinessProcessApplicationConfigurationsDAO businessProcessApplicationConfigurationsDAO = HibernateSwaggerObjectMapper.createBusinessProcessApplicationConfigurations_DAO(body);
         HibernateUtility.getInstance("bp-data-model").persist(businessProcessApplicationConfigurationsDAO);
         return getApiResponse();
     }
 
     @Override
     public ResponseEntity<ModelApiResponse> addBusinessProcessPartnerPreference(BusinessProcessPreferences body) {
-        BusinessProcessPreferencesDAO businessProcessPreferencesDAO = HibernateSwaggerConverter.createBusinessProcessPreferences_DAO(body);
+        BusinessProcessPreferencesDAO businessProcessPreferencesDAO = HibernateSwaggerObjectMapper.createBusinessProcessPreferences_DAO(body);
         HibernateUtility.getInstance("bp-data-model").persist(businessProcessPreferencesDAO);
         return getApiResponse();
     }
 
     @Override
-    public ResponseEntity<ModelApiResponse> updateBusinessProcessDefinition(String businessProcessID, BusinessProcess body) {
-        BusinessProcessDAO businessProcessDAO = DAOUtility.getBusinessProcessDAOByID(businessProcessID);
-        BusinessProcessDAO businessProcessDAONew = HibernateSwaggerConverter.createBusinessProcess_DAO(body);
+    public ResponseEntity<ModelApiResponse> updateBusinessProcessDefinition(BusinessProcess body) {
+        BusinessProcessDAO businessProcessDAO = DAOUtility.getBusinessProcessDAOByID(body.getBusinessProcessID());
+        BusinessProcessDAO businessProcessDAONew = HibernateSwaggerObjectMapper.createBusinessProcess_DAO(body);
         businessProcessDAONew.setHjid(businessProcessDAO.getHjid());
 
         HibernateUtility.getInstance("bp-data-model").update(businessProcessDAONew);
@@ -50,18 +50,18 @@ public class BusinessProcessController implements BusinessprocessApi {
     }
 
     @Override
-    public ResponseEntity<ModelApiResponse> updateBusinessProcessPartnerApplicationPreference(String partnerID, BusinessProcessApplicationConfigurations body) {
-        BusinessProcessApplicationConfigurationsDAO businessProcessApplicationConfigurationsDAO = DAOUtility.getBusinessProcessApplicationConfigurationsDAOByPartnerID(partnerID);
-        BusinessProcessApplicationConfigurationsDAO businessProcessApplicationConfigurationsDAONew = HibernateSwaggerConverter.createBusinessProcessApplicationConfigurations_DAO(body);
+    public ResponseEntity<ModelApiResponse> updateBusinessProcessPartnerApplicationPreference(BusinessProcessApplicationConfigurations body) {
+        BusinessProcessApplicationConfigurationsDAO businessProcessApplicationConfigurationsDAO = DAOUtility.getBusinessProcessApplicationConfigurationsDAOByPartnerID(body.getPartnerID());
+        BusinessProcessApplicationConfigurationsDAO businessProcessApplicationConfigurationsDAONew = HibernateSwaggerObjectMapper.createBusinessProcessApplicationConfigurations_DAO(body);
         businessProcessApplicationConfigurationsDAONew.setHjid(businessProcessApplicationConfigurationsDAO.getHjid());
         HibernateUtility.getInstance("bp-data-model").update(businessProcessApplicationConfigurationsDAONew);
         return getApiResponse();
     }
 
     @Override
-    public ResponseEntity<ModelApiResponse> updateBusinessProcessPartnerPreference(String partnerID, BusinessProcessPreferences body) {
-        BusinessProcessPreferencesDAO businessProcessPreferencesDAO = DAOUtility.getBusinessProcessPreferencesDAOByPartnerID(partnerID);
-        BusinessProcessPreferencesDAO businessProcessPreferencesDAONew = HibernateSwaggerConverter.createBusinessProcessPreferences_DAO(body);
+    public ResponseEntity<ModelApiResponse> updateBusinessProcessPartnerPreference(BusinessProcessPreferences body) {
+        BusinessProcessPreferencesDAO businessProcessPreferencesDAO = DAOUtility.getBusinessProcessPreferencesDAOByPartnerID(body.getPartnerID());
+        BusinessProcessPreferencesDAO businessProcessPreferencesDAONew = HibernateSwaggerObjectMapper.createBusinessProcessPreferences_DAO(body);
         businessProcessPreferencesDAONew.setHjid(businessProcessPreferencesDAO.getHjid());
         HibernateUtility.getInstance("bp-data-model").update(businessProcessPreferencesDAONew);
         return getApiResponse();
@@ -69,10 +69,17 @@ public class BusinessProcessController implements BusinessprocessApi {
 
     @Override
     public ResponseEntity<BusinessProcessInstance> continueBusinessProcessInstance(BusinessProcessInstanceInputMessage body) {
-        BusinessProcessInstanceInputMessageDAO businessProcessInstanceInputMessageDAO = HibernateSwaggerConverter.createBusinessProcessInstanceInputMessage_DAO(body);
+        BusinessProcessInstanceInputMessageDAO businessProcessInstanceInputMessageDAO = HibernateSwaggerObjectMapper.createBusinessProcessInstanceInputMessage_DAO(body);
         HibernateUtility.getInstance("bp-data-model").persist(businessProcessInstanceInputMessageDAO);
 
-        BusinessProcessInstance businessProcessInstance = CamundaRestClient.continueProcessInstance(body);
+        BusinessProcessInstance businessProcessInstance = CamundaEngine.continueProcessInstance(body);
+
+        BusinessProcessInstanceDAO businessProcessInstanceDAO = HibernateSwaggerObjectMapper.createBusinessProcessInstance_DAO(businessProcessInstance);
+        BusinessProcessInstanceDAO storedInstance = DAOUtility.getBusinessProcessIntanceDAOByID(businessProcessInstance.getBusinessProcessInstanceID());
+
+        businessProcessInstanceDAO.setHjid(storedInstance.getHjid());
+
+        HibernateUtility.getInstance("bp-data-model").persist(businessProcessInstanceDAO);
 
         return new ResponseEntity<>(businessProcessInstance, HttpStatus.OK);
     }
@@ -101,7 +108,7 @@ public class BusinessProcessController implements BusinessprocessApi {
     @Override
     public ResponseEntity<BusinessProcess> getBusinessProcessDefinition(String businessProcessID) {
         BusinessProcessDAO businessProcessDAO = DAOUtility.getBusinessProcessDAOByID(businessProcessID);
-        BusinessProcess businessProcess = HibernateSwaggerConverter.createBusinessProcess(businessProcessDAO);
+        BusinessProcess businessProcess = HibernateSwaggerObjectMapper.createBusinessProcess(businessProcessDAO);
         return new ResponseEntity<>(businessProcess, HttpStatus.OK);
     }
 
@@ -110,7 +117,7 @@ public class BusinessProcessController implements BusinessprocessApi {
         List<BusinessProcessDAO> businessProcessDAOs = DAOUtility.getBusinessProcessDAOs();
         List<BusinessProcess> businessProcesses = new ArrayList<>();
         for(BusinessProcessDAO businessProcessDAO: businessProcessDAOs) {
-            BusinessProcess businessProcess = HibernateSwaggerConverter.createBusinessProcess(businessProcessDAO);
+            BusinessProcess businessProcess = HibernateSwaggerObjectMapper.createBusinessProcess(businessProcessDAO);
             businessProcesses.add(businessProcess);
         }
 
@@ -120,7 +127,7 @@ public class BusinessProcessController implements BusinessprocessApi {
     @Override
     public ResponseEntity<BusinessProcessApplicationConfigurations> getBusinessProcessPartnerApplicationPreference(String partnerID) {
         BusinessProcessApplicationConfigurationsDAO businessProcessApplicationConfigurationsDAO = DAOUtility.getBusinessProcessApplicationConfigurationsDAOByPartnerID(partnerID);
-        BusinessProcessApplicationConfigurations businessProcessApplicationConfigurations = HibernateSwaggerConverter.createBusinessProcessApplicationConfigurations(businessProcessApplicationConfigurationsDAO);
+        BusinessProcessApplicationConfigurations businessProcessApplicationConfigurations = HibernateSwaggerObjectMapper.createBusinessProcessApplicationConfigurations(businessProcessApplicationConfigurationsDAO);
 
         return new ResponseEntity<>(businessProcessApplicationConfigurations, HttpStatus.OK);
     }
@@ -128,7 +135,7 @@ public class BusinessProcessController implements BusinessprocessApi {
     @Override
     public ResponseEntity<BusinessProcessPreferences> getBusinessProcessPartnerPreference(String partnerID) {
         BusinessProcessPreferencesDAO businessProcessPreferencesDAO = DAOUtility.getBusinessProcessPreferencesDAOByPartnerID(partnerID);
-        BusinessProcessPreferences businessProcessPreferences = HibernateSwaggerConverter.createBusinessProcessPreferences(businessProcessPreferencesDAO);
+        BusinessProcessPreferences businessProcessPreferences = HibernateSwaggerObjectMapper.createBusinessProcessPreferences(businessProcessPreferencesDAO);
 
         return new ResponseEntity<>(businessProcessPreferences, HttpStatus.OK);
     }
@@ -136,7 +143,7 @@ public class BusinessProcessController implements BusinessprocessApi {
     @Override
     public ResponseEntity<BusinessProcessDocument> getDocument(String documentID) {
         BusinessProcessDocumentDAO businessProcessDocumentDAO = DAOUtility.getBusinessProcessDocument(documentID);
-        BusinessProcessDocument businessProcessDocument = HibernateSwaggerConverter.createBusinessProcessDocument(businessProcessDocumentDAO);
+        BusinessProcessDocument businessProcessDocument = HibernateSwaggerObjectMapper.createBusinessProcessDocument(businessProcessDocumentDAO);
         return new ResponseEntity<>(businessProcessDocument, HttpStatus.OK);
     }
 
@@ -145,7 +152,7 @@ public class BusinessProcessController implements BusinessprocessApi {
         List<BusinessProcessDocumentDAO> businessProcessDocumentsDAO = DAOUtility.getBusinessProcessDocuments(partnerID, typeID);
         List<BusinessProcessDocument> businessProcessDocuments = new ArrayList<>();
         for(BusinessProcessDocumentDAO businessProcessDocumentDAO: businessProcessDocumentsDAO) {
-            BusinessProcessDocument businessProcessDocument = HibernateSwaggerConverter.createBusinessProcessDocument(businessProcessDocumentDAO);
+            BusinessProcessDocument businessProcessDocument = HibernateSwaggerObjectMapper.createBusinessProcessDocument(businessProcessDocumentDAO);
             businessProcessDocuments.add(businessProcessDocument);
         }
 
@@ -157,7 +164,7 @@ public class BusinessProcessController implements BusinessprocessApi {
         List<BusinessProcessDocumentDAO> businessProcessDocumentsDAO = DAOUtility.getBusinessProcessDocuments(partnerID, typeID, source);
         List<BusinessProcessDocument> businessProcessDocuments = new ArrayList<>();
         for(BusinessProcessDocumentDAO businessProcessDocumentDAO: businessProcessDocumentsDAO) {
-            BusinessProcessDocument businessProcessDocument = HibernateSwaggerConverter.createBusinessProcessDocument(businessProcessDocumentDAO);
+            BusinessProcessDocument businessProcessDocument = HibernateSwaggerObjectMapper.createBusinessProcessDocument(businessProcessDocumentDAO);
             businessProcessDocuments.add(businessProcessDocument);
         }
         return new ResponseEntity<>(businessProcessDocuments, HttpStatus.OK);
@@ -168,7 +175,7 @@ public class BusinessProcessController implements BusinessprocessApi {
         List<BusinessProcessDocumentDAO> businessProcessDocumentsDAO = DAOUtility.getBusinessProcessDocuments(partnerID, typeID, status, source);
         List<BusinessProcessDocument> businessProcessDocuments = new ArrayList<>();
         for(BusinessProcessDocumentDAO businessProcessDocumentDAO: businessProcessDocumentsDAO) {
-            BusinessProcessDocument businessProcessDocument = HibernateSwaggerConverter.createBusinessProcessDocument(businessProcessDocumentDAO);
+            BusinessProcessDocument businessProcessDocument = HibernateSwaggerObjectMapper.createBusinessProcessDocument(businessProcessDocumentDAO);
             businessProcessDocuments.add(businessProcessDocument);
         }
         return new ResponseEntity<>(businessProcessDocuments, HttpStatus.OK);
@@ -176,10 +183,13 @@ public class BusinessProcessController implements BusinessprocessApi {
 
     @Override
     public ResponseEntity<BusinessProcessInstance> startBusinessProcessInstance(BusinessProcessInstanceInputMessage body) {
-        BusinessProcessInstanceInputMessageDAO businessProcessInstanceInputMessageDAO = HibernateSwaggerConverter.createBusinessProcessInstanceInputMessageDAO(body);
+        BusinessProcessInstanceInputMessageDAO businessProcessInstanceInputMessageDAO = HibernateSwaggerObjectMapper.createBusinessProcessInstanceInputMessage_DAO(body);
         HibernateUtility.getInstance("bp-data-model").persist(businessProcessInstanceInputMessageDAO);
 
-        BusinessProcessInstance businessProcessInstance = CamundaRestClient.startProcessInstance(body);
+        BusinessProcessInstance businessProcessInstance = CamundaEngine.startProcessInstance(body);
+
+        BusinessProcessInstanceDAO businessProcessInstanceDAO = HibernateSwaggerObjectMapper.createBusinessProcessInstance_DAO(businessProcessInstance);
+        HibernateUtility.getInstance("bp-data-model").persist(businessProcessInstanceDAO);
 
         return new ResponseEntity<>(businessProcessInstance, HttpStatus.OK);
     }
