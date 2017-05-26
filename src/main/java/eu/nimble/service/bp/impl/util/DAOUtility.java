@@ -15,12 +15,6 @@ import java.util.List;
  */
 public class DAOUtility {
 
-    public static ProcessDAO getProcessDAOByID(String processID) {
-        String query = "select bp from ProcessDAO bp where ( bp.processID ='" + processID + "') ";
-        List<ProcessDAO> resultSet = (List<ProcessDAO>) HibernateUtility.getInstance("bp-data-model").loadAll(query);
-        return resultSet.get(0);
-    }
-
     public static ProcessApplicationConfigurationsDAO getProcessApplicationConfigurationsDAOByPartnerID(String partnerID) {
         String query = "select conf from ProcessApplicationConfigurationsDAO conf where ( conf.partnerID ='" + partnerID + "') ";
         List<ProcessApplicationConfigurationsDAO> resultSet = (List<ProcessApplicationConfigurationsDAO>) HibernateUtility.getInstance("bp-data-model").loadAll(query);
@@ -31,12 +25,6 @@ public class DAOUtility {
         String query = "select conf from ProcessPreferencesDAO conf where ( conf.partnerID ='" + partnerID + "') ";
         List<ProcessPreferencesDAO> resultSet = (List<ProcessPreferencesDAO>) HibernateUtility.getInstance("bp-data-model").loadAll(query);
         return resultSet.get(0);
-    }
-
-    public static List<ProcessDAO> getProcessDAOs() {
-        String query = "select bp from ProcessDAO bp ";
-        List<ProcessDAO> resultSet = (List<ProcessDAO>) HibernateUtility.getInstance("bp-data-model").loadAll(query);
-        return resultSet;
     }
 
     public static ProcessDocumentDAO getProcessDocument(String documentID) {

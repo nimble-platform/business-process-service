@@ -18,18 +18,6 @@ import java.util.List;
  */
 public class HibernateSwaggerObjectMapper {
 
-    public static ProcessDAO createProcess_DAO(Process body) {
-        ProcessDAO processDAO = new ProcessDAO();
-
-        processDAO.setProcessID(body.getProcessID());
-        processDAO.setBpmnContent(body.getBpmnContent());
-        processDAO.setProcessName(body.getProcessName());
-        ProcessType processTypeDAO = ProcessType.fromValue(body.getProcessType().toString());
-        processDAO.setProcessType(processTypeDAO);
-
-        return processDAO;
-    }
-
     public static ProcessApplicationConfigurationsDAO createProcessApplicationConfigurations_DAO(ProcessApplicationConfigurations body) {
         ProcessApplicationConfigurationsDAO processApplicationConfigurationsDAO = new ProcessApplicationConfigurationsDAO();
 
@@ -89,15 +77,6 @@ public class HibernateSwaggerObjectMapper {
 
         processInstanceInputMessageDAO.setVariables(processVariablesDAO);
         return processInstanceInputMessageDAO;
-    }
-
-    public static Process createProcess(ProcessDAO processDAO) {
-        Process process = new Process();
-        process.setBpmnContent(processDAO.getBpmnContent());
-        process.setProcessID(processDAO.getProcessID());
-        process.setProcessName(processDAO.getProcessName());
-        process.setProcessType(Process.ProcessTypeEnum.valueOf(processDAO.getProcessType().value()));
-        return process;
     }
 
     public static ProcessApplicationConfigurations createProcessApplicationConfigurations(ProcessApplicationConfigurationsDAO processApplicationConfigurationsDAO) {

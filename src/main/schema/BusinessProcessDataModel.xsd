@@ -24,14 +24,6 @@
 			<xsd:enumeration value="OTHER"/>
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:complexType name="ProcessDAO">
-		<xsd:sequence>
-			<xsd:element name="processID" type="xsd:string"/>
-			<xsd:element name="processName" type="xsd:string"/>
-			<xsd:element name="processType" type="ProcessType"/>
-			<xsd:element name="bpmnContent" type="xsd:string"/>
-		</xsd:sequence>
-	</xsd:complexType>
 	<xsd:simpleType name="ApplicationExecutionType">
 		<xsd:restriction base="xsd:token">
 			<xsd:enumeration value="JAVA"/>

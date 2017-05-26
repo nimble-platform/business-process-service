@@ -5,15 +5,24 @@
  */
 package eu.nimble.service.bp.impl.util;
 
+import eu.nimble.service.bp.swagger.model.Process;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
 import eu.nimble.service.bp.swagger.model.ProcessVariables;
+import eu.nimble.utility.XMLUtility;
 import org.camunda.bpm.engine.*;
+import org.camunda.bpm.engine.repository.ProcessDefinition;
 import org.camunda.bpm.engine.task.Task;
+import org.camunda.bpm.model.bpmn.Bpmn;
+import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.xml.transform.dom.DOMSource;
+import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -64,6 +73,40 @@ public class CamundaEngine {
 		return businessProcessInstance;
 	}
 
+	public static List<Process> getProcessDefinitions() {
+		List<ProcessDefinition> processDefinitions = repositoryService.createProcessDefinitionQuery().list();
+		List<Process> processes = new ArrayList<>();
+		for(ProcessDefinition processDefinition: processDefinitions) {
+			Process process = mapProcess(processDefinition);
+			processes.add(process);
+		}
+
+		return processes;
+	}
+
+	private static Process mapProcess(ProcessDefinition processDefinition) {
+		String key = processDefinition.getKey();
+		String name = processDefinition.getName();
+		String processDefinitionId = processDefinition.getId();
+
+		BpmnModelInstance bpmnModel = repositoryService.getBpmnModelInstance(processDefinitionId);
+
+		DOMSource domSource = bpmnModel.getDocument().getDomSource();
+		String bpmnContent = XMLUtility.nodeToString(domSource.getNode());
+		String type = XMLUtility.evaluateXPathAndGetAttributeValue(domSource.getNode(), "//camunda:property[@name = 'businessProcessCategory']/@value");
+		if(type == null)
+			type = "OTHER";
+
+		logger.info(" $$$ Getting BPMN {} {} {} {}", processDefinitionId, key, name, type);
+
+		Process process = new Process();
+		process.setProcessID(key);
+		process.setProcessName(name);
+		process.setBpmnContent(bpmnContent);
+		process.setProcessType(Process.ProcessTypeEnum.valueOf(type));
+		return  process;
+	}
+
 	private static Map<String,Object> getVariablesData(ProcessInstanceInputMessage body) {
 		ProcessVariables variables = body.getVariables();
 		String content = variables.getContent();
@@ -77,4 +120,25 @@ public class CamundaEngine {
 		return data;
 	}
 
+	public static void addProcessDefinition(Process body) {
+		String bpmnContent = body.getBpmnContent();
+		repositoryService.createDeployment().addString(body.getProcessID()+".bpmn", bpmnContent).deploy();
+		//getProcessDefinitions();
+	}
+
+	public static void deleteProcessDefinition(String processID) {
+		ProcessDefinition processDefinition = repositoryService.createProcessDefinitionQuery().processDefinitionKey(processID).singleResult();
+		repositoryService.deleteProcessDefinition(processDefinition.getId(), true);
+	}
+
+	public static Process getProcessDefinition(String processID) {
+		ProcessDefinition processDefinition = repositoryService.createProcessDefinitionQuery().processDefinitionKey(processID).singleResult();
+		Process process = mapProcess(processDefinition);
+		return process;
+	}
+
+	public static void updateProcessDefinition(Process body) {
+		deleteProcessDefinition(body.getProcessID());
+		addProcessDefinition(body);
+	}
 }

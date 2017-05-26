@@ -19,10 +19,10 @@ public class TestOrderProcessor implements JavaDelegate {
     @HystrixCommand
     @Override
     public void execute(DelegateExecution execution) throws Exception {
-        logger.info("executed TestOrderProcessor: {}", execution);
+        logger.info(" $$$ TestOrderProcessor: {}", execution);
         final Map<String, Object> variables = execution.getVariables();
         for (String key: variables.keySet()) {
-            logger.debug(" $$$ Variabla name {}, value {}", key, variables.get(key));
+            logger.debug(" $$$ Variable name {}, value {}", key, variables.get(key));
         }
     }
 }

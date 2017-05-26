@@ -2,6 +2,8 @@ package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.swagger.model.Process;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
+import eu.nimble.service.bp.swagger.model.ProcessInstance;
+import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
 import org.junit.FixMethodOrder;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -31,7 +33,7 @@ import static org.junit.Assert.assertNotNull;
 //@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 //@Ignore
-public class ContentControllerTest {
+public class ContentStartContinueControllerTest {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -45,7 +47,7 @@ public class ContentControllerTest {
      * Add a new business process
      */
     @Test
-    public void addProcessDefinitionTest() {
+    public void t1_addProcessDefinitionTest() {
         Process body = TestObjectFactory.createProcess();
         String url = "http://localhost:" + port +"/content";
 
@@ -60,7 +62,7 @@ public class ContentControllerTest {
      * Get the business process definitions
      */
     @Test
-    public void getProcessDefinitionTest() {
+    public void t2_getProcessDefinitionTest() {
         String processID = TestObjectFactory.getProcessID();
         String url = "http://localhost:" + port +"/content/{processID}";
 
@@ -78,7 +80,7 @@ public class ContentControllerTest {
      * Get the business process definitions
      */
     @Test
-    public void getProcessDefinitionsTest() {
+    public void t3_getProcessDefinitionsTest() {
         ResponseEntity<List> response = restTemplate.getForEntity("http://localhost:" + port +"/content", List.class);
 
         logger.info(" $$$ Test response {} ", response.toString());
@@ -89,17 +91,54 @@ public class ContentControllerTest {
      * Update a business process
      */
     @Test
-    public void updateProcessDefinitionTest() {
+    public void t4_updateProcessDefinitionTest() {
         Process body = TestObjectFactory.updateProcess();
 
         restTemplate.put("http://localhost:" + port +"/content", body);
+    }
+
+    static String processInstanceID = "";
+
+    /**
+     * Start an instance of a business process
+     */
+    @Test
+    public void t5_startBusinessProcessInstanceTest() {
+        ProcessInstanceInputMessage body = TestObjectFactory.createStartProcessInstanceInputMessage();
+        String url = "http://localhost:" + port +"/start";
+
+        ResponseEntity<ProcessInstance> response = restTemplate.postForEntity(url, body, ProcessInstance.class);
+
+        logger.info(" $$$ Test response {} ", response.toString());
+
+        processInstanceID = response.getBody().getProcessInstanceID();
+
+        assertNotNull(response);
+    }
+
+    /**
+     * Send input to a waiting process instance (because of a human task)
+     */
+    @Test
+    public void t6_continueBusinessProcessInstanceTest() {
+        ProcessInstanceInputMessage body = TestObjectFactory.createContinueProcessInstanceInputMessage();
+
+        body.setProcessInstanceID(processInstanceID);
+
+        String url = "http://localhost:" + port +"/continue";
+
+        ResponseEntity<ProcessInstance> response = restTemplate.postForEntity(url, body, ProcessInstance.class);
+
+        logger.info(" $$$ Test response {} ", response.toString());
+
+        assertNotNull(response);
     }
 
     /**
      * Deletes a business process definition
      */
     @Test
-    public void z_deleteProcessDefinitionTest() {
+    public void t7_removeProcessDefinitionTest() {
         String processID = TestObjectFactory.getProcessID();
         String url = "http://localhost:" + port +"/content/{processID}";
 
