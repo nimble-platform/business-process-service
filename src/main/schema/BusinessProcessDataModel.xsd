@@ -1,17 +1,17 @@
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-	<xsd:complexType name="BusinessProcessPreferences_DAO">
+	<xsd:complexType name="ProcessPreferencesDAO">
 		<xsd:sequence>
 			<xsd:element name="partnerID" type="xsd:string"/>
-			<xsd:element name="preferences" type="BusinessProcessPreference_DAO" maxOccurs="unbounded"/>
+			<xsd:element name="preferences" type="ProcessPreferenceDAO" maxOccurs="unbounded"/>
 		</xsd:sequence>
 	</xsd:complexType>
-	<xsd:complexType name="BusinessProcessPreference_DAO">
+	<xsd:complexType name="ProcessPreferenceDAO">
 		<xsd:sequence>
 			<xsd:element name="targetPartnerID" type="xsd:string"/>
-			<xsd:element name="processOrder" type="BusinessProcessType" maxOccurs="unbounded"/>
+			<xsd:element name="processOrder" type="ProcessType" maxOccurs="unbounded"/>
 		</xsd:sequence>
 	</xsd:complexType>
-	<xsd:simpleType name="BusinessProcessType">
+	<xsd:simpleType name="ProcessType">
 		<xsd:restriction base="xsd:token">
 			<xsd:enumeration value="CATALOGUE"/>
 			<xsd:enumeration value="NEGOTIATION"/>
@@ -24,11 +24,11 @@
 			<xsd:enumeration value="OTHER"/>
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:complexType name="BusinessProcess_DAO">
+	<xsd:complexType name="ProcessDAO">
 		<xsd:sequence>
-			<xsd:element name="businessProcessID" type="xsd:string"/>
-			<xsd:element name="businessProcessName" type="xsd:string"/>
-			<xsd:element name="businessProcessType" type="BusinessProcessType"/>
+			<xsd:element name="processID" type="xsd:string"/>
+			<xsd:element name="processName" type="xsd:string"/>
+			<xsd:element name="processType" type="ProcessType"/>
 			<xsd:element name="bpmnContent" type="xsd:string"/>
 		</xsd:sequence>
 	</xsd:complexType>
@@ -39,7 +39,7 @@
 			<xsd:enumeration value="OTHER"/>
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:complexType name="ExecutionConfiguration_DAO">
+	<xsd:complexType name="ExecutionConfigurationDAO">
 		<xsd:sequence>
 			<xsd:element name="type" type="ApplicationExecutionType"/>
 			<xsd:element name="URI" type="xsd:string"/>
@@ -52,34 +52,34 @@
 			<xsd:enumeration value="DATAPROCESSOR"/>
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:complexType name="ApplicationConfiguration_DAO">
+	<xsd:complexType name="ApplicationConfigurationDAO">
 		<xsd:sequence>
 			<xsd:element name="activityID" type="xsd:string"/>
 			<xsd:element name="name" type="xsd:string"/>
 			<xsd:element name="transactionName" type="xsd:string"/>
 			<xsd:element name="type" type="ApplicationType"/>
-			<xsd:element name="execution" type="ExecutionConfiguration_DAO"/>
+			<xsd:element name="execution" type="ExecutionConfigurationDAO"/>
 		</xsd:sequence>
 	</xsd:complexType>
-	<xsd:complexType name="BusinessProcessApplicationConfigurations_DAO">
+	<xsd:complexType name="ProcessApplicationConfigurationsDAO">
 		<xsd:sequence>
 			<xsd:element name="partnerID" type="xsd:string"/>
-			<xsd:element name="businessProcessID" type="xsd:string"/>
-			<xsd:element name="applicationConfigurations" type="ApplicationConfiguration_DAO" maxOccurs="unbounded"/>
+			<xsd:element name="processID" type="xsd:string"/>
+			<xsd:element name="applicationConfigurations" type="ApplicationConfigurationDAO" maxOccurs="unbounded"/>
 		</xsd:sequence>
 	</xsd:complexType>
-	<xsd:complexType name="BusinessProcessVariables_DAO">
+	<xsd:complexType name="ProcessVariablesDAO">
 		<xsd:sequence>
-			<xsd:element name="businessProcessID" type="xsd:string"/>
+			<xsd:element name="processID" type="xsd:string"/>
 			<xsd:element name="initiatorID" type="xsd:string"/>
 			<xsd:element name="responderID" type="xsd:string"/>
 			<xsd:element name="content" type="xsd:string"/>
 		</xsd:sequence>
 	</xsd:complexType>
-	<xsd:complexType name="BusinessProcessInstanceInputMessage_DAO">
+	<xsd:complexType name="ProcessInstanceInputMessageDAO">
 		<xsd:sequence>
-			<xsd:element name="variables" type="BusinessProcessVariables_DAO"/>
-			<xsd:element name="businessProcessInstanceID" type="xsd:string"/>
+			<xsd:element name="variables" type="ProcessVariablesDAO"/>
+			<xsd:element name="processInstanceID" type="xsd:string"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	<xsd:simpleType name="DocumentType">
@@ -98,7 +98,7 @@
 			<xsd:enumeration value="OTHER"/>
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:simpleType name="BusinessProcessInstanceStatus">
+	<xsd:simpleType name="ProcessInstanceStatus">
 		<xsd:restriction base="xsd:token">
 			<xsd:enumeration value="STARTED"/>
 			<xsd:enumeration value="WAITING"/>
@@ -106,14 +106,14 @@
 			<xsd:enumeration value="COMPLETED"/>
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:complexType name="BusinessProcessInstance_DAO">
+	<xsd:complexType name="ProcessInstanceDAO">
 		<xsd:sequence>
-			<xsd:element name="businessProcessInstanceID" type="xsd:string"/>
-			<xsd:element name="businessProcessID" type="xsd:string"/>
-			<xsd:element name="status" type="BusinessProcessInstanceStatus"/>
+			<xsd:element name="processInstanceID" type="xsd:string"/>
+			<xsd:element name="processID" type="xsd:string"/>
+			<xsd:element name="status" type="ProcessInstanceStatus"/>
 		</xsd:sequence>
 	</xsd:complexType>
-	<xsd:simpleType name="BusinessProcessDocumentStatus">
+	<xsd:simpleType name="ProcessDocumentStatus">
 		<xsd:restriction base="xsd:token">
 			<xsd:enumeration value="APPROVED"/>
 			<xsd:enumeration value="WAITINGRESPONSE"/>
@@ -121,13 +121,13 @@
 			<xsd:enumeration value="PASTDUE"/>
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:complexType name="BusinessProcessDocument_DAO">
+	<xsd:complexType name="ProcessDocumentDAO">
 		<xsd:sequence>
 			<xsd:element name="documentID" type="xsd:string"/>
 			<xsd:element name="submissionDate" type="xsd:string"/>
 			<xsd:element name="type" type="DocumentType"/>
-			<xsd:element name="status" type="BusinessProcessDocumentStatus"/>
-			<xsd:element name="businessProcessInstanceID" type="xsd:string"/>
+			<xsd:element name="status" type="ProcessDocumentStatus"/>
+			<xsd:element name="processInstanceID" type="xsd:string"/>
 			<xsd:element name="initiatorID" type="xsd:string"/>
 			<xsd:element name="responderID" type="xsd:string"/>
 			<xsd:element name="content" type="xsd:string"/>

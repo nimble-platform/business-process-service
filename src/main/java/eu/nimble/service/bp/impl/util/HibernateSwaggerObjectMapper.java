@@ -7,6 +7,9 @@ package eu.nimble.service.bp.impl.util;
 
 import eu.nimble.service.bp.hyperjaxb.model.*;
 import eu.nimble.service.bp.swagger.model.*;
+import eu.nimble.service.bp.swagger.model.Process;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
@@ -15,23 +18,23 @@ import java.util.List;
  */
 public class HibernateSwaggerObjectMapper {
 
-    public static BusinessProcessDAO createBusinessProcess_DAO(BusinessProcess body) {
-        BusinessProcessDAO businessProcessDAO = new BusinessProcessDAO();
+    public static ProcessDAO createProcess_DAO(Process body) {
+        ProcessDAO processDAO = new ProcessDAO();
 
-        businessProcessDAO.setBusinessProcessID(body.getBusinessProcessID());
-        businessProcessDAO.setBpmnContent(body.getBpmnContent());
-        businessProcessDAO.setBusinessProcessName(body.getBusinessProcessName());
-        BusinessProcessType businessProcessTypeDAO = BusinessProcessType.fromValue(body.getBusinessProcessType().toString());
-        businessProcessDAO.setBusinessProcessType(businessProcessTypeDAO);
+        processDAO.setProcessID(body.getProcessID());
+        processDAO.setBpmnContent(body.getBpmnContent());
+        processDAO.setProcessName(body.getProcessName());
+        ProcessType processTypeDAO = ProcessType.fromValue(body.getProcessType().toString());
+        processDAO.setProcessType(processTypeDAO);
 
-        return businessProcessDAO;
+        return processDAO;
     }
 
-    public static BusinessProcessApplicationConfigurationsDAO createBusinessProcessApplicationConfigurations_DAO(BusinessProcessApplicationConfigurations body) {
-        BusinessProcessApplicationConfigurationsDAO businessProcessApplicationConfigurationsDAO = new BusinessProcessApplicationConfigurationsDAO();
+    public static ProcessApplicationConfigurationsDAO createProcessApplicationConfigurations_DAO(ProcessApplicationConfigurations body) {
+        ProcessApplicationConfigurationsDAO processApplicationConfigurationsDAO = new ProcessApplicationConfigurationsDAO();
 
-        businessProcessApplicationConfigurationsDAO.setBusinessProcessID(body.getBusinessProcessID());
-        businessProcessApplicationConfigurationsDAO.setPartnerID(body.getPartnerID());
+        processApplicationConfigurationsDAO.setProcessID(body.getProcessID());
+        processApplicationConfigurationsDAO.setPartnerID(body.getPartnerID());
 
         List<ApplicationConfiguration> applicationConfigurations = body.getApplicationConfigurations();
         for (ApplicationConfiguration applicationConfiguration : applicationConfigurations) {
@@ -46,63 +49,63 @@ public class HibernateSwaggerObjectMapper {
             executionConfigurationDAO.setURI(applicationConfiguration.getExecution().getURI());
             applicationConfigurationDAO.setExecution(executionConfigurationDAO);
 
-            businessProcessApplicationConfigurationsDAO.getApplicationConfigurations().add(applicationConfigurationDAO);
+            processApplicationConfigurationsDAO.getApplicationConfigurations().add(applicationConfigurationDAO);
         }
 
-        return businessProcessApplicationConfigurationsDAO;
+        return processApplicationConfigurationsDAO;
     }
 
-    public static BusinessProcessPreferencesDAO createBusinessProcessPreferences_DAO(BusinessProcessPreferences body) {
-        BusinessProcessPreferencesDAO businessProcessPreferencesDAO = new BusinessProcessPreferencesDAO();
+    public static ProcessPreferencesDAO createProcessPreferences_DAO(ProcessPreferences body) {
+        ProcessPreferencesDAO processPreferencesDAO = new ProcessPreferencesDAO();
 
-        businessProcessPreferencesDAO.setPartnerID(body.getPartnerID());
-        List<BusinessProcessPreference> preferences = body.getPreferences();
-        for (BusinessProcessPreference preference : preferences) {
-            BusinessProcessPreferenceDAO businessProcessPreferenceDAO = new BusinessProcessPreferenceDAO();
+        processPreferencesDAO.setPartnerID(body.getPartnerID());
+        List<ProcessPreference> preferences = body.getPreferences();
+        for (ProcessPreference preference : preferences) {
+            ProcessPreferenceDAO processPreferenceDAO = new ProcessPreferenceDAO();
 
-            businessProcessPreferenceDAO.setTargetPartnerID(preference.getTargetPartnerID());
+            processPreferenceDAO.setTargetPartnerID(preference.getTargetPartnerID());
 
-            List<BusinessProcessPreference.ProcessOrderEnum> processOrder = preference.getProcessOrder();
-            for (BusinessProcessPreference.ProcessOrderEnum processType : processOrder) {
-                BusinessProcessType businessProcessType = BusinessProcessType.fromValue(processType.toString());
-                businessProcessPreferenceDAO.getProcessOrder().add(businessProcessType);
+            List<ProcessPreference.ProcessOrderEnum> processOrder = preference.getProcessOrder();
+            for (ProcessPreference.ProcessOrderEnum businessProcessType : processOrder) {
+                ProcessType processType = ProcessType.fromValue(businessProcessType.toString());
+                processPreferenceDAO.getProcessOrder().add(processType);
             }
-            businessProcessPreferencesDAO.getPreferences().add(businessProcessPreferenceDAO);
+            processPreferencesDAO.getPreferences().add(processPreferenceDAO);
         }
 
-        return businessProcessPreferencesDAO;
+        return processPreferencesDAO;
     }
 
-    public static BusinessProcessInstanceInputMessageDAO createBusinessProcessInstanceInputMessage_DAO(BusinessProcessInstanceInputMessage body) {
-        BusinessProcessInstanceInputMessageDAO businessProcessInstanceInputMessageDAO = new BusinessProcessInstanceInputMessageDAO();
+    public static ProcessInstanceInputMessageDAO createProcessInstanceInputMessage_DAO(ProcessInstanceInputMessage body) {
+        ProcessInstanceInputMessageDAO processInstanceInputMessageDAO = new ProcessInstanceInputMessageDAO();
 
-        businessProcessInstanceInputMessageDAO.setBusinessProcessInstanceID(body.getBusinessProcessInstanceID());
+        processInstanceInputMessageDAO.setProcessInstanceID(body.getProcessInstanceID());
 
-        BusinessProcessVariablesDAO businessProcessVariablesDAO = new BusinessProcessVariablesDAO();
-        businessProcessVariablesDAO.setBusinessProcessID(body.getVariables().getBusinessProcessID());
-        businessProcessVariablesDAO.setContent(body.getVariables().getContent());
-        businessProcessVariablesDAO.setInitiatorID(body.getVariables().getInitiatorID());
-        businessProcessVariablesDAO.setResponderID(body.getVariables().getResponderID());
+        ProcessVariablesDAO processVariablesDAO = new ProcessVariablesDAO();
+        processVariablesDAO.setProcessID(body.getVariables().getProcessID());
+        processVariablesDAO.setContent(body.getVariables().getContent());
+        processVariablesDAO.setInitiatorID(body.getVariables().getInitiatorID());
+        processVariablesDAO.setResponderID(body.getVariables().getResponderID());
 
-        businessProcessInstanceInputMessageDAO.setVariables(businessProcessVariablesDAO);
-        return businessProcessInstanceInputMessageDAO;
+        processInstanceInputMessageDAO.setVariables(processVariablesDAO);
+        return processInstanceInputMessageDAO;
     }
 
-    public static BusinessProcess createBusinessProcess(BusinessProcessDAO businessProcessDAO) {
-        BusinessProcess businessProcess = new BusinessProcess();
-        businessProcess.setBpmnContent(businessProcessDAO.getBpmnContent());
-        businessProcess.setBusinessProcessID(businessProcessDAO.getBusinessProcessID());
-        businessProcess.setBusinessProcessName(businessProcessDAO.getBusinessProcessName());
-        businessProcess.setBusinessProcessType(BusinessProcess.BusinessProcessTypeEnum.valueOf(businessProcessDAO.getBusinessProcessType().value()));
-        return businessProcess;
+    public static Process createProcess(ProcessDAO processDAO) {
+        Process process = new Process();
+        process.setBpmnContent(processDAO.getBpmnContent());
+        process.setProcessID(processDAO.getProcessID());
+        process.setProcessName(processDAO.getProcessName());
+        process.setProcessType(Process.ProcessTypeEnum.valueOf(processDAO.getProcessType().value()));
+        return process;
     }
 
-    public static BusinessProcessApplicationConfigurations createBusinessProcessApplicationConfigurations(BusinessProcessApplicationConfigurationsDAO businessProcessApplicationConfigurationsDAO) {
-        BusinessProcessApplicationConfigurations businessProcessApplicationConfigurations = new BusinessProcessApplicationConfigurations();
+    public static ProcessApplicationConfigurations createProcessApplicationConfigurations(ProcessApplicationConfigurationsDAO processApplicationConfigurationsDAO) {
+        ProcessApplicationConfigurations processApplicationConfigurations = new ProcessApplicationConfigurations();
 
-        businessProcessApplicationConfigurations.setPartnerID(businessProcessApplicationConfigurationsDAO.getPartnerID());
-        businessProcessApplicationConfigurations.setBusinessProcessID(businessProcessApplicationConfigurationsDAO.getBusinessProcessID());
-        List<ApplicationConfigurationDAO> applicationConfigurationDAOS = businessProcessApplicationConfigurationsDAO.getApplicationConfigurations();
+        processApplicationConfigurations.setPartnerID(processApplicationConfigurationsDAO.getPartnerID());
+        processApplicationConfigurations.setProcessID(processApplicationConfigurationsDAO.getProcessID());
+        List<ApplicationConfigurationDAO> applicationConfigurationDAOS = processApplicationConfigurationsDAO.getApplicationConfigurations();
         for (ApplicationConfigurationDAO applicationConfigurationDAO : applicationConfigurationDAOS) {
             ApplicationConfiguration applicationConfiguration = new ApplicationConfiguration();
             applicationConfiguration.setActivityID(applicationConfigurationDAO.getActivityID());
@@ -116,50 +119,71 @@ public class HibernateSwaggerObjectMapper {
 
             applicationConfiguration.setExecution(executionConfiguration);
 
-            businessProcessApplicationConfigurations.getApplicationConfigurations().add(applicationConfiguration);
+            processApplicationConfigurations.getApplicationConfigurations().add(applicationConfiguration);
         }
 
-        return businessProcessApplicationConfigurations;
+        return processApplicationConfigurations;
     }
 
-    public static BusinessProcessPreferences createBusinessProcessPreferences(BusinessProcessPreferencesDAO businessProcessPreferencesDAO) {
-        BusinessProcessPreferences businessProcessPreferences = new BusinessProcessPreferences();
-        businessProcessPreferences.setPartnerID(businessProcessPreferencesDAO.getPartnerID());
-        List<BusinessProcessPreferenceDAO> preferences = businessProcessPreferencesDAO.getPreferences();
-        for (BusinessProcessPreferenceDAO preference : preferences) {
-            BusinessProcessPreference businessProcessPreference = new BusinessProcessPreference();
-            businessProcessPreference.setTargetPartnerID(preference.getTargetPartnerID());
+    public static ProcessPreferences createProcessPreferences(ProcessPreferencesDAO processPreferencesDAO) {
+        ProcessPreferences processPreferences = new ProcessPreferences();
+        processPreferences.setPartnerID(processPreferencesDAO.getPartnerID());
+        List<ProcessPreferenceDAO> preferences = processPreferencesDAO.getPreferences();
+        for (ProcessPreferenceDAO preference : preferences) {
+            ProcessPreference processPreference = new ProcessPreference();
+            processPreference.setTargetPartnerID(preference.getTargetPartnerID());
 
-            List<BusinessProcessType> processOrder = preference.getProcessOrder();
-            for (BusinessProcessType process : processOrder) {
-                businessProcessPreference.getProcessOrder().add(BusinessProcessPreference.ProcessOrderEnum.valueOf(process.value()));
+            List<ProcessType> processOrder = preference.getProcessOrder();
+            for (ProcessType process : processOrder) {
+                processPreference.getProcessOrder().add(ProcessPreference.ProcessOrderEnum.valueOf(process.value()));
             }
 
-            businessProcessPreferences.getPreferences().add(businessProcessPreference);
+            processPreferences.getPreferences().add(processPreference);
         }
 
-        return businessProcessPreferences;
+        return processPreferences;
     }
 
-    public static BusinessProcessDocument createBusinessProcessDocument(BusinessProcessDocumentDAO businessProcessDocumentDAO) {
-        BusinessProcessDocument businessProcessDocument = new BusinessProcessDocument();
-        businessProcessDocument.setBusinessProcessInstanceID(businessProcessDocumentDAO.getBusinessProcessInstanceID());
-        businessProcessDocument.setContent(businessProcessDocumentDAO.getContent());
-        businessProcessDocument.setDocumentID(businessProcessDocumentDAO.getDocumentID());
-        businessProcessDocument.setInitiatorID(businessProcessDocumentDAO.getInitiatorID());
-        businessProcessDocument.setResponderID(businessProcessDocumentDAO.getResponderID());
-        businessProcessDocument.setSubmissionDate(businessProcessDocumentDAO.getSubmissionDate());
-        businessProcessDocument.setStatus(BusinessProcessDocument.StatusEnum.valueOf(businessProcessDocumentDAO.getStatus().value()));
-        businessProcessDocument.setType(BusinessProcessDocument.TypeEnum.valueOf(businessProcessDocumentDAO.getType().value()));
-        return businessProcessDocument;
+    public static ProcessDocument createProcessDocument(ProcessDocumentDAO processDocumentDAO) {
+        ProcessDocument processDocument = new ProcessDocument();
+        processDocument.setProcessInstanceID(processDocumentDAO.getProcessInstanceID());
+        processDocument.setContent(processDocumentDAO.getContent());
+        processDocument.setDocumentID(processDocumentDAO.getDocumentID());
+        processDocument.setInitiatorID(processDocumentDAO.getInitiatorID());
+        processDocument.setResponderID(processDocumentDAO.getResponderID());
+        processDocument.setSubmissionDate(processDocumentDAO.getSubmissionDate());
+        processDocument.setStatus(ProcessDocument.StatusEnum.valueOf(processDocumentDAO.getStatus().value()));
+        processDocument.setType(ProcessDocument.TypeEnum.valueOf(processDocumentDAO.getType().value()));
+        return processDocument;
     }
 
 
-    public static BusinessProcessInstanceDAO createBusinessProcessInstance_DAO(BusinessProcessInstance businessProcessInstance) {
-        BusinessProcessInstanceDAO businessProcessInstanceDAO = new BusinessProcessInstanceDAO();
-        businessProcessInstanceDAO.setBusinessProcessID(businessProcessInstance.getBusinessProcessID());
-        businessProcessInstanceDAO.setBusinessProcessInstanceID(businessProcessInstance.getBusinessProcessInstanceID());
-        businessProcessInstanceDAO.setStatus(BusinessProcessInstanceStatus.fromValue(businessProcessInstance.getStatus().toString()));
-        return businessProcessInstanceDAO;
+    public static ProcessInstanceDAO createProcessInstance_DAO(ProcessInstance processInstance) {
+        ProcessInstanceDAO processInstanceDAO = new ProcessInstanceDAO();
+        processInstanceDAO.setProcessID(processInstance.getProcessID());
+        processInstanceDAO.setProcessInstanceID(processInstance.getProcessInstanceID());
+        processInstanceDAO.setStatus(ProcessInstanceStatus.fromValue(processInstance.getStatus().toString()));
+        return processInstanceDAO;
+    }
+
+    public static ProcessDocumentDAO createProcessDocument_DAO(ProcessDocument body) {
+        ProcessDocumentDAO processDocumentDAO = new ProcessDocumentDAO();
+        processDocumentDAO.setProcessInstanceID(body.getProcessInstanceID());
+        processDocumentDAO.setContent(body.getContent());
+        processDocumentDAO.setInitiatorID(body.getInitiatorID());
+        processDocumentDAO.setResponderID(body.getResponderID());
+        processDocumentDAO.setStatus(ProcessDocumentStatus.fromValue(body.getStatus().toString()));
+        processDocumentDAO.setDocumentID(body.getDocumentID());
+        processDocumentDAO.setType(DocumentType.fromValue(body.getType().toString()));
+        processDocumentDAO.setSubmissionDate(body.getSubmissionDate());
+        return processDocumentDAO;
+    }
+
+    public static ResponseEntity<ModelApiResponse> getApiResponse() {
+        ModelApiResponse apiResponse = new ModelApiResponse();
+        apiResponse.setType("SUCCESS");
+        apiResponse.setMessage("Successful operation");
+        apiResponse.setCode(200);
+        return new ResponseEntity<>(apiResponse, HttpStatus.OK);
     }
 }

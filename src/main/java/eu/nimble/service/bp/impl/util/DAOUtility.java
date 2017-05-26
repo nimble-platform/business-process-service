@@ -15,65 +15,65 @@ import java.util.List;
  */
 public class DAOUtility {
 
-    public static BusinessProcessDAO getBusinessProcessDAOByID(String businessProcessID) {
-        String query = "select businessprocess from BusinessProcessDAO where ( businessprocess.businessProcessID ='" + businessProcessID + "') ";
-        List<BusinessProcessDAO> resultSet = (List<BusinessProcessDAO>) HibernateUtility.getInstance("bp-data-model").loadAll(query);
+    public static ProcessDAO getProcessDAOByID(String processID) {
+        String query = "select bp from ProcessDAO bp where ( bp.processID ='" + processID + "') ";
+        List<ProcessDAO> resultSet = (List<ProcessDAO>) HibernateUtility.getInstance("bp-data-model").loadAll(query);
         return resultSet.get(0);
     }
 
-    public static BusinessProcessApplicationConfigurationsDAO getBusinessProcessApplicationConfigurationsDAOByPartnerID(String partnerID) {
-        String query = "select conf from BusinessProcessApplicationConfigurationsDAO where ( conf.partnerID ='" + partnerID + "') ";
-        List<BusinessProcessApplicationConfigurationsDAO> resultSet = (List<BusinessProcessApplicationConfigurationsDAO>) HibernateUtility.getInstance("bp-data-model").loadAll(query);
+    public static ProcessApplicationConfigurationsDAO getProcessApplicationConfigurationsDAOByPartnerID(String partnerID) {
+        String query = "select conf from ProcessApplicationConfigurationsDAO conf where ( conf.partnerID ='" + partnerID + "') ";
+        List<ProcessApplicationConfigurationsDAO> resultSet = (List<ProcessApplicationConfigurationsDAO>) HibernateUtility.getInstance("bp-data-model").loadAll(query);
         return resultSet.get(0);
     }
 
-    public static BusinessProcessPreferencesDAO getBusinessProcessPreferencesDAOByPartnerID(String partnerID) {
-        String query = "select conf from BusinessProcessPreferencesDAO where ( conf.partnerID ='" + partnerID + "') ";
-        List<BusinessProcessPreferencesDAO> resultSet = (List<BusinessProcessPreferencesDAO>) HibernateUtility.getInstance("bp-data-model").loadAll(query);
+    public static ProcessPreferencesDAO getProcessPreferencesDAOByPartnerID(String partnerID) {
+        String query = "select conf from ProcessPreferencesDAO conf where ( conf.partnerID ='" + partnerID + "') ";
+        List<ProcessPreferencesDAO> resultSet = (List<ProcessPreferencesDAO>) HibernateUtility.getInstance("bp-data-model").loadAll(query);
         return resultSet.get(0);
     }
 
-    public static List<BusinessProcessDAO> getBusinessProcessDAOs() {
-        String query = "select businessprocess from BusinessProcessDAO ";
-        List<BusinessProcessDAO> resultSet = (List<BusinessProcessDAO>) HibernateUtility.getInstance("bp-data-model").loadAll(query);
+    public static List<ProcessDAO> getProcessDAOs() {
+        String query = "select bp from ProcessDAO bp ";
+        List<ProcessDAO> resultSet = (List<ProcessDAO>) HibernateUtility.getInstance("bp-data-model").loadAll(query);
         return resultSet;
     }
 
-    public static BusinessProcessDocumentDAO getBusinessProcessDocument(String documentID) {
-        String query = "select document from BusinessProcessDocumentDAO where ( ";
+    public static ProcessDocumentDAO getProcessDocument(String documentID) {
+        String query = "select document from ProcessDocumentDAO document where ( ";
         query += " document.documentID ='" + documentID + "' ";
         query += " ) ";
-        List<BusinessProcessDocumentDAO> resultSet = (List<BusinessProcessDocumentDAO>) HibernateUtility.getInstance("bp-data-model").loadAll(query);
+        List<ProcessDocumentDAO> resultSet = (List<ProcessDocumentDAO>) HibernateUtility.getInstance("bp-data-model").loadAll(query);
         return resultSet.get(0);
     }
 
-    public static List<BusinessProcessDocumentDAO> getBusinessProcessDocuments(String partnerID, String typeID) {
-        return getBusinessProcessDocuments(partnerID, typeID, null, null);
+    public static List<ProcessDocumentDAO> getProcessDocuments(String partnerID, String type) {
+        return getProcessDocuments(partnerID, type, null, null);
     }
 
-    public static List<BusinessProcessDocumentDAO> getBusinessProcessDocuments(String partnerID, String typeID, String source) {
-        return getBusinessProcessDocuments(partnerID, typeID, null, source);
+    public static List<ProcessDocumentDAO> getProcessDocuments(String partnerID, String type, String source) {
+        return getProcessDocuments(partnerID, type, null, source);
     }
 
-    public static List<BusinessProcessDocumentDAO> getBusinessProcessDocuments(String partnerID, String typeID, String status, String source) {
-        String query = "select document from BusinessProcessDocumentDAO where ( ";
+    public static List<ProcessDocumentDAO> getProcessDocuments(String partnerID, String type, String status, String source) {
+        String query = "select document from ProcessDocumentDAO document where ( ";
 
         if (source != null && partnerID != null) {
             String attribute = source.equals("SENT") ? "initiatorID" : "responderID";
             query += " document." + attribute + " ='" + partnerID + "' ";
         } else if (source == null && partnerID != null) query += " (document.initiatorID ='" + partnerID + "' or document.responderID ='" + partnerID + "') ";
 
-        if (typeID != null) query += " and document.typeID ='" + typeID + "' ";
+        if (type != null) query += " and document.type ='" + type + "' ";
 
         if (status != null) query += " and document.status ='" + status + "' ";
         query += " ) ";
-        List<BusinessProcessDocumentDAO> resultSet = (List<BusinessProcessDocumentDAO>) HibernateUtility.getInstance("bp-data-model").loadAll(query);
+        List<ProcessDocumentDAO> resultSet = (List<ProcessDocumentDAO>) HibernateUtility.getInstance("bp-data-model").loadAll(query);
         return resultSet;
     }
 
-    public static BusinessProcessInstanceDAO getBusinessProcessIntanceDAOByID(String businessProcessInstanceID) {
-        String query = "select processinstance from BusinessProcessInstanceDAO where ( processinstance.businessProcessInstanceID ='" + businessProcessInstanceID + "') ";
-        List<BusinessProcessInstanceDAO> resultSet = (List<BusinessProcessInstanceDAO>) HibernateUtility.getInstance("bp-data-model").loadAll(query);
+    public static ProcessInstanceDAO getProcessIntanceDAOByID(String processInstanceID) {
+        String query = "select processinstance from ProcessInstanceDAO processinstance where ( processinstance.processInstanceID ='" + processInstanceID + "') ";
+        List<ProcessInstanceDAO> resultSet = (List<ProcessInstanceDAO>) HibernateUtility.getInstance("bp-data-model").loadAll(query);
         return resultSet.get(0);
     }
 }

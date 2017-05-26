@@ -3,11 +3,12 @@ package eu.nimble.service.bp.impl;
 import eu.nimble.service.bp.swagger.model.Version;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.http.ResponseEntity;
 
 import static org.junit.Assert.assertEquals;
-
+//@Ignore
 public class VersionControllerTest {
 
     private VersionController vc;

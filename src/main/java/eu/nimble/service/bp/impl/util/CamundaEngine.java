@@ -5,11 +5,10 @@
  */
 package eu.nimble.service.bp.impl.util;
 
-import eu.nimble.service.bp.swagger.model.BusinessProcessInstance;
-import eu.nimble.service.bp.swagger.model.BusinessProcessInstanceInputMessage;
-import eu.nimble.service.bp.swagger.model.BusinessProcessVariables;
+import eu.nimble.service.bp.swagger.model.ProcessInstance;
+import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
+import eu.nimble.service.bp.swagger.model.ProcessVariables;
 import org.camunda.bpm.engine.*;
-import org.camunda.bpm.engine.runtime.ProcessInstance;
 import org.camunda.bpm.engine.task.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,42 +28,44 @@ public class CamundaEngine {
 
 	private static Logger logger = LoggerFactory.getLogger(CamundaEngine.class);
 
-	public static BusinessProcessInstance continueProcessInstance(BusinessProcessInstanceInputMessage body) {
-		String businessProcessInstanceID = body.getBusinessProcessInstanceID();
-		Task task = taskService.createTaskQuery().processInstanceId(businessProcessInstanceID).list().get(0);
+	public static ProcessInstance continueProcessInstance(ProcessInstanceInputMessage body) {
+		String processInstanceID = body.getProcessInstanceID();
+		Task task = taskService.createTaskQuery().processInstanceId(processInstanceID).list().get(0);
 
 		Map<String,Object> data = getVariablesData(body);
 
-		BusinessProcessInstance businessProcessInstance = new BusinessProcessInstance();
-		businessProcessInstance.setBusinessProcessID(body.getVariables().getBusinessProcessID());
-		businessProcessInstance.setBusinessProcessInstanceID(businessProcessInstanceID);
-		businessProcessInstance.setStatus(BusinessProcessInstance.StatusEnum.COMPLETED);
+		ProcessInstance processInstance = new ProcessInstance();
+		processInstance.setProcessID(body.getVariables().getProcessID());
+		processInstance.setProcessInstanceID(processInstanceID);
+		//processInstance.setProcessInstanceID("prc124");
+		processInstance.setStatus(ProcessInstance.StatusEnum.COMPLETED);
 
-		logger.info(" Completing business process instance {}, with data {}", businessProcessInstanceID, data.toString());
+		logger.info(" Completing business process instance {}, with data {}", processInstanceID, data.toString());
 		taskService.complete(task.getId(), data);
-		logger.info(" Completed business process instance {}", businessProcessInstanceID);
+		logger.info(" Completed business process instance {}", processInstanceID);
 
-		return businessProcessInstance;
+		return processInstance;
 	}
 
-	public static BusinessProcessInstance startProcessInstance(BusinessProcessInstanceInputMessage body) {
+	public static ProcessInstance startProcessInstance(ProcessInstanceInputMessage body) {
 		Map<String,Object> data = getVariablesData(body);
-		String businessProcessID  = body.getVariables().getBusinessProcessID();
+		String processID  = body.getVariables().getProcessID();
 
-		logger.info(" Starting business process instance for {}, with data {}", businessProcessID, data.toString());
-		ProcessInstance processInstance = runtimeService.startProcessInstanceByKey(businessProcessID, data);
-		logger.info(" Started business process instance for {}, with instance id {}", businessProcessID, processInstance.getProcessInstanceId());
+		logger.info(" Starting business process instance for {}, with data {}", processID, data.toString());
+		org.camunda.bpm.engine.runtime.ProcessInstance processInstance = runtimeService.startProcessInstanceByKey(processID, data);
+		logger.info(" Started business process instance for {}, with instance id {}", processID, processInstance.getProcessInstanceId());
 
-		BusinessProcessInstance businessProcessInstance = new BusinessProcessInstance();
-		businessProcessInstance.setBusinessProcessID(businessProcessID);
-		businessProcessInstance.setBusinessProcessInstanceID(processInstance.getProcessInstanceId());
-		businessProcessInstance.setStatus(BusinessProcessInstance.StatusEnum.STARTED);
+		ProcessInstance businessProcessInstance = new ProcessInstance();
+		businessProcessInstance.setProcessID(processID);
+		//businessProcessInstance.setProcessInstanceID("prc124");
+		businessProcessInstance.setProcessInstanceID(processInstance.getProcessInstanceId());
+		businessProcessInstance.setStatus(ProcessInstance.StatusEnum.STARTED);
 
 		return businessProcessInstance;
 	}
 
-	private static Map<String,Object> getVariablesData(BusinessProcessInstanceInputMessage body) {
-		BusinessProcessVariables variables = body.getVariables();
+	private static Map<String,Object> getVariablesData(ProcessInstanceInputMessage body) {
+		ProcessVariables variables = body.getVariables();
 		String content = variables.getContent();
 		String initiatorID = variables.getInitiatorID();
 		String responderID = variables.getResponderID();
