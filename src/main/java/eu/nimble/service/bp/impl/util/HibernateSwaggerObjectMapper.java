@@ -86,22 +86,27 @@ public class HibernateSwaggerObjectMapper {
         processApplicationConfigurations.setProcessID(processApplicationConfigurationsDAO.getProcessID());
         List<ApplicationConfigurationDAO> applicationConfigurationDAOS = processApplicationConfigurationsDAO.getApplicationConfigurations();
         for (ApplicationConfigurationDAO applicationConfigurationDAO : applicationConfigurationDAOS) {
-            ApplicationConfiguration applicationConfiguration = new ApplicationConfiguration();
-            applicationConfiguration.setActivityID(applicationConfigurationDAO.getActivityID());
-            applicationConfiguration.setName(applicationConfigurationDAO.getName());
-            applicationConfiguration.setTransactionName(applicationConfigurationDAO.getTransactionName());
-            applicationConfiguration.setType(ApplicationConfiguration.TypeEnum.valueOf(applicationConfigurationDAO.getType().value()));
-
-            ExecutionConfiguration executionConfiguration = new ExecutionConfiguration();
-            executionConfiguration.setURI(applicationConfigurationDAO.getExecution().getURI());
-            executionConfiguration.setType(ExecutionConfiguration.TypeEnum.valueOf(applicationConfigurationDAO.getExecution().getType().value()));
-
-            applicationConfiguration.setExecution(executionConfiguration);
-
+            ApplicationConfiguration applicationConfiguration = createApplicationConfiguration(applicationConfigurationDAO);
             processApplicationConfigurations.getApplicationConfigurations().add(applicationConfiguration);
         }
 
         return processApplicationConfigurations;
+    }
+
+    public static ApplicationConfiguration createApplicationConfiguration(ApplicationConfigurationDAO applicationConfigurationDAO) {
+        ApplicationConfiguration applicationConfiguration = new ApplicationConfiguration();
+        applicationConfiguration.setActivityID(applicationConfigurationDAO.getActivityID());
+        applicationConfiguration.setName(applicationConfigurationDAO.getName());
+        applicationConfiguration.setTransactionName(applicationConfigurationDAO.getTransactionName());
+        applicationConfiguration.setType(ApplicationConfiguration.TypeEnum.valueOf(applicationConfigurationDAO.getType().value()));
+
+        ExecutionConfiguration executionConfiguration = new ExecutionConfiguration();
+        executionConfiguration.setURI(applicationConfigurationDAO.getExecution().getURI());
+        executionConfiguration.setType(ExecutionConfiguration.TypeEnum.valueOf(applicationConfigurationDAO.getExecution().getType().value()));
+
+        applicationConfiguration.setExecution(executionConfiguration);
+
+        return applicationConfiguration;
     }
 
     public static ProcessPreferences createProcessPreferences(ProcessPreferencesDAO processPreferencesDAO) {
@@ -123,16 +128,15 @@ public class HibernateSwaggerObjectMapper {
         return processPreferences;
     }
 
-    public static ProcessDocument createProcessDocument(ProcessDocumentDAO processDocumentDAO) {
-        ProcessDocument processDocument = new ProcessDocument();
+    public static ProcessDocumentMetadata createProcessDocumentMetadata(ProcessDocumentMetadataDAO processDocumentDAO) {
+        ProcessDocumentMetadata processDocument = new ProcessDocumentMetadata();
         processDocument.setProcessInstanceID(processDocumentDAO.getProcessInstanceID());
-        processDocument.setContent(processDocumentDAO.getContent());
         processDocument.setDocumentID(processDocumentDAO.getDocumentID());
         processDocument.setInitiatorID(processDocumentDAO.getInitiatorID());
         processDocument.setResponderID(processDocumentDAO.getResponderID());
         processDocument.setSubmissionDate(processDocumentDAO.getSubmissionDate());
-        processDocument.setStatus(ProcessDocument.StatusEnum.valueOf(processDocumentDAO.getStatus().value()));
-        processDocument.setType(ProcessDocument.TypeEnum.valueOf(processDocumentDAO.getType().value()));
+        processDocument.setStatus(ProcessDocumentMetadata.StatusEnum.valueOf(processDocumentDAO.getStatus().value()));
+        processDocument.setType(ProcessDocumentMetadata.TypeEnum.valueOf(processDocumentDAO.getType().value()));
         return processDocument;
     }
 
@@ -145,10 +149,9 @@ public class HibernateSwaggerObjectMapper {
         return processInstanceDAO;
     }
 
-    public static ProcessDocumentDAO createProcessDocument_DAO(ProcessDocument body) {
-        ProcessDocumentDAO processDocumentDAO = new ProcessDocumentDAO();
+    public static ProcessDocumentMetadataDAO createProcessDocumentMetadata_DAO(ProcessDocumentMetadata body) {
+        ProcessDocumentMetadataDAO processDocumentDAO = new ProcessDocumentMetadataDAO();
         processDocumentDAO.setProcessInstanceID(body.getProcessInstanceID());
-        processDocumentDAO.setContent(body.getContent());
         processDocumentDAO.setInitiatorID(body.getInitiatorID());
         processDocumentDAO.setResponderID(body.getResponderID());
         processDocumentDAO.setStatus(ProcessDocumentStatus.fromValue(body.getStatus().toString()));

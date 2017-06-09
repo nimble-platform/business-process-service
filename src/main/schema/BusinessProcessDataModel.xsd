@@ -113,7 +113,7 @@
 			<xsd:enumeration value="PASTDUE"/>
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:complexType name="ProcessDocumentDAO">
+	<xsd:complexType name="ProcessDocumentMetadataDAO">
 		<xsd:sequence>
 			<xsd:element name="documentID" type="xsd:string"/>
 			<xsd:element name="submissionDate" type="xsd:string"/>
@@ -122,7 +122,12 @@
 			<xsd:element name="processInstanceID" type="xsd:string"/>
 			<xsd:element name="initiatorID" type="xsd:string"/>
 			<xsd:element name="responderID" type="xsd:string"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="ProcessDocumentContentDAO">
+		<xsd:sequence>
+			<xsd:element name="documentID" type="xsd:string"/>
 			<xsd:element name="content" type="xsd:string"/>
 		</xsd:sequence>
-	</xsd:complexType>		
+	</xsd:complexType>
 </xsd:schema>

@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -62,10 +63,12 @@ public class ApplicationControllerTest {
     @Test
     public void z_deleteBusinessProcessPartnerApplicationPreferenceTest() {
         String partnerID = TestObjectFactory.getPartnerID();
+        String processID = TestObjectFactory.getProcessID();
         String url = "http://localhost:" + port +"/application/{partnerID}";
 
         Map<String, String> params = new HashMap<String, String>();
         params.put("partnerID", partnerID);
+        params.put("processID", processID);
 
         restTemplate.delete(url, params);
     }
@@ -81,7 +84,7 @@ public class ApplicationControllerTest {
         Map<String, String> params = new HashMap<String, String>();
         params.put("partnerID", partnerID);
 
-        ResponseEntity<ProcessApplicationConfigurations> response = restTemplate.getForEntity(url, ProcessApplicationConfigurations.class, params);
+        ResponseEntity<List> response = restTemplate.getForEntity(url, List.class, params);
 
         logger.info(" $$$ Test response {} ", response.toString());
 

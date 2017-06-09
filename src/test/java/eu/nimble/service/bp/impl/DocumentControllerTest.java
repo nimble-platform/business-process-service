@@ -1,7 +1,7 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
-import eu.nimble.service.bp.swagger.model.ProcessDocument;
+import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import org.junit.FixMethodOrder;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -45,8 +45,8 @@ public class DocumentControllerTest {
      * Add a business process docuent
      */
     @Test
-    public void addDocumentTest() {
-        ProcessDocument body = TestObjectFactory.createBusinessDocument();
+    public void addDocumentMetadataTest() {
+        ProcessDocumentMetadata body = TestObjectFactory.createBusinessDocumentMetadata();
         String url = "http://localhost:" + port +"/document";
 
         ResponseEntity<ModelApiResponse> response = restTemplate.postForEntity(url, body, ModelApiResponse.class);
@@ -68,24 +68,6 @@ public class DocumentControllerTest {
         params.put("documentID", documentID);
 
         restTemplate.delete(url, params);
-    }
-
-    /**
-     * Get the business process document by id
-     */
-    @Test
-    public void getDocumentTest() {
-        String documentID = TestObjectFactory.getDocumentID();
-        String url = "http://localhost:" + port +"/document/{documentID}";
-
-        Map<String, String> params = new HashMap<String, String>();
-        params.put("documentID", documentID);
-
-        ResponseEntity<ProcessDocument> response = restTemplate.getForEntity(url, ProcessDocument.class, params);
-
-        logger.info(" $$$ Test response {} ", response.toString());
-
-        assertNotNull(response);
     }
 
     /**
@@ -158,8 +140,8 @@ public class DocumentControllerTest {
      * Update a business process document
      */
     @Test
-    public void updateDocumentTest() {
-        ProcessDocument body = TestObjectFactory.updateBusinessDocument();
+    public void updateDocumentMetadataTest() {
+        ProcessDocumentMetadata body = TestObjectFactory.updateBusinessDocumentMetadata();
         restTemplate.put("http://localhost:" + port +"/document", body);
     }
 }

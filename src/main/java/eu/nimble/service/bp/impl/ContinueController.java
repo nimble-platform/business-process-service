@@ -25,6 +25,7 @@ public class ContinueController implements ContinueApi {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     @Override
     public ResponseEntity<ProcessInstance> continueProcessInstance(@RequestBody ProcessInstanceInputMessage body) {
+        logger.debug(" $$$ Continue Process with ProcessInstanceInputMessage {}", body.toString());
         ProcessInstanceInputMessageDAO processInstanceInputMessageDAO = HibernateSwaggerObjectMapper.createProcessInstanceInputMessage_DAO(body);
         HibernateUtility.getInstance("bp-data-model").persist(processInstanceInputMessageDAO);
 

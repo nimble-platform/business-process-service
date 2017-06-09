@@ -125,22 +125,21 @@ public class TestObjectFactory {
         return inputMessage;
     }
 
-    public static ProcessDocument createBusinessDocument() {
-        ProcessDocument processDocument = new ProcessDocument();
-        processDocument.setType(ProcessDocument.TypeEnum.valueOf(documentType));
-        processDocument.setStatus(ProcessDocument.StatusEnum.valueOf(documentStatus));
+    public static ProcessDocumentMetadata createBusinessDocumentMetadata() {
+        ProcessDocumentMetadata processDocument = new ProcessDocumentMetadata();
+        processDocument.setType(ProcessDocumentMetadata.TypeEnum.valueOf(documentType));
+        processDocument.setStatus(ProcessDocumentMetadata.StatusEnum.valueOf(documentStatus));
         processDocument.setDocumentID(documentID);
         processDocument.setSubmissionDate("2017-05-23");
         processDocument.setInitiatorID(partnerID);
         processDocument.setResponderID("seller1387");
         processDocument.setProcessInstanceID(processInstanceID);
-        processDocument.setContent("<Order></Order>");
         return processDocument;
     }
 
-    public static ProcessDocument updateBusinessDocument() {
-        ProcessDocument processDocument = createBusinessDocument();
-        processDocument.setContent("<Order>1387</Order>");
+    public static ProcessDocumentMetadata updateBusinessDocumentMetadata() {
+        ProcessDocumentMetadata processDocument = createBusinessDocumentMetadata();
+        processDocument.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
         return processDocument;
     }
 

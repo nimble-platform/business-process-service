@@ -214,6 +214,11 @@
             <artifactId>maven-jaxb2-plugin</artifactId>
             <version>${maven-jaxb2-plugin.version}</version>
         </dependency>
+        <dependency>
+            <groupId>eu.nimble.core.infrastructure.business</groupId>
+            <artifactId>ubl-data-model</artifactId>
+            <version>0.1-SNAPSHOT</version>
+        </dependency>
     </dependencies>
     <build>
         <finalName>${project.artifactId}</finalName>

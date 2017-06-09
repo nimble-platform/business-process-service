@@ -225,7 +225,7 @@ paths:
 
   /application/{partnerID}:
     get:
-      summary: Get the business process application preference of a partner
+      summary: Get the business process application preferences of a partner for all processes
       operationId: getProcessPartnerApplicationPreference
       produces:
       - application/json
@@ -240,15 +240,22 @@ paths:
         200:
           description: Partner Preference obtained
           schema:
-            $ref: '#/definitions/ProcessApplicationConfigurations'
+            type: array
+            items:
+              $ref: '#/definitions/ProcessApplicationConfigurations'
+  /application/{partnerID}/{processID}:
     delete:
-      description: Deletes the business process application preference of a partner
+      description: Deletes the business process application preference of a partner for a process
       operationId: deleteProcessPartnerApplicationPreference
       produces:
       - application/json
       parameters:
       - in: path
         name: partnerID
+        type: string
+        required: true
+      - in: path
+        name: processID
         type: string
         required: true
       responses:
@@ -302,8 +309,8 @@ paths:
 
   /document:
     post:
-      summary: Add a business process docuent
-      operationId: addDocument
+      summary: Add a business process document metadata
+      operationId: addDocumentMetadata
       consumes:
       - application/json
       produces:
@@ -313,7 +320,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/ProcessDocument'
+          $ref: '#/definitions/ProcessDocumentMetadata'
       responses:
         # Response code
         200:
@@ -321,8 +328,8 @@ paths:
           schema:
             $ref: '#/definitions/ApiResponse'
     put:
-      description: Update a business process document
-      operationId: updateDocument
+      description: Update a business process document metadata
+      operationId: updateDocumentMetadata
       consumes:
       - application/json
       produces:
@@ -331,17 +338,18 @@ paths:
       - in: body
         name: body
         schema:
-          $ref: '#/definitions/ProcessDocument'
+          $ref: '#/definitions/ProcessDocumentMetadata'
       responses:
         # Response code
         200:
           description: Document updated
           schema:
             $ref: '#/definitions/ApiResponse'
+
   /document/{documentID}:
     get:
-      summary: Get the business process document by id
-      operationId: getDocument
+      summary: Get the business process document content by id
+      operationId: getDocumentContent
       produces:
       - application/json
       parameters:
@@ -355,9 +363,9 @@ paths:
         200:
           description: Document obtained
           schema:
-            $ref: '#/definitions/ProcessDocument'
+            $ref: '#/definitions/ProcessDocumentContent'
     delete:
-      description: Deletes the business process document by id
+      description: Deletes the business process document metadata together with content by id
       operationId: deleteDocument
       produces:
       - application/json
@@ -375,7 +383,7 @@ paths:
 
   /document/{partnerID}/{type}/{source}/{status}:
     get:
-      summary: Get the business process documents
+      summary: Get the business process document metadata
       operationId: getDocuments
       produces:
       - application/json
@@ -388,7 +396,7 @@ paths:
       - in: path
         name: type
         type: string
-        description: The type of the document (e.g. DocumentType object)
+        description: The type of the document
         required: true
       - in: path
         name: status
@@ -407,11 +415,11 @@ paths:
           schema:
             type: array
             items:
-              $ref: '#/definitions/ProcessDocument'
+              $ref: '#/definitions/ProcessDocumentMetadata'
 
   /document/{partnerID}/{type}/{source}:
     get:
-      summary: Get the business process documents
+      summary: Get the business process document metadata
       operationId: getDocuments
       produces:
       - application/json
@@ -424,7 +432,7 @@ paths:
       - in: path
         name: type
         type: string
-        description: The type of the document (e.g. DocumentType object)
+        description: The type of the document
         required: true
       - in: path
         name: source
@@ -438,11 +446,11 @@ paths:
           schema:
             type: array
             items:
-              $ref: '#/definitions/ProcessDocument'
+              $ref: '#/definitions/ProcessDocumentMetadata'
 
   /document/{partnerID}/{type}:
     get:
-      summary: Get the business process documents
+      summary: Get the business process document metadata
       operationId: getDocuments
       produces:
       - application/json
@@ -455,7 +463,7 @@ paths:
       - in: path
         name: type
         type: string
-        description: The type of the document (e.g. DocumentType object)
+        description: The type of the document
         required: true
       responses:
         # Response code
@@ -464,7 +472,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: '#/definitions/ProcessDocument'
+              $ref: '#/definitions/ProcessDocumentMetadata'
 
 definitions:
 
@@ -617,8 +625,8 @@ definitions:
         - ABORTED
         - COMPLETED
 
-  ProcessDocument:
-    title: Business Process Document Object
+  ProcessDocumentMetadata:
+    title: Business Process Document Metadata Object
     type: object
     properties:
       documentID:
@@ -652,6 +660,13 @@ definitions:
       initiatorID:
         type: string
       responderID:
+        type: string
+
+  ProcessDocumentContent:
+    title: Business Process Document Content Object
+    type: object
+    properties:
+      documentID:
         type: string
       content:
         type: string

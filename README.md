@@ -29,7 +29,7 @@ In addition the Business Process Service provides a proxy to the REST API from C
  ```
  The according Dockerfile can be found at src/main/docker/Dockerfile.
 
- Also you can reach the camunda cockpit available at http://localhost:8081/app/cockpit/default/ (kermit/superSecret)
+ Also you can reach the camunda cockpit available at [Camunda Cocpit](http://localhost:8081/app/cockpit/default/) (kermit/superSecret)
  
 ### Get Version Request
  ```bash
@@ -41,7 +41,35 @@ In addition the Business Process Service provides a proxy to the REST API from C
 ### Business Process Example Calls
 
 In the following there are some examples for interacting with Camunda through the REST interface.
-
+* GET deployed business process definitions
+````bash
+ curl http://localhost:8081/content
+````
+* START 'Order' process 
+````
+  curl -X POST -H 'Content-Type:application/json' -d '{
+                                                      	"variables": {
+                                                      		"processID": "Order",
+                                                      		"initiatorID": "buyer1387",
+                                                      		"responderID": "seller1387",
+                                                      		"content": "JSON content"
+                                                      	},
+                                                      	"processInstanceID": "deneme"
+                                                      }' http://localhost:8081/start 
+````
+* COMPLETE 'Order' process 
+````
+  curl -X POST -H 'Content-Type:application/json' -d '{
+                                                      	"variables": {
+                                                      		"processID": "Order",
+                                                      		"initiatorID": "seller1387",
+                                                      		"responderID": "buyer1387",
+                                                      		"content": "JSON content"
+                                                      	},
+                                                      	"processInstanceID": "23"
+                                                      }' http://localhost:8081/continue 
+````
+<!-- 
 * GET Engines 
 ```bash
  curl http://localhost:8081/rest/engine/
@@ -54,7 +82,7 @@ In the following there are some examples for interacting with Camunda through th
 ```bash
  curl http://localhost:8081/rest/engine/default/process-definition/key/Sample/
 ```
-* START 'Sample' process (without parameters)
+* START 'Sample' process (without parameters) 
 ```bash
  curl -X POST -H 'Content-Type:application/json' -d '{"variables": {}, "businessKey" : ""}' http://localhost:8081/rest/engine/default/process-definition/key/Sample/start
 ```
@@ -66,11 +94,10 @@ In the following there are some examples for interacting with Camunda through th
 ```bash
  curl http://localhost:8081/rest/engine/default/task?processInstanceId={processInstanceId}
 ```
- 
 * COMPLETE a task of the process instance
 ```bash
  curl -X POST -H 'Content-Type:application/json' -d '{"variables": {"orderResponse":{"value":"<OrderResponse><item>approved</item></OrderResponse>","type":"String"}}, "businessKey" : ""}' http://localhost:8081/rest/engine/default/task/{taskId}/complete 
 ```
-
+-->
  
 The project leading to this application has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No 723810.

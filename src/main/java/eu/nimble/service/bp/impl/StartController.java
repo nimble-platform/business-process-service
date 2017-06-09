@@ -23,6 +23,7 @@ public class StartController implements StartApi {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     @Override
     public ResponseEntity<ProcessInstance> startProcessInstance(@RequestBody ProcessInstanceInputMessage body) {
+        logger.debug(" $$$ Start Process with ProcessInstanceInputMessage {}", body.toString());
         ProcessInstanceInputMessageDAO processInstanceInputMessageDAO = HibernateSwaggerObjectMapper.createProcessInstanceInputMessage_DAO(body);
         HibernateUtility.getInstance("bp-data-model").persist(processInstanceInputMessageDAO);
 
