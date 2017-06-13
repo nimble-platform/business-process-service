@@ -60,7 +60,7 @@ public class DefaultOrderResponseSender  implements JavaDelegate {
 
             // note the direction of the document (here it is from seller to buyer)
             businessProcessApplication.sendDocument(processInstanceId, seller, buyer,
-                    orderResponse, ProcessDocumentMetadata.TypeEnum.ORDERRESPONSE,
+                    orderResponse, ProcessDocumentMetadata.TypeEnum.ORDERRESPONSESIMPLE,
                     ProcessDocumentMetadata.StatusEnum.APPROVED,
                     order.getID(), responseStatus);
         } else if(executionType == ExecutionConfiguration.TypeEnum.MICROSERVICE) {

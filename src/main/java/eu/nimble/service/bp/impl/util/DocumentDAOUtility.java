@@ -1,5 +1,6 @@
 package eu.nimble.service.bp.impl.util;
 
+
 import eu.nimble.service.bp.hyperjaxb.model.*;
 import eu.nimble.service.bp.swagger.model.ApplicationConfiguration;
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
@@ -13,8 +14,9 @@ import eu.nimble.service.model.ubl.receiptadvice.ReceiptAdviceType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
 import eu.nimble.utility.Configuration;
 import eu.nimble.utility.HibernateUtility;
-import eu.nimble.utility.JAXBUtility;
 import org.camunda.bpm.engine.ProcessEngines;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -22,6 +24,7 @@ import java.util.List;
  * Created by yildiray on 6/7/2017.
  */
 public class DocumentDAOUtility {
+    private static Logger logger = LoggerFactory.getLogger(DocumentDAOUtility.class);
     public static ExecutionConfiguration getExecutionConfiguration(String partnerID, String processID, ApplicationConfiguration.TypeEnum applicationType) {
         String processKey = ProcessEngines.getDefaultProcessEngine().getRepositoryService().getProcessDefinition(processID).getKey();
 
@@ -82,19 +85,10 @@ public class DocumentDAOUtility {
 
     public static void deleteDocumentWithMetadata(String documentID) {
         ProcessDocumentMetadataDAO processDocumentMetadataDAO = DAOUtility.getProcessDocumentMetadata(documentID);
-        HibernateUtility.getInstance("bp-data-model").delete(ProcessDocumentMetadataDAO.class, processDocumentMetadataDAO.getHjid());
 
-        String type = processDocumentMetadataDAO.getType().toString().toLowerCase();
-        type = Character.toUpperCase(type.charAt(0)) + type.substring(1);
+        Object document = getUBLDocument(documentID, processDocumentMetadataDAO.getType());
 
-        String query = "SELECT document FROM " + type + "Type document "
-                + " WHERE document.ID = '" + documentID + "'";
-
-        List resultSet = HibernateUtility.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME)
-                .loadAll(query);
-
-        if(resultSet.size() > 0) {
-            Object document = resultSet.get(0);
+        if(document != null) {
             switch (processDocumentMetadataDAO.getType()) {
                 case ORDER:
                     HibernateUtility.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(OrderType.class, ((OrderType) document).getHjid());
@@ -107,7 +101,7 @@ public class DocumentDAOUtility {
                 case QUOTATION:
                     HibernateUtility.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(QuotationType.class, ((QuotationType) document).getHjid());
                     break;
-                case ORDERRESPONSE:
+                case ORDERRESPONSESIMPLE:
                     HibernateUtility.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(OrderResponseSimpleType.class, ((OrderResponseSimpleType) document).getHjid());
                     break;
                 case RECEIPTADVICE:
@@ -129,53 +123,66 @@ public class DocumentDAOUtility {
                     break;
             }
         }
+        HibernateUtility.getInstance("bp-data-model").delete(ProcessDocumentMetadataDAO.class, processDocumentMetadataDAO.getHjid());
     }
 
-    public static String createJsonContent(String documentID) {
-        ProcessDocumentMetadataDAO processDocumentMetadataDAO = DAOUtility.getProcessDocumentMetadata(documentID);
-        HibernateUtility.getInstance("bp-data-model").delete(ProcessDocumentMetadataDAO.class, processDocumentMetadataDAO.getHjid());
-
-        String type = processDocumentMetadataDAO.getType().toString().toLowerCase();
-        type = Character.toUpperCase(type.charAt(0)) + type.substring(1);
-
-        String query = "SELECT document FROM " + type + "Type document "
+    public static Object getUBLDocument(String documentID, DocumentType documentType) {
+        String hibernateEntityName = "";
+        switch (documentType) {
+            case ORDER:
+                hibernateEntityName = "OrderType";
+                break;
+            case INVOICE:
+                hibernateEntityName = "InvoiceType";
+                break;
+            case CATALOGUE:
+                hibernateEntityName = "CatalogueType";
+                break;
+            case QUOTATION:
+                hibernateEntityName = "QuotationType";
+                break;
+            case ORDERRESPONSESIMPLE:
+                hibernateEntityName = "OrderResponseSimpleType";
+                break;
+            case RECEIPTADVICE:
+                hibernateEntityName = "ReceiptAdviceType";
+                break;
+            case DESPATCHADVICE:
+                hibernateEntityName = "DespatchAdviceType";
+                break;
+            case REMITTANCEADVICE:
+                hibernateEntityName = "RemittanceAdviceType";
+                break;
+            case APPLICATIONRESPONSE:
+                hibernateEntityName = "ApplicationResponseType";
+                break;
+            case REQUESTFORQUOTATION:
+                hibernateEntityName = "RequestForQuotationType";
+                break;
+            case TRANSPORTATIONSTATUS:
+                hibernateEntityName = "TransportationStatusType";
+                break;
+            default:
+                break;
+        }
+        String query = "SELECT document FROM " + hibernateEntityName + " document "
                 + " WHERE document.ID = '" + documentID + "'";
 
         List resultSet = HibernateUtility.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME)
                 .loadAll(query);
 
-        // TODO: Create the JSON content to be sent
-        String jsonContent = null;
         if(resultSet.size() > 0) {
             Object document = resultSet.get(0);
-            switch (processDocumentMetadataDAO.getType()) {
-                case ORDER:
-                    break;
-                case INVOICE:
-                    break;
-                case CATALOGUE:
-                    break;
-                case QUOTATION:
-                    break;
-                case ORDERRESPONSE:
-                    break;
-                case RECEIPTADVICE:
-                    break;
-                case DESPATCHADVICE:
-                    break;
-                case REMITTANCEADVICE:
-                    break;
-                case APPLICATIONRESPONSE:
-                    break;
-                case REQUESTFORQUOTATION:
-                    break;
-                case TRANSPORTATIONSTATUS:
-                    break;
-                default:
-                    break;
-            }
+
+            return document;
         }
 
-        return jsonContent;
+        return null;
+    }
+
+    public static Object getUBLDocument(String documentID) {
+        ProcessDocumentMetadataDAO processDocumentMetadataDAO = DAOUtility.getProcessDocumentMetadata(documentID);
+        logger.debug(" $$$ Document metadata for {} is {}...", documentID, processDocumentMetadataDAO);
+        return getUBLDocument(documentID, processDocumentMetadataDAO.getType());
     }
 }

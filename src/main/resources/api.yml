@@ -347,23 +347,6 @@ paths:
             $ref: '#/definitions/ApiResponse'
 
   /document/{documentID}:
-    get:
-      summary: Get the business process document content by id
-      operationId: getDocumentContent
-      produces:
-      - application/json
-      parameters:
-      - in: path
-        name: documentID
-        type: string
-        description: The id of the document.
-        required: true
-      responses:
-        # Response code
-        200:
-          description: Document obtained
-          schema:
-            $ref: '#/definitions/ProcessDocumentContent'
     delete:
       description: Deletes the business process document metadata together with content by id
       operationId: deleteDocument
@@ -640,7 +623,7 @@ definitions:
         - REQUESTFORQUOTATION
         - QUOTATION
         - ORDER
-        - ORDERRESPONSE
+        - ORDERRESPONSESIMPLE
         - REMITTANCEADVICE
         - INVOICE
         - APPLICATIONRESPONSE
@@ -662,15 +645,6 @@ definitions:
       responderID:
         type: string
 
-  ProcessDocumentContent:
-    title: Business Process Document Content Object
-    type: object
-    properties:
-      documentID:
-        type: string
-      content:
-        type: string
-
   ApiResponse:
     type: object
     properties:
@@ -680,3 +654,169 @@ definitions:
         type: string
       message:
         type: string
+
+
+
+
+  Order:
+    ID:
+      type: string
+    IssueDate:
+      type: string
+    IssueTime:
+      type: string
+    Note:
+      type: string
+    BuyerCustomerParty:
+      $ref: '#/definitions/CustomerParty'
+    SellerSupplierParty:
+      $ref: '#/definitions/SupplierParty'
+    TaxTotal:
+      $ref: '#/definitions/TaxTotal'
+    AnticipatedMonetaryTotal:
+      $ref: '#/definitions/MonetaryTotal'
+    OrderLine:
+      type: array
+      items:
+        $ref: '#/definitions/OrderLine'
+
+  CustomerParty:
+    Party:
+      $ref: '#/definitions/Party'
+
+  SupplierParty:
+    Party:
+      $ref: '#/definitions/Party'
+
+  Party:
+    ID:
+      type: string
+
+  Amount:
+    value:
+      type: integer
+    currencyID:
+      type: string
+
+  Amount:
+    value:
+      type: string
+    listID:
+      type: string
+
+  Quantity:
+    value:
+      type: string
+    unitCode:
+      type: string
+
+  TaxTotal:
+    TaxAmount:
+      $ref: '#/definitions/Amount'
+    TaxSubtotal:
+      type: array
+      items:
+        $ref: '#/definitions/TaxSubtotal'
+
+  TaxSubtotal:
+    TaxAmount:
+      $ref: '#/definitions/Amount'
+    Percent:
+      type: integer
+    TaxCategory:
+      $ref: '#/definitions/TaxCategory'
+
+  TaxCategory:
+    TaxScheme:
+      $ref: '#/definitions/TaxScheme'
+
+  TaxScheme:
+    TaxTypeCode:
+      $ref: '#/definitions/Code'
+
+  MonetaryTotal:
+    LineExtensionAmount:
+      $ref: '#/definitions/Amount'
+    TaxExclusiveAmount:
+      $ref: '#/definitions/Amount'
+    TaxInclusiveAmount:
+      $ref: '#/definitions/Amount'
+    AllowanceTotalAmount:
+      $ref: '#/definitions/Amount'
+    ChargeTotalAmount:
+      $ref: '#/definitions/Amount'
+    PayableAmount:
+      $ref: '#/definitions/Amount'
+
+  OrderLine:
+    Note:
+      type: string
+    LineItem:
+      $ref: '#definitions/LineItem'
+
+  LineItem:
+    ID:
+      type: string
+    Note:
+      type: string
+    Quantity:
+      $ref: '#/definitions/Quantity'
+    LineExtensionAmount:
+      $ref: '#/definitions/Amount'
+    TotalTaxAmount:
+      $ref: '#/definitions/Amount'
+    Price:
+      $ref: '#/definitions/Price'
+    Item:
+      $ref: '#/definitions/Item'
+    TaxTotal:
+      $ref: '#/definitions/TaxTotal'
+
+  Price:
+    PriceAmount:
+      $ref: '#/definitions/Amount'
+
+  Item:
+    Description:
+      type: string
+    Name:
+      type: string
+    SellerItemIdentification:
+      type:
+        $ref: '#/definitions/ItemIdentification'
+    CommodityClassification:
+      type: array
+      items:
+        $ref: '#/definitions/CommodityClassification'
+
+  ItemIdentification:
+    ID:
+      type: string
+
+  OrderReference:
+    ID:
+      type: string
+
+  CommodityClassification:
+    ItemClassificationCode:
+      $ref: '#/definitions/Code'
+
+  OrderResponse:
+    ID:
+      type: string
+    IssueDate:
+      type: string
+    IssueTime:
+      type: string
+    Note:
+      type: string
+    AcceptedIndicator:
+      type: boolean
+    RejectionNote:
+      type: string
+    OrderReference:
+      $ref: '#/definitions/OrderReference'
+    SellerSupplierParty:
+      $ref: '#/definitions/SupplierParty'
+    BuyerCustomerParty:
+      $ref: '#/definitions/CustomerParty'

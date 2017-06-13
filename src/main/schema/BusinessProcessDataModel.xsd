@@ -80,7 +80,7 @@
 			<xsd:enumeration value="REQUESTFORQUOTATION"/>
 			<xsd:enumeration value="QUOTATION"/>
 			<xsd:enumeration value="ORDER"/>
-			<xsd:enumeration value="ORDERRESPONSE"/>
+			<xsd:enumeration value="ORDERRESPONSESIMPLE"/>
 			<xsd:enumeration value="REMITTANCEADVICE"/>
 			<xsd:enumeration value="INVOICE"/>
 			<xsd:enumeration value="APPLICATIONRESPONSE"/>
@@ -124,10 +124,10 @@
 			<xsd:element name="responderID" type="xsd:string"/>
 		</xsd:sequence>
 	</xsd:complexType>
-	<xsd:complexType name="ProcessDocumentContentDAO">
+	<!--xsd:complexType name="ProcessDocumentContentDAO">
 		<xsd:sequence>
 			<xsd:element name="documentID" type="xsd:string"/>
 			<xsd:element name="content" type="xsd:string"/>
 		</xsd:sequence>
-	</xsd:complexType>
+	</xsd:complexType-->
 </xsd:schema>

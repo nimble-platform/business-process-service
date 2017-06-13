@@ -6,6 +6,8 @@ import eu.nimble.service.model.ubl.commonbasiccomponents.CodeType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.QuantityType;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
+import eu.nimble.utility.Configuration;
+import eu.nimble.utility.HibernateUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,31 +24,32 @@ public class UBLUtility {
         List<OrderLineType> orderLines = new ArrayList<>();
         // TODO: receive the order lines from the content
 
+        // DEMO PURPOSE
         OrderLineType orderLine = new OrderLineType();
         LineItemType lineItem = new LineItemType();
         orderLine.setLineItem(lineItem);
         lineItem.setID("1");
-        QuantityType quantity = new QuantityType();
+        QuantityType quantity = new QuantityType(); // Requested
         quantity.setUnitCode("KGM");
         quantity.setValue(new BigDecimal(5));
         lineItem.setQuantity(quantity);
         AmountType lineExtensionAmount = zeroAmount();
-        lineExtensionAmount.setValue(new BigDecimal(100));
+        lineExtensionAmount.setValue(new BigDecimal(100)); // Requested
         lineItem.setLineExtensionAmount(lineExtensionAmount);
         AmountType totalTaxAmount = zeroAmount();
         totalTaxAmount.setValue(new BigDecimal(18));
         lineItem.setTotalTaxAmount(totalTaxAmount);
         PriceType price = new PriceType();
         AmountType priceAmount = zeroAmount();
-        priceAmount.setValue(new BigDecimal(20));
+        priceAmount.setValue(new BigDecimal(20)); // Requested
         price.setPriceAmount(priceAmount);
         lineItem.setPrice(price);
-        ItemType item = new ItemType();
+        ItemType item = new ItemType(); // Requested
         item.setName("Apple");
         lineItem.setItem(item);
         TaxTotalType taxTotal = new TaxTotalType();
         taxTotal.setTaxAmount(totalTaxAmount);
-        TaxSubtotalType taxSubTotal = new TaxSubtotalType();
+        TaxSubtotalType taxSubTotal = new TaxSubtotalType();// Requested
         taxSubTotal.setTaxAmount(totalTaxAmount);
         taxSubTotal.setPercent(new BigDecimal(18));
         TaxCategoryType taxCategory = new TaxCategoryType();
@@ -59,16 +62,24 @@ public class UBLUtility {
         taxTotal.getTaxSubtotal().add(taxSubTotal);
 
         lineItem.setTaxTotal(taxTotal);
-
         orderLines.add(orderLine);
         ///////
         return orderLines;
     }
 
     private static PartyType getPartyType(String partyID) {
-        // TODO: receive this from IdentityService
-        PartyType party = new PartyType();
-        party.setID(partyID);
+        /*String query = "SELECT party FROM PartyType party WHERE party.ID='" + partyID + "' ";
+        List<PartyType> resultSet = (List<PartyType>) HibernateUtility.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME)
+                .loadAll(query);
+
+        PartyType party = null;
+        if(resultSet.size() == 0) { */
+            // TODO: receive this from IdentityService
+            PartyType party = new PartyType();
+            party.setID(partyID);
+        /*} else {
+            party = resultSet.get(0);
+        }*/
 
         return party;
     }
@@ -101,7 +112,7 @@ public class UBLUtility {
         // get accepted indicator
         boolean acceptedIndicator = getAcceptedIndicator(content);
         orderResponse.setAcceptedIndicator(acceptedIndicator);
-        if(acceptedIndicator == false) {
+        if (acceptedIndicator == false) {
             String rejectionNote = getRejectionNote(content);
             orderResponse.setRejectionNote(rejectionNote);
         }
@@ -134,27 +145,27 @@ public class UBLUtility {
         MonetaryTotalType monetaryTotal = createMonetaryTotal(orderLines);
         order.setAnticipatedMonetaryTotal(monetaryTotal);
 
-        return  order;
+        return order;
     }
 
     private static TaxTotalType createTaxTotal(List<OrderLineType> orderLines) {
         // first collect the TaxSubTotals in the line items
         List<TaxSubtotalType> taxSubtotals = new ArrayList<>();
-        for(OrderLineType orderLine : orderLines) {
+        for (OrderLineType orderLine : orderLines) {
             List<TaxSubtotalType> lineTaxSubTotals = orderLine.getLineItem().getTaxTotal().getTaxSubtotal();
-            for(TaxSubtotalType subtotal: lineTaxSubTotals)
+            for (TaxSubtotalType subtotal : lineTaxSubTotals)
                 taxSubtotals.add(subtotal);
         }
 
         // examine all the tax totals based on taxtypecode and percent. The same ones should be collected into the same taxsubtotal
         Map<String, List<TaxSubtotalType>> subtotalMap = new HashMap<>();
-        for(TaxSubtotalType subtotal: taxSubtotals) {
+        for (TaxSubtotalType subtotal : taxSubtotals) {
             BigDecimal percent = subtotal.getPercent();
             String taxTypeCode = subtotal.getTaxCategory().getTaxScheme() != null ? subtotal.getTaxCategory().getTaxScheme().getTaxTypeCode().getValue() : "S";
             logger.debug(" $$$ tax type code {} and percent {}: ", taxTypeCode, percent);
 
             List<TaxSubtotalType> subtotalList = subtotalMap.get(taxTypeCode + "-" + percent.intValue());
-            if(subtotalList == null) {
+            if (subtotalList == null) {
                 subtotalList = new ArrayList<>();
             }
             subtotalList.add(subtotal);
@@ -162,7 +173,7 @@ public class UBLUtility {
         }
         // sum the taxsubtotals and obtain the document level tax subtotals
         List<TaxSubtotalType> documentLevelTaxSubtotals = new ArrayList<>();
-        for(Map.Entry<String, List<TaxSubtotalType>> entry: subtotalMap.entrySet()) {
+        for (Map.Entry<String, List<TaxSubtotalType>> entry : subtotalMap.entrySet()) {
             String taxTypeCode = entry.getKey().split("-")[0];
             BigDecimal percent = new BigDecimal(entry.getKey().split("-")[1]);
             // create new document level tax subtotal
@@ -179,7 +190,7 @@ public class UBLUtility {
             // calculate the amount for this new tax subtotal
             AmountType taxAmount = zeroAmount();
             List<TaxSubtotalType> lineTaxSubtotals = entry.getValue();
-            for(TaxSubtotalType lineTaxSubtotal: lineTaxSubtotals) {
+            for (TaxSubtotalType lineTaxSubtotal : lineTaxSubtotals) {
                 BigDecimal lineTaxSubtotalAmount = lineTaxSubtotal.getTaxAmount().getValue();
                 BigDecimal newTaxAmountValue = new BigDecimal(taxAmount.getValue().intValue() + lineTaxSubtotalAmount.intValue());
                 taxAmount.setValue(newTaxAmountValue);
@@ -191,7 +202,7 @@ public class UBLUtility {
 
         // now calculate the document level total tax amount by summing document level tax subtotals
         AmountType taxTotalAmount = zeroAmount();
-        for(TaxSubtotalType documentLevelTaxSubtotal: documentLevelTaxSubtotals) {
+        for (TaxSubtotalType documentLevelTaxSubtotal : documentLevelTaxSubtotals) {
             BigDecimal taxSubtotalAmount = documentLevelTaxSubtotal.getTaxAmount().getValue();
             BigDecimal newTaxAmountValue = new BigDecimal(taxTotalAmount.getValue().intValue() + taxSubtotalAmount.intValue());
             taxTotalAmount.setValue(newTaxAmountValue);
@@ -208,7 +219,7 @@ public class UBLUtility {
         // get empty zero monetary total
         MonetaryTotalType total = createEmptyMonetaryTotal();
 
-        for(OrderLineType orderLine : orderLines) {
+        for (OrderLineType orderLine : orderLines) {
             // sum line extension amounts
             AmountType lineAmount = orderLine.getLineItem().getLineExtensionAmount();
 
@@ -220,9 +231,9 @@ public class UBLUtility {
             BigDecimal allowances = total.getAllowanceTotalAmount().getValue();
             BigDecimal charges = total.getChargeTotalAmount().getValue();
 
-            for(AllowanceChargeType allowanceCharge: allowanceCharges) {
+            for (AllowanceChargeType allowanceCharge : allowanceCharges) {
                 BigDecimal allowanceChargeAmount = allowanceCharge.getAmount().getValue();
-                if(allowanceCharge.isChargeIndicator())
+                if (allowanceCharge.isChargeIndicator())
                     total.getChargeTotalAmount().setValue(new BigDecimal(charges.intValue() + allowanceChargeAmount.intValue()));
                 else
                     total.getAllowanceTotalAmount().setValue(new BigDecimal(allowances.intValue() + allowanceChargeAmount.intValue()));

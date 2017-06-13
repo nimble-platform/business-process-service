@@ -5,10 +5,12 @@ import eu.nimble.service.bp.impl.util.DAOUtility;
 import eu.nimble.service.bp.impl.util.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.impl.util.DocumentDAOUtility;
 import eu.nimble.service.bp.swagger.api.DocumentApi;
-import eu.nimble.service.bp.swagger.model.ProcessDocumentContent;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
-import eu.nimble.utility.HibernateUtility;
+import eu.nimble.service.model.ubl.order.ObjectFactory;
+import eu.nimble.service.model.ubl.order.OrderType;
+import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
+import eu.nimble.utility.JAXBUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -16,6 +18,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +30,35 @@ import java.util.List;
 @Controller
 public class DocumentController implements DocumentApi {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    @RequestMapping(value = "/document/json/{documentID}",
+            produces = {"application/json"},
+            method = RequestMethod.GET)
+    ResponseEntity<Object> getDocumentJsonContent(@PathVariable("documentID") String documentID) {
+        Object document = DocumentDAOUtility.getUBLDocument(documentID);
+        return new ResponseEntity<>(document, HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/document/xml/{documentID}",
+            produces = {"application/json"},
+            method = RequestMethod.GET)
+    ResponseEntity<String> getDocumentXMLContent(@PathVariable("documentID") String documentID) {
+        Object document = DocumentDAOUtility.getUBLDocument(documentID);
+
+        String documentContentXML = null;
+        if(document instanceof OrderType) {
+            ObjectFactory factory = new ObjectFactory();
+            OrderType order = (OrderType) document;
+            documentContentXML = JAXBUtility.serialize(order, factory.createOrder(order));
+        } else if(document instanceof OrderResponseSimpleType) {
+            eu.nimble.service.model.ubl.orderresponsesimple.ObjectFactory factory = new eu.nimble.service.model.ubl.orderresponsesimple.ObjectFactory();
+            OrderResponseSimpleType orderResponse = (OrderResponseSimpleType) document;
+            documentContentXML = JAXBUtility.serialize(orderResponse, factory.createOrderResponseSimple(orderResponse));
+        }
+
+        return new ResponseEntity<>(documentContentXML, HttpStatus.OK);
+    }
+    // The above two operations are to retrieve the document contents
 
     @Override
     public ResponseEntity<ModelApiResponse> addDocumentMetadata(@RequestBody ProcessDocumentMetadata body) {
@@ -46,7 +79,7 @@ public class DocumentController implements DocumentApi {
         return HibernateSwaggerObjectMapper.getApiResponse();
     }
 
-    @Override
+    /*@Override
     public ResponseEntity<ProcessDocumentContent> getDocumentContent(@PathVariable("documentID") String documentID) {
         logger.info(" $$$ Getting Document for ... {}", documentID);
         ProcessDocumentContent processDocumentContent = new ProcessDocumentContent();
@@ -57,7 +90,7 @@ public class DocumentController implements DocumentApi {
         processDocumentContent.setContent(documentJsonContent);
 
         return new ResponseEntity<>(processDocumentContent, HttpStatus.OK);
-    }
+    }*/
 
     @Override
     public ResponseEntity<List<ProcessDocumentMetadata>> getDocuments(@PathVariable("partnerID") String partnerID, @PathVariable("type") String type) {

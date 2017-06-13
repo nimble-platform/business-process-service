@@ -26,7 +26,7 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
             logger.debug(" $$$ Created document: {}", JAXBUtility.serialize(order, factory.createOrder(order)));
 
             return order;
-        } else if(documentType == ProcessDocumentMetadata.TypeEnum.ORDERRESPONSE) {
+        } else if(documentType == ProcessDocumentMetadata.TypeEnum.ORDERRESPONSESIMPLE) {
             OrderResponseSimpleType orderResponse = UBLUtility.createOrderResponse(initiatorID, responderID, content, responseToDocumentID);
 
             eu.nimble.service.model.ubl.orderresponsesimple.ObjectFactory factory = new eu.nimble.service.model.ubl.orderresponsesimple.ObjectFactory();
@@ -55,7 +55,7 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
         if(documentType == ProcessDocumentMetadata.TypeEnum.ORDER) {
             OrderType order = (OrderType) document;
             documentMetadata.setDocumentID(order.getID());
-        } else if(documentType == ProcessDocumentMetadata.TypeEnum.ORDERRESPONSE) {
+        } else if(documentType == ProcessDocumentMetadata.TypeEnum.ORDERRESPONSESIMPLE) {
             OrderResponseSimpleType orderResponse = (OrderResponseSimpleType) document;
             documentMetadata.setDocumentID(orderResponse.getID());
         }

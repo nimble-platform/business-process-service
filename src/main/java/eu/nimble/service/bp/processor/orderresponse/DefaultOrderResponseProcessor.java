@@ -55,7 +55,7 @@ public class DefaultOrderResponseProcessor  implements JavaDelegate {
 
             // NOTE: Pay attention to the direction of the document. Here it is from seller to buyer
             businessProcessApplication.saveDocument(processInstanceId, seller, buyer,
-                    orderResponse, ProcessDocumentMetadata.TypeEnum.ORDERRESPONSE,
+                    orderResponse, ProcessDocumentMetadata.TypeEnum.ORDERRESPONSESIMPLE,
                     ProcessDocumentMetadata.StatusEnum.APPROVED);
         } else if(executionType == ExecutionConfiguration.TypeEnum.MICROSERVICE) {
             // TODO: How to call a microservice
