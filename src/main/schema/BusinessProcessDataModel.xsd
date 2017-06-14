@@ -65,7 +65,7 @@
 			<xsd:element name="processID" type="xsd:string"/>
 			<xsd:element name="initiatorID" type="xsd:string"/>
 			<xsd:element name="responderID" type="xsd:string"/>
-			<xsd:element name="content" type="xsd:string"/>
+			<xsd:element name="contentUUID" type="xsd:string"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	<xsd:complexType name="ProcessInstanceInputMessageDAO">

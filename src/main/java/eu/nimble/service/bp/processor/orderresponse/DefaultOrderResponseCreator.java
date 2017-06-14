@@ -53,7 +53,7 @@ public class DefaultOrderResponseCreator  implements JavaDelegate {
             IBusinessProcessApplication businessProcessApplication = (IBusinessProcessApplication) instance;
 
             // Note to the direction of the document (here it is from seller to buyer)
-            orderResponse  = (OrderResponseSimpleType) businessProcessApplication.createDocument(seller, buyer, content, ProcessDocumentMetadata.TypeEnum.ORDERRESPONSESIMPLE, order.getID());
+            orderResponse  = (OrderResponseSimpleType) businessProcessApplication.createDocument(seller, buyer, content, ProcessDocumentMetadata.TypeEnum.ORDERRESPONSESIMPLE);
 
         } else if(executionType == ExecutionConfiguration.TypeEnum.MICROSERVICE) {
             // TODO: How to call a microservice

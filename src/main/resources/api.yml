@@ -580,6 +580,9 @@ definitions:
         type: string
       responderID:
         type: string
+      contentUUID:
+        type: string
+        description: The UUID of the document in the content variable
       content:
         type: string
 
@@ -659,37 +662,37 @@ definitions:
 
 
   Order:
-    ID:
+    id:
       type: string
-    IssueDate:
+    issueDate:
       type: string
-    IssueTime:
+    issueTime:
       type: string
-    Note:
+    note:
       type: string
-    BuyerCustomerParty:
+    buyerCustomerParty:
       $ref: '#/definitions/CustomerParty'
-    SellerSupplierParty:
+    sellerSupplierParty:
       $ref: '#/definitions/SupplierParty'
-    TaxTotal:
+    taxTotal:
       $ref: '#/definitions/TaxTotal'
-    AnticipatedMonetaryTotal:
+    anticipatedMonetaryTotal:
       $ref: '#/definitions/MonetaryTotal'
-    OrderLine:
+    orderLine:
       type: array
       items:
         $ref: '#/definitions/OrderLine'
 
   CustomerParty:
-    Party:
+    party:
       $ref: '#/definitions/Party'
 
   SupplierParty:
-    Party:
+    party:
       $ref: '#/definitions/Party'
 
   Party:
-    ID:
+    id:
       type: string
 
   Amount:
@@ -711,112 +714,112 @@ definitions:
       type: string
 
   TaxTotal:
-    TaxAmount:
+    taxAmount:
       $ref: '#/definitions/Amount'
-    TaxSubtotal:
+    taxSubtotal:
       type: array
       items:
         $ref: '#/definitions/TaxSubtotal'
 
   TaxSubtotal:
-    TaxAmount:
+    taxAmount:
       $ref: '#/definitions/Amount'
-    Percent:
+    percent:
       type: integer
-    TaxCategory:
+    taxCategory:
       $ref: '#/definitions/TaxCategory'
 
   TaxCategory:
-    TaxScheme:
+    taxScheme:
       $ref: '#/definitions/TaxScheme'
 
   TaxScheme:
-    TaxTypeCode:
+    taxTypeCode:
       $ref: '#/definitions/Code'
 
   MonetaryTotal:
-    LineExtensionAmount:
+    lineExtensionAmount:
       $ref: '#/definitions/Amount'
-    TaxExclusiveAmount:
+    taxExclusiveAmount:
       $ref: '#/definitions/Amount'
-    TaxInclusiveAmount:
+    taxInclusiveAmount:
       $ref: '#/definitions/Amount'
-    AllowanceTotalAmount:
+    allowanceTotalAmount:
       $ref: '#/definitions/Amount'
-    ChargeTotalAmount:
+    chargeTotalAmount:
       $ref: '#/definitions/Amount'
-    PayableAmount:
+    payableAmount:
       $ref: '#/definitions/Amount'
 
   OrderLine:
-    Note:
+    note:
       type: string
-    LineItem:
+    lineItem:
       $ref: '#definitions/LineItem'
 
   LineItem:
-    ID:
+    id:
       type: string
-    Note:
+    note:
       type: string
-    Quantity:
+    quantity:
       $ref: '#/definitions/Quantity'
-    LineExtensionAmount:
+    lineExtensionAmount:
       $ref: '#/definitions/Amount'
-    TotalTaxAmount:
+    totalTaxAmount:
       $ref: '#/definitions/Amount'
-    Price:
+    price:
       $ref: '#/definitions/Price'
-    Item:
+    item:
       $ref: '#/definitions/Item'
-    TaxTotal:
+    taxTotal:
       $ref: '#/definitions/TaxTotal'
 
   Price:
-    PriceAmount:
+    priceAmount:
       $ref: '#/definitions/Amount'
 
   Item:
-    Description:
+    description:
       type: string
-    Name:
+    name:
       type: string
-    SellerItemIdentification:
+    sellerItemIdentification:
       type:
         $ref: '#/definitions/ItemIdentification'
-    CommodityClassification:
+    commodityClassification:
       type: array
       items:
         $ref: '#/definitions/CommodityClassification'
 
   ItemIdentification:
-    ID:
+    id:
       type: string
 
   OrderReference:
-    ID:
+    id:
       type: string
 
   CommodityClassification:
-    ItemClassificationCode:
+    itemClassificationCode:
       $ref: '#/definitions/Code'
 
   OrderResponse:
-    ID:
+    id:
       type: string
-    IssueDate:
+    issueDate:
       type: string
-    IssueTime:
+    issueTime:
       type: string
-    Note:
+    note:
       type: string
-    AcceptedIndicator:
+    acceptedIndicator:
       type: boolean
-    RejectionNote:
+    rejectionNote:
       type: string
-    OrderReference:
+    orderReference:
       $ref: '#/definitions/OrderReference'
-    SellerSupplierParty:
+    sellerSupplierParty:
       $ref: '#/definitions/SupplierParty'
-    BuyerCustomerParty:
+    buyerCustomerParty:
       $ref: '#/definitions/CustomerParty'

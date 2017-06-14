@@ -53,7 +53,7 @@ public class DefaultOrderCreator  implements JavaDelegate {
 
             IBusinessProcessApplication businessProcessApplication = (IBusinessProcessApplication) instance;
 
-            order  = (OrderType) businessProcessApplication.createDocument(buyer, seller, content, ProcessDocumentMetadata.TypeEnum.ORDER, null);
+            order  = (OrderType) businessProcessApplication.createDocument(buyer, seller, content, ProcessDocumentMetadata.TypeEnum.ORDER);
         } else if(executionType == ExecutionConfiguration.TypeEnum.MICROSERVICE) {
             // TODO: How to call a microservice
         } else {

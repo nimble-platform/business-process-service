@@ -7,12 +7,9 @@ import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
  */
 public interface IBusinessProcessApplication {
     public Object createDocument(String initiatorID, String responderID, String content,
-                                 ProcessDocumentMetadata.TypeEnum documentType, String responseToDocumentID);
+                                 ProcessDocumentMetadata.TypeEnum documentType);
 
-    public void saveDocument(String processInstanceId, String initiatorID, String responderID,
-                     Object documentObject, ProcessDocumentMetadata.TypeEnum documentType, ProcessDocumentMetadata.StatusEnum documentStatus);
+    public void saveDocument(String processInstanceId, String initiatorID, String responderID, Object documentObject);
 
-    public void sendDocument(String processInstanceId, String initiatorID, String responderID,
-                             Object documentObject, ProcessDocumentMetadata.TypeEnum documentType, ProcessDocumentMetadata.StatusEnum documentStatus,
-                             String initiatingDocumentID, ProcessDocumentMetadata.StatusEnum responseStatus);
+    public void sendDocument(String processInstanceId, String initiatorID, String responderID, Object documentObject);
 }

@@ -54,9 +54,7 @@ public class DefaultOrderSender  implements JavaDelegate {
 
             IBusinessProcessApplication businessProcessApplication = (IBusinessProcessApplication) instance;
 
-            businessProcessApplication.sendDocument(processInstanceId, buyer, seller,
-                    order, ProcessDocumentMetadata.TypeEnum.ORDER,
-                    ProcessDocumentMetadata.StatusEnum.WAITINGRESPONSE, null, null);
+            businessProcessApplication.sendDocument(processInstanceId, buyer, seller, order);
         } else if(executionType == ExecutionConfiguration.TypeEnum.MICROSERVICE) {
             // TODO: How to call a microservice
         } else {

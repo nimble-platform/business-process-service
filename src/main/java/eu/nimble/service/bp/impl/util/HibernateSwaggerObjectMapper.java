@@ -71,7 +71,7 @@ public class HibernateSwaggerObjectMapper {
 
         ProcessVariablesDAO processVariablesDAO = new ProcessVariablesDAO();
         processVariablesDAO.setProcessID(body.getVariables().getProcessID());
-        processVariablesDAO.setContent(body.getVariables().getContent());
+        processVariablesDAO.setContentUUID(body.getVariables().getContentUUID());
         processVariablesDAO.setInitiatorID(body.getVariables().getInitiatorID());
         processVariablesDAO.setResponderID(body.getVariables().getResponderID());
 

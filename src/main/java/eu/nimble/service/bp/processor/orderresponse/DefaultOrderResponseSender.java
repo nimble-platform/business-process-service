@@ -55,14 +55,8 @@ public class DefaultOrderResponseSender  implements JavaDelegate {
 
             IBusinessProcessApplication businessProcessApplication = (IBusinessProcessApplication) instance;
 
-            // get the response status from the order response. So in the next step you will set the status of the order accordingly.
-            ProcessDocumentMetadata.StatusEnum responseStatus = orderResponse.isAcceptedIndicator() ? ProcessDocumentMetadata.StatusEnum.APPROVED : ProcessDocumentMetadata.StatusEnum.DENIED;
-
             // note the direction of the document (here it is from seller to buyer)
-            businessProcessApplication.sendDocument(processInstanceId, seller, buyer,
-                    orderResponse, ProcessDocumentMetadata.TypeEnum.ORDERRESPONSESIMPLE,
-                    ProcessDocumentMetadata.StatusEnum.APPROVED,
-                    order.getID(), responseStatus);
+            businessProcessApplication.sendDocument(processInstanceId, seller, buyer, orderResponse);
         } else if(executionType == ExecutionConfiguration.TypeEnum.MICROSERVICE) {
             // TODO: How to call a microservice
         } else {

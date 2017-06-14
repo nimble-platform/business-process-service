@@ -52,7 +52,8 @@ In the following there are some examples for interacting with Camunda through th
                                                       		"processID": "Order",
                                                       		"initiatorID": "buyer1387",
                                                       		"responderID": "seller1387",
-                                                      		"content": "JSON content"
+                                                      		"contentUUID": "d65f6a41-5b9a-4b25-8720-e9c07916023a",
+                                                      		"content": "{ \"id\": \"d65f6a41-5b9a-4b25-8720-e9c07916023a\", \"issueDate\": \"2017-06-12T21:00:00Z\", \"issueTime\": \"1970-01-01T10:27:42Z\", \"buyerCustomerParty\": { \"party\": { \"id\": \"buyer1387\" } }, \"sellerSupplierParty\": { \"party\": { \"id\": \"seller1387\" } }, \"taxTotal\": { \"taxAmount\": { \"value\": 18, \"currencyID\": \"EUR\" }, \"taxSubtotal\": [ { \"taxAmount\": { \"value\": 18, \"currencyID\": \"EUR\" }, \"percent\": 18, \"taxCategory\": { \"taxScheme\": { \"taxTypeCode\": { \"value\": \"VAT\" } } } } ] }, \"anticipatedMonetaryTotal\": { \"lineExtensionAmount\": { \"value\": 100, \"currencyID\": \"EUR\" }, \"taxExclusiveAmount\": { \"value\": 100, \"currencyID\": \"EUR\" }, \"taxInclusiveAmount\": { \"value\": 118, \"currencyID\": \"EUR\" }, \"payableAmount\": { \"value\": 118, \"currencyID\": \"EUR\" } }, \"orderLine\": [ { \"lineItem\": { \"id\": \"1\", \"quantity\": { \"value\": 5, \"unitCode\": \"KGM\" }, \"lineExtensionAmount\": { \"value\": 100, \"currencyID\": \"EUR\" }, \"totalTaxAmount\": { \"value\": 18, \"currencyID\": \"EUR\" }, \"price\": { \"priceAmount\": { \"value\": 20, \"currencyID\": \"EUR\" } }, \"item\": { \"name\": \"Apple\" }, \"taxTotal\": { \"taxAmount\": { \"value\": 18, \"currencyID\": \"EUR\" }, \"taxSubtotal\": [ { \"taxAmount\": { \"value\": 18, \"currencyID\": \"EUR\" }, \"percent\": 18, \"taxCategory\": { \"taxScheme\": { \"taxTypeCode\": { \"value\": \"VAT\" } } } } ] } } } ] }"
                                                       	},
                                                       	"processInstanceID": "deneme"
                                                       }' http://localhost:8081/start 
@@ -64,7 +65,8 @@ In the following there are some examples for interacting with Camunda through th
                                                       		"processID": "Order",
                                                       		"initiatorID": "seller1387",
                                                       		"responderID": "buyer1387",
-                                                      		"content": "JSON content"
+                                                      		"contentUUID": "12bf7859-c232-46cb-acd4-cb4a1ede2b51",
+                                                      		"content": "{ \"id\": \"12bf7859-c232-46cb-acd4-cb4a1ede2b51\", \"issueDate\": \"2017-06-12T21:00:00Z\", \"issueTime\": \"1970-01-01T10:37:49Z\", \"acceptedIndicator\": true, \"orderReference\": { \"id\": \"d65f6a41-5b9a-4b25-8720-e9c07916023a\" }, \"sellerSupplierParty\": { \"party\": { \"id\": \"seller1387\" } }, \"buyerCustomerParty\": { \"party\": { \"id\": \"buyer1387\" } } }"
                                                       	},
                                                       	"processInstanceID": "23"
                                                       }' http://localhost:8081/continue 
