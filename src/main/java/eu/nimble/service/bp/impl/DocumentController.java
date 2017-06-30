@@ -10,6 +10,8 @@ import eu.nimble.service.bp.swagger.model.ModelApiResponse;
 import eu.nimble.service.model.ubl.order.ObjectFactory;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
+import eu.nimble.service.model.ubl.quotation.QuotationType;
+import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
 import eu.nimble.utility.JAXBUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,6 +56,14 @@ public class DocumentController implements DocumentApi {
             eu.nimble.service.model.ubl.orderresponsesimple.ObjectFactory factory = new eu.nimble.service.model.ubl.orderresponsesimple.ObjectFactory();
             OrderResponseSimpleType orderResponse = (OrderResponseSimpleType) document;
             documentContentXML = JAXBUtility.serialize(orderResponse, factory.createOrderResponseSimple(orderResponse));
+        } else if(document instanceof RequestForQuotationType) {
+            eu.nimble.service.model.ubl.requestforquotation.ObjectFactory factory = new eu.nimble.service.model.ubl.requestforquotation.ObjectFactory();
+            RequestForQuotationType requestForQuotation = (RequestForQuotationType) document;
+            documentContentXML = JAXBUtility.serialize(requestForQuotation, factory.createRequestForQuotation(requestForQuotation));
+        } else if(document instanceof QuotationType) {
+            eu.nimble.service.model.ubl.quotation.ObjectFactory factory = new eu.nimble.service.model.ubl.quotation.ObjectFactory();
+            QuotationType quotation = (QuotationType) document;
+            documentContentXML = JAXBUtility.serialize(quotation, factory.createQuotation(quotation));
         }
 
         return new ResponseEntity<>(documentContentXML, HttpStatus.OK);

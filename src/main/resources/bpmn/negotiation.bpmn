@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="1.7.2">
+  <bpmn:process id="Negotiation" name="Negotiation" isExecutable="true">
+    <bpmn:extensionElements>
+      <camunda:properties>
+        <camunda:property name="businessProcessCategory" value="NEGOTIATION" />
+      </camunda:properties>
+    </bpmn:extensionElements>
+    <bpmn:startEvent id="StartEvent">
+      <bpmn:outgoing>SequenceFlow_1foezn2</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_1foezn2" sourceRef="StartEvent" targetRef="CreateRFQDocument" />
+    <bpmn:sequenceFlow id="SequenceFlow_1hpgfmq" sourceRef="SendRFQDocumenttoSeller" targetRef="WaitQuotation" />
+    <bpmn:sequenceFlow id="SequenceFlow_1rfxe09" sourceRef="WaitQuotation" targetRef="CreateQuotationDocument" />
+    <bpmn:endEvent id="EndEvent">
+      <bpmn:incoming>SequenceFlow_0am3t90</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_0am3t90" sourceRef="SendQuotationtoBuyer" targetRef="EndEvent" />
+    <bpmn:serviceTask id="SendRFQDocumenttoSeller" name="Send Request For Quotation Document to Seller (Data Channel)" camunda:class="eu.nimble.service.bp.processor.negotiation.DefaultRFQSender">
+      <bpmn:incoming>SequenceFlow_0g4ddlg</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1hpgfmq</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:userTask id="WaitQuotation" name="Wait Quotation">
+      <bpmn:incoming>SequenceFlow_1hpgfmq</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1rfxe09</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="SendQuotationtoBuyer" name="Send Quotation to Buyer (Data Channel)" camunda:class="eu.nimble.service.bp.processor.negotiation.DefaultQuotationSender">
+      <bpmn:incoming>SequenceFlow_0gq7jmn</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0am3t90</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="SequenceFlow_0s75o6o" sourceRef="CreateRFQDocument" targetRef="ProcessRFQDocument" />
+    <bpmn:sequenceFlow id="SequenceFlow_06wdhi6" sourceRef="CreateQuotationDocument" targetRef="ProcessQuotation" />
+    <bpmn:serviceTask id="CreateRFQDocument" name="Create Request For Quotation Document (Data Adapter)" camunda:class="eu.nimble.service.bp.processor.negotiation.DefaultRFQCreator">
+      <bpmn:incoming>SequenceFlow_1foezn2</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0s75o6o</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="CreateQuotationDocument" name="Create Quotation Document (Data Adapter)" camunda:class="eu.nimble.service.bp.processor.negotiation.DefaultQuotationCreator">
+      <bpmn:incoming>SequenceFlow_1rfxe09</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_06wdhi6</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="SequenceFlow_0g4ddlg" sourceRef="ProcessRFQDocument" targetRef="SendRFQDocumenttoSeller" />
+    <bpmn:serviceTask id="ProcessRFQDocument" name="Process Request For Quotation Document (Data Processor)" camunda:class="eu.nimble.service.bp.processor.negotiation.DefaultRFQProcessor">
+      <bpmn:incoming>SequenceFlow_0s75o6o</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0g4ddlg</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="SequenceFlow_0gq7jmn" sourceRef="ProcessQuotation" targetRef="SendQuotationtoBuyer" />
+    <bpmn:serviceTask id="ProcessQuotation" name="Process Quotation (Data Processor)" camunda:class="eu.nimble.service.bp.processor.negotiation.DefaultQuotationProcessor">
+      <bpmn:incoming>SequenceFlow_06wdhi6</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0gq7jmn</bpmn:outgoing>
+    </bpmn:serviceTask>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Negotiation">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent">
+        <dc:Bounds x="122" y="206" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="95" y="242" width="90" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1foezn2_di" bpmnElement="SequenceFlow_1foezn2">
+        <di:waypoint xsi:type="dc:Point" x="158" y="224" />
+        <di:waypoint xsi:type="dc:Point" x="207" y="224" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="137.5" y="203" width="90" height="12" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1hpgfmq_di" bpmnElement="SequenceFlow_1hpgfmq">
+        <di:waypoint xsi:type="dc:Point" x="540" y="264" />
+        <di:waypoint xsi:type="dc:Point" x="540" y="426" />
+        <di:waypoint xsi:type="dc:Point" x="599" y="426" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="510" y="339" width="90" height="12" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1rfxe09_di" bpmnElement="SequenceFlow_1rfxe09">
+        <di:waypoint xsi:type="dc:Point" x="699" y="426" />
+        <di:waypoint xsi:type="dc:Point" x="756" y="426" />
+        <di:waypoint xsi:type="dc:Point" x="756" y="267" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="682.5" y="405" width="90" height="12" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="EndEvent_0mvpfgi_di" bpmnElement="EndEvent">
+        <dc:Bounds x="1170" y="206" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1143" y="246" width="90" height="12" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0am3t90_di" bpmnElement="SequenceFlow_0am3t90">
+        <di:waypoint xsi:type="dc:Point" x="1113" y="224" />
+        <di:waypoint xsi:type="dc:Point" x="1170" y="224" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1096.5" y="203" width="90" height="12" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ServiceTask_0n1727p_di" bpmnElement="SendRFQDocumenttoSeller">
+        <dc:Bounds x="490" y="184" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_1umcxuf_di" bpmnElement="WaitQuotation">
+        <dc:Bounds x="599" y="386" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ServiceTask_0zrh848_di" bpmnElement="SendQuotationtoBuyer">
+        <dc:Bounds x="1013" y="184" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0s75o6o_di" bpmnElement="SequenceFlow_0s75o6o">
+        <di:waypoint xsi:type="dc:Point" x="307" y="224" />
+        <di:waypoint xsi:type="dc:Point" x="349" y="224" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="283" y="203" width="90" height="12" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_06wdhi6_di" bpmnElement="SequenceFlow_06wdhi6">
+        <di:waypoint xsi:type="dc:Point" x="806" y="224" />
+        <di:waypoint xsi:type="dc:Point" x="862" y="224" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="789" y="203" width="90" height="12" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ServiceTask_03tjsik_di" bpmnElement="CreateRFQDocument">
+        <dc:Bounds x="207" y="184" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ServiceTask_0ngv0zq_di" bpmnElement="CreateQuotationDocument">
+        <dc:Bounds x="706" y="184" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0g4ddlg_di" bpmnElement="SequenceFlow_0g4ddlg">
+        <di:waypoint xsi:type="dc:Point" x="449" y="224" />
+        <di:waypoint xsi:type="dc:Point" x="490" y="224" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="424.5" y="203" width="90" height="12" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ServiceTask_174fw5r_di" bpmnElement="ProcessRFQDocument">
+        <dc:Bounds x="349" y="184" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0gq7jmn_di" bpmnElement="SequenceFlow_0gq7jmn">
+        <di:waypoint xsi:type="dc:Point" x="962" y="224" />
+        <di:waypoint xsi:type="dc:Point" x="1013" y="224" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="942.5" y="203" width="90" height="12" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ServiceTask_0xwxgk9_di" bpmnElement="ProcessQuotation">
+        <dc:Bounds x="862" y="184" width="100" height="80" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

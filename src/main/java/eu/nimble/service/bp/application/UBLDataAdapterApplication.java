@@ -6,6 +6,8 @@ import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.order.ObjectFactory;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
+import eu.nimble.service.model.ubl.quotation.QuotationType;
+import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
 import eu.nimble.utility.DateUtility;
 import eu.nimble.utility.JAXBUtility;
 import org.joda.time.DateTime;
@@ -46,6 +48,28 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
             } catch (IOException e) {
                 logger.error("", e);
             }
+        } else if(documentType == ProcessDocumentMetadata.TypeEnum.REQUESTFORQUOTATION) {
+            try {
+                RequestForQuotationType rfq = mapper.readValue(content, RequestForQuotationType.class);
+
+                eu.nimble.service.model.ubl.requestforquotation.ObjectFactory factory = new eu.nimble.service.model.ubl.requestforquotation.ObjectFactory();
+                logger.debug(" $$$ Created document: {}", JAXBUtility.serialize(rfq, factory.createRequestForQuotation(rfq)));
+
+                return rfq;
+            } catch (IOException e) {
+                logger.error("", e);
+            }
+        } else if(documentType == ProcessDocumentMetadata.TypeEnum.QUOTATION) {
+            try {
+                QuotationType quotation = mapper.readValue(content, QuotationType.class);
+
+                eu.nimble.service.model.ubl.quotation.ObjectFactory factory = new eu.nimble.service.model.ubl.quotation.ObjectFactory();
+                logger.debug(" $$$ Created document: {}", JAXBUtility.serialize(quotation, factory.createQuotation(quotation)));
+
+                return quotation;
+            } catch (IOException e) {
+                logger.error("", e);
+            }
         }
 
         return null;
@@ -72,6 +96,16 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
             documentMetadata.setDocumentID(orderResponse.getID());
             documentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
             documentMetadata.setType(ProcessDocumentMetadata.TypeEnum.ORDERRESPONSESIMPLE);
+        } else if(document instanceof  RequestForQuotationType) {
+            RequestForQuotationType rfq = (RequestForQuotationType) document;
+            documentMetadata.setDocumentID(rfq.getID());
+            documentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.WAITINGRESPONSE);
+            documentMetadata.setType(ProcessDocumentMetadata.TypeEnum.REQUESTFORQUOTATION);
+        } else if(document instanceof  QuotationType) {
+            QuotationType quotation = (QuotationType) document;
+            documentMetadata.setDocumentID(quotation.getID());
+            documentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
+            documentMetadata.setType(ProcessDocumentMetadata.TypeEnum.QUOTATION);
         }
 
         // persist the document metadata
@@ -96,6 +130,11 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
                 initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.DENIED);
 
             DocumentDAOUtility.updateDocumentMetadata(initiatingDocumentMetadata);
+        } else if(document instanceof QuotationType) {
+            QuotationType quotation = (QuotationType) document;
+            String rfqID = quotation.getRequestForQuotationDocumentReference().getID();
+            ProcessDocumentMetadata initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(rfqID);
+            initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
         }
     }
 
