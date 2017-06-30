@@ -45,6 +45,30 @@ In the following there are some examples for interacting with Camunda through th
 ````bash
  curl http://localhost:8081/content
 ````
+* START 'Negotiation' process 
+````
+  curl -X POST -H 'Content-Type:application/json' -d '{
+                                                      	 "variables": {
+                                                            "processID": "Negotiation",
+                                                            "initiatorID": "buyer1387",
+                                                            "responderID": "seller1387",
+                                                            "content": "{ \"id\": \"3997b638-b2df-4820-be46-b0af8c5e297d\", \"issueDate\": \"2017-06-12T21:00:00Z\", \"issueTime\": \"1970-01-01T10:27:42Z\", \"sellerSupplierParty\": { \"party\": { \"id\": \"seller1387\" } }, \"buyerCustomerParty\": { \"party\": { \"id\": \"buyer1387\" } },      \"requestForQuotationLine\": [ { \"lineItem\": { \"id\": \"1\", \"quantity\": { \"value\": 5, \"unitCode\": \"KGM\" }, \"lineExtensionAmount\": { \"value\": 100, \"currencyID\": \"EUR\" }, \"totalTaxAmount\": { \"value\": 18, \"currencyID\": \"EUR\" }, \"price\": { \"priceAmount\": { \"value\": 20, \"currencyID\": \"EUR\" } }, \"item\": { \"name\": \"Apple\" }, \"taxTotal\": { \"taxAmount\": { \"value\": 18, \"currencyID\": \"EUR\" }, \"taxSubtotal\": [ { \"taxAmount\": { \"value\": 18, \"currencyID\": \"EUR\" }, \"percent\": 18, \"taxCategory\": { \"taxScheme\": { \"taxTypeCode\": { \"value\": \"VAT\" } } } } ] } } } ] }"
+                                                          },
+                                                          "processInstanceID": "deneme"
+                                                      }' http://localhost:8081/start 
+````
+* COMPLETE 'Negotiation' process 
+````
+  curl -X POST -H 'Content-Type:application/json' -d '{
+                                                      	 "variables": {
+                                                            "processID": "Negotiation",
+                                                            "initiatorID": "seller1387",
+                                                            "responderID": "buyer1387",
+                                                            "content": "{ \"id\": \"c9319255-77eb-498d-ac7b-a13decf57c3f\", \"issueDate\": \"2017-06-12T21:00:00Z\", \"issueTime\": \"1970-01-01T10:27:42Z\", \"requestForQuotationDocumentReference\": { \"id\": \"3997b638-b2df-4820-be46-b0af8c5e297d\" }, \"sellerSupplierParty\": { \"party\": { \"id\": \"seller1387\" } }, \"buyerCustomerParty\": { \"party\": { \"id\": \"buyer1387\" } },      \"quotationLine\": [ { \"lineItem\": { \"id\": \"1\", \"quantity\": { \"value\": 5, \"unitCode\": \"KGM\" }, \"lineExtensionAmount\": { \"value\": 100, \"currencyID\": \"EUR\" }, \"totalTaxAmount\": { \"value\": 18, \"currencyID\": \"EUR\" }, \"price\": { \"priceAmount\": { \"value\": 20, \"currencyID\": \"EUR\" } }, \"item\": { \"name\": \"Apple\" }, \"taxTotal\": { \"taxAmount\": { \"value\": 18, \"currencyID\": \"EUR\" }, \"taxSubtotal\": [ { \"taxAmount\": { \"value\": 18, \"currencyID\": \"EUR\" }, \"percent\": 18, \"taxCategory\": { \"taxScheme\": { \"taxTypeCode\": { \"value\": \"VAT\" } } } } ] } } } ] }"
+                                                         },
+                                                         "processInstanceID": "25"
+                                                      }' http://localhost:8081/continue 
+````
 * START 'Order' process 
 ````
   curl -X POST -H 'Content-Type:application/json' -d '{
