@@ -27,3 +27,14 @@ camunda:
     admin-user:
       id: kermit
       password: superSecret
+
+nimble:
+  cors_enabled: false
+
+---
+
+spring:
+  profiles: local_dev
+
+nimble:
+  cors_enabled: true
