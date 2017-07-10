@@ -9,6 +9,11 @@ Base configuration can be found at src/main/resources/application.properties and
 [Spring Cloud Config](https://cloud.spring.io/spring-cloud-config/) is used for central configuration management. A central configuration is hosted on [https://github.com/nimble-platform/cloud-config](https://github.com/nimble-platform/cloud-config)
 and injected during startup.
 
+For database configuration, please set your postgres username and password in the following files:
+* pom.xml
+* persistence.properties
+* application.properties
+
 ## Swagger
 
 The Business Process API is designed using the [swagger.io editor](http://editor.swagger.io) (file: src/main/resources/api.yml) and the code generator for the Spring framework. 
