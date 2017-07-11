@@ -56,20 +56,6 @@ public class BusinessProcessApplication {
   @Autowired
   private ConfigurableApplicationContext context;
 
-  @Value("${nimble.cors_enabled}")
-  private String corsEnabled;
-
-  @Bean
-  public WebMvcConfigurer corsConfigurer() {
-    return new WebMvcConfigurerAdapter() {
-      @Override
-      public void addCorsMappings(CorsRegistry registry) {
-        if( corsEnabled.equals("true"))
-          registry.addMapping("/*").allowedOrigins("*");
-      }
-    };
-  }
-
 //  @Autowired
 //  private Showcase showcase;
 
