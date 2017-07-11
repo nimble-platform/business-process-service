@@ -16,6 +16,12 @@ spring:
       # service discovery is disabled by default and should be enabled (set to true) for the "cloud mode".
       # it can be set via an environment variable or the config server
       enabled: ${discovery.enabled:${DISCOVERY_ENABLED:false}}
+  datasource:
+    url: jdbc:postgresql://${BUSINESS_PROCESS_DB_URI:localhost:5432}/camunda?user=postgres&password=postgres
+    driverClassName: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
 
 logstash:
   uri: ${vcap.services.logstash-service.credentials.url:${LOGSTASH_URI:localhost:5000}}
@@ -35,6 +41,17 @@ nimble:
 
 spring:
   profiles: local_dev
+  # Local h2 database
+  datasource:
+    url: jdbc:h2:mem:AZ;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driverClassName: org.h2.Driver
+    username: sa
+    password:
+    jpa:
+      database-platform: org.hibernate.dialect.H2Dialect
+  h2:
+    console:
+      enabled: true
 
 nimble:
   cors_enabled: true
