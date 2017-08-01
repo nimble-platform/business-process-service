@@ -3,10 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package eu.nimble.service.bp.impl.util;
+package eu.nimble.service.bp.impl.util.persistence;
 
 import eu.nimble.service.bp.hyperjaxb.model.*;
-import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.utility.HibernateUtility;
 
 import java.util.List;
@@ -83,5 +82,20 @@ public class DAOUtility {
             return null;
         }
         return resultSet.get(0);
+    }
+
+    public static ProcessDAO getProcessDAOByID(String processID) {
+        String query = "select process from ProcessDAO process where ( process.processID ='" + processID + "') ";
+        List<ProcessDAO> resultSet = (List<ProcessDAO>) HibernateUtility.getInstance("bp-data-model").loadAll(query);
+        if(resultSet.size() == 0) {
+            return null;
+        }
+        return resultSet.get(0);
+    }
+
+    public static List<ProcessDAO> getProcessDAOs() {
+        String query = "select process from ProcessDAO process ";
+        List<ProcessDAO> resultSet = (List<ProcessDAO>) HibernateUtility.getInstance("bp-data-model").loadAll(query);
+        return resultSet;
     }
 }

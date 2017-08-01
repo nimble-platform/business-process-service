@@ -1,12 +1,10 @@
 package eu.nimble.service.bp.processor.negotiation;
 
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
-import com.sun.org.apache.regexp.internal.RE;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
-import eu.nimble.service.bp.impl.util.DocumentDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.DocumentDAOUtility;
 import eu.nimble.service.bp.swagger.model.ApplicationConfiguration;
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
-import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;

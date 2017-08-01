@@ -1,7 +1,8 @@
-package eu.nimble.service.bp.application;
+package eu.nimble.service.bp.application.ubl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.nimble.service.bp.impl.util.DocumentDAOUtility;
+import eu.nimble.service.bp.application.IBusinessProcessApplication;
+import eu.nimble.service.bp.impl.util.persistence.DocumentDAOUtility;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.order.ObjectFactory;
 import eu.nimble.service.model.ubl.order.OrderType;

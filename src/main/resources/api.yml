@@ -501,6 +501,33 @@ definitions:
           - PRODUCTCONFIGURATION
           - OTHER
 
+
+  Transaction:
+    title: The transaction in a business process
+    type: object
+    properties:
+      transactionID:
+        type: string
+      initiatorID:
+        type: string
+      responderID:
+        type: string
+      documentType:
+        type: string
+        enum:
+        - CATALOGUE
+        - REQUESTFORQUOTATION
+        - QUOTATION
+        - ORDER
+        - ORDERRESPONSESIMPLE
+        - REMITTANCEADVICE
+        - INVOICE
+        - APPLICATIONRESPONSE
+        - TRANSPORTATIONSTATUS
+        - DESPATCHADVICE
+        - RECEIPTADVICE
+        - OTHER
+
   Process:
     title: Business Process Object
     type: object
@@ -521,8 +548,14 @@ definitions:
         - FULFILLMENT
         - PRODUCTCONFIGURATION
         - OTHER
+      textContent:
+        type: string
       bpmnContent:
         type: string
+      transactions:
+        type: array
+        items:
+          $ref: '#/definitions/Transaction'
 
   ExecutionConfiguration:
     title: Execution Configuration Object
@@ -543,9 +576,7 @@ definitions:
     properties:
       activityID:
         type: string
-      name:
-        type: string
-      transactionName:
+      transactionID:
         type: string
         description: The transaction where the activity exist
       type:

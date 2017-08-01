@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package eu.nimble.service.bp.impl.util;
+package eu.nimble.service.bp.impl.util.persistence;
 
 import eu.nimble.service.bp.hyperjaxb.model.*;
 import eu.nimble.service.bp.swagger.model.*;
@@ -28,9 +28,8 @@ public class HibernateSwaggerObjectMapper {
         for (ApplicationConfiguration applicationConfiguration : applicationConfigurations) {
             ApplicationConfigurationDAO applicationConfigurationDAO = new ApplicationConfigurationDAO();
             applicationConfigurationDAO.setActivityID(applicationConfiguration.getActivityID());
-            applicationConfigurationDAO.setName(applicationConfiguration.getName());
             applicationConfigurationDAO.setType(ApplicationType.fromValue(applicationConfiguration.getType().toString()));
-            applicationConfigurationDAO.setTransactionName(applicationConfiguration.getTransactionName());
+            applicationConfigurationDAO.setTransactionID(applicationConfiguration.getTransactionID());
 
             ExecutionConfigurationDAO executionConfigurationDAO = new ExecutionConfigurationDAO();
             executionConfigurationDAO.setType(ApplicationExecutionType.fromValue(applicationConfiguration.getExecution().getType().toString()));
@@ -96,8 +95,7 @@ public class HibernateSwaggerObjectMapper {
     public static ApplicationConfiguration createApplicationConfiguration(ApplicationConfigurationDAO applicationConfigurationDAO) {
         ApplicationConfiguration applicationConfiguration = new ApplicationConfiguration();
         applicationConfiguration.setActivityID(applicationConfigurationDAO.getActivityID());
-        applicationConfiguration.setName(applicationConfigurationDAO.getName());
-        applicationConfiguration.setTransactionName(applicationConfigurationDAO.getTransactionName());
+        applicationConfiguration.setTransactionID(applicationConfigurationDAO.getTransactionID());
         applicationConfiguration.setType(ApplicationConfiguration.TypeEnum.valueOf(applicationConfigurationDAO.getType().value()));
 
         ExecutionConfiguration executionConfiguration = new ExecutionConfiguration();
@@ -167,5 +165,64 @@ public class HibernateSwaggerObjectMapper {
         apiResponse.setMessage("Successful operation");
         apiResponse.setCode(200);
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+    }
+
+    public static ProcessPreferences createDefaultProcessPreferences() {
+        ProcessPreferences preferences = new ProcessPreferences();
+
+        ProcessPreference preference = new ProcessPreference();
+        preference.setTargetPartnerID("DEFAULT");
+        preference.addProcessOrderItem(ProcessPreference.ProcessOrderEnum.PRODUCTCONFIGURATION);
+        preference.addProcessOrderItem(ProcessPreference.ProcessOrderEnum.CATALOGUE);
+        preference.addProcessOrderItem(ProcessPreference.ProcessOrderEnum.NEGOTIATION);
+        preference.addProcessOrderItem(ProcessPreference.ProcessOrderEnum.ORDER);
+        preference.addProcessOrderItem(ProcessPreference.ProcessOrderEnum.INVOICE);
+        preference.addProcessOrderItem(ProcessPreference.ProcessOrderEnum.REMITTANCEADVICE);
+        preference.addProcessOrderItem(ProcessPreference.ProcessOrderEnum.FULFILLMENT);
+        preference.addProcessOrderItem(ProcessPreference.ProcessOrderEnum.TRACKING);
+
+        preferences.addPreferencesItem(preference);
+        return null;
+    }
+
+    public static ProcessDAO createProcess_DAO(Process body) {
+        ProcessDAO processDAO = new ProcessDAO();
+        processDAO.setProcessID(body.getProcessID());
+        processDAO.setProcessName(body.getProcessName());
+        processDAO.setTextContent(body.getTextContent());
+        processDAO.setProcessType(ProcessType.fromValue(body.getProcessType().toString()));
+
+        List<Transaction> transactions = body.getTransactions();
+        for(Transaction transaction: transactions) {
+            TransactionDAO transactionDAO = new TransactionDAO();
+            transactionDAO.setInitiatorID(transaction.getInitiatorID());
+            transactionDAO.setResponderID(transaction.getResponderID());
+            transactionDAO.setTransactionID(transaction.getTransactionID());
+            transactionDAO.setDocumentType(DocumentType.fromValue(transaction.getDocumentType().toString()));
+            processDAO.getTransactions().add(transactionDAO);
+        }
+
+        return processDAO;
+    }
+
+    public static Process createProcess(ProcessDAO processDAO) {
+        Process process = new Process();
+        process.setProcessID(processDAO.getProcessID());
+        process.setProcessName(processDAO.getProcessName());
+        process.setTextContent(processDAO.getTextContent());
+        process.setProcessType(Process.ProcessTypeEnum.valueOf(processDAO.getProcessType().value()));
+        process.setBpmnContent("");
+
+        List<TransactionDAO> transactionsDAO = processDAO.getTransactions();
+        for(TransactionDAO transactionDAO: transactionsDAO) {
+            Transaction transaction = new Transaction();
+            transaction.setInitiatorID(transactionDAO.getInitiatorID());
+            transaction.setResponderID(transactionDAO.getResponderID());
+            transaction.setTransactionID(transactionDAO.getTransactionID());
+            transaction.setDocumentType(Transaction.DocumentTypeEnum.valueOf(transactionDAO.getDocumentType().value()));
+            process.getTransactions().add(transaction);
+        }
+
+        return process;
     }
 }

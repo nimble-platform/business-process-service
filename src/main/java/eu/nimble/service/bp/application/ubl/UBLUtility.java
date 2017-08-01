@@ -1,4 +1,4 @@
-package eu.nimble.service.bp.application;
+package eu.nimble.service.bp.application.ubl;
 
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.commonbasiccomponents.AmountType;

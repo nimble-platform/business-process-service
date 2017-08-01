@@ -1,8 +1,8 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.hyperjaxb.model.ProcessApplicationConfigurationsDAO;
-import eu.nimble.service.bp.impl.util.DAOUtility;
-import eu.nimble.service.bp.impl.util.HibernateSwaggerObjectMapper;
+import eu.nimble.service.bp.impl.util.persistence.DAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.swagger.api.ApplicationApi;
 import eu.nimble.service.bp.swagger.model.ProcessApplicationConfigurations;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;

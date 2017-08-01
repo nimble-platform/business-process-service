@@ -2,10 +2,9 @@ package eu.nimble.service.bp.processor.orderresponse;
 
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
-import eu.nimble.service.bp.impl.util.DocumentDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.DocumentDAOUtility;
 import eu.nimble.service.bp.swagger.model.ApplicationConfiguration;
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
-import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;

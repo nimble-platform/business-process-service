@@ -21,6 +21,10 @@ public class TestObjectFactory {
         process.setProcessName(processName);
         process.setProcessID(processID);
         process.setBpmnContent(getOrderBPMNContent());
+        process.setTextContent("Title: ORDER\\n\" +\n" +
+                "                \"Buyer -> Seller: Order\\n\" +\n" +
+                "                \"Note right of Seller: Evaluate Order\\n\" +\n" +
+                "                \"Seller -> Buyer: Order Response");
         process.setProcessType(Process.ProcessTypeEnum.ORDER);
         return process;
     }
@@ -30,6 +34,10 @@ public class TestObjectFactory {
         process.setProcessName("NegotiationTest");
         process.setProcessID("NegotiationTest");
         process.setBpmnContent(getNegotiationBPMNContent());
+        process.setTextContent("Title: NEGOTIATION\\n\" +\n" +
+                "                \"Buyer -> Seller: Request For Quotation\\n\" +\n" +
+                "                \"Note right of Seller: Evaluate RfQ\\n\" +\n" +
+                "                \"Seller -> Buyer: Quotation");
         process.setProcessType(Process.ProcessTypeEnum.NEGOTIATION);
         return process;
     }
@@ -51,8 +59,7 @@ public class TestObjectFactory {
         ApplicationConfiguration configuration = new ApplicationConfiguration();
         configuration.setExecution(execution);
         configuration.setType(ApplicationConfiguration.TypeEnum.DATAADAPTER);
-        configuration.setTransactionName("Create Order");
-        configuration.setName("Create Order");
+        configuration.setTransactionID("Create Order");
         configuration.setActivityID("Create Order 1387");
 
         configurations.getApplicationConfigurations().add(configuration);
@@ -64,8 +71,7 @@ public class TestObjectFactory {
         configuration = new ApplicationConfiguration();
         configuration.setExecution(execution);
         configuration.setType(ApplicationConfiguration.TypeEnum.DATACHANNEL);
-        configuration.setTransactionName("Send Order");
-        configuration.setName("Send Order");
+        configuration.setTransactionID("Send Order");
         configuration.setActivityID("Send Order 1387");
 
         configurations.getApplicationConfigurations().add(configuration);

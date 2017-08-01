@@ -1,4 +1,4 @@
-package eu.nimble.service.bp.impl.util;
+package eu.nimble.service.bp.impl.util.persistence;
 
 
 import eu.nimble.service.bp.hyperjaxb.model.*;
@@ -45,12 +45,11 @@ public class DocumentDAOUtility {
         } else { // it is not configured by the partner
             applicationConfigurationDAO = new ApplicationConfigurationDAO();
             applicationConfigurationDAO.setActivityID("ActivityID");
-            applicationConfigurationDAO.setName("ActivityName");
             applicationConfigurationDAO.setType(ApplicationType.fromValue(applicationType.toString()));
-            applicationConfigurationDAO.setTransactionName("TransactionName");
+            applicationConfigurationDAO.setTransactionID("TransactionID");
 
             ExecutionConfigurationDAO applicationExecutionDAO = new ExecutionConfigurationDAO();
-            applicationExecutionDAO.setURI("eu.nimble.service.bp.application.UBLDataAdapterApplication");
+            applicationExecutionDAO.setURI("eu.nimble.service.bp.application.ubl.UBLDataAdapterApplication");
             applicationExecutionDAO.setType(ApplicationExecutionType.JAVA);
             applicationConfigurationDAO.setExecution(applicationExecutionDAO);
         }

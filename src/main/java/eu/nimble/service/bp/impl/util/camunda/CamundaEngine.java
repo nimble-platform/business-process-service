@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package eu.nimble.service.bp.impl.util;
+package eu.nimble.service.bp.impl.util.camunda;
 
 import eu.nimble.service.bp.swagger.model.Process;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
@@ -13,13 +13,11 @@ import eu.nimble.utility.XMLUtility;
 import org.camunda.bpm.engine.*;
 import org.camunda.bpm.engine.repository.ProcessDefinition;
 import org.camunda.bpm.engine.task.Task;
-import org.camunda.bpm.model.bpmn.Bpmn;
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.xml.transform.dom.DOMSource;
-import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -120,9 +118,8 @@ public class CamundaEngine {
 		return data;
 	}
 
-	public static void addProcessDefinition(Process body) {
-		String bpmnContent = body.getBpmnContent();
-		repositoryService.createDeployment().addString(body.getProcessID()+".bpmn", bpmnContent).deploy();
+	public static void addProcessDefinition(String processID, String bpmnContent) {
+		repositoryService.createDeployment().addString(processID +".bpmn", bpmnContent).deploy();
 		//getProcessDefinitions();
 	}
 
@@ -137,8 +134,8 @@ public class CamundaEngine {
 		return process;
 	}
 
-	public static void updateProcessDefinition(Process body) {
-		deleteProcessDefinition(body.getProcessID());
-		addProcessDefinition(body);
+	public static void updateProcessDefinition(String processID, String bpmnContent) {
+		deleteProcessDefinition(processID);
+		addProcessDefinition(processID, bpmnContent);
 	}
 }

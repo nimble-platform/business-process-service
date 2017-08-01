@@ -11,6 +11,23 @@
 			<xsd:element name="processOrder" type="ProcessType" maxOccurs="unbounded"/>
 		</xsd:sequence>
 	</xsd:complexType>
+	<xsd:complexType name="ProcessDAO">
+		<xsd:sequence>
+			<xsd:element name="processID" type="xsd:string"/>
+			<xsd:element name="processName" type="xsd:string"/>
+			<xsd:element name="textContent" type="xsd:string"/>
+			<xsd:element name="processType" type="ProcessType"/>
+			<xsd:element name="transactions" type="TransactionDAO" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="TransactionDAO">
+		<xsd:sequence>
+			<xsd:element name="transactionID" type="xsd:string"/>
+			<xsd:element name="initiatorID" type="xsd:string"/>
+			<xsd:element name="responderID" type="xsd:string"/>
+			<xsd:element name="documentType" type="DocumentType"/>
+		</xsd:sequence>
+	</xsd:complexType>
 	<xsd:simpleType name="ProcessType">
 		<xsd:restriction base="xsd:token">
 			<xsd:enumeration value="CATALOGUE"/>
@@ -47,8 +64,7 @@
 	<xsd:complexType name="ApplicationConfigurationDAO">
 		<xsd:sequence>
 			<xsd:element name="activityID" type="xsd:string"/>
-			<xsd:element name="name" type="xsd:string"/>
-			<xsd:element name="transactionName" type="xsd:string"/>
+			<xsd:element name="transactionID" type="xsd:string"/>
 			<xsd:element name="type" type="ApplicationType"/>
 			<xsd:element name="execution" type="ExecutionConfigurationDAO"/>
 		</xsd:sequence>

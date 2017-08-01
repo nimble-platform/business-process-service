@@ -1,8 +1,8 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.hyperjaxb.model.ProcessPreferencesDAO;
-import eu.nimble.service.bp.impl.util.DAOUtility;
-import eu.nimble.service.bp.impl.util.HibernateSwaggerObjectMapper;
+import eu.nimble.service.bp.impl.util.persistence.DAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.swagger.api.PreferenceApi;
 import eu.nimble.service.bp.swagger.model.ProcessPreferences;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
@@ -42,7 +42,12 @@ public class PreferenceController implements PreferenceApi {
     public ResponseEntity<ProcessPreferences> getProcessPartnerPreference(@PathVariable("partnerID") String partnerID) {
         logger.info(" $$$ Getting ProcessPreferences for ... {}", partnerID);
         ProcessPreferencesDAO businessProcessPreferencesDAO = DAOUtility.getProcessPreferencesDAOByPartnerID(partnerID);
-        ProcessPreferences businessProcessPreferences = HibernateSwaggerObjectMapper.createProcessPreferences(businessProcessPreferencesDAO);
+        ProcessPreferences businessProcessPreferences = null;
+        if(businessProcessPreferencesDAO == null) {
+            businessProcessPreferences = HibernateSwaggerObjectMapper.createDefaultProcessPreferences();
+        } else {
+            businessProcessPreferences = HibernateSwaggerObjectMapper.createProcessPreferences(businessProcessPreferencesDAO);
+        }
 
         return new ResponseEntity<>(businessProcessPreferences, HttpStatus.OK);
     }
