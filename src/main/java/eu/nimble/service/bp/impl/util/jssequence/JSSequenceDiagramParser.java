@@ -12,6 +12,7 @@ public class JSSequenceDiagramParser {
     private String processName;
     private Process.ProcessTypeEnum processType;
     private String bpmnContent;
+    private String diagramContent;
     private int flowCount = 0;
     private List<Transaction> transactions; // create this
 
@@ -45,6 +46,12 @@ public class JSSequenceDiagramParser {
                 "\t\t<bpmn:startEvent id=\"StartEvent\">\n" +
                 "\t\t\t<bpmn:outgoing>Flow" + (++flowCount) + "</bpmn:outgoing>\n" +
                 "\t\t</bpmn:startEvent>\n";
+
+        diagramContent = "\t<bpmndi:BPMNDiagram id=\"BPMNDiagram\">\n" +
+                "\t\t<bpmndi:BPMNPlane id=\"BPMNPlane\" bpmnElement=\"Order\">\n" +
+                "\t\t\t<bpmndi:BPMNShape id=\"StartEventShape\" bpmnElement=\"StartEvent\">\n" +
+                "\t\t\t\t<dc:Bounds x=\"100\" y=\"200\" width=\"50\" height=\"50\" />\n" +
+                "\t\t\t</bpmndi:BPMNShape>\n";
     }
 
     public String getBPMNContent() {
@@ -57,6 +64,8 @@ public class JSSequenceDiagramParser {
         String[] lines = content.split("\n");
         String normalizedDocumentName = "";
         String lastTaskID = "StartEvent";
+        int xIndex = 150;
+
         for (String line : lines) {
 
             if (line.startsWith("Title")) {
@@ -80,6 +89,16 @@ public class JSSequenceDiagramParser {
                         "\t\t\t<bpmn:outgoing>Flow" + (++flowCount) + "</bpmn:outgoing>\n" +
                         "\t\t</bpmn:userTask>\n";
 
+                diagramContent += "<bpmndi:BPMNEdge id=\"Flow" + (flowCount - 1) + "Shape\" bpmnElement=\"Flow" + (flowCount - 1) + "\">\n" +
+                        "\t\t\t\t<di:waypoint xsi:type=\"dc:Point\" x=\"" + xIndex + "\" y=\"225\" />\n" +
+                        "\t\t\t\t<di:waypoint xsi:type=\"dc:Point\" x=\"" + (xIndex + 50) + "\" y=\"225\" />\n" +
+                        "\t\t\t</bpmndi:BPMNEdge>\n" +
+                        "\t\t\t<bpmndi:BPMNShape id=\"" + lastTaskID + "Shape\" bpmnElement=\"" + lastTaskID + "\">\n" +
+                        "\t\t\t\t<dc:Bounds x=\"" + (xIndex + 50) + "\" y=\"185\" width=\"100\" height=\"80\" />\n" +
+                        "\t\t\t</bpmndi:BPMNShape>\n";
+
+                xIndex += 150;
+
             } else if (line.contains("->")) {
                 String[] parts = line.split(":");
                 String documentName = parts[1].trim();
@@ -92,7 +111,7 @@ public class JSSequenceDiagramParser {
                 Transaction transaction = new Transaction();
                 transaction.setInitiatorID(initiator);
                 transaction.setResponderID(responder);
-                transaction.setDocumentType(Transaction.DocumentTypeEnum.valueOf(normalizedDocumentName));
+                transaction.setDocumentType(Transaction.DocumentTypeEnum.valueOf(normalizedDocumentName.toUpperCase()));
                 transaction.setTransactionID(normalizedDocumentName);
                 transactions.add(transaction);
 
@@ -112,6 +131,29 @@ public class JSSequenceDiagramParser {
                         "\t\t\t<bpmn:outgoing>Flow" + (++flowCount) + "</bpmn:outgoing>\n" +
                         "\t\t</bpmn:serviceTask>\n";
 
+                diagramContent += "\t\t\t<bpmndi:BPMNEdge id=\"Flow" + (flowCount - 3) + "Shape\" bpmnElement=\"Flow" + (flowCount - 3) + "\">\n" +
+                        "\t\t\t\t<di:waypoint xsi:type=\"dc:Point\" x=\"" + xIndex + "\" y=\"225\" />\n" +
+                        "\t\t\t\t<di:waypoint xsi:type=\"dc:Point\" x=\"" + (xIndex + 50) + "\" y=\"225\" />\n" +
+                        "\t\t\t</bpmndi:BPMNEdge>\n" +
+                        "\t\t\t<bpmndi:BPMNShape id=\"Create" + normalizedDocumentName + "DocumentShape\" bpmnElement=\"Create" + normalizedDocumentName + "Document\">\n" +
+                        "\t\t\t\t<dc:Bounds x=\"" + (xIndex + 50) + "\" y=\"185\" width=\"100\" height=\"80\" />\n" +
+                        "\t\t\t</bpmndi:BPMNShape>\n" +
+                        "\t\t\t<bpmndi:BPMNEdge id=\"Flow" + (flowCount - 2) + "Shape\" bpmnElement=\"Flow" + (flowCount - 2) + "\">\n" +
+                        "\t\t\t\t<di:waypoint xsi:type=\"dc:Point\" x=\"" + (xIndex + 150) + "\" y=\"225\" />\n" +
+                        "\t\t\t\t<di:waypoint xsi:type=\"dc:Point\" x=\"" + (xIndex + 200) + "\" y=\"225\" />\n" +
+                        "\t\t\t</bpmndi:BPMNEdge>\n" +
+                        "\t\t\t<bpmndi:BPMNShape id=\"Process" + normalizedDocumentName + "DocumentShape\" bpmnElement=\"Process" + normalizedDocumentName + "Document\">\n" +
+                        "\t\t\t\t<dc:Bounds x=\"" + (xIndex + 200) + "\" y=\"185\" width=\"100\" height=\"80\" />\n" +
+                        "\t\t\t</bpmndi:BPMNShape>\n" +
+                        "\t\t\t<bpmndi:BPMNEdge id=\"Flow" + (flowCount - 1) + "Shape\" bpmnElement=\"Flow" + (flowCount - 1) + "\">\n" +
+                        "\t\t\t\t<di:waypoint xsi:type=\"dc:Point\" x=\"" + (xIndex + 300) + "\" y=\"225\" />\n" +
+                        "\t\t\t\t<di:waypoint xsi:type=\"dc:Point\" x=\"" + (xIndex + 350) + "\" y=\"225\" />\n" +
+                        "\t\t\t</bpmndi:BPMNEdge>\n" +
+                        "\t\t\t<bpmndi:BPMNShape id=\"Send" + normalizedDocumentName + "Documentto"+responder+"Shape\" bpmnElement=\"Send" + normalizedDocumentName + "Documentto"+responder+"\">\n" +
+                        "\t\t\t\t<dc:Bounds x=\"" + (xIndex + 350) + "\" y=\"185\" width=\"100\" height=\"80\" />\n" +
+                        "\t\t\t</bpmndi:BPMNShape>\n";
+
+                xIndex += 450;
                 lastTaskID = "Send" + normalizedDocumentName + "Documentto" + responder;
             }
         }
@@ -120,7 +162,18 @@ public class JSSequenceDiagramParser {
                 "\t\t<bpmn:endEvent id=\"EndEvent\">\n" +
                 "\t\t\t<bpmn:incoming>Flow" + flowCount + "</bpmn:incoming>\n" +
                 "\t\t</bpmn:endEvent>\n" +
-                "\t</bpmn:process>\n" +
+                "\t</bpmn:process>\n";
+
+        diagramContent += "<bpmndi:BPMNEdge id=\"Flow" + flowCount + "Shape\" bpmnElement=\"Flow" + flowCount + "\">\n" +
+                "\t\t\t\t<di:waypoint xsi:type=\"dc:Point\" x=\"" + xIndex + "\" y=\"225\" />\n" +
+                "\t\t\t\t<di:waypoint xsi:type=\"dc:Point\" x=\"" + (xIndex + 50) + "\" y=\"225\" />\n" +
+                "\t\t\t</bpmndi:BPMNEdge>\n" +
+                "\t\t\t<bpmndi:BPMNShape id=\"EndEventShape\" bpmnElement=\"EndEvent\">\n" +
+                "\t\t\t\t<dc:Bounds x=\"" + (xIndex + 50) + "\" y=\"200\" width=\"50\" height=\"50\" />\n" +
+                "\t\t\t</bpmndi:BPMNShape>\n" +
+                "\t\t</bpmndi:BPMNPlane>\n" +
+                "\t</bpmndi:BPMNDiagram>\n";
+        bpmnContent += diagramContent +
                 "</bpmn:definitions>";
     }
 
@@ -128,7 +181,7 @@ public class JSSequenceDiagramParser {
         String text = "Title: ORDER\n" +
                 "Buyer -> Seller: Order\n" +
                 "Note right of Seller: Evaluate Order\n" +
-                "Seller -> Buyer: Order Response";
+                "Seller -> Buyer: Order Response Simple";
 
         Process process = new Process();
         process.setTextContent(text);
