@@ -57,7 +57,7 @@
 	</xsd:simpleType>
 	<xsd:complexType name="ExecutionConfigurationDAO">
 		<xsd:sequence>
-			<xsd:element name="type" type="ApplicationExecutionType"/>
+			<xsd:element name="executionType" type="ApplicationExecutionType"/>
 			<xsd:element name="URI" type="xsd:string"/>
 		</xsd:sequence>
 	</xsd:complexType>
@@ -70,9 +70,9 @@
 	</xsd:simpleType>
 	<xsd:complexType name="ApplicationConfigurationDAO">
 		<xsd:sequence>
-			<xsd:element name="activityID" type="xsd:string"/>
 			<xsd:element name="transactionID" type="xsd:string"/>
-			<xsd:element name="type" type="ApplicationType"/>
+			<xsd:element name="roleType" type="RoleType"/>
+			<xsd:element name="applicationType" type="ApplicationType"/>
 			<xsd:element name="execution" type="ExecutionConfigurationDAO"/>
 		</xsd:sequence>
 	</xsd:complexType>

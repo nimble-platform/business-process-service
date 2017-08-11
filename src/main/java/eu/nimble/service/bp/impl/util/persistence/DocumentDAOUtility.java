@@ -25,7 +25,7 @@ import java.util.List;
  */
 public class DocumentDAOUtility {
     private static Logger logger = LoggerFactory.getLogger(DocumentDAOUtility.class);
-    public static ExecutionConfiguration getExecutionConfiguration(String partnerID, String processID, ApplicationConfiguration.TypeEnum applicationType) {
+    public static ExecutionConfiguration getExecutionConfiguration(String partnerID, String processID, ApplicationConfiguration.ApplicationTypeEnum applicationType) {
         String processKey = ProcessEngines.getDefaultProcessEngine().getRepositoryService().getProcessDefinition(processID).getKey();
 
         ApplicationConfigurationDAO applicationConfigurationDAO = null;
@@ -35,7 +35,7 @@ public class DocumentDAOUtility {
         if (processConfigurations != null) { // it is configured
             List<ApplicationConfigurationDAO> configurations = processConfigurations.getApplicationConfigurations();
             for (ApplicationConfigurationDAO configuration : configurations) {
-                if (configuration.getType().value().equals(
+                if (configuration.getApplicationType().value().equals(
                         applicationType.toString()
                 )) {
                     applicationConfigurationDAO = configuration;
@@ -44,13 +44,14 @@ public class DocumentDAOUtility {
             }
         } else { // it is not configured by the partner
             applicationConfigurationDAO = new ApplicationConfigurationDAO();
-            applicationConfigurationDAO.setActivityID("ActivityID");
-            applicationConfigurationDAO.setType(ApplicationType.fromValue(applicationType.toString()));
+            // TODO: Retrieve it from the identity service or context
+            applicationConfigurationDAO.setRoleType(RoleType.BUYER);
+            applicationConfigurationDAO.setApplicationType(ApplicationType.fromValue(applicationType.toString()));
             applicationConfigurationDAO.setTransactionID("TransactionID");
 
             ExecutionConfigurationDAO applicationExecutionDAO = new ExecutionConfigurationDAO();
             applicationExecutionDAO.setURI("eu.nimble.service.bp.application.ubl.UBLDataAdapterApplication");
-            applicationExecutionDAO.setType(ApplicationExecutionType.JAVA);
+            applicationExecutionDAO.setExecutionType(ApplicationExecutionType.JAVA);
             applicationConfigurationDAO.setExecution(applicationExecutionDAO);
         }
 

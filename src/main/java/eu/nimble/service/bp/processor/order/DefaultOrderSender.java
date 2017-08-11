@@ -42,19 +42,19 @@ public class DefaultOrderSender  implements JavaDelegate {
         // get application execution configuration
         ExecutionConfiguration executionConfiguration = DocumentDAOUtility.getExecutionConfiguration(buyer,
                 execution.getProcessInstance().getProcessDefinitionId(),
-                ApplicationConfiguration.TypeEnum.DATACHANNEL);
+                ApplicationConfiguration.ApplicationTypeEnum.DATACHANNEL);
         String applicationURI = executionConfiguration.getURI();
-        ExecutionConfiguration.TypeEnum executionType = executionConfiguration.getType();
+        ExecutionConfiguration.ExecutionTypeEnum executionType = executionConfiguration.getExecutionType();
 
         // Call that configured application with the variables
-        if(executionType == ExecutionConfiguration.TypeEnum.JAVA) {
+        if(executionType == ExecutionConfiguration.ExecutionTypeEnum.JAVA) {
             Class applicationClass = Class.forName(applicationURI);
             Object instance = applicationClass.newInstance();
 
             IBusinessProcessApplication businessProcessApplication = (IBusinessProcessApplication) instance;
 
             businessProcessApplication.sendDocument(processInstanceId, buyer, seller, order);
-        } else if(executionType == ExecutionConfiguration.TypeEnum.MICROSERVICE) {
+        } else if(executionType == ExecutionConfiguration.ExecutionTypeEnum.MICROSERVICE) {
             // TODO: How to call a microservice
         } else {
             // TODO: think other types of execution possibilities

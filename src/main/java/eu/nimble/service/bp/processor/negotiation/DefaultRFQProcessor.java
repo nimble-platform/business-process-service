@@ -39,19 +39,19 @@ public class DefaultRFQProcessor implements JavaDelegate {
 
         // get application execution configuration
         ExecutionConfiguration executionConfiguration = DocumentDAOUtility.getExecutionConfiguration(buyer, execution.getProcessInstance().getProcessDefinitionId(),
-                ApplicationConfiguration.TypeEnum.DATAPROCESSOR);
+                ApplicationConfiguration.ApplicationTypeEnum.DATAPROCESSOR);
         String applicationURI = executionConfiguration.getURI();
-        ExecutionConfiguration.TypeEnum executionType = executionConfiguration.getType();
+        ExecutionConfiguration.ExecutionTypeEnum executionType = executionConfiguration.getExecutionType();
 
         // Call that configured application with the variables
-        if(executionType == ExecutionConfiguration.TypeEnum.JAVA) {
+        if(executionType == ExecutionConfiguration.ExecutionTypeEnum.JAVA) {
             Class applicationClass = Class.forName(applicationURI);
             Object instance = applicationClass.newInstance();
 
             IBusinessProcessApplication businessProcessApplication = (IBusinessProcessApplication) instance;
 
             businessProcessApplication.saveDocument(processInstanceId, buyer, seller, requestForQuotation);
-        } else if(executionType == ExecutionConfiguration.TypeEnum.MICROSERVICE) {
+        } else if(executionType == ExecutionConfiguration.ExecutionTypeEnum.MICROSERVICE) {
             // TODO: How to call a microservice
         } else {
             // TODO: think other types of execution possibilities

@@ -27,12 +27,12 @@ public class HibernateSwaggerObjectMapper {
         List<ApplicationConfiguration> applicationConfigurations = body.getApplicationConfigurations();
         for (ApplicationConfiguration applicationConfiguration : applicationConfigurations) {
             ApplicationConfigurationDAO applicationConfigurationDAO = new ApplicationConfigurationDAO();
-            applicationConfigurationDAO.setActivityID(applicationConfiguration.getActivityID());
-            applicationConfigurationDAO.setType(ApplicationType.fromValue(applicationConfiguration.getType().toString()));
+            applicationConfigurationDAO.setRoleType(RoleType.fromValue(applicationConfiguration.getRoleType().toString()));
+            applicationConfigurationDAO.setApplicationType(ApplicationType.fromValue(applicationConfiguration.getApplicationType().toString()));
             applicationConfigurationDAO.setTransactionID(applicationConfiguration.getTransactionID());
 
             ExecutionConfigurationDAO executionConfigurationDAO = new ExecutionConfigurationDAO();
-            executionConfigurationDAO.setType(ApplicationExecutionType.fromValue(applicationConfiguration.getExecution().getType().toString()));
+            executionConfigurationDAO.setExecutionType(ApplicationExecutionType.fromValue(applicationConfiguration.getExecution().getExecutionType().toString()));
             executionConfigurationDAO.setURI(applicationConfiguration.getExecution().getURI());
             applicationConfigurationDAO.setExecution(executionConfigurationDAO);
 
@@ -94,13 +94,13 @@ public class HibernateSwaggerObjectMapper {
 
     public static ApplicationConfiguration createApplicationConfiguration(ApplicationConfigurationDAO applicationConfigurationDAO) {
         ApplicationConfiguration applicationConfiguration = new ApplicationConfiguration();
-        applicationConfiguration.setActivityID(applicationConfigurationDAO.getActivityID());
+        applicationConfiguration.setRoleType(ApplicationConfiguration.RoleTypeEnum.valueOf(applicationConfigurationDAO.getRoleType().value()));
         applicationConfiguration.setTransactionID(applicationConfigurationDAO.getTransactionID());
-        applicationConfiguration.setType(ApplicationConfiguration.TypeEnum.valueOf(applicationConfigurationDAO.getType().value()));
+        applicationConfiguration.setApplicationType(ApplicationConfiguration.ApplicationTypeEnum.valueOf(applicationConfigurationDAO.getApplicationType().value()));
 
         ExecutionConfiguration executionConfiguration = new ExecutionConfiguration();
         executionConfiguration.setURI(applicationConfigurationDAO.getExecution().getURI());
-        executionConfiguration.setType(ExecutionConfiguration.TypeEnum.valueOf(applicationConfigurationDAO.getExecution().getType().value()));
+        executionConfiguration.setExecutionType(ExecutionConfiguration.ExecutionTypeEnum.valueOf(applicationConfigurationDAO.getExecution().getExecutionType().value()));
 
         applicationConfiguration.setExecution(executionConfiguration);
 

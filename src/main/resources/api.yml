@@ -569,7 +569,7 @@ definitions:
     title: Execution Configuration Object
     type: object
     properties:
-      type:
+      executionType:
         type: string
         enum:
         - JAVA
@@ -582,12 +582,16 @@ definitions:
     title: Application Configuration Object for each activity in a business process
     type: object
     properties:
-      activityID:
-        type: string
       transactionID:
         type: string
         description: The transaction where the activity exist
-      type:
+      roleType:
+        type: string
+        enum:
+        - BUYER
+        - SELLER
+        - LOGISTICSPROVIDER
+      applicationType:
         type: string
         enum:
         - DATAADAPTER

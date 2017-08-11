@@ -53,26 +53,26 @@ public class TestObjectFactory {
         configurations.setProcessID(processID);
 
         ExecutionConfiguration execution = new ExecutionConfiguration();
-        execution.setType(ExecutionConfiguration.TypeEnum.JAVA);
+        execution.setExecutionType(ExecutionConfiguration.ExecutionTypeEnum.JAVA);
         execution.setURI("eu.nimble.service.EndUserDatabaseService");
 
         ApplicationConfiguration configuration = new ApplicationConfiguration();
         configuration.setExecution(execution);
-        configuration.setType(ApplicationConfiguration.TypeEnum.DATAADAPTER);
+        configuration.setApplicationType(ApplicationConfiguration.ApplicationTypeEnum.DATAADAPTER);
         configuration.setTransactionID("Create Order");
-        configuration.setActivityID("Create Order 1387");
+        configuration.setRoleType(ApplicationConfiguration.RoleTypeEnum.BUYER);
 
         configurations.getApplicationConfigurations().add(configuration);
 
         execution = new ExecutionConfiguration();
-        execution.setType(ExecutionConfiguration.TypeEnum.JAVA);
+        execution.setExecutionType(ExecutionConfiguration.ExecutionTypeEnum.JAVA);
         execution.setURI("eu.nimble.service.EndUserChannelService");
 
         configuration = new ApplicationConfiguration();
         configuration.setExecution(execution);
-        configuration.setType(ApplicationConfiguration.TypeEnum.DATACHANNEL);
+        configuration.setApplicationType(ApplicationConfiguration.ApplicationTypeEnum.DATACHANNEL);
         configuration.setTransactionID("Send Order");
-        configuration.setActivityID("Send Order 1387");
+        configuration.setRoleType(ApplicationConfiguration.RoleTypeEnum.BUYER);
 
         configurations.getApplicationConfigurations().add(configuration);
 
@@ -81,7 +81,7 @@ public class TestObjectFactory {
 
     public static ProcessApplicationConfigurations updateProcessApplicationConfigurations() {
         ProcessApplicationConfigurations configurations = createProcessApplicationConfigurations();
-        configurations.getApplicationConfigurations().get(0).setActivityID("Create Order 1388");
+        configurations.getApplicationConfigurations().get(0).setRoleType(ApplicationConfiguration.RoleTypeEnum.SELLER);
 
         return configurations;
     }

@@ -41,12 +41,12 @@ public class DefaultOrderResponseProcessor  implements JavaDelegate {
         // get application execution configuration
         ExecutionConfiguration executionConfiguration = DocumentDAOUtility.getExecutionConfiguration(seller,
                 execution.getProcessInstance().getProcessDefinitionId(),
-                ApplicationConfiguration.TypeEnum.DATAPROCESSOR);
+                ApplicationConfiguration.ApplicationTypeEnum.DATAPROCESSOR);
         String applicationURI = executionConfiguration.getURI();
-        ExecutionConfiguration.TypeEnum executionType = executionConfiguration.getType();
+        ExecutionConfiguration.ExecutionTypeEnum executionType = executionConfiguration.getExecutionType();
 
         // Call that configured application with the variables
-        if(executionType == ExecutionConfiguration.TypeEnum.JAVA) {
+        if(executionType == ExecutionConfiguration.ExecutionTypeEnum.JAVA) {
             Class applicationClass = Class.forName(applicationURI);
             Object instance = applicationClass.newInstance();
 
@@ -54,7 +54,7 @@ public class DefaultOrderResponseProcessor  implements JavaDelegate {
 
             // NOTE: Pay attention to the direction of the document. Here it is from seller to buyer
             businessProcessApplication.saveDocument(processInstanceId, seller, buyer, orderResponse);
-        } else if(executionType == ExecutionConfiguration.TypeEnum.MICROSERVICE) {
+        } else if(executionType == ExecutionConfiguration.ExecutionTypeEnum.MICROSERVICE) {
             // TODO: How to call a microservice
         } else {
             // TODO: think other types of execution possibilities
