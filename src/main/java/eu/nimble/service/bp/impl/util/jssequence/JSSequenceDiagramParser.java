@@ -105,12 +105,12 @@ public class JSSequenceDiagramParser {
                 normalizedDocumentName = documentName.replaceAll(" ", "").trim();
 
                 String[] roles = parts[0].split("->");
-                String initiator = roles[0].trim();
-                String responder = roles[1].trim();
+                String initiator = roles[0].trim().toUpperCase();
+                String responder = roles[1].trim().toUpperCase();
 
                 Transaction transaction = new Transaction();
-                transaction.setInitiatorID(initiator);
-                transaction.setResponderID(responder);
+                transaction.setInitiatorRole(Transaction.InitiatorRoleEnum.valueOf(initiator));
+                transaction.setResponderRole(Transaction.ResponderRoleEnum.valueOf(responder));
                 transaction.setDocumentType(Transaction.DocumentTypeEnum.valueOf(normalizedDocumentName.toUpperCase()));
                 transaction.setTransactionID(normalizedDocumentName);
                 transactions.add(transaction);

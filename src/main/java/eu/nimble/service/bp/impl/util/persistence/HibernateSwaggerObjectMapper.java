@@ -195,8 +195,8 @@ public class HibernateSwaggerObjectMapper {
         List<Transaction> transactions = body.getTransactions();
         for(Transaction transaction: transactions) {
             TransactionDAO transactionDAO = new TransactionDAO();
-            transactionDAO.setInitiatorID(transaction.getInitiatorID());
-            transactionDAO.setResponderID(transaction.getResponderID());
+            transactionDAO.setInitiatorRole(RoleType.fromValue(transaction.getInitiatorRole().toString()));
+            transactionDAO.setResponderRole(RoleType.fromValue(transaction.getResponderRole().toString()));
             transactionDAO.setTransactionID(transaction.getTransactionID());
             transactionDAO.setDocumentType(DocumentType.fromValue(transaction.getDocumentType().toString()));
             processDAO.getTransactions().add(transactionDAO);
@@ -216,8 +216,8 @@ public class HibernateSwaggerObjectMapper {
         List<TransactionDAO> transactionsDAO = processDAO.getTransactions();
         for(TransactionDAO transactionDAO: transactionsDAO) {
             Transaction transaction = new Transaction();
-            transaction.setInitiatorID(transactionDAO.getInitiatorID());
-            transaction.setResponderID(transactionDAO.getResponderID());
+            transaction.setInitiatorRole(Transaction.InitiatorRoleEnum.valueOf(transactionDAO.getInitiatorRole().value()));
+            transaction.setResponderRole(Transaction.ResponderRoleEnum.valueOf(transactionDAO.getResponderRole().value()));
             transaction.setTransactionID(transactionDAO.getTransactionID());
             transaction.setDocumentType(Transaction.DocumentTypeEnum.valueOf(transactionDAO.getDocumentType().value()));
             process.getTransactions().add(transaction);

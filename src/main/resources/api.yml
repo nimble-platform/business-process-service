@@ -508,10 +508,18 @@ definitions:
     properties:
       transactionID:
         type: string
-      initiatorID:
+      initiatorRole:
         type: string
-      responderID:
+        enum:
+        - BUYER
+        - SELLER
+        - LOGISTICSPROVIDER
+      responderRole:
         type: string
+        enum:
+        - BUYER
+        - SELLER
+        - LOGISTICSPROVIDER
       documentType:
         type: string
         enum:

@@ -23,8 +23,8 @@
 	<xsd:complexType name="TransactionDAO">
 		<xsd:sequence>
 			<xsd:element name="transactionID" type="xsd:string"/>
-			<xsd:element name="initiatorID" type="xsd:string"/>
-			<xsd:element name="responderID" type="xsd:string"/>
+			<xsd:element name="initiatorRole" type="RoleType"/>
+			<xsd:element name="responderRole" type="RoleType"/>
 			<xsd:element name="documentType" type="DocumentType"/>
 		</xsd:sequence>
 	</xsd:complexType>
@@ -39,6 +39,13 @@
 			<xsd:enumeration value="FULFILLMENT"/>
 			<xsd:enumeration value="PRODUCTCONFIGURATION"/>
 			<xsd:enumeration value="OTHER"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="RoleType">
+		<xsd:restriction base="xsd:token">
+			<xsd:enumeration value="BUYER"/>
+			<xsd:enumeration value="SELLER"/>
+			<xsd:enumeration value="LOGISTICSPROVIDER"/>
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="ApplicationExecutionType">
