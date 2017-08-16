@@ -2,9 +2,7 @@ package eu.nimble.service.bp.impl.util.persistence;
 
 
 import eu.nimble.service.bp.hyperjaxb.model.*;
-import eu.nimble.service.bp.swagger.model.ApplicationConfiguration;
-import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
-import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
+import eu.nimble.service.bp.swagger.model.*;
 import eu.nimble.service.model.ubl.catalogue.CatalogueType;
 import eu.nimble.service.model.ubl.despatchadvice.DespatchAdviceType;
 import eu.nimble.service.model.ubl.order.OrderType;
@@ -25,38 +23,41 @@ import java.util.List;
  */
 public class DocumentDAOUtility {
     private static Logger logger = LoggerFactory.getLogger(DocumentDAOUtility.class);
-    public static ExecutionConfiguration getExecutionConfiguration(String partnerID, String processID, ApplicationConfiguration.ApplicationTypeEnum applicationType) {
+    public static ExecutionConfiguration getExecutionConfiguration(String partnerID, String processID, ProcessConfiguration.RoleTypeEnum roleType, String transactionID, ExecutionConfiguration.ApplicationTypeEnum applicationType) {
         String processKey = ProcessEngines.getDefaultProcessEngine().getRepositoryService().getProcessDefinition(processID).getKey();
 
-        ApplicationConfigurationDAO applicationConfigurationDAO = null;
+        TransactionConfigurationDAO transactionConfigurationDAO = null;
+        ExecutionConfigurationDAO executionConfigurationDAO = null;
         // Get buyer order application preference for data adapter
-        ProcessApplicationConfigurationsDAO processConfigurations = DAOUtility.getProcessApplicationConfigurationsDAOByPartnerID(partnerID, processKey);
+        ProcessConfigurationDAO processConfiguration = DAOUtility.getProcessConfiguration(partnerID, processKey, roleType);
 
-        if (processConfigurations != null) { // it is configured
-            List<ApplicationConfigurationDAO> configurations = processConfigurations.getApplicationConfigurations();
-            for (ApplicationConfigurationDAO configuration : configurations) {
-                if (configuration.getApplicationType().value().equals(
-                        applicationType.toString()
-                )) {
-                    applicationConfigurationDAO = configuration;
-                    break;
+        if (processConfiguration != null) { // it is configured
+            List<TransactionConfigurationDAO> configurations = processConfiguration.getTransactionConfigurations();
+            for (TransactionConfigurationDAO configuration : configurations) {
+                if(configuration.getTransactionID().equals(transactionID)) {
+                    transactionConfigurationDAO = configuration;
+                    for (ExecutionConfigurationDAO executionConfiguration : configuration.getExecutionConfigurations()) {
+                        if (executionConfiguration.getApplicationType().value().equals(applicationType.toString())) {
+                            executionConfigurationDAO = executionConfiguration;
+                            break;
+                        }
+                    }
                 }
             }
         } else { // it is not configured by the partner
-            applicationConfigurationDAO = new ApplicationConfigurationDAO();
+            transactionConfigurationDAO = new TransactionConfigurationDAO();
             // TODO: Retrieve it from the identity service or context
-            applicationConfigurationDAO.setRoleType(RoleType.BUYER);
-            applicationConfigurationDAO.setApplicationType(ApplicationType.fromValue(applicationType.toString()));
-            applicationConfigurationDAO.setTransactionID("TransactionID");
+            transactionConfigurationDAO.setTransactionID(transactionID);
 
-            ExecutionConfigurationDAO applicationExecutionDAO = new ExecutionConfigurationDAO();
-            applicationExecutionDAO.setURI("eu.nimble.service.bp.application.ubl.UBLDataAdapterApplication");
-            applicationExecutionDAO.setExecutionType(ApplicationExecutionType.JAVA);
-            applicationConfigurationDAO.setExecution(applicationExecutionDAO);
+            executionConfigurationDAO = new ExecutionConfigurationDAO();
+            executionConfigurationDAO.setExecutionUri("eu.nimble.service.bp.application.ubl.UBLDataAdapterApplication");
+            executionConfigurationDAO.setExecutionType(ApplicationExecutionType.JAVA);
+            executionConfigurationDAO.setApplicationType(ApplicationType.fromValue(applicationType.toString()));
+            transactionConfigurationDAO.getExecutionConfigurations().add(executionConfigurationDAO);
         }
 
-        ApplicationConfiguration applicationConfiguration = HibernateSwaggerObjectMapper.createApplicationConfiguration(applicationConfigurationDAO);
-        return applicationConfiguration.getExecution();
+        ExecutionConfiguration executionConfiguration = HibernateSwaggerObjectMapper.createExecutionConfiguration(executionConfigurationDAO);
+        return executionConfiguration;
     }
 
     public static void addDocumentWithMetadata(ProcessDocumentMetadata documentMetadata, Object document) {

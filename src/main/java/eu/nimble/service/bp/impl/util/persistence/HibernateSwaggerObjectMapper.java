@@ -18,30 +18,6 @@ import java.util.List;
  */
 public class HibernateSwaggerObjectMapper {
 
-    public static ProcessApplicationConfigurationsDAO createProcessApplicationConfigurations_DAO(ProcessApplicationConfigurations body) {
-        ProcessApplicationConfigurationsDAO processApplicationConfigurationsDAO = new ProcessApplicationConfigurationsDAO();
-
-        processApplicationConfigurationsDAO.setProcessID(body.getProcessID());
-        processApplicationConfigurationsDAO.setPartnerID(body.getPartnerID());
-
-        List<ApplicationConfiguration> applicationConfigurations = body.getApplicationConfigurations();
-        for (ApplicationConfiguration applicationConfiguration : applicationConfigurations) {
-            ApplicationConfigurationDAO applicationConfigurationDAO = new ApplicationConfigurationDAO();
-            applicationConfigurationDAO.setRoleType(RoleType.fromValue(applicationConfiguration.getRoleType().toString()));
-            applicationConfigurationDAO.setApplicationType(ApplicationType.fromValue(applicationConfiguration.getApplicationType().toString()));
-            applicationConfigurationDAO.setTransactionID(applicationConfiguration.getTransactionID());
-
-            ExecutionConfigurationDAO executionConfigurationDAO = new ExecutionConfigurationDAO();
-            executionConfigurationDAO.setExecutionType(ApplicationExecutionType.fromValue(applicationConfiguration.getExecution().getExecutionType().toString()));
-            executionConfigurationDAO.setURI(applicationConfiguration.getExecution().getURI());
-            applicationConfigurationDAO.setExecution(executionConfigurationDAO);
-
-            processApplicationConfigurationsDAO.getApplicationConfigurations().add(applicationConfigurationDAO);
-        }
-
-        return processApplicationConfigurationsDAO;
-    }
-
     public static ProcessPreferencesDAO createProcessPreferences_DAO(ProcessPreferences body) {
         ProcessPreferencesDAO processPreferencesDAO = new ProcessPreferencesDAO();
 
@@ -76,35 +52,6 @@ public class HibernateSwaggerObjectMapper {
 
         processInstanceInputMessageDAO.setVariables(processVariablesDAO);
         return processInstanceInputMessageDAO;
-    }
-
-    public static ProcessApplicationConfigurations createProcessApplicationConfigurations(ProcessApplicationConfigurationsDAO processApplicationConfigurationsDAO) {
-        ProcessApplicationConfigurations processApplicationConfigurations = new ProcessApplicationConfigurations();
-
-        processApplicationConfigurations.setPartnerID(processApplicationConfigurationsDAO.getPartnerID());
-        processApplicationConfigurations.setProcessID(processApplicationConfigurationsDAO.getProcessID());
-        List<ApplicationConfigurationDAO> applicationConfigurationDAOS = processApplicationConfigurationsDAO.getApplicationConfigurations();
-        for (ApplicationConfigurationDAO applicationConfigurationDAO : applicationConfigurationDAOS) {
-            ApplicationConfiguration applicationConfiguration = createApplicationConfiguration(applicationConfigurationDAO);
-            processApplicationConfigurations.getApplicationConfigurations().add(applicationConfiguration);
-        }
-
-        return processApplicationConfigurations;
-    }
-
-    public static ApplicationConfiguration createApplicationConfiguration(ApplicationConfigurationDAO applicationConfigurationDAO) {
-        ApplicationConfiguration applicationConfiguration = new ApplicationConfiguration();
-        applicationConfiguration.setRoleType(ApplicationConfiguration.RoleTypeEnum.valueOf(applicationConfigurationDAO.getRoleType().value()));
-        applicationConfiguration.setTransactionID(applicationConfigurationDAO.getTransactionID());
-        applicationConfiguration.setApplicationType(ApplicationConfiguration.ApplicationTypeEnum.valueOf(applicationConfigurationDAO.getApplicationType().value()));
-
-        ExecutionConfiguration executionConfiguration = new ExecutionConfiguration();
-        executionConfiguration.setURI(applicationConfigurationDAO.getExecution().getURI());
-        executionConfiguration.setExecutionType(ExecutionConfiguration.ExecutionTypeEnum.valueOf(applicationConfigurationDAO.getExecution().getExecutionType().value()));
-
-        applicationConfiguration.setExecution(executionConfiguration);
-
-        return applicationConfiguration;
     }
 
     public static ProcessPreferences createProcessPreferences(ProcessPreferencesDAO processPreferencesDAO) {
@@ -224,5 +171,60 @@ public class HibernateSwaggerObjectMapper {
         }
 
         return process;
+    }
+
+    public static ExecutionConfiguration createExecutionConfiguration(ExecutionConfigurationDAO executionConfigurationDAO) {
+        ExecutionConfiguration executionConfiguration = new ExecutionConfiguration();
+        executionConfiguration.setExecutionUri(executionConfigurationDAO.getExecutionUri());
+        executionConfiguration.setExecutionType(ExecutionConfiguration.ExecutionTypeEnum.valueOf(executionConfigurationDAO.getExecutionType().value()));
+        executionConfiguration.setApplicationType(ExecutionConfiguration.ApplicationTypeEnum.valueOf(executionConfigurationDAO.getApplicationType().value()));
+        return executionConfiguration;
+    }
+
+    public static ProcessConfigurationDAO createProcessConfiguration_DAO(ProcessConfiguration body) {
+        ProcessConfigurationDAO processConfigurationDAO = new ProcessConfigurationDAO();
+        processConfigurationDAO.setPartnerID(body.getPartnerID());
+        processConfigurationDAO.setProcessID(body.getProcessID());
+        processConfigurationDAO.setRoleType(RoleType.fromValue(body.getRoleType().toString()));
+
+        for(TransactionConfiguration transactionConfiguration : body.getTransactionConfigurations()) {
+            TransactionConfigurationDAO transactionConfigurationDAO = new TransactionConfigurationDAO();
+            transactionConfigurationDAO.setTransactionID(transactionConfiguration.getTransactionID());
+
+            for(ExecutionConfiguration executionConfiguration : transactionConfiguration.getExecutionConfigurations()) {
+                ExecutionConfigurationDAO executionConfigurationDAO = new ExecutionConfigurationDAO();
+                executionConfigurationDAO.setApplicationType(ApplicationType.fromValue(executionConfiguration.getApplicationType().toString()));
+                executionConfigurationDAO.setExecutionType(ApplicationExecutionType.fromValue(executionConfiguration.getExecutionType().toString()));
+                executionConfigurationDAO.setExecutionUri(executionConfiguration.getExecutionUri());
+                transactionConfigurationDAO.getExecutionConfigurations().add(executionConfigurationDAO);
+            }
+            processConfigurationDAO.getTransactionConfigurations().add(transactionConfigurationDAO);
+        }
+
+        return processConfigurationDAO;
+    }
+
+    public static ProcessConfiguration createProcessConfiguration(ProcessConfigurationDAO processConfigurationDAO) {
+        ProcessConfiguration processConfiguration = new ProcessConfiguration();
+        processConfiguration.setPartnerID(processConfigurationDAO.getPartnerID());
+        processConfiguration.setProcessID(processConfigurationDAO.getProcessID());
+        processConfiguration.setRoleType(ProcessConfiguration.RoleTypeEnum.valueOf(processConfigurationDAO.getRoleType().value()));
+
+        for(TransactionConfigurationDAO transactionConfigurationDAO : processConfigurationDAO.getTransactionConfigurations()) {
+            TransactionConfiguration transactionConfiguration = new TransactionConfiguration();
+            transactionConfiguration.setTransactionID(transactionConfigurationDAO.getTransactionID());
+
+            for(ExecutionConfigurationDAO executionConfigurationDAO : transactionConfigurationDAO.getExecutionConfigurations()) {
+                ExecutionConfiguration executionConfiguration = new ExecutionConfiguration();
+                executionConfiguration.setApplicationType(ExecutionConfiguration.ApplicationTypeEnum.valueOf(executionConfigurationDAO.getApplicationType().value()));
+                executionConfiguration.setExecutionType(ExecutionConfiguration.ExecutionTypeEnum.valueOf(executionConfigurationDAO.getExecutionType().value()));
+                executionConfiguration.setExecutionUri(executionConfigurationDAO.getExecutionUri());
+
+                transactionConfiguration.getExecutionConfigurations().add(executionConfiguration);
+            }
+            processConfiguration.getTransactionConfigurations().add(transactionConfiguration);
+        }
+
+        return processConfiguration;
     }
 }

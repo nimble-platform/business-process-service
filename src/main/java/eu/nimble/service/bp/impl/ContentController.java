@@ -33,9 +33,11 @@ public class ContentController implements ContentApi {
         logger.debug(" $$$ {}", body.toString());
 
         String bpmnContent = body.getBpmnContent();
-        if(bpmnContent == null || bpmnContent.trim().equals("")) {
+        if (bpmnContent == null || bpmnContent.trim().equals("")) {
+            logger.info(" $$$ BPMN Content is empty. Hence BPMN is created from the text content...");
             JSSequenceDiagramParser parser = new JSSequenceDiagramParser(body);
             bpmnContent = parser.getBPMNContent();
+            logger.debug(" $$$ Generated BPMN Content: \n {}", bpmnContent);
             body.setTransactions(parser.getTransactions());
         }
 
@@ -54,7 +56,8 @@ public class ContentController implements ContentApi {
         CamundaEngine.deleteProcessDefinition(processID);
 
         ProcessDAO processDAO = DAOUtility.getProcessDAOByID(processID);
-        HibernateUtility.getInstance("bp-data-model").delete(ProcessDAO.class, processDAO.getHjid());
+        if(processDAO != null)
+            HibernateUtility.getInstance("bp-data-model").delete(ProcessDAO.class, processDAO.getHjid());
 
         return HibernateSwaggerObjectMapper.getApiResponse();
     }
@@ -63,12 +66,13 @@ public class ContentController implements ContentApi {
     public ResponseEntity<Process> getProcessDefinition(@PathVariable("processID") String processID) {
         logger.info(" $$$ Getting business process definition for ... {}", processID);
 
-        Process processCamunda = CamundaEngine.getProcessDefinition(processID);  // This will be returned in case of BPMN is requested
-
         ProcessDAO processDAO = DAOUtility.getProcessDAOByID(processID);
-
-        Process process = HibernateSwaggerObjectMapper.createProcess(processDAO);
-        process.setBpmnContent(processCamunda.getBpmnContent());
+        // The process definition is not in the database...
+        Process process = null;
+        if (processDAO != null)
+            process = HibernateSwaggerObjectMapper.createProcess(processDAO);
+        else
+            process = CamundaEngine.getProcessDefinition(processID);
 
         logger.debug(" $$$ Returning process definition {}", process.toString());
         return new ResponseEntity<>(process, HttpStatus.OK);
@@ -78,13 +82,26 @@ public class ContentController implements ContentApi {
     public ResponseEntity<List<Process>> getProcessDefinitions() {
         logger.info(" $$$ Getting business process definitions");
 
-        // The following can be used if all bpmn contents are necessary
-        //List<Process> processes = CamundaEngine.getProcessDefinitions();
+        // first get the ones in the database
         List<ProcessDAO> processDAOs = DAOUtility.getProcessDAOs();
         List<Process> processes = new ArrayList<>();
-        for(ProcessDAO processDAO: processDAOs) {
+        for (ProcessDAO processDAO : processDAOs) {
             Process process = HibernateSwaggerObjectMapper.createProcess(processDAO);
             processes.add(process);
+        }
+        // then get the ones initially loaded
+        List<Process> defaultProcesses = CamundaEngine.getProcessDefinitions();
+        // merge them
+        for(Process defaultProcess: defaultProcesses) {
+            boolean found = false;
+            for(Process process: processes) {
+                if(process.getProcessID().equals(defaultProcess.getProcessID())) {
+                    found = true;
+                    break;
+                }
+            }
+            if(!found)
+                processes.add(defaultProcess);
         }
 
         return new ResponseEntity<>(processes, HttpStatus.OK);
@@ -96,7 +113,8 @@ public class ContentController implements ContentApi {
         logger.debug(" $$$ {}", body.toString());
 
         String bpmnContent = body.getBpmnContent();
-        if(bpmnContent == null || bpmnContent.trim().equals("")) {
+        if (bpmnContent == null || bpmnContent.trim().equals("")) {
+            logger.info(" $$$ BPMN Content is empty. Hence BPMN is created from the text content...");
             JSSequenceDiagramParser parser = new JSSequenceDiagramParser(body);
             bpmnContent = parser.getBPMNContent();
             body.setTransactions(parser.getTransactions());

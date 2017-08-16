@@ -3,8 +3,9 @@ package eu.nimble.service.bp.processor.orderresponse;
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
 import eu.nimble.service.bp.impl.util.persistence.DocumentDAOUtility;
-import eu.nimble.service.bp.swagger.model.ApplicationConfiguration;
+
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
+import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
@@ -38,8 +39,8 @@ public class DefaultOrderResponseCreator  implements JavaDelegate {
 
         // get application execution configuration of the party
         ExecutionConfiguration executionConfiguration = DocumentDAOUtility.getExecutionConfiguration(seller,
-                execution.getProcessInstance().getProcessDefinitionId(), ApplicationConfiguration.ApplicationTypeEnum.DATAADAPTER);
-        String applicationURI = executionConfiguration.getURI();
+                execution.getProcessInstance().getProcessDefinitionId(), ProcessConfiguration.RoleTypeEnum.SELLER, "ORDERRESPONSE", ExecutionConfiguration.ApplicationTypeEnum.DATAADAPTER);
+        String applicationURI = executionConfiguration.getExecutionUri();
         ExecutionConfiguration.ExecutionTypeEnum executionType = executionConfiguration.getExecutionType();
 
         // specify output variables

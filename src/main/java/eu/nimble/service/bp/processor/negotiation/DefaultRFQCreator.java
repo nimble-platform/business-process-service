@@ -3,8 +3,8 @@ package eu.nimble.service.bp.processor.negotiation;
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
 import eu.nimble.service.bp.impl.util.persistence.DocumentDAOUtility;
-import eu.nimble.service.bp.swagger.model.ApplicationConfiguration;
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
+import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
@@ -36,8 +36,8 @@ public class DefaultRFQCreator implements JavaDelegate {
 
         // get application execution configuration
         ExecutionConfiguration executionConfiguration = DocumentDAOUtility.getExecutionConfiguration(buyer,
-                execution.getProcessInstance().getProcessDefinitionId(), ApplicationConfiguration.ApplicationTypeEnum.DATAADAPTER);
-        String applicationURI = executionConfiguration.getURI();
+                execution.getProcessInstance().getProcessDefinitionId(), ProcessConfiguration.RoleTypeEnum.BUYER, "REQUESTFORQUOTATION", ExecutionConfiguration.ApplicationTypeEnum.DATAADAPTER);
+        String applicationURI = executionConfiguration.getExecutionUri();
         ExecutionConfiguration.ExecutionTypeEnum executionType = executionConfiguration.getExecutionType();
 
         // specify output variables

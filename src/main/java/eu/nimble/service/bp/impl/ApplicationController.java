@@ -1,11 +1,11 @@
 package eu.nimble.service.bp.impl;
 
-import eu.nimble.service.bp.hyperjaxb.model.ProcessApplicationConfigurationsDAO;
+import eu.nimble.service.bp.hyperjaxb.model.ProcessConfigurationDAO;
 import eu.nimble.service.bp.impl.util.persistence.DAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.swagger.api.ApplicationApi;
-import eu.nimble.service.bp.swagger.model.ProcessApplicationConfigurations;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
+import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import eu.nimble.utility.HibernateUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,32 +24,33 @@ import java.util.List;
 @Controller
 public class ApplicationController implements ApplicationApi {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
     @Override
-    public ResponseEntity<ModelApiResponse> addProcessPartnerApplicationPreference(@RequestBody ProcessApplicationConfigurations body) {
+    public ResponseEntity<ModelApiResponse> addProcessConfiguration(@RequestBody ProcessConfiguration body) {
         logger.info(" $$$ Adding ProcessApplicationConfigurations: ");
         logger.debug(" $$$ {}", body.toString());
-        ProcessApplicationConfigurationsDAO processApplicationConfigurationsDAO = HibernateSwaggerObjectMapper.createProcessApplicationConfigurations_DAO(body);
-        HibernateUtility.getInstance("bp-data-model").persist(processApplicationConfigurationsDAO);
+        ProcessConfigurationDAO processConfigurationDAO = HibernateSwaggerObjectMapper.createProcessConfiguration_DAO(body);
+        HibernateUtility.getInstance("bp-data-model").persist(processConfigurationDAO);
         return HibernateSwaggerObjectMapper.getApiResponse();
     }
 
     @Override
-    public ResponseEntity<ModelApiResponse> deleteProcessPartnerApplicationPreference(@PathVariable("partnerID") String partnerID, @PathVariable("processID") String processID) {
+    public ResponseEntity<ModelApiResponse> deleteProcessConfiguration(@PathVariable("partnerID") String partnerID, @PathVariable("processID") String processID, @PathVariable("roleType") String roleType) {
         logger.info(" $$$ Deleting ProcessApplicationConfigurations for ... {}", partnerID);
-        ProcessApplicationConfigurationsDAO processApplicationConfigurationsDAO = DAOUtility.getProcessApplicationConfigurationsDAOByPartnerID(partnerID, processID);
-        HibernateUtility.getInstance("bp-data-model").delete(ProcessApplicationConfigurationsDAO.class, processApplicationConfigurationsDAO.getHjid());
+        ProcessConfigurationDAO processConfigurationDAO = DAOUtility.getProcessConfiguration(partnerID, processID, ProcessConfiguration.RoleTypeEnum.valueOf(roleType));
+        HibernateUtility.getInstance("bp-data-model").delete(ProcessConfigurationDAO.class, processConfigurationDAO.getHjid());
         return HibernateSwaggerObjectMapper.getApiResponse();
     }
 
     @Override
-    public ResponseEntity<List<ProcessApplicationConfigurations>> getProcessPartnerApplicationPreference(@PathVariable("partnerID") String partnerID) {
+    public ResponseEntity<List<ProcessConfiguration>> getProcessConfiguration(@PathVariable("partnerID") String partnerID) {
         logger.info(" $$$ Getting ProcessApplicationConfigurations for ... {}", partnerID);
-        List<ProcessApplicationConfigurationsDAO> processApplicationConfigurationsDAO = DAOUtility.getProcessApplicationConfigurationsDAOByPartnerID(partnerID);
+        List<ProcessConfigurationDAO> processApplicationConfigurationsDAO = DAOUtility.getProcessConfigurationDAOByPartnerID(partnerID);
 
-        List<ProcessApplicationConfigurations> processApplicationConfigurations = new ArrayList<>();
+        List<ProcessConfiguration> processApplicationConfigurations = new ArrayList<>();
 
-        for(ProcessApplicationConfigurationsDAO preferenceDAO : processApplicationConfigurationsDAO) {
-            ProcessApplicationConfigurations configurations = HibernateSwaggerObjectMapper.createProcessApplicationConfigurations(preferenceDAO);
+        for(ProcessConfigurationDAO preferenceDAO : processApplicationConfigurationsDAO) {
+            ProcessConfiguration configurations = HibernateSwaggerObjectMapper.createProcessConfiguration(preferenceDAO);
             processApplicationConfigurations.add(configurations);
         }
 
@@ -57,13 +58,28 @@ public class ApplicationController implements ApplicationApi {
     }
 
     @Override
-    public ResponseEntity<ModelApiResponse> updateProcessPartnerApplicationPreference(@RequestBody ProcessApplicationConfigurations body) {
+    public ResponseEntity<ProcessConfiguration> getProcessConfigurationByProcessID(@PathVariable("partnerID") String partnerID, @PathVariable("processID") String processID, @PathVariable("roleType") String roleType) {
+        logger.info(" $$$ Deleting ProcessApplicationConfigurations for ... {}", partnerID);
+        ProcessConfigurationDAO processConfigurationDAO = DAOUtility.getProcessConfiguration(partnerID, processID, ProcessConfiguration.RoleTypeEnum.valueOf(roleType));
+        ProcessConfiguration processConfiguration = null;
+        if(processConfigurationDAO != null)
+            processConfiguration = HibernateSwaggerObjectMapper.createProcessConfiguration(processConfigurationDAO);
+        return new ResponseEntity<>(processConfiguration, HttpStatus.OK);
+    }
+
+    @Override
+    public ResponseEntity<ModelApiResponse> updateProcessConfiguration(@RequestBody ProcessConfiguration body) {
         logger.info(" $$$ Updating ProcessApplicationConfigurations: ");
         logger.debug(" $$$ {}", body.toString());
-        ProcessApplicationConfigurationsDAO processApplicationConfigurationsDAO = DAOUtility.getProcessApplicationConfigurationsDAOByPartnerID(body.getPartnerID(), body.getProcessID());
-        ProcessApplicationConfigurationsDAO processApplicationConfigurationsDAONew = HibernateSwaggerObjectMapper.createProcessApplicationConfigurations_DAO(body);
-        processApplicationConfigurationsDAONew.setHjid(processApplicationConfigurationsDAO.getHjid());
-        HibernateUtility.getInstance("bp-data-model").update(processApplicationConfigurationsDAONew);
+        ProcessConfigurationDAO processApplicationConfigurationsDAO = DAOUtility.getProcessConfiguration(body.getPartnerID(), body.getProcessID(), body.getRoleType());
+        ProcessConfigurationDAO processApplicationConfigurationsDAONew = HibernateSwaggerObjectMapper.createProcessConfiguration_DAO(body);
+
+        if(processApplicationConfigurationsDAO != null) {
+            processApplicationConfigurationsDAONew.setHjid(processApplicationConfigurationsDAO.getHjid());
+            HibernateUtility.getInstance("bp-data-model").update(processApplicationConfigurationsDAONew);
+        } else {
+            HibernateUtility.getInstance("bp-data-model").persist(processApplicationConfigurationsDAONew);
+        }
         return HibernateSwaggerObjectMapper.getApiResponse();
     }
 }

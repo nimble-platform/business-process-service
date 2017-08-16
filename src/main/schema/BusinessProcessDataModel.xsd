@@ -57,8 +57,9 @@
 	</xsd:simpleType>
 	<xsd:complexType name="ExecutionConfigurationDAO">
 		<xsd:sequence>
+			<xsd:element name="applicationType" type="ApplicationType"/>
 			<xsd:element name="executionType" type="ApplicationExecutionType"/>
-			<xsd:element name="URI" type="xsd:string"/>
+			<xsd:element name="executionUri" type="xsd:string"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	<xsd:simpleType name="ApplicationType">
@@ -68,19 +69,18 @@
 			<xsd:enumeration value="DATAPROCESSOR"/>
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:complexType name="ApplicationConfigurationDAO">
+	<xsd:complexType name="TransactionConfigurationDAO">
 		<xsd:sequence>
 			<xsd:element name="transactionID" type="xsd:string"/>
-			<xsd:element name="roleType" type="RoleType"/>
-			<xsd:element name="applicationType" type="ApplicationType"/>
-			<xsd:element name="execution" type="ExecutionConfigurationDAO"/>
+			<xsd:element name="executionConfigurations" type="ExecutionConfigurationDAO" maxOccurs="unbounded"/>
 		</xsd:sequence>
 	</xsd:complexType>
-	<xsd:complexType name="ProcessApplicationConfigurationsDAO">
+	<xsd:complexType name="ProcessConfigurationDAO">
 		<xsd:sequence>
 			<xsd:element name="partnerID" type="xsd:string"/>
+            <xsd:element name="roleType" type="RoleType"/>
 			<xsd:element name="processID" type="xsd:string"/>
-			<xsd:element name="applicationConfigurations" type="ApplicationConfigurationDAO" maxOccurs="unbounded"/>
+			<xsd:element name="transactionConfigurations" type="TransactionConfigurationDAO" maxOccurs="unbounded"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	<xsd:complexType name="ProcessVariablesDAO">

@@ -3,8 +3,8 @@ package eu.nimble.service.bp.processor.negotiation;
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
 import eu.nimble.service.bp.impl.util.persistence.DocumentDAOUtility;
-import eu.nimble.service.bp.swagger.model.ApplicationConfiguration;
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
+import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
@@ -38,9 +38,9 @@ public class DefaultRFQProcessor implements JavaDelegate {
         RequestForQuotationType requestForQuotation = (RequestForQuotationType) variables.get("requestForQuotation");
 
         // get application execution configuration
-        ExecutionConfiguration executionConfiguration = DocumentDAOUtility.getExecutionConfiguration(buyer, execution.getProcessInstance().getProcessDefinitionId(),
-                ApplicationConfiguration.ApplicationTypeEnum.DATAPROCESSOR);
-        String applicationURI = executionConfiguration.getURI();
+        ExecutionConfiguration executionConfiguration = DocumentDAOUtility.getExecutionConfiguration(buyer, execution.getProcessInstance().getProcessDefinitionId(), ProcessConfiguration.RoleTypeEnum.BUYER,"REQUESTFORQUOTATION",
+                ExecutionConfiguration.ApplicationTypeEnum.DATAPROCESSOR);
+        String applicationURI = executionConfiguration.getExecutionUri();
         ExecutionConfiguration.ExecutionTypeEnum executionType = executionConfiguration.getExecutionType();
 
         // Call that configured application with the variables

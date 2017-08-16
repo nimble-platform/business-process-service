@@ -1,7 +1,8 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
-import eu.nimble.service.bp.swagger.model.ProcessApplicationConfigurations;
+
+import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import org.junit.FixMethodOrder;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -46,7 +47,7 @@ public class ApplicationControllerTest {
      */
     @Test
     public void addBusinessProcessPartnerApplicationPreferenceTest() {
-        ProcessApplicationConfigurations body = TestObjectFactory.createProcessApplicationConfigurations();
+        ProcessConfiguration body = TestObjectFactory.createProcessConfiguration();
 
         String url = "http://localhost:" + port +"/application";
 
@@ -96,7 +97,7 @@ public class ApplicationControllerTest {
      */
     @Test
     public void updateBusinessProcessPartnerApplicationPreferenceTest() {
-        ProcessApplicationConfigurations body = TestObjectFactory.updateProcessApplicationConfigurations();
+        ProcessConfiguration body = TestObjectFactory.updateProcessConfiguration();
         restTemplate.put("http://localhost:" + port +"/application", body);
     }
 }

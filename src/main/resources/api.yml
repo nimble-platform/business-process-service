@@ -187,7 +187,7 @@ paths:
   /application:
     post:
       summary: Add a new partner business process application preference
-      operationId: addProcessPartnerApplicationPreference
+      operationId: addProcessConfiguration
       consumes:
       - application/json
       produces:
@@ -197,7 +197,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/ProcessApplicationConfigurations'
+          $ref: '#/definitions/ProcessConfiguration'
       responses:
         # Response code
         200:
@@ -206,7 +206,7 @@ paths:
             $ref: '#/definitions/ApiResponse'
     put:
       description: Update the business process application preference of a partner
-      operationId: updateProcessPartnerApplicationPreference
+      operationId: updateProcessConfiguration
       consumes:
       - application/json
       produces:
@@ -215,7 +215,7 @@ paths:
       - in: body
         name: body
         schema:
-          $ref: '#/definitions/ProcessApplicationConfigurations'
+          $ref: '#/definitions/ProcessConfiguration'
       responses:
         # Response code
         200:
@@ -226,7 +226,7 @@ paths:
   /application/{partnerID}:
     get:
       summary: Get the business process application preferences of a partner for all processes
-      operationId: getProcessPartnerApplicationPreference
+      operationId: getProcessConfiguration
       produces:
       - application/json
       parameters:
@@ -242,11 +242,36 @@ paths:
           schema:
             type: array
             items:
-              $ref: '#/definitions/ProcessApplicationConfigurations'
-  /application/{partnerID}/{processID}:
+              $ref: '#/definitions/ProcessConfiguration'
+  /application/{partnerID}/{processID}/{roleType}:
+    get:
+      summary: Get the business process application preferences of a partner for a specific process
+      operationId: getProcessConfigurationByProcessID
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: partnerID
+        type: string
+        description: The id of the partner.
+        required: true
+      - in: path
+        name: processID
+        type: string
+        required: true
+      - in: path
+        name: roleType
+        type: string
+        required: true
+      responses:
+        # Response code
+        200:
+          description: Partner Preference obtained
+          schema:
+            $ref: '#/definitions/ProcessConfiguration'
     delete:
       description: Deletes the business process application preference of a partner for a process
-      operationId: deleteProcessPartnerApplicationPreference
+      operationId: deleteProcessConfiguration
       produces:
       - application/json
       parameters:
@@ -256,6 +281,10 @@ paths:
         required: true
       - in: path
         name: processID
+        type: string
+        required: true
+      - in: path
+        name: roleType
         type: string
         required: true
       responses:
@@ -569,49 +598,51 @@ definitions:
     title: Execution Configuration Object
     type: object
     properties:
-      executionType:
-        type: string
-        enum:
-        - JAVA
-        - MICROSERVICE
-        - OTHER
-      URI:
-        type: string
-
-  ApplicationConfiguration:
-    title: Application Configuration Object for each activity in a business process
-    type: object
-    properties:
-      transactionID:
-        type: string
-        description: The transaction where the activity exist
-      roleType:
-        type: string
-        enum:
-        - BUYER
-        - SELLER
-        - LOGISTICSPROVIDER
       applicationType:
         type: string
         enum:
         - DATAADAPTER
         - DATACHANNEL
         - DATAPROCESSOR
-      execution:
-        $ref: '#/definitions/ExecutionConfiguration'
+      executionType:
+        type: string
+        enum:
+        - JAVA
+        - MICROSERVICE
+        - OTHER
+      executionUri:
+        type: string
 
-  ProcessApplicationConfigurations:
+  TransactionConfiguration:
+    title: Application Configuration Object for each activity in a business process
+    type: object
+    properties:
+      transactionID:
+        type: string
+        description: The transaction where the activity exist
+      executionConfigurations:
+        type: array
+        items:
+          $ref: '#/definitions/ExecutionConfiguration'
+
+  ProcessConfiguration:
     title: Applications in Business Process Configuration Object
     type: object
     properties:
       partnerID:
         type: string
+      roleType:
+        type: string
+        enum:
+        - BUYER
+        - SELLER
+        - LOGISTICSPROVIDER        
       processID:
         type: string
-      applicationConfigurations:
+      transactionConfigurations:
         type: array
         items:
-          $ref: '#/definitions/ApplicationConfiguration'
+          $ref: '#/definitions/TransactionConfiguration'
 
   ProcessVariables:
     title: Business Process Variables Object

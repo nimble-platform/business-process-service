@@ -48,7 +48,7 @@ public class JSSequenceDiagramParser {
                 "\t\t</bpmn:startEvent>\n";
 
         diagramContent = "\t<bpmndi:BPMNDiagram id=\"BPMNDiagram\">\n" +
-                "\t\t<bpmndi:BPMNPlane id=\"BPMNPlane\" bpmnElement=\"Order\">\n" +
+                "\t\t<bpmndi:BPMNPlane id=\"BPMNPlane\" bpmnElement=\"" + processID + "\">\n" +
                 "\t\t\t<bpmndi:BPMNShape id=\"StartEventShape\" bpmnElement=\"StartEvent\">\n" +
                 "\t\t\t\t<dc:Bounds x=\"100\" y=\"200\" width=\"50\" height=\"50\" />\n" +
                 "\t\t\t</bpmndi:BPMNShape>\n";
@@ -79,7 +79,7 @@ public class JSSequenceDiagramParser {
 
                 String[] parts = line.split(":");
 
-                String role = parts[0].trim();
+                String role = parts[0].trim().toUpperCase();
                 String userTaskName = parts[1].trim();
 
                 lastTaskID = userTaskName.replaceAll(" ", "").trim();
@@ -149,7 +149,7 @@ public class JSSequenceDiagramParser {
                         "\t\t\t\t<di:waypoint xsi:type=\"dc:Point\" x=\"" + (xIndex + 300) + "\" y=\"225\" />\n" +
                         "\t\t\t\t<di:waypoint xsi:type=\"dc:Point\" x=\"" + (xIndex + 350) + "\" y=\"225\" />\n" +
                         "\t\t\t</bpmndi:BPMNEdge>\n" +
-                        "\t\t\t<bpmndi:BPMNShape id=\"Send" + normalizedDocumentName + "Documentto"+responder+"Shape\" bpmnElement=\"Send" + normalizedDocumentName + "Documentto"+responder+"\">\n" +
+                        "\t\t\t<bpmndi:BPMNShape id=\"Send" + normalizedDocumentName + "Documentto" + responder + "Shape\" bpmnElement=\"Send" + normalizedDocumentName + "Documentto" + responder + "\">\n" +
                         "\t\t\t\t<dc:Bounds x=\"" + (xIndex + 350) + "\" y=\"185\" width=\"100\" height=\"80\" />\n" +
                         "\t\t\t</bpmndi:BPMNShape>\n";
 

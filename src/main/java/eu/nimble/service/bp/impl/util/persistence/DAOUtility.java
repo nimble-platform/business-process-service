@@ -6,6 +6,7 @@
 package eu.nimble.service.bp.impl.util.persistence;
 
 import eu.nimble.service.bp.hyperjaxb.model.*;
+import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import eu.nimble.utility.HibernateUtility;
 
 import java.util.List;
@@ -15,20 +16,11 @@ import java.util.List;
  */
 public class DAOUtility {
 
-    public static List<ProcessApplicationConfigurationsDAO> getProcessApplicationConfigurationsDAOByPartnerID(String partnerID) {
-        String query = "select conf from ProcessApplicationConfigurationsDAO conf where ( conf.partnerID ='" + partnerID + "') ";
-        List<ProcessApplicationConfigurationsDAO> resultSet = (List<ProcessApplicationConfigurationsDAO>) HibernateUtility.getInstance("bp-data-model").loadAll(query);
+    public static List<ProcessConfigurationDAO> getProcessConfigurationDAOByPartnerID(String partnerID) {
+        String query = "select conf from ProcessConfigurationDAO conf where ( conf.partnerID ='" + partnerID + "') ";
+        List<ProcessConfigurationDAO> resultSet = (List<ProcessConfigurationDAO>) HibernateUtility.getInstance("bp-data-model").loadAll(query);
 
         return resultSet;
-    }
-
-    public static ProcessApplicationConfigurationsDAO getProcessApplicationConfigurationsDAOByPartnerID(String partnerID, String processID) {
-        String query = "select conf from ProcessApplicationConfigurationsDAO conf where ( conf.partnerID ='" + partnerID + "' and conf.processID ='" + processID + "' ) ";
-        List<ProcessApplicationConfigurationsDAO> resultSet = (List<ProcessApplicationConfigurationsDAO>) HibernateUtility.getInstance("bp-data-model").loadAll(query);
-        if(resultSet.size() == 0) {
-            return null;
-        }
-        return resultSet.get(0);
     }
 
     public static ProcessPreferencesDAO getProcessPreferencesDAOByPartnerID(String partnerID) {
@@ -97,5 +89,19 @@ public class DAOUtility {
         String query = "select process from ProcessDAO process ";
         List<ProcessDAO> resultSet = (List<ProcessDAO>) HibernateUtility.getInstance("bp-data-model").loadAll(query);
         return resultSet;
+    }
+
+    public static ProcessConfigurationDAO getProcessConfiguration(String partnerID, String processID, ProcessConfiguration.RoleTypeEnum roleType) {
+        String query = "select conf from ProcessConfigurationDAO conf where ( conf.partnerID ='" + partnerID + "' and conf.processID ='" + processID + "' ) ";
+        List<ProcessConfigurationDAO> resultSet = (List<ProcessConfigurationDAO>) HibernateUtility.getInstance("bp-data-model").loadAll(query);
+        if(resultSet.size() == 0) {
+            return null;
+        }
+        for(ProcessConfigurationDAO processConfigurationDAO : resultSet) {
+            if(processConfigurationDAO.getRoleType().value().equals(roleType.toString())) {
+                return processConfigurationDAO;
+            }
+        }
+        return null;
     }
 }

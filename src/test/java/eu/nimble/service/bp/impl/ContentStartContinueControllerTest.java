@@ -142,7 +142,7 @@ public class ContentStartContinueControllerTest {
      * Get the business process definitions
      */
     @Test
-    public void t9_getProcessDefinitionTest() {
+    public void t90_getProcessDefinitionTest() {
         String processID = "NegotiationTest";
         String url = "http://localhost:" + port +"/content/{processID}";
 
@@ -205,7 +205,7 @@ public class ContentStartContinueControllerTest {
     /**
      * Deletes a business process definition
      */
-    //@Test
+    @Test
     public void t94_removeProcessDefinitionTest() {
         String processID = TestObjectFactory.getProcessID();
         String url = "http://localhost:" + port +"/content/{processID}";
@@ -220,7 +220,7 @@ public class ContentStartContinueControllerTest {
     /**
      * Deletes a business process definition
      */
-    //@Test
+    @Test
     public void t95_removeProcessDefinitionTest() {
         String processID = "NegotiationTest";
         String url = "http://localhost:" + port +"/content/{processID}";

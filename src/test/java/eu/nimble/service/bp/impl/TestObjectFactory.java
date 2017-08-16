@@ -47,41 +47,40 @@ public class TestObjectFactory {
         return process;
     }
 
-    public static ProcessApplicationConfigurations createProcessApplicationConfigurations() {
-        ProcessApplicationConfigurations configurations = new ProcessApplicationConfigurations();
+    public static ProcessConfiguration createProcessConfiguration() {
+        ProcessConfiguration configurations = new ProcessConfiguration();
         configurations.setPartnerID(partnerID);
         configurations.setProcessID(processID);
+        configurations.setRoleType(ProcessConfiguration.RoleTypeEnum.BUYER);
 
         ExecutionConfiguration execution = new ExecutionConfiguration();
         execution.setExecutionType(ExecutionConfiguration.ExecutionTypeEnum.JAVA);
-        execution.setURI("eu.nimble.service.EndUserDatabaseService");
+        execution.setExecutionUri("eu.nimble.service.EndUserDatabaseService");
+        execution.setApplicationType(ExecutionConfiguration.ApplicationTypeEnum.DATAADAPTER);
 
-        ApplicationConfiguration configuration = new ApplicationConfiguration();
-        configuration.setExecution(execution);
-        configuration.setApplicationType(ApplicationConfiguration.ApplicationTypeEnum.DATAADAPTER);
+        TransactionConfiguration configuration = new TransactionConfiguration();
+        configuration.getExecutionConfigurations().add(execution);
+
         configuration.setTransactionID("Create Order");
-        configuration.setRoleType(ApplicationConfiguration.RoleTypeEnum.BUYER);
-
-        configurations.getApplicationConfigurations().add(configuration);
+        configurations.getTransactionConfigurations().add(configuration);
 
         execution = new ExecutionConfiguration();
         execution.setExecutionType(ExecutionConfiguration.ExecutionTypeEnum.JAVA);
-        execution.setURI("eu.nimble.service.EndUserChannelService");
+        execution.setExecutionUri("eu.nimble.service.EndUserChannelService");
+        execution.setApplicationType(ExecutionConfiguration.ApplicationTypeEnum.DATACHANNEL);
 
-        configuration = new ApplicationConfiguration();
-        configuration.setExecution(execution);
-        configuration.setApplicationType(ApplicationConfiguration.ApplicationTypeEnum.DATACHANNEL);
+        configuration = new TransactionConfiguration();
+        configuration.getExecutionConfigurations().add(execution);
         configuration.setTransactionID("Send Order");
-        configuration.setRoleType(ApplicationConfiguration.RoleTypeEnum.BUYER);
 
-        configurations.getApplicationConfigurations().add(configuration);
+        configurations.getTransactionConfigurations().add(configuration);
 
         return configurations;
     }
 
-    public static ProcessApplicationConfigurations updateProcessApplicationConfigurations() {
-        ProcessApplicationConfigurations configurations = createProcessApplicationConfigurations();
-        configurations.getApplicationConfigurations().get(0).setRoleType(ApplicationConfiguration.RoleTypeEnum.SELLER);
+    public static ProcessConfiguration updateProcessConfiguration() {
+        ProcessConfiguration configurations = createProcessConfiguration();
+        configurations.setRoleType(ProcessConfiguration.RoleTypeEnum.SELLER);
 
         return configurations;
     }
