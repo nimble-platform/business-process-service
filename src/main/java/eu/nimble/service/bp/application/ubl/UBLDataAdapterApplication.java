@@ -1,5 +1,7 @@
 package eu.nimble.service.bp.application.ubl;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
 import eu.nimble.service.bp.impl.util.persistence.DocumentDAOUtility;
@@ -26,6 +28,8 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
     @Override
     public Object createDocument(String initiatorID, String responderID, String content, ProcessDocumentMetadata.TypeEnum documentType) {
         ObjectMapper mapper = new ObjectMapper();
+        mapper = mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper = mapper.configure(MapperFeature.PROPAGATE_TRANSIENT_MARKER, true);
 
         if(documentType == ProcessDocumentMetadata.TypeEnum.ORDER) {
             try {
@@ -121,7 +125,7 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
         // e.g OrderResponse to an Order
         if(document instanceof OrderResponseSimpleType) {
             OrderResponseSimpleType orderResponse = (OrderResponseSimpleType) document;
-            String orderID = orderResponse.getOrderReference().getID();
+            String orderID = orderResponse.getOrderReference().getDocumentReference().getID();
             boolean isAccepted = orderResponse.isAcceptedIndicator();
 
             ProcessDocumentMetadata initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(orderID);
