@@ -224,90 +224,6 @@
         <finalName>${project.artifactId}</finalName>
         <plugins>
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>sql-maven-plugin</artifactId>
-                <version>1.5</version>
-                <dependencies>
-                    <!-- specify the dependent jdbc driver here -->
-                    <dependency>
-                        <groupId>org.postgresql</groupId>
-                        <artifactId>postgresql</artifactId>
-                        <version>LATEST</version>
-                    </dependency>
-                </dependencies>
-
-                <!-- common configuration shared by all executions -->
-                <configuration>
-                    <driver>org.postgresql.Driver</driver>
-                    <url>jdbc:postgresql://localhost:5432/camunda</url>
-                    <username>postgres</username>
-                    <password>postgres</password>
-                    <!-- You can comment out username/password configurations and
-                         have maven to look them up in your settings.xml using ${settingsKey}
-                    -->
-                    <settingsKey>sensibleKey</settingsKey>
-                    <!--all executions are ignored if -Dmaven.test.skip=true-->
-                    <skip>${maven.test.skip}</skip>
-                </configuration>
-
-                <executions>
-                    <execution>
-                        <id>drop-db-before-test-if-any</id>
-                        <phase>initialize</phase>
-                        <goals>
-                            <goal>execute</goal>
-                        </goals>
-                        <configuration>
-                            <url>jdbc:postgresql://localhost:5432/postgres</url>
-                            <autocommit>true</autocommit>
-                            <sqlCommand>drop database if exists camunda</sqlCommand>
-                            <onError>continue</onError>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>drop-db-engine-before-test-if-any</id>
-                        <phase>initialize</phase>
-                        <goals>
-                            <goal>execute</goal>
-                        </goals>
-                        <configuration>
-                            <url>jdbc:postgresql://localhost:5432/postgres</url>
-                            <autocommit>true</autocommit>
-                            <sqlCommand>drop database if exists businessprocessengine</sqlCommand>
-                            <onError>continue</onError>
-                        </configuration>
-                    </execution>
-
-                    <execution>
-                        <id>create-db</id>
-                        <phase>initialize</phase>
-                        <goals>
-                            <goal>execute</goal>
-                        </goals>
-                        <configuration>
-                            <url>jdbc:postgresql://localhost:5432/postgres</url>
-                            <autocommit>true</autocommit>
-                            <sqlCommand>create database camunda</sqlCommand>
-                            <onError>continue</onError>
-                        </configuration>
-                    </execution>
-
-                    <execution>
-                        <id>create-db-engine</id>
-                        <phase>initialize</phase>
-                        <goals>
-                            <goal>execute</goal>
-                        </goals>
-                        <configuration>
-                            <url>jdbc:postgresql://localhost:5432/postgres</url>
-                            <autocommit>true</autocommit>
-                            <sqlCommand>create database businessprocessengine</sqlCommand>
-                            <onError>continue</onError>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
@@ -493,6 +409,97 @@
                     <version>${docker.plugin.version}</version>
                 </dependency>
             </dependencies>
+        </profile>
+        <profile>
+            <id>reset-db</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>sql-maven-plugin</artifactId>
+                        <version>1.5</version>
+                        <dependencies>
+                            <!-- specify the dependent jdbc driver here -->
+                            <dependency>
+                                <groupId>org.postgresql</groupId>
+                                <artifactId>postgresql</artifactId>
+                                <version>LATEST</version>
+                            </dependency>
+                        </dependencies>
+
+                        <!-- common configuration shared by all executions -->
+                        <configuration>
+                            <driver>org.postgresql.Driver</driver>
+                            <url>jdbc:postgresql://localhost:5432/camunda?currentSchema=public</url>
+                            <username>postgres</username>
+                            <password>nimble</password>
+                            <!-- You can comment out username/password configurations and
+                                 have maven to look them up in your settings.xml using ${settingsKey}
+                            -->
+                            <settingsKey>sensibleKey</settingsKey>
+                            <!--all executions are ignored if -Dmaven.test.skip=true-->
+                            <skip>${maven.test.skip}</skip>
+                        </configuration>
+
+                        <executions>
+                            <execution>
+                                <id>drop-db-before-test-if-any</id>
+                                <phase>initialize</phase>
+                                <goals>
+                                    <goal>execute</goal>
+                                </goals>
+                                <configuration>
+                                    <url>jdbc:postgresql://localhost:5432/postgres</url>
+                                    <autocommit>true</autocommit>
+                                    <sqlCommand>drop database if exists camunda</sqlCommand>
+                                    <onError>continue</onError>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>drop-db-engine-before-test-if-any</id>
+                                <phase>initialize</phase>
+                                <goals>
+                                    <goal>execute</goal>
+                                </goals>
+                                <configuration>
+                                    <url>jdbc:postgresql://localhost:5432/postgres</url>
+                                    <autocommit>true</autocommit>
+                                    <sqlCommand>drop database if exists businessprocessengine</sqlCommand>
+                                    <onError>continue</onError>
+                                </configuration>
+                            </execution>
+
+                            <execution>
+                                <id>create-db</id>
+                                <phase>initialize</phase>
+                                <goals>
+                                    <goal>execute</goal>
+                                </goals>
+                                <configuration>
+                                    <url>jdbc:postgresql://localhost:5432/postgres</url>
+                                    <autocommit>true</autocommit>
+                                    <sqlCommand>create database camunda</sqlCommand>
+                                    <onError>continue</onError>
+                                </configuration>
+                            </execution>
+
+                            <execution>
+                                <id>create-db-engine</id>
+                                <phase>initialize</phase>
+                                <goals>
+                                    <goal>execute</goal>
+                                </goals>
+                                <configuration>
+                                    <url>jdbc:postgresql://localhost:5432/postgres</url>
+                                    <autocommit>true</autocommit>
+                                    <sqlCommand>create database businessprocessengine</sqlCommand>
+                                    <onError>continue</onError>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 
