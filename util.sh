@@ -6,7 +6,8 @@ set -e
 
 if [ "$1" == "docker-build" ]; then
 
-    mvn clean install -DskipTests -Drun.jvmArguments="-Dspring.profiles.active=local_dev"
+    mvn clean install -DskipTests
+    mvn -f -P docker
 
 elif [ "$1" == "docker-push" ]; then
 
