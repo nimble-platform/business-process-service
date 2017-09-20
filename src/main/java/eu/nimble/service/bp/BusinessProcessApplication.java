@@ -1,7 +1,10 @@
 package eu.nimble.service.bp;
 
 import com.netflix.hystrix.contrib.javanica.aop.aspectj.HystrixCommandAspect;
-import org.camunda.bpm.engine.HistoryService;
+import org.apache.ibatis.session.SqlSession;
+import org.camunda.bpm.engine.*;
+import org.camunda.bpm.engine.impl.ProcessEngineImpl;
+import org.camunda.bpm.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.camunda.bpm.spring.boot.starter.annotation.EnableProcessApplication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,11 +21,17 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 @SpringBootApplication
 @EnableHystrix
@@ -55,6 +64,25 @@ public class BusinessProcessApplication {
 
   @Autowired
   private ConfigurableApplicationContext context;
+
+  @EventListener({ContextRefreshedEvent.class})
+  void contextRefreshedEvent() {
+    ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
+    ProcessEngineConfigurationImpl processEngineConfiguration = ((ProcessEngineImpl)processEngine).getProcessEngineConfiguration();
+    SqlSession session = processEngineConfiguration.getDbSqlSessionFactory().getSqlSessionFactory().openSession();
+    Connection connection = session.getConnection();
+
+    try {
+      Statement jdbcStatement = connection.createStatement();
+      jdbcStatement.execute("ALTER TABLE ACT_HI_VARINST ALTER TEXT_ CLOB");
+      jdbcStatement.execute("ALTER TABLE ACT_RU_VARIABLE ALTER TEXT_ CLOB");
+      jdbcStatement.execute("ALTER TABLE ACT_HI_DETAIL ALTER TEXT_ CLOB");
+      jdbcStatement.close();
+      logger.info("Updated the column type TEXT_ column of ACT_HI_VARINST, ACT_RU_VARIABLE, ACT_HI_DETAIL tables to CLOB");
+    } catch (SQLException e) {
+      logger.error("Failed to alter table for changing the column type to CLOB", e);
+    }
+  }
 
 //  @Autowired
 //  private Showcase showcase;
