@@ -76,6 +76,15 @@ nimble:
 ---
 
 spring:
+  profiles: kubernetes
+
+nimble:
+  cors_enabled: false
+  db-credentials-json: ${DB_CREDENTIALS_JSON}
+
+---
+
+spring:
   profiles: local_dev
   # Local h2 database
   datasource:
