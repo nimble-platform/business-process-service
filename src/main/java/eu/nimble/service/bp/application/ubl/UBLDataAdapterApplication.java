@@ -6,10 +6,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
 import eu.nimble.service.bp.impl.util.persistence.DocumentDAOUtility;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
+import eu.nimble.service.model.ubl.despatchadvice.DespatchAdviceType;
 import eu.nimble.service.model.ubl.order.ObjectFactory;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
+import eu.nimble.service.model.ubl.receiptadvice.ReceiptAdviceType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
 import eu.nimble.utility.DateUtility;
 import eu.nimble.utility.JAXBUtility;
@@ -75,6 +77,28 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
             } catch (IOException e) {
                 logger.error("", e);
             }
+        } else if(documentType == ProcessDocumentMetadata.TypeEnum.DESPATCHADVICE) {
+            try {
+                DespatchAdviceType despatchAdvice = mapper.readValue(content, DespatchAdviceType.class);
+
+                eu.nimble.service.model.ubl.despatchadvice.ObjectFactory factory = new eu.nimble.service.model.ubl.despatchadvice.ObjectFactory();
+                logger.debug(" $$$ Created document: {}", JAXBUtility.serialize(despatchAdvice, factory.createDespatchAdvice(despatchAdvice)));
+
+                return despatchAdvice;
+            } catch (IOException e) {
+                logger.error("", e);
+            }
+        } else if(documentType == ProcessDocumentMetadata.TypeEnum.RECEIPTADVICE) {
+            try {
+                ReceiptAdviceType receiptAdvice = mapper.readValue(content, ReceiptAdviceType.class);
+
+                eu.nimble.service.model.ubl.receiptadvice.ObjectFactory factory = new eu.nimble.service.model.ubl.receiptadvice.ObjectFactory();
+                logger.debug(" $$$ Created document: {}", JAXBUtility.serialize(receiptAdvice, factory.createReceiptAdvice(receiptAdvice)));
+
+                return receiptAdvice;
+            } catch (IOException e) {
+                logger.error("", e);
+            }
         }
 
         return null;
@@ -111,6 +135,16 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
             documentMetadata.setDocumentID(quotation.getID());
             documentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
             documentMetadata.setType(ProcessDocumentMetadata.TypeEnum.QUOTATION);
+        } else if(document instanceof  DespatchAdviceType) {
+            DespatchAdviceType despatchAdvice = (DespatchAdviceType) document;
+            documentMetadata.setDocumentID(despatchAdvice.getID());
+            documentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.WAITINGRESPONSE);
+            documentMetadata.setType(ProcessDocumentMetadata.TypeEnum.DESPATCHADVICE);
+        } else if(document instanceof  ReceiptAdviceType) {
+            ReceiptAdviceType receiptAdvice = (ReceiptAdviceType) document;
+            documentMetadata.setDocumentID(receiptAdvice.getID());
+            documentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
+            documentMetadata.setType(ProcessDocumentMetadata.TypeEnum.RECEIPTADVICE);
         }
 
         // persist the document metadata
@@ -135,10 +169,17 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
                 initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.DENIED);
 
             DocumentDAOUtility.updateDocumentMetadata(initiatingDocumentMetadata);
+
         } else if(document instanceof QuotationType) {
             QuotationType quotation = (QuotationType) document;
             String rfqID = quotation.getRequestForQuotationDocumentReference().getID();
             ProcessDocumentMetadata initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(rfqID);
+            initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
+
+        } else if(document instanceof ReceiptAdviceType) {
+            ReceiptAdviceType receiptAdvice = (ReceiptAdviceType) document;
+            String despatchAdviceID = receiptAdvice.getDespatchDocumentReference().get(0).getID();
+            ProcessDocumentMetadata initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(despatchAdviceID);
             initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
         }
     }
