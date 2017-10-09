@@ -526,7 +526,7 @@ definitions:
           - REMITTANCEADVICE
           - INVOICE
           - TRACKING
-          - FULFILLMENT
+          - FULFILMENT
           - PRODUCTCONFIGURATION
           - OTHER
 
@@ -582,7 +582,7 @@ definitions:
         - REMITTANCEADVICE
         - INVOICE
         - TRACKING
-        - FULFILLMENT
+        - FULFILMENT
         - PRODUCTCONFIGURATION
         - OTHER
       textContent:

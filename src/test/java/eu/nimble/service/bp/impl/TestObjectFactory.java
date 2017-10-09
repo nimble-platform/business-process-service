@@ -102,7 +102,7 @@ public class TestObjectFactory {
         preference.getProcessOrder().add(ProcessPreference.ProcessOrderEnum.NEGOTIATION);
         preference.getProcessOrder().add(ProcessPreference.ProcessOrderEnum.ORDER);
         preference.getProcessOrder().add(ProcessPreference.ProcessOrderEnum.TRACKING);
-        preference.getProcessOrder().add(ProcessPreference.ProcessOrderEnum.FULFILLMENT);
+        preference.getProcessOrder().add(ProcessPreference.ProcessOrderEnum.FULFILMENT);
         preference.getProcessOrder().add(ProcessPreference.ProcessOrderEnum.INVOICE);
         processPreferences.getPreferences().add(preference);
 

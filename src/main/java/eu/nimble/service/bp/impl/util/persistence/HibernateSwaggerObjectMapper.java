@@ -125,7 +125,7 @@ public class HibernateSwaggerObjectMapper {
         preference.addProcessOrderItem(ProcessPreference.ProcessOrderEnum.ORDER);
         preference.addProcessOrderItem(ProcessPreference.ProcessOrderEnum.INVOICE);
         preference.addProcessOrderItem(ProcessPreference.ProcessOrderEnum.REMITTANCEADVICE);
-        preference.addProcessOrderItem(ProcessPreference.ProcessOrderEnum.FULFILLMENT);
+        preference.addProcessOrderItem(ProcessPreference.ProcessOrderEnum.FULFILMENT);
         preference.addProcessOrderItem(ProcessPreference.ProcessOrderEnum.TRACKING);
 
         preferences.addPreferencesItem(preference);

@@ -36,7 +36,7 @@
 			<xsd:enumeration value="REMITTANCEADVICE"/>
 			<xsd:enumeration value="INVOICE"/>
 			<xsd:enumeration value="TRACKING"/>
-			<xsd:enumeration value="FULFILLMENT"/>
+			<xsd:enumeration value="FULFILMENT"/>
 			<xsd:enumeration value="PRODUCTCONFIGURATION"/>
 			<xsd:enumeration value="OTHER"/>
 		</xsd:restriction>
