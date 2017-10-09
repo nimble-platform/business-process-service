@@ -7,6 +7,7 @@ node ('nimble-jenkins-slave') {
 
     stage ('Build Docker Image') {
         sh '/bin/bash -xe util.sh docker-build'
+        sh 'sleep 5' // wait for image to be propagated locally
     }
 
     stage ('Push Docker image') {
