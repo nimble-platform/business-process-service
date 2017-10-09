@@ -11,7 +11,7 @@ if [ "$1" == "docker-build" ]; then
 
 elif [ "$1" == "docker-push" ]; then
 
-    mvn docker:push -P docker
+    docker push nimbleplatform/business-process-service:latest
 
 fi
 
