@@ -1,12 +1,14 @@
 node ('nimble-jenkins-slave') {
     def app
     stage('Clone and Update') {
-        // slackSend 'Started build no. ${env.BUILD_ID} of ${env.JOB_NAME}'
         git(url: 'https://github.com/nimble-platform/business-process-service.git', branch: 'master')
     }
 
     stage ('Build Docker Image') {
-        sh '/bin/bash -xe util.sh docker-build'
+        withDockerRegistry([credentialsId: 'NimbleDocker']) {
+            sh '/bin/bash -xe util.sh docker-build'
+            sh 'sleep 5' // wait for image to be propagated locally
+        }
     }
 
     stage ('Push Docker image') {
