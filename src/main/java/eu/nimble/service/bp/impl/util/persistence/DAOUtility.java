@@ -18,14 +18,14 @@ public class DAOUtility {
 
     public static List<ProcessConfigurationDAO> getProcessConfigurationDAOByPartnerID(String partnerID) {
         String query = "select conf from ProcessConfigurationDAO conf where ( conf.partnerID ='" + partnerID + "') ";
-        List<ProcessConfigurationDAO> resultSet = (List<ProcessConfigurationDAO>) HibernateUtility.getInstance("bp-data-model").loadAll(query);
+        List<ProcessConfigurationDAO> resultSet = (List<ProcessConfigurationDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
 
         return resultSet;
     }
 
     public static ProcessPreferencesDAO getProcessPreferencesDAOByPartnerID(String partnerID) {
         String query = "select conf from ProcessPreferencesDAO conf where ( conf.partnerID ='" + partnerID + "') ";
-        List<ProcessPreferencesDAO> resultSet = (List<ProcessPreferencesDAO>) HibernateUtility.getInstance("bp-data-model").loadAll(query);
+        List<ProcessPreferencesDAO> resultSet = (List<ProcessPreferencesDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
         if(resultSet.size() == 0) {
             return null;
         }
@@ -36,7 +36,7 @@ public class DAOUtility {
         String query = "select document from ProcessDocumentMetadataDAO document where ( ";
         query += " document.documentID ='" + documentID + "' ";
         query += " ) ";
-        List<ProcessDocumentMetadataDAO> resultSet = (List<ProcessDocumentMetadataDAO>) HibernateUtility.getInstance("bp-data-model").loadAll(query);
+        List<ProcessDocumentMetadataDAO> resultSet = (List<ProcessDocumentMetadataDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
         if(resultSet.size() == 0) {
             return null;
         }
@@ -63,13 +63,13 @@ public class DAOUtility {
 
         if (status != null) query += " and document.status ='" + status + "' ";
         query += " ) ";
-        List<ProcessDocumentMetadataDAO> resultSet = (List<ProcessDocumentMetadataDAO>) HibernateUtility.getInstance("bp-data-model").loadAll(query);
+        List<ProcessDocumentMetadataDAO> resultSet = (List<ProcessDocumentMetadataDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
         return resultSet;
     }
 
     public static ProcessInstanceDAO getProcessIntanceDAOByID(String processInstanceID) {
         String query = "select processinstance from ProcessInstanceDAO processinstance where ( processinstance.processInstanceID ='" + processInstanceID + "') ";
-        List<ProcessInstanceDAO> resultSet = (List<ProcessInstanceDAO>) HibernateUtility.getInstance("bp-data-model").loadAll(query);
+        List<ProcessInstanceDAO> resultSet = (List<ProcessInstanceDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
         if(resultSet.size() == 0) {
             return null;
         }
@@ -78,7 +78,7 @@ public class DAOUtility {
 
     public static ProcessDAO getProcessDAOByID(String processID) {
         String query = "select process from ProcessDAO process where ( process.processID ='" + processID + "') ";
-        List<ProcessDAO> resultSet = (List<ProcessDAO>) HibernateUtility.getInstance("bp-data-model").loadAll(query);
+        List<ProcessDAO> resultSet = (List<ProcessDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
         if(resultSet.size() == 0) {
             return null;
         }
@@ -87,13 +87,13 @@ public class DAOUtility {
 
     public static List<ProcessDAO> getProcessDAOs() {
         String query = "select process from ProcessDAO process ";
-        List<ProcessDAO> resultSet = (List<ProcessDAO>) HibernateUtility.getInstance("bp-data-model").loadAll(query);
+        List<ProcessDAO> resultSet = (List<ProcessDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
         return resultSet;
     }
 
     public static ProcessConfigurationDAO getProcessConfiguration(String partnerID, String processID, ProcessConfiguration.RoleTypeEnum roleType) {
         String query = "select conf from ProcessConfigurationDAO conf where ( conf.partnerID ='" + partnerID + "' and conf.processID ='" + processID + "' ) ";
-        List<ProcessConfigurationDAO> resultSet = (List<ProcessConfigurationDAO>) HibernateUtility.getInstance("bp-data-model").loadAll(query);
+        List<ProcessConfigurationDAO> resultSet = (List<ProcessConfigurationDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
         if(resultSet.size() == 0) {
             return null;
         }

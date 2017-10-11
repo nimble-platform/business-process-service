@@ -17,47 +17,60 @@ spring:
       # it can be set via an environment variable or the config server
       enabled: ${discovery.enabled:${DISCOVERY_ENABLED:false}}
   datasource:
-    url: jdbc:postgresql://${BUSINESS_PROCESS_DB_URI:localhost:5432}/businessprocessengine?user=postgres&password=postgres
+    url: jdbc:postgresql://${BUSINESS_PROCESS_DB_URI:localhost:5432}/camunda?user=postgres&password=nimble&currentSchema=public
     driverClassName: org.postgresql.Driver
-  jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
-    show-sql: true
-#    hibernate:
-#      ddl-auto: update
-#    properties:
-#      hibernate:
-#        connection:
-#          url: jdbc:postgresql://${BUSINESS_PROCESS_DB_URI:localhost:5432}/businessprocessengine
-#          username: postgres
-#          password: postgres
-#          driver_class: org.postgresql.Driver
-#        dialect: org.hibernate.dialect.PostgreSQLDialect
-#
-#        show_sql: true
-#        hbm2ddl:
-#          auto: update
-#        cache:
-#          provider_class: org.hibernate.cache.HashtableCacheProvider
-#        jdbc:
-#          batch_size: 0
-#
-#        # OPEN THE FOLLOWING PROPERTIES IN THE PRODUCTION ENVIRONMENT
-#        c3p0:
-#          acquire_increment: 2
-#          idle_test_period: 60
-#          min_size: 10
-#          max_size: 100
-#          maxStatements: 0
-#          maxStatementsPerConnection: 100
-#          timeout: 300
-#          acquireRetryAttempts: 1
-#          acquireRetryDelay: 250
-#          numHelperThreads: 10
-#        use_sql_comments: true
-#        transaction:
-#          factory_class: org.hibernate.transaction.JDBCTransactionFactory
-#        current_session_context_class: thread
+  jackson:
+    date-format: com.fasterxml.jackson.databind.util.ISO8601DateFormat
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false
 
+springfox:
+  documentation:
+    swagger:
+      v2:
+        path: /api-docs
+
+persistence:
+  orm:
+    business_process:
+      hibernate:
+        connection:
+          url: jdbc:postgresql://localhost:5432/businessprocessengine?currentSchema=public
+          username: postgres
+          password: nimble
+          driver_class: org.postgresql.Driver
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        show_sql: false
+        hbm2ddl:
+          auto: update
+        cache:
+          provider_class: org.hibernate.cache.HashtableCacheProvider
+        jdbc:
+          batch_size: 0
+        c3p0:
+          acquire_increment: 2
+          idle_test_period: 60
+          min_size: 10
+          max_size: 100
+          maxStatements: 0
+          maxStatementsPerConnection: 100
+          timeout: 300
+          acquireRetryAttempts: 1
+          acquireRetryDelay: 250
+          numHelperThreads: 10
+        use_sql_comments: true
+        transaction:
+          factory_class: org.hibernate.transaction.JDBCTransactionFactory
+        current_session_context_class: thread
+        event:
+          merge:
+            entity_copy_observer: allow
+
+      # valid only for kubernetes deployment
+      bluemix:
+        connection:
+          #TODO check the environment variable name for this config
+          uri: ${BLUEMIX_BUSINESS_PROCESS_DB_JSON_URI:}
 
 logstash:
   uri: ${vcap.services.logstash-service.credentials.url:${LOGSTASH_URI:localhost:5000}}
@@ -66,6 +79,9 @@ camunda:
   bpm:
     webapp:
       index-redirect-enabled: false
+    database:
+      schema-update: drop-create
+      type: postgres
     admin-user:
       id: kermit
       password: superSecret

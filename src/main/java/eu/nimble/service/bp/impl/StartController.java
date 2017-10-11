@@ -4,6 +4,7 @@ import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceInputMessageDAO;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.impl.util.persistence.HibernateSwaggerObjectMapper;
+import eu.nimble.service.bp.impl.util.persistence.HibernateUtilityRef;
 import eu.nimble.service.bp.swagger.api.StartApi;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
@@ -25,12 +26,12 @@ public class StartController implements StartApi {
     public ResponseEntity<ProcessInstance> startProcessInstance(@RequestBody ProcessInstanceInputMessage body) {
         logger.debug(" $$$ Start Process with ProcessInstanceInputMessage {}", body.toString());
         ProcessInstanceInputMessageDAO processInstanceInputMessageDAO = HibernateSwaggerObjectMapper.createProcessInstanceInputMessage_DAO(body);
-        HibernateUtility.getInstance("bp-data-model").persist(processInstanceInputMessageDAO);
+        HibernateUtilityRef.getInstance("bp-data-model").persist(processInstanceInputMessageDAO);
 
         ProcessInstance processInstance = CamundaEngine.startProcessInstance(body);
 
         ProcessInstanceDAO processInstanceDAO = HibernateSwaggerObjectMapper.createProcessInstance_DAO(processInstance);
-        HibernateUtility.getInstance("bp-data-model").persist(processInstanceDAO);
+        HibernateUtilityRef.getInstance("bp-data-model").persist(processInstanceDAO);
 
         return new ResponseEntity<>(processInstance, HttpStatus.OK);
     }

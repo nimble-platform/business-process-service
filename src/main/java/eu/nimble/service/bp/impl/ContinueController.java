@@ -5,6 +5,7 @@ import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceInputMessageDAO;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.impl.util.persistence.DAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.HibernateSwaggerObjectMapper;
+import eu.nimble.service.bp.impl.util.persistence.HibernateUtilityRef;
 import eu.nimble.service.bp.swagger.api.ContinueApi;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
@@ -26,7 +27,7 @@ public class ContinueController implements ContinueApi {
     public ResponseEntity<ProcessInstance> continueProcessInstance(@RequestBody ProcessInstanceInputMessage body) {
         logger.debug(" $$$ Continue Process with ProcessInstanceInputMessage {}", body.toString());
         ProcessInstanceInputMessageDAO processInstanceInputMessageDAO = HibernateSwaggerObjectMapper.createProcessInstanceInputMessage_DAO(body);
-        HibernateUtility.getInstance("bp-data-model").persist(processInstanceInputMessageDAO);
+        HibernateUtilityRef.getInstance("bp-data-model").persist(processInstanceInputMessageDAO);
 
         ProcessInstance processInstance = CamundaEngine.continueProcessInstance(body);
 
@@ -35,7 +36,7 @@ public class ContinueController implements ContinueApi {
 
         processInstanceDAO.setHjid(storedInstance.getHjid());
 
-        HibernateUtility.getInstance("bp-data-model").update(processInstanceDAO);
+        HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceDAO);
 
         return new ResponseEntity<>(processInstance, HttpStatus.OK);
     }

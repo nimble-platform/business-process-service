@@ -74,13 +74,21 @@ public class BusinessProcessApplication {
 
     try {
       Statement jdbcStatement = connection.createStatement();
-      jdbcStatement.execute("ALTER TABLE ACT_HI_VARINST ALTER TEXT_ CLOB");
-      jdbcStatement.execute("ALTER TABLE ACT_RU_VARIABLE ALTER TEXT_ CLOB");
-      jdbcStatement.execute("ALTER TABLE ACT_HI_DETAIL ALTER TEXT_ CLOB");
+      jdbcStatement.execute("ALTER TABLE ACT_HI_VARINST ALTER COLUMN TEXT_ TYPE text");
+      jdbcStatement.execute("ALTER TABLE ACT_RU_VARIABLE ALTER COLUMN TEXT_ TYPE text");
+      jdbcStatement.execute("ALTER TABLE ACT_HI_DETAIL ALTER COLUMN TEXT_ TYPE text");
+
       jdbcStatement.close();
-      logger.info("Updated the column type TEXT_ column of ACT_HI_VARINST, ACT_RU_VARIABLE, ACT_HI_DETAIL tables to CLOB");
+      logger.info("Updated the column type TEXT_ column of ACT_HI_VARINST, ACT_RU_VARIABLE, ACT_HI_DETAIL tables to TEXT");
     } catch (SQLException e) {
       logger.error("Failed to alter table for changing the column type to CLOB", e);
+    } finally {
+      try {
+        session.close();
+        connection.close();
+      } catch (Exception e) {
+        logger.warn("Failed to close session/connection", e);
+      }
     }
   }
 

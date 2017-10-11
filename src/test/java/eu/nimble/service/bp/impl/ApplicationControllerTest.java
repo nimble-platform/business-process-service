@@ -3,6 +3,7 @@ package eu.nimble.service.bp.impl;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
 
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
+import eu.nimble.utility.config.PersistenceConfig;
 import org.junit.FixMethodOrder;
 import org.junit.Ignore;
 import org.junit.Test;

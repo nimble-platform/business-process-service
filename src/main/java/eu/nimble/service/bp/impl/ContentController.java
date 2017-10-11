@@ -5,6 +5,7 @@ import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.impl.util.persistence.DAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.impl.util.jssequence.JSSequenceDiagramParser;
+import eu.nimble.service.bp.impl.util.persistence.HibernateUtilityRef;
 import eu.nimble.service.bp.swagger.api.ContentApi;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
 import eu.nimble.service.bp.swagger.model.Process;
@@ -44,7 +45,7 @@ public class ContentController implements ContentApi {
         CamundaEngine.addProcessDefinition(body.getProcessID(), bpmnContent);
 
         ProcessDAO processDAO = HibernateSwaggerObjectMapper.createProcess_DAO(body);
-        HibernateUtility.getInstance("bp-data-model").persist(processDAO);
+        HibernateUtilityRef.getInstance("bp-data-model").persist(processDAO);
 
         return HibernateSwaggerObjectMapper.getApiResponse();
     }
@@ -57,7 +58,7 @@ public class ContentController implements ContentApi {
 
         ProcessDAO processDAO = DAOUtility.getProcessDAOByID(processID);
         if(processDAO != null)
-            HibernateUtility.getInstance("bp-data-model").delete(ProcessDAO.class, processDAO.getHjid());
+            HibernateUtilityRef.getInstance("bp-data-model").delete(ProcessDAO.class, processDAO.getHjid());
 
         return HibernateSwaggerObjectMapper.getApiResponse();
     }
@@ -127,7 +128,7 @@ public class ContentController implements ContentApi {
 
         processDAONew.setHjid(processDAO.getHjid());
 
-        HibernateUtility.getInstance("bp-data-model").update(processDAONew);
+        HibernateUtilityRef.getInstance("bp-data-model").update(processDAONew);
 
         return HibernateSwaggerObjectMapper.getApiResponse();
     }

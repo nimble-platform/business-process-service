@@ -11,7 +11,7 @@ and injected during startup.
 
 For database configuration, please set your postgres username and password in the following files:
 * pom.xml
-* persistence.properties
+* bootstrap.yml
 * application.properties
 
 ## Swagger

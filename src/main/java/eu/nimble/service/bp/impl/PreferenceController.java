@@ -3,6 +3,7 @@ package eu.nimble.service.bp.impl;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessPreferencesDAO;
 import eu.nimble.service.bp.impl.util.persistence.DAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.HibernateSwaggerObjectMapper;
+import eu.nimble.service.bp.impl.util.persistence.HibernateUtilityRef;
 import eu.nimble.service.bp.swagger.api.PreferenceApi;
 import eu.nimble.service.bp.swagger.model.ProcessPreferences;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
@@ -26,7 +27,7 @@ public class PreferenceController implements PreferenceApi {
         logger.info(" $$$ Adding ProcessPreferences: ");
         logger.debug(" $$$ {}", body.toString());
         ProcessPreferencesDAO processPreferencesDAO = HibernateSwaggerObjectMapper.createProcessPreferences_DAO(body);
-        HibernateUtility.getInstance("bp-data-model").persist(processPreferencesDAO);
+        HibernateUtilityRef.getInstance("bp-data-model").persist(processPreferencesDAO);
         return HibernateSwaggerObjectMapper.getApiResponse();
     }
 
@@ -34,7 +35,7 @@ public class PreferenceController implements PreferenceApi {
     public ResponseEntity<ModelApiResponse> deleteProcessPartnerPreference(@PathVariable("partnerID") String partnerID) {
         logger.info(" $$$ Deleting ProcessPreferences for ... {}", partnerID);
         ProcessPreferencesDAO processPreferencesDAO = DAOUtility.getProcessPreferencesDAOByPartnerID(partnerID);
-        HibernateUtility.getInstance("bp-data-model").delete(ProcessPreferencesDAO.class, processPreferencesDAO.getHjid());
+        HibernateUtilityRef.getInstance("bp-data-model").delete(ProcessPreferencesDAO.class, processPreferencesDAO.getHjid());
         return HibernateSwaggerObjectMapper.getApiResponse();
     }
 
@@ -59,7 +60,7 @@ public class PreferenceController implements PreferenceApi {
         ProcessPreferencesDAO processPreferencesDAO = DAOUtility.getProcessPreferencesDAOByPartnerID(body.getPartnerID());
         ProcessPreferencesDAO processPreferencesDAONew = HibernateSwaggerObjectMapper.createProcessPreferences_DAO(body);
         processPreferencesDAONew.setHjid(processPreferencesDAO.getHjid());
-        HibernateUtility.getInstance("bp-data-model").update(processPreferencesDAONew);
+        HibernateUtilityRef.getInstance("bp-data-model").update(processPreferencesDAONew);
         return HibernateSwaggerObjectMapper.getApiResponse();
     }
 }

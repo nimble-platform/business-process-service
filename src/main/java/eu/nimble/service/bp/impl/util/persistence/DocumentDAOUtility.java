@@ -62,10 +62,10 @@ public class DocumentDAOUtility {
 
     public static void addDocumentWithMetadata(ProcessDocumentMetadata documentMetadata, Object document) {
         ProcessDocumentMetadataDAO processDocumentDAO = HibernateSwaggerObjectMapper.createProcessDocumentMetadata_DAO(documentMetadata);
-        HibernateUtility.getInstance("bp-data-model").persist(processDocumentDAO);
+        HibernateUtilityRef.getInstance("bp-data-model").persist(processDocumentDAO);
 
         if (document != null)
-            HibernateUtility.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(document);
+            HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(document);
     }
 
     public static void updateDocumentMetadata(ProcessDocumentMetadata body) {
@@ -75,7 +75,7 @@ public class DocumentDAOUtility {
 
         newDocumentDAO.setHjid(storedDocumentDAO.getHjid());
 
-        HibernateUtility.getInstance("bp-data-model").update(newDocumentDAO);
+        HibernateUtilityRef.getInstance("bp-data-model").update(newDocumentDAO);
     }
 
     public static ProcessDocumentMetadata getDocumentMetadata(String documentID) {
@@ -92,31 +92,31 @@ public class DocumentDAOUtility {
         if(document != null) {
             switch (processDocumentMetadataDAO.getType()) {
                 case ORDER:
-                    HibernateUtility.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(OrderType.class, ((OrderType) document).getHjid());
+                    HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(OrderType.class, ((OrderType) document).getHjid());
                     break;
                 case INVOICE:
                     break;
                 case CATALOGUE:
-                    HibernateUtility.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(CatalogueType.class, ((CatalogueType) document).getHjid());
+                    HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(CatalogueType.class, ((CatalogueType) document).getHjid());
                     break;
                 case QUOTATION:
-                    HibernateUtility.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(QuotationType.class, ((QuotationType) document).getHjid());
+                    HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(QuotationType.class, ((QuotationType) document).getHjid());
                     break;
                 case ORDERRESPONSESIMPLE:
-                    HibernateUtility.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(OrderResponseSimpleType.class, ((OrderResponseSimpleType) document).getHjid());
+                    HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(OrderResponseSimpleType.class, ((OrderResponseSimpleType) document).getHjid());
                     break;
                 case RECEIPTADVICE:
-                    HibernateUtility.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(ReceiptAdviceType.class, ((ReceiptAdviceType) document).getHjid());
+                    HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(ReceiptAdviceType.class, ((ReceiptAdviceType) document).getHjid());
                     break;
                 case DESPATCHADVICE:
-                    HibernateUtility.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(DespatchAdviceType.class, ((DespatchAdviceType) document).getHjid());
+                    HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(DespatchAdviceType.class, ((DespatchAdviceType) document).getHjid());
                     break;
                 case REMITTANCEADVICE:
                     break;
                 case APPLICATIONRESPONSE:
                     break;
                 case REQUESTFORQUOTATION:
-                    HibernateUtility.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(RequestForQuotationType.class, ((RequestForQuotationType) document).getHjid());
+                    HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(RequestForQuotationType.class, ((RequestForQuotationType) document).getHjid());
                     break;
                 case TRANSPORTATIONSTATUS:
                     break;
@@ -124,7 +124,7 @@ public class DocumentDAOUtility {
                     break;
             }
         }
-        HibernateUtility.getInstance("bp-data-model").delete(ProcessDocumentMetadataDAO.class, processDocumentMetadataDAO.getHjid());
+        HibernateUtilityRef.getInstance("bp-data-model").delete(ProcessDocumentMetadataDAO.class, processDocumentMetadataDAO.getHjid());
     }
 
     public static Object getUBLDocument(String documentID, DocumentType documentType) {
@@ -169,7 +169,7 @@ public class DocumentDAOUtility {
         String query = "SELECT document FROM " + hibernateEntityName + " document "
                 + " WHERE document.ID = '" + documentID + "'";
 
-        List resultSet = HibernateUtility.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME)
+        List resultSet = HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME)
                 .loadAll(query);
 
         if(resultSet.size() > 0) {

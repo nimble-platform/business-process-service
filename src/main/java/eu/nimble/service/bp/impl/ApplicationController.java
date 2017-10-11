@@ -3,6 +3,7 @@ package eu.nimble.service.bp.impl;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessConfigurationDAO;
 import eu.nimble.service.bp.impl.util.persistence.DAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.HibernateSwaggerObjectMapper;
+import eu.nimble.service.bp.impl.util.persistence.HibernateUtilityRef;
 import eu.nimble.service.bp.swagger.api.ApplicationApi;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
@@ -30,7 +31,7 @@ public class ApplicationController implements ApplicationApi {
         logger.info(" $$$ Adding ProcessApplicationConfigurations: ");
         logger.debug(" $$$ {}", body.toString());
         ProcessConfigurationDAO processConfigurationDAO = HibernateSwaggerObjectMapper.createProcessConfiguration_DAO(body);
-        HibernateUtility.getInstance("bp-data-model").persist(processConfigurationDAO);
+        HibernateUtilityRef.getInstance("bp-data-model").persist(processConfigurationDAO);
         return HibernateSwaggerObjectMapper.getApiResponse();
     }
 
@@ -38,7 +39,7 @@ public class ApplicationController implements ApplicationApi {
     public ResponseEntity<ModelApiResponse> deleteProcessConfiguration(@PathVariable("partnerID") String partnerID, @PathVariable("processID") String processID, @PathVariable("roleType") String roleType) {
         logger.info(" $$$ Deleting ProcessApplicationConfigurations for ... {}", partnerID);
         ProcessConfigurationDAO processConfigurationDAO = DAOUtility.getProcessConfiguration(partnerID, processID, ProcessConfiguration.RoleTypeEnum.valueOf(roleType));
-        HibernateUtility.getInstance("bp-data-model").delete(ProcessConfigurationDAO.class, processConfigurationDAO.getHjid());
+        HibernateUtilityRef.getInstance("bp-data-model").delete(ProcessConfigurationDAO.class, processConfigurationDAO.getHjid());
         return HibernateSwaggerObjectMapper.getApiResponse();
     }
 
@@ -76,9 +77,9 @@ public class ApplicationController implements ApplicationApi {
 
         if(processApplicationConfigurationsDAO != null) {
             processApplicationConfigurationsDAONew.setHjid(processApplicationConfigurationsDAO.getHjid());
-            HibernateUtility.getInstance("bp-data-model").update(processApplicationConfigurationsDAONew);
+            HibernateUtilityRef.getInstance("bp-data-model").update(processApplicationConfigurationsDAONew);
         } else {
-            HibernateUtility.getInstance("bp-data-model").persist(processApplicationConfigurationsDAONew);
+            HibernateUtilityRef.getInstance("bp-data-model").persist(processApplicationConfigurationsDAONew);
         }
         return HibernateSwaggerObjectMapper.getApiResponse();
     }

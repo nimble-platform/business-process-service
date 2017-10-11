@@ -1,5 +1,6 @@
 package eu.nimble.service.bp.config;
 
+import eu.nimble.utility.config.BluemixDatabaseConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,20 +30,7 @@ public class KubernetesDataSourceConfig {
     @Bean
     @Primary
     public DataSource getDataSource() {
-
-        // parse JSON
-        BasicJsonParser parser = new BasicJsonParser();
-        String originalUrl = (String) parser.parseMap(this.dbCredentialsJson).get("uri");
-
-        // construct data from 'postgres://username:password@host:port/database'
-        Matcher matcher = Pattern.compile("^postgres://(.*?):(.*?)@").matcher(originalUrl);
-        matcher.find();
-        String username = matcher.group(1);
-        String password = matcher.group(2);
-        String url = "jdbc:postgresql://" + matcher.replaceAll("");
-        String driverClass = "org.postgresql.Driver";
-
-        logger.info("Setting datasource to {} (user: {})", url, username);
-        return DataSourceBuilder.create().url(url).username(username).password(password).driverClassName(driverClass).build();
+        BluemixDatabaseConfig config = new BluemixDatabaseConfig(dbCredentialsJson);
+        return DataSourceBuilder.create().url(config.getUrl()).username(config.getUsername()).password(config.getPassword()).driverClassName(config.getDriver()).build();
     }
 }
