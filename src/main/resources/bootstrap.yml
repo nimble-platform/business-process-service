@@ -68,9 +68,7 @@ persistence:
 
       # valid only for kubernetes deployment
       bluemix:
-        connection:
-          #TODO check the environment variable name for this config
-          uri: ${BLUEMIX_BUSINESS_PROCESS_DB_JSON_URI:}
+        credentials_json: ${BLUEMIX_BUSINESS_PROCESS_DB_JSON:}
 
     ubl:
       hibernate:

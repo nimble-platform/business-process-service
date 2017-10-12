@@ -34,20 +34,15 @@ public class BusinessProcessPersistenceConfig {
     @Autowired
     private Environment environment;
 
-    @Value("persistence.orm.business_process.bluemix.connection.uri")
-    private String bluemixBusiness_processDbUri;
+    @Value("persistence.orm.business_process.bluemix.credentials_json")
+    private String bluemixBusiness_processDbJson;
 
     private Map<String, String> business_process;
 
-    public String getBluemixBusiness_processDbUri() {
-        return bluemixBusiness_processDbUri;
-    }
-
-    public void setBluemixBusiness_processDbUri(String bluemixBusiness_processDbUri) {
-        this.bluemixBusiness_processDbUri = bluemixBusiness_processDbUri;
+    public void updateDBConfig() {
         // update persistence properties if kubernetes profile is active
         if(Arrays.stream(environment.getActiveProfiles()).anyMatch(profile -> profile.contentEquals("kubernetes"))) {
-            BluemixDatabaseConfig config = new BluemixDatabaseConfig(bluemixBusiness_processDbUri);
+            BluemixDatabaseConfig config = new BluemixDatabaseConfig(bluemixBusiness_processDbJson);
             config.copyToHibernatePersistenceParameters(config, business_process);
         }
     }
