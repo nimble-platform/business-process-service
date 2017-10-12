@@ -43,7 +43,6 @@ import java.sql.Statement;
 @RestController
 @EnableSwagger2
 @EnableProcessApplication
-@ComponentScan(basePackages = "eu.nimble.service.bp")
 public class BusinessProcessApplication {
 
   boolean contextClosed;
