@@ -43,6 +43,7 @@ import java.sql.Statement;
 @RestController
 @EnableSwagger2
 @EnableProcessApplication
+@ComponentScan(basePackages = "eu")
 public class BusinessProcessApplication {
 
   boolean contextClosed;
