@@ -1,5 +1,5 @@
 node ('nimble-jenkins-slave') {
-    def app
+
     stage('Clone and Update') {
         git(url: 'https://github.com/nimble-platform/business-process-service.git', branch: env.BRANCH_NAME)
     }
