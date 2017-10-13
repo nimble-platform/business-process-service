@@ -65,11 +65,6 @@ persistence:
         event:
           merge:
             entity_copy_observer: allow
-
-      # valid only for kubernetes deployment
-      bluemix:
-        credentials_json: ${BLUEMIX_BUSINESS_PROCESS_DB_JSON:}
-
     ubl:
       hibernate:
         connection:
@@ -103,13 +98,6 @@ persistence:
         event:
           merge:
             entity_copy_observer: allow
-
-      # valid only for kubernetes deployment
-      bluemix:
-        connection:
-          #TODO check the environment variable name for this config
-          uri: ${BLUEMIX_UBL_DB_JSON_URI:}
-
     modaml:
       hibernate:
         connection:
@@ -143,12 +131,6 @@ persistence:
         event:
           merge:
             entity_copy_observer: allow
-      # valid only for kubernetes deployment
-      bluemix:
-        connection:
-          #TODO check the environment variable name for this config
-          uri: ${BLUEMIX_MODAML_DB_JSON_URI:}
-
 
 logstash:
   uri: ${vcap.services.logstash-service.credentials.url:${LOGSTASH_URI:localhost:5000}}
@@ -216,6 +198,8 @@ persistence:
         event:
           merge:
             entity_copy_observer: allow
+      bluemix:
+        credentials_json: ${BLUEMIX_BUSINESS_PROCESS_DB_JSON:}
     ubl:
       hibernate:
         connection:
