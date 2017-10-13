@@ -1,7 +1,7 @@
 node ('nimble-jenkins-slave') {
     def app
     stage('Clone and Update') {
-        git(url: 'https://github.com/nimble-platform/business-process-service.git', branch: 'master')
+        git(url: 'https://github.com/nimble-platform/business-process-service.git', branch: env.BRANCH_NAME)
     }
 
     stage('Build Dependencies') {
@@ -24,7 +24,7 @@ node ('nimble-jenkins-slave') {
         }
     }
 
-    stage ('Push Docker image') {
+    stage ('Push Docker') {
         withDockerRegistry([credentialsId: 'NimbleDocker']) {
             sh '/bin/bash -xe util.sh docker-push'
         }
