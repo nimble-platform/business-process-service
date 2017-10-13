@@ -4,10 +4,23 @@ node ('nimble-jenkins-slave') {
         git(url: 'https://github.com/nimble-platform/business-process-service.git', branch: 'master')
     }
 
-    stage ('Build Docker Image') {
+    stage('Build Dependencies') {
+        sh 'rm -rf common'
+        sh 'git clone https://github.com/nimble-platform/common'
+        dir ('common') {
+            sh 'mvn clean install'
+        }
+    }
+
+    stage ('Build Java') {
+        withDockerRegistry([credentialsId: 'NimbleDocker']) {
+            sh '/bin/bash -xe util.sh java-build'
+        }
+    }
+
+    stage ('Build Docker') {
         withDockerRegistry([credentialsId: 'NimbleDocker']) {
             sh '/bin/bash -xe util.sh docker-build'
-            sh 'sleep 5' // wait for image to be propagated locally
         }
     }
 
@@ -18,6 +31,7 @@ node ('nimble-jenkins-slave') {
     }
 
     stage ('Apply to Cluster') {
-        sh 'kubectl apply -f kubernetes/deploy.yml -n prod --validate=false'
+        // cluster is down at the moment
+//        sh 'kubectl apply -f kubernetes/deploy.yml -n prod --validate=false'
     }
 }
