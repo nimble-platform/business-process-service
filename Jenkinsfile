@@ -24,14 +24,16 @@ node ('nimble-jenkins-slave') {
         }
     }
 
-    stage ('Push Docker') {
-        withDockerRegistry([credentialsId: 'NimbleDocker']) {
-            sh '/bin/bash -xe util.sh docker-push'
+    if (env.BRANCH_NAME == 'master') {
+        stage('Push Docker') {
+            withDockerRegistry([credentialsId: 'NimbleDocker']) {
+                sh '/bin/bash -xe util.sh docker-push'
+            }
         }
-    }
 
-    stage ('Apply to Cluster') {
-        // cluster is down at the moment
-//        sh 'kubectl apply -f kubernetes/deploy.yml -n prod --validate=false'
+        stage('Apply to Cluster') {
+            // cluster is down at the moment
+            //        sh 'kubectl apply -f kubernetes/deploy.yml -n prod --validate=false'
+        }
     }
 }
