@@ -4,15 +4,22 @@ node ('nimble-jenkins-slave') {
         git(url: 'https://github.com/nimble-platform/business-process-service.git', branch: env.BRANCH_NAME)
     }
 
-    stage('Build Dependencies') {
+//    stage('Build Dependencies') {
+//        sh 'rm -rf common'
+//        sh 'git clone https://github.com/nimble-platform/common'
+//        dir ('common') {
+//            sh 'mvn clean install'
+//        }
+//    }
+
+    stage ('Build Java') {
+
         sh 'rm -rf common'
         sh 'git clone https://github.com/nimble-platform/common'
         dir ('common') {
             sh 'mvn clean install'
         }
-    }
 
-    stage ('Build Java') {
         sh '/bin/bash -xe util.sh java-build'
     }
 
@@ -22,6 +29,7 @@ node ('nimble-jenkins-slave') {
         }
     }
 
+    // only push and update the master branch
     if (env.BRANCH_NAME == 'master') {
         stage('Push Docker') {
             withDockerRegistry([credentialsId: 'NimbleDocker']) {
