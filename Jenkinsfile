@@ -13,9 +13,7 @@ node ('nimble-jenkins-slave') {
     }
 
     stage ('Build Java') {
-        withDockerRegistry([credentialsId: 'NimbleDocker']) {
-            sh '/bin/bash -xe util.sh java-build'
-        }
+        sh '/bin/bash -xe util.sh java-build'
     }
 
     stage ('Build Docker') {
