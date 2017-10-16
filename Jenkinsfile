@@ -14,6 +14,7 @@ node ('nimble-jenkins-slave') {
 
     stage ('Build Java') {
 
+        // install NIMBLE-Commons library
         sh 'rm -rf common'
         sh 'git clone https://github.com/nimble-platform/common'
         dir ('common') {
