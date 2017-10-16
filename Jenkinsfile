@@ -4,24 +4,16 @@ node ('nimble-jenkins-slave') {
         git(url: 'https://github.com/nimble-platform/business-process-service.git', branch: env.BRANCH_NAME)
     }
 
-//    stage('Build Dependencies') {
-//        sh 'rm -rf common'
-//        sh 'git clone https://github.com/nimble-platform/common'
-//        dir ('common') {
-//            sh 'mvn clean install'
-//        }
-//    }
-
-    stage ('Build Java') {
-
-        // install NIMBLE-Commons library
+    stage('Build Dependencies') {
         sh 'rm -rf common'
         sh 'git clone https://github.com/nimble-platform/common'
         dir ('common') {
             sh 'mvn clean install'
         }
+    }
 
-        sh '/bin/bash -xe util.sh java-build'
+    stage ('Build Java') {
+        sh 'mvn install -DskipTests'
     }
 
     stage ('Build Docker') {
