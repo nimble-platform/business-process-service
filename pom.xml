@@ -4,8 +4,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>eu.nimble.services</groupId>
-    <artifactId>business-process-service</artifactId>
+    <groupId>eu.nimble.core.service</groupId>
+    <artifactId>business-process</artifactId>
     <version>0.0.1</version>
     <name>Nimble Business Process Service</name>
     <description>This is the Business Process Service for NIMBLE based on Camunda with its REST-API
@@ -205,9 +205,9 @@
             <version>${maven-jaxb2-plugin.version}</version>
         </dependency>
         <dependency>
-            <groupId>eu.nimble.core.infrastructure.business</groupId>
+            <groupId>eu.nimble.core.common</groupId>
             <artifactId>ubl-data-model</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>0.0.1-SNAPSHOT</version>
         </dependency>
     </dependencies>
     <build>
