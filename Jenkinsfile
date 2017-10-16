@@ -13,7 +13,7 @@ node ('nimble-jenkins-slave') {
     }
 
     stage ('Build Java') {
-        sh 'mvn install -DskipTests'
+        sh 'mvn clean package -DskipTests'
     }
 
     stage ('Build Docker') {
