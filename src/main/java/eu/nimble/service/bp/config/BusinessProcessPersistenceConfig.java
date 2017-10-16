@@ -31,18 +31,17 @@ public class BusinessProcessPersistenceConfig {
         instance = this;
     }
 
+    private static boolean dbInitialized = false;
     public static BusinessProcessPersistenceConfig getInstance() {
+        if(instance != null && dbInitialized == false) {
+            instance.setupDbConnections();
+            dbInitialized = true;
+        }
         return instance;
     }
 
     @Autowired
     private Environment environment;
-
-    @Value("persistence.orm.business_process.bluemix.credentials_json")
-    private String bluemixBusiness_processDbJson;
-
-    @Value("${nimble.db-credentials-json}")
-    private String dbCredentialsJson;
 
     private Map<String, String> business_process;
 
@@ -50,17 +49,19 @@ public class BusinessProcessPersistenceConfig {
     @Primary
     public DataSource getDataSource() {
         if(Arrays.stream(environment.getActiveProfiles()).anyMatch(profile -> profile.contentEquals("kubernetes"))) {
-            BluemixDatabaseConfig config = new BluemixDatabaseConfig(dbCredentialsJson);
+            String camundaDbCredentialsJson = environment.getProperty("nimble.db-credentials-json");
+            BluemixDatabaseConfig config = new BluemixDatabaseConfig(camundaDbCredentialsJson);
             return DataSourceBuilder.create().url(config.getUrl()).username(config.getUsername()).password(config.getPassword()).driverClassName(config.getDriver()).build();
         } else {
             return DataSourceBuilder.create().url(environment.getProperty("spring.datasource.url")).build();
         }
     }
 
-    public void updateDBConfig() {
+    public void setupDbConnections() {
         // update persistence properties if kubernetes profile is active
         if(Arrays.stream(environment.getActiveProfiles()).anyMatch(profile -> profile.contentEquals("kubernetes"))) {
-            BluemixDatabaseConfig config = new BluemixDatabaseConfig(bluemixBusiness_processDbJson);
+            String bpDbCredentialsJson = environment.getProperty("persistence.orm.business_process.bluemix.credentials_json");
+            BluemixDatabaseConfig config = new BluemixDatabaseConfig(bpDbCredentialsJson);
             config.copyToHibernatePersistenceParameters(business_process);
         }
     }

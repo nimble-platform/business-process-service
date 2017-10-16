@@ -16,7 +16,6 @@ public class HibernateUtilityRef {
     public static HibernateUtility getInstance(String persistenceUnitName) {
         HibernateUtility utility = null;
         if(persistenceUnitName.contentEquals("bp-data-model")) {
-            BusinessProcessPersistenceConfig.getInstance().updateDBConfig();
             Map<String, String> persistenceProperties = BusinessProcessPersistenceConfig.getInstance().getBusiness_process();
             utility = HibernateUtility.getInstance(persistenceUnitName, persistenceProperties);
 
