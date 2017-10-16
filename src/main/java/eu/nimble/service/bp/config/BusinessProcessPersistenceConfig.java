@@ -62,7 +62,7 @@ public class BusinessProcessPersistenceConfig {
         if(Arrays.stream(environment.getActiveProfiles()).anyMatch(profile -> profile.contentEquals("kubernetes"))) {
             String bpDbCredentialsJson = environment.getProperty("persistence.orm.business_process.bluemix.credentials_json");
             BluemixDatabaseConfig config = new BluemixDatabaseConfig(bpDbCredentialsJson);
-            config.copyToHibernatePersistenceParameters(business_process);
+//            config.copyToHibernatePersistenceParameters(business_process); ToDo: check if this is necessary.
         }
     }
 
