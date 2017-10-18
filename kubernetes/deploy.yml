@@ -40,10 +40,25 @@ spec:
             value: kubernetes
           - name: DISCOVERY_ENABLED
             value: "false"
-          - name: DB_CREDENTIALS_JSON
+          - name: DB_CREDENTIALS_JSON # Camunda database
+            valueFrom:
+              secretKeyRef:
+                name: binding-nimble-camunda-db-prod
+                key: binding
+          - name: BLUEMIX_BUSINESS_PROCESS_DB_JSON
             valueFrom:
               secretKeyRef:
                 name: binding-nimble-business-process-db-prod
+                key: binding
+          - name: BLUEMIX_UBL_DB_JSON
+            valueFrom:
+              secretKeyRef:
+                name: binding-nimble-ubl-db-prod
+                key: binding
+          - name: BLUEMIX_MODAML_DB_JSON
+            valueFrom:
+              secretKeyRef:
+                name: binding-nimble-modaml-db-prod
                 key: binding
 
 ---
