@@ -1,6 +1,8 @@
 package eu.nimble.service.bp.config;
 
 import eu.nimble.utility.config.BluemixDatabaseConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceBuilder;
@@ -25,6 +27,8 @@ import java.util.Map;
 @PropertySource("classpath:bootstrap.yml")
 public class BusinessProcessPersistenceConfig {
 
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
     private static BusinessProcessPersistenceConfig instance;
 
     private BusinessProcessPersistenceConfig() {
@@ -32,8 +36,9 @@ public class BusinessProcessPersistenceConfig {
     }
 
     private static boolean dbInitialized = false;
+
     public static BusinessProcessPersistenceConfig getInstance() {
-        if(instance != null && dbInitialized == false) {
+        if (instance != null && dbInitialized == false) {
             instance.setupDbConnections();
             dbInitialized = true;
         }
@@ -48,18 +53,32 @@ public class BusinessProcessPersistenceConfig {
     @Bean
     @Primary
     public DataSource getDataSource() {
-        if(Arrays.stream(environment.getActiveProfiles()).anyMatch(profile -> profile.contentEquals("kubernetes"))) {
+        if (Arrays.stream(environment.getActiveProfiles()).anyMatch(profile -> profile.contentEquals("kubernetes"))) {
             String camundaDbCredentialsJson = environment.getProperty("nimble.db-credentials-json");
             BluemixDatabaseConfig config = new BluemixDatabaseConfig(camundaDbCredentialsJson);
-            return DataSourceBuilder.create().url(config.getUrl()).username(config.getUsername()).password(config.getPassword()).driverClassName(config.getDriver()).build();
+            return DataSourceBuilder.create()
+                    .url(config.getUrl())
+                    .username(config.getUsername())
+                    .password(config.getPassword())
+                    .driverClassName(config.getDriver())
+                    .build();
         } else {
-            return DataSourceBuilder.create().url(environment.getProperty("spring.datasource.url")).build();
+            logger.info("Creating datasource: url={}, user={}",
+                    environment.getProperty("spring.datasource.url"),
+                    environment.getProperty("spring.datasource.username"));
+
+            return DataSourceBuilder.create()
+                    .url(environment.getProperty("spring.datasource.url"))
+                    .username(environment.getProperty("spring.datasource.username"))
+                    .password(environment.getProperty("spring.datasource.password"))
+                    .driverClassName(environment.getProperty("spring.datasource.driverClassName"))
+                    .build();
         }
     }
 
     public void setupDbConnections() {
         // update persistence properties if kubernetes profile is active
-        if(Arrays.stream(environment.getActiveProfiles()).anyMatch(profile -> profile.contentEquals("kubernetes"))) {
+        if (Arrays.stream(environment.getActiveProfiles()).anyMatch(profile -> profile.contentEquals("kubernetes"))) {
             String bpDbCredentialsJson = environment.getProperty("persistence.orm.business_process.bluemix.credentials_json");
             BluemixDatabaseConfig config = new BluemixDatabaseConfig(bpDbCredentialsJson);
 //            config.copyToHibernatePersistenceParameters(business_process); ToDo: check if this is necessary.

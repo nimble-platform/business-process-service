@@ -6,18 +6,20 @@ spring:
     name: business-process-service
   cloud:
     config:
-      uri: ${vcap.services.config-service.credentials.url:${CONFIG_SERVER_URI:http://localhost:8888}}
+      uri: ${CONFIG_SERVER_URI:http://localhost:8888}
       # failFast is disabled per default, so that the service can start standalone without config server.
       # failFast should be enabled in production environments.
       # it can be set via an environment variable or the config server
-      failFast: ${vcap.services.config-service.failFast:${CONFIG_SERVER_FAILFAST:false}}
+      failFast: ${CONFIG_SERVER_FAILFAST:false}
     discovery:
       # by disabling the service discovery the application/service can be started in "standalone mode".
       # service discovery is disabled by default and should be enabled (set to true) for the "cloud mode".
       # it can be set via an environment variable or the config server
       enabled: ${discovery.enabled:${DISCOVERY_ENABLED:false}}
   datasource:
-    url: jdbc:postgresql://${BUSINESS_PROCESS_DB_URI:localhost:5432}/camunda?user=postgres&password=nimble&currentSchema=public
+    url: jdbc:postgresql://${CAMUNDA_DB_HOST:localhost}:${CAMUNDA_DB_PORT:5432}/${CAMUNDA_DB_NAME:camunda}
+    username: ${CAMUNDA_DB_USERNAME:postgres}
+    password: ${CAMUNDA_DB_PASSWORD:nimble}
     driverClassName: org.postgresql.Driver
   jackson:
     date-format: com.fasterxml.jackson.databind.util.ISO8601DateFormat
@@ -35,9 +37,9 @@ persistence:
     business_process:
       hibernate:
         connection:
-          url: jdbc:postgresql://localhost:5432/businessprocessengine?currentSchema=public
-          username: postgres
-          password: nimble
+          url: jdbc:postgresql://${BUSINESS_PROCESS_DB_HOST:localhost}:${BUSINESS_PROCESS_DB_PORT:5432}/${BUSINESS_PROCESS_DB_NAME:businessprocessengine}?currentSchema=public
+          username: ${BUSINESS_PROCESS_DB_USERNAME:postgres}
+          password: ${BUSINESS_PROCESS_DB_PASSWORD:nimble}
           driver_class: org.postgresql.Driver
         dialect: org.hibernate.dialect.PostgreSQLDialect
         show_sql: false
@@ -133,14 +135,14 @@ persistence:
             entity_copy_observer: allow
 
 logstash:
-  uri: ${vcap.services.logstash-service.credentials.url:${LOGSTASH_URI:localhost:5000}}
+  uri: ${LOGSTASH_URI:localhost:5000}
 
 camunda:
   bpm:
     webapp:
       index-redirect-enabled: false
     database:
-      schema-update: drop-create
+      schema-update: true
       type: postgres
     admin-user:
       id: kermit
