@@ -8,5 +8,7 @@ ADD $finalName $JAR
 RUN touch $JAR
 ENV PORT 8085
 EXPOSE $PORT
-CMD [${JAR}]
+
+RUN env
+
 ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom", "-jar", "/business-process-service.jar"]
