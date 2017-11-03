@@ -17,9 +17,7 @@ node('nimble-jenkins-slave') {
     }
 
     stage('Build Docker') {
-        withDockerRegistry([credentialsId: 'NimbleDocker']) {
-            sh '/bin/bash -xe util.sh docker-build'
-        }
+        sh '/bin/bash -xe util.sh docker-build'
     }
 
     if (env.BRANCH_NAME == 'master') {
