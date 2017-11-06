@@ -30,7 +30,8 @@
                         "thread": "%thread",
                         "class": "%logger{40}",
                         "version": "${build-version:-}",
-                        "message": "%message"
+                        "message": "%message",
+                        "exception": "%exception"
                         }
                     </pattern>
                 </pattern>
