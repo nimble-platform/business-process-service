@@ -38,6 +38,7 @@
 			<xsd:enumeration value="TRACKING"/>
 			<xsd:enumeration value="FULFILMENT"/>
 			<xsd:enumeration value="PRODUCTCONFIGURATION"/>
+			<xsd:enumeration value="TRANSPORT_EXECUTION_PLAN"/>
 			<xsd:enumeration value="OTHER"/>
 		</xsd:restriction>
 	</xsd:simpleType>
@@ -110,6 +111,8 @@
 			<xsd:enumeration value="TRANSPORTATIONSTATUS"/>
 			<xsd:enumeration value="DESPATCHADVICE"/>
 			<xsd:enumeration value="RECEIPTADVICE"/>
+			<xsd:enumeration value="TRANSPORTEXECUTIONPLANREQUEST"/>
+			<xsd:enumeration value="TRANSPORTEXECUTIONPLAN"/>
 			<xsd:enumeration value="OTHER"/>
 		</xsd:restriction>
 	</xsd:simpleType>

@@ -13,6 +13,8 @@ import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.service.model.ubl.receiptadvice.ReceiptAdviceType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
+import eu.nimble.service.model.ubl.transportexecutionplan.TransportExecutionPlanType;
+import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
 import eu.nimble.utility.DateUtility;
 import eu.nimble.utility.JAXBUtility;
 import org.joda.time.DateTime;
@@ -99,6 +101,30 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
             } catch (IOException e) {
                 logger.error("", e);
             }
+
+        } else if(documentType == ProcessDocumentMetadata.TypeEnum.TRANSPORTEXECUTIONPLANREQUEST) {
+            try {
+                TransportExecutionPlanRequestType transportExecutionPlanRequest = mapper.readValue(content, TransportExecutionPlanRequestType.class);
+
+                eu.nimble.service.model.ubl.transportexecutionplanrequest.ObjectFactory factory = new eu.nimble.service.model.ubl.transportexecutionplanrequest.ObjectFactory();
+                logger.debug(" $$$ Created document: {}", JAXBUtility.serialize(transportExecutionPlanRequest, factory.createTransportExecutionPlanRequest(transportExecutionPlanRequest)));
+
+                return transportExecutionPlanRequest;
+            } catch (IOException e) {
+                logger.error("", e);
+            }
+
+        } else if(documentType == ProcessDocumentMetadata.TypeEnum.TRANSPORTEXECUTIONPLAN) {
+            try {
+                TransportExecutionPlanType transportExecutionPlan = mapper.readValue(content, TransportExecutionPlanType.class);
+
+                eu.nimble.service.model.ubl.transportexecutionplan.ObjectFactory factory = new eu.nimble.service.model.ubl.transportexecutionplan.ObjectFactory();
+                logger.debug(" $$$ Created document: {}", JAXBUtility.serialize(transportExecutionPlan, factory.createTransportExecutionPlan(transportExecutionPlan)));
+
+                return transportExecutionPlan;
+            } catch (IOException e) {
+                logger.error("", e);
+            }
         }
 
         return null;
@@ -120,31 +146,48 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
             documentMetadata.setDocumentID(order.getID());
             documentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.WAITINGRESPONSE);
             documentMetadata.setType(ProcessDocumentMetadata.TypeEnum.ORDER);
+
         } else if(document instanceof OrderResponseSimpleType) {
             OrderResponseSimpleType orderResponse = (OrderResponseSimpleType) document;
             documentMetadata.setDocumentID(orderResponse.getID());
             documentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
             documentMetadata.setType(ProcessDocumentMetadata.TypeEnum.ORDERRESPONSESIMPLE);
+
         } else if(document instanceof  RequestForQuotationType) {
             RequestForQuotationType rfq = (RequestForQuotationType) document;
             documentMetadata.setDocumentID(rfq.getID());
             documentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.WAITINGRESPONSE);
             documentMetadata.setType(ProcessDocumentMetadata.TypeEnum.REQUESTFORQUOTATION);
+
         } else if(document instanceof  QuotationType) {
             QuotationType quotation = (QuotationType) document;
             documentMetadata.setDocumentID(quotation.getID());
             documentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
             documentMetadata.setType(ProcessDocumentMetadata.TypeEnum.QUOTATION);
+
         } else if(document instanceof  DespatchAdviceType) {
             DespatchAdviceType despatchAdvice = (DespatchAdviceType) document;
             documentMetadata.setDocumentID(despatchAdvice.getID());
             documentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.WAITINGRESPONSE);
             documentMetadata.setType(ProcessDocumentMetadata.TypeEnum.DESPATCHADVICE);
+
         } else if(document instanceof  ReceiptAdviceType) {
             ReceiptAdviceType receiptAdvice = (ReceiptAdviceType) document;
             documentMetadata.setDocumentID(receiptAdvice.getID());
             documentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
             documentMetadata.setType(ProcessDocumentMetadata.TypeEnum.RECEIPTADVICE);
+
+        } else if(document instanceof TransportExecutionPlanRequestType) {
+            TransportExecutionPlanRequestType transportExecutionPlanRequestType = (TransportExecutionPlanRequestType) document;
+            documentMetadata.setDocumentID(transportExecutionPlanRequestType.getID());
+            documentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.WAITINGRESPONSE);
+            documentMetadata.setType(ProcessDocumentMetadata.TypeEnum.TRANSPORTEXECUTIONPLANREQUEST);
+
+        } else if(document instanceof TransportExecutionPlanType) {
+            TransportExecutionPlanType transportExecutionPlanType = (TransportExecutionPlanType) document;
+            documentMetadata.setDocumentID(transportExecutionPlanType.getID());
+            documentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
+            documentMetadata.setType(ProcessDocumentMetadata.TypeEnum.TRANSPORTEXECUTIONPLAN);
         }
 
         // persist the document metadata
@@ -179,6 +222,12 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
         } else if(document instanceof ReceiptAdviceType) {
             ReceiptAdviceType receiptAdvice = (ReceiptAdviceType) document;
             String despatchAdviceID = receiptAdvice.getDespatchDocumentReference().get(0).getID();
+            ProcessDocumentMetadata initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(despatchAdviceID);
+            initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
+
+        } else if(document instanceof TransportExecutionPlanType) {
+            TransportExecutionPlanType transportExecutionPlanType = (TransportExecutionPlanType) document;
+            String despatchAdviceID = transportExecutionPlanType.getTransportExecutionPlanRequestDocumentReference().getID();
             ProcessDocumentMetadata initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(despatchAdviceID);
             initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
         }

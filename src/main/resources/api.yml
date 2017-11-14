@@ -527,6 +527,7 @@ definitions:
           - INVOICE
           - TRACKING
           - FULFILMENT
+          - TRANSPORT_EXECUTION_PLAN
           - PRODUCTCONFIGURATION
           - OTHER
 
@@ -563,6 +564,8 @@ definitions:
         - TRANSPORTATIONSTATUS
         - DESPATCHADVICE
         - RECEIPTADVICE
+        - TRANSPORTEXECUTIONPLANREQUEST
+        - TRANSPORTEXECUTIONPLAN
         - OTHER
 
   Process:
@@ -584,6 +587,7 @@ definitions:
         - TRACKING
         - FULFILMENT
         - PRODUCTCONFIGURATION
+        - TRANSPORTEXECUTIONPLAN
         - OTHER
       textContent:
         type: string
@@ -707,6 +711,8 @@ definitions:
         - TRANSPORTATIONSTATUS
         - DESPATCHADVICE
         - RECEIPTADVICE
+        - TRANSPORTEXECUTIONPLANREQUEST
+        - TRANSPORTEXECUTIONPLAN
         - OTHER
       status:
         type: string
