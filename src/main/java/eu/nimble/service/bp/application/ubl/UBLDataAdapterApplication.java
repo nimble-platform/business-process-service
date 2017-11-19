@@ -7,6 +7,8 @@ import eu.nimble.service.bp.application.IBusinessProcessApplication;
 import eu.nimble.service.bp.impl.util.persistence.DocumentDAOUtility;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.despatchadvice.DespatchAdviceType;
+import eu.nimble.service.model.ubl.iteminformationrequest.ItemInformationRequestType;
+import eu.nimble.service.model.ubl.iteminformationresponse.ItemInformationResponseType;
 import eu.nimble.service.model.ubl.order.ObjectFactory;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
@@ -125,6 +127,30 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
             } catch (IOException e) {
                 logger.error("", e);
             }
+
+        } else if(documentType == ProcessDocumentMetadata.TypeEnum.ITEMINFORMATIONREQUEST) {
+            try {
+                ItemInformationRequestType itemInformationRequest = mapper.readValue(content, ItemInformationRequestType.class);
+
+                eu.nimble.service.model.ubl.iteminformationrequest.ObjectFactory factory = new eu.nimble.service.model.ubl.iteminformationrequest.ObjectFactory();
+                logger.debug(" $$$ Created document: {}", JAXBUtility.serialize(itemInformationRequest, factory.createItemInformationRequest(itemInformationRequest)));
+
+                return itemInformationRequest;
+            } catch (IOException e) {
+                logger.error("", e);
+            }
+
+        } else if(documentType == ProcessDocumentMetadata.TypeEnum.ITEMINFORMATIONRESPONSE) {
+            try {
+                ItemInformationResponseType itemInformationResponse = mapper.readValue(content, ItemInformationResponseType.class);
+
+                eu.nimble.service.model.ubl.iteminformationresponse.ObjectFactory factory = new eu.nimble.service.model.ubl.iteminformationresponse.ObjectFactory();
+                logger.debug(" $$$ Created document: {}", JAXBUtility.serialize(itemInformationResponse, factory.createItemInformationResponse(itemInformationResponse)));
+
+                return itemInformationResponse;
+            } catch (IOException e) {
+                logger.error("", e);
+            }
         }
 
         return null;
@@ -188,6 +214,18 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
             documentMetadata.setDocumentID(transportExecutionPlanType.getID());
             documentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
             documentMetadata.setType(ProcessDocumentMetadata.TypeEnum.TRANSPORTEXECUTIONPLAN);
+
+        } else if(document instanceof ItemInformationRequestType) {
+            ItemInformationRequestType itemInformationRequest = (ItemInformationRequestType) document;
+            documentMetadata.setDocumentID(itemInformationRequest.getID());
+            documentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.WAITINGRESPONSE);
+            documentMetadata.setType(ProcessDocumentMetadata.TypeEnum.ITEMINFORMATIONREQUEST);
+
+        } else if(document instanceof ItemInformationResponseType) {
+            ItemInformationResponseType itemInformationResponse = (ItemInformationResponseType) document;
+            documentMetadata.setDocumentID(itemInformationResponse.getID());
+            documentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
+            documentMetadata.setType(ProcessDocumentMetadata.TypeEnum.ITEMINFORMATIONRESPONSE);
         }
 
         // persist the document metadata
@@ -227,8 +265,14 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
 
         } else if(document instanceof TransportExecutionPlanType) {
             TransportExecutionPlanType transportExecutionPlanType = (TransportExecutionPlanType) document;
-            String despatchAdviceID = transportExecutionPlanType.getTransportExecutionPlanRequestDocumentReference().getID();
-            ProcessDocumentMetadata initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(despatchAdviceID);
+            String tepDocRefId = transportExecutionPlanType.getTransportExecutionPlanRequestDocumentReference().getID();
+            ProcessDocumentMetadata initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(tepDocRefId);
+            initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
+
+        } else if(document instanceof ItemInformationResponseType) {
+            ItemInformationResponseType itemInformationResponse = (ItemInformationResponseType) document;
+            String itemInformationRequestId = itemInformationResponse.getItemInformationRequestDocumentReference().getID();
+            ProcessDocumentMetadata initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(itemInformationRequestId);
             initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
         }
     }

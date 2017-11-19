@@ -17,7 +17,7 @@ spring:
       # it can be set via an environment variable or the config server
       enabled: ${discovery.enabled:${DISCOVERY_ENABLED:false}}
   datasource:
-    url: jdbc:postgresql://${CAMUNDA_DB_HOST:localhost}:${CAMUNDA_DB_PORT:5432}/${CAMUNDA_DB_NAME:camunda}
+    url: jdbc:postgresql://${CAMUNDA_DB_HOST:localhost}:${CAMUNDA_DB_PORT:5432}/${CAMUNDA_DB_NAME:camunda}?currentSchema=public
     username: ${CAMUNDA_DB_USERNAME:postgres}
     password: ${CAMUNDA_DB_PASSWORD:nimble}
     driverClassName: org.postgresql.Driver
@@ -142,7 +142,7 @@ camunda:
     webapp:
       index-redirect-enabled: false
     database:
-      schema-update: true
+      schema-update: drop-create
       type: postgres
     admin-user:
       id: kermit

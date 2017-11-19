@@ -420,7 +420,7 @@
                         <!-- common configuration shared by all executions -->
                         <configuration>
                             <driver>org.postgresql.Driver</driver>
-                            <url>jdbc:postgresql://localhost:111/camunda?currentSchema=public</url>
+                            <url>jdbc:postgresql://localhost:5432/camunda?currentSchema=public</url>
                             <username>postgres</username>
                             <password>nimble</password>
                             <!-- You can comment out username/password configurations and
