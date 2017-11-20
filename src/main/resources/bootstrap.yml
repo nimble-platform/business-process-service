@@ -70,11 +70,18 @@ persistence:
     ubl:
       hibernate:
         connection:
-          url: jdbc:h2:file:${user.home}/nimble/ubl;AUTO_SERVER=TRUE;MVCC=TRUE;AUTO_RECONNECT=TRUE;DB_CLOSE_DELAY=10;INIT=create schema IF NOT EXISTS APPS
-          username: sa
-          password:
-          driver_class: org.h2.Driver
-        dialect: org.hibernate.dialect.H2Dialect
+          #### H2 Configs
+#          url: jdbc:h2:file:${user.home}/nimble/ubl;AUTO_SERVER=TRUE;MVCC=TRUE;AUTO_RECONNECT=TRUE;DB_CLOSE_DELAY=10;INIT=create schema IF NOT EXISTS APPS
+#          username: sa
+#          password:
+#          driver_class: org.h2.Driver
+#        dialect: org.hibernate.dialect.H2Dialect
+          #### Postgres Configs
+          url: jdbc:postgresql://${UBL_DB_HOST:localhost}:${UBL_DB_HOST_PORT:5432}/${UBL_DB_NAME:ubldb}?currentSchema=public
+          username: ${UBL_DB_USERNAME:postgres}
+          password: ${UBL_DB_PASSWORD:nimble}
+          driver_class: org.postgresql.Driver
+        dialect: org.hibernate.dialect.PostgreSQLDialect
         show_sql: false
         hbm2ddl:
           auto: update
