@@ -140,7 +140,7 @@ camunda:
     webapp:
       index-redirect-enabled: false
     database:
-      schema-update: drop-create
+      schema-update: true
       type: postgres
     admin-user:
       id: kermit

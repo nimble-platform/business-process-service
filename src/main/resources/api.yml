@@ -528,6 +528,7 @@ definitions:
           - TRACKING
           - FULFILMENT
           - PRODUCTCONFIGURATION
+          - PPAP
           - OTHER
 
 
@@ -563,6 +564,8 @@ definitions:
         - TRANSPORTATIONSTATUS
         - DESPATCHADVICE
         - RECEIPTADVICE
+        - PPAPREQUEST
+        - PPAPRESPONSE
         - OTHER
 
   Process:
@@ -584,6 +587,7 @@ definitions:
         - TRACKING
         - FULFILMENT
         - PRODUCTCONFIGURATION
+        - PPAP
         - OTHER
       textContent:
         type: string
@@ -707,6 +711,8 @@ definitions:
         - TRANSPORTATIONSTATUS
         - DESPATCHADVICE
         - RECEIPTADVICE
+        - PPAPREQUEST
+        - PPAPRESPONSE
         - OTHER
       status:
         type: string

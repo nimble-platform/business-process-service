@@ -15,11 +15,14 @@ import eu.nimble.service.model.ubl.receiptadvice.ReceiptAdviceType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
 import eu.nimble.utility.DateUtility;
 import eu.nimble.utility.JAXBUtility;
+import oasis.names.specification.ubl.schema.xsd.ppaprequest_2.PpapRequestType;
+import oasis.names.specification.ubl.schema.xsd.ppapresponse_2.PpapResponseType;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Created by yildiray on 6/5/2017.
@@ -41,6 +44,23 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
                 logger.debug(" $$$ Created document: {}", JAXBUtility.serialize(order, factory.createOrder(order)));
 
                 return order;
+            } catch (IOException e) {
+                logger.error("", e);
+            }
+        }
+        else if(documentType == ProcessDocumentMetadata.TypeEnum.PPAPREQUEST){
+            try {
+                PpapRequestType ppapRequestType = mapper.readValue(content, PpapRequestType.class);
+                return ppapRequestType;
+            } catch (IOException e) {
+                logger.error("", e);
+            }
+        }
+        else if(documentType == ProcessDocumentMetadata.TypeEnum.PPAPRESPONSE){
+            try {
+                PpapResponseType ppapResponseType = mapper.readValue(content, PpapResponseType.class);
+
+                return ppapResponseType;
             } catch (IOException e) {
                 logger.error("", e);
             }
@@ -120,6 +140,16 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
             documentMetadata.setDocumentID(order.getID());
             documentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.WAITINGRESPONSE);
             documentMetadata.setType(ProcessDocumentMetadata.TypeEnum.ORDER);
+        } else if(document instanceof PpapRequestType){
+            PpapRequestType ppapRequestType = (PpapRequestType) document;
+            documentMetadata.setDocumentID(ppapRequestType.getID());
+            documentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.WAITINGRESPONSE);
+            documentMetadata.setType(ProcessDocumentMetadata.TypeEnum.PPAPREQUEST);
+        } else if(document instanceof PpapResponseType){
+            PpapResponseType ppapResponseType = (PpapResponseType) document;
+            documentMetadata.setDocumentID(ppapResponseType.getID());
+            documentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.WAITINGRESPONSE);
+            documentMetadata.setType(ProcessDocumentMetadata.TypeEnum.PPAPRESPONSE);
         } else if(document instanceof OrderResponseSimpleType) {
             OrderResponseSimpleType orderResponse = (OrderResponseSimpleType) document;
             documentMetadata.setDocumentID(orderResponse.getID());
@@ -170,7 +200,20 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
 
             DocumentDAOUtility.updateDocumentMetadata(initiatingDocumentMetadata);
 
-        } else if(document instanceof QuotationType) {
+        }
+        else if(document instanceof PpapResponseType){
+            PpapResponseType ppapResponseType = (PpapResponseType) document;
+            String ppapREQUESTID = ppapResponseType.getDocumentReference().getID();
+            boolean isAccepted = ppapResponseType.isAcceptedIndicator();
+
+            ProcessDocumentMetadata initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(ppapREQUESTID);
+            if(isAccepted)
+                initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
+            else
+                initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.DENIED);
+
+            DocumentDAOUtility.updateDocumentMetadata(initiatingDocumentMetadata);
+        }else if(document instanceof QuotationType) {
             QuotationType quotation = (QuotationType) document;
             String rfqID = quotation.getRequestForQuotationDocumentReference().getID();
             ProcessDocumentMetadata initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(rfqID);
