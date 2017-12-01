@@ -2,11 +2,11 @@
 <configuration debug="false">
 
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
-    <include resource="org/springframework/boot/logging/logback/console-appender.xml" />
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
     ​
     <springProperty scope="context" name="springAppName" source="spring.application.name"/>
-    <springProperty name="logstash-uri" source="logstash.uri" />
-    <springProperty name="build-version" source="build.version" />
+    <springProperty name="logstash-uri" source="logstash.uri"/>
+    <springProperty name="build-version" source="build.version"/>
 
     <!-- Appender to send logs to Logstash -->
     <appender name="logstash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
@@ -21,7 +21,7 @@
                 <pattern>
                     <pattern>
                         {
-                        "severity": "%level",
+                        "level": "%level",
                         "serviceID": "${springAppName:-}",
                         "trace": "%X{X-B3-TraceId:-}",
                         "span": "%X{X-B3-SpanId:-}",
@@ -30,7 +30,8 @@
                         "thread": "%thread",
                         "class": "%logger{40}",
                         "version": "${build-version:-}",
-                        "rest": "%message"
+                        "message": "%message",
+                        "exception": "%exception"
                         }
                     </pattern>
                 </pattern>

@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>eu.nimble.core.service</groupId>
-    <artifactId>business-process</artifactId>
+    <artifactId>business-process-service</artifactId>
     <version>0.0.1</version>
     <name>Nimble Business Process Service</name>
     <description>This is the Business Process Service for NIMBLE based on Camunda with its REST-API

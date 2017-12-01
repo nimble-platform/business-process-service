@@ -13,7 +13,12 @@ elif [ "$1" == "docker-build" ]; then
 
 elif [ "$1" == "docker-push" ]; then
 
-    docker push nimbleplatform/business-process-service:latest
+    mvn docker:push -P docker
+
+elif [ "$1" == "all" ]; then
+
+    mvn clean install -DskipTests
+    mvn docker:build docker:push -P docker
 
 fi
 
