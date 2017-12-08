@@ -32,6 +32,17 @@ springfox:
       v2:
         path: /api-docs
 
+#### c3p0 database connection pool configurations
+com:
+  mchange:
+    v2:
+      c3p0:
+        impl:
+          DefaultConnectionTester:
+            querylessTestRunner: SWITCH
+      log:
+        MLog: slf4j
+
 persistence:
   orm:
     business_process:
@@ -50,32 +61,26 @@ persistence:
         jdbc:
           batch_size: 0
         c3p0:
-          acquire_increment: 2
-          idle_test_period: 60
-          min_size: 10
-          max_size: 100
-          maxStatements: 0
-          maxStatementsPerConnection: 100
-          timeout: 300
-          acquireRetryAttempts: 1
-          acquireRetryDelay: 250
+          acquireIncrement: 10
+          initialPoolSize: 10
+          maxPoolSize: 100
+          minPoolSize: 10
+          maxStatementsPerConnection: 10
+          acquireRetryAttempts: 10
+          acquireRetryDelay: 100
           numHelperThreads: 10
+          idle_test_period: 600
         use_sql_comments: true
         transaction:
           factory_class: org.hibernate.transaction.JDBCTransactionFactory
         current_session_context_class: thread
+        enable_lazy_load_no_trans: true
         event:
           merge:
             entity_copy_observer: allow
     ubl:
       hibernate:
         connection:
-          #### H2 Configs
-#          url: jdbc:h2:file:${user.home}/nimble/ubl;AUTO_SERVER=TRUE;MVCC=TRUE;AUTO_RECONNECT=TRUE;DB_CLOSE_DELAY=10;INIT=create schema IF NOT EXISTS APPS
-#          username: sa
-#          password:
-#          driver_class: org.h2.Driver
-#        dialect: org.hibernate.dialect.H2Dialect
           #### Postgres Configs
           url: jdbc:postgresql://${UBL_DB_HOST:localhost}:${UBL_DB_HOST_PORT:5432}/${UBL_DB_NAME:ubldb}?currentSchema=public
           username: ${UBL_DB_USERNAME:postgres}
@@ -90,20 +95,20 @@ persistence:
         jdbc:
           batch_size: 0
         c3p0:
-          acquire_increment: 2
-          idle_test_period: 60
-          min_size: 10
-          max_size: 100
-          maxStatements: 0
-          maxStatementsPerConnection: 100
-          timeout: 300
-          acquireRetryAttempts: 1
-          acquireRetryDelay: 250
+          acquireIncrement: 10
+          initialPoolSize: 10
+          maxPoolSize: 100
+          minPoolSize: 10
+          maxStatementsPerConnection: 10
+          acquireRetryAttempts: 10
+          acquireRetryDelay: 100
           numHelperThreads: 10
+          idle_test_period: 600
         use_sql_comments: true
         transaction:
           factory_class: org.hibernate.transaction.JDBCTransactionFactory
         current_session_context_class: thread
+        enable_lazy_load_no_trans: true
         event:
           merge:
             entity_copy_observer: allow
@@ -190,20 +195,20 @@ persistence:
         jdbc:
           batch_size: 0
         c3p0:
-          acquire_increment: 2
-          idle_test_period: 60
-          min_size: 10
-          max_size: 100
-          maxStatements: 0
-          maxStatementsPerConnection: 100
-          timeout: 300
-          acquireRetryAttempts: 1
-          acquireRetryDelay: 250
+          acquireIncrement: 10
+          initialPoolSize: 10
+          maxPoolSize: 100
+          minPoolSize: 10
+          maxStatementsPerConnection: 10
+          acquireRetryAttempts: 10
+          acquireRetryDelay: 100
           numHelperThreads: 10
+          idle_test_period: 600
         use_sql_comments: true
         transaction:
           factory_class: org.hibernate.transaction.JDBCTransactionFactory
         current_session_context_class: thread
+        enable_lazy_load_no_trans: true
         event:
           merge:
             entity_copy_observer: allow
@@ -222,20 +227,20 @@ persistence:
         jdbc:
           batch_size: 0
         c3p0:
-          acquire_increment: 2
-          idle_test_period: 60
-          min_size: 10
-          max_size: 100
-          maxStatements: 0
-          maxStatementsPerConnection: 100
-          timeout: 300
-          acquireRetryAttempts: 1
-          acquireRetryDelay: 250
+          acquireIncrement: 10
+          initialPoolSize: 10
+          maxPoolSize: 100
+          minPoolSize: 10
+          maxStatementsPerConnection: 10
+          acquireRetryAttempts: 10
+          acquireRetryDelay: 100
           numHelperThreads: 10
+          idle_test_period: 600
         use_sql_comments: true
         transaction:
           factory_class: org.hibernate.transaction.JDBCTransactionFactory
         current_session_context_class: thread
+        enable_lazy_load_no_trans: true
         event:
           merge:
             entity_copy_observer: allow
@@ -285,15 +290,24 @@ spring:
   profiles: local_dev
   # Local h2 database
   datasource:
-    url: jdbc:h2:mem:AZ;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    driverClassName: org.h2.Driver
-    username: sa
-    password:
-    jpa:
-      database-platform: org.hibernate.dialect.H2Dialect
+    url: jdbc:postgresql://${CAMUNDA_DB_HOST:localhost}:${CAMUNDA_DB_PORT:5432}/${CAMUNDA_DB_NAME:camunda}?currentSchema=public
+    username: ${CAMUNDA_DB_USERNAME:postgres}
+    password: ${CAMUNDA_DB_PASSWORD:nimble}
+    driverClassName: org.postgresql.Driver
   h2:
     console:
       enabled: true
+persistence:
+  orm:
+    ubl:
+      hibernate:
+        connection:
+          #### H2 Configs
+          url: jdbc:h2:file:${user.home}/nimble/ubl;AUTO_SERVER=TRUE;MVCC=TRUE;AUTO_RECONNECT=TRUE;DB_CLOSE_DELAY=10;INIT=create schema IF NOT EXISTS APPS
+          username: sa
+          password:
+          driver_class: org.h2.Driver
+        dialect: org.hibernate.dialect.H2Dialect
 
 nimble:
   cors_enabled: true

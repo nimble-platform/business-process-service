@@ -1,6 +1,8 @@
 package eu.nimble.service.bp;
 
 import com.netflix.hystrix.contrib.javanica.aop.aspectj.HystrixCommandAspect;
+import eu.nimble.service.bp.impl.util.persistence.HibernateUtilityRef;
+import eu.nimble.utility.HibernateUtility;
 import org.apache.ibatis.session.SqlSession;
 import org.camunda.bpm.engine.*;
 import org.camunda.bpm.engine.impl.ProcessEngineImpl;
@@ -90,6 +92,9 @@ public class BusinessProcessApplication {
         logger.warn("Failed to close session/connection", e);
       }
     }
+
+    HibernateUtility.getInstance(eu.nimble.utility.Configuration.UBL_PERSISTENCE_UNIT_NAME);
+    HibernateUtilityRef.getInstance("bp-data-model");
   }
 
 //  @Autowired
