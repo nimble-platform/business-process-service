@@ -55,7 +55,7 @@ persistence:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         show_sql: false
         hbm2ddl:
-          auto: create-drop  # update
+          auto: update
         cache:
           provider_class: org.hibernate.cache.HashtableCacheProvider
         jdbc:
@@ -89,7 +89,7 @@ persistence:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         show_sql: false
         hbm2ddl:
-          auto: create-drop  # update
+          auto: update
         cache:
           provider_class: org.hibernate.cache.HashtableCacheProvider
         jdbc:
@@ -122,7 +122,7 @@ persistence:
         dialect: org.hibernate.dialect.H2Dialect
         show_sql: false
         hbm2ddl:
-          auto: create-drop  # update
+          auto: update
         cache:
           provider_class: org.hibernate.cache.HashtableCacheProvider
         jdbc:
@@ -154,7 +154,7 @@ camunda:
     webapp:
       index-redirect-enabled: false
     database:
-      schema-update: create-drop  # true
+      schema-update: true
       type: postgres
     admin-user:
       id: kermit
