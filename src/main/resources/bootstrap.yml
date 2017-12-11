@@ -69,7 +69,7 @@ persistence:
           acquireRetryAttempts: 10
           acquireRetryDelay: 100
           numHelperThreads: 10
-          testConnectionOnCheckout: true
+          idle_test_period: 600
         use_sql_comments: true
         transaction:
           factory_class: org.hibernate.transaction.JDBCTransactionFactory
@@ -103,7 +103,7 @@ persistence:
           acquireRetryAttempts: 10
           acquireRetryDelay: 100
           numHelperThreads: 10
-          testConnectionOnCheckout: true
+          idle_test_period: 600
         use_sql_comments: true
         transaction:
           factory_class: org.hibernate.transaction.JDBCTransactionFactory
@@ -203,7 +203,7 @@ persistence:
           acquireRetryAttempts: 10
           acquireRetryDelay: 100
           numHelperThreads: 10
-          testConnectionOnCheckout: true
+          idle_test_period: 600
         use_sql_comments: true
         transaction:
           factory_class: org.hibernate.transaction.JDBCTransactionFactory
@@ -235,7 +235,7 @@ persistence:
           acquireRetryAttempts: 10
           acquireRetryDelay: 100
           numHelperThreads: 10
-          testConnectionOnCheckout: true
+          idle_test_period: 600
         use_sql_comments: true
         transaction:
           factory_class: org.hibernate.transaction.JDBCTransactionFactory
