@@ -21,6 +21,8 @@ spring:
     username: ${CAMUNDA_DB_USERNAME:postgres}
     password: ${CAMUNDA_DB_PASSWORD:nimble}
     driverClassName: org.postgresql.Driver
+    testWhileIdle: true
+    timeBetweenEvictionRunsMillis: 600000
   jackson:
     date-format: com.fasterxml.jackson.databind.util.ISO8601DateFormat
     serialization:
