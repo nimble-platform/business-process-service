@@ -5,7 +5,7 @@ ARG finalName
 ENV JAR '/'$finalName
 ARG port
 ADD $finalName $JAR
-#RUN touch $JAR
+RUN touch $JAR
 ENV PORT 8085
 EXPOSE $PORT
 
