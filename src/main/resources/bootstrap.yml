@@ -24,7 +24,7 @@ spring:
     initialSize: 10
     testWhileIde: true
     timeBetweenEvictionRunsMillis: 600000
-    minEvictableIdleTimeMillis: -1
+    minEvictableIdleTimeMillis: 3600000
     validationQuery: SELECT 1
 #    tomcat:
 #      initial-size: 10
