@@ -21,16 +21,17 @@ spring:
     username: ${CAMUNDA_DB_USERNAME:postgres}
     password: ${CAMUNDA_DB_PASSWORD:nimble}
     driverClassName: org.postgresql.Driver
-    initialSize: 10
-    testWhileIde: true
-    timeBetweenEvictionRunsMillis: 600000
-    minEvictableIdleTimeMillis: 3600000
-    validationQuery: SELECT 1
-#    tomcat:
-#      initial-size: 10
-#      test-while-idle: true
-#      time-between-eviction-runs-millis: 600000
-#      validation-query: SELECT 1
+#    initialSize: 10
+#    testWhileIde: true
+#    timeBetweenEvictionRunsMillis: 600000
+#    minEvictableIdleTimeMillis: 3600000
+#    validationQuery: SELECT 1
+    tomcat:
+      initial-size: 10
+      test-while-idle: true
+      time-between-eviction-runs-millis: 600000
+      validation-query: SELECT 1
+      min-evictable-idle-time-millis: 3600000
   jackson:
     date-format: com.fasterxml.jackson.databind.util.ISO8601DateFormat
     serialization:
