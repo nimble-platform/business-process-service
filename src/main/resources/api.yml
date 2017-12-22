@@ -590,8 +590,8 @@ definitions:
         - TRACKING
         - FULFILMENT
         - PRODUCTCONFIGURATION
-        - TRANSPORTEXECUTIONPLAN
-        - ITEMINFORMATIONREQUEST
+        - TRANSPORT_EXECUTION_PLAN
+        - ITEM_INFORMATION_REQUEST
         - OTHER
       textContent:
         type: string
