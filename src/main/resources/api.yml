@@ -594,8 +594,8 @@ definitions:
         - FULFILMENT
         - PRODUCTCONFIGURATION
         - PPAP
-        - TRANSPORTEXECUTIONPLAN
-        - ITEMINFORMATIONREQUEST
+        - TRANSPORT_EXECUTION_PLAN
+        - ITEM_INFORMATION_REQUEST
         - OTHER
       textContent:
         type: string
