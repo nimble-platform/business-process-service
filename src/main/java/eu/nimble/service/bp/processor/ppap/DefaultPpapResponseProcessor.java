@@ -7,8 +7,7 @@ import eu.nimble.service.bp.impl.util.persistence.DocumentDAOUtility;
 
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
-import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
-import oasis.names.specification.ubl.schema.xsd.ppapresponse_2.PpapResponseType;
+import eu.nimble.service.model.ubl.ppapresponse.PpapResponseType;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
 import org.slf4j.Logger;

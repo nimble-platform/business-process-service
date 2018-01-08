@@ -7,9 +7,9 @@ import eu.nimble.service.bp.impl.util.persistence.DocumentDAOUtility;
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
-import eu.nimble.service.model.ubl.commonaggregatecomponents.DocumentReferenceType;
-import oasis.names.specification.ubl.schema.xsd.ppaprequest_2.PpapRequestType;
-import oasis.names.specification.ubl.schema.xsd.ppapresponse_2.PpapResponseType;
+import eu.nimble.service.model.ubl.ppapresponse.PpapResponseType;
+import eu.nimble.service.model.ubl.ppaprequest.PpapRequestType;
+
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
 import org.slf4j.Logger;
@@ -34,7 +34,6 @@ public class DefaultPpapResponseCreator implements JavaDelegate {
         // get input variables
         String buyer = variables.get("responderID").toString();
         String seller = variables.get("initiatorID").toString();
-        PpapRequestType ppapRequestType = (PpapRequestType) variables.get("ppapRequest");
         String content = variables.get("content").toString();
 
         // get application execution configuration of the party
