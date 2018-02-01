@@ -1,8 +1,10 @@
+package eu.nimble.selenium;
+
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 
-public class Test90_Order_InitiateDespatchAdvice implements SeleniumInterface{
+public class Test90_Order_InitiateDespatchAdvice implements SeleniumInterface {
     @Override
     public void execute() {
         //Launch the website
@@ -12,7 +14,10 @@ public class Test90_Order_InitiateDespatchAdvice implements SeleniumInterface{
         WebElement email = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"email\"]")));
         WebElement password = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"password\"]")));
 
+        email.clear();
         email.sendKeys(emailAddress);
+
+        password.clear();
         password.sendKeys(userPassword);
 
         // Submit

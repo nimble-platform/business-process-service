@@ -1,3 +1,5 @@
+package eu.nimble.selenium;
+
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -13,7 +15,10 @@ public class Test7_Order implements SeleniumInterface {
         WebElement email = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"email\"]")));
         WebElement password = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"password\"]")));
 
+        email.clear();
         email.sendKeys(emailAddressBuyer);
+
+        password.clear();
         password.sendKeys(userPasswordBuyer);
 
         // Submit
@@ -26,7 +31,7 @@ public class Test7_Order implements SeleniumInterface {
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/nav/button"))).click();
         driver.findElement(By.xpath("//*[@id=\"navbarNavAltMarkup\"]/ul[1]/li[3]/a")).click();
 
-        // Search for ExampleProduct
+        // Search for QuantumExampleProduct
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"searchTerm\"]"))).sendKeys("QuantumExampleProduct");
         driver.findElement(By.xpath("/html/body/div/nimble-app/simple-search/simple-search-form/form/div[1]/span/button")).click();
 
@@ -35,7 +40,7 @@ public class Test7_Order implements SeleniumInterface {
 
         // Order
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/simple-search-details/div/h3/button"))).click();
-        driver.findElement(By.xpath("/html/body/div/nimble-app/simple-search-details/div/product-bp-options/ul/li[3]/a")).click();
+        driver.findElement(By.xpath("/html/body/div/nimble-app/simple-search-details/div/product-bp-options/ul/li[4]/a")).click();
 
         // Fill quantity
         driver.findElement(By.xpath("/html/body/div/nimble-app/simple-search-details/div/product-bp-options/order-bp/div[2]/order/quantity-view[1]/form/div/div/div/input[1]")).sendKeys("12");

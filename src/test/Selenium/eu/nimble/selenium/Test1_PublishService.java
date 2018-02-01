@@ -1,3 +1,5 @@
+package eu.nimble.selenium;
+
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -12,7 +14,10 @@ public class Test1_PublishService implements SeleniumInterface {
         WebElement email = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"email\"]")));
         WebElement password = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"password\"]")));
 
+        email.clear();
         email.sendKeys(emailAddress);
+
+        password.clear();
         password.sendKeys(userPassword);
 
         // Submit
@@ -34,7 +39,7 @@ public class Test1_PublishService implements SeleniumInterface {
 
         // Set product name,description
         driver.findElement(By.xpath("/html/body/div/nimble-app/product-publish/div/form/catalogue-line-view/catalogue-line-header/div/div[2]/value-view[2]/div/input")).sendKeys("QuantumExampleProductService");
-        driver.findElement(By.xpath("/html/body/div/nimble-app/product-publish/div/form/catalogue-line-view/catalogue-line-header/div/div[2]/value-view[3]/div/input")).sendKeys("QuantumExampleProductServiceDescription");
+        driver.findElement(By.xpath("/html/body/div/nimble-app/product-publish/div/form/catalogue-line-view/catalogue-line-header/div/div[2]/value-view[3]/div/textarea")).sendKeys("QuantumExampleProductServiceDescription");
 
         // Switch to logistic view
         driver.findElement(By.xpath("/html/body/div/nimble-app/product-publish/div/form/catalogue-line-view/div[2]/button")).click();

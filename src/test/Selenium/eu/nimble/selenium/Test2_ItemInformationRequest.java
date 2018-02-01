@@ -1,8 +1,10 @@
+package eu.nimble.selenium;
+
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 
-public class Test2_ItemInformationRequest implements SeleniumInterface{
+public class Test2_ItemInformationRequest implements SeleniumInterface {
 
     @Override
     public void execute() throws Exception {
@@ -13,7 +15,10 @@ public class Test2_ItemInformationRequest implements SeleniumInterface{
         WebElement email = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"email\"]")));
         WebElement password = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"password\"]")));
 
+        email.clear();
         email.sendKeys(emailAddressBuyer);
+
+        password.clear();
         password.sendKeys(userPasswordBuyer);
 
         // Submit
@@ -26,9 +31,8 @@ public class Test2_ItemInformationRequest implements SeleniumInterface{
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/nav/button"))).click();
         driver.findElement(By.xpath("//*[@id=\"navbarNavAltMarkup\"]/ul[1]/li[3]/a")).click();
 
-        // Search for ExampleProduct
+        // Search for QuantumExampleProduct
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"searchTerm\"]"))).sendKeys("QuantumExampleProduct");
-    //    driver.findElement(By.xpath("/html/body/div/nimble-app/simple-search/simple-search-form/form/div[1]/span/button")).click();
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/simple-search/simple-search-form/form/div[1]/span/button"))).click();
 
         // Click (First one)

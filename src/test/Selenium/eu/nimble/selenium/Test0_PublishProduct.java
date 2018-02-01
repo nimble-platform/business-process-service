@@ -1,8 +1,10 @@
+package eu.nimble.selenium;
+
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 
-public class Test0_PublishProduct implements SeleniumInterface{
+public class Test0_PublishProduct implements SeleniumInterface {
 
     @Override
     public void execute() {
@@ -13,7 +15,10 @@ public class Test0_PublishProduct implements SeleniumInterface{
         WebElement email = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"email\"]")));
         WebElement password = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"password\"]")));
 
+        email.clear();
         email.sendKeys(emailAddress);
+
+        password.clear();
         password.sendKeys(userPassword);
 
         // Submit
@@ -35,7 +40,7 @@ public class Test0_PublishProduct implements SeleniumInterface{
 
         // Set product name,description
         driver.findElement(By.xpath("/html/body/div/nimble-app/product-publish/div/form/catalogue-line-view/catalogue-line-header/div/div[2]/value-view[2]/div/input")).sendKeys("QuantumExampleProduct");
-        driver.findElement(By.xpath("/html/body/div/nimble-app/product-publish/div/form/catalogue-line-view/catalogue-line-header/div/div[2]/value-view[3]/div/input")).sendKeys("QuantumExampleProductDescription");
+        driver.findElement(By.xpath("/html/body/div/nimble-app/product-publish/div/form/catalogue-line-view/catalogue-line-header/div/div[2]/value-view[3]/div/textarea")).sendKeys("QuantumExampleProductDescription");
 
         // Set price amount and price base quantity
         driver.findElement(By.xpath("/html/body/div/nimble-app/product-publish/div/form/catalogue-line-view/ul/li[2]/a")).click();

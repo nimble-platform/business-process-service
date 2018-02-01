@@ -1,8 +1,10 @@
+package eu.nimble.selenium;
+
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 
-public class Test91_Order_ReceiptAdvice implements SeleniumInterface{
+public class Test6_Negotiation_InitiateOrder implements SeleniumInterface {
     @Override
     public void execute() {
         //Launch the website
@@ -12,7 +14,10 @@ public class Test91_Order_ReceiptAdvice implements SeleniumInterface{
         WebElement email = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"email\"]")));
         WebElement password = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"password\"]")));
 
+        email.clear();
         email.sendKeys(emailAddressBuyer);
+
+        password.clear();
         password.sendKeys(userPasswordBuyer);
 
         // Submit
@@ -23,17 +28,18 @@ public class Test91_Order_ReceiptAdvice implements SeleniumInterface{
 
         // Options
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"bpOptionsMenuBuyer\"]"))).click();
-        // Business History
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/nimble-dashboard/div[3]/div/div/table/tbody/tr[2]/td[8]/div/div/div[1]"))).click();
-        // Receipt Advice Details
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/product-bp-options/fulfilment/div[1]/ul/li[4]/a"))).click();
-        // Fill Rejected Quantity
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/product-bp-options/fulfilment/div[2]/receipt-advice/quantity-view/form/div/div/div/input[1]"))).sendKeys("135");
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/product-bp-options/fulfilment/div[2]/receipt-advice/quantity-view/form/div/div/div/input[2]"))).sendKeys("pieces");
-        // Send
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/product-bp-options/fulfilment/div[2]/receipt-advice/div/div/button"))).click();
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/nimble-dashboard/div[3]/div/div/table/tbody/tr[2]/td[8]/div/div/div"))).click();
+        // Details
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/product-bp-options/negotiation/ul/li[4]/a"))).click();
+        // Initiate order
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/product-bp-options/negotiation/quotation/div[2]/button[2]"))).click();
 
-        // Check whether it is sent
+        // Order details
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/product-bp-options/order-bp/div[1]/ul/li[3]/a"))).click();
+        // Send
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/product-bp-options/order-bp/div[2]/order/div/button"))).click();
+
+        // Check whether it is initiated.
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"bpOptionsMenuBuyer\"]")));
 
         // Logout
