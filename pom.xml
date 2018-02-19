@@ -28,6 +28,7 @@
         <swagger.api.src>src/main/resources/api.yml</swagger.api.src>
         <maven-jaxb2-plugin.version>0.13.1</maven-jaxb2-plugin.version>
         <build-helper-plugin.version>3.0.0</build-helper-plugin.version>
+        <dockerImageTag>${project.version}</dockerImageTag>
     </properties>
 
     <parent>
@@ -383,8 +384,7 @@
                                 </resource>
                             </resources>
                             <imageTags>
-                                <imageTag>${project.version}</imageTag>
-                                <imageTag>latest</imageTag>
+                                <imageTag>${dockerImageTag}</imageTag>
                             </imageTags>
                             <serverId>docker-hub</serverId>
                             <registryUrl>https://index.docker.io/v1/</registryUrl>

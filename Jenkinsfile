@@ -20,9 +20,23 @@ node('nimble-jenkins-slave') {
         sh '/bin/bash -xe util.sh docker-build'
     }
 
-    if (env.BRANCH_NAME == 'master') {
+    if (env.BRANCH_NAME == 'staging') {
+        stage('Build Docker') {
+            sh '/bin/bash -xe util.sh docker-build-staging'
+        }
+
+        stage('Push Docker') {
+            sh 'docker push nimbleplatform/business-process-service:staging'
+        }
+
         stage('Deploy') {
-            sh 'ssh nimble "cd /data/deployment_setup/prod/ && sudo ./run-prod.sh restart-single business-process-service"'
+            sh 'ssh staging "cd /srv/nimble-staging/ && ./run-staging.sh restart-single business-process-service"'
+        }
+    } else {
+        if (env.BRANCH_NAME == 'master') {
+            stage('Deploy') {
+                sh 'ssh nimble "cd /data/deployment_setup/prod/ && sudo ./run-prod.sh restart-single business-process-service"'
+            }
         }
     }
 
