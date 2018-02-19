@@ -16,10 +16,6 @@ node('nimble-jenkins-slave') {
         sh 'mvn clean package -DskipTests'
     }
 
-    stage('Build Docker') {
-        sh '/bin/bash -xe util.sh docker-build'
-    }
-
     if (env.BRANCH_NAME == 'staging') {
         stage('Build Docker') {
             sh '/bin/bash -xe util.sh docker-build-staging'
@@ -33,10 +29,14 @@ node('nimble-jenkins-slave') {
             sh 'ssh staging "cd /srv/nimble-staging/ && ./run-staging.sh restart-single business-process-service"'
         }
     } else {
-        if (env.BRANCH_NAME == 'master') {
-            stage('Deploy') {
-                sh 'ssh nimble "cd /data/deployment_setup/prod/ && sudo ./run-prod.sh restart-single business-process-service"'
-            }
+        stage('Build Docker') {
+            sh '/bin/bash -xe util.sh docker-build'
+        }
+    }
+
+    if (env.BRANCH_NAME == 'master') {
+        stage('Deploy') {
+            sh 'ssh nimble "cd /data/deployment_setup/prod/ && sudo ./run-prod.sh restart-single business-process-service"'
         }
     }
 
