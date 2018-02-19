@@ -112,6 +112,8 @@
 			<xsd:enumeration value="TRANSPORTATIONSTATUS"/>
 			<xsd:enumeration value="DESPATCHADVICE"/>
 			<xsd:enumeration value="RECEIPTADVICE"/>
+			<xsd:enumeration value="PPAPRESPONSE"/>
+			<xsd:enumeration value="PPAPREQUEST"/>
 			<xsd:enumeration value="TRANSPORTEXECUTIONPLANREQUEST"/>
 			<xsd:enumeration value="TRANSPORTEXECUTIONPLAN"/>
 			<xsd:enumeration value="ITEMINFORMATIONREQUEST"/>

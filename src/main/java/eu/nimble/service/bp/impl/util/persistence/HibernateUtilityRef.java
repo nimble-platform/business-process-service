@@ -19,7 +19,8 @@ public class HibernateUtilityRef {
             Map<String, String> persistenceProperties = BusinessProcessPersistenceConfig.getInstance().getBusiness_process();
             utility = HibernateUtility.getInstance(persistenceUnitName, persistenceProperties);
 
-        } else if(persistenceUnitName.contentEquals(Configuration.UBL_PERSISTENCE_UNIT_NAME) ||
+        }
+        else if(persistenceUnitName.contentEquals(Configuration.UBL_PERSISTENCE_UNIT_NAME) ||
                 persistenceUnitName.contentEquals(Configuration.MODAML_PERSISTENCE_UNIT_NAME)) {
             utility = HibernateUtility.getInstance(persistenceUnitName);
         }
