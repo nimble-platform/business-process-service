@@ -8,6 +8,7 @@ node('nimble-jenkins-slave') {
         sh 'rm -rf common'
         sh 'git clone https://github.com/nimble-platform/common'
         dir('common') {
+            sh 'git checkout staging'
             sh 'mvn clean install'
         }
     }
