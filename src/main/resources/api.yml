@@ -486,6 +486,181 @@ paths:
             items:
               $ref: '#/definitions/ProcessDocumentMetadata'
 
+  /group:
+    get:
+      summary: Retrieves process instance groups for the specified party. If no partyID is specified, then all groups are returned
+      operationId: getProcessInstanceGroups
+      parameters:
+      - in: query
+        name: partyID
+        type: string
+        description: Identifier of the party
+      - in: query
+        name: offset
+        type: integer
+        description: Offset of the first result among the complete result set satisfying the given criteria
+        default: 0
+      - in: query
+        name: limit
+        type: integer
+        description: Number of results to be included in the result set
+        default: 10
+      - in: query
+        name: archived
+        type: boolean
+        default: false
+      produces:
+      - application/json
+      responses:
+        200:
+          description: Retrieved the groups successfully
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/ProcessInstanceGroup'
+    post:
+      summary: Saves a process group along with the initial process instance
+      operationId: saveProcessInstanceGroup
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: processInstanceGroup
+        description: The content of the process instance group to be saved
+        required: true
+        schema:
+          $ref: '#/definitions/ProcessInstanceGroup'
+      responses:
+        # Response code
+        201:
+          description: Saved the group successfully
+
+  /group/{ID}:
+    get:
+      summary: Retrieves the process instance group specified with the ID
+      operationId: getProcessInstanceGroup
+      parameters:
+      - in: path
+        name: ID
+        type: string
+        required: true
+      responses:
+        200:
+          description: Retrieved the groups successfully
+          schema:
+            $ref: '#/definitions/ProcessInstanceGroup'
+    delete:
+      summary: Deletes the process instance group along with the included process instances
+      operationId: deleteProcessInstanceGroup
+      parameters:
+      - in: path
+        name: ID
+        type: string
+        required: true
+      responses:
+        200:
+          description: Deleted the groups successfully
+
+  /group/{ID}/archive:
+    post:
+      summary: Archives the process instance group specified with ID
+      operationId: archiveGroup
+      parameters:
+      - in: path
+        name: ID
+        type: string
+        description: Identifier of the process instance group to be archived
+        required: true
+      responses:
+        200:
+          description: Archived the group successfully
+          schema:
+            $ref: '#/definitions/ProcessInstanceGroup'
+  /group/{ID}/restore:
+    post:
+      summary: Restores the archived process instance group specified with ID
+      operationId: restoreGroup
+      parameters:
+      - in: path
+        name: ID
+        type: string
+        description: Identifier of the process instance group to be restored
+        required: true
+      responses:
+        200:
+          description: Restored the group successfully
+          schema:
+            $ref: '#/definitions/ProcessInstanceGroup'
+
+  /group/archive-all:
+    post:
+      summary: Archives all the groups of the given party
+      operationId: archiveAllGroups
+      parameters:
+      - in: query
+        name: partyID
+        type: string
+        description: Identifier of the party of which groups will be archived
+        required: true
+      responses:
+        200:
+          description: Archived the groups successfully
+  /group/delete-all:
+    post:
+      summary: Deletes all the archived groups of the given party
+      operationId: deleteAllArchivedGroups
+      parameters:
+      - in: query
+        name: partyID
+        type: string
+        description: Identifier of the party of which groups will be deleted
+        required: true
+      responses:
+        200:
+          description: Deleted the groups successfully
+
+  /group/{ID}/process-instance:
+    post:
+      summary: Adds a new process instance to the specified
+      operationId: addProcessInstanceToGroup
+      parameters:
+      - in: path
+        name: ID
+        type: string
+        description: Identifier of the process instance group to which a new process instance id is added
+        required: true
+      - in: query
+        name: processInstanceID
+        type: string
+        description: Identifier of the process instance to be added
+        required: true
+      responses:
+        200:
+          description: Added the process instance to the group successfully
+          schema:
+            $ref: '#/definitions/ProcessInstanceGroup'
+    delete:
+      summary: Deletes a new process instance to the specified
+      operationId: deleteProcessInstanceFromGroup
+      parameters:
+      - in: path
+        name: ID
+        type: string
+        description: Identifier of the process instance group from which the process instance id is deleted
+        required: true
+      - in: query
+        name: processInstanceID
+        type: string
+        description: Identifier of the process instance to be deleted
+        required: true
+      responses:
+        200:
+          description: Deleted the process instance from the group successfully
+          schema:
+            $ref: '#/definitions/ProcessInstanceGroup'
+
 definitions:
 
   Version:
@@ -692,6 +867,21 @@ definitions:
         - WAITING
         - ABORTED
         - COMPLETED
+
+  ProcessInstanceGroup:
+    title: Process Instance Group
+    type: object
+    properties:
+      ID:
+        type: string
+      partyID:
+        type: string
+      processInstanceIDs:
+        type: array
+        items:
+          type: string
+      archived:
+        type: boolean
 
   ProcessDocumentMetadata:
     title: Business Process Document Metadata Object

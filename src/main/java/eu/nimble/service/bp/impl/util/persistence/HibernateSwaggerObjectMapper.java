@@ -227,4 +227,22 @@ public class HibernateSwaggerObjectMapper {
 
         return processConfiguration;
     }
+
+    public static ProcessInstanceGroupDAO createProcessInstanceGroup_DAO(ProcessInstanceGroup processInstanceGroup) {
+        ProcessInstanceGroupDAO processInstanceGroupDAO = new ProcessInstanceGroupDAO();
+        processInstanceGroupDAO.setID(processInstanceGroup.getID());
+        processInstanceGroupDAO.setArchived(processInstanceGroup.getArchived());
+        processInstanceGroupDAO.setPartyID(processInstanceGroup.getPartyID());
+        processInstanceGroupDAO.setProcessInstanceIDs(processInstanceGroup.getProcessInstanceIDs());
+        return processInstanceGroupDAO;
+    }
+
+    public static ProcessInstanceGroup createProcessInstanceGroup(ProcessInstanceGroupDAO processInstanceGroupDAO) {
+        ProcessInstanceGroup processInstanceGroup = new ProcessInstanceGroup();
+        processInstanceGroup.setID(processInstanceGroupDAO.getID());
+        processInstanceGroup.setArchived(processInstanceGroupDAO.isArchived());
+        processInstanceGroup.setPartyID(processInstanceGroupDAO.getPartyID());
+        processInstanceGroup.setProcessInstanceIDs(processInstanceGroupDAO.getProcessInstanceIDs());
+        return processInstanceGroup;
+    }
 }
