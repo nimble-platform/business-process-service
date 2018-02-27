@@ -76,7 +76,6 @@ public class BusinessProcessPersistenceConfig {
                     .driverClassName(environment.getProperty("spring.datasource.driverClassName"))
                     .build();
         }
-
         // Assume we make use of Apache Tomcat connection pooling (default in Spring Boot)
         org.apache.tomcat.jdbc.pool.DataSource tds = (org.apache.tomcat.jdbc.pool.DataSource) ds;
         tds.setInitialSize(Integer.valueOf(environment.getProperty("spring.datasource.tomcat.initial-size")));
