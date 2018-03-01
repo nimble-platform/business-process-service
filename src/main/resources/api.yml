@@ -496,6 +496,22 @@ paths:
         type: string
         description: Identifier of the party
       - in: query
+        name: relatedProducts
+        type: array
+        description: Related products
+      - in: query
+        name: tradingPartnerIDs
+        type: array
+        description: Identifier of the corresponsing trading partner ID
+      - in: query
+        name: initiationDateRange
+        type: string
+        description: Initiation date range
+      - in: query
+        name: lastActivityDateRange
+        type: string
+        description: Last activity date range
+      - in: query
         name: offset
         type: integer
         description: Offset of the first result among the complete result set satisfying the given criteria
@@ -844,6 +860,10 @@ definitions:
       contentUUID:
         type: string
         description: The UUID of the document in the content variable
+      relatedProducts:
+        type: array
+        items:
+          type: string
       content:
         type: string
 
@@ -861,6 +881,8 @@ definitions:
     type: object
     properties:
       processInstanceID:
+        type: string
+      creationDate:
         type: string
       processID:
         type: string
@@ -916,6 +938,10 @@ definitions:
         - ITEMINFORMATIONREQUEST
         - ITEMINFORMATIONRESPONSE
         - OTHER
+      relatedProducts:
+        type: array
+        items:
+          type: string
       status:
         type: string
         enum:

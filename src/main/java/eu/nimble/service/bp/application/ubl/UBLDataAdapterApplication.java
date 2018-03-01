@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Created by yildiray on 6/5/2017.
@@ -183,7 +184,7 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
 
     @Override
     public void saveDocument(String processInstanceId, String initiatorID, String responderID,
-                            Object document) {
+                            Object document, List<String> relatedProducts) {
         ProcessDocumentMetadata documentMetadata = new ProcessDocumentMetadata();
         documentMetadata.setInitiatorID(initiatorID);
         documentMetadata.setResponderID(responderID);
@@ -191,6 +192,7 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
 
         DateTime submissionDate = new DateTime();
         documentMetadata.setSubmissionDate(DateUtility.convert(submissionDate));
+        documentMetadata.getRelatedProducts().addAll(relatedProducts);
 
         if(document instanceof OrderType) {
             OrderType order = (OrderType) document;

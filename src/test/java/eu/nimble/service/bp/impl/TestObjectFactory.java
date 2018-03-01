@@ -126,6 +126,9 @@ public class TestObjectFactory {
         variables.setContent("JSON Content");
         variables.setInitiatorID(partnerID);
         variables.setResponderID("seller1387");
+        variables.getRelatedProducts().add("Chair");
+        variables.getRelatedProducts().add("Bed");
+        variables.getRelatedProducts().add("Glass");
 
         inputMessage.setVariables(variables);
 
@@ -320,6 +323,8 @@ public class TestObjectFactory {
                 "]]></camunda:inputParameter>\n" +
                 "          <camunda:inputParameter name=\"orderXML\"><![CDATA[${content}\n" +
                 "]]></camunda:inputParameter>\n" +
+                "          <camunda:inputParameter name=\"products\"><![CDATA[${relatedProducts}\n" +
+                "]]></camunda:inputParameter>\n" +
                 "        </camunda:inputOutput>\n" +
                 "      </bpmn:extensionElements>\n" +
                 "      <bpmn:incoming>SequenceFlow_1foezn2</bpmn:incoming>\n" +
@@ -411,7 +416,9 @@ public class TestObjectFactory {
         variables.setContent("JSON Content for Negotiation");
         variables.setInitiatorID(partnerID);
         variables.setResponderID("seller1387");
-
+        variables.getRelatedProducts().add("Pencil");
+        variables.getRelatedProducts().add("Desk");
+        variables.getRelatedProducts().add("Mobile");
         inputMessage.setVariables(variables);
 
         return inputMessage;

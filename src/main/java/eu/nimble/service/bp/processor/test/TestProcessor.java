@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -22,7 +23,11 @@ public class TestProcessor implements JavaDelegate {
         logger.info(" $$$ TestProcessor: {}", execution);
         final Map<String, Object> variables = execution.getVariables();
         for (String key: variables.keySet()) {
-            logger.debug(" $$$ Variable name {}, value {}", key, variables.get(key));
+            logger.debug(" $$$ Variable name {}, value {}, type {}", key, variables.get(key), variables.get(key).getClass().getName());
+            if(key.equals("relatedProducts")) {
+                List<String> relatedProducts = (List<String>) variables.get(key);
+                logger.debug(" $$$ First Related Product: {}", relatedProducts.get(0));
+            }
         }
     }
 }

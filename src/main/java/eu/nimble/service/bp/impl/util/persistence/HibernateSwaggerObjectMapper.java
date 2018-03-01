@@ -53,6 +53,10 @@ public class HibernateSwaggerObjectMapper {
         processVariablesDAO.setInitiatorID(body.getVariables().getInitiatorID());
         processVariablesDAO.setResponderID(body.getVariables().getResponderID());
 
+        List<String> relatedProducts = body.getVariables().getRelatedProducts();
+        for(String relatedProduct: relatedProducts) {
+            processVariablesDAO.getRelatedProducts().add(relatedProduct);
+        }
         processInstanceInputMessageDAO.setVariables(processVariablesDAO);
         return processInstanceInputMessageDAO;
     }
@@ -85,17 +89,23 @@ public class HibernateSwaggerObjectMapper {
         processDocument.setSubmissionDate(processDocumentDAO.getSubmissionDate());
         processDocument.setStatus(ProcessDocumentMetadata.StatusEnum.valueOf(processDocumentDAO.getStatus().value()));
         processDocument.setType(ProcessDocumentMetadata.TypeEnum.valueOf(processDocumentDAO.getType().value()));
+
+        List<String> relatedProducts = processDocumentDAO.getRelatedProducts();
+        for(String relatedProduct: relatedProducts) {
+            processDocument.getRelatedProducts().add(relatedProduct);
+        }
         return processDocument;
     }
-
 
     public static ProcessInstanceDAO createProcessInstance_DAO(ProcessInstance processInstance) {
         ProcessInstanceDAO processInstanceDAO = new ProcessInstanceDAO();
         processInstanceDAO.setProcessID(processInstance.getProcessID());
         processInstanceDAO.setProcessInstanceID(processInstance.getProcessInstanceID());
+        processInstanceDAO.setCreationDate(processInstance.getCreationDate());
         processInstanceDAO.setStatus(ProcessInstanceStatus.fromValue(processInstance.getStatus().toString()));
         return processInstanceDAO;
     }
+
     public static ProcessDocumentMetadataDAO createProcessDocumentMetadata_DAO(ProcessDocumentMetadata body) {
         ProcessDocumentMetadataDAO processDocumentDAO = new ProcessDocumentMetadataDAO();
         processDocumentDAO.setProcessInstanceID(body.getProcessInstanceID());
@@ -105,6 +115,11 @@ public class HibernateSwaggerObjectMapper {
         processDocumentDAO.setDocumentID(body.getDocumentID());
         processDocumentDAO.setType(DocumentType.fromValue(body.getType().toString()));
         processDocumentDAO.setSubmissionDate(body.getSubmissionDate());
+
+        List<String> relatedProducts = body.getRelatedProducts();
+        for(String relatedProduct: relatedProducts) {
+            processDocumentDAO.getRelatedProducts().add(relatedProduct);
+        }
         return processDocumentDAO;
     }
 

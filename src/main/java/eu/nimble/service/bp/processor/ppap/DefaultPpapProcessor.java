@@ -12,6 +12,7 @@ import org.camunda.bpm.engine.delegate.JavaDelegate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -35,6 +36,7 @@ public class DefaultPpapProcessor implements JavaDelegate {
         // get input variables
         String buyer = variables.get("initiatorID").toString();
         String seller = variables.get("responderID").toString();
+        List<String> relatedProducts = (List<String>) variables.get("relatedProducts");
         PpapRequestType ppapRequestType = (PpapRequestType) variables.get("ppapRequest");
 
         // get application execution configuration
@@ -50,7 +52,7 @@ public class DefaultPpapProcessor implements JavaDelegate {
 
             IBusinessProcessApplication businessProcessApplication = (IBusinessProcessApplication) instance;
 
-            businessProcessApplication.saveDocument(processInstanceId, buyer, seller, ppapRequestType);
+            businessProcessApplication.saveDocument(processInstanceId, buyer, seller, ppapRequestType, relatedProducts);
         } else if(executionType == ExecutionConfiguration.ExecutionTypeEnum.MICROSERVICE) {
             // TODO: How to call a microservice
         } else {

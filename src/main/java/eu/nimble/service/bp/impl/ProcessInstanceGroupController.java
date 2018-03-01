@@ -1,12 +1,16 @@
 package eu.nimble.service.bp.impl;
 
+import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
+import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
 import eu.nimble.service.bp.impl.util.persistence.DAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.impl.util.persistence.HibernateUtilityRef;
 import eu.nimble.service.bp.swagger.api.GroupApi;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroup;
+import eu.nimble.utility.DateUtility;
 import io.swagger.annotations.ApiParam;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -78,14 +82,85 @@ public class ProcessInstanceGroupController implements GroupApi {
     }
 
     @Override
-    public ResponseEntity<List<ProcessInstanceGroup>> getProcessInstanceGroups(@ApiParam(value = "Identifier of the party") @RequestParam(value = "partyID", required = false) String partyID, @ApiParam(value = "Offset of the first result among the complete result set satisfying the given criteria", defaultValue = "0") @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset, @ApiParam(value = "Number of results to be included in the result set", defaultValue = "10") @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit, @ApiParam(value = "", defaultValue = "false") @RequestParam(value = "archived", required = false, defaultValue = "false") Boolean archived) {
+    public ResponseEntity<List<ProcessInstanceGroup>> getProcessInstanceGroups(@ApiParam(value = "Identifier of the party") @RequestParam(value = "partyID", required = false) String partyID
+            , @ApiParam(value = "Related products") @RequestParam(value = "relatedProducts", required = false) List<String> relatedProducts
+            , @ApiParam(value = "Identifier of the corresponsing trading partner ID") @RequestParam(value = "tradingPartnerIDs", required = false) List<String> tradingPartnerIDs
+            , @ApiParam(value = "Initiation date range") @RequestParam(value = "initiationDateRange", required = false) String initiationDateRange
+            , @ApiParam(value = "Last activity date range") @RequestParam(value = "lastActivityDateRange", required = false) String lastActivityDateRange
+            , @ApiParam(value = "Offset of the first result among the complete result set satisfying the given criteria", defaultValue = "0") @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset
+            , @ApiParam(value = "Number of results to be included in the result set", defaultValue = "10") @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit
+            , @ApiParam(value = "", defaultValue = "false") @RequestParam(value = "archived", required = false, defaultValue = "false") Boolean archived) {
         logger.debug("Getting ProcessInstanceGroups for party: {}", partyID);
 
         List<ProcessInstanceGroupDAO> processInstanceGroupDAOs = DAOUtility.getProcessInstanceGroupDAOs(partyID, offset, limit, archived);
 
         List<ProcessInstanceGroup> processInstanceGroups = new ArrayList<>();
-        for(ProcessInstanceGroupDAO processInstanceGroupDAO : processInstanceGroupDAOs) {
-            processInstanceGroups.add(HibernateSwaggerObjectMapper.createProcessInstanceGroup(processInstanceGroupDAO));
+        for (ProcessInstanceGroupDAO processInstanceGroupDAO : processInstanceGroupDAOs) {
+
+            // In order to apply filter first decompose the elements...
+            String firstProcessInstanceID = processInstanceGroupDAO.getProcessInstanceIDs().get(0);
+            String lastProcessInstanceID = processInstanceGroupDAO.getProcessInstanceIDs().get(processInstanceGroupDAO.getProcessInstanceIDs().size() - 1);
+
+            ProcessInstanceDAO firstProcessInstance = DAOUtility.getProcessIntanceDAOByID(firstProcessInstanceID);
+            String creationDate = firstProcessInstance.getCreationDate();
+            DateTime creationDateTime = DateUtility.convert(creationDate);
+
+            boolean creationDateFilterOK = false;
+            if(initiationDateRange != null) {
+                String[] parts = initiationDateRange.split("_");
+                DateTime start = DateUtility.convert(parts[0]);
+                DateTime finish = DateUtility.convert(parts[1]);
+
+                creationDateFilterOK = creationDateTime.isAfter(start) && creationDateTime.isBefore(finish);
+            } else
+                creationDateFilterOK = true;
+
+            ProcessInstanceDAO lastProcessInstance = DAOUtility.getProcessIntanceDAOByID(lastProcessInstanceID);
+            String lastActivityDate = lastProcessInstance.getCreationDate();
+            DateTime lastActivityDateTime = DateUtility.convert(lastActivityDate);
+
+            boolean lastActivityDateFilterOK = false;
+            if(lastActivityDateRange != null) {
+                String[] parts = lastActivityDateRange.split("_");
+                DateTime start = DateUtility.convert(parts[0]);
+                DateTime finish = DateUtility.convert(parts[1]);
+
+                lastActivityDateFilterOK = lastActivityDateTime.isAfter(start) && lastActivityDateTime.isBefore(finish);
+            } else
+                lastActivityDateFilterOK = true;
+
+            boolean productsFilterOK = false;
+            boolean tradingPartnersFilterOK = false;
+            List<ProcessDocumentMetadataDAO> processInstanceDocuments = DAOUtility.getProcessDocumentMetadataByProcessInstanceID(firstProcessInstanceID);
+            for(ProcessDocumentMetadataDAO processInstanceDocument: processInstanceDocuments) {
+                String initiatorID = processInstanceDocument.getInitiatorID();
+                String responderID = processInstanceDocument.getResponderID();
+
+                if(!tradingPartnerIDs.isEmpty()) {
+                    for (String tradingPartner : tradingPartnerIDs) {
+                        if (tradingPartner.equals(initiatorID) || tradingPartner.equals(responderID)) {
+                            tradingPartnersFilterOK = true;
+                            break;
+                        }
+                    }
+                } else
+                    tradingPartnersFilterOK = true;
+
+
+                List<String> products = processInstanceDocument.getRelatedProducts();
+                if(!relatedProducts.isEmpty()) {
+                    for (String product : products) {
+                        if (relatedProducts.contains(product)) {
+                            productsFilterOK = true;
+                            break;
+                        }
+                    }
+                } else
+                    productsFilterOK = true;
+            }
+
+            if(creationDateFilterOK && lastActivityDateFilterOK && tradingPartnersFilterOK && productsFilterOK)
+                processInstanceGroups.add(HibernateSwaggerObjectMapper.createProcessInstanceGroup(processInstanceGroupDAO));
         }
 
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(processInstanceGroups);

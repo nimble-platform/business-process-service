@@ -12,6 +12,7 @@ import org.camunda.bpm.engine.delegate.JavaDelegate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -36,6 +37,7 @@ public class DefaultReceiptAdviceProcessor implements JavaDelegate {
         // get input variables
         String buyer = variables.get("initiatorID").toString();
         String seller = variables.get("responderID").toString();
+        List<String> relatedProducts = (List<String>) variables.get("relatedProducts");
         ReceiptAdviceType receiptAdvice = (ReceiptAdviceType) variables.get("receiptAdvice");
 
         // get application execution configuration
@@ -51,7 +53,7 @@ public class DefaultReceiptAdviceProcessor implements JavaDelegate {
 
             IBusinessProcessApplication businessProcessApplication = (IBusinessProcessApplication) instance;
 
-            businessProcessApplication.saveDocument(processInstanceId, buyer, seller, receiptAdvice);
+            businessProcessApplication.saveDocument(processInstanceId, buyer, seller, receiptAdvice, relatedProducts);
         } else if(executionType == ExecutionConfiguration.ExecutionTypeEnum.MICROSERVICE) {
             // TODO: How to call a microservice
         } else {

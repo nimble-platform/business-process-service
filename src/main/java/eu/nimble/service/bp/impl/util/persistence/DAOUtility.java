@@ -43,6 +43,15 @@ public class DAOUtility {
         return resultSet.get(0);
     }
 
+    public static List<ProcessDocumentMetadataDAO> getProcessDocumentMetadataByProcessInstanceID(String processInstanceID) {
+        String query = "select document from ProcessDocumentMetadataDAO document where ( ";
+        query += " document.processInstanceID ='" + processInstanceID + "' ";
+        query += " ) ";
+        List<ProcessDocumentMetadataDAO> resultSet = (List<ProcessDocumentMetadataDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+
+        return resultSet;
+    }
+
     public static List<ProcessDocumentMetadataDAO> getProcessDocumentMetadata(String partnerID, String type) {
         return getProcessDocumentMetadata(partnerID, type, null, null);
     }

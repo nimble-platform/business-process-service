@@ -7,6 +7,7 @@ package eu.nimble.service.bp.impl.util.camunda;
 
 import eu.nimble.service.bp.swagger.model.*;
 import eu.nimble.service.bp.swagger.model.Process;
+import eu.nimble.utility.DateUtility;
 import eu.nimble.utility.XMLUtility;
 import org.camunda.bpm.engine.*;
 import org.camunda.bpm.engine.repository.ProcessDefinition;
@@ -62,6 +63,7 @@ public class CamundaEngine {
         ProcessInstance businessProcessInstance = new ProcessInstance();
         businessProcessInstance.setProcessID(processID);
         //businessProcessInstance.setProcessInstanceID("prc124");
+        businessProcessInstance.setCreationDate(DateUtility.getCurrentTimeStamp());
         businessProcessInstance.setProcessInstanceID(processInstance.getProcessInstanceId());
         businessProcessInstance.setStatus(ProcessInstance.StatusEnum.STARTED);
 
@@ -115,6 +117,7 @@ public class CamundaEngine {
         data.put("initiatorID", initiatorID);
         data.put("responderID", responderID);
         data.put("content", content);
+        data.put("relatedProducts", variables.getRelatedProducts());
         return data;
     }
 
