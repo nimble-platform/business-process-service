@@ -19,6 +19,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -253,9 +254,19 @@ public class ContentStartContinueControllerTest {
     public void t923_searchBusinessProcessInstanceGroupTest() {
         String url = "http://localhost:" + port + "/group";
 
+        List<String> tradingPartners = new ArrayList<>();
+        tradingPartners.add("seller1387");
+        tradingPartners.add("seller1388");
+
+        List<String> products = new ArrayList<>();
+        products.add("Chair");
+        products.add("Laptop");
+
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(url)
                 // Add query parameter
-                //.queryParam("partyID", TestObjectFactory.getPartnerID())
+                //.queryParam("initiationDateRange", "2018-03-01T15:45:37"+"_"+"2018-03-03T15:45:37")
+                //.queryParam("tradingPartnerIDs", String.join(",", tradingPartners))
+                .queryParam("relatedProducts", String.join(",", products))
                 .queryParam("partyID", TestObjectFactory.getPartnerID());
 
 

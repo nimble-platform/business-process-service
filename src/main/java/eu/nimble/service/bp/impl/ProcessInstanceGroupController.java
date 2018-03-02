@@ -87,33 +87,33 @@ public class ProcessInstanceGroupController implements GroupApi {
     public ResponseEntity<List<ProcessInstanceGroup>> getProcessInstanceGroups(@ApiParam(value = "Identifier of the party") @RequestParam(value = "partyID", required = false) String partyID
             , @ApiParam(value = "Related products") @RequestParam(value = "relatedProducts", required = false) List<String> relatedProducts
             , @ApiParam(value = "Identifier of the corresponsing trading partner ID") @RequestParam(value = "tradingPartnerIDs", required = false) List<String> tradingPartnerIDs
-            , @ApiParam(value = "Initiation date range") @RequestParam(value = "initiationDateRange", required = false) String initiationDateRange
-            , @ApiParam(value = "Last activity date range") @RequestParam(value = "lastActivityDateRange", required = false) String lastActivityDateRange
+            , @ApiParam(value = "Initiation date range for the first process instance in the group") @RequestParam(value = "initiationDateRange", required = false) String initiationDateRange
+            , @ApiParam(value = "Last activity date range. It is the creation date of last process instance in the group") @RequestParam(value = "lastActivityDateRange", required = false) String lastActivityDateRange
             , @ApiParam(value = "Offset of the first result among the complete result set satisfying the given criteria", defaultValue = "0") @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset
             , @ApiParam(value = "Number of results to be included in the result set", defaultValue = "10") @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit
             , @ApiParam(value = "", defaultValue = "false") @RequestParam(value = "archived", required = false, defaultValue = "false") Boolean archived) {
         logger.debug("Getting ProcessInstanceGroups for party: {}", partyID);
 
-        List<ProcessInstanceGroupDAO> processInstanceGroupDAOs = DAOUtility.getProcessInstanceGroupDAOs(partyID.trim(), offset, limit, archived);
+        List<ProcessInstanceGroupDAO> processInstanceGroupDAOs = DAOUtility.getProcessInstanceGroupDAOs(partyID, offset, limit, archived);
         logger.debug(" There are {} process instance groups as a whole..", processInstanceGroupDAOs.size());
         List<ProcessInstanceGroup> processInstanceGroups = new ArrayList<>();
         for (ProcessInstanceGroupDAO processInstanceGroupDAO : processInstanceGroupDAOs) {
 
             // In order to apply filter first decompose the elements...
-            if(partyID != null) {
+            if (partyID != null) {
                 logger.debug("Party ID is not null: {}", partyID);
                 String firstProcessInstanceID = processInstanceGroupDAO.getProcessInstanceIDs().get(0);
                 String lastProcessInstanceID = processInstanceGroupDAO.getProcessInstanceIDs().get(processInstanceGroupDAO.getProcessInstanceIDs().size() - 1);
 
                 ProcessInstanceDAO firstProcessInstance = DAOUtility.getProcessIntanceDAOByID(firstProcessInstanceID);
                 String creationDate = firstProcessInstance.getCreationDate();
+                logger.debug(" First instance {}, creation date {}...", firstProcessInstanceID, creationDate);
                 DateTime creationDateTime = DateUtility.convert(creationDate);
 
                 ProcessInstanceDAO lastProcessInstance = DAOUtility.getProcessIntanceDAOByID(lastProcessInstanceID);
                 String lastActivityDate = lastProcessInstance.getCreationDate();
+                logger.debug(" Last instance {}, activity date {}...", lastProcessInstanceID, lastActivityDate);
                 DateTime lastActivityDateTime = DateUtility.convert(lastActivityDate);
-
-                logger.debug(" First instance {}, creation date {}, last instance {}, activity date {}...", firstProcessInstanceID, creationDate, lastProcessInstanceID, lastActivityDate);
 
                 boolean creationDateFilterOK = false;
                 if (initiationDateRange != null) {
@@ -143,7 +143,8 @@ public class ProcessInstanceGroupController implements GroupApi {
                     String initiatorID = processInstanceDocument.getInitiatorID();
                     String responderID = processInstanceDocument.getResponderID();
                     logger.debug(" Document initiator {} and document responder {}...", initiatorID, responderID);
-                    if (!tradingPartnerIDs.isEmpty()) {
+                    if (tradingPartnerIDs != null && !tradingPartnerIDs.isEmpty()) {
+                        logger.debug(" Trading partners: {}", tradingPartnerIDs);
                         for (String tradingPartner : tradingPartnerIDs) {
                             if (tradingPartner.equals(initiatorID) || tradingPartner.equals(responderID)) {
                                 tradingPartnersFilterOK = true;
@@ -156,7 +157,7 @@ public class ProcessInstanceGroupController implements GroupApi {
 
                     List<String> products = processInstanceDocument.getRelatedProducts();
                     logger.debug(" Document related products {}...", products);
-                    if (!relatedProducts.isEmpty()) {
+                    if (relatedProducts != null && !relatedProducts.isEmpty()) {
                         for (String product : products) {
                             if (relatedProducts.contains(product)) {
                                 productsFilterOK = true;
@@ -167,6 +168,8 @@ public class ProcessInstanceGroupController implements GroupApi {
                         productsFilterOK = true;
                 }
 
+                logger.debug(" $$$ Creation Date Filter: {}, Last Activity Date Filter: {}, Trading Partner Filter: {}, Products Filter: {}...",
+                        creationDateFilterOK, lastActivityDateFilterOK, tradingPartnersFilterOK, productsFilterOK);
                 if (creationDateFilterOK && lastActivityDateFilterOK && tradingPartnersFilterOK && productsFilterOK)
                     processInstanceGroups.add(HibernateSwaggerObjectMapper.createProcessInstanceGroup(processInstanceGroupDAO));
             } else {

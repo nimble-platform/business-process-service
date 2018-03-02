@@ -506,11 +506,11 @@ paths:
       - in: query
         name: initiationDateRange
         type: string
-        description: Initiation date range
+        description: Initiation date range for the first process instance in the group
       - in: query
         name: lastActivityDateRange
         type: string
-        description: Last activity date range
+        description: Last activity date range. It is the creation date of last process instance in the group
       - in: query
         name: offset
         type: integer
