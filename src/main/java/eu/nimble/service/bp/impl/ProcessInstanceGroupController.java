@@ -31,7 +31,9 @@ public class ProcessInstanceGroupController implements GroupApi {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
-    public ResponseEntity<ProcessInstanceGroup> addProcessInstanceToGroup(@ApiParam(value = "Identifier of the process instance group to which a new process instance id is added", required = true) @PathVariable("ID") String ID, @ApiParam(value = "Identifier of the process instance to be added", required = true) @RequestParam(value = "processInstanceID", required = true) String processInstanceID) {
+    public ResponseEntity<ProcessInstanceGroup> addProcessInstanceToGroup(
+            @ApiParam(value = "Identifier of the process instance group to which a new process instance id is added", required = true) @PathVariable("ID") String ID,
+            @ApiParam(value = "Identifier of the process instance to be added", required = true) @RequestParam(value = "processInstanceID", required = true) String processInstanceID) {
         logger.debug("Adding process instance: {} to ProcessInstanceGroup: {}", ID);
 
         ProcessInstanceGroupDAO processInstanceGroupDAO = DAOUtility.getProcessInstanceGroupDAOByID(ID);
@@ -64,7 +66,7 @@ public class ProcessInstanceGroupController implements GroupApi {
 
         DAOUtility.deleteProcessInstanceGroupDAOByID(ID);
 
-        ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body("ProcessInstanceGroup deleted successfully");
+        ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body("true");
         logger.debug("Deleted ProcessInstanceGroups: {}", ID);
         return response;
     }
@@ -92,75 +94,84 @@ public class ProcessInstanceGroupController implements GroupApi {
             , @ApiParam(value = "", defaultValue = "false") @RequestParam(value = "archived", required = false, defaultValue = "false") Boolean archived) {
         logger.debug("Getting ProcessInstanceGroups for party: {}", partyID);
 
-        List<ProcessInstanceGroupDAO> processInstanceGroupDAOs = DAOUtility.getProcessInstanceGroupDAOs(partyID, offset, limit, archived);
-
+        List<ProcessInstanceGroupDAO> processInstanceGroupDAOs = DAOUtility.getProcessInstanceGroupDAOs(partyID.trim(), offset, limit, archived);
+        logger.debug(" There are {} process instance groups as a whole..", processInstanceGroupDAOs.size());
         List<ProcessInstanceGroup> processInstanceGroups = new ArrayList<>();
         for (ProcessInstanceGroupDAO processInstanceGroupDAO : processInstanceGroupDAOs) {
 
             // In order to apply filter first decompose the elements...
-            String firstProcessInstanceID = processInstanceGroupDAO.getProcessInstanceIDs().get(0);
-            String lastProcessInstanceID = processInstanceGroupDAO.getProcessInstanceIDs().get(processInstanceGroupDAO.getProcessInstanceIDs().size() - 1);
+            if(partyID != null) {
+                logger.debug("Party ID is not null: {}", partyID);
+                String firstProcessInstanceID = processInstanceGroupDAO.getProcessInstanceIDs().get(0);
+                String lastProcessInstanceID = processInstanceGroupDAO.getProcessInstanceIDs().get(processInstanceGroupDAO.getProcessInstanceIDs().size() - 1);
 
-            ProcessInstanceDAO firstProcessInstance = DAOUtility.getProcessIntanceDAOByID(firstProcessInstanceID);
-            String creationDate = firstProcessInstance.getCreationDate();
-            DateTime creationDateTime = DateUtility.convert(creationDate);
+                ProcessInstanceDAO firstProcessInstance = DAOUtility.getProcessIntanceDAOByID(firstProcessInstanceID);
+                String creationDate = firstProcessInstance.getCreationDate();
+                DateTime creationDateTime = DateUtility.convert(creationDate);
 
-            boolean creationDateFilterOK = false;
-            if(initiationDateRange != null) {
-                String[] parts = initiationDateRange.split("_");
-                DateTime start = DateUtility.convert(parts[0]);
-                DateTime finish = DateUtility.convert(parts[1]);
+                ProcessInstanceDAO lastProcessInstance = DAOUtility.getProcessIntanceDAOByID(lastProcessInstanceID);
+                String lastActivityDate = lastProcessInstance.getCreationDate();
+                DateTime lastActivityDateTime = DateUtility.convert(lastActivityDate);
 
-                creationDateFilterOK = creationDateTime.isAfter(start) && creationDateTime.isBefore(finish);
-            } else
-                creationDateFilterOK = true;
+                logger.debug(" First instance {}, creation date {}, last instance {}, activity date {}...", firstProcessInstanceID, creationDate, lastProcessInstanceID, lastActivityDate);
 
-            ProcessInstanceDAO lastProcessInstance = DAOUtility.getProcessIntanceDAOByID(lastProcessInstanceID);
-            String lastActivityDate = lastProcessInstance.getCreationDate();
-            DateTime lastActivityDateTime = DateUtility.convert(lastActivityDate);
+                boolean creationDateFilterOK = false;
+                if (initiationDateRange != null) {
+                    String[] parts = initiationDateRange.split("_");
+                    DateTime start = DateUtility.convert(parts[0]);
+                    DateTime finish = DateUtility.convert(parts[1]);
 
-            boolean lastActivityDateFilterOK = false;
-            if(lastActivityDateRange != null) {
-                String[] parts = lastActivityDateRange.split("_");
-                DateTime start = DateUtility.convert(parts[0]);
-                DateTime finish = DateUtility.convert(parts[1]);
-
-                lastActivityDateFilterOK = lastActivityDateTime.isAfter(start) && lastActivityDateTime.isBefore(finish);
-            } else
-                lastActivityDateFilterOK = true;
-
-            boolean productsFilterOK = false;
-            boolean tradingPartnersFilterOK = false;
-            List<ProcessDocumentMetadataDAO> processInstanceDocuments = DAOUtility.getProcessDocumentMetadataByProcessInstanceID(firstProcessInstanceID);
-            for(ProcessDocumentMetadataDAO processInstanceDocument: processInstanceDocuments) {
-                String initiatorID = processInstanceDocument.getInitiatorID();
-                String responderID = processInstanceDocument.getResponderID();
-
-                if(!tradingPartnerIDs.isEmpty()) {
-                    for (String tradingPartner : tradingPartnerIDs) {
-                        if (tradingPartner.equals(initiatorID) || tradingPartner.equals(responderID)) {
-                            tradingPartnersFilterOK = true;
-                            break;
-                        }
-                    }
+                    creationDateFilterOK = creationDateTime.isAfter(start) && creationDateTime.isBefore(finish);
                 } else
-                    tradingPartnersFilterOK = true;
+                    creationDateFilterOK = true;
 
+                boolean lastActivityDateFilterOK = false;
+                if (lastActivityDateRange != null) {
+                    String[] parts = lastActivityDateRange.split("_");
+                    DateTime start = DateUtility.convert(parts[0]);
+                    DateTime finish = DateUtility.convert(parts[1]);
 
-                List<String> products = processInstanceDocument.getRelatedProducts();
-                if(!relatedProducts.isEmpty()) {
-                    for (String product : products) {
-                        if (relatedProducts.contains(product)) {
-                            productsFilterOK = true;
-                            break;
-                        }
-                    }
+                    lastActivityDateFilterOK = lastActivityDateTime.isAfter(start) && lastActivityDateTime.isBefore(finish);
                 } else
-                    productsFilterOK = true;
-            }
+                    lastActivityDateFilterOK = true;
 
-            if(creationDateFilterOK && lastActivityDateFilterOK && tradingPartnersFilterOK && productsFilterOK)
+                boolean productsFilterOK = false;
+                boolean tradingPartnersFilterOK = false;
+                // get process instance documents, to reach the related products in the document...
+                List<ProcessDocumentMetadataDAO> processInstanceDocuments = DAOUtility.getProcessDocumentMetadataByProcessInstanceID(firstProcessInstanceID);
+                for (ProcessDocumentMetadataDAO processInstanceDocument : processInstanceDocuments) {
+                    String initiatorID = processInstanceDocument.getInitiatorID();
+                    String responderID = processInstanceDocument.getResponderID();
+                    logger.debug(" Document initiator {} and document responder {}...", initiatorID, responderID);
+                    if (!tradingPartnerIDs.isEmpty()) {
+                        for (String tradingPartner : tradingPartnerIDs) {
+                            if (tradingPartner.equals(initiatorID) || tradingPartner.equals(responderID)) {
+                                tradingPartnersFilterOK = true;
+                                break;
+                            }
+                        }
+                    } else
+                        tradingPartnersFilterOK = true;
+
+
+                    List<String> products = processInstanceDocument.getRelatedProducts();
+                    logger.debug(" Document related products {}...", products);
+                    if (!relatedProducts.isEmpty()) {
+                        for (String product : products) {
+                            if (relatedProducts.contains(product)) {
+                                productsFilterOK = true;
+                                break;
+                            }
+                        }
+                    } else
+                        productsFilterOK = true;
+                }
+
+                if (creationDateFilterOK && lastActivityDateFilterOK && tradingPartnersFilterOK && productsFilterOK)
+                    processInstanceGroups.add(HibernateSwaggerObjectMapper.createProcessInstanceGroup(processInstanceGroupDAO));
+            } else {
                 processInstanceGroups.add(HibernateSwaggerObjectMapper.createProcessInstanceGroup(processInstanceGroupDAO));
+            }
         }
 
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(processInstanceGroups);
@@ -204,7 +215,7 @@ public class ProcessInstanceGroupController implements GroupApi {
         ProcessInstanceGroupDAO processInstanceGroupDAO = HibernateSwaggerObjectMapper.createProcessInstanceGroup_DAO(processInstanceGroup);
         HibernateUtilityRef.getInstance("bp-data-model").persist(processInstanceGroupDAO);
 
-        ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body("Successfully saved ProcessInstanceGroup");
+        ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body("true");
         logger.debug("Saved ProcessInstanceGroup {}", processInstanceGroup.toString());
         return response;
     }
@@ -215,7 +226,7 @@ public class ProcessInstanceGroupController implements GroupApi {
 
         DAOUtility.archiveAllGroupsForParty(partyID);
 
-        ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body("Successfully archived ProcessInstanceGroup");
+        ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body("true");
         logger.debug("Archived ProcessInstanceGroup for party {}", partyID);
         return response;
     }
@@ -226,7 +237,7 @@ public class ProcessInstanceGroupController implements GroupApi {
 
         DAOUtility.deleteArchivedGroupsForParty(partyID);
 
-        ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body("Successfully archived ProcessInstanceGroup");
+        ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body("true");
         logger.debug("Deleted archived ProcessInstanceGroups for party {}", partyID);
         return response;
     }

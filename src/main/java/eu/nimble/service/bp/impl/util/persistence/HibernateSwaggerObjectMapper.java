@@ -111,7 +111,10 @@ public class HibernateSwaggerObjectMapper {
         processDocumentDAO.setProcessInstanceID(body.getProcessInstanceID());
         processDocumentDAO.setInitiatorID(body.getInitiatorID());
         processDocumentDAO.setResponderID(body.getResponderID());
-        processDocumentDAO.setStatus(ProcessDocumentStatus.fromValue(body.getStatus().toString()));
+        if(body.getStatus() != null)
+            processDocumentDAO.setStatus(ProcessDocumentStatus.fromValue(body.getStatus().toString()));
+        else
+            processDocumentDAO.setStatus(ProcessDocumentStatus.APPROVED);
         processDocumentDAO.setDocumentID(body.getDocumentID());
         processDocumentDAO.setType(DocumentType.fromValue(body.getType().toString()));
         processDocumentDAO.setSubmissionDate(body.getSubmissionDate());

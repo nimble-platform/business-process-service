@@ -117,7 +117,7 @@ public class DAOUtility {
     public static List<ProcessInstanceGroupDAO> getProcessInstanceGroupDAOs(String partyId, int offset, int limit, boolean archived) {
         String query = "select pig from ProcessInstanceGroupDAO pig where pig.archived = " + archived;
         if(partyId != null) {
-            query += " and pig.ID ='" + partyId + "'";
+            query += " and pig.partyID ='" + partyId + "'";
         }
         List<ProcessInstanceGroupDAO> groups = (List<ProcessInstanceGroupDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query, offset, limit);
         return groups;
