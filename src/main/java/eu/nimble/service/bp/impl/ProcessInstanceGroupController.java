@@ -88,7 +88,7 @@ public class ProcessInstanceGroupController implements GroupApi {
             , @ApiParam(value = "Related products") @RequestParam(value = "relatedProducts", required = false) List<String> relatedProducts
             , @ApiParam(value = "Identifier of the corresponsing trading partner ID") @RequestParam(value = "tradingPartnerIDs", required = false) List<String> tradingPartnerIDs
             , @ApiParam(value = "Initiation date range for the first process instance in the group") @RequestParam(value = "initiationDateRange", required = false) String initiationDateRange
-            , @ApiParam(value = "Last activity date range. It is the creation date of last process instance in the group") @RequestParam(value = "lastActivityDateRange", required = false) String lastActivityDateRange
+            , @ApiParam(value = "Last activity date range. It is the latest submission date of the document to last process instance in the group") @RequestParam(value = "lastActivityDateRange", required = false) String lastActivityDateRange
             , @ApiParam(value = "Offset of the first result among the complete result set satisfying the given criteria", defaultValue = "0") @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset
             , @ApiParam(value = "Number of results to be included in the result set", defaultValue = "10") @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit
             , @ApiParam(value = "", defaultValue = "false") @RequestParam(value = "archived", required = false, defaultValue = "false") Boolean archived) {
@@ -110,10 +110,17 @@ public class ProcessInstanceGroupController implements GroupApi {
                 logger.debug(" First instance {}, creation date {}...", firstProcessInstanceID, creationDate);
                 DateTime creationDateTime = DateUtility.convert(creationDate);
 
-                ProcessInstanceDAO lastProcessInstance = DAOUtility.getProcessIntanceDAOByID(lastProcessInstanceID);
-                String lastActivityDate = lastProcessInstance.getCreationDate();
-                logger.debug(" Last instance {}, activity date {}...", lastProcessInstanceID, lastActivityDate);
-                DateTime lastActivityDateTime = DateUtility.convert(lastActivityDate);
+                // get the documents of the last process instance
+                List<ProcessDocumentMetadataDAO> lastProcessInstanceDocuments = DAOUtility.getProcessDocumentMetadataByProcessInstanceID(lastProcessInstanceID);
+                // give a seed :)
+                DateTime lastActivityDateTime = DateUtility.convert("1979-03-11T09:20:00");
+                for (ProcessDocumentMetadataDAO processInstanceDocument : lastProcessInstanceDocuments) {
+                    DateTime submissionDateTime = DateUtility.convert(processInstanceDocument.getSubmissionDate());
+                    // select the latest document submission time
+                    if(submissionDateTime.isAfter(lastActivityDateTime))
+                        lastActivityDateTime = submissionDateTime;
+                }
+                logger.debug(" Last instance {}, activity date {}...", lastProcessInstanceID, DateUtility.convert(lastActivityDateTime));
 
                 boolean creationDateFilterOK = false;
                 if (initiationDateRange != null) {

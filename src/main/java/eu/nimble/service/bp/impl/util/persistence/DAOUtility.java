@@ -132,7 +132,7 @@ public class DAOUtility {
     public static void deleteProcessInstanceGroupDAOByID(String groupID) {
         String query = "select pig from ProcessInstanceGroupDAO pig where ( pig.ID ='" + groupID+ "') ";
         ProcessInstanceGroupDAO group = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query);
-        HibernateUtilityRef.getInstance("bp-data-model").delete(group);
+        HibernateUtilityRef.getInstance("bp-data-model").delete(ProcessInstanceGroupDAO.class, group.getHjid());
     }
 
     public static void archiveAllGroupsForParty(String partyId) {

@@ -510,7 +510,7 @@ paths:
       - in: query
         name: lastActivityDateRange
         type: string
-        description: Last activity date range. It is the creation date of last process instance in the group
+        description: Last activity date range. It is the latest submission date of the document to last process instance in the group
       - in: query
         name: offset
         type: integer
