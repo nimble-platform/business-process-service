@@ -46,7 +46,7 @@ public class DocumentControllerTest {
      */
     @Test
     public void addDocumentMetadataTest() {
-        ProcessDocumentMetadata body = TestObjectFactory.createBusinessDocumentMetadata();
+        ProcessDocumentMetadata body = TestObjectFactory.createBusinessDocumentMetadata(null);
         String url = "http://localhost:" + port +"/document";
 
         ResponseEntity<ModelApiResponse> response = restTemplate.postForEntity(url, body, ModelApiResponse.class);
@@ -89,7 +89,7 @@ public class DocumentControllerTest {
 
         ResponseEntity<List> response = restTemplate.getForEntity(url, List.class, params);
 
-        logger.info(" $$$ Test response {} ", response.toString());
+        logger.info(" $$$ Document search response {} ", response.toString());
 
         assertNotNull(response);
     }
@@ -111,7 +111,7 @@ public class DocumentControllerTest {
 
         ResponseEntity<List> response = restTemplate.getForEntity(url, List.class, params);
 
-        logger.info(" $$$ Test response {} ", response.toString());
+        logger.info(" $$$ Document search response {} ", response.toString());
 
         assertNotNull(response);
     }
@@ -131,7 +131,7 @@ public class DocumentControllerTest {
 
         ResponseEntity<List> response = restTemplate.getForEntity(url, List.class, params);
 
-        logger.info(" $$$ Test response {} ", response.toString());
+        logger.info(" $$$ Document search response {} ", response.toString());
 
         assertNotNull(response);
     }

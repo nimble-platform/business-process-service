@@ -91,6 +91,7 @@
 			<xsd:element name="initiatorID" type="xsd:string"/>
 			<xsd:element name="responderID" type="xsd:string"/>
 			<xsd:element name="contentUUID" type="xsd:string"/>
+            <xsd:element name="relatedProducts" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	<xsd:complexType name="ProcessInstanceInputMessageDAO">
@@ -112,6 +113,8 @@
 			<xsd:enumeration value="TRANSPORTATIONSTATUS"/>
 			<xsd:enumeration value="DESPATCHADVICE"/>
 			<xsd:enumeration value="RECEIPTADVICE"/>
+			<xsd:enumeration value="PPAPRESPONSE"/>
+			<xsd:enumeration value="PPAPREQUEST"/>
 			<xsd:enumeration value="TRANSPORTEXECUTIONPLANREQUEST"/>
 			<xsd:enumeration value="TRANSPORTEXECUTIONPLAN"/>
 			<xsd:enumeration value="ITEMINFORMATIONREQUEST"/>
@@ -130,8 +133,18 @@
 	<xsd:complexType name="ProcessInstanceDAO">
 		<xsd:sequence>
 			<xsd:element name="processInstanceID" type="xsd:string"/>
+            <xsd:element name="creationDate" type="xsd:string"/>
 			<xsd:element name="processID" type="xsd:string"/>
 			<xsd:element name="status" type="ProcessInstanceStatus"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="ProcessInstanceGroupDAO">
+		<xsd:sequence>
+			<xsd:element name="ID" type="xsd:string" maxOccurs="1"/>
+			<xsd:element name="Name" type="xsd:string"/>
+			<xsd:element name="partyID" type="xsd:string"/>
+			<xsd:element name="processInstanceIDs" type="xsd:string" maxOccurs="unbounded"/>
+			<xsd:element name="archived" type="xsd:boolean"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	<xsd:simpleType name="ProcessDocumentStatus">
@@ -147,6 +160,7 @@
 			<xsd:element name="documentID" type="xsd:string"/>
 			<xsd:element name="submissionDate" type="xsd:string"/>
 			<xsd:element name="type" type="DocumentType"/>
+			<xsd:element name="relatedProducts" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
 			<xsd:element name="status" type="ProcessDocumentStatus"/>
 			<xsd:element name="processInstanceID" type="xsd:string"/>
 			<xsd:element name="initiatorID" type="xsd:string"/>

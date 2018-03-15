@@ -14,6 +14,7 @@ import org.camunda.bpm.engine.delegate.JavaDelegate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -38,6 +39,7 @@ public class DefaultQuotationProcessor  implements JavaDelegate {
         // get input variables
         String buyer = variables.get("responderID").toString();
         String seller = variables.get("initiatorID").toString();
+        List<String> relatedProducts = (List<String>) variables.get("relatedProducts");
         QuotationType quotation = (QuotationType) variables.get("quotation");
 
         // get application execution configuration
@@ -55,7 +57,7 @@ public class DefaultQuotationProcessor  implements JavaDelegate {
             IBusinessProcessApplication businessProcessApplication = (IBusinessProcessApplication) instance;
 
             // NOTE: Pay attention to the direction of the document. Here it is from seller to buyer
-            businessProcessApplication.saveDocument(processInstanceId, seller, buyer, quotation);
+            businessProcessApplication.saveDocument(processInstanceId, seller, buyer, quotation, relatedProducts);
         } else if(executionType == ExecutionConfiguration.ExecutionTypeEnum.MICROSERVICE) {
             // TODO: How to call a microservice
         } else {

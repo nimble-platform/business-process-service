@@ -8,6 +8,7 @@ node('nimble-jenkins-slave') {
         sh 'rm -rf common'
         sh 'git clone https://github.com/nimble-platform/common'
         dir('common') {
+            sh 'git checkout staging'
             sh 'mvn clean install'
         }
     }
@@ -16,8 +17,22 @@ node('nimble-jenkins-slave') {
         sh 'mvn clean package -DskipTests'
     }
 
-    stage('Build Docker') {
-        sh '/bin/bash -xe util.sh docker-build'
+    if (env.BRANCH_NAME == 'staging') {
+        stage('Build Docker') {
+            sh '/bin/bash -xe util.sh docker-build-staging'
+        }
+
+        stage('Push Docker') {
+            sh 'docker push nimbleplatform/business-process-service:staging'
+        }
+
+        stage('Deploy') {
+            sh 'ssh staging "cd /srv/nimble-staging/ && ./run-staging.sh restart-single business-process-service"'
+        }
+    } else {
+        stage('Build Docker') {
+            sh '/bin/bash -xe util.sh docker-build'
+        }
     }
 
     if (env.BRANCH_NAME == 'master') {

@@ -8,10 +8,13 @@ package eu.nimble.service.bp.impl.util.persistence;
 import eu.nimble.service.bp.hyperjaxb.model.*;
 import eu.nimble.service.bp.swagger.model.*;
 import eu.nimble.service.bp.swagger.model.Process;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import java.io.Console;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * @author yildiray
@@ -50,6 +53,10 @@ public class HibernateSwaggerObjectMapper {
         processVariablesDAO.setInitiatorID(body.getVariables().getInitiatorID());
         processVariablesDAO.setResponderID(body.getVariables().getResponderID());
 
+        List<String> relatedProducts = body.getVariables().getRelatedProducts();
+        for(String relatedProduct: relatedProducts) {
+            processVariablesDAO.getRelatedProducts().add(relatedProduct);
+        }
         processInstanceInputMessageDAO.setVariables(processVariablesDAO);
         return processInstanceInputMessageDAO;
     }
@@ -82,14 +89,19 @@ public class HibernateSwaggerObjectMapper {
         processDocument.setSubmissionDate(processDocumentDAO.getSubmissionDate());
         processDocument.setStatus(ProcessDocumentMetadata.StatusEnum.valueOf(processDocumentDAO.getStatus().value()));
         processDocument.setType(ProcessDocumentMetadata.TypeEnum.valueOf(processDocumentDAO.getType().value()));
+
+        List<String> relatedProducts = processDocumentDAO.getRelatedProducts();
+        for(String relatedProduct: relatedProducts) {
+            processDocument.getRelatedProducts().add(relatedProduct);
+        }
         return processDocument;
     }
-
 
     public static ProcessInstanceDAO createProcessInstance_DAO(ProcessInstance processInstance) {
         ProcessInstanceDAO processInstanceDAO = new ProcessInstanceDAO();
         processInstanceDAO.setProcessID(processInstance.getProcessID());
         processInstanceDAO.setProcessInstanceID(processInstance.getProcessInstanceID());
+        processInstanceDAO.setCreationDate(processInstance.getCreationDate());
         processInstanceDAO.setStatus(ProcessInstanceStatus.fromValue(processInstance.getStatus().toString()));
         return processInstanceDAO;
     }
@@ -99,10 +111,18 @@ public class HibernateSwaggerObjectMapper {
         processDocumentDAO.setProcessInstanceID(body.getProcessInstanceID());
         processDocumentDAO.setInitiatorID(body.getInitiatorID());
         processDocumentDAO.setResponderID(body.getResponderID());
-        processDocumentDAO.setStatus(ProcessDocumentStatus.fromValue(body.getStatus().toString()));
+        if(body.getStatus() != null)
+            processDocumentDAO.setStatus(ProcessDocumentStatus.fromValue(body.getStatus().toString()));
+        else
+            processDocumentDAO.setStatus(ProcessDocumentStatus.APPROVED);
         processDocumentDAO.setDocumentID(body.getDocumentID());
         processDocumentDAO.setType(DocumentType.fromValue(body.getType().toString()));
         processDocumentDAO.setSubmissionDate(body.getSubmissionDate());
+
+        List<String> relatedProducts = body.getRelatedProducts();
+        for(String relatedProduct: relatedProducts) {
+            processDocumentDAO.getRelatedProducts().add(relatedProduct);
+        }
         return processDocumentDAO;
     }
 
@@ -226,5 +246,23 @@ public class HibernateSwaggerObjectMapper {
         }
 
         return processConfiguration;
+    }
+
+    public static ProcessInstanceGroupDAO createProcessInstanceGroup_DAO(ProcessInstanceGroup processInstanceGroup) {
+        ProcessInstanceGroupDAO processInstanceGroupDAO = new ProcessInstanceGroupDAO();
+        processInstanceGroupDAO.setID(processInstanceGroup.getID());
+        processInstanceGroupDAO.setArchived(processInstanceGroup.getArchived());
+        processInstanceGroupDAO.setPartyID(processInstanceGroup.getPartyID());
+        processInstanceGroupDAO.setProcessInstanceIDs(processInstanceGroup.getProcessInstanceIDs());
+        return processInstanceGroupDAO;
+    }
+
+    public static ProcessInstanceGroup createProcessInstanceGroup(ProcessInstanceGroupDAO processInstanceGroupDAO) {
+        ProcessInstanceGroup processInstanceGroup = new ProcessInstanceGroup();
+        processInstanceGroup.setID(processInstanceGroupDAO.getID());
+        processInstanceGroup.setArchived(processInstanceGroupDAO.isArchived());
+        processInstanceGroup.setPartyID(processInstanceGroupDAO.getPartyID());
+        processInstanceGroup.setProcessInstanceIDs(processInstanceGroupDAO.getProcessInstanceIDs());
+        return processInstanceGroup;
     }
 }

@@ -11,6 +11,7 @@ import org.camunda.bpm.engine.delegate.JavaDelegate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
 
 public class DefaultItemInformationResponseProcessor implements JavaDelegate {
@@ -32,6 +33,7 @@ public class DefaultItemInformationResponseProcessor implements JavaDelegate {
         // get input variables
         String buyer = variables.get("responderID").toString();
         String seller = variables.get("initiatorID").toString();
+        List<String> relatedProducts = (List<String>) variables.get("relatedProducts");
         ItemInformationResponseType itemInformationResponse = (ItemInformationResponseType) variables.get("itemInformationResponse");
 
         // get application execution configuration
@@ -49,7 +51,7 @@ public class DefaultItemInformationResponseProcessor implements JavaDelegate {
             IBusinessProcessApplication businessProcessApplication = (IBusinessProcessApplication) instance;
 
             // NOTE: Pay attention to the direction of the document. Here it is from seller to buyer
-            businessProcessApplication.saveDocument(processInstanceId, seller, buyer, itemInformationResponse);
+            businessProcessApplication.saveDocument(processInstanceId, seller, buyer, itemInformationResponse, relatedProducts);
         } else if(executionType == ExecutionConfiguration.ExecutionTypeEnum.MICROSERVICE) {
             // TODO: How to call a microservice
         } else {

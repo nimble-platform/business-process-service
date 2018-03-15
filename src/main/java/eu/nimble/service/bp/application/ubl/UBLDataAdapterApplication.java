@@ -19,11 +19,14 @@ import eu.nimble.service.model.ubl.transportexecutionplan.TransportExecutionPlan
 import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
 import eu.nimble.utility.DateUtility;
 import eu.nimble.utility.JAXBUtility;
+import eu.nimble.service.model.ubl.ppaprequest.PpapRequestType;
+import eu.nimble.service.model.ubl.ppapresponse.PpapResponseType;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Created by yildiray on 6/5/2017.
@@ -59,7 +62,30 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
             } catch (IOException e) {
                 logger.error("", e);
             }
-        } else if(documentType == ProcessDocumentMetadata.TypeEnum.REQUESTFORQUOTATION) {
+        }
+        else if(documentType == ProcessDocumentMetadata.TypeEnum.PPAPREQUEST){
+            try {
+                PpapRequestType ppapRequestType = mapper.readValue(content, PpapRequestType.class);
+
+                eu.nimble.service.model.ubl.ppaprequest.ObjectFactory factory = new eu.nimble.service.model.ubl.ppaprequest.ObjectFactory();
+                logger.debug(" $$$ Created document: {}",JAXBUtility.serialize(ppapRequestType,factory.createPpapRequest(ppapRequestType)));
+
+                return ppapRequestType;
+            } catch (IOException e) {
+                logger.error("", e);
+            }
+        }
+        else if(documentType == ProcessDocumentMetadata.TypeEnum.PPAPRESPONSE){
+            try {
+                PpapResponseType ppapResponseType = mapper.readValue(content, PpapResponseType.class);
+                eu.nimble.service.model.ubl.ppapresponse.ObjectFactory factory = new eu.nimble.service.model.ubl.ppapresponse.ObjectFactory();
+                logger.debug(" $$$ Created document: {}",JAXBUtility.serialize(ppapResponseType,factory.createPpapResponse(ppapResponseType)));
+
+                return ppapResponseType;
+            } catch (IOException e) {
+                logger.error("", e);
+            }
+        }  else if(documentType == ProcessDocumentMetadata.TypeEnum.REQUESTFORQUOTATION) {
             try {
                 RequestForQuotationType rfq = mapper.readValue(content, RequestForQuotationType.class);
 
@@ -158,7 +184,7 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
 
     @Override
     public void saveDocument(String processInstanceId, String initiatorID, String responderID,
-                            Object document) {
+                            Object document, List<String> relatedProducts) {
         ProcessDocumentMetadata documentMetadata = new ProcessDocumentMetadata();
         documentMetadata.setInitiatorID(initiatorID);
         documentMetadata.setResponderID(responderID);
@@ -166,6 +192,7 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
 
         DateTime submissionDate = new DateTime();
         documentMetadata.setSubmissionDate(DateUtility.convert(submissionDate));
+        documentMetadata.getRelatedProducts().addAll(relatedProducts);
 
         if(document instanceof OrderType) {
             OrderType order = (OrderType) document;
@@ -179,7 +206,18 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
             documentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
             documentMetadata.setType(ProcessDocumentMetadata.TypeEnum.ORDERRESPONSESIMPLE);
 
-        } else if(document instanceof  RequestForQuotationType) {
+        } else if(document instanceof PpapRequestType){
+            PpapRequestType ppapRequestType = (PpapRequestType) document;
+            documentMetadata.setDocumentID(ppapRequestType.getID());
+            documentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.WAITINGRESPONSE);
+            documentMetadata.setType(ProcessDocumentMetadata.TypeEnum.PPAPREQUEST);
+
+        } else if(document instanceof PpapResponseType){
+            PpapResponseType ppapResponseType = (PpapResponseType) document;
+            documentMetadata.setDocumentID(ppapResponseType.getID());
+            documentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.WAITINGRESPONSE);
+            documentMetadata.setType(ProcessDocumentMetadata.TypeEnum.PPAPRESPONSE);
+        }  else if(document instanceof  RequestForQuotationType) {
             RequestForQuotationType rfq = (RequestForQuotationType) document;
             documentMetadata.setDocumentID(rfq.getID());
             documentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.WAITINGRESPONSE);
@@ -251,7 +289,21 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
 
             DocumentDAOUtility.updateDocumentMetadata(initiatingDocumentMetadata);
 
-        } else if(document instanceof QuotationType) {
+        }
+        else if(document instanceof PpapResponseType){
+            PpapResponseType ppapResponseType = (PpapResponseType) document;
+
+            String ppapREQUESTID = ppapResponseType.getPpapDocumentReference().getID();
+            boolean isAccepted = ppapResponseType.isAcceptedIndicator();
+
+            ProcessDocumentMetadata initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(ppapREQUESTID);
+            if(isAccepted)
+                initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
+            else
+                initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.DENIED);
+
+            DocumentDAOUtility.updateDocumentMetadata(initiatingDocumentMetadata);
+        }else if(document instanceof QuotationType) {
             QuotationType quotation = (QuotationType) document;
             String rfqID = quotation.getRequestForQuotationDocumentReference().getID();
             ProcessDocumentMetadata initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(rfqID);
