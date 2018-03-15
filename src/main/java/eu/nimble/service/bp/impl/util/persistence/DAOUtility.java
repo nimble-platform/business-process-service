@@ -43,6 +43,15 @@ public class DAOUtility {
         return resultSet.get(0);
     }
 
+    public static List<ProcessDocumentMetadataDAO> getProcessDocumentMetadataByProcessInstanceID(String processInstanceID) {
+        String query = "select document from ProcessDocumentMetadataDAO document where ( ";
+        query += " document.processInstanceID ='" + processInstanceID + "' ";
+        query += " ) ";
+        List<ProcessDocumentMetadataDAO> resultSet = (List<ProcessDocumentMetadataDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+
+        return resultSet;
+    }
+
     public static List<ProcessDocumentMetadataDAO> getProcessDocumentMetadata(String partnerID, String type) {
         return getProcessDocumentMetadata(partnerID, type, null, null);
     }
@@ -103,5 +112,36 @@ public class DAOUtility {
             }
         }
         return null;
+    }
+
+    public static List<ProcessInstanceGroupDAO> getProcessInstanceGroupDAOs(String partyId, int offset, int limit, boolean archived) {
+        String query = "select pig from ProcessInstanceGroupDAO pig where pig.archived = " + archived;
+        if(partyId != null) {
+            query += " and pig.partyID ='" + partyId + "'";
+        }
+        List<ProcessInstanceGroupDAO> groups = (List<ProcessInstanceGroupDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query, offset, limit);
+        return groups;
+    }
+
+    public static ProcessInstanceGroupDAO getProcessInstanceGroupDAOByID(String groupID) {
+        String query = "select pig from ProcessInstanceGroupDAO pig where ( pig.ID ='" + groupID+ "') ";
+        ProcessInstanceGroupDAO group = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query);
+        return group;
+    }
+
+    public static void deleteProcessInstanceGroupDAOByID(String groupID) {
+        String query = "select pig from ProcessInstanceGroupDAO pig where ( pig.ID ='" + groupID+ "') ";
+        ProcessInstanceGroupDAO group = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query);
+        HibernateUtilityRef.getInstance("bp-data-model").delete(ProcessInstanceGroupDAO.class, group.getHjid());
+    }
+
+    public static void archiveAllGroupsForParty(String partyId) {
+        String query = "update ProcessInstanceGroupDAO as pig set pig.archived = true WHERE pig.partyID = '" + partyId + "'";
+        HibernateUtilityRef.getInstance("bp-data-model").executeUpdate(query);
+    }
+
+    public static void deleteArchivedGroupsForParty(String partyId) {
+        String query = "delete ProcessInstanceGroupDAO as pig WHERE pig.archived = true and pig.partyID = '" + partyId + "'";
+        HibernateUtilityRef.getInstance("bp-data-model").executeUpdate(query);
     }
 }

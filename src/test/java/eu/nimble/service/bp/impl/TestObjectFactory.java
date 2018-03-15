@@ -2,6 +2,7 @@ package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.swagger.model.*;
 import eu.nimble.service.bp.swagger.model.Process;
+import eu.nimble.utility.DateUtility;
 
 /**
  * Created by yildiray on 5/24/2017.
@@ -126,6 +127,9 @@ public class TestObjectFactory {
         variables.setContent("JSON Content");
         variables.setInitiatorID(partnerID);
         variables.setResponderID("seller1387");
+        variables.getRelatedProducts().add("Chair");
+        variables.getRelatedProducts().add("Bed");
+        variables.getRelatedProducts().add("Glass");
 
         inputMessage.setVariables(variables);
 
@@ -140,20 +144,28 @@ public class TestObjectFactory {
         return inputMessage;
     }
 
-    public static ProcessDocumentMetadata createBusinessDocumentMetadata() {
+    public static ProcessDocumentMetadata createBusinessDocumentMetadata(String instanceID) {
         ProcessDocumentMetadata processDocument = new ProcessDocumentMetadata();
         processDocument.setType(ProcessDocumentMetadata.TypeEnum.valueOf(documentType));
         processDocument.setStatus(ProcessDocumentMetadata.StatusEnum.valueOf(documentStatus));
         processDocument.setDocumentID(documentID);
-        processDocument.setSubmissionDate("2017-05-23");
+        processDocument.setSubmissionDate(DateUtility.getCurrentTimeStamp());
         processDocument.setInitiatorID(partnerID);
         processDocument.setResponderID("seller1387");
-        processDocument.setProcessInstanceID(processInstanceID);
+        if(instanceID == null)
+            processDocument.setProcessInstanceID(processInstanceID);
+        else
+            processDocument.setProcessInstanceID(instanceID);
+
+        processDocument.getRelatedProducts().add("Chair");
+        processDocument.getRelatedProducts().add("Bed");
+        processDocument.getRelatedProducts().add("Sheet");
+
         return processDocument;
     }
 
     public static ProcessDocumentMetadata updateBusinessDocumentMetadata() {
-        ProcessDocumentMetadata processDocument = createBusinessDocumentMetadata();
+        ProcessDocumentMetadata processDocument = createBusinessDocumentMetadata(null);
         processDocument.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
         return processDocument;
     }
@@ -320,6 +332,8 @@ public class TestObjectFactory {
                 "]]></camunda:inputParameter>\n" +
                 "          <camunda:inputParameter name=\"orderXML\"><![CDATA[${content}\n" +
                 "]]></camunda:inputParameter>\n" +
+                "          <camunda:inputParameter name=\"products\"><![CDATA[${relatedProducts}\n" +
+                "]]></camunda:inputParameter>\n" +
                 "        </camunda:inputOutput>\n" +
                 "      </bpmn:extensionElements>\n" +
                 "      <bpmn:incoming>SequenceFlow_1foezn2</bpmn:incoming>\n" +
@@ -411,7 +425,9 @@ public class TestObjectFactory {
         variables.setContent("JSON Content for Negotiation");
         variables.setInitiatorID(partnerID);
         variables.setResponderID("seller1387");
-
+        variables.getRelatedProducts().add("Pencil");
+        variables.getRelatedProducts().add("Desk");
+        variables.getRelatedProducts().add("Mobile");
         inputMessage.setVariables(variables);
 
         return inputMessage;
@@ -423,5 +439,13 @@ public class TestObjectFactory {
         inputMessage.getVariables().setResponderID(partnerID);
 
         return inputMessage;
+    }
+
+    public static ProcessInstanceGroup createProcessInstanceGroupMessage() {
+        ProcessInstanceGroup group = new ProcessInstanceGroup();
+        group.setArchived(false);
+        group.setID("Group123");
+        group.setPartyID(partnerID);
+        return group;
     }
 }

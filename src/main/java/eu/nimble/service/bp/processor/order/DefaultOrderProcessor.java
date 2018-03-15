@@ -12,6 +12,7 @@ import org.camunda.bpm.engine.delegate.JavaDelegate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -37,6 +38,7 @@ public class DefaultOrderProcessor implements JavaDelegate {
         // get input variables
         String buyer = variables.get("initiatorID").toString();
         String seller = variables.get("responderID").toString();
+        List<String> relatedProducts = (List<String>) variables.get("relatedProducts");
         OrderType order = (OrderType) variables.get("order");
 
         // get application execution configuration
@@ -52,7 +54,7 @@ public class DefaultOrderProcessor implements JavaDelegate {
 
             IBusinessProcessApplication businessProcessApplication = (IBusinessProcessApplication) instance;
 
-            businessProcessApplication.saveDocument(processInstanceId, buyer, seller, order);
+            businessProcessApplication.saveDocument(processInstanceId, buyer, seller, order, relatedProducts);
         } else if(executionType == ExecutionConfiguration.ExecutionTypeEnum.MICROSERVICE) {
             // TODO: How to call a microservice
         } else {

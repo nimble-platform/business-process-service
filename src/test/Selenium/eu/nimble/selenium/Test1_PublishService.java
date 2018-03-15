@@ -42,7 +42,7 @@ public class Test1_PublishService implements SeleniumInterface {
         driver.findElement(By.xpath("/html/body/div/nimble-app/product-publish/div/form/catalogue-line-view/catalogue-line-header/div/div[2]/value-view[3]/div/textarea")).sendKeys("QuantumExampleProductServiceDescription");
 
         // Switch to logistic view
-        driver.findElement(By.xpath("/html/body/div/nimble-app/product-publish/div/form/catalogue-line-view/div[2]/button")).click();
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/product-publish/div/form/catalogue-line-view/div/button"))).click();
         // Fill Service Type
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/product-publish/div/form/catalogue-line-view/transportation-service-details/div[1]/value-view[1]/div/input"))).sendKeys("String");
         // Fill Total Capacity
