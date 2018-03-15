@@ -5,7 +5,7 @@ node('nimble-jenkins-slave') {
     }
 
     stage('Build Dependencies') {
-        sh 'rm -rf common   '
+        sh 'rm -rf common'
         sh 'git clone https://github.com/nimble-platform/common'
         dir('common') {
             sh 'mvn clean install'
@@ -13,7 +13,7 @@ node('nimble-jenkins-slave') {
     }
 
     stage('Build Java') {
-        sh 'mvn clean package -DskipTests'
+        sh 'mvn package -DskipTests'
     }
 
     if (env.BRANCH_NAME == 'staging') {
