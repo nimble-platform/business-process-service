@@ -5,10 +5,9 @@ node('nimble-jenkins-slave') {
     }
 
     stage('Build Dependencies') {
-        sh 'rm -rf common'
+        sh 'rm -rf common   '
         sh 'git clone https://github.com/nimble-platform/common'
         dir('common') {
-            sh 'git checkout staging'
             sh 'mvn clean install'
         }
     }
