@@ -13,7 +13,7 @@ node('nimble-jenkins-slave') {
     }
 
     stage('Build Java') {
-        sh 'mvn package -DskipTests'
+        sh 'mvn clean package -DskipTests'
     }
 
     if (env.BRANCH_NAME == 'staging') {
