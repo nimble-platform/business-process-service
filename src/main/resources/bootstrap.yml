@@ -293,10 +293,10 @@ spring:
   profiles: local_dev
   # Local h2 database
   datasource:
-    url: jdbc:postgresql://${CAMUNDA_DB_HOST:localhost}:${CAMUNDA_DB_PORT:5432}/${CAMUNDA_DB_NAME:camunda}?currentSchema=public
-    username: ${CAMUNDA_DB_USERNAME:postgres}
-    password: ${CAMUNDA_DB_PASSWORD:nimble}
-    driverClassName: org.postgresql.Driver
+    url: jdbc:h2:mem:db;MVCC=TRUE;AUTO_RECONNECT=TRUE;DB_CLOSE_DELAY=10;INIT=create schema IF NOT EXISTS APPS
+    username: sa
+    password:
+    driverClassName: org.h2.Driver
   h2:
     console:
       enabled: true
@@ -306,11 +306,18 @@ persistence:
       hibernate:
         connection:
           #### H2 Configs
-          url: jdbc:h2:file:${user.home}/nimble/ubl;AUTO_SERVER=TRUE;MVCC=TRUE;AUTO_RECONNECT=TRUE;DB_CLOSE_DELAY=10;INIT=create schema IF NOT EXISTS APPS
+          url: jdbc:h2:mem:db2;MVCC=TRUE;AUTO_RECONNECT=TRUE;DB_CLOSE_DELAY=10;INIT=create schema IF NOT EXISTS APPS
           username: sa
           password:
           driver_class: org.h2.Driver
         dialect: org.hibernate.dialect.H2Dialect
-
+    business_process:
+      hibernate:
+        connection:
+          url: jdbc:h2:mem:db3;MVCC=TRUE;AUTO_RECONNECT=TRUE;DB_CLOSE_DELAY=10;INIT=create schema IF NOT EXISTS APPS
+          username: sa
+          password:
+          driver_class: org.h2.Driver
+        dialect: org.hibernate.dialect.H2Dialect
 nimble:
   cors_enabled: true

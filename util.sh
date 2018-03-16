@@ -11,6 +11,10 @@ elif [ "$1" == "docker-build" ]; then
 
     mvn docker:build -P docker
 
+elif [ "$1" == "docker-build-staging" ]; then
+
+    mvn docker:build -P docker -DdockerImageTag=staging
+
 elif [ "$1" == "docker-push" ]; then
 
     mvn docker:push -P docker

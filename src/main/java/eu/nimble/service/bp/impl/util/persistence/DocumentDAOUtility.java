@@ -1,6 +1,7 @@
 package eu.nimble.service.bp.impl.util.persistence;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.hyperjaxb.model.*;
 import eu.nimble.service.bp.swagger.model.*;
 import eu.nimble.service.model.ubl.catalogue.CatalogueType;
@@ -11,7 +12,6 @@ import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.service.model.ubl.receiptadvice.ReceiptAdviceType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
 import eu.nimble.utility.Configuration;
-import eu.nimble.utility.HibernateUtility;
 import org.camunda.bpm.engine.ProcessEngines;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,6 +67,8 @@ public class DocumentDAOUtility {
         if (document != null)
             HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(document);
     }
+
+
 
     public static void updateDocumentMetadata(ProcessDocumentMetadata body) {
         ProcessDocumentMetadataDAO storedDocumentDAO = DAOUtility.getProcessDocumentMetadata(body.getDocumentID());

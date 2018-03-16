@@ -28,6 +28,7 @@
         <swagger.api.src>src/main/resources/api.yml</swagger.api.src>
         <maven-jaxb2-plugin.version>0.13.1</maven-jaxb2-plugin.version>
         <build-helper-plugin.version>3.0.0</build-helper-plugin.version>
+        <dockerImageTag>${project.version}</dockerImageTag>
     </properties>
 
     <parent>
@@ -214,6 +215,26 @@
             <artifactId>ubl-data-model</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>eu.nimble.core.common</groupId>
+            <artifactId>utility</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.reflections</groupId>
+            <artifactId>reflections</artifactId>
+            <version>0.9.10</version>
+        </dependency>
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-server</artifactId>
+            <version>3.8.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-java</artifactId>
+            <version>3.8.1</version>
+        </dependency>
     </dependencies>
     <build>
         <finalName>${project.artifactId}</finalName>
@@ -388,8 +409,7 @@
                                 </resource>
                             </resources>
                             <imageTags>
-                                <imageTag>${project.version}</imageTag>
-                                <imageTag>latest</imageTag>
+                                <imageTag>${dockerImageTag}</imageTag>
                             </imageTags>
                             <serverId>docker-hub</serverId>
                             <registryUrl>https://index.docker.io/v1/</registryUrl>

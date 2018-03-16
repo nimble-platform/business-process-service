@@ -11,6 +11,7 @@ import org.camunda.bpm.engine.delegate.JavaDelegate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
 
 public class DefaultTransportExecutionPlanRequestProcessor implements JavaDelegate {
@@ -32,6 +33,7 @@ public class DefaultTransportExecutionPlanRequestProcessor implements JavaDelega
         // get input variables
         String buyer = variables.get("initiatorID").toString();
         String seller = variables.get("responderID").toString();
+        List<String> relatedProducts = (List<String>) variables.get("relatedProducts");
         TransportExecutionPlanRequestType transportExecutionPlanRequest = (TransportExecutionPlanRequestType) variables.get("transportExecutionPlanRequest");
 
         // get application execution configuration
@@ -47,7 +49,7 @@ public class DefaultTransportExecutionPlanRequestProcessor implements JavaDelega
 
             IBusinessProcessApplication businessProcessApplication = (IBusinessProcessApplication) instance;
 
-            businessProcessApplication.saveDocument(processInstanceId, buyer, seller, transportExecutionPlanRequest);
+            businessProcessApplication.saveDocument(processInstanceId, buyer, seller, transportExecutionPlanRequest, relatedProducts);
         } else if(executionType == ExecutionConfiguration.ExecutionTypeEnum.MICROSERVICE) {
             // TODO: How to call a microservice
         } else {

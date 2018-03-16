@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="1.8.2">
+  <bpmn:process id="Ppap" name="Ppap" isExecutable="true">
+    <bpmn:extensionElements>
+      <camunda:properties>
+        <camunda:property name="businessProcessCategory" value="PPAP" />
+      </camunda:properties>
+    </bpmn:extensionElements>
+    <bpmn:startEvent id="StartEvent">
+      <bpmn:outgoing>SequenceFlow_07kdl9i</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="CreatePpapDocument" name="Create Ppap Document (Data Adapter)" camunda:class="eu.nimble.service.bp.processor.ppap.DefaultPpapCreator">
+      <bpmn:incoming>SequenceFlow_07kdl9i</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0o6h0xc</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="SequenceFlow_07kdl9i" sourceRef="StartEvent" targetRef="CreatePpapDocument" />
+    <bpmn:serviceTask id="ProcessPpapDocument" name="Process Ppap Document (Data Processor)" camunda:class="eu.nimble.service.bp.processor.ppap.DefaultPpapProcessor">
+      <bpmn:incoming>SequenceFlow_0o6h0xc</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1bzui8v</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="SequenceFlow_0o6h0xc" sourceRef="CreatePpapDocument" targetRef="ProcessPpapDocument" />
+    <bpmn:serviceTask id="SendPpapDocumentToSeller" name="Send Ppap Document to Seller (Data Channel)" camunda:class="eu.nimble.service.bp.processor.ppap.DefaultPpapSender">
+      <bpmn:incoming>SequenceFlow_1bzui8v</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0q5murk</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="SequenceFlow_1bzui8v" sourceRef="ProcessPpapDocument" targetRef="SendPpapDocumentToSeller" />
+    <bpmn:userTask id="WaitPpapResponse" name="Wait Ppap Response">
+      <bpmn:incoming>SequenceFlow_0q5murk</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1rqauy5</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="SequenceFlow_0q5murk" sourceRef="SendPpapDocumentToSeller" targetRef="WaitPpapResponse" />
+    <bpmn:serviceTask id="CreatePpapResponseDocument" name="Create Ppap Response Document (Data Adapter)" camunda:class="eu.nimble.service.bp.processor.ppap.DefaultPpapResponseCreator">
+      <bpmn:incoming>SequenceFlow_1rqauy5</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_14dt482</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="SequenceFlow_1rqauy5" sourceRef="WaitPpapResponse" targetRef="CreatePpapResponseDocument" />
+    <bpmn:serviceTask id="ProcessPpapResponseDocument" name="Process Ppap Response (Data Processor)" camunda:class="eu.nimble.service.bp.processor.ppap.DefaultPpapResponseProcessor">
+      <bpmn:incoming>SequenceFlow_14dt482</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0435mm2</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="SequenceFlow_14dt482" sourceRef="CreatePpapResponseDocument" targetRef="ProcessPpapResponseDocument" />
+    <bpmn:serviceTask id="SendPpapResponseToBuyer" name="Send Order Response to Buyer (Data Channel)" camunda:class="eu.nimble.service.bp.processor.ppap.DefaultPpapResponseSender">
+      <bpmn:incoming>SequenceFlow_0435mm2</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0hj9b63</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="SequenceFlow_0435mm2" sourceRef="ProcessPpapResponseDocument" targetRef="SendPpapResponseToBuyer" />
+    <bpmn:endEvent id="EndOfEvent">
+      <bpmn:incoming>SequenceFlow_0hj9b63</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_0hj9b63" sourceRef="SendPpapResponseToBuyer" targetRef="EndOfEvent" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Ppap">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent">
+        <dc:Bounds x="173" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ServiceTask_0q37go0_di" bpmnElement="CreatePpapDocument">
+        <dc:Bounds x="268" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_07kdl9i_di" bpmnElement="SequenceFlow_07kdl9i">
+        <di:waypoint xsi:type="dc:Point" x="209" y="120" />
+        <di:waypoint xsi:type="dc:Point" x="268" y="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="238.5" y="98" width="0" height="13" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ServiceTask_0oz4jpb_di" bpmnElement="ProcessPpapDocument">
+        <dc:Bounds x="423" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0o6h0xc_di" bpmnElement="SequenceFlow_0o6h0xc">
+        <di:waypoint xsi:type="dc:Point" x="368" y="120" />
+        <di:waypoint xsi:type="dc:Point" x="423" y="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="395.5" y="98" width="0" height="13" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ServiceTask_1i0lowh_di" bpmnElement="SendPpapDocumentToSeller">
+        <dc:Bounds x="559" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1bzui8v_di" bpmnElement="SequenceFlow_1bzui8v">
+        <di:waypoint xsi:type="dc:Point" x="523" y="120" />
+        <di:waypoint xsi:type="dc:Point" x="559" y="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="541" y="98" width="0" height="13" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="UserTask_02irg9i_di" bpmnElement="WaitPpapResponse">
+        <dc:Bounds x="673" y="215" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0q5murk_di" bpmnElement="SequenceFlow_0q5murk">
+        <di:waypoint xsi:type="dc:Point" x="609" y="160" />
+        <di:waypoint xsi:type="dc:Point" x="609" y="255" />
+        <di:waypoint xsi:type="dc:Point" x="673" y="255" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="624" y="201" width="0" height="13" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ServiceTask_06vshiv_di" bpmnElement="CreatePpapResponseDocument">
+        <dc:Bounds x="774" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1rqauy5_di" bpmnElement="SequenceFlow_1rqauy5">
+        <di:waypoint xsi:type="dc:Point" x="773" y="255" />
+        <di:waypoint xsi:type="dc:Point" x="824" y="255" />
+        <di:waypoint xsi:type="dc:Point" x="824" y="160" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="798.5" y="233.5" width="0" height="13" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ServiceTask_0622c9n_di" bpmnElement="ProcessPpapResponseDocument">
+        <dc:Bounds x="929" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_14dt482_di" bpmnElement="SequenceFlow_14dt482">
+        <di:waypoint xsi:type="dc:Point" x="874" y="120" />
+        <di:waypoint xsi:type="dc:Point" x="929" y="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="901.5" y="98" width="0" height="13" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ServiceTask_0i7lcap_di" bpmnElement="SendPpapResponseToBuyer">
+        <dc:Bounds x="1073" y="78" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0435mm2_di" bpmnElement="SequenceFlow_0435mm2">
+        <di:waypoint xsi:type="dc:Point" x="1029" y="119" />
+        <di:waypoint xsi:type="dc:Point" x="1073" y="119" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1051" y="97" width="0" height="13" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="EndEvent_02rk7uh_di" bpmnElement="EndOfEvent">
+        <dc:Bounds x="1231" y="102" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1204" y="142" width="0" height="13" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0hj9b63_di" bpmnElement="SequenceFlow_0hj9b63">
+        <di:waypoint xsi:type="dc:Point" x="1173" y="119" />
+        <di:waypoint xsi:type="dc:Point" x="1231" y="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1202" y="97.5" width="0" height="13" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

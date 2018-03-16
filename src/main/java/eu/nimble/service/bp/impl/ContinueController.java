@@ -35,6 +35,8 @@ public class ContinueController implements ContinueApi {
         ProcessInstanceDAO storedInstance = DAOUtility.getProcessIntanceDAOByID(processInstance.getProcessInstanceID());
 
         processInstanceDAO.setHjid(storedInstance.getHjid());
+        processInstanceDAO.setCreationDate(storedInstance.getCreationDate());
+        processInstance.setCreationDate(storedInstance.getCreationDate());
 
         HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceDAO);
 
