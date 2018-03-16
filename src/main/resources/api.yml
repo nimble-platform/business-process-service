@@ -308,6 +308,12 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/ProcessInstanceInputMessage'
+      - in: query
+        name: gid
+        description: The UUID of the process instance group owned by the party initiating the process
+        required: false
+        type: string
+
       responses:
         # Response code
         200:
@@ -525,6 +531,10 @@ paths:
         name: archived
         type: boolean
         default: false
+      - in: query
+        name: collaborationRole
+        type: string
+        required: false
       produces:
       - application/json
       responses:
@@ -638,6 +648,24 @@ paths:
           description: Deleted the groups successfully
 
   /group/{ID}/process-instance:
+    get:
+      summary: Retrieves the process instances for the given process group
+      operationId: getProcessInstancesOfGroup
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: ID
+        type: string
+        description: Identifier of the process instance group for which the associated process instances will be retrieved
+        required: true
+      responses:
+        200:
+          description: Retrieved the process instances successfully
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/ProcessInstance'
     post:
       summary: Adds a new process instance to the specified
       operationId: addProcessInstanceToGroup
@@ -895,7 +923,7 @@ definitions:
         - COMPLETED
 
   ProcessInstanceGroup:
-    title: Process Instance Group
+    title: Process Instance Group Object
     type: object
     properties:
       ID:
@@ -908,6 +936,12 @@ definitions:
           type: string
       archived:
         type: boolean
+      collaborationRole:
+        type: string
+      associatedGroups:
+        type: array
+        items:
+          type: string
 
   ProcessDocumentMetadata:
     title: Business Process Document Metadata Object

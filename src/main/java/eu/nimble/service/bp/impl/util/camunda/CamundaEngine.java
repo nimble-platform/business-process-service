@@ -159,7 +159,7 @@ public class CamundaEngine {
         }
     }
 
-    private static List<Transaction> getTransactions(String processID) {
+    public static List<Transaction> getTransactions(String processID) {
         List<Transaction> transactions = new ArrayList<>();
         Transaction transaction = null;
         switch (processID) {
@@ -189,6 +189,62 @@ public class CamundaEngine {
                 transaction.setResponderRole(Transaction.ResponderRoleEnum.BUYER);
                 transaction.setTransactionID(Transaction.DocumentTypeEnum.QUOTATION.toString());
                 transaction.setDocumentType(Transaction.DocumentTypeEnum.QUOTATION);
+                transactions.add(transaction);
+                break;
+            case "Ppap":
+                transaction = new Transaction();
+                transaction.setInitiatorRole(Transaction.InitiatorRoleEnum.BUYER);
+                transaction.setResponderRole(Transaction.ResponderRoleEnum.SELLER);
+                transaction.setTransactionID(Transaction.DocumentTypeEnum.PPAPREQUEST.toString());
+                transaction.setDocumentType(Transaction.DocumentTypeEnum.PPAPREQUEST);
+                transactions.add(transaction);
+                transaction = new Transaction();
+                transaction.setInitiatorRole(Transaction.InitiatorRoleEnum.SELLER);
+                transaction.setResponderRole(Transaction.ResponderRoleEnum.BUYER);
+                transaction.setTransactionID(Transaction.DocumentTypeEnum.PPAPRESPONSE.toString());
+                transaction.setDocumentType(Transaction.DocumentTypeEnum.PPAPRESPONSE);
+                transactions.add(transaction);
+                break;
+            case "Item_Information_Request":
+                transaction = new Transaction();
+                transaction.setInitiatorRole(Transaction.InitiatorRoleEnum.BUYER);
+                transaction.setResponderRole(Transaction.ResponderRoleEnum.SELLER);
+                transaction.setTransactionID(Transaction.DocumentTypeEnum.ITEMINFORMATIONREQUEST.toString());
+                transaction.setDocumentType(Transaction.DocumentTypeEnum.ITEMINFORMATIONREQUEST);
+                transactions.add(transaction);
+                transaction = new Transaction();
+                transaction.setInitiatorRole(Transaction.InitiatorRoleEnum.SELLER);
+                transaction.setResponderRole(Transaction.ResponderRoleEnum.BUYER);
+                transaction.setTransactionID(Transaction.DocumentTypeEnum.ITEMINFORMATIONRESPONSE.toString());
+                transaction.setDocumentType(Transaction.DocumentTypeEnum.ITEMINFORMATIONRESPONSE);
+                transactions.add(transaction);
+                break;
+            case "Fulfilment":
+                transaction = new Transaction();
+                transaction.setInitiatorRole(Transaction.InitiatorRoleEnum.SELLER);
+                transaction.setResponderRole(Transaction.ResponderRoleEnum.BUYER);
+                transaction.setTransactionID(Transaction.DocumentTypeEnum.DESPATCHADVICE.toString());
+                transaction.setDocumentType(Transaction.DocumentTypeEnum.DESPATCHADVICE);
+                transactions.add(transaction);
+                transaction = new Transaction();
+                transaction.setInitiatorRole(Transaction.InitiatorRoleEnum.BUYER);
+                transaction.setResponderRole(Transaction.ResponderRoleEnum.SELLER);
+                transaction.setTransactionID(Transaction.DocumentTypeEnum.RECEIPTADVICE.toString());
+                transaction.setDocumentType(Transaction.DocumentTypeEnum.RECEIPTADVICE);
+                transactions.add(transaction);
+                break;
+            case "Transport_Execution_Plan":
+                transaction = new Transaction();
+                transaction.setInitiatorRole(Transaction.InitiatorRoleEnum.BUYER);
+                transaction.setResponderRole(Transaction.ResponderRoleEnum.SELLER);
+                transaction.setTransactionID(Transaction.DocumentTypeEnum.TRANSPORTEXECUTIONPLANREQUEST.toString());
+                transaction.setDocumentType(Transaction.DocumentTypeEnum.TRANSPORTEXECUTIONPLANREQUEST);
+                transactions.add(transaction);
+                transaction = new Transaction();
+                transaction.setInitiatorRole(Transaction.InitiatorRoleEnum.SELLER);
+                transaction.setResponderRole(Transaction.ResponderRoleEnum.BUYER);
+                transaction.setTransactionID(Transaction.DocumentTypeEnum.TRANSPORTEXECUTIONPLAN.toString());
+                transaction.setDocumentType(Transaction.DocumentTypeEnum.TRANSPORTEXECUTIONPLAN);
                 transactions.add(transaction);
                 break;
             default:

@@ -145,6 +145,8 @@
 			<xsd:element name="partyID" type="xsd:string"/>
 			<xsd:element name="processInstanceIDs" type="xsd:string" maxOccurs="unbounded"/>
 			<xsd:element name="archived" type="xsd:boolean"/>
+			<xsd:element name="collaborationRole" type="xsd:string"/>
+			<xsd:element name="associatedGroups" type="xsd:string" maxOccurs="unbounded"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	<xsd:simpleType name="ProcessDocumentStatus">

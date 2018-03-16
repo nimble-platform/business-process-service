@@ -262,7 +262,9 @@ public class HibernateSwaggerObjectMapper {
         processInstanceGroup.setID(processInstanceGroupDAO.getID());
         processInstanceGroup.setArchived(processInstanceGroupDAO.isArchived());
         processInstanceGroup.setPartyID(processInstanceGroupDAO.getPartyID());
+        processInstanceGroup.setCollaborationRole(processInstanceGroupDAO.getCollaborationRole());
         processInstanceGroup.setProcessInstanceIDs(processInstanceGroupDAO.getProcessInstanceIDs());
+        processInstanceGroup.setAssociatedGroups(processInstanceGroupDAO.getAssociatedGroups());
         return processInstanceGroup;
     }
 }
