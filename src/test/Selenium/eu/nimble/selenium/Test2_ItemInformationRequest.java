@@ -29,7 +29,8 @@ public class Test2_ItemInformationRequest implements SeleniumInterface {
 
         // Go to search page
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/nav/button"))).click();
-        driver.findElement(By.xpath("//*[@id=\"navbarNavAltMarkup\"]/ul[1]/li[3]/a")).click();
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"dropdownMenuSearch\"]"))).click();
+        driver.findElement(By.xpath("//*[@id=\"navbarNavAltMarkup\"]/ul[1]/li[3]/div/a[1]")).click();
 
         // Search for QuantumExampleProduct
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"searchTerm\"]"))).sendKeys("QuantumExampleProduct");
@@ -49,11 +50,12 @@ public class Test2_ItemInformationRequest implements SeleniumInterface {
         driver.findElement(By.xpath("/html/body/div/nimble-app/simple-search-details/div/product-bp-options/item-information-request-bp/div[2]/item-information-request/div[2]/button")).click();
 
         // Check whether it is sent
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/nimble-dashboard/ul/li[2]/a"))).click();
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"bpOptionsMenuBuyer\"]")));
 
         // Logout
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"dropdownMenuUser\"]"))).click();
-        driver.findElement(By.xpath("/html/body/div/nimble-app/nav/div/ul[2]/li/div/a[3]")).click();
+        wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//*[@id=\"dropdownMenuUser\"]"))).click();
+        driver.findElement(By.xpath("//*[@id=\"navbarNavAltMarkup\"]/ul[3]/li/div/a[3]")).click();
 
     }
 }

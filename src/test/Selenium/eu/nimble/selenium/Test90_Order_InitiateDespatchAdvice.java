@@ -1,6 +1,7 @@
 package eu.nimble.selenium;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 
@@ -27,9 +28,9 @@ public class Test90_Order_InitiateDespatchAdvice implements SeleniumInterface {
         wait.until(ExpectedConditions.not(ExpectedConditions.presenceOfAllElementsLocatedBy(By.xpath("/html/body/div/nimble-app/nimble-login/credentials-form/form/button[1]"))));
 
         // Options
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"bpOptionsMenuSeller\"]"))).click();
-        // Go to business history
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/nimble-dashboard/div[2]/div/div/table/tbody/tr[2]/td[8]/div/div/div[1]"))).click();
+        WebElement elem = driver.findElement(By.xpath("/html/body/div/nimble-app/nimble-dashboard/div[2]/div/div/table/tbody/tr[3]/td[8]/div/div/div/label"));
+        String js = "arguments[0].click();";
+        ((JavascriptExecutor) driver).executeScript(js, elem);
         // Order Response Details
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/product-bp-options/order-bp/div[1]/ul/li[4]/a"))).click();
         // Initiate Despatch Advice
@@ -51,6 +52,6 @@ public class Test90_Order_InitiateDespatchAdvice implements SeleniumInterface {
         // Logout
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/nav/button"))).click();
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"dropdownMenuUser\"]"))).click();
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"navbarNavAltMarkup\"]/ul[2]/li/div/a[3]"))).click();
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"navbarNavAltMarkup\"]/ul[3]/li/div/a[3]"))).click();
     }
 }

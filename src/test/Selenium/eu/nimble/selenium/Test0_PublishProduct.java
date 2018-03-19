@@ -33,7 +33,7 @@ public class Test0_PublishProduct implements SeleniumInterface {
         wait.until(ExpectedConditions.elementToBeClickable(By.xpath("/html/body/div/nimble-app/nav/button"))).click();
         wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//*[@id=\"navbarNavAltMarkup\"]/ul[1]/li[2]/a"))).click();
 
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/category-search/div[2]/button"))).click();
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/category-search/div/div[2]/button"))).click();
 
         // Select Single Product Tab
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"singleUpload\"]"))).click();
@@ -46,16 +46,16 @@ public class Test0_PublishProduct implements SeleniumInterface {
         driver.findElement(By.xpath("/html/body/div/nimble-app/product-publish/div/form/catalogue-line-view/ul/li[2]/a")).click();
 
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/product-publish/div/form/catalogue-line-view/product-trading-details/amount-view/form/div/div/input[1]"))).sendKeys("1000");
-
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/product-publish/div/form/catalogue-line-view/product-trading-details/amount-view/form/div/div/input[2]"))).sendKeys("EUR");
         driver.findElement(By.xpath("/html/body/div/nimble-app/product-publish/div/form/catalogue-line-view/product-trading-details/quantity-view[1]/form/div/div/div/input[1]")).sendKeys("520");
         driver.findElement(By.xpath("/html/body/div/nimble-app/product-publish/div/form/catalogue-line-view/product-trading-details/quantity-view[1]/form/div/div/div/input[2]")).sendKeys("EUR");
 
         // Add a category
         driver.findElement(By.xpath("/html/body/div/nimble-app/product-publish/div/div/div[1]")).click();
 
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/category-search/div[1]/form/input"))).sendKeys("Die");
-        wait.until(ExpectedConditions.elementToBeClickable(By.xpath("/html/body/div/nimble-app/category-search/div[1]/form/button"))).click();
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/category-search/ul/li[1]"))).click();
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/category-search/div/div[1]/form/input"))).sendKeys("Bath");
+        wait.until(ExpectedConditions.elementToBeClickable(By.xpath("/html/body/div/nimble-app/category-search/div/div[1]/form/button"))).click();
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/category-search/div/ul/li[1]"))).click();
 
         // Publish
         wait.until(ExpectedConditions.elementToBeClickable(By.xpath("/html/body/div/nimble-app/product-publish/div/div/button"))).click();
@@ -64,8 +64,7 @@ public class Test0_PublishProduct implements SeleniumInterface {
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/catalogue-view/div[1]/button")));
 
         // Logout
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"dropdownMenuUser\"]"))).click();
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"navbarNavAltMarkup\"]/ul[2]/li/div/a[3]"))).click();
-
+        wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//*[@id=\"dropdownMenuUser\"]"))).click();
+        driver.findElement(By.xpath("//*[@id=\"navbarNavAltMarkup\"]/ul[3]/li/div/a[3]")).click();
     }
 }

@@ -24,12 +24,15 @@ public class Test96_PPAPResponseView implements SeleniumInterface {
 
         // Wait until submit button is gone.In other words,wait until dashboard page is available.
         wait.until(ExpectedConditions.not(ExpectedConditions.presenceOfAllElementsLocatedBy(By.xpath("/html/body/div/nimble-app/nimble-login/credentials-form/form/button[1]"))));
-
+        // Purchase
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/nimble-dashboard/ul/li[2]/a"))).click();
         // Options
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"bpOptionsMenuBuyer\"]"))).click();
+     //   wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"bpOptionsMenuBuyer\"]"))).click();
         // Business History
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/nimble-dashboard/div[3]/div/div/table/tbody/tr[2]/td[8]/div/div/div"))).click();
-
+    //    wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/nimble-dashboard/div[3]/div/div/table/tbody/tr[2]/td[8]/div/div/div"))).click();
+        WebElement elem = driver.findElement(By.xpath("/html/body/div/nimble-app/nimble-dashboard/div[2]/div/div/table/tbody/tr[3]/td[8]/div/div/div/label"));
+        String js = "arguments[0].click();";
+        ((JavascriptExecutor) driver).executeScript(js, elem);
         // Check documents
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/product-bp-options/ppap/ppap-document-download/div/div/div/table/tbody/tr[2]/td/button")));
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/product-bp-options/ppap/ppap-document-download/div/div/div/table/tbody/tr[7]/td/button")));
@@ -38,7 +41,7 @@ public class Test96_PPAPResponseView implements SeleniumInterface {
         // Logout
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/nav/button"))).click();
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"dropdownMenuUser\"]"))).click();
-        driver.findElement(By.xpath("/html/body/div/nimble-app/nav/div/ul[2]/li/div/a[3]")).click();
+        driver.findElement(By.xpath("//*[@id=\"navbarNavAltMarkup\"]/ul[3]/li/div/a[3]")).click();
 
     }
 }
