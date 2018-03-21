@@ -541,9 +541,7 @@ paths:
         200:
           description: Retrieved the groups successfully
           schema:
-            type: array
-            items:
-              $ref: '#/definitions/ProcessInstanceGroup'
+            $ref: '#/definitions/ProcessInstanceGroupResponse'
     post:
       summary: Saves a process group along with the initial process instance
       operationId: saveProcessInstanceGroup
@@ -942,6 +940,17 @@ definitions:
         type: array
         items:
           type: string
+
+  ProcessInstanceGroupResponse:
+    title: Process Instance Group Response
+    type: object
+    properties:
+      processInstanceGroups:
+        type: array
+        items:
+          $ref: '#/definitions/ProcessInstanceGroup'
+      size:
+        type: integer
 
   ProcessDocumentMetadata:
     title: Business Process Document Metadata Object

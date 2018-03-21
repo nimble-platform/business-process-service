@@ -4,6 +4,7 @@ import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceInputMessageDAO;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
+import eu.nimble.service.bp.impl.util.persistence.DAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.impl.util.persistence.HibernateUtilityRef;
 import eu.nimble.service.bp.swagger.api.StartApi;
@@ -44,6 +45,8 @@ public class StartController implements StartApi {
         // create process instance groups if this is the first process initializing the process group
         if(gid == null) {
             createProcessInstanceGroups(body, processInstance);
+        } else {
+            addNewProcessInstanceToGroup(gid, processInstance.getProcessInstanceID(), body);
         }
 
         return new ResponseEntity<>(processInstance, HttpStatus.OK);
@@ -83,5 +86,35 @@ public class StartController implements StartApi {
 
         HibernateUtilityRef.getInstance("bp-data-model").persist(processInstanceGroupDAO1);
         HibernateUtilityRef.getInstance("bp-data-model").persist(processInstanceGroupDAO2);
+    }
+
+    private void addNewProcessInstanceToGroup(String gid, String processInstanceId, ProcessInstanceInputMessage body) {
+        ProcessInstanceGroupDAO group = DAOUtility.getProcessInstanceGroupDAO(gid);
+        group.getProcessInstanceIDs().add(processInstanceId);
+        HibernateUtilityRef.getInstance("bp-data-model").update(group);
+
+        // add the new process instance to the recipient's group
+        // if such a group exists add into it otherwise create a new group
+        ProcessInstanceGroupDAO associatedGroup = DAOUtility.getProcessInstanceGroupDAO(body.getVariables().getResponderID(), gid);
+        if(associatedGroup == null) {
+            String uuid = UUID.randomUUID().toString();
+            ProcessInstanceGroupDAO processInstanceGroupDAO = new ProcessInstanceGroupDAO();
+            processInstanceGroupDAO.setArchived(false);
+            processInstanceGroupDAO.setID(uuid);
+            processInstanceGroupDAO.setName(body.getVariables().getRelatedProducts().toString());
+            processInstanceGroupDAO.setPartyID(body.getVariables().getInitiatorID());
+            processInstanceGroupDAO.setCollaborationRole(CamundaEngine.getTransactions(body.getVariables().getProcessID()).get(0).getInitiatorRole().toString());
+            List<String> associatedGroups = new ArrayList<>();
+            associatedGroups.add(gid);
+            processInstanceGroupDAO.setAssociatedGroups(associatedGroups);
+            List<String> processInstanceIds = new ArrayList<>();
+            processInstanceIds.add(processInstanceId);
+            processInstanceGroupDAO.setProcessInstanceIDs(processInstanceIds);
+            HibernateUtilityRef.getInstance("bp-data-model").persist(processInstanceGroupDAO);
+
+        } else {
+            associatedGroup.getProcessInstanceIDs().add(processInstanceId);
+            HibernateUtilityRef.getInstance("bp-data-model").update(associatedGroup);
+        }
     }
 }
