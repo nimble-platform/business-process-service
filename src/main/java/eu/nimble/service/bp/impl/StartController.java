@@ -43,8 +43,11 @@ public class StartController implements StartApi {
         HibernateUtilityRef.getInstance("bp-data-model").persist(processInstanceDAO);
 
         // create process instance groups if this is the first process initializing the process group
-        if(gid == null) {
+        if (gid == null) {
             createProcessInstanceGroups(body, processInstance);
+
+            // the group exists for the initiator but the trading partner is a new one
+            // so, a new group should be created for the new party
         } else {
             addNewProcessInstanceToGroup(gid, processInstance.getProcessInstanceID(), body);
         }
@@ -54,63 +57,57 @@ public class StartController implements StartApi {
 
     private void createProcessInstanceGroups(ProcessInstanceInputMessage body, ProcessInstance processInstance) {
         // create group for initiating party
-        String uuid1 = UUID.randomUUID().toString();
-        String uuid2 = UUID.randomUUID().toString();
-
-        ProcessInstanceGroupDAO processInstanceGroupDAO1 = new ProcessInstanceGroupDAO();
-        processInstanceGroupDAO1.setArchived(false);
-        processInstanceGroupDAO1.setID(uuid1);
-        processInstanceGroupDAO1.setName(body.getVariables().getRelatedProducts().toString());
-        processInstanceGroupDAO1.setPartyID(body.getVariables().getInitiatorID());
-        processInstanceGroupDAO1.setCollaborationRole(CamundaEngine.getTransactions(body.getVariables().getProcessID()).get(0).getInitiatorRole().toString());
-        List<String> associatedGroups = new ArrayList<>();
-        associatedGroups.add(uuid2);
-        processInstanceGroupDAO1.setAssociatedGroups(associatedGroups);
-        List<String> processInstanceIds = new ArrayList<>();
-        processInstanceIds.add(processInstance.getProcessInstanceID());
-        processInstanceGroupDAO1.setProcessInstanceIDs(processInstanceIds);
+        ProcessInstanceGroupDAO processInstanceGroupDAO1 = DAOUtility.createProcessInstanceGroupDAO(
+                body.getVariables().getInitiatorID(),
+                processInstance.getProcessInstanceID(),
+                CamundaEngine.getTransactions(body.getVariables().getProcessID()).get(0).getInitiatorRole().toString(),
+                body.getVariables().getRelatedProducts().toString());
 
         // craete group for responder party
-        ProcessInstanceGroupDAO processInstanceGroupDAO2 = new ProcessInstanceGroupDAO();
-        processInstanceGroupDAO2.setArchived(false);
-        processInstanceGroupDAO2.setID(uuid2);
-        processInstanceGroupDAO2.setName(body.getVariables().getRelatedProducts().toString());
-        processInstanceGroupDAO2.setPartyID(body.getVariables().getResponderID());
-        processInstanceGroupDAO2.setCollaborationRole(CamundaEngine.getTransactions(body.getVariables().getProcessID()).get(1).getInitiatorRole().toString());
-        associatedGroups = new ArrayList<>();
-        associatedGroups.add(uuid1);
-        processInstanceGroupDAO2.setAssociatedGroups(associatedGroups);
-        processInstanceIds = new ArrayList<>();
-        processInstanceIds.add(processInstance.getProcessInstanceID());
-        processInstanceGroupDAO2.setProcessInstanceIDs(processInstanceIds);
+        ProcessInstanceGroupDAO processInstanceGroupDAO2 = DAOUtility.createProcessInstanceGroupDAO(
+                body.getVariables().getResponderID(),
+                processInstance.getProcessInstanceID(),
+                CamundaEngine.getTransactions(body.getVariables().getProcessID()).get(1).getInitiatorRole().toString(),
+                body.getVariables().getRelatedProducts().toString());
 
-        HibernateUtilityRef.getInstance("bp-data-model").persist(processInstanceGroupDAO1);
-        HibernateUtilityRef.getInstance("bp-data-model").persist(processInstanceGroupDAO2);
+        // associate groups
+        List<ProcessInstanceGroupDAO> associatedGroups = new ArrayList<>();
+        associatedGroups.add(processInstanceGroupDAO2);
+        processInstanceGroupDAO1.setAssociatedGroups(associatedGroups);
+        HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceGroupDAO1);
+
+        associatedGroups = new ArrayList<>();
+        associatedGroups.add(processInstanceGroupDAO1);
+        processInstanceGroupDAO2.setAssociatedGroups(associatedGroups);
+        HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceGroupDAO2);
     }
 
-    private void addNewProcessInstanceToGroup(String gid, String processInstanceId, ProcessInstanceInputMessage body) {
-        ProcessInstanceGroupDAO group = DAOUtility.getProcessInstanceGroupDAO(gid);
-        group.getProcessInstanceIDs().add(processInstanceId);
-        HibernateUtilityRef.getInstance("bp-data-model").update(group);
+    private void addNewProcessInstanceToGroup(String sourceGid, String processInstanceId, ProcessInstanceInputMessage body) {
+        ProcessInstanceGroupDAO sourceGroup = DAOUtility.getProcessInstanceGroupDAO(sourceGid);
+        sourceGroup.getProcessInstanceIDs().add(processInstanceId);
+        sourceGroup = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").update(sourceGroup);
+
 
         // add the new process instance to the recipient's group
         // if such a group exists add into it otherwise create a new group
-        ProcessInstanceGroupDAO associatedGroup = DAOUtility.getProcessInstanceGroupDAO(body.getVariables().getResponderID(), gid);
-        if(associatedGroup == null) {
-            String uuid = UUID.randomUUID().toString();
-            ProcessInstanceGroupDAO processInstanceGroupDAO = new ProcessInstanceGroupDAO();
-            processInstanceGroupDAO.setArchived(false);
-            processInstanceGroupDAO.setID(uuid);
-            processInstanceGroupDAO.setName(body.getVariables().getRelatedProducts().toString());
-            processInstanceGroupDAO.setPartyID(body.getVariables().getInitiatorID());
-            processInstanceGroupDAO.setCollaborationRole(CamundaEngine.getTransactions(body.getVariables().getProcessID()).get(0).getInitiatorRole().toString());
-            List<String> associatedGroups = new ArrayList<>();
-            associatedGroups.add(gid);
-            processInstanceGroupDAO.setAssociatedGroups(associatedGroups);
-            List<String> processInstanceIds = new ArrayList<>();
-            processInstanceIds.add(processInstanceId);
-            processInstanceGroupDAO.setProcessInstanceIDs(processInstanceIds);
-            HibernateUtilityRef.getInstance("bp-data-model").persist(processInstanceGroupDAO);
+        ProcessInstanceGroupDAO associatedGroup = DAOUtility.getProcessInstanceGroupDAO(body.getVariables().getResponderID(), sourceGid);
+        if (associatedGroup == null) {
+            ProcessInstanceGroupDAO targetGroup = DAOUtility.createProcessInstanceGroupDAO(
+                    body.getVariables().getResponderID(),
+                    processInstanceId,
+                    CamundaEngine.getTransactions(body.getVariables().getProcessID()).get(0).getResponderRole().toString(),
+                    body.getVariables().getRelatedProducts().toString());
+
+            // associate groups
+            List<ProcessInstanceGroupDAO> associatedGroups = new ArrayList<>();
+            associatedGroups.add(sourceGroup);
+            targetGroup.setAssociatedGroups(associatedGroups);
+            targetGroup = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").update(targetGroup);
+
+            associatedGroups = new ArrayList<>();
+            associatedGroups.add(targetGroup);
+            sourceGroup.setAssociatedGroups(associatedGroups);
+            HibernateUtilityRef.getInstance("bp-data-model").update(sourceGroup);
 
         } else {
             associatedGroup.getProcessInstanceIDs().add(processInstanceId);

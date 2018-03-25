@@ -6,12 +6,15 @@
 package eu.nimble.service.bp.impl.util.persistence;
 
 import eu.nimble.service.bp.hyperjaxb.model.*;
+import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroup;
+import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
 import eu.nimble.utility.HibernateUtility;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * @author yildiray
@@ -116,6 +119,31 @@ public class DAOUtility {
         return null;
     }
 
+    public static ProcessInstanceGroupDAO createProcessInstanceGroupDAO(String partyId, String processInstanceId, String collaborationRole, String relatedProducts) {
+        return createProcessInstanceGroupDAO(partyId, processInstanceId, collaborationRole, relatedProducts, null);
+    }
+
+    public static ProcessInstanceGroupDAO createProcessInstanceGroupDAO(String partyId, String processInstanceId, String collaborationRole, String relatedProducts, ProcessInstanceGroupDAO associatedGroup) {
+        String uuid = UUID.randomUUID().toString();
+        ProcessInstanceGroupDAO group = new ProcessInstanceGroupDAO();
+        group.setArchived(false);
+        group.setID(uuid);
+        group.setName(relatedProducts);
+        group.setPartyID(partyId);
+        group.setCollaborationRole(collaborationRole);
+        List<String> processInstanceIds = new ArrayList<>();
+        processInstanceIds.add(processInstanceId);
+        group.setProcessInstanceIDs(processInstanceIds);
+        List<ProcessInstanceGroupDAO> associatedGroups = new ArrayList<>();
+        if(associatedGroup != null) {
+            associatedGroups.add(associatedGroup);
+        }
+        group.setAssociatedGroups(associatedGroups);
+        HibernateUtilityRef.getInstance("bp-data-model").persist(group);
+        return group;
+    }
+
+
     public static List<ProcessInstanceGroupDAO> getProcessInstanceGroupDAOs(String partyId, String collaborationRole, int offset, int limit, boolean archived) {
         String query = "select pig from ProcessInstanceGroupDAO pig where pig.archived = " + archived;
         if(partyId != null) {
@@ -148,7 +176,7 @@ public class DAOUtility {
 
     public static ProcessInstanceGroupDAO getProcessInstanceGroupDAO(String partyId, String associatedGroupId) {
         String query = "select pig from ProcessInstanceGroupDAO pig where pig.partyID = '" + partyId+ "' and pig.ID in " +
-                "(select agrp.item from ProcessInstanceGroupDAO pig2 join pig2.associatedGroupsItems agrp where pig2.ID = '" + associatedGroupId + "')";
+                "(select agrp.ID from ProcessInstanceGroupDAO pig2 join pig2.associatedGroups agrp where pig2.ID = '" + associatedGroupId + "')";
         ProcessInstanceGroupDAO group = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query);
         return group;
     }

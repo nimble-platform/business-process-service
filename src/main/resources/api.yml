@@ -335,6 +335,11 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/ProcessInstanceInputMessage'
+      - in: query
+        name: gid
+        description: The UUID of the process instance group owned by the party continuing the process
+        required: false
+        type: string
       responses:
         # Response code
         200:
@@ -939,7 +944,7 @@ definitions:
       associatedGroups:
         type: array
         items:
-          type: string
+          $ref: '#/definitions/ProcessInstanceGroup'
 
   ProcessInstanceGroupResponse:
     title: Process Instance Group Response

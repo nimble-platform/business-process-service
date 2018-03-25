@@ -1,4 +1,4 @@
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" xmlns:hj="http://hyperjaxb3.jvnet.org/ejb/schemas/customizations" xmlns:orm="http://java.sun.com/xml/ns/persistence/orm" jaxb:extensionBindingPrefixes="hj orm">
 	<xsd:complexType name="ProcessPreferencesDAO">
 		<xsd:sequence>
 			<xsd:element name="partnerID" type="xsd:string"/>
@@ -146,7 +146,21 @@
 			<xsd:element name="processInstanceIDs" type="xsd:string" maxOccurs="unbounded"/>
 			<xsd:element name="archived" type="xsd:boolean"/>
 			<xsd:element name="collaborationRole" type="xsd:string"/>
-			<xsd:element name="associatedGroups" type="xsd:string" maxOccurs="unbounded"/>
+			<xsd:element name="associatedGroups" type="ProcessInstanceGroupDAO" maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:appinfo>
+						<hj:one-to-many merge="false">
+							<orm:join-column name="GROUPS_PROCESS_INSTANCE_GROU_0"/>
+							<orm:cascade>
+								<orm:cascade-persist/>
+								<orm:cascade-refresh/>
+								<orm:cascade-merge/>
+								<orm:cascade-detach/>
+							</orm:cascade>
+						</hj:one-to-many>
+					</xsd:appinfo>
+				</xsd:annotation>
+			</xsd:element>
 		</xsd:sequence>
 	</xsd:complexType>
 	<xsd:simpleType name="ProcessDocumentStatus">
