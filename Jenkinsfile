@@ -2,7 +2,7 @@ node ('nimble-jenkins-slave') {
     stage('Clone and Update') {
         git(url: 'https://github.com/nimble-platform/business-process-service.git', branch: 'k8s-integration')
 
-        sh 'git clone https://github.com/nimble-platform/common.git ; cd common ; mvn clean install'
+        sh 'rm -rf common ; git clone https://github.com/nimble-platform/common.git ; cd common ; mvn clean install'
     }
 
     stage ('Build docker image') {
