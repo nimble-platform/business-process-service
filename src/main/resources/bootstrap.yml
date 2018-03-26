@@ -66,11 +66,11 @@ persistence:
         jdbc:
           batch_size: 0
         c3p0:
-          acquireIncrement: 10
-          initialPoolSize: 10
-          maxPoolSize: 100
-          minPoolSize: 10
-          maxStatementsPerConnection: 10
+          acquire_increment: 5
+          initialPoolSize: 5
+          max_size: 25
+          min_size: 5
+          maxStatementsPerConnection: 5
           acquireRetryAttempts: 10
           acquireRetryDelay: 100
           numHelperThreads: 10
@@ -100,11 +100,11 @@ persistence:
         jdbc:
           batch_size: 0
         c3p0:
-          acquireIncrement: 10
-          initialPoolSize: 10
-          maxPoolSize: 100
-          minPoolSize: 10
-          maxStatementsPerConnection: 10
+          acquire_increment: 5
+          initialPoolSize: 5
+          max_size: 25
+          min_size: 5
+          maxStatementsPerConnection: 5
           acquireRetryAttempts: 10
           acquireRetryDelay: 100
           numHelperThreads: 10
@@ -134,15 +134,14 @@ persistence:
           batch_size: 0
         c3p0:
           acquire_increment: 2
-          idle_test_period: 60
-          min_size: 10
-          max_size: 100
-          maxStatements: 0
-          maxStatementsPerConnection: 100
-          timeout: 300
-          acquireRetryAttempts: 1
-          acquireRetryDelay: 250
+          initialPoolSize: 2
+          max_size: 10
+          min_size: 2
+          maxStatementsPerConnection: 2
+          acquireRetryAttempts: 10
+          acquireRetryDelay: 100
           numHelperThreads: 10
+          idle_test_period: 600
         use_sql_comments: true
         transaction:
           factory_class: org.hibernate.transaction.JDBCTransactionFactory
@@ -200,11 +199,11 @@ persistence:
         jdbc:
           batch_size: 0
         c3p0:
-          acquireIncrement: 10
-          initialPoolSize: 10
-          maxPoolSize: 100
-          minPoolSize: 10
-          maxStatementsPerConnection: 10
+          acquire_increment: 5
+          initialPoolSize: 5
+          max_size: 25
+          min_size: 5
+          maxStatementsPerConnection: 5
           acquireRetryAttempts: 10
           acquireRetryDelay: 100
           numHelperThreads: 10
@@ -232,11 +231,11 @@ persistence:
         jdbc:
           batch_size: 0
         c3p0:
-          acquireIncrement: 10
-          initialPoolSize: 10
-          maxPoolSize: 100
-          minPoolSize: 10
-          maxStatementsPerConnection: 10
+          acquire_increment: 5
+          initialPoolSize: 5
+          max_size: 25
+          min_size: 5
+          maxStatementsPerConnection: 5
           acquireRetryAttempts: 10
           acquireRetryDelay: 100
           numHelperThreads: 10
@@ -265,15 +264,14 @@ persistence:
           batch_size: 0
         c3p0:
           acquire_increment: 2
-          idle_test_period: 60
-          min_size: 10
-          max_size: 100
-          maxStatements: 0
-          maxStatementsPerConnection: 100
-          timeout: 300
-          acquireRetryAttempts: 1
-          acquireRetryDelay: 250
+          initialPoolSize: 2
+          max_size: 10
+          min_size: 2
+          maxStatementsPerConnection: 2
+          acquireRetryAttempts: 10
+          acquireRetryDelay: 100
           numHelperThreads: 10
+          idle_test_period: 600
         use_sql_comments: true
         transaction:
           factory_class: org.hibernate.transaction.JDBCTransactionFactory
