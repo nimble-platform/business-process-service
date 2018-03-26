@@ -944,7 +944,7 @@ definitions:
       associatedGroups:
         type: array
         items:
-          $ref: '#/definitions/ProcessInstanceGroup'
+          type: string
 
   ProcessInstanceGroupResponse:
     title: Process Instance Group Response

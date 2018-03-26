@@ -123,7 +123,7 @@ public class DAOUtility {
         return createProcessInstanceGroupDAO(partyId, processInstanceId, collaborationRole, relatedProducts, null);
     }
 
-    public static ProcessInstanceGroupDAO createProcessInstanceGroupDAO(String partyId, String processInstanceId, String collaborationRole, String relatedProducts, ProcessInstanceGroupDAO associatedGroup) {
+    public static ProcessInstanceGroupDAO createProcessInstanceGroupDAO(String partyId, String processInstanceId, String collaborationRole, String relatedProducts, String associatedGroup) {
         String uuid = UUID.randomUUID().toString();
         ProcessInstanceGroupDAO group = new ProcessInstanceGroupDAO();
         group.setArchived(false);
@@ -134,11 +134,11 @@ public class DAOUtility {
         List<String> processInstanceIds = new ArrayList<>();
         processInstanceIds.add(processInstanceId);
         group.setProcessInstanceIDs(processInstanceIds);
-        List<ProcessInstanceGroupDAO> associatedGroups = new ArrayList<>();
         if(associatedGroup != null) {
+            List<String> associatedGroups = new ArrayList<>();
             associatedGroups.add(associatedGroup);
+            group.setAssociatedGroups(associatedGroups);
         }
-        group.setAssociatedGroups(associatedGroups);
         HibernateUtilityRef.getInstance("bp-data-model").persist(group);
         return group;
     }
@@ -176,7 +176,7 @@ public class DAOUtility {
 
     public static ProcessInstanceGroupDAO getProcessInstanceGroupDAO(String partyId, String associatedGroupId) {
         String query = "select pig from ProcessInstanceGroupDAO pig where pig.partyID = '" + partyId+ "' and pig.ID in " +
-                "(select agrp.ID from ProcessInstanceGroupDAO pig2 join pig2.associatedGroups agrp where pig2.ID = '" + associatedGroupId + "')";
+                "(select agrp.item from ProcessInstanceGroupDAO pig2 join pig2.associatedGroupsItems agrp where pig2.ID = '" + associatedGroupId + "')";
         ProcessInstanceGroupDAO group = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query);
         return group;
     }

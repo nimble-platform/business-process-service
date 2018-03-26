@@ -259,28 +259,14 @@ public class HibernateSwaggerObjectMapper {
     }
 
     public static ProcessInstanceGroup createProcessInstanceGroup(ProcessInstanceGroupDAO processInstanceGroupDAO) {
-        return createProcessInstanceGroup(processInstanceGroupDAO, 0);
-    }
-
-    private static ProcessInstanceGroup createProcessInstanceGroup(ProcessInstanceGroupDAO processInstanceGroupDAO, int hierarchyLevel) {
-        // Only populate the first level associated group.
-        // This prevents infinite recursion
-        if(hierarchyLevel > 1) {
-            return null;
-        }
-
         ProcessInstanceGroup processInstanceGroup = new ProcessInstanceGroup();
         processInstanceGroup.setID(processInstanceGroupDAO.getID());
         processInstanceGroup.setArchived(processInstanceGroupDAO.isArchived());
         processInstanceGroup.setPartyID(processInstanceGroupDAO.getPartyID());
         processInstanceGroup.setCollaborationRole(processInstanceGroupDAO.getCollaborationRole());
         processInstanceGroup.setProcessInstanceIDs(processInstanceGroupDAO.getProcessInstanceIDs());
+        processInstanceGroup.setAssociatedGroups(processInstanceGroupDAO.getAssociatedGroups());
 
-        List<ProcessInstanceGroup> associatedGroups = new ArrayList<>();
-        for(ProcessInstanceGroupDAO associatedGroup : processInstanceGroupDAO.getAssociatedGroups()) {
-            associatedGroups.add(createProcessInstanceGroup(associatedGroup, hierarchyLevel+1));
-        }
-        processInstanceGroup.setAssociatedGroups(associatedGroups);
         return processInstanceGroup;
     }
 }

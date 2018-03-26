@@ -30,6 +30,7 @@ import java.util.UUID;
 @Controller
 public class ContinueController implements ContinueApi {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
     @Override
     public ResponseEntity<ProcessInstance> continueProcessInstance(@ApiParam(value = "", required = true) @RequestBody ProcessInstanceInputMessage body, @ApiParam(value = "The UUID of the process instance group owned by the party continuing the process") @RequestParam(value = "gid", required = false) String gid) {
         logger.debug(" $$$ Continue Process with ProcessInstanceInputMessage {}", body.toString());
@@ -60,23 +61,17 @@ public class ContinueController implements ContinueApi {
 
         // check whether the group for the trading partner is still there. If not, create a new one
         ProcessInstanceGroupDAO associatedGroup = DAOUtility.getProcessInstanceGroupDAO(body.getVariables().getInitiatorID(), sourceGid);
-        if(associatedGroup == null) {
+        if (associatedGroup == null) {
             associatedGroup = DAOUtility.createProcessInstanceGroupDAO(
                     body.getVariables().getInitiatorID(),
                     processInstanceId,
                     CamundaEngine.getTransactions(body.getVariables().getProcessID()).get(0).getInitiatorRole().toString(),
-                    body.getVariables().getRelatedProducts().toString());
+                    body.getVariables().getRelatedProducts().toString(),
+                    sourceGid);
 
             // associate groups
-            List<ProcessInstanceGroupDAO> associatedGroups = new ArrayList<>();
-            associatedGroups.add(associatedGroup);
-            existingGroup.setAssociatedGroups(associatedGroups);
-            existingGroup = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").update(existingGroup);
-
-            associatedGroups = new ArrayList<>();
-            associatedGroups.add(existingGroup);
-            associatedGroup.setAssociatedGroups(associatedGroups);
-            HibernateUtilityRef.getInstance("bp-data-model").update(associatedGroup);
+            existingGroup.getAssociatedGroups().add(associatedGroup.getID());
+            HibernateUtilityRef.getInstance("bp-data-model").update(existingGroup);
         }
     }
 }

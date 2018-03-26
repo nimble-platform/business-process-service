@@ -146,21 +146,7 @@
 			<xsd:element name="processInstanceIDs" type="xsd:string" maxOccurs="unbounded"/>
 			<xsd:element name="archived" type="xsd:boolean"/>
 			<xsd:element name="collaborationRole" type="xsd:string"/>
-			<xsd:element name="associatedGroups" type="ProcessInstanceGroupDAO" maxOccurs="unbounded">
-				<xsd:annotation>
-					<xsd:appinfo>
-						<hj:one-to-many merge="false">
-							<orm:join-column name="GROUPS_PROCESS_INSTANCE_GROU_0"/>
-							<orm:cascade>
-								<orm:cascade-persist/>
-								<orm:cascade-refresh/>
-								<orm:cascade-merge/>
-								<orm:cascade-detach/>
-							</orm:cascade>
-						</hj:one-to-many>
-					</xsd:appinfo>
-				</xsd:annotation>
-			</xsd:element>
+			<xsd:element name="associatedGroups" type="xsd:string" maxOccurs="unbounded"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	<xsd:simpleType name="ProcessDocumentStatus">

@@ -71,13 +71,14 @@ public class StartController implements StartApi {
                 body.getVariables().getRelatedProducts().toString());
 
         // associate groups
-        List<ProcessInstanceGroupDAO> associatedGroups = new ArrayList<>();
-        associatedGroups.add(processInstanceGroupDAO2);
+        List<String> associatedGroups = new ArrayList<>();
+        associatedGroups.add(processInstanceGroupDAO2.getID());
         processInstanceGroupDAO1.setAssociatedGroups(associatedGroups);
-        HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceGroupDAO1);
+        // below assignment fetches the hjids from the
+        processInstanceGroupDAO1 = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceGroupDAO1);
 
         associatedGroups = new ArrayList<>();
-        associatedGroups.add(processInstanceGroupDAO1);
+        associatedGroups.add(processInstanceGroupDAO1.getID());
         processInstanceGroupDAO2.setAssociatedGroups(associatedGroups);
         HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceGroupDAO2);
     }
@@ -96,17 +97,10 @@ public class StartController implements StartApi {
                     body.getVariables().getResponderID(),
                     processInstanceId,
                     CamundaEngine.getTransactions(body.getVariables().getProcessID()).get(0).getResponderRole().toString(),
-                    body.getVariables().getRelatedProducts().toString());
+                    body.getVariables().getRelatedProducts().toString(),
+                    sourceGid);
 
-            // associate groups
-            List<ProcessInstanceGroupDAO> associatedGroups = new ArrayList<>();
-            associatedGroups.add(sourceGroup);
-            targetGroup.setAssociatedGroups(associatedGroups);
-            targetGroup = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").update(targetGroup);
-
-            associatedGroups = new ArrayList<>();
-            associatedGroups.add(targetGroup);
-            sourceGroup.setAssociatedGroups(associatedGroups);
+            sourceGroup.getAssociatedGroups().add(targetGroup.getID());
             HibernateUtilityRef.getInstance("bp-data-model").update(sourceGroup);
 
         } else {
