@@ -7,7 +7,7 @@ node ('nimble-jenkins-slave') {
 
     stage ('Build docker image') {
         sh 'mvn clean package -DskipTests'
-        sh 'mvn -f catalogue-service-micro/pom.xml docker:build -DdockerImageTag=${BUILD_NUMBER} -P docker'
+        sh 'mvn -f docker:build -DdockerImageTag=${BUILD_NUMBER} -P docker'
 
         sh 'sleep 5' // For the tag to populate
     }
