@@ -2,29 +2,30 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   labels:
-    app: nimble-platform
+    app: business-process-service
     name: business-process-service
   name: business-process-service
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: nimble-platform
+      app: business-process-service
       name: business-process-service
   strategy:
     rollingUpdate:
       maxSurge: 1
       maxUnavailable: 1
     type: RollingUpdate
-  revisionHistoryLimit: 5
+  revisionHistoryLimit: 2
   template:
     metadata:
       labels:
-        app: nimble-platform
+        app: business-process-service
         name: business-process-service
     spec:
       containers:
-      - image: nimbleplatform/business-process-service
+#      can be overwritten with "-set spec.template.spec.containers[0].image=image_url"
+      - image: nimbleplatform/business-process-service:IMAGE_TAG
         imagePullPolicy: Always
         name: business-process-service
         ports:
@@ -35,46 +36,92 @@ spec:
           requests:
             cpu: 200m
             memory: 256Mi
+          limits:
+            cpu: 400m
+            memory: 512Mi
         env:
           - name: SPRING_PROFILES_ACTIVE
-            value: kubernetes
+            value: "k8s"
           - name: DISCOVERY_ENABLED
             value: "false"
-          - name: DB_CREDENTIALS_JSON # Camunda database
-            valueFrom:
-              secretKeyRef:
-                name: binding-nimble-camunda-db-prod
-                key: binding
-          - name: BLUEMIX_BUSINESS_PROCESS_DB_JSON
-            valueFrom:
-              secretKeyRef:
-                name: binding-nimble-business-process-db-prod
-                key: binding
-          - name: BLUEMIX_UBL_DB_JSON
-            valueFrom:
-              secretKeyRef:
-                name: binding-nimble-ubl-db-prod
-                key: binding
-          - name: BLUEMIX_MODAML_DB_JSON
-            valueFrom:
-              secretKeyRef:
-                name: binding-nimble-modaml-db-prod
-                key: binding
 
----
+          # Business Process database
+          - name: BUSINESS_PROCESS_DB_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: business-process-service-configmap
+                key: business_process_db_host
+          - name: BUSINESS_PROCESS_DB_PORT
+            valueFrom:
+              configMapKeyRef:
+                name: business-process-service-configmap
+                key: business_process_db_port
+          - name: BUSINESS_PROCESS_DB_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: business-process-service-configmap
+                key: business_process_db_name
+          - name: BUSINESS_PROCESS_DB_USERNAME
+            valueFrom:
+              configMapKeyRef:
+                name: business-process-service-configmap
+                key: business_process_db_username
+          - name: BUSINESS_PROCESS_DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: business-process-service-secret
+                key: business_process_db_password
 
-kind: Service
-metadata:
-  name: business-process-service
-  labels:
-    app: nimble-platform
-    name: business-process-service
-spec:
-  ports:
-    - name: http
-      protocol: TCP
-      port: 8085
-      targetPort: 8085
-  selector:
-    app: nimble-platform
-    name: business-process-service
+          # Camunda database
+          - name: CAMUNDA_DB_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: business-process-service-configmap
+                key: camunda_db_host
+          - name: CAMUNDA_DB_PORT
+            valueFrom:
+              configMapKeyRef:
+                name: business-process-service-configmap
+                key: camunda_db_port
+          - name: CAMUNDA_DB_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: business-process-service-configmap
+                key: camunda_db_name
+          - name: CAMUNDA_DB_USERNAME
+            valueFrom:
+              configMapKeyRef:
+                name: business-process-service-configmap
+                key: camunda_db_username
+          - name: CAMUNDA_DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: business-process-service-secret
+                key: camunda_db_password
+
+          # UBL database
+          - name: UBL_DB_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: business-process-service-configmap
+                key: ubl_db_host
+          - name: UBL_DB_HOST_PORT
+            valueFrom:
+              configMapKeyRef:
+                name: business-process-service-configmap
+                key: ubl_db_port
+          - name: UBL_DB_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: business-process-service-configmap
+                key: ubl_db_name
+          - name: UBL_DB_USERNAME
+            valueFrom:
+              configMapKeyRef:
+                name: business-process-service-configmap
+                key: ubl_db_username
+          - name: UBL_DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: business-process-service-secret
+                key: ubl_db_password

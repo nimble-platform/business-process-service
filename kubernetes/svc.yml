@@ -1,0 +1,15 @@
+kind: Service
+metadata:
+  name: business-process-service
+  labels:
+    app: business-process-service
+    name: business-process-service
+spec:
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8085
+      targetPort: 8085
+  selector:
+    app: business-process-service
+    name: business-process-service
