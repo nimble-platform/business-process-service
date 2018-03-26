@@ -26,6 +26,6 @@ node ('nimble-jenkins-slave') {
 
     stage ('Print-deploy logs') {
         sh 'sleep 60'
-        sh 'kubectl -n prod logs deploy/business-process-service -c catalogue-service'
+        sh 'kubectl -n prod logs deploy/business-process-service -c business-process-service'
     }
 }
