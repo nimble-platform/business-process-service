@@ -4,9 +4,11 @@ import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
 import eu.nimble.service.bp.impl.util.persistence.DAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.impl.util.persistence.HibernateUtilityRef;
+import eu.nimble.service.bp.impl.util.persistence.ProcessInstanceGroupDAOUtility;
 import eu.nimble.service.bp.swagger.api.GroupApi;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroup;
+import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupFilter;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupResponse;
 import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
@@ -95,6 +97,7 @@ public class ProcessInstanceGroupController implements GroupApi {
     @Override
     public ResponseEntity<ProcessInstanceGroupResponse> getProcessInstanceGroups(@ApiParam(value = "Identifier of the party") @RequestParam(value = "partyID", required = false) String partyID,
                                                                                  @ApiParam(value = "Related products") @RequestParam(value = "relatedProducts", required = false) List<String> relatedProducts,
+                                                                                 @ApiParam(value = "Related product categories") @RequestParam(value = "relatedProductCategories", required = false) List<String> relatedProductCategories,
                                                                                  @ApiParam(value = "Identifier of the corresponsing trading partner ID") @RequestParam(value = "tradingPartnerIDs", required = false) List<String> tradingPartnerIDs,
                                                                                  @ApiParam(value = "Initiation date range for the first process instance in the group") @RequestParam(value = "initiationDateRange", required = false) String initiationDateRange,
                                                                                  @ApiParam(value = "Last activity date range. It is the latest submission date of the document to last process instance in the group") @RequestParam(value = "lastActivityDateRange", required = false) String lastActivityDateRange,
@@ -104,9 +107,9 @@ public class ProcessInstanceGroupController implements GroupApi {
                                                                                  @ApiParam(value = "") @RequestParam(value = "collaborationRole", required = false) String collaborationRole) {
         logger.debug("Getting ProcessInstanceGroups for party: {}", partyID);
 
-        List<ProcessInstanceGroupDAO> processInstanceGroupDAOs = DAOUtility.getProcessInstanceGroupDAOs(partyID, collaborationRole, offset, limit, archived);
-        int totalSize = DAOUtility.getProcessInstanceGroupSize(partyID, collaborationRole, archived);
-        logger.debug(" There are {} process instance groups in total", processInstanceGroupDAOs);
+        List<ProcessInstanceGroupDAO> processInstanceGroupDAOs = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAOs(partyID, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, null, null, limit, offset);
+        int totalSize = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupSize(partyID, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, null, null);
+        logger.debug(" There are {} process instance groups in total", processInstanceGroupDAOs.size());
         List<ProcessInstanceGroup> processInstanceGroups = new ArrayList<>();
         for (ProcessInstanceGroupDAO processInstanceGroupDAO : processInstanceGroupDAOs) {
 
@@ -191,7 +194,7 @@ public class ProcessInstanceGroupController implements GroupApi {
                 if (creationDateFilterOK && lastActivityDateFilterOK && tradingPartnersFilterOK && productsFilterOK)
                     processInstanceGroups.add(HibernateSwaggerObjectMapper.createProcessInstanceGroup(processInstanceGroupDAO));
             } else {*/
-                processInstanceGroups.add(HibernateSwaggerObjectMapper.createProcessInstanceGroup(processInstanceGroupDAO));
+            processInstanceGroups.add(HibernateSwaggerObjectMapper.createProcessInstanceGroup(processInstanceGroupDAO));
             //}
         }
 
@@ -201,6 +204,26 @@ public class ProcessInstanceGroupController implements GroupApi {
 
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(groupResponse);
         logger.debug("Retrieved ProcessInstanceGroups for party: {}", partyID);
+        return response;
+    }
+
+    @Override
+    public ResponseEntity<ProcessInstanceGroupFilter> getProcessInstanceGroupFilters(
+            @ApiParam(value = "Identifier of the party") @RequestParam(value = "partyID", required = false) String partyID,
+            @ApiParam(value = "Related products") @RequestParam(value = "relatedProducts", required = false) List<String> relatedProducts,
+            @ApiParam(value = "Related product categories") @RequestParam(value = "relatedProductCategories", required = false) List<String> relatedProductCategories,
+            @ApiParam(value = "Identifier of the corresponsing trading partner ID") @RequestParam(value = "tradingPartnerIDs", required = false) List<String> tradingPartnerIDs,
+            @ApiParam(value = "Initiation date range for the first process instance in the group") @RequestParam(value = "initiationDateRange", required = false) String initiationDateRange,
+            @ApiParam(value = "Last activity date range. It is the latest submission date of the document to last process instance in the group") @RequestParam(value = "lastActivityDateRange", required = false) String lastActivityDateRange,
+            @ApiParam(value = "", defaultValue = "false") @RequestParam(value = "archived", required = false, defaultValue = "false") Boolean archived,
+            @ApiParam(value = "") @RequestParam(value = "collaborationRole", required = false) String collaborationRole) {
+
+        ProcessInstanceGroupFilter filters = ProcessInstanceGroupDAOUtility.getFilterDetails(partyID, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, null, null);
+        ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(filters);
+        logger.debug("Filters retrieved for partyId: {}, archived: {}, products: {}, categories: {}, parties: {}", partyID, archived,
+                relatedProducts != null ? relatedProducts.toString() : "[]",
+                relatedProductCategories != null ? relatedProductCategories.toString() : "[]",
+                tradingPartnerIDs != null ? tradingPartnerIDs.toString() : "[]");
         return response;
     }
 
@@ -265,84 +288,5 @@ public class ProcessInstanceGroupController implements GroupApi {
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body("true");
         logger.debug("Deleted archived ProcessInstanceGroups for party {}", partyID);
         return response;
-    }
-
-    @CrossOrigin(origins = {"*"})
-    @RequestMapping(value = "/group/temp",
-            produces = {MediaType.APPLICATION_JSON_VALUE},
-            method = RequestMethod.GET)
-    public ResponseEntity transformCatalogue(@RequestParam(value = "collaborationRole", required = true) String collaborationRole) {
-        List<ProcessInstanceGroup> instanceGroups = new ArrayList<>();
-        ProcessInstanceGroup pig = new ProcessInstanceGroup();
-        pig.setID("pig-1");
-        pig.setPartyID("party-id-1");
-        pig.setArchived(false);
-
-        ProcessInstance pi = new ProcessInstance();
-        pi.setCreationDate("2018-01-01 00:00:00");
-        pi.setProcessID("Item_Information_Request");
-        pi.setProcessInstanceID("pi1");
-        pi.setStatus(ProcessInstance.StatusEnum.COMPLETED);
-
-        ProcessInstance pi2 = new ProcessInstance();
-        pi2.setCreationDate("2018-01-02 00:00:00");
-        pi2.setProcessID("Negotiation");
-        pi2.setProcessInstanceID("pi2");
-        pi2.setStatus(ProcessInstance.StatusEnum.COMPLETED);
-
-        ProcessInstance pi3 = new ProcessInstance();
-        pi3.setCreationDate("2018-01-03 00:00:00");
-        pi3.setProcessID("Order");
-        pi3.setProcessInstanceID("pi3");
-        pi3.setStatus(ProcessInstance.StatusEnum.STARTED);
-
-        pig.addProcessInstanceIDsItem("pi1");
-        pig.addProcessInstanceIDsItem("pi2");
-        pig.addProcessInstanceIDsItem("pi3");
-        instanceGroups.add(pig);
-
-        ProcessInstanceGroup pig2 = new ProcessInstanceGroup();
-        pig2.setID("pig-2");
-        pig2.setPartyID("party-id-1");
-        pig2.setArchived(false);
-
-        ProcessInstance pi4 = new ProcessInstance();
-        pi4.setCreationDate("2018-01-04 00:00:00");
-        pi4.setProcessID("Item_Information_Request");
-        pi4.setProcessInstanceID("pi4");
-        pi4.setStatus(ProcessInstance.StatusEnum.COMPLETED);
-
-        ProcessInstance pi5 = new ProcessInstance();
-        pi5.setCreationDate("2018-01-05 00:00:00");
-        pi5.setProcessID("Negotiation");
-        pi5.setProcessInstanceID("pi5");
-        pi5.setStatus(ProcessInstance.StatusEnum.COMPLETED);
-
-        ProcessInstance pi6 = new ProcessInstance();
-        pi6.setCreationDate("2018-01-06 00:00:00");
-        pi6.setProcessID("Order");
-        pi6.setProcessInstanceID("pi3");
-        pi6.setStatus(ProcessInstance.StatusEnum.STARTED);
-
-        pig2.addProcessInstanceIDsItem("pi4");
-        pig2.addProcessInstanceIDsItem("pi5");
-        pig2.addProcessInstanceIDsItem("pi6");
-        instanceGroups.add(pig2);
-
-        ProcessInstanceGroup pig3 = new ProcessInstanceGroup();
-        pig3.setID("pig-3");
-        pig3.setPartyID("party-id-1");
-        pig3.setArchived(false);
-
-        ProcessInstance pi7 = new ProcessInstance();
-        pi7.setCreationDate("2018-01-01 00:00:00");
-        pi7.setProcessID("Item_Information_Request");
-        pi7.setProcessInstanceID("pi7");
-        pi7.setStatus(ProcessInstance.StatusEnum.COMPLETED);
-
-        pig3.addProcessInstanceIDsItem("pi7");
-        instanceGroups.add(pig3);
-
-        return ResponseEntity.ok().body(instanceGroups);
     }
 }

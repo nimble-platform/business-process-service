@@ -34,6 +34,7 @@ public class DefaultTransportExecutionPlanRequestProcessor implements JavaDelega
         String buyer = variables.get("initiatorID").toString();
         String seller = variables.get("responderID").toString();
         List<String> relatedProducts = (List<String>) variables.get("relatedProducts");
+        List<String> relatedProductCategories = (List<String>) variables.get("relatedProductCategories");
         TransportExecutionPlanRequestType transportExecutionPlanRequest = (TransportExecutionPlanRequestType) variables.get("transportExecutionPlanRequest");
 
         // get application execution configuration
@@ -49,7 +50,7 @@ public class DefaultTransportExecutionPlanRequestProcessor implements JavaDelega
 
             IBusinessProcessApplication businessProcessApplication = (IBusinessProcessApplication) instance;
 
-            businessProcessApplication.saveDocument(processInstanceId, buyer, seller, transportExecutionPlanRequest, relatedProducts);
+            businessProcessApplication.saveDocument(processInstanceId, buyer, seller, transportExecutionPlanRequest, relatedProducts, relatedProductCategories);
         } else if(executionType == ExecutionConfiguration.ExecutionTypeEnum.MICROSERVICE) {
             // TODO: How to call a microservice
         } else {

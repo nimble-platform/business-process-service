@@ -118,6 +118,7 @@ public class CamundaEngine {
         data.put("responderID", responderID);
         data.put("content", content);
         data.put("relatedProducts", variables.getRelatedProducts());
+        data.put("relatedProductCategories", variables.getRelatedProductCategories());
         return data;
     }
 

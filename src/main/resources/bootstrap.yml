@@ -94,7 +94,7 @@ persistence:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         show_sql: false
         hbm2ddl:
-          auto: update
+          auto: validate
         cache:
           provider_class: org.hibernate.cache.HashtableCacheProvider
         jdbc:

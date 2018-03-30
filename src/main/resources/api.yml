@@ -511,6 +511,10 @@ paths:
         type: array
         description: Related products
       - in: query
+        name: relatedProductCategories
+        type: array
+        description: Related product categories
+      - in: query
         name: tradingPartnerIDs
         type: array
         description: Identifier of the corresponsing trading partner ID
@@ -565,6 +569,50 @@ paths:
         # Response code
         201:
           description: Saved the group successfully
+  /group/query-criteria:
+    get:
+      summary: Generates detailed filtering criteria for the current query parameters in place
+      operationId: getProcessInstanceGroupFilters
+      parameters:
+      - in: query
+        name: partyID
+        type: string
+        description: Identifier of the party
+      - in: query
+        name: relatedProducts
+        type: array
+        description: Related products
+      - in: query
+        name: relatedProductCategories
+        type: array
+        description: Related product categories
+      - in: query
+        name: tradingPartnerIDs
+        type: array
+        description: Identifier of the corresponsing trading partner ID
+      - in: query
+        name: initiationDateRange
+        type: string
+        description: Initiation date range for the first process instance in the group
+      - in: query
+        name: lastActivityDateRange
+        type: string
+        description: Last activity date range. It is the latest submission date of the document to last process instance in the group
+      - in: query
+        name: archived
+        type: boolean
+        default: false
+      - in: query
+        name: collaborationRole
+        type: string
+        required: false
+      produces:
+      - application/json
+      responses:
+        200:
+          description: Retrieved the filters successfully
+          schema:
+            $ref: '#/definitions/ProcessInstanceGroupFilter'
 
   /group/{ID}:
     get:
@@ -895,6 +943,10 @@ definitions:
         type: array
         items:
           type: string
+      relatedProductCategories:
+        type: array
+        items:
+          type: string
       content:
         type: string
 
@@ -957,6 +1009,28 @@ definitions:
       size:
         type: integer
 
+  ProcessInstanceGroupFilter:
+    title: Process Instance Group Filters
+    description: Contains the filtering criteria for Process Instance Group objects
+    type: object
+    properties:
+      startDate:
+        type: string
+      endDate:
+        type: string
+      tradingPartnerIDs:
+        type: array
+        items:
+          type: string
+      relatedProducts:
+        type: array
+        items:
+          type: string
+      relatedProductCategories:
+        type: array
+        items:
+          type: string
+
   ProcessDocumentMetadata:
     title: Business Process Document Metadata Object
     type: object
@@ -987,6 +1061,10 @@ definitions:
         - ITEMINFORMATIONRESPONSE
         - OTHER
       relatedProducts:
+        type: array
+        items:
+          type: string
+      relatedProductCategories:
         type: array
         items:
           type: string

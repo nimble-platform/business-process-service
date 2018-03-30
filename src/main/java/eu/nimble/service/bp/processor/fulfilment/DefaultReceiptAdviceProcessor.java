@@ -38,6 +38,7 @@ public class DefaultReceiptAdviceProcessor implements JavaDelegate {
         String buyer = variables.get("initiatorID").toString();
         String seller = variables.get("responderID").toString();
         List<String> relatedProducts = (List<String>) variables.get("relatedProducts");
+        List<String> relatedProductCategories = (List<String>) variables.get("relatedProductCategories");
         ReceiptAdviceType receiptAdvice = (ReceiptAdviceType) variables.get("receiptAdvice");
 
         // get application execution configuration
@@ -53,7 +54,7 @@ public class DefaultReceiptAdviceProcessor implements JavaDelegate {
 
             IBusinessProcessApplication businessProcessApplication = (IBusinessProcessApplication) instance;
 
-            businessProcessApplication.saveDocument(processInstanceId, buyer, seller, receiptAdvice, relatedProducts);
+            businessProcessApplication.saveDocument(processInstanceId, buyer, seller, receiptAdvice, relatedProducts, relatedProductCategories);
         } else if(executionType == ExecutionConfiguration.ExecutionTypeEnum.MICROSERVICE) {
             // TODO: How to call a microservice
         } else {

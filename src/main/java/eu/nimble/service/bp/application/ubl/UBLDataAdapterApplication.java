@@ -184,7 +184,7 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
 
     @Override
     public void saveDocument(String processInstanceId, String initiatorID, String responderID,
-                            Object document, List<String> relatedProducts) {
+                            Object document, List<String> relatedProducts, List<String> relatedProductCategories) {
         ProcessDocumentMetadata documentMetadata = new ProcessDocumentMetadata();
         documentMetadata.setInitiatorID(initiatorID);
         documentMetadata.setResponderID(responderID);
@@ -193,6 +193,7 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
         DateTime submissionDate = new DateTime();
         documentMetadata.setSubmissionDate(DateUtility.convert(submissionDate));
         documentMetadata.getRelatedProducts().addAll(relatedProducts);
+        documentMetadata.getRelatedProductCategories().addAll(relatedProductCategories);
 
         if(document instanceof OrderType) {
             OrderType order = (OrderType) document;

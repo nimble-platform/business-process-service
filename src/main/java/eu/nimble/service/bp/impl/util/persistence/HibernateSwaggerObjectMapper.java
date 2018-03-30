@@ -58,6 +58,10 @@ public class HibernateSwaggerObjectMapper {
         for(String relatedProduct: relatedProducts) {
             processVariablesDAO.getRelatedProducts().add(relatedProduct);
         }
+        List<String> relatedProductCategories = body.getVariables().getRelatedProductCategories();
+        for(String category: relatedProductCategories) {
+            processVariablesDAO.getRelatedProductCategories().add(category);
+        }
         processInstanceInputMessageDAO.setVariables(processVariablesDAO);
         return processInstanceInputMessageDAO;
     }
@@ -90,11 +94,8 @@ public class HibernateSwaggerObjectMapper {
         processDocument.setSubmissionDate(processDocumentDAO.getSubmissionDate());
         processDocument.setStatus(ProcessDocumentMetadata.StatusEnum.valueOf(processDocumentDAO.getStatus().value()));
         processDocument.setType(ProcessDocumentMetadata.TypeEnum.valueOf(processDocumentDAO.getType().value()));
-
-        List<String> relatedProducts = processDocumentDAO.getRelatedProducts();
-        for(String relatedProduct: relatedProducts) {
-            processDocument.getRelatedProducts().add(relatedProduct);
-        }
+        processDocument.setRelatedProducts(processDocumentDAO.getRelatedProducts());
+        processDocument.setRelatedProductCategories(processDocumentDAO.getRelatedProductCategories());
         return processDocument;
     }
 
@@ -123,6 +124,10 @@ public class HibernateSwaggerObjectMapper {
         List<String> relatedProducts = body.getRelatedProducts();
         for(String relatedProduct: relatedProducts) {
             processDocumentDAO.getRelatedProducts().add(relatedProduct);
+        }
+        List<String> relatedProductCategories = body.getRelatedProductCategories();
+        for(String category: relatedProductCategories) {
+            processDocumentDAO.getRelatedProductCategories().add(category);
         }
         return processDocumentDAO;
     }

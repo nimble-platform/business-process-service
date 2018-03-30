@@ -143,31 +143,6 @@ public class DAOUtility {
         return group;
     }
 
-
-    public static List<ProcessInstanceGroupDAO> getProcessInstanceGroupDAOs(String partyId, String collaborationRole, int offset, int limit, boolean archived) {
-        String query = "select pig from ProcessInstanceGroupDAO pig where pig.archived = " + archived;
-        if(partyId != null) {
-            query += " and pig.partyID ='" + partyId + "'";
-        }
-        if(collaborationRole != null) {
-            query += " and pig.collaborationRole = '" + collaborationRole + "'";
-        }
-        List<ProcessInstanceGroupDAO> groups = (List<ProcessInstanceGroupDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query, offset, limit);
-        return groups;
-    }
-
-    public static int getProcessInstanceGroupSize(String partyId, String collaborationRole, boolean archived) {
-        String query = "select count(*) from ProcessInstanceGroupDAO pig where pig.archived = " + archived;
-        if(partyId != null) {
-            query += " and pig.partyID ='" + partyId + "'";
-        }
-        if(collaborationRole != null) {
-            query += " and pig.collaborationRole = '" + collaborationRole + "'";
-        }
-        int count = ((Long) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query)).intValue();
-        return count;
-    }
-
     public static ProcessInstanceGroupDAO getProcessInstanceGroupDAO(String groupID) {
         String query = "select pig from ProcessInstanceGroupDAO pig where ( pig.ID ='" + groupID+ "') ";
         ProcessInstanceGroupDAO group = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query);
