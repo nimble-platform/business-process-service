@@ -998,6 +998,10 @@ definitions:
         type: array
         items:
           type: string
+      firstActivityTime:
+        type: string
+      lastActivityTime:
+        type: string
 
   ProcessInstanceGroupResponse:
     title: Process Instance Group Response

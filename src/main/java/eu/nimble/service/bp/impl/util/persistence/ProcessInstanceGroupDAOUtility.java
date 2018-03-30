@@ -10,7 +10,7 @@ import java.util.List;
  * Created by suat on 26-Mar-18.
  */
 public class ProcessInstanceGroupDAOUtility {
-    public static List<ProcessInstanceGroupDAO> getProcessInstanceGroupDAOs(
+    public static List<Object> getProcessInstanceGroupDAOs(
             String partyId,
             String collaborationRole,
             Boolean archived,
@@ -23,7 +23,7 @@ public class ProcessInstanceGroupDAOUtility {
             int offset) {
 
         String query = getGroupRetrievalQuery(GroupQueryType.GROUP, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories, startTime, endTime);
-        List<ProcessInstanceGroupDAO> groups = (List<ProcessInstanceGroupDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query, offset, limit);
+        List<Object> groups = (List<Object>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query, offset, limit);
         return groups;
     }
 
@@ -114,9 +114,9 @@ public class ProcessInstanceGroupDAOUtility {
         if(queryType == GroupQueryType.FILTER) {
             query += "select distinct new list(relProd.item, relCat.item, doc.initiatorID, doc.responderID)";
         } else if(queryType == GroupQueryType.SIZE) {
-            query += "select count(*)";
+            query += "select count(distinct pig)";
         } else if(queryType == GroupQueryType.GROUP) {
-            query += "select pig";
+            query += "select pig, max(doc.submissionDate) as lastActivityTime, min(doc.submissionDate) as firstActivityTime";
         }
 
         query += " from " +
@@ -158,6 +158,11 @@ public class ProcessInstanceGroupDAOUtility {
         }
         if (collaborationRole != null) {
             query += " and pig.collaborationRole = '" + collaborationRole + "'";
+        }
+
+        if(queryType == GroupQueryType.GROUP) {
+            query += " group by pig.hjid";
+            query += " order by firstActivityTime desc";
         }
         return query;
     }

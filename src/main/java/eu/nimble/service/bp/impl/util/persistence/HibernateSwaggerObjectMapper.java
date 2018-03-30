@@ -263,7 +263,9 @@ public class HibernateSwaggerObjectMapper {
         return processInstanceGroupDAO;
     }
 
-    public static ProcessInstanceGroup createProcessInstanceGroup(ProcessInstanceGroupDAO processInstanceGroupDAO) {
+    public static ProcessInstanceGroup createProcessInstanceGroup(Object result) {
+        Object[] object = (Object[]) result;
+        ProcessInstanceGroupDAO processInstanceGroupDAO = (ProcessInstanceGroupDAO) object[0];
         ProcessInstanceGroup processInstanceGroup = new ProcessInstanceGroup();
         processInstanceGroup.setID(processInstanceGroupDAO.getID());
         processInstanceGroup.setArchived(processInstanceGroupDAO.isArchived());
@@ -271,6 +273,8 @@ public class HibernateSwaggerObjectMapper {
         processInstanceGroup.setCollaborationRole(processInstanceGroupDAO.getCollaborationRole());
         processInstanceGroup.setProcessInstanceIDs(processInstanceGroupDAO.getProcessInstanceIDs());
         processInstanceGroup.setAssociatedGroups(processInstanceGroupDAO.getAssociatedGroups());
+        processInstanceGroup.setLastActivityTime((String) object[1]);
+        processInstanceGroup.setFirstActivityTime((String) object[2]);
 
         return processInstanceGroup;
     }

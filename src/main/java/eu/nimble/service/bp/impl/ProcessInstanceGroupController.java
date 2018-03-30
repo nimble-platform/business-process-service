@@ -108,95 +108,12 @@ public class ProcessInstanceGroupController implements GroupApi {
                                                                                  @ApiParam(value = "") @RequestParam(value = "collaborationRole", required = false) String collaborationRole) {
         logger.debug("Getting ProcessInstanceGroups for party: {}", partyID);
 
-        List<ProcessInstanceGroupDAO> processInstanceGroupDAOs = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAOs(partyID, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, null, null, limit, offset);
+        List<Object> results = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAOs(partyID, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, null, null, limit, offset);
         int totalSize = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupSize(partyID, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, null, null);
-        logger.debug(" There are {} process instance groups in total", processInstanceGroupDAOs.size());
+        logger.debug(" There are {} process instance groups in total", results.size());
         List<ProcessInstanceGroup> processInstanceGroups = new ArrayList<>();
-        for (ProcessInstanceGroupDAO processInstanceGroupDAO : processInstanceGroupDAOs) {
-
-            // In order to apply filter first decompose the elements...
-            /*if (partyID != null) {
-                logger.debug("Party ID is not null: {}", partyID);
-                String firstProcessInstanceID = processInstanceGroupDAO.getProcessInstanceIDs().get(0);
-                String lastProcessInstanceID = processInstanceGroupDAO.getProcessInstanceIDs().get(processInstanceGroupDAO.getProcessInstanceIDs().size() - 1);
-
-                ProcessInstanceDAO firstProcessInstance = DAOUtility.getProcessIntanceDAOByID(firstProcessInstanceID);
-                String creationDate = firstProcessInstance.getCreationDate();
-                logger.debug(" First instance {}, creation date {}...", firstProcessInstanceID, creationDate);
-                DateTime creationDateTime = DateUtility.convert(creationDate);
-
-                // get the documents of the last process instance
-                List<ProcessDocumentMetadataDAO> lastProcessInstanceDocuments = DAOUtility.getProcessDocumentMetadataByProcessInstanceID(lastProcessInstanceID);
-                // give a seed :)
-                DateTime lastActivityDateTime = DateUtility.convert("1979-03-11T09:20:00");
-                for (ProcessDocumentMetadataDAO processInstanceDocument : lastProcessInstanceDocuments) {
-                    DateTime submissionDateTime = DateUtility.convert(processInstanceDocument.getSubmissionDate());
-                    // select the latest document submission time
-                    if(submissionDateTime.isAfter(lastActivityDateTime))
-                        lastActivityDateTime = submissionDateTime;
-                }
-                logger.debug(" Last instance {}, activity date {}...", lastProcessInstanceID, DateUtility.convert(lastActivityDateTime));
-
-                boolean creationDateFilterOK = false;
-                if (initiationDateRange != null) {
-                    String[] parts = initiationDateRange.split("_");
-                    DateTime start = DateUtility.convert(parts[0]);
-                    DateTime finish = DateUtility.convert(parts[1]);
-
-                    creationDateFilterOK = creationDateTime.isAfter(start) && creationDateTime.isBefore(finish);
-                } else
-                    creationDateFilterOK = true;
-
-                boolean lastActivityDateFilterOK = false;
-                if (lastActivityDateRange != null) {
-                    String[] parts = lastActivityDateRange.split("_");
-                    DateTime start = DateUtility.convert(parts[0]);
-                    DateTime finish = DateUtility.convert(parts[1]);
-
-                    lastActivityDateFilterOK = lastActivityDateTime.isAfter(start) && lastActivityDateTime.isBefore(finish);
-                } else
-                    lastActivityDateFilterOK = true;
-
-                boolean productsFilterOK = false;
-                boolean tradingPartnersFilterOK = false;
-                // get process instance documents, to reach the related products in the document...
-                List<ProcessDocumentMetadataDAO> processInstanceDocuments = DAOUtility.getProcessDocumentMetadataByProcessInstanceID(firstProcessInstanceID);
-                for (ProcessDocumentMetadataDAO processInstanceDocument : processInstanceDocuments) {
-                    String initiatorID = processInstanceDocument.getInitiatorID();
-                    String responderID = processInstanceDocument.getResponderID();
-                    logger.debug(" Document initiator {} and document responder {}...", initiatorID, responderID);
-                    if (tradingPartnerIDs != null && !tradingPartnerIDs.isEmpty()) {
-                        logger.debug(" Trading partners: {}", tradingPartnerIDs);
-                        for (String tradingPartner : tradingPartnerIDs) {
-                            if (tradingPartner.equals(initiatorID) || tradingPartner.equals(responderID)) {
-                                tradingPartnersFilterOK = true;
-                                break;
-                            }
-                        }
-                    } else
-                        tradingPartnersFilterOK = true;
-
-
-                    List<String> products = processInstanceDocument.getRelatedProducts();
-                    logger.debug(" Document related products {}...", products);
-                    if (relatedProducts != null && !relatedProducts.isEmpty()) {
-                        for (String product : products) {
-                            if (relatedProducts.contains(product)) {
-                                productsFilterOK = true;
-                                break;
-                            }
-                        }
-                    } else
-                        productsFilterOK = true;
-                }
-
-                logger.debug(" $$$ Creation Date Filter: {}, Last Activity Date Filter: {}, Trading Partner Filter: {}, Products Filter: {}...",
-                        creationDateFilterOK, lastActivityDateFilterOK, tradingPartnersFilterOK, productsFilterOK);
-                if (creationDateFilterOK && lastActivityDateFilterOK && tradingPartnersFilterOK && productsFilterOK)
-                    processInstanceGroups.add(HibernateSwaggerObjectMapper.createProcessInstanceGroup(processInstanceGroupDAO));
-            } else {*/
-            processInstanceGroups.add(HibernateSwaggerObjectMapper.createProcessInstanceGroup(processInstanceGroupDAO));
-            //}
+        for (Object result : results) {
+            processInstanceGroups.add(HibernateSwaggerObjectMapper.createProcessInstanceGroup(result));
         }
 
         ProcessInstanceGroupResponse groupResponse = new ProcessInstanceGroupResponse();
