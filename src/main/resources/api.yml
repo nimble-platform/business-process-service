@@ -1022,6 +1022,10 @@ definitions:
         type: array
         items:
           type: string
+      tradingPartnerNames:
+        type: array
+        items:
+          type: string
       relatedProducts:
         type: array
         items:

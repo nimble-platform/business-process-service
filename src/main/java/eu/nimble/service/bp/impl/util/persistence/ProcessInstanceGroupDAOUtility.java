@@ -91,7 +91,6 @@ public class ProcessInstanceGroupDAOUtility {
                     partnerName = "Transport";
                 }
 
-
                 if (partnerName != null && !filter.getTradingPartnerNames().contains(partnerName)) {
                     filter.getTradingPartnerNames().add(partnerName);
                 }
