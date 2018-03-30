@@ -569,7 +569,8 @@ paths:
         # Response code
         201:
           description: Saved the group successfully
-  /group/query-criteria:
+
+  /group/filters:
     get:
       summary: Generates detailed filtering criteria for the current query parameters in place
       operationId: getProcessInstanceGroupFilters
