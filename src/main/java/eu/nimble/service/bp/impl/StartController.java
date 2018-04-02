@@ -7,6 +7,7 @@ import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.impl.util.persistence.DAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.impl.util.persistence.HibernateUtilityRef;
+import eu.nimble.service.bp.impl.util.persistence.ProcessInstanceGroupDAOUtility;
 import eu.nimble.service.bp.swagger.api.StartApi;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
@@ -57,14 +58,14 @@ public class StartController implements StartApi {
 
     private void createProcessInstanceGroups(ProcessInstanceInputMessage body, ProcessInstance processInstance) {
         // create group for initiating party
-        ProcessInstanceGroupDAO processInstanceGroupDAO1 = DAOUtility.createProcessInstanceGroupDAO(
+        ProcessInstanceGroupDAO processInstanceGroupDAO1 = ProcessInstanceGroupDAOUtility.createProcessInstanceGroupDAO(
                 body.getVariables().getInitiatorID(),
                 processInstance.getProcessInstanceID(),
                 CamundaEngine.getTransactions(body.getVariables().getProcessID()).get(0).getInitiatorRole().toString(),
                 body.getVariables().getRelatedProducts().toString());
 
         // craete group for responder party
-        ProcessInstanceGroupDAO processInstanceGroupDAO2 = DAOUtility.createProcessInstanceGroupDAO(
+        ProcessInstanceGroupDAO processInstanceGroupDAO2 = ProcessInstanceGroupDAOUtility.createProcessInstanceGroupDAO(
                 body.getVariables().getResponderID(),
                 processInstance.getProcessInstanceID(),
                 CamundaEngine.getTransactions(body.getVariables().getProcessID()).get(1).getInitiatorRole().toString(),
@@ -84,16 +85,16 @@ public class StartController implements StartApi {
     }
 
     private void addNewProcessInstanceToGroup(String sourceGid, String processInstanceId, ProcessInstanceInputMessage body) {
-        ProcessInstanceGroupDAO sourceGroup = DAOUtility.getProcessInstanceGroupDAO(sourceGid);
+        ProcessInstanceGroupDAO sourceGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(sourceGid);
         sourceGroup.getProcessInstanceIDs().add(processInstanceId);
         sourceGroup = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").update(sourceGroup);
 
 
         // add the new process instance to the recipient's group
         // if such a group exists add into it otherwise create a new group
-        ProcessInstanceGroupDAO associatedGroup = DAOUtility.getProcessInstanceGroupDAO(body.getVariables().getResponderID(), sourceGid);
+        ProcessInstanceGroupDAO associatedGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(body.getVariables().getResponderID(), sourceGid);
         if (associatedGroup == null) {
-            ProcessInstanceGroupDAO targetGroup = DAOUtility.createProcessInstanceGroupDAO(
+            ProcessInstanceGroupDAO targetGroup = ProcessInstanceGroupDAOUtility.createProcessInstanceGroupDAO(
                     body.getVariables().getResponderID(),
                     processInstanceId,
                     CamundaEngine.getTransactions(body.getVariables().getProcessID()).get(0).getResponderRole().toString(),

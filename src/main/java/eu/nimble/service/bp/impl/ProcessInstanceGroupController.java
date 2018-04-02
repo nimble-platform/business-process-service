@@ -36,12 +36,12 @@ public class ProcessInstanceGroupController implements GroupApi {
             @ApiParam(value = "Identifier of the process instance to be added", required = true) @RequestParam(value = "processInstanceID", required = true) String processInstanceID) {
         logger.debug("Adding process instance: {} to ProcessInstanceGroup: {}", ID);
 
-        ProcessInstanceGroupDAO processInstanceGroupDAO = DAOUtility.getProcessInstanceGroupDAO(ID);
+        ProcessInstanceGroupDAO processInstanceGroupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(ID);
         processInstanceGroupDAO.getProcessInstanceIDs().add(processInstanceID);
         HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceGroupDAO);
 
         // retrieve the group DAO again to populate the first/last activity times
-        processInstanceGroupDAO = DAOUtility.getProcessInstanceGroupDAO(ID);
+        processInstanceGroupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(ID);
         ProcessInstanceGroup processInstanceGroup = HibernateSwaggerObjectMapper.convertProcessInstanceGroupDAO(processInstanceGroupDAO);
 
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(processInstanceGroup);
@@ -53,11 +53,11 @@ public class ProcessInstanceGroupController implements GroupApi {
     public ResponseEntity<ProcessInstanceGroup> deleteProcessInstanceFromGroup(@ApiParam(value = "Identifier of the process instance group from which the process instance id is deleted", required = true) @PathVariable("ID") String ID, @ApiParam(value = "Identifier of the process instance to be deleted", required = true) @RequestParam(value = "processInstanceID", required = true) String processInstanceID) {
         logger.debug("Deleting process instance: {} from ProcessInstanceGroup: {}", ID);
 
-        ProcessInstanceGroupDAO processInstanceGroupDAO = DAOUtility.getProcessInstanceGroupDAO(ID);
+        ProcessInstanceGroupDAO processInstanceGroupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(ID);
         processInstanceGroupDAO.getProcessInstanceIDs().remove(processInstanceID);
         HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceGroupDAO);
 
-        processInstanceGroupDAO = DAOUtility.getProcessInstanceGroupDAO(ID);
+        processInstanceGroupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(ID);
         ProcessInstanceGroup processInstanceGroup = HibernateSwaggerObjectMapper.convertProcessInstanceGroupDAO(processInstanceGroupDAO);
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(processInstanceGroup);
         logger.debug("Deleted process instance: {} from ProcessInstanceGroup: {}", ID);
@@ -68,7 +68,7 @@ public class ProcessInstanceGroupController implements GroupApi {
     public ResponseEntity<List<ProcessInstance>> getProcessInstancesOfGroup(@ApiParam(value = "Identifier of the process instance group for which the associated process instances will be retrieved", required = true) @PathVariable("ID") String ID) {
         logger.debug("Getting ProcessInstances for group: {}", ID);
 
-        ProcessInstanceGroupDAO processInstanceGroupDAO = DAOUtility.getProcessInstanceGroupDAO(ID);
+        ProcessInstanceGroupDAO processInstanceGroupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(ID);
 
         ProcessInstanceGroup processInstanceGroup = HibernateSwaggerObjectMapper.convertProcessInstanceGroupDAO(processInstanceGroupDAO);
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(processInstanceGroup);
@@ -80,7 +80,7 @@ public class ProcessInstanceGroupController implements GroupApi {
     public ResponseEntity<Void> deleteProcessInstanceGroup(@ApiParam(value = "", required = true) @PathVariable("ID") String ID) {
         logger.debug("Deleting ProcessInstanceGroup ID: {}", ID);
 
-        DAOUtility.deleteProcessInstanceGroupDAOByID(ID);
+        ProcessInstanceGroupDAOUtility.deleteProcessInstanceGroupDAOByID(ID);
 
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body("true");
         logger.debug("Deleted ProcessInstanceGroups: {}", ID);
@@ -91,7 +91,7 @@ public class ProcessInstanceGroupController implements GroupApi {
     public ResponseEntity<ProcessInstanceGroup> getProcessInstanceGroup(@ApiParam(value = "", required = true) @PathVariable("ID") String ID) {
         logger.debug("Getting ProcessInstanceGroup: {}", ID);
 
-        ProcessInstanceGroupDAO processInstanceGroupDAO = DAOUtility.getProcessInstanceGroupDAO(ID);
+        ProcessInstanceGroupDAO processInstanceGroupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(ID);
 
         ProcessInstanceGroup processInstanceGroup = HibernateSwaggerObjectMapper.convertProcessInstanceGroupDAO(processInstanceGroupDAO);
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(processInstanceGroup);
@@ -153,7 +153,7 @@ public class ProcessInstanceGroupController implements GroupApi {
     public ResponseEntity<ProcessInstanceGroup> archiveGroup(@ApiParam(value = "Identifier of the process instance group to be archived", required = true) @PathVariable("ID") String ID) {
         logger.debug("Archiving ProcessInstanceGroup: {}", ID);
 
-        ProcessInstanceGroupDAO processInstanceGroupDAO = DAOUtility.getProcessInstanceGroupDAO(ID);
+        ProcessInstanceGroupDAO processInstanceGroupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(ID);
         processInstanceGroupDAO.setArchived(true);
 
         HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceGroupDAO);
@@ -168,7 +168,7 @@ public class ProcessInstanceGroupController implements GroupApi {
     public ResponseEntity<ProcessInstanceGroup> restoreGroup(@ApiParam(value = "Identifier of the process instance group to be restored", required = true) @PathVariable("ID") String ID) {
         logger.debug("Restoring ProcessInstanceGroup: {}", ID);
 
-        ProcessInstanceGroupDAO processInstanceGroupDAO = DAOUtility.getProcessInstanceGroupDAO(ID);
+        ProcessInstanceGroupDAO processInstanceGroupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(ID);
         processInstanceGroupDAO.setArchived(false);
 
         HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceGroupDAO);
@@ -194,7 +194,7 @@ public class ProcessInstanceGroupController implements GroupApi {
     public ResponseEntity<Void> archiveAllGroups(@ApiParam(value = "Identifier of the party of which groups will be archived", required = true) @RequestParam(value = "partyID", required = true) String partyID) {
         logger.debug("Archiving ProcessInstanceGroups for party {}", partyID);
 
-        DAOUtility.archiveAllGroupsForParty(partyID);
+        ProcessInstanceGroupDAOUtility.archiveAllGroupsForParty(partyID);
 
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body("true");
         logger.debug("Archived ProcessInstanceGroup for party {}", partyID);
@@ -205,7 +205,7 @@ public class ProcessInstanceGroupController implements GroupApi {
     public ResponseEntity<Void> deleteAllArchivedGroups(@ApiParam(value = "Identifier of the party of which groups will be deleted", required = true) @RequestParam(value = "partyID", required = true) String partyID) {
         logger.debug("Deleting archived ProcessInstanceGroups for party {}", partyID);
 
-        DAOUtility.deleteArchivedGroupsForParty(partyID);
+        ProcessInstanceGroupDAOUtility.deleteArchivedGroupsForParty(partyID);
 
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body("true");
         logger.debug("Deleted archived ProcessInstanceGroups for party {}", partyID);

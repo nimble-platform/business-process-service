@@ -7,6 +7,7 @@ import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.impl.util.persistence.DAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.impl.util.persistence.HibernateUtilityRef;
+import eu.nimble.service.bp.impl.util.persistence.ProcessInstanceGroupDAOUtility;
 import eu.nimble.service.bp.swagger.api.ContinueApi;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
@@ -57,12 +58,12 @@ public class ContinueController implements ContinueApi {
     }
 
     private void checkExistingGroup(String sourceGid, String processInstanceId, ProcessInstanceInputMessage body) {
-        ProcessInstanceGroupDAO existingGroup = DAOUtility.getProcessInstanceGroupDAO(sourceGid);
+        ProcessInstanceGroupDAO existingGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(sourceGid);
 
         // check whether the group for the trading partner is still there. If not, create a new one
-        ProcessInstanceGroupDAO associatedGroup = DAOUtility.getProcessInstanceGroupDAO(body.getVariables().getInitiatorID(), sourceGid);
+        ProcessInstanceGroupDAO associatedGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(body.getVariables().getInitiatorID(), sourceGid);
         if (associatedGroup == null) {
-            associatedGroup = DAOUtility.createProcessInstanceGroupDAO(
+            associatedGroup = ProcessInstanceGroupDAOUtility.createProcessInstanceGroupDAO(
                     body.getVariables().getInitiatorID(),
                     processInstanceId,
                     CamundaEngine.getTransactions(body.getVariables().getProcessID()).get(0).getInitiatorRole().toString(),
