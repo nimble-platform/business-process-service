@@ -4,13 +4,14 @@ import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupFilter;
 
 import java.security.acl.Group;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by suat on 26-Mar-18.
  */
 public class ProcessInstanceGroupDAOUtility {
-    public static List<Object> getProcessInstanceGroupDAOs(
+    public static List<ProcessInstanceGroupDAO> getProcessInstanceGroupDAOs(
             String partyId,
             String collaborationRole,
             Boolean archived,
@@ -24,7 +25,15 @@ public class ProcessInstanceGroupDAOUtility {
 
         String query = getGroupRetrievalQuery(GroupQueryType.GROUP, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories, startTime, endTime);
         List<Object> groups = (List<Object>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query, offset, limit);
-        return groups;
+        List<ProcessInstanceGroupDAO> results = new ArrayList<>();
+        for(Object groupResult : groups) {
+            Object[] resultItems = (Object[]) groupResult;
+            ProcessInstanceGroupDAO group = (ProcessInstanceGroupDAO) resultItems[0];
+            group.setLastActivityTime((String) resultItems[1]);
+            group.setFirstActivityTime((String) resultItems[2]);
+            results.add(group);
+        }
+        return results;
     }
 
     public static int getProcessInstanceGroupSize(String partyId,

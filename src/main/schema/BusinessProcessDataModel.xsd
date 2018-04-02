@@ -148,6 +148,20 @@
 			<xsd:element name="archived" type="xsd:boolean"/>
 			<xsd:element name="collaborationRole" type="xsd:string"/>
 			<xsd:element name="associatedGroups" type="xsd:string" maxOccurs="unbounded"/>
+			<xsd:element name="firstActivityTime" type="xsd:string">
+				<xsd:annotation>
+					<xsd:appinfo>
+						<hj:ignored/>
+					</xsd:appinfo>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="lastActivityTime" type="xsd:string">
+				<xsd:annotation>
+					<xsd:appinfo>
+						<hj:ignored/>
+					</xsd:appinfo>
+				</xsd:annotation>
+			</xsd:element>
 		</xsd:sequence>
 	</xsd:complexType>
 	<xsd:simpleType name="ProcessDocumentStatus">

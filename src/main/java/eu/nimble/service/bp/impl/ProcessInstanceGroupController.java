@@ -40,7 +40,10 @@ public class ProcessInstanceGroupController implements GroupApi {
         processInstanceGroupDAO.getProcessInstanceIDs().add(processInstanceID);
         HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceGroupDAO);
 
-        ProcessInstanceGroup processInstanceGroup = HibernateSwaggerObjectMapper.createProcessInstanceGroup(processInstanceGroupDAO);
+        // retrieve the group DAO again to populate the first/last activity times
+        processInstanceGroupDAO = DAOUtility.getProcessInstanceGroupDAO(ID);
+        ProcessInstanceGroup processInstanceGroup = HibernateSwaggerObjectMapper.convertProcessInstanceGroupDAO(processInstanceGroupDAO);
+
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(processInstanceGroup);
         logger.debug("Added process instance: {} to ProcessInstanceGroup: {}", ID);
         return response;
@@ -54,7 +57,8 @@ public class ProcessInstanceGroupController implements GroupApi {
         processInstanceGroupDAO.getProcessInstanceIDs().remove(processInstanceID);
         HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceGroupDAO);
 
-        ProcessInstanceGroup processInstanceGroup = HibernateSwaggerObjectMapper.createProcessInstanceGroup(processInstanceGroupDAO);
+        processInstanceGroupDAO = DAOUtility.getProcessInstanceGroupDAO(ID);
+        ProcessInstanceGroup processInstanceGroup = HibernateSwaggerObjectMapper.convertProcessInstanceGroupDAO(processInstanceGroupDAO);
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(processInstanceGroup);
         logger.debug("Deleted process instance: {} from ProcessInstanceGroup: {}", ID);
         return response;
@@ -66,7 +70,7 @@ public class ProcessInstanceGroupController implements GroupApi {
 
         ProcessInstanceGroupDAO processInstanceGroupDAO = DAOUtility.getProcessInstanceGroupDAO(ID);
 
-        ProcessInstanceGroup processInstanceGroup = HibernateSwaggerObjectMapper.createProcessInstanceGroup(processInstanceGroupDAO);
+        ProcessInstanceGroup processInstanceGroup = HibernateSwaggerObjectMapper.convertProcessInstanceGroupDAO(processInstanceGroupDAO);
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(processInstanceGroup);
         logger.debug("Retrieved ProcessInstances for group: {}", ID);
         return response;
@@ -89,7 +93,7 @@ public class ProcessInstanceGroupController implements GroupApi {
 
         ProcessInstanceGroupDAO processInstanceGroupDAO = DAOUtility.getProcessInstanceGroupDAO(ID);
 
-        ProcessInstanceGroup processInstanceGroup = HibernateSwaggerObjectMapper.createProcessInstanceGroup(processInstanceGroupDAO);
+        ProcessInstanceGroup processInstanceGroup = HibernateSwaggerObjectMapper.convertProcessInstanceGroupDAO(processInstanceGroupDAO);
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(processInstanceGroup);
         logger.debug("Retrieved ProcessInstanceGroup: {}", ID);
         return response;
@@ -108,12 +112,12 @@ public class ProcessInstanceGroupController implements GroupApi {
                                                                                  @ApiParam(value = "") @RequestParam(value = "collaborationRole", required = false) String collaborationRole) {
         logger.debug("Getting ProcessInstanceGroups for party: {}", partyID);
 
-        List<Object> results = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAOs(partyID, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, null, null, limit, offset);
+        List<ProcessInstanceGroupDAO> results = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAOs(partyID, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, null, null, limit, offset);
         int totalSize = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupSize(partyID, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, null, null);
         logger.debug(" There are {} process instance groups in total", results.size());
         List<ProcessInstanceGroup> processInstanceGroups = new ArrayList<>();
-        for (Object result : results) {
-            processInstanceGroups.add(HibernateSwaggerObjectMapper.createProcessInstanceGroup(result));
+        for (ProcessInstanceGroupDAO result : results) {
+            processInstanceGroups.add(HibernateSwaggerObjectMapper.convertProcessInstanceGroupDAO(result));
         }
 
         ProcessInstanceGroupResponse groupResponse = new ProcessInstanceGroupResponse();
@@ -154,7 +158,7 @@ public class ProcessInstanceGroupController implements GroupApi {
 
         HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceGroupDAO);
 
-        ProcessInstanceGroup processInstanceGroup = HibernateSwaggerObjectMapper.createProcessInstanceGroup(processInstanceGroupDAO);
+        ProcessInstanceGroup processInstanceGroup = HibernateSwaggerObjectMapper.convertProcessInstanceGroupDAO(processInstanceGroupDAO);
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(processInstanceGroup);
         logger.debug("Archived ProcessInstanceGroup: {}", ID);
         return response;
@@ -169,7 +173,7 @@ public class ProcessInstanceGroupController implements GroupApi {
 
         HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceGroupDAO);
 
-        ProcessInstanceGroup processInstanceGroup = HibernateSwaggerObjectMapper.createProcessInstanceGroup(processInstanceGroupDAO);
+        ProcessInstanceGroup processInstanceGroup = HibernateSwaggerObjectMapper.convertProcessInstanceGroupDAO(processInstanceGroupDAO);
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(processInstanceGroup);
         logger.debug("Restored ProcessInstanceGroup: {}", ID);
         return response;

@@ -144,9 +144,20 @@ public class DAOUtility {
     }
 
     public static ProcessInstanceGroupDAO getProcessInstanceGroupDAO(String groupID) {
-        String query = "select pig from ProcessInstanceGroupDAO pig where ( pig.ID ='" + groupID+ "') ";
-        ProcessInstanceGroupDAO group = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query);
-        return group;
+        String query = "select pig, max(doc.submissionDate) as lastActivityTime, min(doc.submissionDate) as firstActivityTime from" +
+                " ProcessInstanceGroupDAO pig join pig.processInstanceIDsItems pid," +
+                " ProcessInstanceDAO pi," +
+                " ProcessDocumentMetadataDAO doc" +
+                " where" +
+                " ( pig.ID ='" + groupID+ "') and" +
+                " pid.item = pi.processInstanceID and" +
+                " doc.processInstanceID = pi.processInstanceID" +
+                " group by pig.hjid";
+        Object[] resultItems = (Object[]) (HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query));
+        ProcessInstanceGroupDAO pig = (ProcessInstanceGroupDAO) resultItems[0];
+        pig.setLastActivityTime((String) resultItems[1]);
+        pig.setFirstActivityTime((String) resultItems[2]);
+        return pig;
     }
 
     public static ProcessInstanceGroupDAO getProcessInstanceGroupDAO(String partyId, String associatedGroupId) {
