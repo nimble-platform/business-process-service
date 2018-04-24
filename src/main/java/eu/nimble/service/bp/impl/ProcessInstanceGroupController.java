@@ -1,7 +1,6 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
-import eu.nimble.service.bp.impl.util.persistence.DAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.impl.util.persistence.HibernateUtilityRef;
 import eu.nimble.service.bp.impl.util.persistence.ProcessInstanceGroupDAOUtility;
@@ -13,11 +12,13 @@ import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupResponse;
 import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.ArrayList;
@@ -29,6 +30,9 @@ import java.util.List;
 @Controller
 public class ProcessInstanceGroupController implements GroupApi {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    @Autowired
+    private ProcessInstanceGroupDAOUtility groupDaoUtility;
 
     @Override
     public ResponseEntity<ProcessInstanceGroup> addProcessInstanceToGroup(
@@ -131,6 +135,7 @@ public class ProcessInstanceGroupController implements GroupApi {
 
     @Override
     public ResponseEntity<ProcessInstanceGroupFilter> getProcessInstanceGroupFilters(
+            @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
             @ApiParam(value = "Identifier of the party") @RequestParam(value = "partyID", required = false) String partyID,
             @ApiParam(value = "Related products") @RequestParam(value = "relatedProducts", required = false) List<String> relatedProducts,
             @ApiParam(value = "Related product categories") @RequestParam(value = "relatedProductCategories", required = false) List<String> relatedProductCategories,
@@ -140,7 +145,7 @@ public class ProcessInstanceGroupController implements GroupApi {
             @ApiParam(value = "", defaultValue = "false") @RequestParam(value = "archived", required = false, defaultValue = "false") Boolean archived,
             @ApiParam(value = "") @RequestParam(value = "collaborationRole", required = false) String collaborationRole) {
 
-        ProcessInstanceGroupFilter filters = ProcessInstanceGroupDAOUtility.getFilterDetails(partyID, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, null, null);
+        ProcessInstanceGroupFilter filters = groupDaoUtility.getFilterDetails(partyID, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, null, null, bearerToken);
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(filters);
         logger.debug("Filters retrieved for partyId: {}, archived: {}, products: {}, categories: {}, parties: {}", partyID, archived,
                 relatedProducts != null ? relatedProducts.toString() : "[]",

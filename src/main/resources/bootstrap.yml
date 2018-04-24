@@ -166,7 +166,16 @@ camunda:
 
 nimble:
   cors_enabled: false
+  identity:
+    url: ${IDENTITY_URL:http://nimble-staging.salzburgresearch.at/identity}
 
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 10000
 
 ################################################################################################
 ################################## KUBERNETES CONFIG ###########################################

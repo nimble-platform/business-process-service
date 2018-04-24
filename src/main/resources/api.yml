@@ -607,6 +607,10 @@ paths:
         name: collaborationRole
         type: string
         required: false
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       produces:
       - application/json
       responses:

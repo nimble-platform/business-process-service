@@ -1,9 +1,14 @@
 package eu.nimble.service.bp.impl.util.persistence;
 
+import eu.nimble.common.rest.identity.IdentityClient;
+import eu.nimble.common.rest.identity.IdentityClientTyped;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupFilter;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
+import feign.Response;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
-import java.security.acl.Group;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -11,7 +16,11 @@ import java.util.UUID;
 /**
  * Created by suat on 26-Mar-18.
  */
+@Component
 public class ProcessInstanceGroupDAOUtility {
+    @Autowired
+    private IdentityClientTyped identityClient;
+
     public static List<ProcessInstanceGroupDAO> getProcessInstanceGroupDAOs(
             String partyId,
             String collaborationRole,
@@ -50,7 +59,7 @@ public class ProcessInstanceGroupDAOUtility {
         return count;
     }
 
-    public static ProcessInstanceGroupFilter getFilterDetails(
+    public ProcessInstanceGroupFilter getFilterDetails(
             String partyId,
             String collaborationRole,
             Boolean archived,
@@ -58,7 +67,8 @@ public class ProcessInstanceGroupDAOUtility {
             List<String> relatedProductIds,
             List<String> relatedProductCategories,
             String startTime,
-            String endTime) {
+            String endTime,
+            String bearerToken) {
 
         String query = getGroupRetrievalQuery(GroupQueryType.FILTER, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories, startTime, endTime);
 
@@ -89,20 +99,19 @@ public class ProcessInstanceGroupDAOUtility {
                 filter.getTradingPartnerIDs().add(resultColumn);
             }
 
-            // populate partners' names
-            //TODO gather these from the actual REST services
-            for (String tradingPartnerId : filter.getTradingPartnerIDs()) {
-                String partnerName = null;
-                if (tradingPartnerId.contentEquals("482")) {
-                    partnerName = "SRDC";
-                } else if (tradingPartnerId.contentEquals("554")) {
-                    partnerName = "Alici";
-                } else if (tradingPartnerId.contentEquals("1621")) {
-                    partnerName = "Transport";
-                }
+            List<PartyType> parties = identityClient.getParties(bearerToken, filter.getTradingPartnerIDs());
 
-                if (partnerName != null && !filter.getTradingPartnerNames().contains(partnerName)) {
-                    filter.getTradingPartnerNames().add(partnerName);
+            // populate partners' names
+            if(parties != null) {
+                for (String tradingPartnerId : filter.getTradingPartnerIDs()) {
+                    for (PartyType party : parties) {
+                        if (party.getID().equals(tradingPartnerId)) {
+                            if (!filter.getTradingPartnerNames().contains(party.getName())) {
+                                filter.getTradingPartnerNames().add(party.getName());
+                            }
+                            break;
+                        }
+                    }
                 }
             }
         }
