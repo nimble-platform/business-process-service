@@ -188,4 +188,14 @@ public class DocumentDAOUtility {
         logger.debug(" $$$ Document metadata for {} is {}...", documentID, processDocumentMetadataDAO);
         return getUBLDocument(documentID, processDocumentMetadataDAO.getType());
     }
+
+    public static boolean documentExists(String documentID) {
+        String query = "SELECT count(*) FROM ProcessDocumentMetadataDAO document WHERE document.documentID = '" + documentID + "'";
+        int count = ((Long) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query)).intValue();
+        if(count > 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 }
