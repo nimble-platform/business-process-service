@@ -313,6 +313,11 @@ paths:
         description: The UUID of the process instance group owned by the party initiating the process
         required: false
         type: string
+      - in: query
+        name: preceding_pid
+        description: The UUID of the preceding process instance
+        required: false
+        type: string
 
       responses:
         # Response code

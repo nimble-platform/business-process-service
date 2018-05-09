@@ -137,6 +137,20 @@
             <xsd:element name="creationDate" type="xsd:string"/>
 			<xsd:element name="processID" type="xsd:string"/>
 			<xsd:element name="status" type="ProcessInstanceStatus"/>
+			<xsd:element name="precedingProcess" type="ProcessInstanceDAO">
+				<xsd:annotation>
+					<xsd:appinfo>
+						<hj:one-to-one>
+							<orm:cascade>
+								<orm:cascade-detach/>
+								<orm:cascade-persist/>
+								<orm:cascade-merge/>
+								<orm:cascade-refresh/>
+							</orm:cascade>
+						</hj:one-to-one>
+					</xsd:appinfo>
+				</xsd:annotation>
+			</xsd:element>
 		</xsd:sequence>
 	</xsd:complexType>
 	<xsd:complexType name="ProcessInstanceGroupDAO">
@@ -144,10 +158,26 @@
 			<xsd:element name="ID" type="xsd:string" maxOccurs="1"/>
 			<xsd:element name="Name" type="xsd:string"/>
 			<xsd:element name="partyID" type="xsd:string"/>
+			<!-- TODO do not use string-based references, use the object itself as a reference -->
+			<!-- if the referred item is deleted the reference becomes obselete -->
+			<!-- Otherwise we need to define a foreign key constraint in the database -->
 			<xsd:element name="processInstanceIDs" type="xsd:string" maxOccurs="unbounded"/>
 			<xsd:element name="archived" type="xsd:boolean"/>
 			<xsd:element name="collaborationRole" type="xsd:string"/>
+			<!-- TODO do not use string-based references, use the object itself as a reference -->
+			<!-- if the referred item is deleted the reference becomes obselete -->
+			<!-- Otherwise we need to define a foreign key constraint in the database -->
+			<!-- see the temp element for proper referencing -->
+			<!-- first try to use manytomany annotation, see the second temp !!! -->
 			<xsd:element name="associatedGroups" type="xsd:string" maxOccurs="unbounded"/>
+			<!--<xsd:element name="temp" type="AssociatedProcessInstanceGroup" maxOccurs="unbounded"/>-->
+			<!--<xsd:element name="temp" type="ProcessInstanceGroupDAO" maxOccurs="unbounded">-->
+				<!--<xsd:annotation>-->
+					<!--<xsd:appinfo>-->
+						<!--<hj:many-to-many/>-->
+					<!--</xsd:appinfo>-->
+				<!--</xsd:annotation>-->
+			<!--</xsd:element>-->
 			<xsd:element name="firstActivityTime" type="xsd:string">
 				<xsd:annotation>
 					<xsd:appinfo>
@@ -161,6 +191,24 @@
 						<hj:ignored/>
 					</xsd:appinfo>
 				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="AssociatedProcessInstanceGroup">
+		<xsd:sequence>
+			<xsd:element name="processInstances" type="ProcessInstanceGroupDAO" minOccurs="1" maxOccurs="1">
+				<!--<xsd:annotation>-->
+					<!--<xsd:appinfo>-->
+						<!--<hj:one-to-one merge="false">-->
+							<!--<orm:cascade>-->
+								<!--<orm:cascade-detach/>-->
+								<!--<orm:cascade-persist/>-->
+								<!--<orm:cascade-merge/>-->
+								<!--<orm:cascade-refresh/>-->
+							<!--</orm:cascade>-->
+						<!--</hj:one-to-one>-->
+					<!--</xsd:appinfo>-->
+				<!--</xsd:annotation>-->
 			</xsd:element>
 		</xsd:sequence>
 	</xsd:complexType>

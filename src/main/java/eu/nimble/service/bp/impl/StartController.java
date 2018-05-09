@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Created by yildiray on 5/25/2017.
@@ -33,7 +32,8 @@ public class StartController implements StartApi {
 
     @Override
     public ResponseEntity<ProcessInstance> startProcessInstance(@ApiParam(value = "", required = true) @RequestBody ProcessInstanceInputMessage body,
-                                                                @ApiParam(value = "The UUID of the process instance group owned by the party initiating the process") @RequestParam(value = "gid", required = false) String gid) {
+                                                                @ApiParam(value = "The UUID of the process instance group owned by the party initiating the process") @RequestParam(value = "gid", required = false) String gid,
+                                                                @ApiParam(value = "The UUID of the preceding process instance") @RequestParam(value = "precedingPid", required = false) String precedingPid) {
         logger.debug(" $$$ Start Process with ProcessInstanceInputMessage {}", body.toString());
         ProcessInstanceInputMessageDAO processInstanceInputMessageDAO = HibernateSwaggerObjectMapper.createProcessInstanceInputMessage_DAO(body);
         HibernateUtilityRef.getInstance("bp-data-model").persist(processInstanceInputMessageDAO);
@@ -42,6 +42,18 @@ public class StartController implements StartApi {
 
         ProcessInstanceDAO processInstanceDAO = HibernateSwaggerObjectMapper.createProcessInstance_DAO(processInstance);
         HibernateUtilityRef.getInstance("bp-data-model").persist(processInstanceDAO);
+
+        // get the process previous process instance
+        if(precedingPid != null) {
+            ProcessInstanceDAO precedingInstance = DAOUtility.getProcessIntanceDAOByID(precedingPid);
+            if (precedingInstance == null) {
+                String msg = "Invalid preceding process instance ID: %s";
+                logger.warn(String.format(msg, precedingPid));
+                return ResponseEntity.badRequest().body(null);
+            }
+            processInstanceDAO.setPrecedingProcess(precedingInstance);
+            HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceDAO);
+        }
 
         // create process instance groups if this is the first process initializing the process group
         if (gid == null) {
