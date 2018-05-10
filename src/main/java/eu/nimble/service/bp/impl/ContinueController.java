@@ -3,6 +3,7 @@ package eu.nimble.service.bp.impl;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceInputMessageDAO;
+import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceStatus;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.impl.util.persistence.DAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.HibernateSwaggerObjectMapper;
@@ -40,14 +41,10 @@ public class ContinueController implements ContinueApi {
 
         ProcessInstance processInstance = CamundaEngine.continueProcessInstance(body);
 
-        ProcessInstanceDAO processInstanceDAO = HibernateSwaggerObjectMapper.createProcessInstance_DAO(processInstance);
         ProcessInstanceDAO storedInstance = DAOUtility.getProcessIntanceDAOByID(processInstance.getProcessInstanceID());
+        storedInstance.setStatus(ProcessInstanceStatus.fromValue(processInstance.getStatus().toString()));
 
-        processInstanceDAO.setHjid(storedInstance.getHjid());
-        processInstanceDAO.setCreationDate(storedInstance.getCreationDate());
-        processInstance.setCreationDate(storedInstance.getCreationDate());
-
-        HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceDAO);
+        HibernateUtilityRef.getInstance("bp-data-model").update(storedInstance);
 
         // create process instance groups if this is the first process initializing the process group
         if (gid != null) {
