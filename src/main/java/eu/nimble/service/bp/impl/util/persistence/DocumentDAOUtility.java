@@ -165,6 +165,18 @@ public class DocumentDAOUtility {
             case TRANSPORTATIONSTATUS:
                 hibernateEntityName = "TransportationStatusType";
                 break;
+            case PPAPREQUEST:
+                hibernateEntityName = "PpapRequestType";
+                break;
+            case PPAPRESPONSE:
+                hibernateEntityName = "PpapResponseType";
+                break;
+            case ITEMINFORMATIONREQUEST:
+                hibernateEntityName = "ItemInformationRequestType";
+                break;
+            case ITEMINFORMATIONRESPONSE:
+                hibernateEntityName = "ItemInformationResponseType";
+                break;
             default:
                 break;
         }

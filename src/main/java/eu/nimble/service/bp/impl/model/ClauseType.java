@@ -1,4 +1,4 @@
-package eu.nimble.service.bp.impl.clause;
+package eu.nimble.service.bp.impl.model;
 
 /**
  * Created by suat on 25-Apr-18.
