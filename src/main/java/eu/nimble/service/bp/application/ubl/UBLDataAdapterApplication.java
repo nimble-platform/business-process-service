@@ -1,10 +1,9 @@
 package eu.nimble.service.bp.application.ubl;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
 import eu.nimble.service.bp.impl.util.persistence.DocumentDAOUtility;
+import eu.nimble.service.bp.impl.util.serialization.Serializer;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.despatchadvice.DespatchAdviceType;
 import eu.nimble.service.model.ubl.iteminformationrequest.ItemInformationRequestType;
@@ -12,6 +11,8 @@ import eu.nimble.service.model.ubl.iteminformationresponse.ItemInformationRespon
 import eu.nimble.service.model.ubl.order.ObjectFactory;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
+import eu.nimble.service.model.ubl.ppaprequest.PpapRequestType;
+import eu.nimble.service.model.ubl.ppapresponse.PpapResponseType;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.service.model.ubl.receiptadvice.ReceiptAdviceType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
@@ -19,8 +20,6 @@ import eu.nimble.service.model.ubl.transportexecutionplan.TransportExecutionPlan
 import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
 import eu.nimble.utility.DateUtility;
 import eu.nimble.utility.JAXBUtility;
-import eu.nimble.service.model.ubl.ppaprequest.PpapRequestType;
-import eu.nimble.service.model.ubl.ppapresponse.PpapResponseType;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,9 +35,7 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
 
     @Override
     public Object createDocument(String initiatorID, String responderID, String content, ProcessDocumentMetadata.TypeEnum documentType) {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper = mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper = mapper.configure(MapperFeature.PROPAGATE_TRANSIENT_MARKER, true);
+        ObjectMapper mapper = Serializer.getDefaultObjectMapper();
 
         if(documentType == ProcessDocumentMetadata.TypeEnum.ORDER) {
             try {

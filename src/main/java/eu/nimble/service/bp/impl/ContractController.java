@@ -11,21 +11,20 @@ import eu.nimble.service.bp.impl.util.persistence.DAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.DocumentDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.HibernateUtilityRef;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
-import eu.nimble.service.model.ubl.commonaggregatecomponents.ClauseType;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
 import eu.nimble.utility.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.logging.LogLevel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.UUID;
+
+import static eu.nimble.service.bp.impl.util.controller.HttpResponseUtil.*;
 
 /**
  * Created by suat on 25-Apr-18.
@@ -52,7 +51,7 @@ public class ContractController {
             logger.info("Getting clause with id: {}", clauseId);
             ClauseType clause = ContractDAOUtility.getClause(clauseId);
             if (clause == null) {
-                createResponseEntityAndLog(String.format("No clause for the given id: %s", clauseId), HttpStatus.NOT_FOUND);
+                return createResponseEntityAndLog(String.format("No clause for the given id: %s", clauseId), HttpStatus.NOT_FOUND);
             }
             logger.info("Retrieved clause with id: {}", clauseId);
             return ResponseEntity.ok().body(clause);
@@ -146,7 +145,7 @@ public class ContractController {
     @RequestMapping(value = "/contracts/{contractId}/clauses",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity<List<ClauseType>> getClausesOfContract(@PathVariable(value = "contractId") String contractId) {
+    public ResponseEntity getClausesOfContract(@PathVariable(value = "contractId") String contractId) {
         try {
             logger.info("Getting clauses for contract: {}", contractId);
             ContractType contract = ContractDAOUtility.getContract(contractId);
@@ -154,8 +153,13 @@ public class ContractController {
                 createResponseEntityAndLog(String.format("No contract for the given id: %s", contractId), HttpStatus.BAD_REQUEST);
             }
 
+            contract.getClause().add(contract.getClause().get(0));
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.enableDefaultTypingAsProperty(ObjectMapper.DefaultTyping.NON_FINAL, "clause");
+            mapper.enableDefaultTyping();
+
             logger.info("Retrieved clauses for contract: {}", contractId);
-            return ResponseEntity.ok().body(contract.getClause());
+            return ResponseEntity.ok().body(mapper.writeValueAsString(contract.getClause()));
 
         } catch (Exception e) {
             return createResponseEntityAndLog(String.format("Unexpected error while getting clauses for contract: %s", contractId), e, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -380,35 +384,5 @@ public class ContractController {
     private ResponseEntity validateDocumentExistence(String documentId) {
         ProcessDocumentMetadataDAO documentMetadata = DAOUtility.getProcessDocumentMetadata(documentId);
         return validateDocumentExistence(documentMetadata);
-    }
-
-    private ResponseEntity createResponseEntityAndLog(String msg, HttpStatus httpStatus) {
-        return createResponseEntityAndLog(msg, null, httpStatus, LogLevel.WARN);
-    }
-
-    private ResponseEntity createResponseEntityAndLog(String msg, Exception e, HttpStatus httpStatus) {
-        if (httpStatus == HttpStatus.BAD_REQUEST) {
-            return createResponseEntityAndLog(msg, e, httpStatus, LogLevel.WARN);
-        } else {
-            return createResponseEntityAndLog(msg, e, httpStatus, LogLevel.ERROR);
-        }
-    }
-
-
-    private ResponseEntity createResponseEntityAndLog(String msg, Exception e, HttpStatus httpStatus, LogLevel logLevel) {
-        if (logLevel == null || logLevel == LogLevel.WARN) {
-            if (e != null) {
-                logger.warn(msg, e);
-            } else {
-                logger.warn(msg);
-            }
-        } else if (logLevel == LogLevel.ERROR) {
-            if (e != null) {
-                logger.error(msg, e);
-            } else {
-                logger.error(msg);
-            }
-        }
-        return ResponseEntity.status(httpStatus).body(msg);
     }
 }
