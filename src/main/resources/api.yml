@@ -345,6 +345,10 @@ paths:
         description: The UUID of the process instance group owned by the party continuing the process
         required: false
         type: string
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       responses:
         # Response code
         200:

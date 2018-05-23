@@ -33,11 +33,12 @@ public class CamundaEngine {
 
     private static Logger logger = LoggerFactory.getLogger(CamundaEngine.class);
 
-    public static ProcessInstance continueProcessInstance(ProcessInstanceInputMessage body) {
+    public static ProcessInstance continueProcessInstance(ProcessInstanceInputMessage body, String bearerToken) {
         String processInstanceID = body.getProcessInstanceID();
         Task task = taskService.createTaskQuery().processInstanceId(processInstanceID).list().get(0);
 
         Map<String, Object> data = getVariablesData(body);
+        data.put("bearer_token", bearerToken);
 
         ProcessInstance processInstance = new ProcessInstance();
         processInstance.setProcessID(body.getVariables().getProcessID());

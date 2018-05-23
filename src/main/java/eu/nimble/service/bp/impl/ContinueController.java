@@ -20,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.ArrayList;
@@ -34,12 +35,14 @@ public class ContinueController implements ContinueApi {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
-    public ResponseEntity<ProcessInstance> continueProcessInstance(@ApiParam(value = "", required = true) @RequestBody ProcessInstanceInputMessage body, @ApiParam(value = "The UUID of the process instance group owned by the party continuing the process") @RequestParam(value = "gid", required = false) String gid) {
+    public ResponseEntity<ProcessInstance> continueProcessInstance(@ApiParam(value = "", required = true) @RequestBody ProcessInstanceInputMessage body,
+                                                                   @ApiParam(value = "The UUID of the process instance group owned by the party continuing the process") @RequestParam(value = "gid", required = false) String gid,
+                                                                   @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         logger.debug(" $$$ Continue Process with ProcessInstanceInputMessage {}", body.toString());
         ProcessInstanceInputMessageDAO processInstanceInputMessageDAO = HibernateSwaggerObjectMapper.createProcessInstanceInputMessage_DAO(body);
         HibernateUtilityRef.getInstance("bp-data-model").persist(processInstanceInputMessageDAO);
 
-        ProcessInstance processInstance = CamundaEngine.continueProcessInstance(body);
+        ProcessInstance processInstance = CamundaEngine.continueProcessInstance(body, bearerToken);
 
         ProcessInstanceDAO storedInstance = DAOUtility.getProcessIntanceDAOByID(processInstance.getProcessInstanceID());
         storedInstance.setStatus(ProcessInstanceStatus.fromValue(processInstance.getStatus().toString()));

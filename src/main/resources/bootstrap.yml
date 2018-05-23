@@ -168,6 +168,8 @@ nimble:
   cors_enabled: false
   identity:
     url: ${IDENTITY_URL:http://nimble-staging.salzburgresearch.at/identity}
+  data-channel:
+    url: ${DATA_CHANNEL_URL:http://nimble-staging.salzburgresearch.at/channel}
 
 hystrix:
   command:
