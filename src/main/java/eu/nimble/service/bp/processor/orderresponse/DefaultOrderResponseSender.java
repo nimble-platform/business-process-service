@@ -3,18 +3,27 @@ package eu.nimble.service.bp.processor.orderresponse;
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
 import eu.nimble.service.bp.config.GenericConfig;
+import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
 import eu.nimble.service.bp.impl.util.persistence.DocumentDAOUtility;
 import eu.nimble.service.bp.impl.util.serialization.Serializer;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
+import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ClauseType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.DataMonitoringClauseType;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.DocumentClauseType;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
+import eu.nimble.service.model.ubl.quotation.QuotationType;
 import org.apache.commons.io.IOUtils;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import request.CreateChannel;
@@ -70,10 +79,7 @@ public class DefaultOrderResponseSender  implements JavaDelegate {
             businessProcessApplication.sendDocument(processInstanceId, seller, buyer, orderResponse);
 
             // create a data channel if the order is approved
-            boolean isAccepted = orderResponse.isAcceptedIndicator();
-            if(isAccepted) {
-                createDataChannel(order, orderResponse, buyer, seller, processInstanceId, (String) variables.get("bearer_token"));
-            }
+            createDataChannel(order, orderResponse, buyer, seller, processInstanceId, (String) variables.get("bearer_token"));
 
         } else if(executionType == ExecutionConfiguration.ExecutionTypeEnum.MICROSERVICE) {
             // TODO: How to call a microservice
@@ -86,8 +92,12 @@ public class DefaultOrderResponseSender  implements JavaDelegate {
         boolean dataMonitoringDemanded = false;
         List<ClauseType> clauses = order.getContract().get(0).getClause();
         for(ClauseType clause : clauses) {
-            if(clause instanceof DataMonitoringClauseType) {
-                dataMonitoringDemanded = true;
+            if(clause.getType().equals(eu.nimble.service.bp.impl.model.ClauseType.NEGOTIATION.toString())) {
+                QuotationType quotation = (QuotationType) DocumentDAOUtility.getUBLDocument(((DocumentClauseType) clause).getClauseDocumentRef().getID(), DocumentType.QUOTATION);
+                if(quotation.isDataMonitoringPromised()) {
+                    dataMonitoringDemanded = true;
+                    break;
+                }
             }
         }
 
@@ -100,6 +110,7 @@ public class DefaultOrderResponseSender  implements JavaDelegate {
             return;
         }
 
+        // create url
         URL dataChannelServiceUrl;
         String dataChannelServiceUrlStr = null;
         try {
@@ -111,7 +122,14 @@ public class DefaultOrderResponseSender  implements JavaDelegate {
             return;
         }
 
-        HttpURLConnection conn = null;
+        // adjust the start end data
+        DateTimeFormatter bpFormatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
+        ProcessDocumentMetadata orderResponseMetadata = DocumentDAOUtility.getDocumentMetadata(orderResponse.getID());
+        LocalDateTime localTime = bpFormatter.parseLocalDateTime(orderResponseMetadata.getSubmissionDate());
+        DateTime startTime = new DateTime(localTime.toDateTime(), DateTimeZone.UTC);
+        DateTime endTime = startTime.plusWeeks(2);
+
+        HttpURLConnection conn;
         try {
             conn = (HttpURLConnection) dataChannelServiceUrl.openConnection();
             conn.setRequestMethod("POST");
@@ -123,7 +141,7 @@ public class DefaultOrderResponseSender  implements JavaDelegate {
             OutputStream os = conn.getOutputStream();
             Set<String> consumerIds = new HashSet<>();
             consumerIds.add(sellerId);
-            CreateChannel.Request request = new CreateChannel.Request(buyerId, consumerIds, "", null, null, processInstanceId);
+            CreateChannel.Request request = new CreateChannel.Request(buyerId, consumerIds, String.format("Data channel for product %s", order.getOrderLine().get(0).getLineItem().getItem().getName()), startTime.toDate(), endTime.toDate(), processInstanceId);
             System.out.println(Serializer.getDefaultObjectMapper().writeValueAsString(request));
             Serializer.getDefaultObjectMapper().writeValue(os, request);
             os.flush();
