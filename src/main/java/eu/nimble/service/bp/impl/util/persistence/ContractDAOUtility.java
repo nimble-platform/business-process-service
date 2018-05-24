@@ -132,12 +132,15 @@ public class ContractDAOUtility {
      */
     public static ContractType constructContructForProcessInstances(ProcessInstanceDAO processInstance) {
         ContractType contract = new ContractType();
+        contract.setID(UUID.randomUUID().toString());
+
         boolean negotiationClauseFound = false;
         boolean ppapClauseFound = false;
 
         do {
             List<ProcessDocumentMetadataDAO> documents = DAOUtility.getProcessDocumentMetadataByProcessInstanceID(processInstance.getProcessInstanceID());
 
+            // if the process is completed
             if(documents.size() > 1) {
                 ProcessDocumentMetadataDAO docMetadata = documents.get(1);
                 // if the second document has a future submission date
@@ -145,28 +148,33 @@ public class ContractDAOUtility {
                     docMetadata = documents.get(0);
                 }
 
-                contract.setID(UUID.randomUUID().toString());
-                DocumentClauseType clause = new DocumentClauseType();
-                contract.getClause().add(clause);
-                DocumentReferenceType docRef = new DocumentReferenceType();
-                clause.setClauseDocumentRef(docRef);
+                DocumentType documentType = docMetadata.getType();
+                if(documentType.equals(DocumentType.ITEMINFORMATIONRESPONSE) ||
+                   documentType.equals(DocumentType.QUOTATION) ||
+                   documentType.equals(DocumentType.PPAPRESPONSE)) {
 
-                clause.setID(UUID.randomUUID().toString());
-                docRef.setID(docMetadata.getDocumentID());
+                    DocumentClauseType clause = new DocumentClauseType();
+                    contract.getClause().add(clause);
+                    DocumentReferenceType docRef = new DocumentReferenceType();
+                    clause.setClauseDocumentRef(docRef);
 
-                if (docMetadata.getType().equals(DocumentType.ITEMINFORMATIONRESPONSE)) {
-                    clause.setType(eu.nimble.service.bp.impl.model.ClauseType.ITEM_DETAILS.toString());
-                    docRef.setDocumentType(DocumentType.ITEMINFORMATIONRESPONSE.toString());
+                    clause.setID(UUID.randomUUID().toString());
+                    docRef.setID(docMetadata.getDocumentID());
 
-                } else if (docMetadata.getType().equals(DocumentType.QUOTATION)) {
-                    clause.setType(eu.nimble.service.bp.impl.model.ClauseType.NEGOTIATION.toString());
-                    docRef.setDocumentType(DocumentType.QUOTATION.toString());
-                    negotiationClauseFound = true;
+                    if (docMetadata.getType().equals(DocumentType.ITEMINFORMATIONRESPONSE)) {
+                        clause.setType(eu.nimble.service.bp.impl.model.ClauseType.ITEM_DETAILS.toString());
+                        docRef.setDocumentType(DocumentType.ITEMINFORMATIONRESPONSE.toString());
 
-                } else if (docMetadata.getType().equals(DocumentType.PPAPRESPONSE)) {
-                    clause.setType(eu.nimble.service.bp.impl.model.ClauseType.PPAP.toString());
-                    docRef.setDocumentType(DocumentType.PPAPRESPONSE.toString());
-                    ppapClauseFound = true;
+                    } else if (docMetadata.getType().equals(DocumentType.QUOTATION)) {
+                        clause.setType(eu.nimble.service.bp.impl.model.ClauseType.NEGOTIATION.toString());
+                        docRef.setDocumentType(DocumentType.QUOTATION.toString());
+                        negotiationClauseFound = true;
+
+                    } else if (docMetadata.getType().equals(DocumentType.PPAPRESPONSE)) {
+                        clause.setType(eu.nimble.service.bp.impl.model.ClauseType.PPAP.toString());
+                        docRef.setDocumentType(DocumentType.PPAPRESPONSE.toString());
+                        ppapClauseFound = true;
+                    }
                 }
             }
 
