@@ -90,13 +90,15 @@ public class DefaultOrderResponseSender  implements JavaDelegate {
 
     private boolean needToCreateDataChannel(OrderType order, OrderResponseSimpleType orderResponse) {
         boolean dataMonitoringDemanded = false;
-        List<ClauseType> clauses = order.getContract().get(0).getClause();
-        for(ClauseType clause : clauses) {
-            if(clause.getType().equals(eu.nimble.service.bp.impl.model.ClauseType.NEGOTIATION.toString())) {
-                QuotationType quotation = (QuotationType) DocumentDAOUtility.getUBLDocument(((DocumentClauseType) clause).getClauseDocumentRef().getID(), DocumentType.QUOTATION);
-                if(quotation.isDataMonitoringPromised()) {
-                    dataMonitoringDemanded = true;
-                    break;
+        if(order.getContract().size() > 0){
+            List<ClauseType> clauses = order.getContract().get(0).getClause();
+            for(ClauseType clause : clauses) {
+                if(clause.getType().equals(eu.nimble.service.bp.impl.model.ClauseType.NEGOTIATION.toString())) {
+                    QuotationType quotation = (QuotationType) DocumentDAOUtility.getUBLDocument(((DocumentClauseType) clause).getClauseDocumentRef().getID(), DocumentType.QUOTATION);
+                    if(quotation.isDataMonitoringPromised()) {
+                        dataMonitoringDemanded = true;
+                        break;
+                    }
                 }
             }
         }
