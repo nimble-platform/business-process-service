@@ -289,18 +289,8 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
 
         }
         else if(document instanceof PpapResponseType){
-            PpapResponseType ppapResponseType = (PpapResponseType) document;
+            // do nothing
 
-            String ppapREQUESTID = ppapResponseType.getPpapDocumentReference().getID();
-            boolean isAccepted = ppapResponseType.isAcceptedIndicator();
-
-            ProcessDocumentMetadata initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(ppapREQUESTID);
-            if(isAccepted)
-                initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
-            else
-                initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.DENIED);
-
-            DocumentDAOUtility.updateDocumentMetadata(initiatingDocumentMetadata);
         }else if(document instanceof QuotationType) {
             QuotationType quotation = (QuotationType) document;
             String rfqID = quotation.getRequestForQuotationDocumentReference().getID();
