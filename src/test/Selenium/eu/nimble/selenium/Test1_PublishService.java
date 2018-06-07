@@ -32,7 +32,7 @@ public class Test1_PublishService implements SeleniumInterface {
         wait.until(ExpectedConditions.elementToBeClickable(By.xpath("/html/body/div/nimble-app/nav/button"))).click();
         wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//*[@id=\"navbarNavAltMarkup\"]/ul[1]/li[2]/a"))).click();
 
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/category-search/div[2]/button"))).click();
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/category-search/div/div[2]/button"))).click();
 
         // Select Single Product Tab
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"singleUpload\"]"))).click();
@@ -60,8 +60,8 @@ public class Test1_PublishService implements SeleniumInterface {
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("/html/body/div/nimble-app/catalogue-view/div[1]/button")));
 
         // Logout
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"dropdownMenuUser\"]"))).click();
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"navbarNavAltMarkup\"]/ul[2]/li/div/a[3]"))).click();
+        wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//*[@id=\"dropdownMenuUser\"]"))).click();
+        driver.findElement(By.xpath("//*[@id=\"navbarNavAltMarkup\"]/ul[3]/li/div/a[3]")).click();
 
     }
 }

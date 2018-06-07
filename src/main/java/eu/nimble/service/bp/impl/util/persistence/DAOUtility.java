@@ -6,10 +6,15 @@
 package eu.nimble.service.bp.impl.util.persistence;
 
 import eu.nimble.service.bp.hyperjaxb.model.*;
+import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
+import eu.nimble.service.bp.swagger.model.ProcessInstanceGroup;
+import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
 import eu.nimble.utility.HibernateUtility;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * @author yildiray
@@ -112,36 +117,5 @@ public class DAOUtility {
             }
         }
         return null;
-    }
-
-    public static List<ProcessInstanceGroupDAO> getProcessInstanceGroupDAOs(String partyId, int offset, int limit, boolean archived) {
-        String query = "select pig from ProcessInstanceGroupDAO pig where pig.archived = " + archived;
-        if(partyId != null) {
-            query += " and pig.partyID ='" + partyId + "'";
-        }
-        List<ProcessInstanceGroupDAO> groups = (List<ProcessInstanceGroupDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query, offset, limit);
-        return groups;
-    }
-
-    public static ProcessInstanceGroupDAO getProcessInstanceGroupDAOByID(String groupID) {
-        String query = "select pig from ProcessInstanceGroupDAO pig where ( pig.ID ='" + groupID+ "') ";
-        ProcessInstanceGroupDAO group = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query);
-        return group;
-    }
-
-    public static void deleteProcessInstanceGroupDAOByID(String groupID) {
-        String query = "select pig from ProcessInstanceGroupDAO pig where ( pig.ID ='" + groupID+ "') ";
-        ProcessInstanceGroupDAO group = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query);
-        HibernateUtilityRef.getInstance("bp-data-model").delete(ProcessInstanceGroupDAO.class, group.getHjid());
-    }
-
-    public static void archiveAllGroupsForParty(String partyId) {
-        String query = "update ProcessInstanceGroupDAO as pig set pig.archived = true WHERE pig.partyID = '" + partyId + "'";
-        HibernateUtilityRef.getInstance("bp-data-model").executeUpdate(query);
-    }
-
-    public static void deleteArchivedGroupsForParty(String partyId) {
-        String query = "delete ProcessInstanceGroupDAO as pig WHERE pig.archived = true and pig.partyID = '" + partyId + "'";
-        HibernateUtilityRef.getInstance("bp-data-model").executeUpdate(query);
     }
 }

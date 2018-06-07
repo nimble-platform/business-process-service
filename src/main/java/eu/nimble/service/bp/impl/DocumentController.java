@@ -1,9 +1,11 @@
 package eu.nimble.service.bp.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.impl.util.persistence.DAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.impl.util.persistence.DocumentDAOUtility;
+import eu.nimble.service.bp.impl.util.serialization.Serializer;
 import eu.nimble.service.bp.swagger.api.DocumentApi;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
@@ -26,6 +28,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import java.util.ArrayList;
 import java.util.List;
 
+import static eu.nimble.service.bp.impl.util.controller.HttpResponseUtil.*;
+
 /**
  * Created by yildiray on 5/25/2017.
  */
@@ -37,8 +41,24 @@ public class DocumentController implements DocumentApi {
             produces = {"application/json"},
             method = RequestMethod.GET)
     ResponseEntity<Object> getDocumentJsonContent(@PathVariable("documentID") String documentID) {
-        Object document = DocumentDAOUtility.getUBLDocument(documentID);
-        return new ResponseEntity<>(document, HttpStatus.OK);
+        try {
+            logger.info("Getting content of document: {}", documentID);
+            Object document = DocumentDAOUtility.getUBLDocument(documentID);
+            if (document == null) {
+                return createResponseEntityAndLog(String.format("No document for id: %s", documentID), HttpStatus.NOT_FOUND);
+            }
+            try {
+                String serializedDocument = Serializer.getDefaultObjectMapper().writeValueAsString(document);
+                logger.info("Retrieved details of the document: {}", documentID);
+                return new ResponseEntity<>(serializedDocument, HttpStatus.OK);
+
+            } catch (JsonProcessingException e) {
+                return createResponseEntityAndLog(String.format("Serialization error for document: %s", documentID), e, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+        } catch (Exception e) {
+            return createResponseEntityAndLog(String.format("Unexpected error while getting the content for document: %s", documentID), e, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @RequestMapping(value = "/document/xml/{documentID}",

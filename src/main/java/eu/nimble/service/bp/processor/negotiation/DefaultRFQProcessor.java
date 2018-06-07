@@ -37,6 +37,7 @@ public class DefaultRFQProcessor implements JavaDelegate {
         String buyer = variables.get("initiatorID").toString();
         String seller = variables.get("responderID").toString();
         List<String> relatedProducts = (List<String>) variables.get("relatedProducts");
+        List<String> relatedProductCategories = (List<String>) variables.get("relatedProductCategories");
         RequestForQuotationType requestForQuotation = (RequestForQuotationType) variables.get("requestForQuotation");
 
         // get application execution configuration
@@ -52,7 +53,7 @@ public class DefaultRFQProcessor implements JavaDelegate {
 
             IBusinessProcessApplication businessProcessApplication = (IBusinessProcessApplication) instance;
 
-            businessProcessApplication.saveDocument(processInstanceId, buyer, seller, requestForQuotation, relatedProducts);
+            businessProcessApplication.saveDocument(processInstanceId, buyer, seller, requestForQuotation, relatedProducts, relatedProductCategories);
         } else if(executionType == ExecutionConfiguration.ExecutionTypeEnum.MICROSERVICE) {
             // TODO: How to call a microservice
         } else {

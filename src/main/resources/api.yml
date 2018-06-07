@@ -308,6 +308,17 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/ProcessInstanceInputMessage'
+      - in: query
+        name: gid
+        description: The UUID of the process instance group owned by the party initiating the process
+        required: false
+        type: string
+      - in: query
+        name: preceding_pid
+        description: The UUID of the preceding process instance
+        required: false
+        type: string
+
       responses:
         # Response code
         200:
@@ -329,6 +340,15 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/ProcessInstanceInputMessage'
+      - in: query
+        name: gid
+        description: The UUID of the process instance group owned by the party continuing the process
+        required: false
+        type: string
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       responses:
         # Response code
         200:
@@ -500,6 +520,10 @@ paths:
         type: array
         description: Related products
       - in: query
+        name: relatedProductCategories
+        type: array
+        description: Related product categories
+      - in: query
         name: tradingPartnerIDs
         type: array
         description: Identifier of the corresponsing trading partner ID
@@ -525,15 +549,17 @@ paths:
         name: archived
         type: boolean
         default: false
+      - in: query
+        name: collaborationRole
+        type: string
+        required: false
       produces:
       - application/json
       responses:
         200:
           description: Retrieved the groups successfully
           schema:
-            type: array
-            items:
-              $ref: '#/definitions/ProcessInstanceGroup'
+            $ref: '#/definitions/ProcessInstanceGroupResponse'
     post:
       summary: Saves a process group along with the initial process instance
       operationId: saveProcessInstanceGroup
@@ -552,6 +578,55 @@ paths:
         # Response code
         201:
           description: Saved the group successfully
+
+  /group/filters:
+    get:
+      summary: Generates detailed filtering criteria for the current query parameters in place
+      operationId: getProcessInstanceGroupFilters
+      parameters:
+      - in: query
+        name: partyID
+        type: string
+        description: Identifier of the party
+      - in: query
+        name: relatedProducts
+        type: array
+        description: Related products
+      - in: query
+        name: relatedProductCategories
+        type: array
+        description: Related product categories
+      - in: query
+        name: tradingPartnerIDs
+        type: array
+        description: Identifier of the corresponsing trading partner ID
+      - in: query
+        name: initiationDateRange
+        type: string
+        description: Initiation date range for the first process instance in the group
+      - in: query
+        name: lastActivityDateRange
+        type: string
+        description: Last activity date range. It is the latest submission date of the document to last process instance in the group
+      - in: query
+        name: archived
+        type: boolean
+        default: false
+      - in: query
+        name: collaborationRole
+        type: string
+        required: false
+      - name: Authorization
+        in: header
+        type: string
+        required: true
+      produces:
+      - application/json
+      responses:
+        200:
+          description: Retrieved the filters successfully
+          schema:
+            $ref: '#/definitions/ProcessInstanceGroupFilter'
 
   /group/{ID}:
     get:
@@ -638,6 +713,24 @@ paths:
           description: Deleted the groups successfully
 
   /group/{ID}/process-instance:
+    get:
+      summary: Retrieves the process instances for the given process group
+      operationId: getProcessInstancesOfGroup
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: ID
+        type: string
+        description: Identifier of the process instance group for which the associated process instances will be retrieved
+        required: true
+      responses:
+        200:
+          description: Retrieved the process instances successfully
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/ProcessInstance'
     post:
       summary: Adds a new process instance to the specified
       operationId: addProcessInstanceToGroup
@@ -864,6 +957,10 @@ definitions:
         type: array
         items:
           type: string
+      relatedProductCategories:
+        type: array
+        items:
+          type: string
       content:
         type: string
 
@@ -895,7 +992,7 @@ definitions:
         - COMPLETED
 
   ProcessInstanceGroup:
-    title: Process Instance Group
+    title: Process Instance Group Object
     type: object
     properties:
       ID:
@@ -908,6 +1005,53 @@ definitions:
           type: string
       archived:
         type: boolean
+      collaborationRole:
+        type: string
+      associatedGroups:
+        type: array
+        items:
+          type: string
+      firstActivityTime:
+        type: string
+      lastActivityTime:
+        type: string
+
+  ProcessInstanceGroupResponse:
+    title: Process Instance Group Response
+    type: object
+    properties:
+      processInstanceGroups:
+        type: array
+        items:
+          $ref: '#/definitions/ProcessInstanceGroup'
+      size:
+        type: integer
+
+  ProcessInstanceGroupFilter:
+    title: Process Instance Group Filters
+    description: Contains the filtering criteria for Process Instance Group objects
+    type: object
+    properties:
+      startDate:
+        type: string
+      endDate:
+        type: string
+      tradingPartnerIDs:
+        type: array
+        items:
+          type: string
+      tradingPartnerNames:
+        type: array
+        items:
+          type: string
+      relatedProducts:
+        type: array
+        items:
+          type: string
+      relatedProductCategories:
+        type: array
+        items:
+          type: string
 
   ProcessDocumentMetadata:
     title: Business Process Document Metadata Object
@@ -939,6 +1083,10 @@ definitions:
         - ITEMINFORMATIONRESPONSE
         - OTHER
       relatedProducts:
+        type: array
+        items:
+          type: string
+      relatedProductCategories:
         type: array
         items:
           type: string

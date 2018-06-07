@@ -27,6 +27,5 @@ public class StartTests {
                 Object o = m.invoke(object);
             }
         }
-        
     }
 }

@@ -165,6 +165,18 @@ public class DocumentDAOUtility {
             case TRANSPORTATIONSTATUS:
                 hibernateEntityName = "TransportationStatusType";
                 break;
+            case PPAPREQUEST:
+                hibernateEntityName = "PpapRequestType";
+                break;
+            case PPAPRESPONSE:
+                hibernateEntityName = "PpapResponseType";
+                break;
+            case ITEMINFORMATIONREQUEST:
+                hibernateEntityName = "ItemInformationRequestType";
+                break;
+            case ITEMINFORMATIONRESPONSE:
+                hibernateEntityName = "ItemInformationResponseType";
+                break;
             default:
                 break;
         }
@@ -187,5 +199,15 @@ public class DocumentDAOUtility {
         ProcessDocumentMetadataDAO processDocumentMetadataDAO = DAOUtility.getProcessDocumentMetadata(documentID);
         logger.debug(" $$$ Document metadata for {} is {}...", documentID, processDocumentMetadataDAO);
         return getUBLDocument(documentID, processDocumentMetadataDAO.getType());
+    }
+
+    public static boolean documentExists(String documentID) {
+        String query = "SELECT count(*) FROM ProcessDocumentMetadataDAO document WHERE document.documentID = '" + documentID + "'";
+        int count = ((Long) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query)).intValue();
+        if(count > 0) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }
