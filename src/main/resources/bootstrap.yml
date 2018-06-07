@@ -26,6 +26,8 @@ spring:
       test-while-idle: true
       time-between-eviction-runs-millis: 600000
       min-evictable-idle-time-millis: 3600000
+    maxActive: 10
+    maxIdle: 10
   jackson:
     date-format: com.fasterxml.jackson.databind.util.ISO8601DateFormat
     serialization:
@@ -68,7 +70,7 @@ persistence:
         c3p0:
           acquire_increment: 5
           initialPoolSize: 5
-          max_size: 25
+          max_size: 15
           min_size: 5
           maxStatementsPerConnection: 5
           acquireRetryAttempts: 10
@@ -102,7 +104,7 @@ persistence:
         c3p0:
           acquire_increment: 5
           initialPoolSize: 5
-          max_size: 25
+          max_size: 5
           min_size: 5
           maxStatementsPerConnection: 5
           acquireRetryAttempts: 10
