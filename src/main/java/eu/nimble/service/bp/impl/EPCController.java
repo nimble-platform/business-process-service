@@ -36,9 +36,9 @@ public class EPCController {
 
         try {
             TTInfo ttInfo = new TTInfo();
-            ttInfo.setMasterUrl("http://falcon-dev.ikap.biba.uni-bremen.de:8117/masterData");
-            ttInfo.setEventUrl("http://falcon-dev.ikap.biba.uni-bremen.de:8117/simpleTracking");
-            ttInfo.setProductionProcessTemplate("http://falcon-dev.ikap.biba.uni-bremen.de:8117/productionProcessTemplate/lindbacks_test");
+            ttInfo.setMasterUrl("https://falcon-dev.ikap.biba.uni-bremen.de/masterData");
+            ttInfo.setEventUrl("https://falcon-dev.ikap.biba.uni-bremen.de/simpleTracking");
+            ttInfo.setProductionProcessTemplate("https://falcon-dev.ikap.biba.uni-bremen.de/productionProcessTemplate/lindbacks_test");
             ttInfo.setRelatedProductId("temp-product-id");
 
             ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(ttInfo);
