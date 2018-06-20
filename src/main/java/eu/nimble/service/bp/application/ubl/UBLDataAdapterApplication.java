@@ -274,47 +274,56 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
 
         // if this document is a response to an initiating document, set the response code of the initiating document
         // e.g OrderResponse to an Order
+        ProcessDocumentMetadata initiatingDocumentMetadata = null;
         if(document instanceof OrderResponseSimpleType) {
             OrderResponseSimpleType orderResponse = (OrderResponseSimpleType) document;
             String orderID = orderResponse.getOrderReference().getDocumentReference().getID();
             boolean isAccepted = orderResponse.isAcceptedIndicator();
 
-            ProcessDocumentMetadata initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(orderID);
+            initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(orderID);
             if(isAccepted)
                 initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
             else
                 initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.DENIED);
 
-            DocumentDAOUtility.updateDocumentMetadata(initiatingDocumentMetadata);
-
         }
         else if(document instanceof PpapResponseType){
-            // do nothing
+            PpapResponseType ppapResponseType = (PpapResponseType) document;
+            String ppapREQUESTID = ppapResponseType.getPpapDocumentReference().getID();
+            initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(ppapREQUESTID);
+            initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
 
         }else if(document instanceof QuotationType) {
             QuotationType quotation = (QuotationType) document;
             String rfqID = quotation.getRequestForQuotationDocumentReference().getID();
-            ProcessDocumentMetadata initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(rfqID);
+            initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(rfqID);
             initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
 
         } else if(document instanceof ReceiptAdviceType) {
             ReceiptAdviceType receiptAdvice = (ReceiptAdviceType) document;
             String despatchAdviceID = receiptAdvice.getDespatchDocumentReference().get(0).getID();
-            ProcessDocumentMetadata initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(despatchAdviceID);
+            initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(despatchAdviceID);
             initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
 
         } else if(document instanceof TransportExecutionPlanType) {
             TransportExecutionPlanType transportExecutionPlanType = (TransportExecutionPlanType) document;
             String tepDocRefId = transportExecutionPlanType.getTransportExecutionPlanRequestDocumentReference().getID();
-            ProcessDocumentMetadata initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(tepDocRefId);
+            initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(tepDocRefId);
             initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
 
         } else if(document instanceof ItemInformationResponseType) {
             ItemInformationResponseType itemInformationResponse = (ItemInformationResponseType) document;
             String itemInformationRequestId = itemInformationResponse.getItemInformationRequestDocumentReference().getID();
-            ProcessDocumentMetadata initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(itemInformationRequestId);
+            initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(itemInformationRequestId);
             initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
+
+        } else {
+            String msg = String.format("Invalid document: %s", document);
+            logger.error(msg);
+            throw new RuntimeException(msg);
         }
+
+        DocumentDAOUtility.updateDocumentMetadata(initiatingDocumentMetadata);
     }
 
 }
