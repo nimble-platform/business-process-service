@@ -5,6 +5,7 @@
  */
 package eu.nimble.service.bp.impl.util.camunda;
 
+import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
 import eu.nimble.service.bp.swagger.model.*;
 import eu.nimble.service.bp.swagger.model.Process;
 import eu.nimble.utility.DateUtility;
@@ -164,8 +165,10 @@ public class CamundaEngine {
     public static List<Transaction> getTransactions(String processID) {
         List<Transaction> transactions = new ArrayList<>();
         Transaction transaction = null;
+
+        processID = processID.toUpperCase();
         switch (processID) {
-            case "Order":
+            case "ORDER":
                 transaction = new Transaction();
                 transaction.setInitiatorRole(Transaction.InitiatorRoleEnum.BUYER);
                 transaction.setResponderRole(Transaction.ResponderRoleEnum.SELLER);
@@ -179,7 +182,7 @@ public class CamundaEngine {
                 transaction.setDocumentType(Transaction.DocumentTypeEnum.ORDERRESPONSESIMPLE);
                 transactions.add(transaction);
                 break;
-            case "Negotiation":
+            case "NEGOTIATION":
                 transaction = new Transaction();
                 transaction.setInitiatorRole(Transaction.InitiatorRoleEnum.BUYER);
                 transaction.setResponderRole(Transaction.ResponderRoleEnum.SELLER);
@@ -193,7 +196,7 @@ public class CamundaEngine {
                 transaction.setDocumentType(Transaction.DocumentTypeEnum.QUOTATION);
                 transactions.add(transaction);
                 break;
-            case "Ppap":
+            case "PPAP":
                 transaction = new Transaction();
                 transaction.setInitiatorRole(Transaction.InitiatorRoleEnum.BUYER);
                 transaction.setResponderRole(Transaction.ResponderRoleEnum.SELLER);
@@ -207,7 +210,7 @@ public class CamundaEngine {
                 transaction.setDocumentType(Transaction.DocumentTypeEnum.PPAPRESPONSE);
                 transactions.add(transaction);
                 break;
-            case "Item_Information_Request":
+            case "ITEM_INFORMATION_REQUEST":
                 transaction = new Transaction();
                 transaction.setInitiatorRole(Transaction.InitiatorRoleEnum.BUYER);
                 transaction.setResponderRole(Transaction.ResponderRoleEnum.SELLER);
@@ -221,7 +224,7 @@ public class CamundaEngine {
                 transaction.setDocumentType(Transaction.DocumentTypeEnum.ITEMINFORMATIONRESPONSE);
                 transactions.add(transaction);
                 break;
-            case "Fulfilment":
+            case "FULFILMENT":
                 transaction = new Transaction();
                 transaction.setInitiatorRole(Transaction.InitiatorRoleEnum.SELLER);
                 transaction.setResponderRole(Transaction.ResponderRoleEnum.BUYER);
@@ -235,7 +238,7 @@ public class CamundaEngine {
                 transaction.setDocumentType(Transaction.DocumentTypeEnum.RECEIPTADVICE);
                 transactions.add(transaction);
                 break;
-            case "Transport_Execution_Plan":
+            case "TRANSPORT_EXECUTION_PLAN":
                 transaction = new Transaction();
                 transaction.setInitiatorRole(Transaction.InitiatorRoleEnum.BUYER);
                 transaction.setResponderRole(Transaction.ResponderRoleEnum.SELLER);
@@ -253,5 +256,18 @@ public class CamundaEngine {
                 return null;
         }
         return transactions;
+    }
+
+    public static Transaction.DocumentTypeEnum getInitialDocumentForProcess(String businessProcessType) {
+        return CamundaEngine.getTransactions(businessProcessType).get(0).getDocumentType();
+    }
+
+    public static List<Transaction.DocumentTypeEnum> getInitialDocumentsForAllProcesses() {
+        List<Transaction.DocumentTypeEnum> initialDocuments = new ArrayList<>();
+        List<ProcessDefinition> processDefinitions = repositoryService.createProcessDefinitionQuery().list();
+        for (ProcessDefinition processDefinition : processDefinitions) {
+            initialDocuments.add(getTransactions(processDefinition.getKey()).get(0).getDocumentType());
+        }
+        return initialDocuments;
     }
 }

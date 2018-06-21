@@ -6,15 +6,14 @@
 package eu.nimble.service.bp.impl.util.persistence;
 
 import eu.nimble.service.bp.hyperjaxb.model.*;
-import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
-import eu.nimble.service.bp.swagger.model.ProcessInstanceGroup;
-import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
-import eu.nimble.utility.HibernateUtility;
+import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * @author yildiray
@@ -81,6 +80,77 @@ public class DAOUtility {
         return resultSet;
     }
 
+
+    public static List<String> getDocumentIds(Integer partyId, List<String> documentTypes, String role, String startDateStr, String endDateStr, String status) {
+        String query = getDocumentMetadataQuery(partyId, documentTypes, role, startDateStr, endDateStr, status, DocumentMetadataQuery.DOCUMENT_IDS);
+        List<String> documentIds = (List<String>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+        return documentIds;
+    }
+
+    public static int getTransactionCount(Integer partyId, List<String> documentTypes, String role, String startDateStr, String endDateStr, String status) {
+        String query = getDocumentMetadataQuery(partyId, documentTypes, role, startDateStr, endDateStr, status, DocumentMetadataQuery.TRANSACTION_COUNT);
+        int count = ((Long) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query)).intValue();
+        return count;
+    }
+
+    public static String getDocumentMetadataQuery(Integer partyId, List<String> documentTypes, String role, String startDateStr, String endDateStr, String status, DocumentMetadataQuery queryType) {
+        String query;
+        if(queryType.equals(DocumentMetadataQuery.TRANSACTION_COUNT)) {
+            query = "select count(*) from ProcessDocumentMetadataDAO documentMetadata ";
+        } else {
+            query = "select documentMetadata.documentID from ProcessDocumentMetadataDAO documentMetadata ";
+        }
+
+        DateTimeFormatter sourceFormatter = DateTimeFormat.forPattern("dd-MM-yyyy");
+        DateTimeFormatter bpFormatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
+
+        boolean filterExists = false;
+
+        if (partyId != null) {
+            String attribute = role.equals(RoleType.BUYER.toString()) ? "initiatorID" : "responderID";
+            query += " where documentMetadata." + attribute + " ='" + partyId + "' ";
+            filterExists = true;
+        }
+
+        // the assumption is that if the start time is not null, the end time is also provided
+        if(startDateStr != null) {
+            DateTime startDate = sourceFormatter.parseDateTime(startDateStr);
+            DateTime endDate = sourceFormatter.parseDateTime(endDateStr);
+            endDate = endDate.plusDays(1).minusMillis(1);
+            if(!filterExists) {
+                query += " where";
+            } else {
+                query += " and";
+            }
+            query += " documentMetadata.submissionDate between '" + bpFormatter.print(startDate) + "' and '" + bpFormatter.print(endDate) + "'";
+            filterExists = true;
+        }
+
+        if(documentTypes.size() > 0) {
+            if (!filterExists) {
+                query += " where (";
+            } else {
+                query += " and(";
+            }
+            for (int i = 0; i < documentTypes.size() - 1; i++) {
+                query += " documentMetadata.type ='" + documentTypes.get(i).toString() + "' or";
+            }
+            query += " documentMetadata.type = '" + documentTypes.get(documentTypes.size() - 1).toString() + "')";
+            filterExists = true;
+        }
+
+        if(status != null) {
+            if (!filterExists) {
+                query += " where ";
+            } else {
+                query += " and ";
+            }
+            query += " documentMetadata.status ='" + status + "'";
+        }
+
+        return query;
+    }
+
     public static ProcessInstanceDAO getProcessIntanceDAOByID(String processInstanceID) {
         String query = "select processinstance from ProcessInstanceDAO processinstance where ( processinstance.processInstanceID ='" + processInstanceID + "') ";
         List<ProcessInstanceDAO> resultSet = (List<ProcessInstanceDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
@@ -117,5 +187,9 @@ public class DAOUtility {
             }
         }
         return null;
+    }
+
+    private enum DocumentMetadataQuery {
+        DOCUMENT_IDS, TRANSACTION_COUNT
     }
 }

@@ -317,13 +317,10 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
             initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(itemInformationRequestId);
             initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
 
-        } else {
-            String msg = String.format("Invalid document: %s", document);
-            logger.error(msg);
-            throw new RuntimeException(msg);
         }
 
-        DocumentDAOUtility.updateDocumentMetadata(initiatingDocumentMetadata);
+        if(initiatingDocumentMetadata != null) {
+            DocumentDAOUtility.updateDocumentMetadata(initiatingDocumentMetadata);
+        }
     }
-
 }
