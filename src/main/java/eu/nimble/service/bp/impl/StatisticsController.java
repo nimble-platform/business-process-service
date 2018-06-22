@@ -1,5 +1,6 @@
 package eu.nimble.service.bp.impl;
 
+import eu.nimble.service.bp.impl.model.statistics.BusinessProcessCount;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.impl.util.controller.HttpResponseUtil;
 import eu.nimble.service.bp.impl.util.controller.InputValidatorUtil;
@@ -19,7 +20,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Api(value = "statistics", description = "The statistics API")
 @RequestMapping(value = "/statistics")
@@ -34,12 +37,12 @@ public class StatisticsController {
     @RequestMapping(value = "/total-number/business-process",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity getDocumentCount(@ApiParam(value = "Business process type. ", required = false) @RequestParam(value = "businessProcessType", required = false) String businessProcessType,
-                                           @ApiParam(value = "Start date", required = false) @RequestParam(value = "startDate", required = false) String startDateStr,
-                                           @ApiParam(value = "End date", required = false) @RequestParam(value = "endDate", required = false) String endDateStr,
-                                           @ApiParam(value = "Company ID", required = false) @RequestParam(value = "companyId", required = false) Integer companyId,
-                                           @ApiParam(value = "Role in business process. Can be seller or buyer", required = false) @RequestParam(value = "role", required = false, defaultValue = "seller") String role,
-                                           @ApiParam(value = "State of transaction. Can be WaitingResponse, Approved or Denied", required = false) @RequestParam(value = "status", required = false) String status) {
+    public ResponseEntity getProcessCount(@ApiParam(value = "Business process type. ", required = false) @RequestParam(value = "businessProcessType", required = false) String businessProcessType,
+                                          @ApiParam(value = "Start date", required = false) @RequestParam(value = "startDate", required = false) String startDateStr,
+                                          @ApiParam(value = "End date", required = false) @RequestParam(value = "endDate", required = false) String endDateStr,
+                                          @ApiParam(value = "Company ID", required = false) @RequestParam(value = "companyId", required = false) Integer companyId,
+                                          @ApiParam(value = "Role in business process. Can be seller or buyer", required = false) @RequestParam(value = "role", required = false, defaultValue = "seller") String role,
+                                          @ApiParam(value = "State of transaction. Can be WaitingResponse, Approved or Denied", required = false) @RequestParam(value = "status", required = false) String status) {
 
         try {
             logger.info("Getting total number of documents for start date: {}, end date: {}, type: {}, company id: {}, role: {}, state: {}", startDateStr, endDateStr, businessProcessType, companyId, role, status);
@@ -95,6 +98,42 @@ public class StatisticsController {
 
         } catch (Exception e) {
             return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting the total number for business process type: %s, start date: %s, end date: %s, company id: %s, role: %s, state: %s", businessProcessType, startDateStr, endDateStr, companyId, role, status), e, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @ApiOperation(value = "Gets the total number (active / completed) of specified business process.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Retrieved the number of processes successfully")
+    })
+    @RequestMapping(value = "/total-number/business-process/break-down",
+            produces = {"application/json"},
+            method = RequestMethod.GET)
+    public ResponseEntity getProcessCountBreakDown(@ApiParam(value = "Start date", required = false) @RequestParam(value = "startDate", required = false) String startDateStr,
+                                                   @ApiParam(value = "End date", required = false) @RequestParam(value = "endDate", required = false) String endDateStr,
+                                                   @ApiParam(value = "Company ID", required = false) @RequestParam(value = "companyId", required = false) Integer companyId) {
+
+        try {
+            logger.info("Getting total number of documents for start date: {}, end date: {}, company id: {}", startDateStr, endDateStr, companyId);
+            ValidationResponse response;
+
+            // check start date
+            response = InputValidatorUtil.checkDate(startDateStr, true);
+            if (response.getInvalidResponse() != null) {
+                return response.getInvalidResponse();
+            }
+
+            // check end date
+            response = InputValidatorUtil.checkDate(endDateStr, true);
+            if (response.getInvalidResponse() != null) {
+                return response.getInvalidResponse();
+            }
+
+            BusinessProcessCount counts = DAOUtility.getGroupTransactionCounts(companyId, startDateStr, endDateStr);
+            logger.info("Number of business process for start date: {}, end date: {}, company id: {}", startDateStr, endDateStr, companyId);
+            return ResponseEntity.ok().body(counts);
+
+        } catch (Exception e) {
+            return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting the total number for start date: %s, end date: %s, company id: %s", startDateStr, endDateStr, companyId), e, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
