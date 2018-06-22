@@ -51,6 +51,12 @@ public class ContractGenerator {
     private final String red_hex = "DC143C";
     private final String blue_hex = "1464AD";
 
+    private final int logo_space = 300;
+    private final int cell_space = 200;
+
+    private final double purchaseDetailsScale = 60.0;
+    private final double termsScale = 100.0;
+
     private boolean firstIIR = true;
 
     public void generateContract(String orderId,ZipOutputStream zos){
@@ -59,9 +65,7 @@ public class ContractGenerator {
         XWPFDocument orderTermsAndConditions = fillOrderTermsAndConditions(order);
         XWPFDocument purchaseDetails = fillPurchaseDetails(order);
 
-
-
-        getClauses(order,zos,purchaseDetails);
+        getAndPopulateClauses(order,zos,purchaseDetails);
 
         addDocxToZipFile("Standard Purchase Order Terms and Conditions.pdf",orderTermsAndConditions,zos);
         addDocxToZipFile("Company Purchase Details.pdf",purchaseDetails,zos);
@@ -73,7 +77,7 @@ public class ContractGenerator {
 
         XWPFDocument document = null;
         try {
-            File file = new File(ContractGenerator.class.getResource("/trading-terms/Standard Purchase Order Terms and Conditions.docx").toURI());
+            File file = new File(ContractGenerator.class.getResource("/contract-bundle/Standard Purchase Order Terms and Conditions.docx").toURI());
             FileInputStream fis = new FileInputStream(file.getAbsoluteFile());
 
             document = new XWPFDocument(fis);
@@ -85,17 +89,15 @@ public class ContractGenerator {
                     if(text != null && text.contains("$logo_id")){
                         text = text.replace("$logo_id","");
 
-                        setSpace(paragraph,300);
+                        setSpace(paragraph,logo_space);
 
                         run.setText(text,0);
-                        File imageFile = new File(ContractGenerator.class.getResource("/trading-terms/nimble_logo.png").toURI());
+                        File imageFile = new File(ContractGenerator.class.getResource("/contract-bundle/nimble_logo.png").toURI());
                         FileInputStream imageFis = new FileInputStream(imageFile.getAbsoluteFile());
 
                         BufferedImage bufferedImage = ImageIO.read(imageFile);
-                        int width = bufferedImage.getWidth();
-                        int height = bufferedImage.getHeight();
 
-                        int scaledWidth = (int)(width * (100.0/height));
+                        int scaledWidth = (int)(bufferedImage.getWidth() * (termsScale/bufferedImage.getHeight()));
 
                         run.addPicture(imageFis,XWPFDocument.PICTURE_TYPE_PNG,"nimble_logo.png",Units.toEMU(scaledWidth),Units.toEMU(100));
                         imageFis.close();
@@ -285,7 +287,7 @@ public class ContractGenerator {
 
         XWPFDocument document = null;
         try {
-            File file = new File(ContractGenerator.class.getResource("/trading-terms/Purchase Details.docx").toURI());
+            File file = new File(ContractGenerator.class.getResource("/contract-bundle/Purchase Details.docx").toURI());
             FileInputStream fis = new FileInputStream(file.getAbsoluteFile());
 
             document = new XWPFDocument(fis);
@@ -303,14 +305,14 @@ public class ContractGenerator {
                                     if(text.contains("$logo_id")){
                                         text = text.replace("$logo_id","");
                                         r.setText(text,0);
-                                        File imageFile = new File(ContractGenerator.class.getResource("/trading-terms/nimble_logo.png").toURI());
+                                        File imageFile = new File(ContractGenerator.class.getResource("/contract-bundle/nimble_logo.png").toURI());
                                         FileInputStream imageFis = new FileInputStream(imageFile.getAbsoluteFile());
 
                                         BufferedImage bufferedImage = ImageIO.read(imageFile);
                                         int width = bufferedImage.getWidth();
                                         int height = bufferedImage.getHeight();
 
-                                        int scaledWidth = (int)(width * (60.0/height));
+                                        int scaledWidth = (int)(width * (purchaseDetailsScale/height));
 
                                         r.addPicture(imageFis,XWPFDocument.PICTURE_TYPE_PNG,"nimble_logo.png",Units.toEMU(scaledWidth),Units.toEMU(60));
                                         imageFis.close();
@@ -328,10 +330,18 @@ public class ContractGenerator {
                                             text = text.replace("$country_invoice_id",order.getBuyerCustomerParty().getParty().getPostalAddress().getCountry().getName());
                                             r.setText(text,0);
                                         }
+                                        else {
+                                            text = text.replace("$country_invoice_id","");
+                                            r.setText(text,0);
+                                        }
                                     }
                                     if(text.contains("$street_invoice_id")){
                                         if(order.getBuyerCustomerParty().getParty().getPostalAddress().getStreetName()!= null){
                                             text = text.replace("$street_invoice_id",order.getBuyerCustomerParty().getParty().getPostalAddress().getStreetName());
+                                            r.setText(text,0);
+                                        }
+                                        else {
+                                            text = text.replace("$street_invoice_id","");
                                             r.setText(text,0);
                                         }
                                     }
@@ -340,10 +350,18 @@ public class ContractGenerator {
                                             text = text.replace("$building_invoice_id",order.getBuyerCustomerParty().getParty().getPostalAddress().getBuildingNumber());
                                             r.setText(text,0);
                                         }
+                                        else {
+                                            text = text.replace("$building_invoice_id","");
+                                            r.setText(text,0);
+                                        }
                                     }
                                     if(text.contains("$country_id")){
                                         if(order.getOrderLine().get(0).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCountry().getName() != null){
                                             text = text.replace("$country_id",order.getOrderLine().get(0).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCountry().getName());
+                                            r.setText(text,0);
+                                        }
+                                        else {
+                                            text = text.replace("$country_id","");
                                             r.setText(text,0);
                                         }
                                     }
@@ -382,6 +400,10 @@ public class ContractGenerator {
                                             text = text.replace("$street_id",order.getOrderLine().get(0).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getStreetName());
                                             r.setText(text,0);
                                         }
+                                        else {
+                                            text = text.replace("$street_id","");
+                                            r.setText(text,0);
+                                        }
                                     }
                                     if(text.contains("$building_id")){
                                         text = text.replace("$building_id",order.getOrderLine().get(0).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getBuildingNumber());
@@ -392,6 +414,10 @@ public class ContractGenerator {
                                             text = text.replace("$country_supplier",order.getSellerSupplierParty().getParty().getPostalAddress().getCountry().getName());
                                             r.setText(text,0);
                                         }
+                                        else {
+                                            text = text.replace("$country_supplier","");
+                                            r.setText(text,0);
+                                        }
                                     }
                                     if(text.contains("$building_supplier")){
                                         text = text.replace("$building_supplier",order.getSellerSupplierParty().getParty().getPostalAddress().getBuildingNumber());
@@ -400,6 +426,10 @@ public class ContractGenerator {
                                     if(text.contains("$street_supplier")){
                                         if(order.getSellerSupplierParty().getParty().getPostalAddress().getStreetName() != null){
                                             text = text.replace("$street_supplier",order.getSellerSupplierParty().getParty().getPostalAddress().getStreetName());
+                                            r.setText(text,0);
+                                        }
+                                        else {
+                                            text = text.replace("$street_supplier","");
                                             r.setText(text,0);
                                         }
                                     }
@@ -473,10 +503,18 @@ public class ContractGenerator {
                                             text = text.replace("$city_id",order.getOrderLine().get(0).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCityName());
                                             r.setText(text,0);
                                         }
+                                        else{
+                                            text = text.replace("$city_id","");
+                                            r.setText(text,0);
+                                        }
                                     }
                                     if(text.contains("$zip_id")){
                                         if(order.getOrderLine().get(0).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getPostalZone() != null){
                                             text = text.replace("$zip_id",order.getOrderLine().get(0).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getPostalZone());
+                                            r.setText(text,0);
+                                        }
+                                        else{
+                                            text = text.replace("$zip_id","");
                                             r.setText(text,0);
                                         }
                                     }
@@ -485,10 +523,18 @@ public class ContractGenerator {
                                             text = text.replace("$city_invoice_id",order.getBuyerCustomerParty().getParty().getPostalAddress().getCityName());
                                             r.setText(text,0);
                                         }
+                                        else{
+                                            text = text.replace("$city_invoice_id","");
+                                            r.setText(text,0);
+                                        }
                                     }
                                     if(text.contains("$zip_invoice_id")){
                                         if(order.getBuyerCustomerParty().getParty().getPostalAddress().getPostalZone() != null){
                                             text = text.replace("$zip_invoice_id",order.getBuyerCustomerParty().getParty().getPostalAddress().getPostalZone());
+                                            r.setText(text,0);
+                                        }
+                                        else{
+                                            text = text.replace("$zip_invoice_id","");
                                             r.setText(text,0);
                                         }
                                     }
@@ -497,10 +543,18 @@ public class ContractGenerator {
                                             text = text.replace("$city_supplier",order.getSellerSupplierParty().getParty().getPostalAddress().getCityName());
                                             r.setText(text,0);
                                         }
+                                        else{
+                                            text = text.replace("$city_supplier","");
+                                            r.setText(text,0);
+                                        }
                                     }
                                     if(text.contains("$zip_supplier")){
                                         if(order.getSellerSupplierParty().getParty().getPostalAddress().getPostalZone() != null){
                                             text = text.replace("$zip_supplier",order.getSellerSupplierParty().getParty().getPostalAddress().getPostalZone());
+                                            r.setText(text,0);
+                                        }
+                                        else{
+                                            text = text.replace("$zip_supplier","");
                                             r.setText(text,0);
                                         }
                                     }
@@ -565,7 +619,7 @@ public class ContractGenerator {
         }
     }
 
-    private void getClauses(OrderType order,ZipOutputStream zos,XWPFDocument document){
+    private void getAndPopulateClauses(OrderType order,ZipOutputStream zos,XWPFDocument document){
         try{
             if(order.getContract().size() <= 0){
                 // Negotiation
@@ -584,6 +638,7 @@ public class ContractGenerator {
             boolean technicalDataSheetDirectoryCreated = false;
 
             boolean PPAPClauseExists = false;
+            boolean negotiationClauseExists = false;
 
             int numberOfItemInformationRequest = 0;
 
@@ -618,17 +673,19 @@ public class ContractGenerator {
                     numberOfItemInformationRequest--;
                 }
                 else if(clause.getType().contentEquals("NEGOTIATION")){
+                    negotiationClauseExists = true;
                     createNegotiationEntry(document,clause);
                 }
             }
 
+            if(!negotiationClauseExists){
+                document.removeBodyElement(document.getPosOfTable(getTable(document,"Negotiation")));
+            }
             if(!PPAPClauseExists){
-                XWPFTable table = document.getTableArray(document.getTables().size()-2);
-                document.removeBodyElement(document.getPosOfTable(table));
+                document.removeBodyElement(document.getPosOfTable(getTable(document,"PPAP")));
             }
             if(!ItemDetailsDirectoryCreated){
-                XWPFTable table = document.getTableArray(document.getTables().size()-1);
-                document.removeBodyElement(document.getPosOfTable(table));
+                document.removeBodyElement(document.getPosOfTable(getTable(document,"Item Information Request")));
             }
         }
         catch (Exception e){
@@ -659,7 +716,7 @@ public class ContractGenerator {
                 map.get(documentReference.getDocumentType()).add(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
             }
 
-            XWPFTable table = document.getTableArray(5);
+            XWPFTable table = getTable(document,"PPAP");
 
             // Traverse the map
             Set set = map.entrySet();
@@ -687,7 +744,7 @@ public class ContractGenerator {
                     }
                 }
 
-                setSpace(row.getCell(1).getParagraphs().get(0),200);
+                setSpace(row.getCell(1).getParagraphs().get(0),cell_space);
                 addRightBorder(row);
             }
 
@@ -730,7 +787,7 @@ public class ContractGenerator {
                 fillItemDetails(table,zos,clause,id);
             }
             else{
-                XWPFTable table = document.getTables().get(6);
+                XWPFTable table = getTable(document,"Item Information Request");
 
                 CTTbl ctTbl = CTTbl.Factory.newInstance();
                 ctTbl.set(table.getCTTbl());
@@ -743,7 +800,7 @@ public class ContractGenerator {
                 clearCell(copyTable.getRow(6).getCell(1));
 
                 fillItemDetails(copyTable,zos,clause,id);
-                int pos = getPosOfFirstItemDetailsTable(document);
+                int pos = document.getPosOfTable(getTable(document,"Item Information Request"));
                 document.insertTable(pos,copyTable);
             }
 
@@ -756,9 +813,10 @@ public class ContractGenerator {
     private void createNegotiationEntry(XWPFDocument document,ClauseType clause){
         QuotationType quotation = (QuotationType) DocumentDAOUtility.getUBLDocument(((DocumentClauseType) clause).getClauseDocumentRef().getID(), DocumentType.QUOTATION);
 
+        XWPFTable table = getTable(document,"Negotiation");
         int totalPriceExists = 0;
         try {
-            for (XWPFTableRow row : document.getTableArray(4).getRows()) {
+            for (XWPFTableRow row : table.getRows()) {
                 for (XWPFTableCell cell : row.getTableCells()) {
                     for (XWPFParagraph p : cell.getParagraphs()) {
                         for (XWPFRun r : p.getRuns()) {
@@ -1051,19 +1109,19 @@ public class ContractGenerator {
         ctrPr.setColor(ctColor);
     }
 
-    private int getPosOfFirstItemDetailsTable(XWPFDocument document){
-        int pos = 0;
+    private XWPFTable getTable(XWPFDocument document,String type){
+        XWPFTable table = null;
 
         for(IBodyElement bodyElement : document.getBodyElements()){
             if(bodyElement.getElementType() == BodyElementType.TABLE){
-                XWPFTable table = (XWPFTable) bodyElement;
-                if(table.getText().contains("Item Information Request")){
-                    pos = document.getPosOfTable(table);
+                XWPFTable tbl = (XWPFTable) bodyElement;
+                if(tbl.getText().contains(type)){
+                    table = tbl;
                     break;
                 }
             }
         }
-        return pos;
+        return table;
     }
 
 }

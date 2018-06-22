@@ -4,7 +4,6 @@ import eu.nimble.service.bp.impl.contract.ContractGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,11 +15,10 @@ public class ContractGeneratorController {
     private final Logger logger = LoggerFactory.getLogger(ContractGeneratorController.class);
 
     @CrossOrigin(origins = {"*"})
-    @RequestMapping(value = "/contract",
-            consumes = MediaType.APPLICATION_JSON_VALUE,
-            method = RequestMethod.POST,
+    @RequestMapping(value = "/contracts/create-bundle",
+            method = RequestMethod.GET,
             produces = {"application/zip"})
-    public void generateContract(@RequestBody String orderId, HttpServletResponse response){
+    public void generateContract(@RequestParam(value = "orderId", required = true) String orderId, HttpServletResponse response){
         try{
             logger.info("Generating contract for the order with id : {}",orderId);
 
@@ -49,6 +47,5 @@ public class ContractGeneratorController {
         }
 
     }
-
 
 }
