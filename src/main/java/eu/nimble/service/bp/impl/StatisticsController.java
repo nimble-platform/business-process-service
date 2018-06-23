@@ -1,13 +1,14 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.impl.model.statistics.BusinessProcessCount;
+import eu.nimble.service.bp.impl.model.statistics.NonOrderedProducts;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.impl.util.controller.HttpResponseUtil;
 import eu.nimble.service.bp.impl.util.controller.InputValidatorUtil;
 import eu.nimble.service.bp.impl.util.controller.ValidationResponse;
 import eu.nimble.service.bp.impl.util.persistence.DAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.StatisticsDAOUtility;
-import eu.nimble.service.bp.swagger.model.ProcessInstanceGroup;
+import eu.nimble.service.bp.impl.util.serialization.Serializer;
 import eu.nimble.service.bp.swagger.model.Transaction;
 import io.swagger.annotations.*;
 import org.slf4j.Logger;
@@ -20,9 +21,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Api(value = "statistics", description = "The statistics API")
 @RequestMapping(value = "/statistics")
@@ -134,6 +133,27 @@ public class StatisticsController {
 
         } catch (Exception e) {
             return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting the total number for start date: %s, end date: %s, company id: %s", startDateStr, endDateStr, companyId), e, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @ApiOperation(value = "Gets the products that are not ordered")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Retrieved the products that are not ordered successfully")
+    })
+    @RequestMapping(value = "/non-ordered",
+            produces = {"application/json"},
+            method = RequestMethod.GET)
+    public ResponseEntity getProcessCount(@ApiParam(value = "Company ID", required = false) @RequestParam(value = "companyId", required = false) Integer companyId) {
+        try {
+            logger.info("Getting non-ordered products for company id: {}", companyId);
+
+            NonOrderedProducts nonOrderedProducts = StatisticsDAOUtility.getNonOrderedProducts(companyId);
+            String serializedResponse = Serializer.getDefaultObjectMapperForFilledFields().writeValueAsString(nonOrderedProducts);
+            logger.info("Retrieved the products that are not ordered for company id: {}", companyId);
+            return ResponseEntity.ok().body(serializedResponse);
+
+        } catch (Exception e) {
+            return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting the total number for company id: %s", companyId), e, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

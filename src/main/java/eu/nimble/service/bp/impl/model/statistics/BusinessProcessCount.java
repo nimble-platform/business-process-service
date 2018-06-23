@@ -14,12 +14,12 @@ public class BusinessProcessCount {
         return counts;
     }
 
-    public void addCount(String companyID, String processType, String status, Long count) {
+    public void addCount(String companyId, String processType, String status, Long count) {
         // check company map
-        Map<String, Map<String, Long>> companyMap = counts.get(companyID);
+        Map<String, Map<String, Long>> companyMap = counts.get(companyId);
         if(companyMap == null) {
             companyMap = new HashMap<>();
-            counts.put(companyID, companyMap);
+            counts.put(companyId, companyMap);
         }
 
         // check process type map
