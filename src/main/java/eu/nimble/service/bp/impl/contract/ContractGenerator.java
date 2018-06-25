@@ -1,7 +1,9 @@
 package eu.nimble.service.bp.impl.contract;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
 import eu.nimble.service.bp.impl.util.persistence.DocumentDAOUtility;
+import eu.nimble.service.bp.impl.util.serialization.Serializer;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.iteminformationrequest.ItemInformationRequestType;
 import eu.nimble.service.model.ubl.iteminformationresponse.ItemInformationResponseType;
@@ -19,9 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
+import java.io.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;
@@ -70,7 +70,165 @@ public class ContractGenerator {
         addDocxToZipFile("Standard Purchase Order Terms and Conditions.pdf",orderTermsAndConditions,zos);
         addDocxToZipFile("Company Purchase Details.pdf",purchaseDetails,zos);
 
+    }
 
+    public String generateOrderTermsAndConditionsAsText(String orderId,String sellerParty,String buyerParty,String incoterms,String tradingTerms){
+        OrderType order = (OrderType) DocumentDAOUtility.getUBLDocument(orderId,DocumentType.ORDER);
+
+        String text = "";
+        try {
+            if(order != null){
+                File file = new File(ContractGenerator.class.getResource("/contract-bundle/Standard Purchase Order Terms and Conditions_Text.docx").toURI());
+                FileInputStream fis = new FileInputStream(file);
+
+                XWPFDocument document = new XWPFDocument(fis);
+
+                List<XWPFParagraph> paragraphs = document.getParagraphs();
+
+                for (XWPFParagraph para : paragraphs) {
+                    String text2 = para.getText();
+                    if(text2 != null){
+                        text = text + text2 + "\n";
+                    }
+                }
+                fis.close();
+
+                // Fill placeholders
+                text = text.replace("$seller_id",order.getSellerSupplierParty().getParty().getName());
+                text = text.replace("$buyer_id",order.getBuyerCustomerParty().getParty().getName());
+
+                if(order.getPaymentTerms().getTradingTerms().size() > 0){
+                    text = text.replace("$payment_id",getTradingTerms(order.getPaymentTerms().getTradingTerms()));
+                }
+                else {
+                    text = text.replace("$payment_id",payment_id_default);
+                }
+
+                if(order.getBuyerCustomerParty().getParty().getPostalAddress().getCountry().getName() != null){
+                    text = text.replace("$buyer_country",order.getBuyerCustomerParty().getParty().getPostalAddress().getCountry().getName());
+                }
+                else {
+                    text = text.replace("$buyer_country",buyer_country_default);
+                }
+
+                if(!order.getSellerSupplierParty().getParty().getPerson().get(0).getContact().getTelephone().contentEquals("")){
+                    text = text.replace("$seller_tel",order.getSellerSupplierParty().getParty().getPerson().get(0).getContact().getTelephone());
+                }
+                else {
+                    text = text.replace("$seller_tel",seller_tel_default);
+                }
+
+                if(!order.getSellerSupplierParty().getParty().getWebsiteURI().contentEquals("")){
+                    text = text.replace("$seller_website",order.getSellerSupplierParty().getParty().getWebsiteURI());
+                }
+                else {
+                    text = text.replace("$seller_website",seller_website_default);
+                }
+
+                if(order.getOrderLine().get(0).getLineItem().getDeliveryTerms().getIncoterms() != null){
+                    text = text.replace("$incoterms_id",order.getOrderLine().get(0).getLineItem().getDeliveryTerms().getIncoterms());
+                }
+                else {
+                    text = text.replace("$incoterms_id",incoterms_id_default);
+                }
+
+                text = text.replace("$notices_id",constructAddress(order.getBuyerCustomerParty().getParty().getName(),order.getBuyerCustomerParty().getParty().getPostalAddress()));
+
+                // Use default values for the rest
+                text = text.replace("$action_day",action_day_default);
+                text = text.replace("$inspection_id",inspection_id_default);
+                text = text.replace("$warranty_id",warranty_id_default);
+                text = text.replace("$change_id",change_id_default);
+                text = text.replace("$insurance_id",insurance_id_default);
+                text = text.replace("$termination_id",termination_id_default);
+                text = text.replace("$shipment_id",shipment_id_default);
+                text = text.replace("$arbitrator_id",arbitrator_id_default);
+                text = text.replace("$agreement_id",agreement_id_default);
+                text = text.replace("$failed_agreement",failed_agreement_default);
+                text = text.replace("$decision_id",decision_id_default);
+            }
+            else {
+                ObjectMapper objectMapper = Serializer.getDefaultObjectMapper();
+                List<TradingTermType> tradingTermTypeList = objectMapper.readValue(tradingTerms,objectMapper.getTypeFactory().constructCollectionType(List.class,TradingTermType.class));
+
+                PartyType supplierParty = objectMapper.readValue(sellerParty,PartyType.class);
+                PartyType customerParty = objectMapper.readValue(buyerParty,PartyType.class);
+
+                File file = new File(ContractGenerator.class.getResource("/contract-bundle/Standard Purchase Order Terms and Conditions_Text.docx").toURI());
+                FileInputStream fis = new FileInputStream(file);
+
+                XWPFDocument document = new XWPFDocument(fis);
+
+                List<XWPFParagraph> paragraphs = document.getParagraphs();
+
+                for (XWPFParagraph para : paragraphs) {
+                    String text2 = para.getText();
+                    if(text2 != null){
+                        text = text + text2 + "\n";
+                    }
+                }
+                fis.close();
+
+                // Fill placeholders
+                text = text.replace("$seller_id",supplierParty.getName());
+                text = text.replace("$buyer_id",customerParty.getName());
+
+                if(tradingTermTypeList.size() > 0){
+                    text = text.replace("$payment_id",getTradingTerms(tradingTermTypeList));
+                }
+                else {
+                    text = text.replace("$payment_id",payment_id_default);
+                }
+
+                if(customerParty.getPostalAddress().getCountry().getName() != null){
+                    text = text.replace("$buyer_country",customerParty.getPostalAddress().getCountry().getName());
+                }
+                else {
+                    text = text.replace("$buyer_country",buyer_country_default);
+                }
+
+                if(!supplierParty.getPerson().get(0).getContact().getTelephone().contentEquals("")){
+                    text = text.replace("$seller_tel",supplierParty.getPerson().get(0).getContact().getTelephone());
+                }
+                else {
+                    text = text.replace("$seller_tel",seller_tel_default);
+                }
+
+                if(!supplierParty.getWebsiteURI().contentEquals("")){
+                    text = text.replace("$seller_website",supplierParty.getWebsiteURI());
+                }
+                else {
+                    text = text.replace("$seller_website",seller_website_default);
+                }
+
+                if(!incoterms.contentEquals("")){
+                    text = text.replace("$incoterms_id",incoterms);
+                }
+                else {
+                    text = text.replace("$incoterms_id",incoterms_id_default);
+                }
+
+                text = text.replace("$notices_id",constructAddress(customerParty.getName(),customerParty.getPostalAddress()));
+
+                // Use default values for the rest
+                text = text.replace("$action_day",action_day_default);
+                text = text.replace("$inspection_id",inspection_id_default);
+                text = text.replace("$warranty_id",warranty_id_default);
+                text = text.replace("$change_id",change_id_default);
+                text = text.replace("$insurance_id",insurance_id_default);
+                text = text.replace("$termination_id",termination_id_default);
+                text = text.replace("$shipment_id",shipment_id_default);
+                text = text.replace("$arbitrator_id",arbitrator_id_default);
+                text = text.replace("$agreement_id",agreement_id_default);
+                text = text.replace("$failed_agreement",failed_agreement_default);
+                text = text.replace("$decision_id",decision_id_default);
+            }
+
+        }
+        catch (Exception e){
+            logger.error("Failed to fill in 'Standard Purchase Order Terms and Conditions_Text.docx' for the order with id : {}",order.getID(),e);
+        }
+        return text;
     }
 
     private XWPFDocument fillOrderTermsAndConditions(OrderType order){
