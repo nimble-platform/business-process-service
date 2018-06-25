@@ -27,7 +27,13 @@ public class HttpResponseUtil {
 
 
     public static ResponseEntity createResponseEntityAndLog(String msg, Exception e, HttpStatus httpStatus, LogLevel logLevel) {
-        if (logLevel == null || logLevel == LogLevel.WARN) {
+        if(logLevel == null || logLevel == LogLevel.INFO) {
+            if(e != null) {
+                logger.info(msg, e);
+            } else {
+                logger.info(msg);
+            }
+        } else if (logLevel == LogLevel.WARN) {
             if (e != null) {
                 logger.warn(msg, e);
             } else {
