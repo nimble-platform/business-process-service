@@ -144,7 +144,7 @@ public class DefaultOrderResponseSender  implements JavaDelegate {
             Set<String> consumerIds = new HashSet<>();
             consumerIds.add(sellerId);
             CreateChannel.Request request = new CreateChannel.Request(buyerId, consumerIds, String.format("Data channel for product %s", order.getOrderLine().get(0).getLineItem().getItem().getName()), startTime.toDate(), endTime.toDate(), processInstanceId);
-            System.out.println(Serializer.getDefaultObjectMapper().writeValueAsString(request));
+
             Serializer.getDefaultObjectMapper().writeValue(os, request);
             os.flush();
 

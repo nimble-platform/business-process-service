@@ -6,8 +6,8 @@
 package eu.nimble.service.bp.impl.util.persistence;
 
 import eu.nimble.service.bp.hyperjaxb.model.*;
+import eu.nimble.service.bp.impl.model.statistics.BusinessProcessCount;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
-import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -88,17 +88,31 @@ public class DAOUtility {
     }
 
     public static int getTransactionCount(Integer partyId, List<String> documentTypes, String role, String startDateStr, String endDateStr, String status) {
-        String query = getDocumentMetadataQuery(partyId, documentTypes, role, startDateStr, endDateStr, status, DocumentMetadataQuery.TRANSACTION_COUNT);
+        String query = getDocumentMetadataQuery(partyId, documentTypes, role, startDateStr, endDateStr, status, DocumentMetadataQuery.TOTAL_TRANSACTION_COUNT);
         int count = ((Long) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query)).intValue();
         return count;
     }
 
+    public static BusinessProcessCount getGroupTransactionCounts(Integer partyId, String startDateStr, String endDateStr) {
+        String query = getDocumentMetadataQuery(partyId, new ArrayList<>(), null, startDateStr, endDateStr, null, DocumentMetadataQuery.GROUPED_TRANSACTION_COUNT);
+        List<Object> results = (List<Object>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+
+        BusinessProcessCount counts = new BusinessProcessCount();
+        for(Object result : results) {
+            Object[] resultItems = (Object[]) result;
+            counts.addCount((String) resultItems[0], resultItems[1].toString(), resultItems[2].toString(), (Long) resultItems[3]);
+        }
+        return counts;
+    }
+
     public static String getDocumentMetadataQuery(Integer partyId, List<String> documentTypes, String role, String startDateStr, String endDateStr, String status, DocumentMetadataQuery queryType) {
-        String query;
-        if(queryType.equals(DocumentMetadataQuery.TRANSACTION_COUNT)) {
+        String query = null;
+        if(queryType.equals(DocumentMetadataQuery.TOTAL_TRANSACTION_COUNT)) {
             query = "select count(*) from ProcessDocumentMetadataDAO documentMetadata ";
-        } else {
+        } else if(queryType.equals(DocumentMetadataQuery.DOCUMENT_IDS)){
             query = "select documentMetadata.documentID from ProcessDocumentMetadataDAO documentMetadata ";
+        } else if(queryType.equals(DocumentMetadataQuery.GROUPED_TRANSACTION_COUNT)) {
+            query = "select documentMetadata.initiatorID, documentMetadata.type, documentMetadata.status, count(*) from ProcessDocumentMetadataDAO documentMetadata ";
         }
 
         DateTimeFormatter sourceFormatter = DateTimeFormat.forPattern("dd-MM-yyyy");
@@ -148,6 +162,10 @@ public class DAOUtility {
             query += " documentMetadata.status ='" + status + "'";
         }
 
+        if(true) {
+            query += " group by documentMetadata.initiatorID, documentMetadata.type, documentMetadata.status";
+        }
+
         return query;
     }
 
@@ -190,6 +208,6 @@ public class DAOUtility {
     }
 
     private enum DocumentMetadataQuery {
-        DOCUMENT_IDS, TRANSACTION_COUNT
+        DOCUMENT_IDS, TOTAL_TRANSACTION_COUNT, GROUPED_TRANSACTION_COUNT
     }
 }

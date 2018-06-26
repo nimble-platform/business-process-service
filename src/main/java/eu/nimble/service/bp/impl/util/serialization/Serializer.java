@@ -1,5 +1,6 @@
 package eu.nimble.service.bp.impl.util.serialization;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,6 +25,13 @@ public class Serializer {
         SimpleModule module = new SimpleModule();
         module.addDeserializer(ClauseType.class, new ClauseDeserializer());
         mapper.registerModule(module);
+        return mapper;
+    }
+
+    public static ObjectMapper getDefaultObjectMapperForFilledFields() {
+        ObjectMapper mapper = getDefaultObjectMapper();
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
         return mapper;
     }
 }
