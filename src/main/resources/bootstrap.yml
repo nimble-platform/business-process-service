@@ -171,7 +171,7 @@ nimble:
   identity:
     url: ${IDENTITY_SERVICE_URL:http://nimble-staging.salzburgresearch.at/identity}
   data-channel:
-    url: ${DATA_CHANNEL_SERVICE_URL:http://nimble-staging.salzburgresearch.at/channel}
+    url: ${DATA_CHANNEL_SERVICE_URL:http://nimble-staging.salzburgresearch.at/data-channel}
 
 hystrix:
   command:
