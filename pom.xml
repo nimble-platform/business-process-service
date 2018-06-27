@@ -214,6 +214,17 @@
             <groupId>eu.nimble.core.common</groupId>
             <artifactId>ubl-data-model</artifactId>
             <version>0.0.1-SNAPSHOT</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>javax.persistence</groupId>
+                    <artifactId>persistence-api</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>eu.nimble.core.common</groupId>
+            <artifactId>statistics-data-model</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>eu.nimble.core.common</groupId>
