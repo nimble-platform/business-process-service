@@ -42,19 +42,14 @@ public class StatisticsDAOUtility {
     }
 
     public static NonOrderedProducts getNonOrderedProducts(Integer partyId) {
-        String query = "select distinct new list(item.manufacturerParty.ID, item.manufacturerParty.name, item.manufacturersItemIdentification.ID, item.name) from ItemType item where  ";
+        String query = "select distinct new list(item.manufacturerParty.ID, item.manufacturerParty.name, item.manufacturersItemIdentification.ID, item.name) from ItemType item " +
+                " where item.transportationServiceDetails is null ";
 
-        boolean filterExists = false;
         if (partyId != null) {
-            query = " item.manufacturerParty.id = '" + partyId + "'";
-            filterExists = true;
+            query = " and item.manufacturerParty.id = '" + partyId + "'";
         }
 
-        if (filterExists) {
-            query += " and ";
-        }
-
-        query += " item.manufacturersItemIdentification.ID not in " +
+        query += " and item.manufacturersItemIdentification.ID not in " +
                 "(select line.lineItem.item.manufacturersItemIdentification.ID from OrderType order_ join order_.orderLine line" +
                 " where line.lineItem.item.manufacturerParty.ID = item.manufacturerParty.ID) ";
 
