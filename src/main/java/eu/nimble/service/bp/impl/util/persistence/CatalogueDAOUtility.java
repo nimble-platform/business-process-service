@@ -8,13 +8,13 @@ import java.util.List;
 
 public class CatalogueDAOUtility {
 
-    public static Long getCatalogueLineHjid(OrderType order){
-        String query = "SELECT cl.hjid FROM CatalogueLineType cl WHERE cl.ID = '"+order.getOrderLine().get(0).getLineItem().getLineReference().get(0).getLineID()+"' AND cl.goodsItem.item.manufacturerParty.ID = '"+order.getOrderLine().get(0).getLineItem().getItem().getManufacturerParty().getID()+"'";
-        List<Long> hjids = (List<Long>) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadAll(query);
-        if(hjids.size() == 0){
+    public static CatalogueLineType getCatalogueLine(OrderType order){
+        String query = "SELECT cl FROM CatalogueLineType cl WHERE cl.ID = '"+order.getOrderLine().get(0).getLineItem().getLineReference().get(0).getLineID()+"' AND cl.goodsItem.item.manufacturerParty.ID = '"+order.getOrderLine().get(0).getLineItem().getItem().getManufacturerParty().getID()+"'";
+        List<CatalogueLineType> catalogueLineTypes = (List<CatalogueLineType>) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadAll(query);
+        if(catalogueLineTypes.size() == 0){
             return null;
         }
-        return hjids.get(0);
+        return catalogueLineTypes.get(0);
     }
 
     public static List<String> getOrderIds(CatalogueLineType catalogueLine){
