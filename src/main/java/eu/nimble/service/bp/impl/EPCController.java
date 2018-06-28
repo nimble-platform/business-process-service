@@ -89,6 +89,12 @@ public class EPCController {
             ObjectMapper objectMapper = new ObjectMapper();
             List<EpcCodes> epcCodesList = objectMapper.readValue(response.getBody().toString(),new TypeReference<List<EpcCodes>>(){});
 
+            if(epcCodesList.size() <= 0){
+                String msg = "The epc: %s is not used in any orders.";
+                logger.error(String.format(msg, epc));
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(String.format(msg, epc));
+            }
+
             String orderId = epcCodesList.get(0).getOrderId();
 
             OrderType order = (OrderType) DocumentDAOUtility.getUBLDocument(orderId, DocumentType.ORDER);
@@ -106,8 +112,8 @@ public class EPCController {
 
         } catch (Exception e) {
             String msg = "Unexpected error while getting the T&T details for the epc: %s";
-            logger.error(String.format(msg, epc));
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+            logger.error(String.format(msg, epc),e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(String.format(msg, epc));
         }
     }
 
@@ -149,6 +155,12 @@ public class EPCController {
         try {
             CatalogueLineType catalogueLine = (CatalogueLineType) HibernateUtility.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).load(CatalogueLineType.class, publishedProductID);
 
+            if(catalogueLine == null){
+                String msg = "There is no catalogue line for hjid : %d";
+                logger.error(String.format(msg,publishedProductID));
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(String.format(msg,publishedProductID));
+            }
+
             List<String> orderIds = CatalogueDAOUtility.getOrderIds(catalogueLine);
 
             String params = "";
@@ -179,9 +191,9 @@ public class EPCController {
             return ResponseEntity.status(HttpStatus.OK).body(epcCodes);
         }
         catch (Exception e){
-            String msg = "Unexpected error while getting the epc codes for productId: %s";
-            logger.error(String.format(msg,publishedProductID));
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+            String msg = "Unexpected error while getting the epc codes for productId: %d";
+            logger.error(String.format(msg,publishedProductID),e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(String.format(msg,publishedProductID));
         }
     }
 }
