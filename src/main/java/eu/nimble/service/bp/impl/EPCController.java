@@ -149,7 +149,7 @@ public class EPCController {
     @RequestMapping(value = "/t-t/epc-codes",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity getEPCCodesBelongsToProduct(@ApiParam(value = "The published product ID") @RequestParam(value = "publishedProductID", required = true) Long publishedProductID,
+    public ResponseEntity getEPCCodesBelongsToProduct(@ApiParam(value = "The published product ID") @RequestParam(value = "productId", required = true) Long publishedProductID,
                                                       @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         logger.info("Getting epc codes for productId: {}", publishedProductID);
         try {
