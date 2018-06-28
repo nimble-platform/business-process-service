@@ -99,15 +99,16 @@ public class EPCController {
 
             OrderType order = (OrderType) DocumentDAOUtility.getUBLDocument(orderId, DocumentType.ORDER);
 
-            Long hjid = CatalogueDAOUtility.getCatalogueLineHjid(order);
+            CatalogueLineType catalogueLine = CatalogueDAOUtility.getCatalogueLine(order);
 
 
             TTInfo ttInfo = new TTInfo();
-            ttInfo.setEventUrl(order.getOrderLine().get(0).getLineItem().getItem().getTrackAndTraceDetails().getEventURL());
-            ttInfo.setMasterUrl(order.getOrderLine().get(0).getLineItem().getItem().getTrackAndTraceDetails().getMasterURL());
-            ttInfo.setProductionProcessTemplate(order.getOrderLine().get(0).getLineItem().getItem().getTrackAndTraceDetails().getProductionProcessTemplate());
-            ttInfo.setRelatedProductId(hjid.toString());
+            ttInfo.setEventUrl(catalogueLine.getGoodsItem().getItem().getTrackAndTraceDetails().getEventURL());
+            ttInfo.setMasterUrl(catalogueLine.getGoodsItem().getItem().getTrackAndTraceDetails().getMasterURL());
+            ttInfo.setProductionProcessTemplate(catalogueLine.getGoodsItem().getItem().getTrackAndTraceDetails().getProductionProcessTemplate());
+            ttInfo.setRelatedProductId(catalogueLine.getHjid().toString());
 
+            logger.info("Received track & tracing details for epc: {}", epc);
             return ResponseEntity.ok(ttInfo);
 
         } catch (Exception e) {
