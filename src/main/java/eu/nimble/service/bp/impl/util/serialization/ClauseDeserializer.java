@@ -16,13 +16,13 @@ import java.io.IOException;
 /**
  * Created by suat on 15-May-18.
  */
-public class ClauseDeserializer extends JsonDeserializer<ClauseType> {
-    static int a = 0;
+public class  ClauseDeserializer extends JsonDeserializer<ClauseType> {
+
     @Override
     public ClauseType deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException, JsonProcessingException {
         ObjectCodec oc = jp.getCodec();
         JsonNode node = oc.readTree(jp);
-        System.out.println("here: " + a++);
+
         if(node == null) {
             return null;
         }
