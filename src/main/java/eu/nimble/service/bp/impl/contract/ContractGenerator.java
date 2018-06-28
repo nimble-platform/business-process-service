@@ -148,7 +148,7 @@ public class ContractGenerator {
                 text = text.replace("$decision_id",decision_id_default);
             }
             else {
-                ObjectMapper objectMapper = Serializer.getDefaultObjectMapper();
+                ObjectMapper objectMapper = Serializer.getObjectMapperForContracts();
                 List<TradingTermType> tradingTermTypeList = objectMapper.readValue(tradingTerms,objectMapper.getTypeFactory().constructCollectionType(List.class,TradingTermType.class));
 
                 PartyType supplierParty = objectMapper.readValue(sellerParty,PartyType.class);

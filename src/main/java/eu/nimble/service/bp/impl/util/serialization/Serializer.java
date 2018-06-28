@@ -15,16 +15,16 @@ public class Serializer {
         ObjectMapper mapper = new ObjectMapper();
         mapper = mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         mapper = mapper.configure(MapperFeature.PROPAGATE_TRANSIENT_MARKER, true);
-        return mapper;
-    }
-
-    public static ObjectMapper getObjectMapperForClauses(){
-        ObjectMapper mapper = new ObjectMapper();
-        mapper = mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper = mapper.configure(MapperFeature.PROPAGATE_TRANSIENT_MARKER, true);
         SimpleModule module = new SimpleModule();
         module.addDeserializer(ClauseType.class, new ClauseDeserializer());
         mapper.registerModule(module);
+        return mapper;
+    }
+
+    public static ObjectMapper getObjectMapperForContracts(){
+        ObjectMapper mapper = new ObjectMapper();
+        mapper = mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper = mapper.configure(MapperFeature.PROPAGATE_TRANSIENT_MARKER, true);
         return mapper;
     }
 
