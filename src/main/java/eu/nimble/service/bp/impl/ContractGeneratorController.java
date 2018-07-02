@@ -69,6 +69,7 @@ public class ContractGeneratorController {
             return ResponseEntity.ok(text);
         }
         catch (Exception e){
+            logger.error("Failed to generate Order Terms and Conditions",e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to generate Order Terms and Conditions");
         }
     }
