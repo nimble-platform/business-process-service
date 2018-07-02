@@ -21,10 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
+import java.io.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;
@@ -155,10 +152,9 @@ public class ContractGenerator {
                 PartyType supplierParty = objectMapper.readValue(sellerParty,PartyType.class);
                 PartyType customerParty = objectMapper.readValue(buyerParty,PartyType.class);
 
-                File file = new File(ContractGenerator.class.getResource("/contract-bundle/Standard Purchase Order Terms and Conditions_Text.docx").toURI());
-                FileInputStream fis = new FileInputStream(file);
+                InputStream file = ContractGenerator.class.getResourceAsStream("/contract-bundle/Standard Purchase Order Terms and Conditions_Text.docx");
 
-                XWPFDocument document = new XWPFDocument(fis);
+                XWPFDocument document = new XWPFDocument(file);
 
                 List<XWPFParagraph> paragraphs = document.getParagraphs();
 
@@ -168,7 +164,6 @@ public class ContractGenerator {
                         text = text + text2 + "\n";
                     }
                 }
-                fis.close();
 
                 // Fill placeholders
                 text = text.replace("$seller_id",supplierParty.getName());
@@ -236,10 +231,9 @@ public class ContractGenerator {
 
         XWPFDocument document = null;
         try {
-            File file = new File(ContractGenerator.class.getResource("/contract-bundle/Standard Purchase Order Terms and Conditions.docx").toURI());
-            FileInputStream fis = new FileInputStream(file.getAbsoluteFile());
+            InputStream file = ContractGenerator.class.getResourceAsStream("/contract-bundle/Standard Purchase Order Terms and Conditions.docx");
 
-            document = new XWPFDocument(fis);
+            document = new XWPFDocument(file);
 
             // image
             for(XWPFParagraph paragraph : document.getParagraphs()){
@@ -251,16 +245,13 @@ public class ContractGenerator {
                         setSpace(paragraph,logo_space);
 
                         run.setText(text,0);
-                        File imageFile = new File(ContractGenerator.class.getResource("/contract-bundle/nimble_logo.png").toURI());
-                        FileInputStream imageFis = new FileInputStream(imageFile.getAbsoluteFile());
 
-                        BufferedImage bufferedImage = ImageIO.read(imageFile);
-
+                        BufferedImage bufferedImage = ImageIO.read(getClass().getResourceAsStream("/contract-bundle/nimble_logo.png"));
+                        ByteArrayOutputStream os = new ByteArrayOutputStream();
+                        ImageIO.write(bufferedImage, "png", os);
                         int scaledWidth = (int)(bufferedImage.getWidth() * (termsScale/bufferedImage.getHeight()));
 
-                        run.addPicture(imageFis,XWPFDocument.PICTURE_TYPE_PNG,"nimble_logo.png",Units.toEMU(scaledWidth),Units.toEMU(100));
-                        imageFis.close();
-
+                        run.addPicture(new ByteArrayInputStream(os.toByteArray()),XWPFDocument.PICTURE_TYPE_PNG,"nimble_logo.png",Units.toEMU(scaledWidth),Units.toEMU(100));
                     }
                 }
             }
@@ -433,8 +424,6 @@ public class ContractGenerator {
                     }
                 }
             }
-            fis.close();
-
         }
         catch (Exception e){
             logger.error("Failed to fill in 'Standard Purchase Order Terms and Conditions.pdf' for the order with id : {}",order.getID(),e);
@@ -446,10 +435,9 @@ public class ContractGenerator {
 
         XWPFDocument document = null;
         try {
-            File file = new File(ContractGenerator.class.getResource("/contract-bundle/Purchase Details.docx").toURI());
-            FileInputStream fis = new FileInputStream(file.getAbsoluteFile());
+            InputStream file = ContractGenerator.class.getResourceAsStream("/contract-bundle/Purchase Details.docx");
 
-            document = new XWPFDocument(fis);
+            document = new XWPFDocument(file);
 
             boolean totalPriceExists = checkTotalPriceExistsInOrder(order);
 
@@ -464,17 +452,16 @@ public class ContractGenerator {
                                     if(text.contains("$logo_id")){
                                         text = text.replace("$logo_id","");
                                         r.setText(text,0);
-                                        File imageFile = new File(ContractGenerator.class.getResource("/contract-bundle/nimble_logo.png").toURI());
-                                        FileInputStream imageFis = new FileInputStream(imageFile.getAbsoluteFile());
 
-                                        BufferedImage bufferedImage = ImageIO.read(imageFile);
+                                        BufferedImage bufferedImage = ImageIO.read(getClass().getResourceAsStream("/contract-bundle/nimble_logo.png"));
+                                        ByteArrayOutputStream os = new ByteArrayOutputStream();
+                                        ImageIO.write(bufferedImage, "png", os);
                                         int width = bufferedImage.getWidth();
                                         int height = bufferedImage.getHeight();
 
                                         int scaledWidth = (int)(width * (purchaseDetailsScale/height));
 
-                                        r.addPicture(imageFis,XWPFDocument.PICTURE_TYPE_PNG,"nimble_logo.png",Units.toEMU(scaledWidth),Units.toEMU(60));
-                                        imageFis.close();
+                                        r.addPicture(new ByteArrayInputStream(os.toByteArray()),XWPFDocument.PICTURE_TYPE_PNG,"nimble_logo.png",Units.toEMU(scaledWidth),Units.toEMU(60));
                                     }
                                     if(text.contains("$order_id")){
                                         text = text.replace("$order_id",order.getID());
