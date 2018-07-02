@@ -21,7 +21,10 @@ import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;
@@ -78,10 +81,8 @@ public class ContractGenerator {
         String text = "";
         try {
             if(order != null){
-                File file = new File(ContractGenerator.class.getResource("/contract-bundle/Standard Purchase Order Terms and Conditions_Text.docx").toURI());
-                FileInputStream fis = new FileInputStream(file);
-
-                XWPFDocument document = new XWPFDocument(fis);
+                InputStream file = ContractGenerator.class.getResourceAsStream("/contract-bundle/Standard Purchase Order Terms and Conditions_Text.docx");
+                XWPFDocument document = new XWPFDocument(file);
 
                 List<XWPFParagraph> paragraphs = document.getParagraphs();
 
@@ -91,7 +92,7 @@ public class ContractGenerator {
                         text = text + text2 + "\n";
                     }
                 }
-                fis.close();
+                file.close();
 
                 // Fill placeholders
                 text = text.replace("$seller_id",order.getSellerSupplierParty().getParty().getName());
