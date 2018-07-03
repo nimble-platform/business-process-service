@@ -1,8 +1,6 @@
 package eu.nimble.service.bp.impl.util.persistence;
 
 import eu.nimble.service.bp.impl.model.statistics.NonOrderedProducts;
-import eu.nimble.service.model.ubl.commonaggregatecomponents.ItemType;
-import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.utility.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +44,7 @@ public class StatisticsDAOUtility {
                 " where item.transportationServiceDetails is null ";
 
         if (partyId != null) {
-            query = " and item.manufacturerParty.id = '" + partyId + "'";
+            query += " and item.manufacturerParty.id = '" + partyId + "'";
         }
 
         query += " and item.manufacturersItemIdentification.ID not in " +

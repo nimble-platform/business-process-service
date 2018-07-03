@@ -93,8 +93,8 @@ public class DAOUtility {
         return count;
     }
 
-    public static BusinessProcessCount getGroupTransactionCounts(Integer partyId, String startDateStr, String endDateStr) {
-        String query = getDocumentMetadataQuery(partyId, new ArrayList<>(), null, startDateStr, endDateStr, null, DocumentMetadataQuery.GROUPED_TRANSACTION_COUNT);
+    public static BusinessProcessCount getGroupTransactionCounts(Integer partyId, String startDateStr, String endDateStr,String role) {
+        String query = getDocumentMetadataQuery(partyId, new ArrayList<>(), role, startDateStr, endDateStr, null, DocumentMetadataQuery.GROUPED_TRANSACTION_COUNT);
         List<Object> results = (List<Object>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
 
         BusinessProcessCount counts = new BusinessProcessCount();
@@ -126,17 +126,32 @@ public class DAOUtility {
             filterExists = true;
         }
 
-        // the assumption is that if the start time is not null, the end time is also provided
-        if(startDateStr != null) {
-            DateTime startDate = sourceFormatter.parseDateTime(startDateStr);
-            DateTime endDate = sourceFormatter.parseDateTime(endDateStr);
-            endDate = endDate.plusDays(1).minusMillis(1);
-            if(!filterExists) {
+        if(startDateStr != null || endDateStr != null){
+            if(!filterExists){
                 query += " where";
-            } else {
+            }
+            else {
                 query += " and";
             }
-            query += " documentMetadata.submissionDate between '" + bpFormatter.print(startDate) + "' and '" + bpFormatter.print(endDate) + "'";
+
+            if(startDateStr != null && endDateStr != null){
+                DateTime startDate = sourceFormatter.parseDateTime(startDateStr);
+                DateTime endDate = sourceFormatter.parseDateTime(endDateStr);
+                endDate = endDate.plusDays(1).minusMillis(1);
+                query += " documentMetadata.submissionDate between '" + bpFormatter.print(startDate) + "' and '" + bpFormatter.print(endDate) + "'";
+
+            }
+            else if(startDateStr != null) {
+                DateTime startDate = sourceFormatter.parseDateTime(startDateStr);
+                query += " documentMetadata.submissionDate >= '" + bpFormatter.print(startDate) + "'";
+
+            }
+            else {
+                DateTime endDate = sourceFormatter.parseDateTime(endDateStr);
+                endDate = endDate.plusDays(1).minusMillis(1);
+                query += " documentMetadata.submissionDate <= '" + bpFormatter.print(endDate) + "'";
+
+            }
             filterExists = true;
         }
 
@@ -162,7 +177,7 @@ public class DAOUtility {
             query += " documentMetadata.status ='" + status + "'";
         }
 
-        if(true) {
+        if(queryType.equals(DocumentMetadataQuery.GROUPED_TRANSACTION_COUNT)) {
             query += " group by documentMetadata.initiatorID, documentMetadata.type, documentMetadata.status";
         }
 

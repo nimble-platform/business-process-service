@@ -109,10 +109,11 @@ public class StatisticsController {
             method = RequestMethod.GET)
     public ResponseEntity getProcessCountBreakDown(@ApiParam(value = "Start date", required = false) @RequestParam(value = "startDate", required = false) String startDateStr,
                                                    @ApiParam(value = "End date", required = false) @RequestParam(value = "endDate", required = false) String endDateStr,
-                                                   @ApiParam(value = "Company ID", required = false) @RequestParam(value = "companyId", required = false) Integer companyId) {
+                                                   @ApiParam(value = "Company ID", required = false) @RequestParam(value = "companyId", required = false) Integer companyId,
+                                                   @ApiParam(value = "Role",required = true) @RequestParam(value = "role",required = true) String role) {
 
         try {
-            logger.info("Getting total number of documents for start date: {}, end date: {}, company id: {}", startDateStr, endDateStr, companyId);
+            logger.info("Getting total number of documents for start date: {}, end date: {}, company id: {}, role: {}", startDateStr, endDateStr, companyId, role);
             ValidationResponse response;
 
             // check start date
@@ -127,12 +128,12 @@ public class StatisticsController {
                 return response.getInvalidResponse();
             }
 
-            BusinessProcessCount counts = DAOUtility.getGroupTransactionCounts(companyId, startDateStr, endDateStr);
-            logger.info("Number of business process for start date: {}, end date: {}, company id: {}", startDateStr, endDateStr, companyId);
+            BusinessProcessCount counts = DAOUtility.getGroupTransactionCounts(companyId, startDateStr, endDateStr,role);
+            logger.info("Number of business process for start date: {}, end date: {}, company id: {}, role: {}", startDateStr, endDateStr, companyId, role);
             return ResponseEntity.ok().body(counts);
 
         } catch (Exception e) {
-            return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting the total number for start date: %s, end date: %s, company id: %s", startDateStr, endDateStr, companyId), e, HttpStatus.INTERNAL_SERVER_ERROR);
+            return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting the total number for start date: %s, end date: %s, company id: %s, role: %s", startDateStr, endDateStr, companyId, role), e, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
