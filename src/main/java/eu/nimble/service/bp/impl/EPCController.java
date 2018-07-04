@@ -59,9 +59,12 @@ public class EPCController {
         }
     }
 
-    @ApiOperation(value = "Gets product-related and company-related details for the given epc code", response = TTInfo.class)
+    @ApiOperation(value = "",notes = "Get product-related and company-related details for the given epc code", response = TTInfo.class)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Retrieved the T&T details successfully", response = TTInfo.class)})
+            @ApiResponse(code = 200, message = "Retrieved the T&T details successfully", response = TTInfo.class),
+            @ApiResponse(code = 404, message = "The given epc code is not used in any orders"),
+            @ApiResponse(code = 500, message = "Unexpected error while getting the T&T details for the given epc")
+    })
     @RequestMapping(value = "/t-t/epc-details",
             produces = {"application/json"},
             method = RequestMethod.GET)
@@ -144,9 +147,12 @@ public class EPCController {
 //        }
 //    }
 
-    @ApiOperation(value = "Gets EPC codes that belongs to the same published product ID", response = List.class)
+    @ApiOperation(value = "",notes = "Get EPC codes that belongs to the same published product ID")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Retrieved epc codes successfully", response = List.class)})
+            @ApiResponse(code = 200, message = "Retrieved epc codes successfully", response = String.class,responseContainer = "List"),
+            @ApiResponse(code = 404, message = "There is no catalogue for the given id"),
+            @ApiResponse(code = 500, message = "Unexpected error while getting the epc codes for the given id")
+    })
     @RequestMapping(value = "/t-t/epc-codes",
             produces = {"application/json"},
             method = RequestMethod.GET)

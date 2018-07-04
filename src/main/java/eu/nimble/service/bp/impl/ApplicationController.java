@@ -7,7 +7,7 @@ import eu.nimble.service.bp.impl.util.persistence.HibernateUtilityRef;
 import eu.nimble.service.bp.swagger.api.ApplicationApi;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
-import eu.nimble.utility.HibernateUtility;
+import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -27,6 +27,7 @@ public class ApplicationController implements ApplicationApi {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
+    @ApiOperation(value = "",notes = "Add a new partner business process application preference")
     public ResponseEntity<ModelApiResponse> addProcessConfiguration(@RequestBody ProcessConfiguration body) {
         logger.info(" $$$ Adding ProcessApplicationConfigurations: ");
         logger.debug(" $$$ {}", body.toString());
@@ -36,6 +37,7 @@ public class ApplicationController implements ApplicationApi {
     }
 
     @Override
+    @ApiOperation(value = "",notes = "Delete the business process application preference of a partner for a process")
     public ResponseEntity<ModelApiResponse> deleteProcessConfiguration(@PathVariable("partnerID") String partnerID, @PathVariable("processID") String processID, @PathVariable("roleType") String roleType) {
         logger.info(" $$$ Deleting ProcessApplicationConfigurations for ... {}", partnerID);
         ProcessConfigurationDAO processConfigurationDAO = DAOUtility.getProcessConfiguration(partnerID, processID, ProcessConfiguration.RoleTypeEnum.valueOf(roleType));
@@ -44,6 +46,7 @@ public class ApplicationController implements ApplicationApi {
     }
 
     @Override
+    @ApiOperation(value = "",notes = "Get the business process application preferences of a partner for all processes")
     public ResponseEntity<List<ProcessConfiguration>> getProcessConfiguration(@PathVariable("partnerID") String partnerID) {
         logger.info(" $$$ Getting ProcessApplicationConfigurations for ... {}", partnerID);
         List<ProcessConfigurationDAO> processApplicationConfigurationsDAO = DAOUtility.getProcessConfigurationDAOByPartnerID(partnerID);
@@ -59,6 +62,7 @@ public class ApplicationController implements ApplicationApi {
     }
 
     @Override
+    @ApiOperation(value = "",notes = "Get the business process application preferences of a partner for a specific process")
     public ResponseEntity<ProcessConfiguration> getProcessConfigurationByProcessID(@PathVariable("partnerID") String partnerID, @PathVariable("processID") String processID, @PathVariable("roleType") String roleType) {
         logger.info(" $$$ Deleting ProcessApplicationConfigurations for ... {}", partnerID);
         ProcessConfigurationDAO processConfigurationDAO = DAOUtility.getProcessConfiguration(partnerID, processID, ProcessConfiguration.RoleTypeEnum.valueOf(roleType));
@@ -69,6 +73,7 @@ public class ApplicationController implements ApplicationApi {
     }
 
     @Override
+    @ApiOperation(value = "",notes = "Update the business process application preference of a partner")
     public ResponseEntity<ModelApiResponse> updateProcessConfiguration(@RequestBody ProcessConfiguration body) {
         logger.info(" $$$ Updating ProcessApplicationConfigurations: ");
         logger.debug(" $$$ {}", body.toString());

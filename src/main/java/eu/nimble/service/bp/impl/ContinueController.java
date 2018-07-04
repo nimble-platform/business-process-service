@@ -12,7 +12,7 @@ import eu.nimble.service.bp.impl.util.persistence.ProcessInstanceGroupDAOUtility
 import eu.nimble.service.bp.swagger.api.ContinueApi;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
-import eu.nimble.utility.HibernateUtility;
+import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,10 +23,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-
 /**
  * Created by yildiray on 5/25/2017.
  */
@@ -35,8 +31,9 @@ public class ContinueController implements ContinueApi {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
+    @ApiOperation(value = "",notes = "Send input to a waiting process instance (because of a human task)")
     public ResponseEntity<ProcessInstance> continueProcessInstance(@ApiParam(value = "", required = true) @RequestBody ProcessInstanceInputMessage body,
-                                                                   @ApiParam(value = "The UUID of the process instance group owned by the party continuing the process") @RequestParam(value = "gid", required = false) String gid,
+                                                                   @ApiParam(value = "The id of the process instance group owned by the party continuing the process") @RequestParam(value = "gid", required = false) String gid,
                                                                    @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         logger.debug(" $$$ Continue Process with ProcessInstanceInputMessage {}", body.toString());
         ProcessInstanceInputMessageDAO processInstanceInputMessageDAO = HibernateSwaggerObjectMapper.createProcessInstanceInputMessage_DAO(body);

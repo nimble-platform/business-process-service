@@ -1,6 +1,9 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.impl.contract.ContractGenerator;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -17,6 +20,10 @@ public class ContractGeneratorController {
     private final Logger logger = LoggerFactory.getLogger(ContractGeneratorController.class);
 
     @CrossOrigin(origins = {"*"})
+    @ApiOperation(value = "",notes = "Generate the contract for the given order id")
+    @ApiResponses(value = {
+            @ApiResponse(code = 500, message = "Failed to generate contract for the order with the given id")
+    })
     @RequestMapping(value = "/contracts/create-bundle",
             method = RequestMethod.GET,
             produces = {"application/zip"})
@@ -50,6 +57,10 @@ public class ContractGeneratorController {
 
     }
 
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Generated the text version of Order Terms and Conditions for the given order id"),
+            @ApiResponse(code = 500, message = "Failed to generate the text version of Order Terms and Conditions for the given order id")
+    })
     @RequestMapping(value = "/contracts/create-terms",
             produces = {MediaType.TEXT_PLAIN_VALUE},
             method = RequestMethod.GET)

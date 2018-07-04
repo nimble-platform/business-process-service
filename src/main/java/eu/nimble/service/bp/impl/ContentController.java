@@ -9,7 +9,7 @@ import eu.nimble.service.bp.impl.util.persistence.HibernateUtilityRef;
 import eu.nimble.service.bp.swagger.api.ContentApi;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
 import eu.nimble.service.bp.swagger.model.Process;
-import eu.nimble.utility.HibernateUtility;
+import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -29,6 +29,7 @@ public class ContentController implements ContentApi {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
+    @ApiOperation(value = "",notes = "Add a new business process")
     public ResponseEntity<ModelApiResponse> addProcessDefinition(@RequestBody Process body) {
         logger.info(" $$$ Adding business process definition: ");
         logger.debug(" $$$ {}", body.toString());
@@ -51,6 +52,7 @@ public class ContentController implements ContentApi {
     }
 
     @Override
+    @ApiOperation(value = "",notes = "Delete a business process definition")
     public ResponseEntity<ModelApiResponse> deleteProcessDefinition(@PathVariable("processID") String processID) {
         logger.info(" $$$ Deleting business process definition for ... {}", processID);
 
@@ -64,6 +66,7 @@ public class ContentController implements ContentApi {
     }
 
     @Override
+    @ApiOperation(value = "",notes = "Get the business process definitions")
     public ResponseEntity<Process> getProcessDefinition(@PathVariable("processID") String processID) {
         logger.info(" $$$ Getting business process definition for ... {}", processID);
 
@@ -80,6 +83,7 @@ public class ContentController implements ContentApi {
     }
 
     @Override
+    @ApiOperation(value = "",notes = "Get the business process definitions")
     public ResponseEntity<List<Process>> getProcessDefinitions() {
         logger.info(" $$$ Getting business process definitions");
 
@@ -109,6 +113,7 @@ public class ContentController implements ContentApi {
     }
 
     @Override
+    @ApiOperation(value = "",notes = "Update a business process")
     public ResponseEntity<ModelApiResponse> updateProcessDefinition(@RequestBody Process body) {
         logger.info(" $$$ Updating business process definition: ");
         logger.debug(" $$$ {}", body.toString());

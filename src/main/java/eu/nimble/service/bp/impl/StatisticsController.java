@@ -29,16 +29,16 @@ import java.util.List;
 public class StatisticsController {
     private final Logger logger = LoggerFactory.getLogger(StatisticsController.class);
 
-    @ApiOperation(value = "Gets the total number (active / completed) of specified business process.")
+    @ApiOperation(value = "",notes = "Get the total number (active / completed) of specified business process")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Retrieved the number of processes successfully")
+            @ApiResponse(code = 200, message = "Retrieved the number of processes successfully",response = int.class)
     })
     @RequestMapping(value = "/total-number/business-process",
             produces = {"application/json"},
             method = RequestMethod.GET)
     public ResponseEntity getProcessCount(@ApiParam(value = "Business process type. ", required = false) @RequestParam(value = "businessProcessType", required = false) String businessProcessType,
-                                          @ApiParam(value = "Start date", required = false) @RequestParam(value = "startDate", required = false) String startDateStr,
-                                          @ApiParam(value = "End date", required = false) @RequestParam(value = "endDate", required = false) String endDateStr,
+                                          @ApiParam(value = "Start date (DD-MM-YYYY)", required = false) @RequestParam(value = "startDate", required = false) String startDateStr,
+                                          @ApiParam(value = "End date (DD-MM-YYYY)", required = false) @RequestParam(value = "endDate", required = false) String endDateStr,
                                           @ApiParam(value = "Company ID", required = false) @RequestParam(value = "companyId", required = false) Integer companyId,
                                           @ApiParam(value = "Role in business process. Can be seller or buyer", required = false) @RequestParam(value = "role", required = false, defaultValue = "seller") String role,
                                           @ApiParam(value = "State of transaction. Can be WaitingResponse, Approved or Denied", required = false) @RequestParam(value = "status", required = false) String status) {
@@ -100,15 +100,15 @@ public class StatisticsController {
         }
     }
 
-    @ApiOperation(value = "Gets the total number (active / completed) of specified business process.")
+    @ApiOperation(value = "",notes = "Get the total number (active / completed) of specified business process")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Retrieved the number of processes successfully")
+            @ApiResponse(code = 200, message = "Retrieved the number of processes successfully",response = BusinessProcessCount.class)
     })
     @RequestMapping(value = "/total-number/business-process/break-down",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity getProcessCountBreakDown(@ApiParam(value = "Start date", required = false) @RequestParam(value = "startDate", required = false) String startDateStr,
-                                                   @ApiParam(value = "End date", required = false) @RequestParam(value = "endDate", required = false) String endDateStr,
+    public ResponseEntity getProcessCountBreakDown(@ApiParam(value = "Start date (DD-MM-YYYY)", required = false) @RequestParam(value = "startDate", required = false) String startDateStr,
+                                                   @ApiParam(value = "End date (DD-MM-YYYY)", required = false) @RequestParam(value = "endDate", required = false) String endDateStr,
                                                    @ApiParam(value = "Company ID", required = false) @RequestParam(value = "companyId", required = false) Integer companyId,
                                                    @ApiParam(value = "Role",required = true) @RequestParam(value = "role",required = true) String role) {
 
@@ -137,14 +137,14 @@ public class StatisticsController {
         }
     }
 
-    @ApiOperation(value = "Gets the products that are not ordered")
+    @ApiOperation(value = "",notes = "Get the products that are not ordered")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Retrieved the products that are not ordered successfully")
+            @ApiResponse(code = 200, message = "Retrieved the products that are not ordered",response = String.class)
     })
     @RequestMapping(value = "/non-ordered",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity getProcessCount(@ApiParam(value = "Company ID", required = false) @RequestParam(value = "companyId", required = false) Integer companyId) {
+    public ResponseEntity getNonOrderedProducts(@ApiParam(value = "Company ID", required = false) @RequestParam(value = "companyId", required = false) Integer companyId) {
         try {
             logger.info("Getting non-ordered products for company id: {}", companyId);
 
@@ -158,15 +158,15 @@ public class StatisticsController {
         }
     }
 
-    @ApiOperation(value = "Gets the trading volume")
+    @ApiOperation(value = "",notes = "Get the trading volume")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Retrieved the trading volume successfully")
+            @ApiResponse(code = 200, message = "Retrieved the trading volume successfully",response = double.class)
     })
     @RequestMapping(value = "/trading-volume",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity getProcessCount(@ApiParam(value = "Start date", required = false) @RequestParam(value = "startDate", required = false) String startDateStr,
-                                          @ApiParam(value = "End date", required = false) @RequestParam(value = "endDate", required = false) String endDateStr,
+    public ResponseEntity getTradingVolume(@ApiParam(value = "Start date (DD-MM-YYYY)", required = false) @RequestParam(value = "startDate", required = false) String startDateStr,
+                                          @ApiParam(value = "End date (DD-MM-YYYY)", required = false) @RequestParam(value = "endDate", required = false) String endDateStr,
                                           @ApiParam(value = "Company ID", required = false) @RequestParam(value = "companyId", required = false) Integer companyId,
                                           @ApiParam(value = "Role in business process. Can be SELLER or BUYER", required = false) @RequestParam(value = "role", required = false, defaultValue = "SELLER") String role,
                                           @ApiParam(value = "State of transaction. Can be WaitingResponse, Approved or Denied", required = false) @RequestParam(value = "status", required = false) String status) {

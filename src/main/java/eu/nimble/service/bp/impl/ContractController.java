@@ -14,6 +14,9 @@ import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
 import eu.nimble.utility.Configuration;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -43,6 +46,12 @@ public class ContractController {
      * <li>500, if there is an unexpected error</li>
      * </ul>
      */
+    @ApiOperation(value = "",notes = "Retrieve clause with the given id")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200,message = "Retrieved the clause successfully",response = ClauseType.class),
+            @ApiResponse(code = 404,message = "No clause for the given id"),
+            @ApiResponse(code = 500,message = "Unexpected error while getting the clause with id")
+    })
     @RequestMapping(value = "/clauses/{clauseId}",
             produces = {"application/json"},
             method = RequestMethod.GET)
@@ -61,6 +70,7 @@ public class ContractController {
         }
     }
 
+    @ApiOperation(value = "",notes = "Update the clause with the given id")
     @RequestMapping(value = "/clauses/{clauseId}",
             method = RequestMethod.PUT)
     public ResponseEntity updateClause(@PathVariable(value = "clauseId") String clauseId,
@@ -111,6 +121,7 @@ public class ContractController {
         }
     }
 
+    @ApiOperation(value = "",notes = "Construct contract starting from the process instance with the given id")
     @RequestMapping(value = "/contracts",
             method = RequestMethod.GET)
     public ResponseEntity constructContractForProcessInstances(@RequestParam(value = "processInstanceId") String processInstanceId) {
@@ -142,6 +153,12 @@ public class ContractController {
      * <li>500, if there is an unexpected error</li>
      * </ul>
      */
+    @ApiOperation(value = "",notes = "Retrieve all clauses for the contract with the given id")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200,message = "Retrieved all clauses for the contract"),
+            @ApiResponse(code = 400,message = "No contract for the given id"),
+            @ApiResponse(code = 500,message = "Unexpected error while getting clauses for contract")
+    })
     @RequestMapping(value = "/contracts/{contractId}/clauses",
             produces = {"application/json"},
             method = RequestMethod.GET)
@@ -166,6 +183,10 @@ public class ContractController {
         }
     }
 
+    @ApiOperation(value = "",notes = "Delete clause from the contract")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200,message = "Deleted clause from the contract successfully",response = ContractType.class)
+    })
     @RequestMapping(value = "/contracts/{contractId}/clauses/{clauseId}",
             method = RequestMethod.DELETE)
     public ResponseEntity deleteClauseFromContract(@PathVariable(value = "contractId") String contractId,
@@ -240,7 +261,7 @@ public class ContractController {
         }
     }
 
-
+    @ApiOperation(value = "",notes = "Add document clause to the contract")
     @RequestMapping(value = "/documents/{documentId}/contract",
             produces = {"application/json"},
             method = RequestMethod.PATCH)
@@ -306,6 +327,7 @@ public class ContractController {
         }
     }
 
+    @ApiOperation(value = "",notes = "Add data monitoring clause to the contract")
     @RequestMapping(value = "/documents/{documentId}/contract",
             consumes = {"application/json"},
             produces = {"application/json"},
