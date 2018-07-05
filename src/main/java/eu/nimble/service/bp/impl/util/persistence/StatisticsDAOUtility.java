@@ -44,7 +44,7 @@ public class StatisticsDAOUtility {
                 " where item.transportationServiceDetails is null ";
 
         if (partyId != null) {
-            query += " and item.manufacturerParty.id = '" + partyId + "'";
+            query += " and item.manufacturerParty.ID = '" + partyId + "'";
         }
 
         query += " and item.manufacturersItemIdentification.ID not in " +
