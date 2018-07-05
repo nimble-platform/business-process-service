@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -110,7 +111,8 @@ public class StatisticsController {
     public ResponseEntity getProcessCountBreakDown(@ApiParam(value = "Start date (DD-MM-YYYY)", required = false) @RequestParam(value = "startDate", required = false) String startDateStr,
                                                    @ApiParam(value = "End date (DD-MM-YYYY)", required = false) @RequestParam(value = "endDate", required = false) String endDateStr,
                                                    @ApiParam(value = "Company ID", required = false) @RequestParam(value = "companyId", required = false) Integer companyId,
-                                                   @ApiParam(value = "Role",required = true) @RequestParam(value = "role",required = true) String role) {
+                                                   @ApiParam(value = "Role in business process. Can be seller or buyer",required = true) @RequestParam(value = "role",required = true,defaultValue = "seller") String role,
+                                                   @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
 
         try {
             logger.info("Getting total number of documents for start date: {}, end date: {}, company id: {}, role: {}", startDateStr, endDateStr, companyId, role);
@@ -128,7 +130,7 @@ public class StatisticsController {
                 return response.getInvalidResponse();
             }
 
-            BusinessProcessCount counts = DAOUtility.getGroupTransactionCounts(companyId, startDateStr, endDateStr,role);
+            BusinessProcessCount counts = DAOUtility.getGroupTransactionCounts(companyId, startDateStr, endDateStr,role,bearerToken);
             logger.info("Number of business process for start date: {}, end date: {}, company id: {}, role: {}", startDateStr, endDateStr, companyId, role);
             return ResponseEntity.ok().body(counts);
 
