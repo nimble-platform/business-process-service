@@ -24,6 +24,7 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -610,7 +611,7 @@ public class ContractGenerator {
                                     }
                                     if(text.contains("$quantity_id")){
                                         if(totalPriceExists){
-                                            text = text.replace("$quantity_id",order.getOrderLine().get(0).getLineItem().getQuantity().getValue().toString()+" "+order.getOrderLine().get(0).getLineItem().getQuantity().getUnitCode());
+                                            text = text.replace("$quantity_id",new DecimalFormat(".##").format(order.getOrderLine().get(0).getLineItem().getQuantity().getValue())+" "+order.getOrderLine().get(0).getLineItem().getQuantity().getUnitCode());
                                             r.setText(text,0);
                                         }
                                         else{
@@ -620,7 +621,7 @@ public class ContractGenerator {
                                     }
                                     if(text.contains("$price_id")){
                                         if(totalPriceExists){
-                                            text = text.replace("$price_id",(order.getOrderLine().get(0).getLineItem().getPrice().getPriceAmount().getValue().divide(order.getOrderLine().get(0).getLineItem().getPrice().getBaseQuantity().getValue(),2)).toString()+" "+order.getOrderLine().get(0).getLineItem().getPrice().getPriceAmount().getCurrencyID());
+                                            text = text.replace("$price_id",new DecimalFormat(".##").format((order.getOrderLine().get(0).getLineItem().getPrice().getPriceAmount().getValue().divide(order.getOrderLine().get(0).getLineItem().getPrice().getBaseQuantity().getValue(),2)))+" "+order.getOrderLine().get(0).getLineItem().getPrice().getPriceAmount().getCurrencyID());
                                             r.setText(text,0);
                                         }
                                         else{
@@ -630,12 +631,12 @@ public class ContractGenerator {
                                     }
                                     if(text.contains("$total_id")){
                                         if(totalPriceExists){
-                                            text = text.replace("$total_id",(order.getOrderLine().get(0).getLineItem().getPrice().getPriceAmount().getValue().divide(order.getOrderLine().get(0).getLineItem().getPrice().getBaseQuantity().getValue(),2)).multiply(order.getOrderLine().get(0).getLineItem().getQuantity().getValue()).toString()+
+                                            text = text.replace("$total_id",new DecimalFormat(".##").format((order.getOrderLine().get(0).getLineItem().getPrice().getPriceAmount().getValue().divide(order.getOrderLine().get(0).getLineItem().getPrice().getBaseQuantity().getValue(),2)).multiply(order.getOrderLine().get(0).getLineItem().getQuantity().getValue()))+
                                                     " "+order.getOrderLine().get(0).getLineItem().getPrice().getPriceAmount().getCurrencyID());
                                             r.setText(text,0);
                                         }
                                         else if(order.getOrderLine().get(0).getLineItem().getPrice().getPriceAmount().getValue() != null){
-                                            text = text.replace("$total_id",order.getOrderLine().get(0).getLineItem().getPrice().getPriceAmount().getValue().toString()+
+                                            text = text.replace("$total_id",new DecimalFormat(".##").format(order.getOrderLine().get(0).getLineItem().getPrice().getPriceAmount().getValue())+
                                                     " "+order.getOrderLine().get(0).getLineItem().getPrice().getPriceAmount().getCurrencyID());
                                             r.setText(text,0);
                                         }
@@ -971,7 +972,7 @@ public class ContractGenerator {
                                 if(text.contains("$nego_price")){
                                     BigDecimal value = quotation.getQuotationLine().get(0).getLineItem().getPrice().getPriceAmount().getValue();
                                     if(value != null) {
-                                        text = text.replace("$nego_price",value.toString()+" "+
+                                        text = text.replace("$nego_price",new DecimalFormat(".##").format(value)+" "+
                                                 quotation.getQuotationLine().get(0).getLineItem().getPrice().getPriceAmount().getCurrencyID());
                                         r.setText(text,0);
 
@@ -986,7 +987,7 @@ public class ContractGenerator {
                                     BigDecimal value = quotation.getQuotationLine().get(0).getLineItem().getPrice().getBaseQuantity().getValue();
                                     String unit = quotation.getQuotationLine().get(0).getLineItem().getPrice().getBaseQuantity().getUnitCode();
                                     if(value != null && unit != null){
-                                        text = text.replace("$nego_base",value.toString()+" "+unit);
+                                        text = text.replace("$nego_base",new DecimalFormat(".##").format(value)+" "+unit);
                                         r.setText(text,0);
 
                                         totalPriceExists++;
@@ -999,7 +1000,7 @@ public class ContractGenerator {
                                 if(text.contains("$nego_quan")){
                                     BigDecimal value = quotation.getQuotationLine().get(0).getLineItem().getQuantity().getValue();
                                     if(value != null){
-                                        text = text.replace("$nego_quan",value.toString()+" "+
+                                        text = text.replace("$nego_quan",new DecimalFormat(".##").format(value)+" "+
                                                 quotation.getQuotationLine().get(0).getLineItem().getQuantity().getUnitCode());
                                         r.setText(text,0);
 
@@ -1012,7 +1013,7 @@ public class ContractGenerator {
                                 }
                                 if(text.contains("$nego_total")){
                                     if(totalPriceExists == 3){
-                                        text = text.replace("$nego_total",quotation.getQuotationLine().get(0).getLineItem().getPrice().getPriceAmount().getValue().divide(quotation.getQuotationLine().get(0).getLineItem().getPrice().getBaseQuantity().getValue(),2).multiply(quotation.getQuotationLine().get(0).getLineItem().getQuantity().getValue()).toString()+
+                                        text = text.replace("$nego_total",new DecimalFormat(".##").format(quotation.getQuotationLine().get(0).getLineItem().getPrice().getPriceAmount().getValue().divide(quotation.getQuotationLine().get(0).getLineItem().getPrice().getBaseQuantity().getValue(),2).multiply(quotation.getQuotationLine().get(0).getLineItem().getQuantity().getValue()))+
                                                 " "+quotation.getQuotationLine().get(0).getLineItem().getPrice().getPriceAmount().getCurrencyID());
                                         r.setText(text,0);
                                     }
