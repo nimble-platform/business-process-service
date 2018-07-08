@@ -708,7 +708,7 @@ public class ContractGenerator {
                                     if(text.contains("$order_delPer")){
                                         BigDecimal value = order.getOrderLine().get(0).getLineItem().getDelivery().get(0).getRequestedDeliveryPeriod().getDurationMeasure().getValue();
                                         if(value != null){
-                                            text = text.replace("$order_delPer",value+" "
+                                            text = text.replace("$order_delPer",new DecimalFormat(".##").format(value)+" "
                                                     +order.getOrderLine().get(0).getLineItem().getDelivery().get(0).getRequestedDeliveryPeriod().getDurationMeasure().getUnitCode());
                                             r.setText(text,0);
                                         }
@@ -1044,7 +1044,7 @@ public class ContractGenerator {
                                 if(text.contains("$nego_delPer")){
                                     BigDecimal value = quotation.getQuotationLine().get(0).getLineItem().getDelivery().get(0).getRequestedDeliveryPeriod().getDurationMeasure().getValue();
                                     if(value != null){
-                                        text = text.replace("$nego_delPer",value+" "+quotation.getQuotationLine().get(0).getLineItem().getDelivery().get(0).getRequestedDeliveryPeriod().getDurationMeasure().getUnitCode());
+                                        text = text.replace("$nego_delPer",new DecimalFormat(".##").format(value)+" "+quotation.getQuotationLine().get(0).getLineItem().getDelivery().get(0).getRequestedDeliveryPeriod().getDurationMeasure().getUnitCode());
                                         r.setText(text,0);
                                     }
                                     else {
@@ -1088,7 +1088,7 @@ public class ContractGenerator {
                                     BigDecimal value = quotation.getQuotationLine().get(0).getLineItem().getWarrantyValidityPeriod().getDurationMeasure().getValue();
                                     String unit = quotation.getQuotationLine().get(0).getLineItem().getWarrantyValidityPeriod().getDurationMeasure().getUnitCode();
                                     if(value != null && unit != null){
-                                        text = text.replace("$nego_validity",value+" "+unit);
+                                        text = text.replace("$nego_validity",new DecimalFormat(".##").format(value)+" "+unit);
                                         r.setText(text,0);
                                     }
                                     else {
