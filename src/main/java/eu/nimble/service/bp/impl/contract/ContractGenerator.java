@@ -11,6 +11,7 @@ import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.ppaprequest.PpapRequestType;
 import eu.nimble.service.model.ubl.ppapresponse.PpapResponseType;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.util.Units;
 import org.apache.poi.xwpf.converter.pdf.PdfConverter;
 import org.apache.poi.xwpf.converter.pdf.PdfOptions;
@@ -1192,27 +1193,25 @@ public class ContractGenerator {
     }
 
     private String getTradingTerms(List<TradingTermType> tradingTerms){
-        String str = "";
+        List<String> selectedTradingTerms = new ArrayList<>();
+
         int size = tradingTerms.size();
         for(int i = 0; i < size;i++){
             TradingTermType tradingTerm = tradingTerms.get(i);
             String result = "";
             if(tradingTerm.getID().contains("Values")){
                 result = String.format(tradingTerm.getTradingTermFormat(),tradingTerm.getValue().toArray());
+                selectedTradingTerms.add(result);
             }
             else {
-                result = tradingTerm.getDescription();
-            }
-
-            if(i != size-1){
-                str = str + result + ",";
-            }
-            else {
-                str = str + result;
+                if(tradingTerm.getValue().get(0).toLowerCase().contentEquals("true")){
+                    result = tradingTerm.getDescription();
+                    selectedTradingTerms.add(result);
+                }
             }
         }
 
-        return str;
+        return StringUtils.join(selectedTradingTerms,',');
     }
 
     private String constructAddress(String company_name,AddressType address){
