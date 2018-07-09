@@ -268,26 +268,26 @@ public class ContractGenerator {
                                     if(text.contains("$seller_id")){
                                         text = text.replace("$seller_id",order.getSellerSupplierParty().getParty().getName());
                                         r.setText(text,0);
-
+                                        r.setUnderline(UnderlinePatterns.SINGLE);
                                         setColor(r,red_hex);
                                     }
                                     else if(text.contains("$buyer_id")){
                                         text = text.replace("$buyer_id",order.getBuyerCustomerParty().getParty().getName());
                                         r.setText(text,0);
-
+                                        r.setUnderline(UnderlinePatterns.SINGLE);
                                         setColor(r,red_hex);
                                     }
                                     else if(text.contains("$payment_id")){
                                         if(order.getPaymentTerms().getTradingTerms().size() > 0){
                                             text = text.replace("$payment_id",getTradingTerms(order.getPaymentTerms().getTradingTerms()));
                                             r.setText(text,0);
-
+                                            r.setUnderline(UnderlinePatterns.SINGLE);
                                             setColor(r,red_hex);
                                         }
                                         else {
                                             text = text.replace("$payment_id",payment_id_default);
                                             r.setText(text,0);
-
+                                            r.setUnderline(UnderlinePatterns.SINGLE);
                                             setColor(r,blue_hex);
                                         }
                                     }
@@ -295,13 +295,13 @@ public class ContractGenerator {
                                         if(order.getBuyerCustomerParty().getParty().getPostalAddress().getCountry().getName() != null){
                                             text = text.replace("$buyer_country",order.getBuyerCustomerParty().getParty().getPostalAddress().getCountry().getName());
                                             r.setText(text,0);
-
+                                            r.setUnderline(UnderlinePatterns.SINGLE);
                                             setColor(r,red_hex);
                                         }
                                         else {
                                             text = text.replace("$buyer_country",buyer_country_default);
                                             r.setText(text,0);
-
+                                            r.setUnderline(UnderlinePatterns.SINGLE);
                                             setColor(r,blue_hex);
                                         }
                                     }
@@ -309,13 +309,13 @@ public class ContractGenerator {
                                         if(!order.getSellerSupplierParty().getParty().getPerson().get(0).getContact().getTelephone().contentEquals("")){
                                             text = text.replace("$seller_tel",order.getSellerSupplierParty().getParty().getPerson().get(0).getContact().getTelephone());
                                             r.setText(text,0);
-
+                                            r.setUnderline(UnderlinePatterns.SINGLE);
                                             setColor(r,red_hex);
                                         }
                                         else {
                                             text = text.replace("$seller_tel",seller_tel_default);
                                             r.setText(text,0);
-
+                                            r.setUnderline(UnderlinePatterns.SINGLE);
                                             setColor(r,blue_hex);
                                         }
                                     }
@@ -323,13 +323,13 @@ public class ContractGenerator {
                                         if(!order.getSellerSupplierParty().getParty().getWebsiteURI().contentEquals("")){
                                             text = text.replace("$seller_website",order.getSellerSupplierParty().getParty().getWebsiteURI());
                                             r.setText(text,0);
-
+                                            r.setUnderline(UnderlinePatterns.SINGLE);
                                             setColor(r,red_hex);
                                         }
                                         else {
                                             text = text.replace("$seller_website",seller_website_default);
                                             r.setText(text,0);
-
+                                            r.setUnderline(UnderlinePatterns.SINGLE);
                                             setColor(r,blue_hex);
                                         }
                                     }
@@ -337,87 +337,87 @@ public class ContractGenerator {
                                         if(order.getOrderLine().get(0).getLineItem().getDeliveryTerms().getIncoterms() != null){
                                             text = text.replace("$incoterms_id",order.getOrderLine().get(0).getLineItem().getDeliveryTerms().getIncoterms());
                                             r.setText(text,0);
-
+                                            r.setUnderline(UnderlinePatterns.SINGLE);
                                             setColor(r,red_hex);
                                         }
                                         else {
                                             text = text.replace("$incoterms_id",incoterms_id_default);
                                             r.setText(text,0);
-
+                                            r.setUnderline(UnderlinePatterns.SINGLE);
                                             setColor(r,blue_hex);
                                         }
                                     }
                                     else if(text.contains("$notices_id")){
                                         text = text.replace("$notices_id",constructAddress(order.getBuyerCustomerParty().getParty().getName(),order.getBuyerCustomerParty().getParty().getPostalAddress()));
                                         r.setText(text,0);
-
+                                        r.setUnderline(UnderlinePatterns.SINGLE);
                                         setColor(r,red_hex);
                                     }
                                     // Use default values for the rest
                                     else if(text.contains("$action_day")){
                                         text = text.replace("$action_day",action_day_default);
                                         r.setText(text,0);
-
+                                        r.setUnderline(UnderlinePatterns.SINGLE);
                                         setColor(r,blue_hex);
                                     }
                                     else if(text.contains("$inspection_id")){
                                         text = text.replace("$inspection_id",inspection_id_default);
                                         r.setText(text,0);
-
+                                        r.setUnderline(UnderlinePatterns.SINGLE);
                                         setColor(r,blue_hex);
                                     }
                                     else if(text.contains("$warranty_id")){
                                         text = text.replace("$warranty_id",warranty_id_default);
                                         r.setText(text,0);
-
+                                        r.setUnderline(UnderlinePatterns.SINGLE);
                                         setColor(r,blue_hex);
                                     }
                                     else if(text.contains("$change_id")){
                                         text = text.replace("$change_id",change_id_default);
                                         r.setText(text,0);
-
+                                        r.setUnderline(UnderlinePatterns.SINGLE);
                                         setColor(r,blue_hex);
                                     }
                                     else if(text.contains("$insurance_id")){
                                         text = text.replace("$insurance_id",insurance_id_default);
                                         r.setText(text,0);
-
+                                        r.setUnderline(UnderlinePatterns.SINGLE);
                                         setColor(r,blue_hex);
                                     }
                                     else if(text.contains("$termination_id")){
                                         text = text.replace("$termination_id",termination_id_default);
                                         r.setText(text,0);
-
+                                        r.setUnderline(UnderlinePatterns.SINGLE);
                                         setColor(r,blue_hex);
                                     }
                                     else if(text.contains("$shipment_id")){
                                         text = text.replace("$shipment_id",shipment_id_default);
                                         r.setText(text,0);
-
+                                        r.setUnderline(UnderlinePatterns.SINGLE);
                                         setColor(r,blue_hex);
                                     }
                                     else if(text.contains("$arbitrator_id")){
                                         text = text.replace("$arbitrator_id",arbitrator_id_default);
                                         r.setText(text,0);
-
+                                        r.setUnderline(UnderlinePatterns.SINGLE);
                                         setColor(r,blue_hex);
                                     }
                                     else if(text.contains("$agreement_id")){
                                         text = text.replace("$agreement_id",agreement_id_default);
                                         r.setText(text,0);
-
+                                        r.setUnderline(UnderlinePatterns.SINGLE);
                                         setColor(r,blue_hex);
                                     }
                                     else if(text.contains("$failed_agreement")){
                                         text = text.replace("$failed_agreement",failed_agreement_default);
                                         r.setText(text,0);
-
+                                        r.setUnderline(UnderlinePatterns.SINGLE);
                                         setColor(r,blue_hex);
                                     }
                                     else if(text.contains("$decision_id")){
                                         text = text.replace("$decision_id",decision_id_default);
                                         r.setText(text,0);
-
+                                        r.setUnderline(UnderlinePatterns.SINGLE);
                                         setColor(r,blue_hex);
                                     }
                                 }
@@ -612,7 +612,7 @@ public class ContractGenerator {
                                     }
                                     if(text.contains("$quantity_id")){
                                         if(totalPriceExists){
-                                            text = text.replace("$quantity_id",new DecimalFormat(".##").format(order.getOrderLine().get(0).getLineItem().getQuantity().getValue())+" "+order.getOrderLine().get(0).getLineItem().getQuantity().getUnitCode());
+                                            text = text.replace("$quantity_id",new DecimalFormat(".00").format(order.getOrderLine().get(0).getLineItem().getQuantity().getValue())+" "+order.getOrderLine().get(0).getLineItem().getQuantity().getUnitCode());
                                             r.setText(text,0);
                                         }
                                         else{
@@ -622,7 +622,7 @@ public class ContractGenerator {
                                     }
                                     if(text.contains("$price_id")){
                                         if(totalPriceExists){
-                                            text = text.replace("$price_id",new DecimalFormat(".##").format((order.getOrderLine().get(0).getLineItem().getPrice().getPriceAmount().getValue().divide(order.getOrderLine().get(0).getLineItem().getPrice().getBaseQuantity().getValue(),2)))+" "+order.getOrderLine().get(0).getLineItem().getPrice().getPriceAmount().getCurrencyID());
+                                            text = text.replace("$price_id",new DecimalFormat(".00").format((order.getOrderLine().get(0).getLineItem().getPrice().getPriceAmount().getValue().divide(order.getOrderLine().get(0).getLineItem().getPrice().getBaseQuantity().getValue(),2)))+" "+order.getOrderLine().get(0).getLineItem().getPrice().getPriceAmount().getCurrencyID());
                                             r.setText(text,0);
                                         }
                                         else{
@@ -632,12 +632,12 @@ public class ContractGenerator {
                                     }
                                     if(text.contains("$total_id")){
                                         if(totalPriceExists){
-                                            text = text.replace("$total_id",new DecimalFormat(".##").format((order.getOrderLine().get(0).getLineItem().getPrice().getPriceAmount().getValue().divide(order.getOrderLine().get(0).getLineItem().getPrice().getBaseQuantity().getValue(),2)).multiply(order.getOrderLine().get(0).getLineItem().getQuantity().getValue()))+
+                                            text = text.replace("$total_id",new DecimalFormat(".00").format((order.getOrderLine().get(0).getLineItem().getPrice().getPriceAmount().getValue().divide(order.getOrderLine().get(0).getLineItem().getPrice().getBaseQuantity().getValue(),2)).multiply(order.getOrderLine().get(0).getLineItem().getQuantity().getValue()))+
                                                     " "+order.getOrderLine().get(0).getLineItem().getPrice().getPriceAmount().getCurrencyID());
                                             r.setText(text,0);
                                         }
                                         else if(order.getOrderLine().get(0).getLineItem().getPrice().getPriceAmount().getValue() != null){
-                                            text = text.replace("$total_id",new DecimalFormat(".##").format(order.getOrderLine().get(0).getLineItem().getPrice().getPriceAmount().getValue())+
+                                            text = text.replace("$total_id",new DecimalFormat(".00").format(order.getOrderLine().get(0).getLineItem().getPrice().getPriceAmount().getValue())+
                                                     " "+order.getOrderLine().get(0).getLineItem().getPrice().getPriceAmount().getCurrencyID());
                                             r.setText(text,0);
                                         }
@@ -709,7 +709,7 @@ public class ContractGenerator {
                                     if(text.contains("$order_delPer")){
                                         BigDecimal value = order.getOrderLine().get(0).getLineItem().getDelivery().get(0).getRequestedDeliveryPeriod().getDurationMeasure().getValue();
                                         if(value != null){
-                                            text = text.replace("$order_delPer",new DecimalFormat(".##").format(value)+" "
+                                            text = text.replace("$order_delPer",new DecimalFormat("##").format(value)+" "
                                                     +order.getOrderLine().get(0).getLineItem().getDelivery().get(0).getRequestedDeliveryPeriod().getDurationMeasure().getUnitCode());
                                             r.setText(text,0);
                                         }
@@ -973,7 +973,7 @@ public class ContractGenerator {
                                 if(text.contains("$nego_price")){
                                     BigDecimal value = quotation.getQuotationLine().get(0).getLineItem().getPrice().getPriceAmount().getValue();
                                     if(value != null) {
-                                        text = text.replace("$nego_price",new DecimalFormat(".##").format(value)+" "+
+                                        text = text.replace("$nego_price",new DecimalFormat(".00").format(value)+" "+
                                                 quotation.getQuotationLine().get(0).getLineItem().getPrice().getPriceAmount().getCurrencyID());
                                         r.setText(text,0);
 
@@ -988,7 +988,7 @@ public class ContractGenerator {
                                     BigDecimal value = quotation.getQuotationLine().get(0).getLineItem().getPrice().getBaseQuantity().getValue();
                                     String unit = quotation.getQuotationLine().get(0).getLineItem().getPrice().getBaseQuantity().getUnitCode();
                                     if(value != null && unit != null){
-                                        text = text.replace("$nego_base",new DecimalFormat(".##").format(value)+" "+unit);
+                                        text = text.replace("$nego_base",new DecimalFormat(".00").format(value)+" "+unit);
                                         r.setText(text,0);
 
                                         totalPriceExists++;
@@ -1001,7 +1001,7 @@ public class ContractGenerator {
                                 if(text.contains("$nego_quan")){
                                     BigDecimal value = quotation.getQuotationLine().get(0).getLineItem().getQuantity().getValue();
                                     if(value != null){
-                                        text = text.replace("$nego_quan",new DecimalFormat(".##").format(value)+" "+
+                                        text = text.replace("$nego_quan",new DecimalFormat(".00").format(value)+" "+
                                                 quotation.getQuotationLine().get(0).getLineItem().getQuantity().getUnitCode());
                                         r.setText(text,0);
 
@@ -1014,7 +1014,7 @@ public class ContractGenerator {
                                 }
                                 if(text.contains("$nego_total")){
                                     if(totalPriceExists == 3){
-                                        text = text.replace("$nego_total",new DecimalFormat(".##").format(quotation.getQuotationLine().get(0).getLineItem().getPrice().getPriceAmount().getValue().divide(quotation.getQuotationLine().get(0).getLineItem().getPrice().getBaseQuantity().getValue(),2).multiply(quotation.getQuotationLine().get(0).getLineItem().getQuantity().getValue()))+
+                                        text = text.replace("$nego_total",new DecimalFormat(".00").format(quotation.getQuotationLine().get(0).getLineItem().getPrice().getPriceAmount().getValue().divide(quotation.getQuotationLine().get(0).getLineItem().getPrice().getBaseQuantity().getValue(),2).multiply(quotation.getQuotationLine().get(0).getLineItem().getQuantity().getValue()))+
                                                 " "+quotation.getQuotationLine().get(0).getLineItem().getPrice().getPriceAmount().getCurrencyID());
                                         r.setText(text,0);
                                     }
@@ -1045,7 +1045,7 @@ public class ContractGenerator {
                                 if(text.contains("$nego_delPer")){
                                     BigDecimal value = quotation.getQuotationLine().get(0).getLineItem().getDelivery().get(0).getRequestedDeliveryPeriod().getDurationMeasure().getValue();
                                     if(value != null){
-                                        text = text.replace("$nego_delPer",new DecimalFormat(".##").format(value)+" "+quotation.getQuotationLine().get(0).getLineItem().getDelivery().get(0).getRequestedDeliveryPeriod().getDurationMeasure().getUnitCode());
+                                        text = text.replace("$nego_delPer",new DecimalFormat("##").format(value)+" "+quotation.getQuotationLine().get(0).getLineItem().getDelivery().get(0).getRequestedDeliveryPeriod().getDurationMeasure().getUnitCode());
                                         r.setText(text,0);
                                     }
                                     else {
@@ -1089,7 +1089,7 @@ public class ContractGenerator {
                                     BigDecimal value = quotation.getQuotationLine().get(0).getLineItem().getWarrantyValidityPeriod().getDurationMeasure().getValue();
                                     String unit = quotation.getQuotationLine().get(0).getLineItem().getWarrantyValidityPeriod().getDurationMeasure().getUnitCode();
                                     if(value != null && unit != null){
-                                        text = text.replace("$nego_validity",new DecimalFormat(".##").format(value)+" "+unit);
+                                        text = text.replace("$nego_validity",new DecimalFormat("##").format(value)+" "+unit);
                                         r.setText(text,0);
                                     }
                                     else {
