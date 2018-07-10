@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
 import eu.nimble.service.bp.impl.util.persistence.DocumentDAOUtility;
 import eu.nimble.service.bp.impl.util.serialization.Serializer;
+import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.iteminformationrequest.ItemInformationRequestType;
 import eu.nimble.service.model.ubl.iteminformationresponse.ItemInformationResponseType;
@@ -29,6 +30,11 @@ import java.text.DecimalFormat;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 
 public class ContractGenerator {
     private final Logger logger = LoggerFactory.getLogger(ContractGenerator.class);
@@ -607,7 +613,7 @@ public class ContractGenerator {
                                         r.setText(text,0);
                                     }
                                     if(text.contains("$product_id")){
-                                        text = text.replace("$product_id",order.getOrderLine().get(0).getLineItem().getLineReference().get(0).getLineID());
+                                        text = text.replace("$product_id",order.getOrderLine().get(0).getLineItem().getItem().getManufacturersItemIdentification().getID());
                                         r.setText(text,0);
                                     }
                                     if(text.contains("$quantity_id")){
@@ -732,8 +738,12 @@ public class ContractGenerator {
                                             r.setText(text,0);
                                         }
                                     }
-                                    if(text.contains("$date_id")){
-                                        text = text.replace("$date_id","");
+                                    if(text.contains("$issue_id")){
+                                        text = text.replace("$issue_id",getDate("issue",order.getID()));
+                                        r.setText(text,0);
+                                    }
+                                    if(text.contains("$conf_id")){
+                                        text = text.replace("$conf_id",getDate("confirmation",order.getID()));
                                         r.setText(text,0);
                                     }
                                 }
@@ -1071,7 +1081,11 @@ public class ContractGenerator {
                                     r.setText(text,0);
                                 }
                                 if(text.contains("$nego_country")){
-                                    text = text.replace("$nego_country",quotation.getQuotationLine().get(0).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCountry().getName());
+                                    String country = quotation.getQuotationLine().get(0).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCountry().getName();
+                                    if(country == null){
+                                        country = "";
+                                    }
+                                    text = text.replace("$nego_country",country);
                                     r.setText(text,0);
                                 }
                                 if(text.contains("$nego_specTerms")){
@@ -1215,7 +1229,11 @@ public class ContractGenerator {
     }
 
     private String constructAddress(String company_name,AddressType address){
-        String addr = company_name + " at " +address.getStreetName()+","+address.getBuildingNumber()+","+address.getCityName()+","+address.getCountry().getName()+","+address.getPostalZone();
+        String country = address.getCountry().getName();
+        if(country == null){
+            country = "";
+        }
+        String addr = company_name + " at " +address.getStreetName()+","+address.getBuildingNumber()+","+address.getCityName()+","+country+","+address.getPostalZone();
         addr = addr.replace(",,",",");
         return addr;
     }
@@ -1268,6 +1286,30 @@ public class ContractGenerator {
             }
         }
         return table;
+    }
+
+    private String getDate(String type,String orderId){
+        String date = "";
+        if(type.contentEquals("issue")){
+            ProcessDocumentMetadata processDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(orderId);
+            DateTimeFormatter bpFormatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
+            LocalDateTime localTime = bpFormatter.parseLocalDateTime(processDocumentMetadata.getSubmissionDate());
+            DateTime issueDate = new DateTime(localTime.toDateTime(), DateTimeZone.UTC);
+
+            DateTimeFormatter format = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm");
+            date = issueDate.toString(format);
+        }
+        else {
+            ProcessDocumentMetadata responseMetadata = DocumentDAOUtility.getCorrespondingResponseMetadata(orderId,DocumentType.ORDER);
+            DateTimeFormatter bpFormatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
+            LocalDateTime localTime = bpFormatter.parseLocalDateTime(responseMetadata.getSubmissionDate());
+            DateTime issueDate = new DateTime(localTime.toDateTime(), DateTimeZone.UTC);
+
+            DateTimeFormatter format = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm");
+            date = issueDate.toString(format);
+        }
+        return date;
+
     }
 
 }

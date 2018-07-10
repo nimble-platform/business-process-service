@@ -1,7 +1,5 @@
 package eu.nimble.service.bp.impl.util.persistence;
 
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.hyperjaxb.model.*;
 import eu.nimble.service.bp.swagger.model.*;
 import eu.nimble.service.model.ubl.catalogue.CatalogueType;
@@ -199,6 +197,15 @@ public class DocumentDAOUtility {
         ProcessDocumentMetadataDAO processDocumentMetadataDAO = DAOUtility.getProcessDocumentMetadata(documentID);
         logger.debug(" $$$ Document metadata for {} is {}...", documentID, processDocumentMetadataDAO);
         return getUBLDocument(documentID, processDocumentMetadataDAO.getType());
+    }
+
+    public static ProcessDocumentMetadata getCorrespondingResponseMetadata(String documentID, DocumentType documentType){
+        String id = "";
+        if(documentType == DocumentType.ORDER){
+            String query = "SELECT orderResponse.ID FROM OrderResponseSimpleType orderResponse WHERE orderResponse.orderReference.documentReference.ID = '"+documentID+"'";
+            id = (String) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadIndividualItem(query);
+        }
+        return getDocumentMetadata(id);
     }
 
     public static boolean documentExists(String documentID) {
