@@ -1,11 +1,11 @@
 package eu.nimble.service.bp.impl.util.persistence;
 
 import eu.nimble.common.rest.identity.IdentityClientTyped;
+import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupFilter;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -231,6 +231,24 @@ public class ProcessInstanceGroupDAOUtility {
                 "(select agrp.item from ProcessInstanceGroupDAO pig2 join pig2.associatedGroupsItems agrp where pig2.ID = '" + associatedGroupId + "')";
         ProcessInstanceGroupDAO group = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query);
         return group;
+    }
+
+    public static List<ProcessInstanceDAO> getProcessInstances(List<String> ids) {
+        String idsString = "(";
+        int size = ids.size();
+        for(int i=0;i<size;i++){
+            if(i != size-1){
+                idsString = idsString + "'"+ids.get(i)+"',";
+            }
+            else {
+                idsString = idsString + "'"+ids.get(i)+"'";
+            }
+        }
+        idsString = idsString + ")";
+
+        String query = "select processInst from ProcessInstanceDAO processInst where processInst.processInstanceID in "+idsString;
+        List<ProcessInstanceDAO> processInstanceDAOS = (List<ProcessInstanceDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+        return processInstanceDAOS;
     }
 
     public static void deleteProcessInstanceGroupDAOByID(String groupID) {

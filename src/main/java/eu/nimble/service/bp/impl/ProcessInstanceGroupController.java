@@ -41,9 +41,16 @@ public class ProcessInstanceGroupController implements GroupApi {
             @ApiParam(value = "Identifier of the process instance group to which a new process instance id is added", required = true) @PathVariable("ID") String ID,
             @ApiParam(value = "Identifier of the process instance to be added", required = true) @RequestParam(value = "processInstanceID", required = true) String processInstanceID) {
         logger.debug("Adding process instance: {} to ProcessInstanceGroup: {}", ID);
+        ProcessInstanceGroupDAO processInstanceGroupDAO = null;
+        try {
+            processInstanceGroupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(ID);
+            processInstanceGroupDAO.getProcessInstanceIDs().add(processInstanceID);
+        }
+        catch (Exception e){
+            logger.error("Failed to get process instance group with the given id : {}",ID,e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
 
-        ProcessInstanceGroupDAO processInstanceGroupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(ID);
-        processInstanceGroupDAO.getProcessInstanceIDs().add(processInstanceID);
         HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceGroupDAO);
 
         // retrieve the group DAO again to populate the first/last activity times
@@ -77,9 +84,8 @@ public class ProcessInstanceGroupController implements GroupApi {
         logger.debug("Getting ProcessInstances for group: {}", ID);
 
         ProcessInstanceGroupDAO processInstanceGroupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(ID);
-
-        ProcessInstanceGroup processInstanceGroup = HibernateSwaggerObjectMapper.convertProcessInstanceGroupDAO(processInstanceGroupDAO);
-        ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(processInstanceGroup);
+        List<ProcessInstance> processInstances = HibernateSwaggerObjectMapper.createProcessInstances(ProcessInstanceGroupDAOUtility.getProcessInstances(processInstanceGroupDAO.getProcessInstanceIDs()));
+        ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(processInstances);
         logger.debug("Retrieved ProcessInstances for group: {}", ID);
         return response;
     }
