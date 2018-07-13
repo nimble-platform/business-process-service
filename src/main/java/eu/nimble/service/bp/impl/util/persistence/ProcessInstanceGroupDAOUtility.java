@@ -263,8 +263,11 @@ public class ProcessInstanceGroupDAOUtility {
     }
 
     public static void deleteArchivedGroupsForParty(String partyId) {
-        String query = "delete ProcessInstanceGroupDAO as pig WHERE pig.archived = true and pig.partyID = '" + partyId + "'";
-        HibernateUtilityRef.getInstance("bp-data-model").executeUpdate(query);
+        String query = "select pig.hjid from ProcessInstanceGroupDAO pig WHERE pig.archived = true and pig.partyID = '" + partyId + "'";
+        List<Long> longs = (List<Long>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+        for(Long hjid : longs){
+            HibernateUtilityRef.getInstance("bp-data-model").delete(ProcessInstanceGroupDAO.class,hjid);
+        }
     }
 
     private enum GroupQueryType {
