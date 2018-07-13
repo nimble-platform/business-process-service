@@ -6,8 +6,11 @@ import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
 import eu.nimble.service.bp.swagger.model.Process;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
+import eu.nimble.service.model.ubl.order.OrderType;
+import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
 import eu.nimble.utility.Configuration;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -57,31 +60,34 @@ public class ContractDAOUtility {
         return clause;
     }
 
-    public static ClauseType getClause(String documentId, DocumentType documentType, eu.nimble.service.bp.impl.model.ClauseType clauseType) {
-        String query;
+    public static List<ClauseType> getClause(String documentId, DocumentType documentType, eu.nimble.service.bp.impl.model.ClauseType clauseType) {
+        List<ClauseType> clauseTypes = new ArrayList<>();
         if(documentType.equals(DocumentType.ORDER)) {
-            query = "SELECT clause " +
-                    "FROM OrderType order " +
-                        "join order.contract contract " +
-                        "join contract.clause clause " +
-                    "WHERE " +
-                        "order.ID = '" + documentId + "' and " +
-                        "clause.type = '" + clauseType + "'";
+            OrderType orderType = (OrderType) DocumentDAOUtility.getUBLDocument(documentId,DocumentType.ORDER);
+            for(ContractType contractType : orderType.getContract()){
+                for(ClauseType clause : contractType.getClause()){
+                    if(eu.nimble.service.bp.impl.model.ClauseType.valueOf(clause.getType()) == clauseType){
+                        clauseTypes.add(clause);
+                    }
+                }
+            }
 
-        } else if(documentType.equals(DocumentType.TRANSPORTEXECUTIONPLAN)) {
-            query = "SELECT clause " +
-                    "FROM TransportExecutionPlanRequestType tep_request " +
-                        "join tep_request.contract.clause " +
-                    "WHERE " +
-                    "tep_request.ID = '" + documentId + "' and " +
-                    "clause.type = '" + clauseType + "'";
-
+        } else if(documentType.equals(DocumentType.TRANSPORTEXECUTIONPLANREQUEST)) {
+            TransportExecutionPlanRequestType transportExecutionPlanRequestType = (TransportExecutionPlanRequestType) DocumentDAOUtility.getUBLDocument(documentId,DocumentType.TRANSPORTEXECUTIONPLANREQUEST);
+            ContractType contractType = transportExecutionPlanRequestType.getTransportContract();
+            if(contractType == null){
+                return null;
+            }
+            for(ClauseType clause : contractType.getClause()){
+                if(eu.nimble.service.bp.impl.model.ClauseType.valueOf(clause.getType()) == clauseType){
+                    clauseTypes.add(clause);
+                }
+            }
         } else {
             return null;
         }
 
-        ClauseType clause = (ClauseType) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadIndividualItem(query);
-        return clause;
+        return clauseTypes;
     }
 
     public static ClauseType getContractClause(String contractId, String clauseId) {

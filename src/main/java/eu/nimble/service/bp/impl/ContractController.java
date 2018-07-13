@@ -25,6 +25,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
 
 import static eu.nimble.service.bp.impl.util.controller.HttpResponseUtil.*;
@@ -170,7 +171,6 @@ public class ContractController {
                 createResponseEntityAndLog(String.format("No contract for the given id: %s", contractId), HttpStatus.BAD_REQUEST);
             }
 
-            contract.getClause().add(contract.getClause().get(0));
             ObjectMapper mapper = new ObjectMapper();
             mapper.enableDefaultTypingAsProperty(ObjectMapper.DefaultTyping.NON_FINAL, "clause");
             mapper.enableDefaultTyping();
@@ -213,6 +213,8 @@ public class ContractController {
                 return createResponseEntityAndLog("Failed to delete clause: " + clauseId + " from contract: " + contractId, e, HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
+            // return updated version
+            contract = ContractDAOUtility.getContract(contractId);
             logger.info("Deleted clause: {} from contract: {}", clauseId, contractId);
             return ResponseEntity.ok().body(contract);
 
@@ -235,7 +237,7 @@ public class ContractController {
     @RequestMapping(value = "/documents/{documentId}/clauses",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity<ClauseType> getClauseDetails(@PathVariable(value = "documentId", required = true) String documentId,
+    public ResponseEntity getClauseDetails(@PathVariable(value = "documentId", required = true) String documentId,
                                                        @RequestParam(value = "clauseType", required = true) eu.nimble.service.bp.impl.model.ClauseType clauseType) {
         try {
             logger.info("Getting clause for document: {}, type: {}", documentId, clauseType);
@@ -249,9 +251,9 @@ public class ContractController {
                 return createResponseEntityAndLog(String.format("Invalid bounded-document type: %s", documentType), HttpStatus.BAD_REQUEST);
             }
 
-            ClauseType clause = ContractDAOUtility.getClause(documentMetadata.getDocumentID(), documentType, clauseType);
-            if (clause == null) {
-                createResponseEntityAndLog(String.format("No clause for the document: %s, clause type: %s", documentId, clauseType), HttpStatus.NOT_FOUND);
+            List<ClauseType> clause = ContractDAOUtility.getClause(documentMetadata.getDocumentID(), documentType, clauseType);
+            if (clause == null || clause.size() == 0) {
+               return createResponseEntityAndLog(String.format("No clause for the document: %s, clause type: %s", documentId, clauseType), HttpStatus.NOT_FOUND);
             }
             logger.info("Retrieved clause with for document: {}, type: {}", documentId, clauseType);
             return ResponseEntity.ok().body(clause);
@@ -292,8 +294,7 @@ public class ContractController {
                 return createResponseEntityAndLog(String.format("Invalid clause document id: %s", clauseDocumentId), HttpStatus.BAD_REQUEST);
             }
 
-            ProcessDocumentMetadataDAO documentMetadata = DAOUtility.getProcessDocumentMetadata(documentId);
-            Object document = DocumentDAOUtility.getUBLDocument(documentId, documentMetadata.getType());
+            Object document = DocumentDAOUtility.getUBLDocument(documentId, clauseDocumentMetadata.getType());
             ContractType contract = checkDocumentContract(document);
             DocumentClauseType clause = new DocumentClauseType();
             DocumentReferenceType docRef = new DocumentReferenceType();
