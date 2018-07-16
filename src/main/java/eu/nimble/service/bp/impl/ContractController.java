@@ -329,7 +329,7 @@ public class ContractController {
     }
 
     @ApiOperation(value = "",notes = "Add data monitoring clause to the contract")
-    @RequestMapping(value = "/documents/{documentId}/contract",
+    @RequestMapping(value = "/documents/{documentId}/contract/dataMonitoring",
             consumes = {"application/json"},
             produces = {"application/json"},
             method = RequestMethod.PATCH)
