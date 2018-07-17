@@ -134,7 +134,7 @@ public class ContractController {
                 return createResponseEntityAndLog(String.format("Invalid process instance id: %s", processInstanceId), HttpStatus.BAD_REQUEST);
             }
 
-            ContractType contract = ContractDAOUtility.constructContructForProcessInstances(processInstance);
+            ContractType contract = ContractDAOUtility.constructContractForProcessInstances(processInstance);
             logger.info("Constructed contract starting from the process instance: {}", processInstanceId);
 
             ObjectMapper objectMapper = new ObjectMapper();
@@ -168,12 +168,10 @@ public class ContractController {
             logger.info("Getting clauses for contract: {}", contractId);
             ContractType contract = ContractDAOUtility.getContract(contractId);
             if (contract == null) {
-                createResponseEntityAndLog(String.format("No contract for the given id: %s", contractId), HttpStatus.BAD_REQUEST);
+                return createResponseEntityAndLog(String.format("No contract for the given id: %s", contractId), HttpStatus.BAD_REQUEST);
             }
 
             ObjectMapper mapper = new ObjectMapper();
-            mapper.enableDefaultTypingAsProperty(ObjectMapper.DefaultTyping.NON_FINAL, "clause");
-            mapper.enableDefaultTyping();
 
             logger.info("Retrieved clauses for contract: {}", contractId);
             return ResponseEntity.ok().body(mapper.writeValueAsString(contract.getClause()));
@@ -264,7 +262,7 @@ public class ContractController {
     }
 
     @ApiOperation(value = "",notes = "Add document clause to the contract")
-    @RequestMapping(value = "/documents/{documentId}/contract",
+    @RequestMapping(value = "/documents/{documentId}/contract/clause/document",
             produces = {"application/json"},
             method = RequestMethod.PATCH)
     public ResponseEntity addDocumentClauseToContract(@PathVariable(value = "documentId") String documentId,
@@ -329,7 +327,7 @@ public class ContractController {
     }
 
     @ApiOperation(value = "",notes = "Add data monitoring clause to the contract")
-    @RequestMapping(value = "/documents/{documentId}/contract/dataMonitoring",
+    @RequestMapping(value = "/documents/{documentId}/contract/clause/data-monitoring",
             consumes = {"application/json"},
             produces = {"application/json"},
             method = RequestMethod.PATCH)
@@ -350,6 +348,7 @@ public class ContractController {
             ContractType contract = checkDocumentContract(document);
 
             dataMonitoringClause.setID(UUID.randomUUID().toString());
+            dataMonitoringClause.setType(eu.nimble.service.bp.impl.model.ClauseType.DATA_MONITORING.toString());
             contract.getClause().add(dataMonitoringClause);
 
             // persist the update

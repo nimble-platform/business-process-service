@@ -1,7 +1,6 @@
 package eu.nimble.service.bp.impl.util.persistence;
 
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
-import eu.nimble.service.bp.hyperjaxb.model.ProcessDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
 import eu.nimble.service.bp.swagger.model.Process;
@@ -136,7 +135,9 @@ public class ContractDAOUtility {
      * @param processInstance
      * @return
      */
-    public static ContractType constructContructForProcessInstances(ProcessInstanceDAO processInstance) {
+    public static ContractType constructContractForProcessInstances(ProcessInstanceDAO processInstance) {
+        ContractType realContract = null;
+
         ContractType contract = new ContractType();
         contract.setID(UUID.randomUUID().toString());
 
@@ -149,9 +150,23 @@ public class ContractDAOUtility {
             // if the process is completed
             if(documents.size() > 1) {
                 ProcessDocumentMetadataDAO docMetadata = documents.get(1);
+                ProcessDocumentMetadataDAO reqMetadata = documents.get(0);
                 // if the second document has a future submission date
                 if (documents.get(0).getSubmissionDate().compareTo(documents.get(1).getSubmissionDate()) > 0) {
                     docMetadata = documents.get(0);
+                    reqMetadata = documents.get(1);
+                }
+
+                // Check whether a contract already exists or not
+                if(reqMetadata.getType().equals(DocumentType.ORDER)){
+                    OrderType orderType = (OrderType) DocumentDAOUtility.getUBLDocument(reqMetadata.getDocumentID(),DocumentType.ORDER);
+                    realContract = orderType.getContract().get(0);
+                    break;
+                }
+                else if(reqMetadata.getType().equals(DocumentType.TRANSPORTEXECUTIONPLANREQUEST)){
+                    TransportExecutionPlanRequestType transportExecutionPlanRequestType = (TransportExecutionPlanRequestType) DocumentDAOUtility.getUBLDocument(reqMetadata.getDocumentID(),DocumentType.TRANSPORTEXECUTIONPLANREQUEST);
+                    realContract = transportExecutionPlanRequestType.getTransportContract();
+                    break;
                 }
 
                 DocumentType documentType = docMetadata.getType();
@@ -200,6 +215,15 @@ public class ContractDAOUtility {
 
         } while (processInstance != null);
 
-        return contract;
+        // Add new clauses to the contract
+        if(realContract != null){
+            for (ClauseType clause : contract.getClause()){
+                realContract.getClause().add(clause);
+            }
+        }
+        else {
+            return contract;
+        }
+        return realContract;
     }
 }

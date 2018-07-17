@@ -306,7 +306,7 @@ spring:
   profiles: local_dev
   # Local h2 database
   datasource:
-    url: jdbc:h2:mem:db;MVCC=TRUE;AUTO_RECONNECT=TRUE;DB_CLOSE_DELAY=10;INIT=create schema IF NOT EXISTS APPS
+    url: jdbc:h2:mem:db;MVCC=TRUE;AUTO_RECONNECT=TRUE;DB_CLOSE_ON_EXIT=FALSE;INIT=create schema IF NOT EXISTS APPS
     username: sa
     password:
     driverClassName: org.h2.Driver
@@ -319,18 +319,22 @@ persistence:
       hibernate:
         connection:
           #### H2 Configs
-          url: jdbc:h2:mem:db2;MVCC=TRUE;AUTO_RECONNECT=TRUE;DB_CLOSE_DELAY=10;INIT=create schema IF NOT EXISTS APPS
+          url: jdbc:h2:mem:db2;MVCC=TRUE;AUTO_RECONNECT=TRUE;DB_CLOSE_ON_EXIT=FALSE;INIT=create schema IF NOT EXISTS APPS
           username: sa
           password:
           driver_class: org.h2.Driver
         dialect: org.hibernate.dialect.H2Dialect
+        hbm2ddl:
+          auto: update
     business_process:
       hibernate:
         connection:
-          url: jdbc:h2:mem:db3;MVCC=TRUE;AUTO_RECONNECT=TRUE;DB_CLOSE_DELAY=10;INIT=create schema IF NOT EXISTS APPS
+          url: jdbc:h2:mem:db3;MVCC=TRUE;AUTO_RECONNECT=TRUE;DB_CLOSE_ON_EXIT=FALSE;INIT=create schema IF NOT EXISTS APPS
           username: sa
           password:
           driver_class: org.h2.Driver
         dialect: org.hibernate.dialect.H2Dialect
+        hbm2ddl:
+                  auto: update
 nimble:
   cors_enabled: true

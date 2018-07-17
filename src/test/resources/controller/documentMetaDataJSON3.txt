@@ -1,0 +1,15 @@
+{
+  "documentID": "17",
+  "initiatorID": "485",
+  "processInstanceID": "232",
+  "relatedProductCategories": [
+    "cat_example1","cat_example2"
+  ],
+  "relatedProducts": [
+    "QProduct"
+  ],
+  "responderID": "23",
+  "status": "APPROVED",
+  "submissionDate": "2018-07-05",
+  "type": "REQUESTFORQUOTATION"
+}
