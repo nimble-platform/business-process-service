@@ -48,6 +48,8 @@ public class Test12_DocumentControllerTest2 {
     private final String status = "WAITINGRESPONSE";
     private final String expectedType = "SUCCESS";
 
+    public static String documentId;
+
     @Test
     public void test1_getDocuments() throws Exception {
         MockHttpServletRequestBuilder request = get("/document/" + partnerID + "/" + type);
@@ -96,6 +98,8 @@ public class Test12_DocumentControllerTest2 {
 
         ProcessDocumentMetadata processDocumentMetadata = response.get(0);
         processDocumentMetadata.setRelatedProducts(listOfProducts);
+
+        documentId = response.get(0).getDocumentID();
 
         // update the document
         request = put("/document")

@@ -57,7 +57,13 @@ public class Test22_DocumentControllerTest3 {
         List<ProcessDocumentMetadata> response = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), new TypeReference<List<ProcessDocumentMetadata>>() {
         });
 
-        Assert.assertSame(expectedSize, response.get(0).getRelatedProducts().size());
+        // find the correct ProcessDocumentMetadata
+        for(ProcessDocumentMetadata pdm : response){
+            if(pdm.getDocumentID().equals(Test12_DocumentControllerTest2.documentId)){
+                Assert.assertSame(expectedSize, pdm.getRelatedProducts().size());
+            }
+        }
+
         // delete the document
         request = delete("/document/" + response.get(0).getDocumentID());
         mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
