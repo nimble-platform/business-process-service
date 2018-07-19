@@ -180,7 +180,7 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
     }
 
     @Override
-    public void saveDocument(String processInstanceId, String initiatorID, String responderID,
+    public void saveDocument(String businessContextId,String processInstanceId, String initiatorID, String responderID,
                             Object document, List<String> relatedProducts, List<String> relatedProductCategories) {
         ProcessDocumentMetadata documentMetadata = new ProcessDocumentMetadata();
         documentMetadata.setInitiatorID(initiatorID);
@@ -265,11 +265,11 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
         }
 
         // persist the document metadata
-        DocumentDAOUtility.addDocumentWithMetadata(documentMetadata, document);
+        DocumentDAOUtility.addDocumentWithMetadata(businessContextId,documentMetadata, document);
     }
 
     @Override
-    public void sendDocument(String processInstanceId, String initiatorID, String responderID, Object document) {
+    public void sendDocument(String businessContextId,String processInstanceId, String initiatorID, String responderID, Object document) {
         // TODO: Send email notification to the responder...
 
         // if this document is a response to an initiating document, set the response code of the initiating document
@@ -320,7 +320,7 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
         }
 
         if(initiatingDocumentMetadata != null) {
-            DocumentDAOUtility.updateDocumentMetadata(initiatingDocumentMetadata);
+            DocumentDAOUtility.updateDocumentMetadata(businessContextId,initiatingDocumentMetadata);
         }
     }
 }

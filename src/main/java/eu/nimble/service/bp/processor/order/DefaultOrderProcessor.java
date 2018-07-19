@@ -40,6 +40,7 @@ public class DefaultOrderProcessor implements JavaDelegate {
         String seller = variables.get("responderID").toString();
         List<String> relatedProducts = (List<String>) variables.get("relatedProducts");
         List<String> relatedProductCategories = (List<String>) variables.get("relatedProductCategories");
+        String processContextId = variables.get("processContextId").toString();
         OrderType order = (OrderType) variables.get("order");
 
         // get application execution configuration
@@ -55,7 +56,7 @@ public class DefaultOrderProcessor implements JavaDelegate {
 
             IBusinessProcessApplication businessProcessApplication = (IBusinessProcessApplication) instance;
 
-            businessProcessApplication.saveDocument(processInstanceId, buyer, seller, order, relatedProducts, relatedProductCategories);
+            businessProcessApplication.saveDocument(processContextId,processInstanceId, buyer, seller, order, relatedProducts, relatedProductCategories);
         } else if(executionType == ExecutionConfiguration.ExecutionTypeEnum.MICROSERVICE) {
             // TODO: How to call a microservice
         } else {

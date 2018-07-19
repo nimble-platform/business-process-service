@@ -32,6 +32,7 @@ public class DefaultItemInformationResponseSender implements JavaDelegate {
         // get input variables
         String buyer = variables.get("responderID").toString();
         String seller = variables.get("initiatorID").toString();
+        String processContextId = variables.get("processContextId").toString();
         ItemInformationResponseType itemInformationResponse = (ItemInformationResponseType) variables.get("itemInformationResponse");
 
         // get application execution configuration
@@ -49,7 +50,7 @@ public class DefaultItemInformationResponseSender implements JavaDelegate {
             IBusinessProcessApplication businessProcessApplication = (IBusinessProcessApplication) instance;
 
             // note the direction of the document (here it is from seller to buyer)
-            businessProcessApplication.sendDocument(processInstanceId, seller, buyer, itemInformationResponse);
+            businessProcessApplication.sendDocument(processContextId,processInstanceId, seller, buyer, itemInformationResponse);
         } else if(executionType == ExecutionConfiguration.ExecutionTypeEnum.MICROSERVICE) {
             // TODO: How to call a microservice
         } else {

@@ -6,6 +6,8 @@ import eu.nimble.service.bp.impl.util.persistence.DAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.impl.util.persistence.DocumentDAOUtility;
 import eu.nimble.service.bp.impl.util.serialization.Serializer;
+import eu.nimble.service.bp.processor.BusinessProcessContext;
+import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.api.DocumentApi;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
@@ -96,14 +98,32 @@ public class DocumentController implements DocumentApi {
     @Override
     @ApiOperation(value = "",notes = "Add a business process document metadata")
     public ResponseEntity<ModelApiResponse> addDocumentMetadata(@RequestBody ProcessDocumentMetadata body) {
-        DocumentDAOUtility.addDocumentWithMetadata(body, null);
+        BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
+        try{
+            DocumentDAOUtility.addDocumentWithMetadata(businessProcessContext.getId(),body, null);
+        }
+        catch (Exception e){
+            businessProcessContext.handleExceptions();
+        }
+        finally {
+            BusinessProcessContextHandler.getBusinessProcessContextHandler().deleteBusinessProcessContext(businessProcessContext.getId());
+        }
         return HibernateSwaggerObjectMapper.getApiResponse();
     }
 
     @Override
     @ApiOperation(value = "",notes = "Update a business process document metadata")
     public ResponseEntity<ModelApiResponse> updateDocumentMetadata(@RequestBody ProcessDocumentMetadata body) {
-        DocumentDAOUtility.updateDocumentMetadata(body);
+        BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
+        try{
+            DocumentDAOUtility.updateDocumentMetadata(businessProcessContext.getId(),body);
+        }
+        catch (Exception e){
+            businessProcessContext.handleExceptions();
+        }
+        finally {
+            BusinessProcessContextHandler.getBusinessProcessContextHandler().deleteBusinessProcessContext(businessProcessContext.getId());
+        }
         return HibernateSwaggerObjectMapper.getApiResponse();
     }
 

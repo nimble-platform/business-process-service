@@ -58,6 +58,7 @@ public class DefaultOrderResponseSender  implements JavaDelegate {
         // get input variables
         String buyer = variables.get("responderID").toString();
         String seller = variables.get("initiatorID").toString();
+        String processContextId = variables.get("processContextId").toString();
         OrderResponseSimpleType orderResponse = (OrderResponseSimpleType) variables.get("orderResponse");
         OrderType order = (OrderType) variables.get("order");
 
@@ -76,7 +77,7 @@ public class DefaultOrderResponseSender  implements JavaDelegate {
             IBusinessProcessApplication businessProcessApplication = (IBusinessProcessApplication) instance;
 
             // note the direction of the document (here it is from seller to buyer)
-            businessProcessApplication.sendDocument(processInstanceId, seller, buyer, orderResponse);
+            businessProcessApplication.sendDocument(processContextId,processInstanceId, seller, buyer, orderResponse);
 
             // create a data channel if the order is approved
             createDataChannel(order, orderResponse, buyer, seller, processInstanceId, (String) variables.get("bearer_token"));

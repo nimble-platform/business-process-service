@@ -38,6 +38,7 @@ public class DefaultPpapResponseSender implements JavaDelegate {
         // get input variables
         String buyer = variables.get("responderID").toString();
         String seller = variables.get("initiatorID").toString();
+        String processContextId = variables.get("processContextId").toString();
         PpapResponseType ppapResponseType = (PpapResponseType) variables.get("ppapResponse");
         PpapRequestType ppapRequestType = (PpapRequestType) variables.get("ppapRequest");
 
@@ -56,7 +57,7 @@ public class DefaultPpapResponseSender implements JavaDelegate {
             IBusinessProcessApplication businessProcessApplication = (IBusinessProcessApplication) instance;
 
             // note the direction of the document (here it is from seller to buyer)
-            businessProcessApplication.sendDocument(processInstanceId, seller, buyer, ppapResponseType);
+            businessProcessApplication.sendDocument(processContextId,processInstanceId, seller, buyer, ppapResponseType);
         } else if(executionType == ExecutionConfiguration.ExecutionTypeEnum.MICROSERVICE) {
             // TODO: How to call a microservice
         } else {

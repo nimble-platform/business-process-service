@@ -9,6 +9,8 @@ import eu.nimble.service.bp.impl.util.persistence.DAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.impl.util.persistence.HibernateUtilityRef;
 import eu.nimble.service.bp.impl.util.persistence.ProcessInstanceGroupDAOUtility;
+import eu.nimble.service.bp.processor.BusinessProcessContext;
+import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.api.ContinueApi;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
@@ -36,25 +38,47 @@ public class ContinueController implements ContinueApi {
                                                                    @ApiParam(value = "The id of the process instance group owned by the party continuing the process") @RequestParam(value = "gid", required = false) String gid,
                                                                    @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         logger.debug(" $$$ Continue Process with ProcessInstanceInputMessage {}", body.toString());
-        ProcessInstanceInputMessageDAO processInstanceInputMessageDAO = HibernateSwaggerObjectMapper.createProcessInstanceInputMessage_DAO(body);
-        HibernateUtilityRef.getInstance("bp-data-model").persist(processInstanceInputMessageDAO);
+        ProcessInstance processInstance = null;
+        BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
+        try {
+            ProcessInstanceInputMessageDAO processInstanceInputMessageDAO = HibernateSwaggerObjectMapper.createProcessInstanceInputMessage_DAO(body);
+            HibernateUtilityRef.getInstance("bp-data-model").persist(processInstanceInputMessageDAO);
 
-        ProcessInstance processInstance = CamundaEngine.continueProcessInstance(body, bearerToken);
+            // save ProcessInstanceInputMessageDAO
+            businessProcessContext.setMessageDAO(processInstanceInputMessageDAO);
 
-        ProcessInstanceDAO storedInstance = DAOUtility.getProcessIntanceDAOByID(processInstance.getProcessInstanceID());
-        storedInstance.setStatus(ProcessInstanceStatus.fromValue(processInstance.getStatus().toString()));
+            processInstance = CamundaEngine.continueProcessInstance(businessProcessContext.getId(),body, bearerToken);
 
-        HibernateUtilityRef.getInstance("bp-data-model").update(storedInstance);
+            ProcessInstanceDAO storedInstance = DAOUtility.getProcessIntanceDAOByID(processInstance.getProcessInstanceID());
 
-        // create process instance groups if this is the first process initializing the process group
-        if (gid != null) {
-            checkExistingGroup(gid, processInstance.getProcessInstanceID(), body);
+            // save previous status
+            businessProcessContext.setPreviousStatus(storedInstance.getStatus());
+
+            storedInstance.setStatus(ProcessInstanceStatus.fromValue(processInstance.getStatus().toString()));
+
+            HibernateUtilityRef.getInstance("bp-data-model").update(storedInstance);
+
+            // save ProcessInstanceDAO
+            businessProcessContext.setProcessInstanceDAO(storedInstance);
+
+            // create process instance groups if this is the first process initializing the process group
+            if (gid != null) {
+                checkExistingGroup(businessProcessContext.getId(),gid, processInstance.getProcessInstanceID(), body);
+            }
+        }
+        catch (Exception e){
+            logger.error(" $$$ Failed to continue process with ProcessInstanceInputMessage {}", body.toString(),e);
+            businessProcessContext.handleExceptions();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+        finally {
+            BusinessProcessContextHandler.getBusinessProcessContextHandler().deleteBusinessProcessContext(businessProcessContext.getId());
         }
 
         return new ResponseEntity<>(processInstance, HttpStatus.OK);
     }
 
-    private void checkExistingGroup(String sourceGid, String processInstanceId, ProcessInstanceInputMessage body) {
+    private void checkExistingGroup(String businessContextId,String sourceGid, String processInstanceId, ProcessInstanceInputMessage body){
         ProcessInstanceGroupDAO existingGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(sourceGid);
 
         // check whether the group for the trading partner is still there. If not, create a new one
@@ -66,6 +90,8 @@ public class ContinueController implements ContinueApi {
                     CamundaEngine.getTransactions(body.getVariables().getProcessID()).get(0).getInitiatorRole().toString(),
                     body.getVariables().getRelatedProducts().toString(),
                     sourceGid);
+
+            BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId).setUpdatedAssociatedGroup(associatedGroup);
 
             // associate groups
             existingGroup.getAssociatedGroups().add(associatedGroup.getID());

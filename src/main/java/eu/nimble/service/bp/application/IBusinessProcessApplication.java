@@ -11,7 +11,7 @@ public interface IBusinessProcessApplication {
     public Object createDocument(String initiatorID, String responderID, String content,
                                  ProcessDocumentMetadata.TypeEnum documentType);
 
-    public void saveDocument(String processInstanceId, String initiatorID, String responderID, Object documentObject, List<String> relatedProducts, List<String> relatedProductCategories);
+    public void saveDocument(String businessContextId,String processInstanceId, String initiatorID, String responderID, Object documentObject, List<String> relatedProducts, List<String> relatedProductCategories);
 
-    public void sendDocument(String processInstanceId, String initiatorID, String responderID, Object documentObject);
+    public void sendDocument(String businessContextId,String processInstanceId, String initiatorID, String responderID, Object documentObject);
 }

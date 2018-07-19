@@ -35,6 +35,7 @@ public class DefaultRFQSender  implements JavaDelegate {
         // get input variables
         String buyer = variables.get("initiatorID").toString();
         String seller = variables.get("responderID").toString();
+        String processContextId = variables.get("processContextId").toString();
         RequestForQuotationType requestForQuotation = (RequestForQuotationType) variables.get("requestForQuotation");
 
         // get application execution configuration
@@ -51,7 +52,7 @@ public class DefaultRFQSender  implements JavaDelegate {
 
             IBusinessProcessApplication businessProcessApplication = (IBusinessProcessApplication) instance;
 
-            businessProcessApplication.sendDocument(processInstanceId, buyer, seller, requestForQuotation);
+            businessProcessApplication.sendDocument(processContextId,processInstanceId, buyer, seller, requestForQuotation);
         } else if(executionType == ExecutionConfiguration.ExecutionTypeEnum.MICROSERVICE) {
             // TODO: How to call a microservice
         } else {

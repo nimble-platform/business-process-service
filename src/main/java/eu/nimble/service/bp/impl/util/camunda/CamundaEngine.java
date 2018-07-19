@@ -5,7 +5,6 @@
  */
 package eu.nimble.service.bp.impl.util.camunda;
 
-import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
 import eu.nimble.service.bp.swagger.model.*;
 import eu.nimble.service.bp.swagger.model.Process;
 import eu.nimble.utility.DateUtility;
@@ -34,11 +33,13 @@ public class CamundaEngine {
 
     private static Logger logger = LoggerFactory.getLogger(CamundaEngine.class);
 
-    public static ProcessInstance continueProcessInstance(ProcessInstanceInputMessage body, String bearerToken) {
+    public static ProcessInstance continueProcessInstance(String processContextId,ProcessInstanceInputMessage body, String bearerToken) {
         String processInstanceID = body.getProcessInstanceID();
         Task task = taskService.createTaskQuery().processInstanceId(processInstanceID).list().get(0);
 
         Map<String, Object> data = getVariablesData(body);
+        // add processContextId
+        data.put("processContextId",processContextId);
         data.put("bearer_token", bearerToken);
 
         ProcessInstance processInstance = new ProcessInstance();
@@ -54,8 +55,10 @@ public class CamundaEngine {
         return processInstance;
     }
 
-    public static ProcessInstance startProcessInstance(ProcessInstanceInputMessage body) {
+    public static ProcessInstance startProcessInstance(String processContextId,ProcessInstanceInputMessage body) {
         Map<String, Object> data = getVariablesData(body);
+        // add processContextId
+        data.put("processContextId",processContextId);
         String processID = body.getVariables().getProcessID();
 
         logger.info(" Starting business process instance for {}, with data {}", processID, data.toString());

@@ -1,6 +1,8 @@
 package eu.nimble.service.bp.impl.util.persistence;
 
 import eu.nimble.service.bp.hyperjaxb.model.*;
+import eu.nimble.service.bp.processor.BusinessProcessContext;
+import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.model.*;
 import eu.nimble.service.model.ubl.catalogue.CatalogueType;
 import eu.nimble.service.model.ubl.despatchadvice.DespatchAdviceType;
@@ -58,24 +60,38 @@ public class DocumentDAOUtility {
         return executionConfiguration;
     }
 
-    public static void addDocumentWithMetadata(ProcessDocumentMetadata documentMetadata, Object document) {
+    public static void addDocumentWithMetadata(String processContextId,ProcessDocumentMetadata documentMetadata, Object document) {
         ProcessDocumentMetadataDAO processDocumentDAO = HibernateSwaggerObjectMapper.createProcessDocumentMetadata_DAO(documentMetadata);
         HibernateUtilityRef.getInstance("bp-data-model").persist(processDocumentDAO);
+        // save ProcessDocumentMetadataDAO
+        BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(processContextId);
+        businessProcessContext.setMetadataDAO(processDocumentDAO);
 
         if (document != null)
+        {
             HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(document);
+            // save Object
+            businessProcessContext.setDocument(document);
+        }
+
     }
 
 
 
-    public static void updateDocumentMetadata(ProcessDocumentMetadata body) {
+    public static void updateDocumentMetadata(String processContextId,ProcessDocumentMetadata body) {
+        BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(processContextId);
+
         ProcessDocumentMetadataDAO storedDocumentDAO = DAOUtility.getProcessDocumentMetadata(body.getDocumentID());
 
+        businessProcessContext.setPreviousDocumentMetadataStatus(storedDocumentDAO.getStatus());
+
+        HibernateUtilityRef.getInstance("bp-data-model").delete(storedDocumentDAO);
         ProcessDocumentMetadataDAO newDocumentDAO = HibernateSwaggerObjectMapper.createProcessDocumentMetadata_DAO(body);
 
-        newDocumentDAO.setHjid(storedDocumentDAO.getHjid());
+        newDocumentDAO = (ProcessDocumentMetadataDAO) HibernateUtilityRef.getInstance("bp-data-model").update(newDocumentDAO);
 
-        HibernateUtilityRef.getInstance("bp-data-model").update(newDocumentDAO);
+        businessProcessContext.setUpdatedDocumentMetadata(newDocumentDAO);
+
     }
 
     public static ProcessDocumentMetadata getDocumentMetadata(String documentID) {

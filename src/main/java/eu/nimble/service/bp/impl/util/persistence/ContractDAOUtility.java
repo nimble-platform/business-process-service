@@ -160,7 +160,9 @@ public class ContractDAOUtility {
                 // Check whether a contract already exists or not
                 if(reqMetadata.getType().equals(DocumentType.ORDER)){
                     OrderType orderType = (OrderType) DocumentDAOUtility.getUBLDocument(reqMetadata.getDocumentID(),DocumentType.ORDER);
-                    realContract = orderType.getContract().get(0);
+                    if(orderType.getContract().size() > 0){
+                        realContract = orderType.getContract().get(0);
+                    }
                     break;
                 }
                 else if(reqMetadata.getType().equals(DocumentType.TRANSPORTEXECUTIONPLANREQUEST)){

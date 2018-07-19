@@ -33,6 +33,7 @@ public class DefaultItemInformationResponseProcessor implements JavaDelegate {
         // get input variables
         String buyer = variables.get("responderID").toString();
         String seller = variables.get("initiatorID").toString();
+        String processContextId = variables.get("processContextId").toString();
         List<String> relatedProducts = (List<String>) variables.get("relatedProducts");
         List<String> relatedProductCategories = (List<String>) variables.get("relatedProductCategories");
         ItemInformationResponseType itemInformationResponse = (ItemInformationResponseType) variables.get("itemInformationResponse");
@@ -52,7 +53,7 @@ public class DefaultItemInformationResponseProcessor implements JavaDelegate {
             IBusinessProcessApplication businessProcessApplication = (IBusinessProcessApplication) instance;
 
             // NOTE: Pay attention to the direction of the document. Here it is from seller to buyer
-            businessProcessApplication.saveDocument(processInstanceId, seller, buyer, itemInformationResponse, relatedProducts, relatedProductCategories);
+            businessProcessApplication.saveDocument(processContextId,processInstanceId, seller, buyer, itemInformationResponse, relatedProducts, relatedProductCategories);
         } else if(executionType == ExecutionConfiguration.ExecutionTypeEnum.MICROSERVICE) {
             // TODO: How to call a microservice
         } else {

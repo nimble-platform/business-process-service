@@ -8,6 +8,8 @@ import eu.nimble.service.bp.impl.util.persistence.DAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.impl.util.persistence.HibernateUtilityRef;
 import eu.nimble.service.bp.impl.util.persistence.ProcessInstanceGroupDAOUtility;
+import eu.nimble.service.bp.processor.BusinessProcessContext;
+import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.api.StartApi;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
@@ -37,40 +39,60 @@ public class StartController implements StartApi {
                                                                 @ApiParam(value = "The id of the process instance group owned by the party initiating the process") @RequestParam(value = "gid", required = false) String gid,
                                                                 @ApiParam(value = "The id of the preceding process instance") @RequestParam(value = "precedingPid", required = false) String precedingPid) {
         logger.debug(" $$$ Start Process with ProcessInstanceInputMessage {}", body.toString());
-        ProcessInstanceInputMessageDAO processInstanceInputMessageDAO = HibernateSwaggerObjectMapper.createProcessInstanceInputMessage_DAO(body);
-        HibernateUtilityRef.getInstance("bp-data-model").persist(processInstanceInputMessageDAO);
+        ProcessInstance processInstance = null;
+        // get BusinessProcessContext
+        BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
+        try {
+            ProcessInstanceInputMessageDAO processInstanceInputMessageDAO = HibernateSwaggerObjectMapper.createProcessInstanceInputMessage_DAO(body);
+            HibernateUtilityRef.getInstance("bp-data-model").persist(processInstanceInputMessageDAO);
 
-        ProcessInstance processInstance = CamundaEngine.startProcessInstance(body);
+            // save ProcessInstanceInputMessageDAO
+            businessProcessContext.setMessageDAO(processInstanceInputMessageDAO);
 
-        ProcessInstanceDAO processInstanceDAO = HibernateSwaggerObjectMapper.createProcessInstance_DAO(processInstance);
-        HibernateUtilityRef.getInstance("bp-data-model").persist(processInstanceDAO);
+            processInstance = CamundaEngine.startProcessInstance(businessProcessContext.getId(),body);
 
-        // get the process previous process instance
-        if(precedingPid != null) {
-            ProcessInstanceDAO precedingInstance = DAOUtility.getProcessIntanceDAOByID(precedingPid);
-            if (precedingInstance == null) {
-                String msg = "Invalid preceding process instance ID: %s";
-                logger.warn(String.format(msg, precedingPid));
-                return ResponseEntity.badRequest().body(null);
+            ProcessInstanceDAO processInstanceDAO = HibernateSwaggerObjectMapper.createProcessInstance_DAO(processInstance);
+            HibernateUtilityRef.getInstance("bp-data-model").persist(processInstanceDAO);
+
+            // save ProcessInstanceDAO
+            businessProcessContext.setProcessInstanceDAO(processInstanceDAO);
+
+            // get the process previous process instance
+            if(precedingPid != null) {
+                ProcessInstanceDAO precedingInstance = DAOUtility.getProcessIntanceDAOByID(precedingPid);
+                if (precedingInstance == null) {
+                    String msg = "Invalid preceding process instance ID: %s";
+                    logger.warn(String.format(msg, precedingPid));
+                    return ResponseEntity.badRequest().body(null);
+                }
+                processInstanceDAO.setPrecedingProcess(precedingInstance);
+                HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceDAO);
+
+                // update ProcessInstanceDAO
+                businessProcessContext.setProcessInstanceDAO(processInstanceDAO);
             }
-            processInstanceDAO.setPrecedingProcess(precedingInstance);
-            HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceDAO);
+
+            // create process instance groups if this is the first process initializing the process group
+            if (gid == null) {
+                createProcessInstanceGroups(businessProcessContext.getId(),body, processInstance);
+                // the group exists for the initiator but the trading partner is a new one
+                // so, a new group should be created for the new party
+            } else {
+                addNewProcessInstanceToGroup(businessProcessContext.getId(),gid, processInstance.getProcessInstanceID(), body);
+            }
         }
-
-        // create process instance groups if this is the first process initializing the process group
-        if (gid == null) {
-            createProcessInstanceGroups(body, processInstance);
-
-            // the group exists for the initiator but the trading partner is a new one
-            // so, a new group should be created for the new party
-        } else {
-            addNewProcessInstanceToGroup(gid, processInstance.getProcessInstanceID(), body);
+        catch (Exception e){
+            logger.error(" $$$ Failed to start process with ProcessInstanceInputMessage {}", body.toString(),e);
+            businessProcessContext.handleExceptions();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
-
+        finally {
+            BusinessProcessContextHandler.getBusinessProcessContextHandler().deleteBusinessProcessContext(businessProcessContext.getId());
+        }
         return new ResponseEntity<>(processInstance, HttpStatus.OK);
     }
 
-    private void createProcessInstanceGroups(ProcessInstanceInputMessage body, ProcessInstance processInstance) {
+    private void createProcessInstanceGroups(String businessContextId,ProcessInstanceInputMessage body, ProcessInstance processInstance) {
         // create group for initiating party
         ProcessInstanceGroupDAO processInstanceGroupDAO1 = ProcessInstanceGroupDAOUtility.createProcessInstanceGroupDAO(
                 body.getVariables().getInitiatorID(),
@@ -78,7 +100,7 @@ public class StartController implements StartApi {
                 CamundaEngine.getTransactions(body.getVariables().getProcessID()).get(0).getInitiatorRole().toString(),
                 body.getVariables().getRelatedProducts().toString());
 
-        // craete group for responder party
+        // create group for responder party
         ProcessInstanceGroupDAO processInstanceGroupDAO2 = ProcessInstanceGroupDAOUtility.createProcessInstanceGroupDAO(
                 body.getVariables().getResponderID(),
                 processInstance.getProcessInstanceID(),
@@ -96,13 +118,20 @@ public class StartController implements StartApi {
         associatedGroups.add(processInstanceGroupDAO1.getID());
         processInstanceGroupDAO2.setAssociatedGroups(associatedGroups);
         HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceGroupDAO2);
+
+        // save ProcessInstanceGroupDAOs
+        BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId).setProcessInstanceGroupDAO1(processInstanceGroupDAO1);
+        BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId).setProcessInstanceGroupDAO2(processInstanceGroupDAO2);
     }
 
-    private void addNewProcessInstanceToGroup(String sourceGid, String processInstanceId, ProcessInstanceInputMessage body) {
+    private void addNewProcessInstanceToGroup(String businessContextId,String sourceGid, String processInstanceId, ProcessInstanceInputMessage body) {
         ProcessInstanceGroupDAO sourceGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(sourceGid);
         sourceGroup.getProcessInstanceIDs().add(processInstanceId);
         sourceGroup = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").update(sourceGroup);
 
+        // save sourceGroup
+        BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId);
+        businessProcessContext.setSourceGroup(sourceGroup);
 
         // add the new process instance to the recipient's group
         // if such a group exists add into it otherwise create a new group
@@ -116,11 +145,17 @@ public class StartController implements StartApi {
                     sourceGid);
 
             sourceGroup.getAssociatedGroups().add(targetGroup.getID());
-            HibernateUtilityRef.getInstance("bp-data-model").update(sourceGroup);
+            sourceGroup = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").update(sourceGroup);
 
+            // save targetGroup and sourceGroup
+            businessProcessContext.setTargetGroup(targetGroup);
+            businessProcessContext.setSourceGroup(sourceGroup);
         } else {
             associatedGroup.getProcessInstanceIDs().add(processInstanceId);
-            HibernateUtilityRef.getInstance("bp-data-model").update(associatedGroup);
+            associatedGroup = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").update(associatedGroup);
+
+            // save associatedGroup
+            businessProcessContext.setAssociatedGroup(associatedGroup);
         }
     }
 }

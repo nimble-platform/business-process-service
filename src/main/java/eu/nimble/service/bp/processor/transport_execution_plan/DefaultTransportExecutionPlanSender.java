@@ -6,7 +6,6 @@ import eu.nimble.service.bp.impl.util.persistence.DocumentDAOUtility;
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import eu.nimble.service.model.ubl.transportexecutionplan.TransportExecutionPlanType;
-import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
 import org.slf4j.Logger;
@@ -33,6 +32,7 @@ public class DefaultTransportExecutionPlanSender implements JavaDelegate {
         // get input variables
         String buyer = variables.get("initiatorID").toString();
         String seller = variables.get("responderID").toString();
+        String processContextId = variables.get("processContextId").toString();
         TransportExecutionPlanType transportExecutionPlan = (TransportExecutionPlanType) variables.get("transportExecutionPlan");
 
         // get application execution configuration
@@ -49,7 +49,7 @@ public class DefaultTransportExecutionPlanSender implements JavaDelegate {
 
             IBusinessProcessApplication businessProcessApplication = (IBusinessProcessApplication) instance;
 
-            businessProcessApplication.sendDocument(processInstanceId, buyer, seller, transportExecutionPlan);
+            businessProcessApplication.sendDocument(processContextId,processInstanceId, buyer, seller, transportExecutionPlan);
         } else if(executionType == ExecutionConfiguration.ExecutionTypeEnum.MICROSERVICE) {
             // TODO: How to call a microservice
         } else {
