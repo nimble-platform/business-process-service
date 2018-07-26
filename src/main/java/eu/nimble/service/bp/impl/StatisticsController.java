@@ -10,6 +10,7 @@ import eu.nimble.service.bp.impl.util.persistence.DAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.StatisticsDAOUtility;
 import eu.nimble.service.bp.impl.util.serialization.Serializer;
 import eu.nimble.service.bp.swagger.model.Transaction;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import io.swagger.annotations.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -209,6 +210,42 @@ public class StatisticsController {
 
         } catch (Exception e) {
             return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting the total number for start date: %s, end date: %s, company id: %s, role: %s, state: %s", startDateStr, endDateStr, companyId, role, status), e, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @ApiOperation(value = "Gets the inactive companies. (Companies that have not initiated a business process)")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Retrieved the inactive companies")
+    })
+    @RequestMapping(value = "/inactive-companies",
+            produces = {"application/json"},
+            method = RequestMethod.GET)
+    public ResponseEntity getInactiveCompanies(@ApiParam(value = "Start date", required = false) @RequestParam(value = "startDate", required = false) String startDateStr,
+                                               @ApiParam(value = "End date", required = false) @RequestParam(value = "endDate", required = false) String endDateStr,
+                                               @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
+        try {
+            logger.info("Getting inactive companies for start date: {}, end date: {}", startDateStr, endDateStr);
+            ValidationResponse response;
+
+            // check start date
+            response = InputValidatorUtil.checkDate(startDateStr, true);
+            if (response.getInvalidResponse() != null) {
+                return response.getInvalidResponse();
+            }
+
+            // check end date
+            response = InputValidatorUtil.checkDate(endDateStr, true);
+            if (response.getInvalidResponse() != null) {
+                return response.getInvalidResponse();
+            }
+
+            List<PartyType> inactiveCompanies = StatisticsDAOUtility.getInactiveCompanies(startDateStr, endDateStr, bearerToken);
+            String serializedResponse = Serializer.getDefaultObjectMapperForFilledFields().writeValueAsString(inactiveCompanies);
+            logger.info("Retrieved the inactive companies for start date: {}, end date: {}", startDateStr, endDateStr);
+            return ResponseEntity.ok().body(serializedResponse);
+
+        } catch (Exception e) {
+            return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting the inactive companies for start date: %s, end date: %s", startDateStr, endDateStr), e, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

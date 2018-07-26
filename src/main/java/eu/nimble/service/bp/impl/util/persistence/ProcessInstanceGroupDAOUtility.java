@@ -1,5 +1,6 @@
 package eu.nimble.service.bp.impl.util.persistence;
 
+import eu.nimble.common.rest.identity.IdentityClient;
 import eu.nimble.common.rest.identity.IdentityClientTyped;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
@@ -19,6 +20,8 @@ import java.util.UUID;
 public class ProcessInstanceGroupDAOUtility {
     @Autowired
     private IdentityClientTyped identityClient;
+    @Autowired
+    private IdentityClient identityClientt;
 
     public static List<ProcessInstanceGroupDAO> getProcessInstanceGroupDAOs(
             String partyId,
