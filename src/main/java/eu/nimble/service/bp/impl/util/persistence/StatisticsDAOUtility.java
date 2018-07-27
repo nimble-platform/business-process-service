@@ -1,6 +1,12 @@
 package eu.nimble.service.bp.impl.util.persistence;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import eu.nimble.service.bp.impl.model.statistics.NonOrderedProducts;
+import eu.nimble.service.bp.impl.util.serialization.Serializer;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.utility.Configuration;
@@ -8,6 +14,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -66,7 +74,7 @@ public class StatisticsDAOUtility {
         return nonOrderedProducts;
     }
 
-    public static List<PartyType> getInactiveCompanies(String startdateStr, String endDateStr, String bearerToken) {
+    public static List<PartyType> getInactiveCompanies(String startdateStr, String endDateStr, String bearerToken) throws IOException {
         // get active party ids
         // get parties for a process that have not completed yet. Therefore return only the initiatorID
         String query = "select docMetadata.initiatorID from ProcessDocumentMetadataDAO docMetadata where docMetadata.status = 'WAITINGRESPONSE'";
@@ -88,15 +96,21 @@ public class StatisticsDAOUtility {
         }
 
         // get inactive companies
-        // TODO get also the names of the parties from the identity service
-        Set<String> partyIds = SpringBridge.getInstance().getIdentityClient().getAllPartyIds(bearerToken, new ArrayList<>());
-
         List<PartyType> inactiveParties = new ArrayList<>();
-        partyIds.removeAll(activePartyIds);
-        partyIds.stream().forEach(partyId -> {
-            PartyType party = new PartyType();
-            party.setID(partyId);
-            inactiveParties.add(party);
+        InputStream parties = SpringBridge.getInstance().getIdentityClient().getAllPartyIds(bearerToken, new ArrayList<>()).body().asInputStream();
+        ObjectMapper mapper = Serializer.getDefaultObjectMapper();
+        JsonFactory factory = mapper.getFactory();
+        JsonParser parser = factory.createParser(parties);
+        JsonNode allParties = mapper.readTree(parser);
+        Iterable<JsonNode> iterable = () -> allParties.elements();
+        iterable.forEach(partyResult -> {
+            String partyId = partyResult.get("identifier").asText();
+            if(!activePartyIds.contains(partyId)) {
+                PartyType party = new PartyType();
+                party.setID(partyId);
+                party.setName(partyResult.get("name").asText());
+                inactiveParties.add(party);
+            }
         });
         return inactiveParties;
     }
