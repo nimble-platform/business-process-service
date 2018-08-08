@@ -85,9 +85,9 @@ public class DocumentDAOUtility {
 
         businessProcessContext.setPreviousDocumentMetadataStatus(storedDocumentDAO.getStatus());
 
-        HibernateUtilityRef.getInstance("bp-data-model").delete(storedDocumentDAO);
         ProcessDocumentMetadataDAO newDocumentDAO = HibernateSwaggerObjectMapper.createProcessDocumentMetadata_DAO(body);
 
+        HibernateUtilityRef.getInstance("bp-data-model").delete(storedDocumentDAO);
         newDocumentDAO = (ProcessDocumentMetadataDAO) HibernateUtilityRef.getInstance("bp-data-model").update(newDocumentDAO);
 
         businessProcessContext.setUpdatedDocumentMetadata(newDocumentDAO);
