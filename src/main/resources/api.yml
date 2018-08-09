@@ -954,7 +954,7 @@ definitions:
         enum:
         - STARTED
         - WAITING
-        - ABORTED
+        - CANCELLED
         - COMPLETED
 
   ProcessInstanceGroup:

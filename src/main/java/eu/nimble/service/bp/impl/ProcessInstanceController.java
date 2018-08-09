@@ -38,7 +38,7 @@ public class ProcessInstanceController {
             // cancel the process
             ProcessEngines.getDefaultProcessEngine().getRuntimeService().deleteProcessInstance(processInstanceId,"",true,true);
             // change status of the process
-            instanceDAO.setStatus(ProcessInstanceStatus.ABORTED);
+            instanceDAO.setStatus(ProcessInstanceStatus.CANCELLED);
             HibernateUtilityRef.getInstance("bp-data-model").update(instanceDAO);
         }
         catch (Exception e) {
