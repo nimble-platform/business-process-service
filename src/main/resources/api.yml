@@ -527,6 +527,17 @@ paths:
         type: boolean
         default: false
       - in: query
+        name: status
+        required: false
+        type: array
+        items:
+          type: string
+          enum:
+          - STARTED
+          - WAITING
+          - CANCELLED
+          - COMPLETED
+      - in: query
         name: collaborationRole
         type: string
         required: false
@@ -591,6 +602,17 @@ paths:
         name: collaborationRole
         type: string
         required: false
+      - in: query
+        name: status
+        required: false
+        type: array
+        items:
+          type: string
+          enum:
+          - STARTED
+          - WAITING
+          - CANCELLED
+          - COMPLETED
       - name: Authorization
         in: header
         type: string
@@ -1018,6 +1040,15 @@ definitions:
         type: array
         items:
           type: string
+      status:
+        type: array
+        items:
+          type: string
+          enum:
+          - STARTED
+          - WAITING
+          - CANCELLED
+          - COMPLETED
 
   ProcessDocumentMetadata:
     title: Business Process Document Metadata Object
