@@ -131,11 +131,12 @@ public class ProcessInstanceGroupController implements GroupApi {
                                                                                  @ApiParam(value = "Offset of the first result among the complete result set satisfying the given criteria", defaultValue = "0") @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset,
                                                                                  @ApiParam(value = "Number of results to be included in the result set", defaultValue = "10") @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit,
                                                                                  @ApiParam(value = "", defaultValue = "false") @RequestParam(value = "archived", required = false, defaultValue = "false") Boolean archived,
+                                                                                 @ApiParam(value = "status") @RequestParam(value = "status",required = false) List<String> status,
                                                                                  @ApiParam(value = "") @RequestParam(value = "collaborationRole", required = false) String collaborationRole) {
         logger.debug("Getting ProcessInstanceGroups for party: {}", partyID);
 
-        List<ProcessInstanceGroupDAO> results = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAOs(partyID, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, null, null, limit, offset);
-        int totalSize = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupSize(partyID, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, null, null);
+        List<ProcessInstanceGroupDAO> results = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAOs(partyID, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, status,null, null, limit, offset);
+        int totalSize = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupSize(partyID, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, status,null, null);
         logger.debug(" There are {} process instance groups in total", results.size());
         List<ProcessInstanceGroup> processInstanceGroups = new ArrayList<>();
         for (ProcessInstanceGroupDAO result : results) {
@@ -162,9 +163,10 @@ public class ProcessInstanceGroupController implements GroupApi {
             @ApiParam(value = "Initiation date range for the first process instance in the group") @RequestParam(value = "initiationDateRange", required = false) String initiationDateRange,
             @ApiParam(value = "Last activity date range. It is the latest submission date of the document to last process instance in the group") @RequestParam(value = "lastActivityDateRange", required = false) String lastActivityDateRange,
             @ApiParam(value = "", defaultValue = "false") @RequestParam(value = "archived", required = false, defaultValue = "false") Boolean archived,
-            @ApiParam(value = "") @RequestParam(value = "collaborationRole", required = false) String collaborationRole) {
+            @ApiParam(value = "") @RequestParam(value = "collaborationRole", required = false) String collaborationRole,
+            @ApiParam(value = "Status") @RequestParam(value = "status",required = false) List<String> status) {
 
-        ProcessInstanceGroupFilter filters = groupDaoUtility.getFilterDetails(partyID, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, null, null, bearerToken);
+        ProcessInstanceGroupFilter filters = groupDaoUtility.getFilterDetails(partyID, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories,status,null, null, bearerToken);
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(filters);
         logger.debug("Filters retrieved for partyId: {}, archived: {}, products: {}, categories: {}, parties: {}", partyID, archived,
                 relatedProducts != null ? relatedProducts.toString() : "[]",
