@@ -244,7 +244,8 @@ public class ProcessInstanceGroupController implements GroupApi {
     }
 
     @Override
-    public ResponseEntity<Void> getOrderProcess(@ApiParam(value = "Identifier of a process instance included in the group", required = true) @RequestParam(value = "processInstanceId", required = true) String processInstanceId) {
+    @ApiOperation(value = "",notes = "Get the order content in a business process group given a process id included in the group")
+    public ResponseEntity<Void> getOrderProcess(@ApiParam(value = "Identifier of a process instance included in the group", required = true) @RequestParam(value = "processInstanceId", required = true) String processInstanceId, @ApiParam(value = "", required = true) @RequestHeader(value = "Authorization", required = true) String authorization) {
         try {
             // check whether the process instance id exists
             ProcessInstanceDAO pi = ProcessInstanceGroupDAOUtility.getProcessInstance(processInstanceId);

@@ -575,6 +575,10 @@ paths:
         type: string
         required: true
         description: Identifier of a process instance included in the group
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       produces:
       - application/json
       responses:
