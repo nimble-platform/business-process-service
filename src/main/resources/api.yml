@@ -555,6 +555,21 @@ paths:
         201:
           description: Saved the group successfully
 
+  /group/order-process:
+    get:
+      operationId: getOrderProcess
+      parameters:
+      - in: query
+        name: processInstanceId
+        type: string
+        required: true
+        description: Identifier of a process instance included in the group
+      produces:
+      - application/json
+      responses:
+        200:
+          description: Retrieved the order content successfuly
+
   /group/filters:
     get:
       operationId: getProcessInstanceGroupFilters

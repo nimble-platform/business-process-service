@@ -1,6 +1,8 @@
 package eu.nimble.service.bp.impl;
 
+import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
+import eu.nimble.service.bp.impl.util.controller.HttpResponseUtil;
 import eu.nimble.service.bp.impl.util.persistence.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.impl.util.persistence.HibernateUtilityRef;
 import eu.nimble.service.bp.impl.util.persistence.ProcessInstanceGroupDAOUtility;
@@ -14,6 +16,7 @@ import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.logging.LogLevel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -34,6 +37,8 @@ public class ProcessInstanceGroupController implements GroupApi {
 
     @Autowired
     private ProcessInstanceGroupDAOUtility groupDaoUtility;
+    @Autowired
+    private DocumentController documentController;
 
     @Override
     @ApiOperation(value = "",notes = "Add a new process instance to the specified")
@@ -234,5 +239,26 @@ public class ProcessInstanceGroupController implements GroupApi {
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body("true");
         logger.debug("Deleted archived ProcessInstanceGroups for party {}", partyID);
         return response;
+    }
+
+    @Override
+    public ResponseEntity<Void> getOrderProcess(@ApiParam(value = "Identifier of a process instance included in the group", required = true) @RequestParam(value = "processInstanceId", required = true) String processInstanceId) {
+        try {
+            // check whether the process instance id exists
+            ProcessInstanceDAO pi = ProcessInstanceGroupDAOUtility.getProcessInstance(processInstanceId);
+            if(pi == null) {
+                return HttpResponseUtil.createResponseEntityAndLog(String.format("No process ID exists for the process id: %s", processInstanceId), null, HttpStatus.NOT_FOUND, LogLevel.INFO);
+            }
+            // get the order
+            String orderId = ProcessInstanceGroupDAOUtility.getOrderIdInGroup(processInstanceId);
+
+            // get the order content
+            String orderJson = (String) documentController.getDocumentJsonContent(orderId).getBody();
+            ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(orderJson);
+            return response;
+
+        } catch (Exception e){
+            return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting the order content for process id: %s", processInstanceId), e, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

@@ -44,7 +44,7 @@ public class DocumentController implements DocumentApi {
     @RequestMapping(value = "/document/json/{documentID}",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    ResponseEntity<Object> getDocumentJsonContent(@PathVariable("documentID") String documentID) {
+    public ResponseEntity<Object> getDocumentJsonContent(@PathVariable("documentID") String documentID) {
         try {
             logger.info("Getting content of document: {}", documentID);
             Object document = DocumentDAOUtility.getUBLDocument(documentID);
