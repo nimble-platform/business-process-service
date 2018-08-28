@@ -1,15 +1,23 @@
 package eu.nimble.service.bp.impl;
 
+import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceStatus;
+import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.impl.util.persistence.DAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.DocumentDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.HibernateUtilityRef;
-import org.camunda.bpm.engine.ProcessEngines;
+import eu.nimble.service.bp.processor.BusinessProcessContext;
+import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -23,6 +31,12 @@ public class ProcessInstanceController {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    @ApiOperation(value = "",notes = "Cancel the process instance with the given id")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Cancelled the process instance successfully"),
+            @ApiResponse(code = 400, message = "There does not exist a process instance with the given id"),
+            @ApiResponse(code = 500, message = "Unexpected error while cancelling the process instance with the given id")
+    })
     @RequestMapping(value = "/processInstance",
             method = RequestMethod.DELETE)
     public ResponseEntity cancelProcessInstance(@RequestParam(value = "processInstanceId", required = true) String processInstanceId) {
@@ -36,7 +50,7 @@ public class ProcessInstanceController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("There does not exist a process instance with the given id");
             }
             // cancel the process
-            ProcessEngines.getDefaultProcessEngine().getRuntimeService().deleteProcessInstance(processInstanceId,"",true,true);
+            CamundaEngine.cancelProcessInstance(processInstanceId);
             // change status of the process
             instanceDAO.setStatus(ProcessInstanceStatus.CANCELLED);
             HibernateUtilityRef.getInstance("bp-data-model").update(instanceDAO);
@@ -50,4 +64,45 @@ public class ProcessInstanceController {
         return ResponseEntity.ok(null);
     }
 
+    @ApiOperation(value = "",notes = "Update the process instance with the given id")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Updated the process instance successfully"),
+            @ApiResponse(code = 400, message = "There does not exist a process instance with the given id"),
+            @ApiResponse(code = 500, message = "Unexpected error while updating the process instance with the given id")
+    })
+    @RequestMapping(value = "/processInstance",
+            method = RequestMethod.PUT)
+    public ResponseEntity updateProcessInstance(@RequestBody String content,
+                                                @RequestParam(value = "processID") DocumentType processID,
+                                                @RequestParam(value = "processInstanceID") String processInstanceID) {
+
+        logger.debug("Updating process instance with id: {}",processInstanceID);
+
+        BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
+
+        try {
+            ProcessInstanceDAO instanceDAO = DAOUtility.getProcessIntanceDAOByID(processInstanceID);
+            // check whether the process instance with the given id exists or not
+            if(instanceDAO == null){
+                logger.error("There does not exist a process instance with id:{}",processID);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("There does not exist a process instance with the given id");
+            }
+
+            // update process instance variables
+            CamundaEngine.updateProcessInstance(content,processID,processInstanceID);
+            // update the corresponding document
+            DocumentDAOUtility.updateDocument(businessProcessContext.getId(),content,processID);
+        }
+        catch (Exception e) {
+            logger.error("Failed to update the process instance with id:{}",processInstanceID,e);
+            businessProcessContext.handleExceptions();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to update the process instance with the given id");
+        }
+        finally {
+            BusinessProcessContextHandler.getBusinessProcessContextHandler().deleteBusinessProcessContext(businessProcessContext.getId());
+        }
+
+        logger.debug("Updated process instance with id: {}",processInstanceID);
+        return ResponseEntity.ok(null);
+    }
 }

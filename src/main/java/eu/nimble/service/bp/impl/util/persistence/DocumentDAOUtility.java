@@ -1,16 +1,21 @@
 package eu.nimble.service.bp.impl.util.persistence;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.hyperjaxb.model.*;
+import eu.nimble.service.bp.impl.util.serialization.Serializer;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.model.*;
 import eu.nimble.service.model.ubl.catalogue.CatalogueType;
 import eu.nimble.service.model.ubl.despatchadvice.DespatchAdviceType;
+import eu.nimble.service.model.ubl.iteminformationrequest.ItemInformationRequestType;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
+import eu.nimble.service.model.ubl.ppaprequest.PpapRequestType;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.service.model.ubl.receiptadvice.ReceiptAdviceType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
+import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
 import eu.nimble.utility.Configuration;
 import org.camunda.bpm.engine.ProcessEngines;
 import org.slf4j.Logger;
@@ -91,6 +96,116 @@ public class DocumentDAOUtility {
         newDocumentDAO = (ProcessDocumentMetadataDAO) HibernateUtilityRef.getInstance("bp-data-model").update(newDocumentDAO);
 
         businessProcessContext.setUpdatedDocumentMetadata(newDocumentDAO);
+
+    }
+
+    public static void updateDocument(String processContextId, String content, DocumentType documentType) {
+        BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(processContextId);
+
+        ObjectMapper mapper = Serializer.getDefaultObjectMapper();
+
+        if(documentType == DocumentType.ITEMINFORMATIONREQUEST){
+            try {
+                ItemInformationRequestType itemInformationRequest = mapper.readValue(content, ItemInformationRequestType.class);
+
+                ItemInformationRequestType existingItemInformationRequest = (ItemInformationRequestType) getUBLDocument(itemInformationRequest.getID(),DocumentType.ITEMINFORMATIONREQUEST);
+                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(existingItemInformationRequest);
+
+                businessProcessContext.setPreviousDocument(existingItemInformationRequest);
+
+                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(itemInformationRequest);
+
+                businessProcessContext.setDocument(itemInformationRequest);
+            }
+            catch (Exception e){
+                logger.error("",e);
+            }
+        }
+        if(documentType == DocumentType.DESPATCHADVICE){
+            try {
+                DespatchAdviceType despatchAdviceType = mapper.readValue(content, DespatchAdviceType.class);
+
+                DespatchAdviceType existingDespatchAdvice = (DespatchAdviceType) getUBLDocument(despatchAdviceType.getID(),DocumentType.DESPATCHADVICE);
+                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(existingDespatchAdvice);
+
+                businessProcessContext.setPreviousDocument(existingDespatchAdvice);
+
+                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(despatchAdviceType);
+
+                businessProcessContext.setDocument(despatchAdviceType);
+            }
+            catch (Exception e){
+                logger.error("",e);
+            }
+        }
+        if(documentType == DocumentType.REQUESTFORQUOTATION){
+            try {
+                RequestForQuotationType requestForQuotationType = mapper.readValue(content, RequestForQuotationType.class);
+
+                RequestForQuotationType existingRequestForQuotation = (RequestForQuotationType) getUBLDocument(requestForQuotationType.getID(),DocumentType.REQUESTFORQUOTATION);
+                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(existingRequestForQuotation);
+
+                businessProcessContext.setPreviousDocument(existingRequestForQuotation);
+
+                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(requestForQuotationType);
+
+                businessProcessContext.setDocument(requestForQuotationType);
+            }
+            catch (Exception e){
+                logger.error("",e);
+            }
+        }
+        if(documentType == DocumentType.ORDER){
+            try {
+                OrderType orderType = mapper.readValue(content, OrderType.class);
+
+                OrderType existingOrderType = (OrderType) getUBLDocument(orderType.getID(),DocumentType.ORDER);
+                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(existingOrderType);
+
+                businessProcessContext.setPreviousDocument(existingOrderType);
+
+                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(orderType);
+
+                businessProcessContext.setDocument(orderType);
+            }
+            catch (Exception e){
+                logger.error("",e);
+            }
+        }
+        if(documentType == DocumentType.PPAPREQUEST){
+            try {
+                PpapRequestType ppapRequestType = mapper.readValue(content, PpapRequestType.class);
+
+                PpapRequestType existingPPAPRequest = (PpapRequestType) getUBLDocument(ppapRequestType.getID(),DocumentType.PPAPREQUEST);
+                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(existingPPAPRequest);
+
+                businessProcessContext.setPreviousDocument(existingPPAPRequest);
+
+                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(ppapRequestType);
+
+                businessProcessContext.setDocument(ppapRequestType);
+            }
+            catch (Exception e){
+                logger.error("",e);
+            }
+        }
+        if(documentType == DocumentType.TRANSPORTEXECUTIONPLANREQUEST){
+            try {
+                TransportExecutionPlanRequestType transportExecutionPlanRequestType = mapper.readValue(content, TransportExecutionPlanRequestType.class);
+
+                TransportExecutionPlanRequestType existingTEPRequest = (TransportExecutionPlanRequestType) getUBLDocument(transportExecutionPlanRequestType.getID(),DocumentType.TRANSPORTEXECUTIONPLANREQUEST);
+                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(existingTEPRequest);
+
+                businessProcessContext.setPreviousDocument(existingTEPRequest);
+
+                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(transportExecutionPlanRequestType);
+
+                businessProcessContext.setDocument(transportExecutionPlanRequestType);
+            }
+            catch (Exception e){
+                logger.error("",e);
+            }
+        }
 
     }
 

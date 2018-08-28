@@ -18,6 +18,7 @@ public class BusinessProcessContext {
     private ProcessDocumentStatus previousDocumentMetadataStatus;
     private ProcessDocumentMetadataDAO updatedDocumentMetadata;
     private ProcessInstanceGroupDAO updatedAssociatedGroup;
+    private Object previousDocument;
     private Object document;
     private String id;
 
@@ -34,6 +35,9 @@ public class BusinessProcessContext {
         }
         if (document != null) {
             HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(document);
+        }
+        if (previousDocument != null){
+            HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(previousDocument);
         }
         if (previousStatus == null && processInstanceDAO != null) {
             HibernateUtilityRef.getInstance("bp-data-model").delete(processInstanceDAO);
@@ -189,5 +193,13 @@ public class BusinessProcessContext {
 
     public void setUpdatedDocumentMetadata(ProcessDocumentMetadataDAO updatedDocumentMetadata) {
         this.updatedDocumentMetadata = updatedDocumentMetadata;
+    }
+
+    public Object getPreviousDocument() {
+        return previousDocument;
+    }
+
+    public void setPreviousDocument(Object previousDocument) {
+        this.previousDocument = previousDocument;
     }
 }
