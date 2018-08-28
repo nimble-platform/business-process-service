@@ -1,12 +1,12 @@
 package eu.nimble.service.bp.impl.util.persistence;
 
-import eu.nimble.common.rest.identity.IdentityClient;
 import eu.nimble.common.rest.identity.IdentityClientTyped;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceStatus;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupFilter;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
+import eu.nimble.utility.HibernateUtility;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -21,8 +21,6 @@ import java.util.UUID;
 public class ProcessInstanceGroupDAOUtility {
     @Autowired
     private IdentityClientTyped identityClient;
-    @Autowired
-    private IdentityClient identityClientt;
 
     public static List<ProcessInstanceGroupDAO> getProcessInstanceGroupDAOs(
             String partyId,
@@ -255,6 +253,12 @@ public class ProcessInstanceGroupDAOUtility {
         return group;
     }
 
+    public static ProcessInstanceDAO getProcessInstance(String processInstanceId) {
+        String queryStr = "SELECT pi FROM ProcessInstanceDAO pi WHERE pi.processInstanceID = ?";
+        ProcessInstanceDAO pi = HibernateUtility.getInstance("bp-data-model").load(queryStr, processInstanceId);
+        return pi;
+    }
+
     public static List<ProcessInstanceDAO> getProcessInstances(List<String> ids) {
         String idsString = "(";
         int size = ids.size();
@@ -290,6 +294,28 @@ public class ProcessInstanceGroupDAOUtility {
         for(Long hjid : longs){
             HibernateUtilityRef.getInstance("bp-data-model").delete(ProcessInstanceGroupDAO.class,hjid);
         }
+    }
+
+    public static String getOrderIdInGroup(String processInstanceId) {
+        // get order
+        String query = "SELECT DISTINCT doc.documentID FROM ProcessInstanceGroupDAO pig join pig.processInstanceIDsItems pid," +
+                " ProcessInstanceDAO pi, " +
+                " ProcessDocumentMetadataDAO doc" +
+                " WHERE " +
+                " pid.item = pi.processInstanceID AND" +
+                " doc.processInstanceID = pi.processInstanceID AND" +
+                " doc.type = 'ORDER' AND pig.ID IN" +
+
+                " (" +
+                " SELECT pig2.ID FROM ProcessInstanceGroupDAO pig2 join pig2.processInstanceIDsItems pid2," +
+                " ProcessInstanceDAO pi2 " +
+                " WHERE" +
+                " pid2.item = pi2.processInstanceID AND " +
+                " pi2.processInstanceID = ?" +
+                ")";
+
+        String orderId = HibernateUtility.getInstance("bp-data-model").load(query, processInstanceId);
+        return orderId;
     }
 
     private enum GroupQueryType {

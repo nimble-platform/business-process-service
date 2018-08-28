@@ -11,7 +11,7 @@ import org.springframework.http.ResponseEntity;
  * Created by suat on 16-May-18.
  */
 public class HttpResponseUtil {
-    private static final Logger logger = LoggerFactory.getLogger(ContractController.class);
+    private static final Logger logger = LoggerFactory.getLogger(HttpResponseUtil.class);
 
     public static ResponseEntity createResponseEntityAndLog(String msg, HttpStatus httpStatus) {
         return createResponseEntityAndLog(msg, null, httpStatus, LogLevel.WARN);
