@@ -11,8 +11,11 @@ import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroup;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupFilter;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupResponse;
+import eu.nimble.service.model.ubl.order.OrderType;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -244,23 +247,34 @@ public class ProcessInstanceGroupController implements GroupApi {
     }
 
     @Override
-    @ApiOperation(value = "",notes = "Get the order content in a business process group given a process id included in the group")
-    public ResponseEntity<Void> getOrderProcess(@ApiParam(value = "Identifier of a process instance included in the group", required = true) @RequestParam(value = "processInstanceId", required = true) String processInstanceId, @ApiParam(value = "", required = true) @RequestHeader(value = "Authorization", required = true) String authorization) {
+    @ApiOperation(value = "", notes = "Get the order content in a business process group given a process id included in the group")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Retrieved the order content", response = OrderType.class),
+            @ApiResponse(code = 404, message = "No order exists")
+    })
+    public ResponseEntity<Void> getOrderProcess(@ApiParam(value = "Identifier of a process instance included in the group", required = true) @RequestParam(value = "processInstanceId", required = true) String processInstanceId,
+                                                @ApiParam(value = "", required = true) @RequestHeader(value = "Authorization", required = true) String authorization) {
         try {
             // check whether the process instance id exists
             ProcessInstanceDAO pi = ProcessInstanceGroupDAOUtility.getProcessInstance(processInstanceId);
-            if(pi == null) {
+            if (pi == null) {
                 return HttpResponseUtil.createResponseEntityAndLog(String.format("No process ID exists for the process id: %s", processInstanceId), null, HttpStatus.NOT_FOUND, LogLevel.INFO);
             }
             // get the order
             String orderId = ProcessInstanceGroupDAOUtility.getOrderIdInGroup(processInstanceId);
 
             // get the order content
-            String orderJson = (String) documentController.getDocumentJsonContent(orderId).getBody();
-            ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(orderJson);
+            ResponseEntity response;
+            if (orderId != null) {
+                String orderJson = (String) documentController.getDocumentJsonContent(orderId).getBody();
+                response = ResponseEntity.status(HttpStatus.OK).body(orderJson);
+
+            } else {
+                response = ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            }
             return response;
 
-        } catch (Exception e){
+        } catch (Exception e) {
             return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting the order content for process id: %s", processInstanceId), e, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
