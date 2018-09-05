@@ -22,12 +22,12 @@ spring:
     password: ${CAMUNDA_DB_PASSWORD:nimble}
     driverClassName: org.postgresql.Driver
     tomcat:
-      initial-size: 10
+      initial-size: 3
       test-while-idle: true
       time-between-eviction-runs-millis: 600000
       min-evictable-idle-time-millis: 3600000
-    maxActive: 10
-    maxIdle: 10
+    maxActive: 6
+    maxIdle: 3
   jackson:
     date-format: com.fasterxml.jackson.databind.util.ISO8601DateFormat
     serialization:
@@ -68,10 +68,10 @@ persistence:
         jdbc:
           batch_size: 0
         c3p0:
-          acquire_increment: 5
-          initialPoolSize: 5
-          max_size: 15
-          min_size: 5
+          acquire_increment: 3
+          initialPoolSize: 3
+          max_size: 6
+          min_size: 3
           maxStatementsPerConnection: 5
           acquireRetryAttempts: 10
           acquireRetryDelay: 100
@@ -102,10 +102,10 @@ persistence:
         jdbc:
           batch_size: 0
         c3p0:
-          acquire_increment: 5
-          initialPoolSize: 5
-          max_size: 5
-          min_size: 5
+          acquire_increment: 3
+          initialPoolSize: 3
+          max_size: 6
+          min_size: 3
           maxStatementsPerConnection: 5
           acquireRetryAttempts: 10
           acquireRetryDelay: 100
