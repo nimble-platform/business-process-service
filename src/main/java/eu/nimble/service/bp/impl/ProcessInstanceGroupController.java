@@ -270,7 +270,7 @@ public class ProcessInstanceGroupController implements GroupApi {
                 response = ResponseEntity.status(HttpStatus.OK).body(orderJson);
 
             } else {
-                response = ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+                response = ResponseEntity.status(HttpStatus.OK).body(null);
             }
             return response;
 
