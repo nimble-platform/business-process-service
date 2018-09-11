@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ClauseType;
 
+import javax.xml.datatype.XMLGregorianCalendar;
+
 /**
  * Created by suat on 16-May-18.
  */
@@ -19,6 +21,9 @@ public class Serializer {
         SimpleModule module = new SimpleModule();
         module.addDeserializer(ClauseType.class, new ClauseDeserializer());
         mapper.registerModule(module);
+        SimpleModule dateModule = new SimpleModule();
+        dateModule.addSerializer(XMLGregorianCalendar.class,new XMLGregorianCalendarSerializer());
+        mapper.registerModule(dateModule);
         return mapper;
     }
 

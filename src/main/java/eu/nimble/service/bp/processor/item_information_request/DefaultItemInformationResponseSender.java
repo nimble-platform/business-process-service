@@ -56,5 +56,10 @@ public class DefaultItemInformationResponseSender implements JavaDelegate {
         } else {
             // TODO: think other types of execution possibilities
         }
+        // remove variables
+        String initialDocumentID = (String) execution.getVariable("initialDocumentID");
+        execution.removeVariables();
+        execution.setVariable("initialDocumentID",initialDocumentID);
+        execution.setVariable("responseDocumentID",itemInformationResponse.getID());
     }
 }

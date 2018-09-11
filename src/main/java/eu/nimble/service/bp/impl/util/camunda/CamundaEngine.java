@@ -5,17 +5,8 @@
  */
 package eu.nimble.service.bp.impl.util.camunda;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
-import eu.nimble.service.bp.impl.util.serialization.Serializer;
 import eu.nimble.service.bp.swagger.model.*;
 import eu.nimble.service.bp.swagger.model.Process;
-import eu.nimble.service.model.ubl.despatchadvice.DespatchAdviceType;
-import eu.nimble.service.model.ubl.iteminformationrequest.ItemInformationRequestType;
-import eu.nimble.service.model.ubl.order.OrderType;
-import eu.nimble.service.model.ubl.ppaprequest.PpapRequestType;
-import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
-import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
 import eu.nimble.utility.DateUtility;
 import eu.nimble.utility.XMLUtility;
 import org.camunda.bpm.engine.*;
@@ -285,38 +276,5 @@ public class CamundaEngine {
 
     public static void cancelProcessInstance(String processInstanceId){
         runtimeService.deleteProcessInstance(processInstanceId,"",true,true);
-    }
-
-    public static void updateProcessInstance(String content, DocumentType documentType, String processInstanceID) throws Exception{
-        ObjectMapper mapper = Serializer.getDefaultObjectMapper();
-
-        Map<String, Object> variables = runtimeService.getVariables(processInstanceID);
-
-        variables.put("content",content);
-
-        switch (documentType){
-            case DESPATCHADVICE:
-                variables.put("despatchAdvice",mapper.readValue(content, DespatchAdviceType.class));
-                break;
-            case ITEMINFORMATIONREQUEST:
-                variables.put("itemInformationRequest",mapper.readValue(content,ItemInformationRequestType.class));
-                break;
-            case REQUESTFORQUOTATION:
-                variables.put("requestForQuotation",mapper.readValue(content, RequestForQuotationType.class));
-                break;
-            case ORDER:
-                variables.put("order",mapper.readValue(content, OrderType.class));
-                break;
-            case PPAPREQUEST:
-                variables.put("ppapRequest",mapper.readValue(content, PpapRequestType.class));
-                break;
-            case TRANSPORTEXECUTIONPLANREQUEST:
-                variables.put("transportExecutionPlanRequest",mapper.readValue(content, TransportExecutionPlanRequestType.class));
-                break;
-            default:
-                break;
-        }
-
-        ProcessEngines.getDefaultProcessEngine().getRuntimeService().setVariables(processInstanceID,variables);
     }
 }

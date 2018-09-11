@@ -55,5 +55,8 @@ public class DefaultItemInformationRequestSender implements JavaDelegate {
         } else {
             // TODO: think other types of execution possibilities
         }
+        // remove variables
+        execution.removeVariables();
+        execution.setVariable("initialDocumentID",itemInformationRequest.getID());
     }
 }

@@ -88,8 +88,6 @@ public class ProcessInstanceController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("There does not exist a process instance with the given id");
             }
 
-            // update process instance variables
-            CamundaEngine.updateProcessInstance(content,processID,processInstanceID);
             // update the corresponding document
             DocumentDAOUtility.updateDocument(businessProcessContext.getId(),content,processID);
         }

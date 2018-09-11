@@ -61,5 +61,9 @@ public class DefaultOrderSender  implements JavaDelegate {
         } else {
             // TODO: think other types of execution possibilities
         }
+        // remove variables
+        execution.removeVariables();
+        execution.setVariable("initialDocumentID",order.getID());
+        execution.setVariable("order",order); // this order is used in DefaultOrderResponseSender
     }
 }
