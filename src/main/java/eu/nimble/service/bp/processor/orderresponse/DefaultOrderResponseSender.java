@@ -11,7 +11,6 @@ import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ClauseType;
-import eu.nimble.service.model.ubl.commonaggregatecomponents.DataMonitoringClauseType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.DocumentClauseType;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
@@ -60,7 +59,7 @@ public class DefaultOrderResponseSender  implements JavaDelegate {
         String seller = variables.get("initiatorID").toString();
         String processContextId = variables.get("processContextId").toString();
         OrderResponseSimpleType orderResponse = (OrderResponseSimpleType) variables.get("orderResponse");
-        OrderType order = (OrderType) variables.get("order");
+        OrderType order = (OrderType) DocumentDAOUtility.getUBLDocument((String) variables.get("initialDocumentID"));
 
         // get application execution configuration
         ExecutionConfiguration executionConfiguration = DocumentDAOUtility.getExecutionConfiguration(seller,
