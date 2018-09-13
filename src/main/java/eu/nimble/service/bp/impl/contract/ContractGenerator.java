@@ -909,7 +909,7 @@ public class ContractGenerator {
             if(ppapRequest.getNote() != null){
                 XWPFTableRow row = table.getRows().get(table.getNumberOfRows()-2);
                 XWPFRun run = row.getCell(1).getParagraphs().get(0).createRun();
-                run.setText(ppapRequest.getNote());
+                run.setText(ppapRequest.getNote().get(0));
                 run.setItalic(true);
             }
             else {
@@ -920,7 +920,7 @@ public class ContractGenerator {
             if(ppapResponse.getNote() != null){
                 XWPFTableRow row = table.getRows().get(table.getNumberOfRows()-1);
                 XWPFRun run = row.getCell(1).getParagraphs().get(0).createRun();
-                run.setText(ppapResponse.getNote());
+                run.setText(ppapResponse.getNote().get(0));
                 run.setItalic(true);
             }
             else{
