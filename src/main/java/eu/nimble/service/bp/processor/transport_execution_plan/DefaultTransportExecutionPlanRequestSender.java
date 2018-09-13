@@ -32,6 +32,7 @@ public class DefaultTransportExecutionPlanRequestSender implements JavaDelegate 
         // get input variables
         String buyer = variables.get("initiatorID").toString();
         String seller = variables.get("responderID").toString();
+        String processContextId = variables.get("processContextId").toString();
         TransportExecutionPlanRequestType order = (TransportExecutionPlanRequestType) variables.get("transportExecutionPlanRequest");
 
         // get application execution configuration
@@ -48,11 +49,14 @@ public class DefaultTransportExecutionPlanRequestSender implements JavaDelegate 
 
             IBusinessProcessApplication businessProcessApplication = (IBusinessProcessApplication) instance;
 
-            businessProcessApplication.sendDocument(processInstanceId, buyer, seller, order);
+            businessProcessApplication.sendDocument(processContextId,processInstanceId, buyer, seller, order);
         } else if(executionType == ExecutionConfiguration.ExecutionTypeEnum.MICROSERVICE) {
             // TODO: How to call a microservice
         } else {
             // TODO: think other types of execution possibilities
         }
+        // remove variables
+        execution.removeVariables();
+        execution.setVariable("initialDocumentID",order.getID());
     }
 }

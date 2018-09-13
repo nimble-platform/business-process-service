@@ -180,7 +180,7 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
     }
 
     @Override
-    public void saveDocument(String processInstanceId, String initiatorID, String responderID,
+    public void saveDocument(String businessContextId,String processInstanceId, String initiatorID, String responderID,
                             Object document, List<String> relatedProducts, List<String> relatedProductCategories) {
         ProcessDocumentMetadata documentMetadata = new ProcessDocumentMetadata();
         documentMetadata.setInitiatorID(initiatorID);
@@ -265,56 +265,62 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
         }
 
         // persist the document metadata
-        DocumentDAOUtility.addDocumentWithMetadata(documentMetadata, document);
+        DocumentDAOUtility.addDocumentWithMetadata(businessContextId,documentMetadata, document);
     }
 
     @Override
-    public void sendDocument(String processInstanceId, String initiatorID, String responderID, Object document) {
+    public void sendDocument(String businessContextId,String processInstanceId, String initiatorID, String responderID, Object document) {
         // TODO: Send email notification to the responder...
 
         // if this document is a response to an initiating document, set the response code of the initiating document
         // e.g OrderResponse to an Order
+        ProcessDocumentMetadata initiatingDocumentMetadata = null;
         if(document instanceof OrderResponseSimpleType) {
             OrderResponseSimpleType orderResponse = (OrderResponseSimpleType) document;
             String orderID = orderResponse.getOrderReference().getDocumentReference().getID();
             boolean isAccepted = orderResponse.isAcceptedIndicator();
 
-            ProcessDocumentMetadata initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(orderID);
+            initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(orderID);
             if(isAccepted)
                 initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
             else
                 initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.DENIED);
 
-            DocumentDAOUtility.updateDocumentMetadata(initiatingDocumentMetadata);
-
         }
         else if(document instanceof PpapResponseType){
-            // do nothing
+            PpapResponseType ppapResponseType = (PpapResponseType) document;
+            String ppapREQUESTID = ppapResponseType.getPpapDocumentReference().getID();
+            initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(ppapREQUESTID);
+            initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
 
         }else if(document instanceof QuotationType) {
             QuotationType quotation = (QuotationType) document;
             String rfqID = quotation.getRequestForQuotationDocumentReference().getID();
-            ProcessDocumentMetadata initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(rfqID);
+            initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(rfqID);
             initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
 
         } else if(document instanceof ReceiptAdviceType) {
             ReceiptAdviceType receiptAdvice = (ReceiptAdviceType) document;
             String despatchAdviceID = receiptAdvice.getDespatchDocumentReference().get(0).getID();
-            ProcessDocumentMetadata initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(despatchAdviceID);
+            initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(despatchAdviceID);
             initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
 
         } else if(document instanceof TransportExecutionPlanType) {
             TransportExecutionPlanType transportExecutionPlanType = (TransportExecutionPlanType) document;
             String tepDocRefId = transportExecutionPlanType.getTransportExecutionPlanRequestDocumentReference().getID();
-            ProcessDocumentMetadata initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(tepDocRefId);
+            initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(tepDocRefId);
             initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
 
         } else if(document instanceof ItemInformationResponseType) {
             ItemInformationResponseType itemInformationResponse = (ItemInformationResponseType) document;
             String itemInformationRequestId = itemInformationResponse.getItemInformationRequestDocumentReference().getID();
-            ProcessDocumentMetadata initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(itemInformationRequestId);
+            initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(itemInformationRequestId);
             initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
+
+        }
+
+        if(initiatingDocumentMetadata != null) {
+            DocumentDAOUtility.updateDocumentMetadata(businessContextId,initiatingDocumentMetadata);
         }
     }
-
 }

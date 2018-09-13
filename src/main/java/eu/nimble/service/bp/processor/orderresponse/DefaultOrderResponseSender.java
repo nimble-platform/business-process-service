@@ -11,7 +11,6 @@ import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ClauseType;
-import eu.nimble.service.model.ubl.commonaggregatecomponents.DataMonitoringClauseType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.DocumentClauseType;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
@@ -58,8 +57,9 @@ public class DefaultOrderResponseSender  implements JavaDelegate {
         // get input variables
         String buyer = variables.get("responderID").toString();
         String seller = variables.get("initiatorID").toString();
+        String processContextId = variables.get("processContextId").toString();
         OrderResponseSimpleType orderResponse = (OrderResponseSimpleType) variables.get("orderResponse");
-        OrderType order = (OrderType) variables.get("order");
+        OrderType order = (OrderType) DocumentDAOUtility.getUBLDocument((String) variables.get("initialDocumentID"));
 
         // get application execution configuration
         ExecutionConfiguration executionConfiguration = DocumentDAOUtility.getExecutionConfiguration(seller,
@@ -76,7 +76,7 @@ public class DefaultOrderResponseSender  implements JavaDelegate {
             IBusinessProcessApplication businessProcessApplication = (IBusinessProcessApplication) instance;
 
             // note the direction of the document (here it is from seller to buyer)
-            businessProcessApplication.sendDocument(processInstanceId, seller, buyer, orderResponse);
+            businessProcessApplication.sendDocument(processContextId,processInstanceId, seller, buyer, orderResponse);
 
             // create a data channel if the order is approved
             createDataChannel(order, orderResponse, buyer, seller, processInstanceId, (String) variables.get("bearer_token"));
@@ -86,6 +86,11 @@ public class DefaultOrderResponseSender  implements JavaDelegate {
         } else {
             // TODO: think other types of execution possibilities
         }
+        // remove variables
+        String initialDocumentID = (String) execution.getVariable("initialDocumentID");
+        execution.removeVariables();
+        execution.setVariable("initialDocumentID",initialDocumentID);
+        execution.setVariable("responseDocumentID",orderResponse.getID());
     }
 
     private boolean needToCreateDataChannel(OrderType order, OrderResponseSimpleType orderResponse) {
@@ -144,7 +149,7 @@ public class DefaultOrderResponseSender  implements JavaDelegate {
             Set<String> consumerIds = new HashSet<>();
             consumerIds.add(sellerId);
             CreateChannel.Request request = new CreateChannel.Request(buyerId, consumerIds, String.format("Data channel for product %s", order.getOrderLine().get(0).getLineItem().getItem().getName()), startTime.toDate(), endTime.toDate(), processInstanceId);
-            System.out.println(Serializer.getDefaultObjectMapper().writeValueAsString(request));
+
             Serializer.getDefaultObjectMapper().writeValue(os, request);
             os.flush();
 

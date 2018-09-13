@@ -7,7 +7,7 @@ import eu.nimble.service.bp.impl.util.persistence.HibernateUtilityRef;
 import eu.nimble.service.bp.swagger.api.PreferenceApi;
 import eu.nimble.service.bp.swagger.model.ProcessPreferences;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
-import eu.nimble.utility.HibernateUtility;
+import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 public class PreferenceController implements PreferenceApi {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     @Override
+    @ApiOperation(value = "",notes = "Add a new partner business process sequence preference")
     public ResponseEntity<ModelApiResponse> addProcessPartnerPreference(@RequestBody ProcessPreferences body) {
         logger.info(" $$$ Adding ProcessPreferences: ");
         logger.debug(" $$$ {}", body.toString());
@@ -32,6 +33,7 @@ public class PreferenceController implements PreferenceApi {
     }
 
     @Override
+    @ApiOperation(value = "",notes = "Deletes the business process preference of a partner")
     public ResponseEntity<ModelApiResponse> deleteProcessPartnerPreference(@PathVariable("partnerID") String partnerID) {
         logger.info(" $$$ Deleting ProcessPreferences for ... {}", partnerID);
         ProcessPreferencesDAO processPreferencesDAO = DAOUtility.getProcessPreferencesDAOByPartnerID(partnerID);
@@ -40,6 +42,7 @@ public class PreferenceController implements PreferenceApi {
     }
 
     @Override
+    @ApiOperation(value = "",notes = "Get the business process preference of a partner")
     public ResponseEntity<ProcessPreferences> getProcessPartnerPreference(@PathVariable("partnerID") String partnerID) {
         logger.info(" $$$ Getting ProcessPreferences for ... {}", partnerID);
         ProcessPreferencesDAO businessProcessPreferencesDAO = DAOUtility.getProcessPreferencesDAOByPartnerID(partnerID);
@@ -54,6 +57,7 @@ public class PreferenceController implements PreferenceApi {
     }
 
     @Override
+    @ApiOperation(value = "",notes = "Update the business process preference of a partner")
     public ResponseEntity<ModelApiResponse> updateProcessPartnerPreference(@RequestBody ProcessPreferences body) {
         logger.info(" $$$ Updating ProcessPreferences: ");
         logger.debug(" $$$ {}", body.toString());

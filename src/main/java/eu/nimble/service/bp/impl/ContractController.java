@@ -14,6 +14,9 @@ import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
 import eu.nimble.utility.Configuration;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -22,6 +25,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
 
 import static eu.nimble.service.bp.impl.util.controller.HttpResponseUtil.*;
@@ -43,6 +47,12 @@ public class ContractController {
      * <li>500, if there is an unexpected error</li>
      * </ul>
      */
+    @ApiOperation(value = "",notes = "Retrieve clause with the given id")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200,message = "Retrieved the clause successfully",response = ClauseType.class),
+            @ApiResponse(code = 404,message = "No clause for the given id"),
+            @ApiResponse(code = 500,message = "Unexpected error while getting the clause with id")
+    })
     @RequestMapping(value = "/clauses/{clauseId}",
             produces = {"application/json"},
             method = RequestMethod.GET)
@@ -61,6 +71,7 @@ public class ContractController {
         }
     }
 
+    @ApiOperation(value = "",notes = "Update the clause with the given id")
     @RequestMapping(value = "/clauses/{clauseId}",
             method = RequestMethod.PUT)
     public ResponseEntity updateClause(@PathVariable(value = "clauseId") String clauseId,
@@ -111,6 +122,7 @@ public class ContractController {
         }
     }
 
+    @ApiOperation(value = "",notes = "Construct contract starting from the process instance with the given id")
     @RequestMapping(value = "/contracts",
             method = RequestMethod.GET)
     public ResponseEntity constructContractForProcessInstances(@RequestParam(value = "processInstanceId") String processInstanceId) {
@@ -122,7 +134,7 @@ public class ContractController {
                 return createResponseEntityAndLog(String.format("Invalid process instance id: %s", processInstanceId), HttpStatus.BAD_REQUEST);
             }
 
-            ContractType contract = ContractDAOUtility.constructContructForProcessInstances(processInstance);
+            ContractType contract = ContractDAOUtility.constructContractForProcessInstances(processInstance);
             logger.info("Constructed contract starting from the process instance: {}", processInstanceId);
 
             ObjectMapper objectMapper = new ObjectMapper();
@@ -142,6 +154,12 @@ public class ContractController {
      * <li>500, if there is an unexpected error</li>
      * </ul>
      */
+    @ApiOperation(value = "",notes = "Retrieve all clauses for the contract with the given id")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200,message = "Retrieved all clauses for the contract"),
+            @ApiResponse(code = 400,message = "No contract for the given id"),
+            @ApiResponse(code = 500,message = "Unexpected error while getting clauses for contract")
+    })
     @RequestMapping(value = "/contracts/{contractId}/clauses",
             produces = {"application/json"},
             method = RequestMethod.GET)
@@ -150,13 +168,10 @@ public class ContractController {
             logger.info("Getting clauses for contract: {}", contractId);
             ContractType contract = ContractDAOUtility.getContract(contractId);
             if (contract == null) {
-                createResponseEntityAndLog(String.format("No contract for the given id: %s", contractId), HttpStatus.BAD_REQUEST);
+                return createResponseEntityAndLog(String.format("No contract for the given id: %s", contractId), HttpStatus.BAD_REQUEST);
             }
 
-            contract.getClause().add(contract.getClause().get(0));
             ObjectMapper mapper = new ObjectMapper();
-            mapper.enableDefaultTypingAsProperty(ObjectMapper.DefaultTyping.NON_FINAL, "clause");
-            mapper.enableDefaultTyping();
 
             logger.info("Retrieved clauses for contract: {}", contractId);
             return ResponseEntity.ok().body(mapper.writeValueAsString(contract.getClause()));
@@ -166,6 +181,10 @@ public class ContractController {
         }
     }
 
+    @ApiOperation(value = "",notes = "Delete clause from the contract")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200,message = "Deleted clause from the contract successfully",response = ContractType.class)
+    })
     @RequestMapping(value = "/contracts/{contractId}/clauses/{clauseId}",
             method = RequestMethod.DELETE)
     public ResponseEntity deleteClauseFromContract(@PathVariable(value = "contractId") String contractId,
@@ -192,6 +211,8 @@ public class ContractController {
                 return createResponseEntityAndLog("Failed to delete clause: " + clauseId + " from contract: " + contractId, e, HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
+            // return updated version
+            contract = ContractDAOUtility.getContract(contractId);
             logger.info("Deleted clause: {} from contract: {}", clauseId, contractId);
             return ResponseEntity.ok().body(contract);
 
@@ -214,7 +235,7 @@ public class ContractController {
     @RequestMapping(value = "/documents/{documentId}/clauses",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity<ClauseType> getClauseDetails(@PathVariable(value = "documentId", required = true) String documentId,
+    public ResponseEntity getClauseDetails(@PathVariable(value = "documentId", required = true) String documentId,
                                                        @RequestParam(value = "clauseType", required = true) eu.nimble.service.bp.impl.model.ClauseType clauseType) {
         try {
             logger.info("Getting clause for document: {}, type: {}", documentId, clauseType);
@@ -228,9 +249,9 @@ public class ContractController {
                 return createResponseEntityAndLog(String.format("Invalid bounded-document type: %s", documentType), HttpStatus.BAD_REQUEST);
             }
 
-            ClauseType clause = ContractDAOUtility.getClause(documentMetadata.getDocumentID(), documentType, clauseType);
-            if (clause == null) {
-                createResponseEntityAndLog(String.format("No clause for the document: %s, clause type: %s", documentId, clauseType), HttpStatus.NOT_FOUND);
+            List<ClauseType> clause = ContractDAOUtility.getClause(documentMetadata.getDocumentID(), documentType, clauseType);
+            if (clause == null || clause.size() == 0) {
+               return createResponseEntityAndLog(String.format("No clause for the document: %s, clause type: %s", documentId, clauseType), HttpStatus.NOT_FOUND);
             }
             logger.info("Retrieved clause with for document: {}, type: {}", documentId, clauseType);
             return ResponseEntity.ok().body(clause);
@@ -240,8 +261,8 @@ public class ContractController {
         }
     }
 
-
-    @RequestMapping(value = "/documents/{documentId}/contract",
+    @ApiOperation(value = "",notes = "Add document clause to the contract")
+    @RequestMapping(value = "/documents/{documentId}/contract/clause/document",
             produces = {"application/json"},
             method = RequestMethod.PATCH)
     public ResponseEntity addDocumentClauseToContract(@PathVariable(value = "documentId") String documentId,
@@ -271,8 +292,7 @@ public class ContractController {
                 return createResponseEntityAndLog(String.format("Invalid clause document id: %s", clauseDocumentId), HttpStatus.BAD_REQUEST);
             }
 
-            ProcessDocumentMetadataDAO documentMetadata = DAOUtility.getProcessDocumentMetadata(documentId);
-            Object document = DocumentDAOUtility.getUBLDocument(documentId, documentMetadata.getType());
+            Object document = DocumentDAOUtility.getUBLDocument(documentId, clauseDocumentMetadata.getType());
             ContractType contract = checkDocumentContract(document);
             DocumentClauseType clause = new DocumentClauseType();
             DocumentReferenceType docRef = new DocumentReferenceType();
@@ -306,7 +326,8 @@ public class ContractController {
         }
     }
 
-    @RequestMapping(value = "/documents/{documentId}/contract",
+    @ApiOperation(value = "",notes = "Add data monitoring clause to the contract")
+    @RequestMapping(value = "/documents/{documentId}/contract/clause/data-monitoring",
             consumes = {"application/json"},
             produces = {"application/json"},
             method = RequestMethod.PATCH)
@@ -327,6 +348,7 @@ public class ContractController {
             ContractType contract = checkDocumentContract(document);
 
             dataMonitoringClause.setID(UUID.randomUUID().toString());
+            dataMonitoringClause.setType(eu.nimble.service.bp.impl.model.ClauseType.DATA_MONITORING.toString());
             contract.getClause().add(dataMonitoringClause);
 
             // persist the update

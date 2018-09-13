@@ -35,6 +35,7 @@ public class DefaultDespatchAdviceSender implements JavaDelegate {
         // get input variables
         String buyer = variables.get("responderID").toString();
         String seller = variables.get("initiatorID").toString();
+        String processContextId = variables.get("processContextId").toString();
         DespatchAdviceType despatchAdvice = (DespatchAdviceType) variables.get("despatchAdvice");
 
         // get application execution configuration
@@ -52,11 +53,14 @@ public class DefaultDespatchAdviceSender implements JavaDelegate {
             IBusinessProcessApplication businessProcessApplication = (IBusinessProcessApplication) instance;
 
             // note the direction of the document (here it is from seller to buyer)
-            businessProcessApplication.sendDocument(processInstanceId, seller, buyer, despatchAdvice);
+            businessProcessApplication.sendDocument(processContextId,processInstanceId, seller, buyer, despatchAdvice);
         } else if(executionType == ExecutionConfiguration.ExecutionTypeEnum.MICROSERVICE) {
             // TODO: How to call a microservice
         } else {
             // TODO: think other types of execution possibilities
         }
+        // remove variables
+        execution.removeVariables();
+        execution.setVariable("initialDocumentID",despatchAdvice.getID());
     }
 }

@@ -8,14 +8,11 @@ package eu.nimble.service.bp.impl.util.persistence;
 import eu.nimble.service.bp.hyperjaxb.model.*;
 import eu.nimble.service.bp.swagger.model.*;
 import eu.nimble.service.bp.swagger.model.Process;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import java.io.Console;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * @author yildiray
@@ -106,6 +103,20 @@ public class HibernateSwaggerObjectMapper {
         processInstanceDAO.setCreationDate(processInstance.getCreationDate());
         processInstanceDAO.setStatus(ProcessInstanceStatus.fromValue(processInstance.getStatus().toString()));
         return processInstanceDAO;
+    }
+
+    public static List<ProcessInstance> createProcessInstances(List<ProcessInstanceDAO> processInstanceDAOS){
+        List<ProcessInstance> processInstances = new ArrayList<>();
+        for(ProcessInstanceDAO processInstanceDAO : processInstanceDAOS){
+            ProcessInstance processInstance = new ProcessInstance();
+            processInstance.setProcessID(processInstanceDAO.getProcessID());
+            processInstance.setProcessInstanceID(processInstanceDAO.getProcessInstanceID());
+            processInstance.setStatus(ProcessInstance.StatusEnum.valueOf(processInstanceDAO.getStatus().toString()));
+            processInstance.setCreationDate(processInstanceDAO.getCreationDate());
+
+            processInstances.add(processInstance);
+        }
+        return processInstances;
     }
 
     public static ProcessDocumentMetadataDAO createProcessDocumentMetadata_DAO(ProcessDocumentMetadata body) {

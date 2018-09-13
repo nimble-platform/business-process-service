@@ -1,0 +1,15 @@
+{
+  "documentID": "12",
+  "initiatorID": "706",
+  "processInstanceID": "437",
+  "relatedProductCategories": [
+    "example_Cat"
+  ],
+  "relatedProducts": [
+    "QExample"
+  ],
+  "responderID": "435",
+  "status": "WAITINGRESPONSE",
+  "submissionDate": "2018-07-05",
+  "type": "ORDER"
+}

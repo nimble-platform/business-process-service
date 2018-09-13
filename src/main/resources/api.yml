@@ -27,7 +27,6 @@ paths:
             $ref: '#/definitions/Version'
   /content:
     get:
-      summary: Get the business process definitions
       operationId: getProcessDefinitions
       produces:
       - application/json
@@ -40,7 +39,6 @@ paths:
             items:
               $ref: '#/definitions/Process'
     post:
-      summary: Add a new business process
       operationId: addProcessDefinition
       consumes:
       - application/json
@@ -59,7 +57,6 @@ paths:
           schema:
             $ref: '#/definitions/ApiResponse'
     put:
-      description: Update a business process
       operationId: updateProcessDefinition
       consumes:
       - application/json
@@ -78,7 +75,6 @@ paths:
             $ref: '#/definitions/ApiResponse'
   /content/{processID}:
     get:
-      summary: Get the business process definitions
       operationId: getProcessDefinition
       produces:
       - application/json
@@ -95,7 +91,6 @@ paths:
           schema:
             $ref: '#/definitions/Process'
     delete:
-      description: Deletes a business process definition
       operationId: deleteProcessDefinition
       produces:
       - application/json
@@ -113,7 +108,6 @@ paths:
 
   /preference:
     post:
-      summary: Add a new partner business process sequence preference
       operationId: addProcessPartnerPreference
       consumes:
       - application/json
@@ -132,7 +126,6 @@ paths:
           schema:
             $ref: '#/definitions/ApiResponse'
     put:
-      description: Update the business process preference of a partner
       operationId: updateProcessPartnerPreference
       consumes:
       - application/json
@@ -151,7 +144,6 @@ paths:
             $ref: '#/definitions/ApiResponse'
   /preference/{partnerID}:
     get:
-      summary: Get the business process preference of a partner
       operationId: getProcessPartnerPreference
       produces:
       - application/json
@@ -168,7 +160,6 @@ paths:
           schema:
             $ref: '#/definitions/ProcessPreferences'
     delete:
-      description: Deletes the business process preference of a partner
       operationId: deleteProcessPartnerPreference
       produces:
       - application/json
@@ -186,7 +177,6 @@ paths:
 
   /application:
     post:
-      summary: Add a new partner business process application preference
       operationId: addProcessConfiguration
       consumes:
       - application/json
@@ -205,7 +195,6 @@ paths:
           schema:
             $ref: '#/definitions/ApiResponse'
     put:
-      description: Update the business process application preference of a partner
       operationId: updateProcessConfiguration
       consumes:
       - application/json
@@ -225,7 +214,6 @@ paths:
 
   /application/{partnerID}:
     get:
-      summary: Get the business process application preferences of a partner for all processes
       operationId: getProcessConfiguration
       produces:
       - application/json
@@ -245,7 +233,6 @@ paths:
               $ref: '#/definitions/ProcessConfiguration'
   /application/{partnerID}/{processID}/{roleType}:
     get:
-      summary: Get the business process application preferences of a partner for a specific process
       operationId: getProcessConfigurationByProcessID
       produces:
       - application/json
@@ -270,7 +257,6 @@ paths:
           schema:
             $ref: '#/definitions/ProcessConfiguration'
     delete:
-      description: Deletes the business process application preference of a partner for a process
       operationId: deleteProcessConfiguration
       produces:
       - application/json
@@ -296,7 +282,6 @@ paths:
 
   /start:
     post:
-      summary: Start an instance of a business process
       operationId: startProcessInstance
       consumes:
       - application/json
@@ -315,7 +300,7 @@ paths:
         type: string
       - in: query
         name: preceding_pid
-        description: The UUID of the preceding process instance
+        description: The id of the preceding process instance
         required: false
         type: string
 
@@ -328,7 +313,6 @@ paths:
 
   /continue:
     post:
-      summary: Send input to a waiting process instance (because of a human task)
       operationId: continueProcessInstance
       consumes:
       - application/json
@@ -358,7 +342,6 @@ paths:
 
   /document:
     post:
-      summary: Add a business process document metadata
       operationId: addDocumentMetadata
       consumes:
       - application/json
@@ -377,7 +360,6 @@ paths:
           schema:
             $ref: '#/definitions/ApiResponse'
     put:
-      description: Update a business process document metadata
       operationId: updateDocumentMetadata
       consumes:
       - application/json
@@ -397,7 +379,6 @@ paths:
 
   /document/{documentID}:
     delete:
-      description: Deletes the business process document metadata together with content by id
       operationId: deleteDocument
       produces:
       - application/json
@@ -415,7 +396,6 @@ paths:
 
   /document/{partnerID}/{type}/{source}/{status}:
     get:
-      summary: Get the business process document metadata
       operationId: getDocuments
       produces:
       - application/json
@@ -428,7 +408,7 @@ paths:
       - in: path
         name: type
         type: string
-        description: The type of the document
+        description: The type of the document such as PPAPRESPONSE,ORDERRESPONSESIMPLE,REQUESTFORQUOTATION etc.
         required: true
       - in: path
         name: status
@@ -451,7 +431,6 @@ paths:
 
   /document/{partnerID}/{type}/{source}:
     get:
-      summary: Get the business process document metadata
       operationId: getDocuments
       produces:
       - application/json
@@ -464,7 +443,7 @@ paths:
       - in: path
         name: type
         type: string
-        description: The type of the document
+        description: The type of the document such as PPAPRESPONSE,ORDERRESPONSESIMPLE,REQUESTFORQUOTATION etc.
         required: true
       - in: path
         name: source
@@ -482,7 +461,6 @@ paths:
 
   /document/{partnerID}/{type}:
     get:
-      summary: Get the business process document metadata
       operationId: getDocuments
       produces:
       - application/json
@@ -495,7 +473,7 @@ paths:
       - in: path
         name: type
         type: string
-        description: The type of the document
+        description: The type of the document such as PPAPRESPONSE,ORDERRESPONSESIMPLE,REQUESTFORQUOTATION etc.
         required: true
       responses:
         # Response code
@@ -508,7 +486,6 @@ paths:
 
   /group:
     get:
-      summary: Retrieves process instance groups for the specified party. If no partyID is specified, then all groups are returned
       operationId: getProcessInstanceGroups
       parameters:
       - in: query
@@ -550,6 +527,17 @@ paths:
         type: boolean
         default: false
       - in: query
+        name: status
+        required: false
+        type: array
+        items:
+          type: string
+          enum:
+          - STARTED
+          - WAITING
+          - CANCELLED
+          - COMPLETED
+      - in: query
         name: collaborationRole
         type: string
         required: false
@@ -561,7 +549,6 @@ paths:
           schema:
             $ref: '#/definitions/ProcessInstanceGroupResponse'
     post:
-      summary: Saves a process group along with the initial process instance
       operationId: saveProcessInstanceGroup
       consumes:
       - application/json
@@ -579,9 +566,27 @@ paths:
         201:
           description: Saved the group successfully
 
+  /group/order-process:
+    get:
+      operationId: getOrderProcess
+      parameters:
+      - in: query
+        name: processInstanceId
+        type: string
+        required: true
+        description: Identifier of a process instance included in the group
+      - name: Authorization
+        in: header
+        type: string
+        required: true
+      produces:
+      - application/json
+      responses:
+        200:
+          description: Retrieved the order content successfuly
+
   /group/filters:
     get:
-      summary: Generates detailed filtering criteria for the current query parameters in place
       operationId: getProcessInstanceGroupFilters
       parameters:
       - in: query
@@ -616,6 +621,17 @@ paths:
         name: collaborationRole
         type: string
         required: false
+      - in: query
+        name: status
+        required: false
+        type: array
+        items:
+          type: string
+          enum:
+          - STARTED
+          - WAITING
+          - CANCELLED
+          - COMPLETED
       - name: Authorization
         in: header
         type: string
@@ -630,7 +646,6 @@ paths:
 
   /group/{ID}:
     get:
-      summary: Retrieves the process instance group specified with the ID
       operationId: getProcessInstanceGroup
       parameters:
       - in: path
@@ -643,7 +658,6 @@ paths:
           schema:
             $ref: '#/definitions/ProcessInstanceGroup'
     delete:
-      summary: Deletes the process instance group along with the included process instances
       operationId: deleteProcessInstanceGroup
       parameters:
       - in: path
@@ -656,7 +670,6 @@ paths:
 
   /group/{ID}/archive:
     post:
-      summary: Archives the process instance group specified with ID
       operationId: archiveGroup
       parameters:
       - in: path
@@ -671,7 +684,6 @@ paths:
             $ref: '#/definitions/ProcessInstanceGroup'
   /group/{ID}/restore:
     post:
-      summary: Restores the archived process instance group specified with ID
       operationId: restoreGroup
       parameters:
       - in: path
@@ -687,7 +699,6 @@ paths:
 
   /group/archive-all:
     post:
-      summary: Archives all the groups of the given party
       operationId: archiveAllGroups
       parameters:
       - in: query
@@ -700,7 +711,6 @@ paths:
           description: Archived the groups successfully
   /group/delete-all:
     post:
-      summary: Deletes all the archived groups of the given party
       operationId: deleteAllArchivedGroups
       parameters:
       - in: query
@@ -714,7 +724,6 @@ paths:
 
   /group/{ID}/process-instance:
     get:
-      summary: Retrieves the process instances for the given process group
       operationId: getProcessInstancesOfGroup
       produces:
       - application/json
@@ -732,7 +741,6 @@ paths:
             items:
               $ref: '#/definitions/ProcessInstance'
     post:
-      summary: Adds a new process instance to the specified
       operationId: addProcessInstanceToGroup
       parameters:
       - in: path
@@ -751,7 +759,6 @@ paths:
           schema:
             $ref: '#/definitions/ProcessInstanceGroup'
     delete:
-      summary: Deletes a new process instance to the specified
       operationId: deleteProcessInstanceFromGroup
       parameters:
       - in: path
@@ -988,7 +995,7 @@ definitions:
         enum:
         - STARTED
         - WAITING
-        - ABORTED
+        - CANCELLED
         - COMPLETED
 
   ProcessInstanceGroup:
@@ -1052,6 +1059,15 @@ definitions:
         type: array
         items:
           type: string
+      status:
+        type: array
+        items:
+          type: string
+          enum:
+          - STARTED
+          - WAITING
+          - CANCELLED
+          - COMPLETED
 
   ProcessDocumentMetadata:
     title: Business Process Document Metadata Object

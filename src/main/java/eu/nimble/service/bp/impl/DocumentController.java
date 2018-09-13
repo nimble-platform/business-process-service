@@ -6,6 +6,8 @@ import eu.nimble.service.bp.impl.util.persistence.DAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.impl.util.persistence.DocumentDAOUtility;
 import eu.nimble.service.bp.impl.util.serialization.Serializer;
+import eu.nimble.service.bp.processor.BusinessProcessContext;
+import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.api.DocumentApi;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
@@ -15,6 +17,7 @@ import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
 import eu.nimble.utility.JAXBUtility;
+import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -37,10 +40,11 @@ import static eu.nimble.service.bp.impl.util.controller.HttpResponseUtil.*;
 public class DocumentController implements DocumentApi {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    @ApiOperation(value = "",notes = "Retrieve Json content of the document with the given id")
     @RequestMapping(value = "/document/json/{documentID}",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    ResponseEntity<Object> getDocumentJsonContent(@PathVariable("documentID") String documentID) {
+    public ResponseEntity<Object> getDocumentJsonContent(@PathVariable("documentID") String documentID) {
         try {
             logger.info("Getting content of document: {}", documentID);
             Object document = DocumentDAOUtility.getUBLDocument(documentID);
@@ -61,6 +65,7 @@ public class DocumentController implements DocumentApi {
         }
     }
 
+    @ApiOperation(value = "",notes = "Retrieve XML content of the document with the given id")
     @RequestMapping(value = "/document/xml/{documentID}",
             produces = {"application/json"},
             method = RequestMethod.GET)
@@ -91,18 +96,39 @@ public class DocumentController implements DocumentApi {
     // The above two operations are to retrieve the document contents
 
     @Override
+    @ApiOperation(value = "",notes = "Add a business process document metadata")
     public ResponseEntity<ModelApiResponse> addDocumentMetadata(@RequestBody ProcessDocumentMetadata body) {
-        DocumentDAOUtility.addDocumentWithMetadata(body, null);
+        BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
+        try{
+            DocumentDAOUtility.addDocumentWithMetadata(businessProcessContext.getId(),body, null);
+        }
+        catch (Exception e){
+            businessProcessContext.handleExceptions();
+        }
+        finally {
+            BusinessProcessContextHandler.getBusinessProcessContextHandler().deleteBusinessProcessContext(businessProcessContext.getId());
+        }
         return HibernateSwaggerObjectMapper.getApiResponse();
     }
 
     @Override
+    @ApiOperation(value = "",notes = "Update a business process document metadata")
     public ResponseEntity<ModelApiResponse> updateDocumentMetadata(@RequestBody ProcessDocumentMetadata body) {
-        DocumentDAOUtility.updateDocumentMetadata(body);
+        BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
+        try{
+            DocumentDAOUtility.updateDocumentMetadata(businessProcessContext.getId(),body);
+        }
+        catch (Exception e){
+            businessProcessContext.handleExceptions();
+        }
+        finally {
+            BusinessProcessContextHandler.getBusinessProcessContextHandler().deleteBusinessProcessContext(businessProcessContext.getId());
+        }
         return HibernateSwaggerObjectMapper.getApiResponse();
     }
 
     @Override
+    @ApiOperation(value = "",notes = "Delete the business process document metadata together with content by id")
     public ResponseEntity<ModelApiResponse> deleteDocument(@PathVariable("documentID") String documentID) {
         logger.info(" $$$ Deleting Document for ... {}", documentID);
         DocumentDAOUtility.deleteDocumentWithMetadata(documentID);
@@ -123,6 +149,7 @@ public class DocumentController implements DocumentApi {
     }*/
 
     @Override
+    @ApiOperation(value = "",notes = "Get the business process document metadata")
     public ResponseEntity<List<ProcessDocumentMetadata>> getDocuments(@PathVariable("partnerID") String partnerID, @PathVariable("type") String type) {
         logger.info(" $$$ Getting Document for partner {}, type {}", partnerID, type);
         List<ProcessDocumentMetadataDAO> processDocumentsDAO = DAOUtility.getProcessDocumentMetadata(partnerID, type);
@@ -136,6 +163,7 @@ public class DocumentController implements DocumentApi {
     }
 
     @Override
+    @ApiOperation(value = "",notes = "Get the business process document metadata")
     public ResponseEntity<List<ProcessDocumentMetadata>> getDocuments(@PathVariable("partnerID") String partnerID, @PathVariable("type") String type, @PathVariable("source") String source) {
         logger.info(" $$$ Getting Document for partner {}, type {}, source {}", partnerID, type, source);
         List<ProcessDocumentMetadataDAO> processDocumentsDAO = DAOUtility.getProcessDocumentMetadata(partnerID, type, source);
@@ -148,6 +176,7 @@ public class DocumentController implements DocumentApi {
     }
 
     @Override
+    @ApiOperation(value = "",notes = "Get the business process document metadata")
     public ResponseEntity<List<ProcessDocumentMetadata>> getDocuments(@PathVariable("partnerID") String partnerID, @PathVariable("type") String type,
             @PathVariable("source") String source, @PathVariable("status") String status) {
         logger.info(" $$$ Getting Document for partner {}, type {}, status {}, source {}", partnerID, type, status, source);

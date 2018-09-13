@@ -36,6 +36,7 @@ public class DefaultReceiptAdviceSender implements JavaDelegate {
         // get input variables
         String buyer = variables.get("initiatorID").toString();
         String seller = variables.get("responderID").toString();
+        String processContextId = variables.get("processContextId").toString();
         ReceiptAdviceType receiptAdvice = (ReceiptAdviceType) variables.get("receiptAdvice");
 
         // get application execution configuration
@@ -52,11 +53,16 @@ public class DefaultReceiptAdviceSender implements JavaDelegate {
 
             IBusinessProcessApplication businessProcessApplication = (IBusinessProcessApplication) instance;
 
-            businessProcessApplication.sendDocument(processInstanceId, buyer, seller, receiptAdvice);
+            businessProcessApplication.sendDocument(processContextId,processInstanceId, buyer, seller, receiptAdvice);
         } else if(executionType == ExecutionConfiguration.ExecutionTypeEnum.MICROSERVICE) {
             // TODO: How to call a microservice
         } else {
             // TODO: think other types of execution possibilities
         }
+        // remove variables
+        String initialDocumentID = (String) execution.getVariable("initialDocumentID");
+        execution.removeVariables();
+        execution.setVariable("initialDocumentID",initialDocumentID);
+        execution.setVariable("responseDocumentID",receiptAdvice.getID());
     }
 }

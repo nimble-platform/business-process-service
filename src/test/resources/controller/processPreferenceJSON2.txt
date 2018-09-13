@@ -1,0 +1,11 @@
+{
+  "partnerID": "706",
+  "preferences": [
+    {
+      "processOrder": [
+        "CATALOGUE","ORDER","OTHER"
+      ],
+      "targetPartnerID": "1024"
+    }
+  ]
+}

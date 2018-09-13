@@ -1,0 +1,1 @@
+{"partnerID":"874","roleType":"BUYER","processID":"87490","transactionConfigurations":[{"transactionID":"72252","executionConfigurations":[{"applicationType":"DATAPROCESSOR","executionType":"JAVA","executionUri":"exec_uri"}]}]}

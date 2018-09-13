@@ -1,0 +1,18 @@
+{
+  "ChannelID": "string",
+  "Hjid": 0,
+  "ID": "aaa-bbb-ccc",
+  "MonitoredCompanyID": [
+    "706"
+  ],
+  "MonitoringCompanyID": [
+    "1339"
+  ],
+  "MonitoringUserID": [
+    "706"
+  ],
+  "Note": [
+    "note here"
+  ],
+  "Type": "DATA_MONITORING"
+}

@@ -127,7 +127,7 @@
 		<xsd:restriction base="xsd:token">
 			<xsd:enumeration value="STARTED"/>
 			<xsd:enumeration value="WAITING"/>
-			<xsd:enumeration value="ABORTED"/>
+			<xsd:enumeration value="CANCELLED"/>
 			<xsd:enumeration value="COMPLETED"/>
 		</xsd:restriction>
 	</xsd:simpleType>
