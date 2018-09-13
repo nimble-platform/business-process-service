@@ -117,10 +117,12 @@ public class CamundaEngine {
         String content = variables.getContent();
         String initiatorID = variables.getInitiatorID();
         String responderID = variables.getResponderID();
+        String creatorUserID = variables.getCreatorUserID();
 
         Map<String, Object> data = new HashMap<String, Object>();
         data.put("initiatorID", initiatorID);
         data.put("responderID", responderID);
+        data.put("creatorUserID",creatorUserID);
         data.put("content", content);
         data.put("relatedProducts", variables.getRelatedProducts());
         data.put("relatedProductCategories", variables.getRelatedProductCategories());

@@ -970,6 +970,8 @@ definitions:
           type: string
       content:
         type: string
+      creatorUserID:
+        type: string
 
   ProcessInstanceInputMessage:
     title: Business Process Input Message Object
@@ -1118,6 +1120,8 @@ definitions:
       initiatorID:
         type: string
       responderID:
+        type: string
+      creatorUserID:
         type: string
 
   ApiResponse:

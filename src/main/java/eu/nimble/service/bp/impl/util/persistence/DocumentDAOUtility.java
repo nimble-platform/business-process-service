@@ -345,6 +345,14 @@ public class DocumentDAOUtility {
         return getDocumentMetadata(id);
     }
 
+    public static ProcessDocumentMetadata getRequestMetadata(String processInstanceID){
+        String query = "FROM ProcessDocumentMetadataDAO documentMetadata WHERE documentMetadata.processInstanceID='"+processInstanceID+"' AND (" +
+                "documentMetadata.type = 'REQUESTFORQUOTATION' OR documentMetadata.type = 'ORDER' OR documentMetadata.type = 'DESPATCHADVICE' OR " +
+                "documentMetadata.type = 'PPAPREQUEST' OR documentMetadata.type = 'TRANSPORTEXECUTIONPLANREQUEST' OR documentMetadata.type = 'ITEMINFORMATIONREQUEST')";
+        ProcessDocumentMetadataDAO processDocumentDAO = (ProcessDocumentMetadataDAO) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query);
+        return HibernateSwaggerObjectMapper.createProcessDocumentMetadata(processDocumentDAO);
+    }
+
     public static boolean documentExists(String documentID) {
         String query = "SELECT count(*) FROM ProcessDocumentMetadataDAO document WHERE document.documentID = '" + documentID + "'";
         int count = ((Long) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query)).intValue();

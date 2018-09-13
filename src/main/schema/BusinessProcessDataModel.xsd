@@ -90,6 +90,7 @@
 			<xsd:element name="processID" type="xsd:string"/>
 			<xsd:element name="initiatorID" type="xsd:string"/>
 			<xsd:element name="responderID" type="xsd:string"/>
+            <xsd:element name="creatorUserID" type="xsd:string"/>
 			<xsd:element name="contentUUID" type="xsd:string"/>
             <xsd:element name="relatedProducts" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
 			<xsd:element name="relatedProductCategories" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
@@ -231,6 +232,7 @@
 			<xsd:element name="processInstanceID" type="xsd:string"/>
 			<xsd:element name="initiatorID" type="xsd:string"/>
 			<xsd:element name="responderID" type="xsd:string"/>
+            <xsd:element name="creatorUserID" type="xsd:string"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	<!--xsd:complexType name="ProcessDocumentContentDAO">

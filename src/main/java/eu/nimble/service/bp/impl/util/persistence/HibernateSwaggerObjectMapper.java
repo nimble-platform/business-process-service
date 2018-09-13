@@ -50,6 +50,7 @@ public class HibernateSwaggerObjectMapper {
         processVariablesDAO.setContentUUID(body.getVariables().getContentUUID());
         processVariablesDAO.setInitiatorID(body.getVariables().getInitiatorID());
         processVariablesDAO.setResponderID(body.getVariables().getResponderID());
+        processVariablesDAO.setCreatorUserID(body.getVariables().getCreatorUserID());
 
         List<String> relatedProducts = body.getVariables().getRelatedProducts();
         for(String relatedProduct: relatedProducts) {
@@ -88,6 +89,7 @@ public class HibernateSwaggerObjectMapper {
         processDocument.setDocumentID(processDocumentDAO.getDocumentID());
         processDocument.setInitiatorID(processDocumentDAO.getInitiatorID());
         processDocument.setResponderID(processDocumentDAO.getResponderID());
+        processDocument.setCreatorUserID(processDocumentDAO.getCreatorUserID());
         processDocument.setSubmissionDate(processDocumentDAO.getSubmissionDate());
         processDocument.setStatus(ProcessDocumentMetadata.StatusEnum.valueOf(processDocumentDAO.getStatus().value()));
         processDocument.setType(ProcessDocumentMetadata.TypeEnum.valueOf(processDocumentDAO.getType().value()));
@@ -124,6 +126,7 @@ public class HibernateSwaggerObjectMapper {
         processDocumentDAO.setProcessInstanceID(body.getProcessInstanceID());
         processDocumentDAO.setInitiatorID(body.getInitiatorID());
         processDocumentDAO.setResponderID(body.getResponderID());
+        processDocumentDAO.setCreatorUserID(body.getCreatorUserID());
         if(body.getStatus() != null)
             processDocumentDAO.setStatus(ProcessDocumentStatus.fromValue(body.getStatus().toString()));
         else

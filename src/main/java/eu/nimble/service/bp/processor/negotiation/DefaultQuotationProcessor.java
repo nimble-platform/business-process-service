@@ -39,6 +39,7 @@ public class DefaultQuotationProcessor  implements JavaDelegate {
         // get input variables
         String buyer = variables.get("responderID").toString();
         String seller = variables.get("initiatorID").toString();
+        String creatorUserID = variables.get("creatorUserID").toString();
         String processContextId = variables.get("processContextId").toString();
         List<String> relatedProducts = (List<String>) variables.get("relatedProducts");
         List<String> relatedProductCategories = (List<String>) variables.get("relatedProductCategories");
@@ -59,7 +60,7 @@ public class DefaultQuotationProcessor  implements JavaDelegate {
             IBusinessProcessApplication businessProcessApplication = (IBusinessProcessApplication) instance;
 
             // NOTE: Pay attention to the direction of the document. Here it is from seller to buyer
-            businessProcessApplication.saveDocument(processContextId,processInstanceId, seller, buyer, quotation, relatedProducts, relatedProductCategories);
+            businessProcessApplication.saveDocument(processContextId,processInstanceId, seller, buyer,creatorUserID, quotation, relatedProducts, relatedProductCategories);
         } else if(executionType == ExecutionConfiguration.ExecutionTypeEnum.MICROSERVICE) {
             // TODO: How to call a microservice
         } else {

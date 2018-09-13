@@ -9,6 +9,7 @@ import eu.nimble.service.bp.impl.util.persistence.DocumentDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.HibernateUtilityRef;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
+import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -74,7 +75,8 @@ public class ProcessInstanceController {
             method = RequestMethod.PUT)
     public ResponseEntity updateProcessInstance(@RequestBody String content,
                                                 @RequestParam(value = "processID") DocumentType processID,
-                                                @RequestParam(value = "processInstanceID") String processInstanceID) {
+                                                @RequestParam(value = "processInstanceID") String processInstanceID,
+                                                @RequestParam(value = "creatorUserID") String creatorUserID) {
 
         logger.debug("Updating process instance with id: {}",processInstanceID);
 
@@ -87,7 +89,10 @@ public class ProcessInstanceController {
                 logger.error("There does not exist a process instance with id:{}",processID);
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("There does not exist a process instance with the given id");
             }
-
+            // update creator user id of metadata
+            ProcessDocumentMetadata processDocumentMetadata = DocumentDAOUtility.getRequestMetadata(processInstanceID);
+            processDocumentMetadata.setCreatorUserID(creatorUserID);
+            DocumentDAOUtility.updateDocumentMetadata(businessProcessContext.getId(),processDocumentMetadata);
             // update the corresponding document
             DocumentDAOUtility.updateDocument(businessProcessContext.getId(),content,processID);
         }
