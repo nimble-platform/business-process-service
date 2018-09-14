@@ -198,7 +198,7 @@ public class ContractGenerator {
                     text = text.replace("$seller_tel",seller_tel_default);
                 }
 
-                if(!supplierParty.getWebsiteURI().contentEquals("")){
+                if(supplierParty.getWebsiteURI() != null && !supplierParty.getWebsiteURI().contentEquals("")){
                     text = text.replace("$seller_website",supplierParty.getWebsiteURI());
                 }
                 else {
@@ -230,7 +230,7 @@ public class ContractGenerator {
 
         }
         catch (Exception e){
-            logger.error("Failed to fill in 'Standard Purchase Order Terms and Conditions_Text.docx' for the order with id : {}",order.getID(),e);
+            logger.error("Failed to fill in 'Standard Purchase Order Terms and Conditions_Text.docx' for the order with id : {}", order.getID() != null ? order.getID() : "", e);
         }
         return text;
     }
