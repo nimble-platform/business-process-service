@@ -345,6 +345,15 @@ public class DocumentDAOUtility {
         return getDocumentMetadata(id);
     }
 
+    public static Object getResponseDocument(String documentID,DocumentType documentType){
+        Object document = null;
+        if(documentType == DocumentType.ORDER){
+            String query = "SELECT orderResponse FROM OrderResponseSimpleType orderResponse WHERE orderResponse.orderReference.documentReference.ID = '"+documentID+"'";
+            document = (OrderResponseSimpleType) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadIndividualItem(query);
+        }
+        return document;
+    }
+
     public static ProcessDocumentMetadata getRequestMetadata(String processInstanceID){
         String query = "FROM ProcessDocumentMetadataDAO documentMetadata WHERE documentMetadata.processInstanceID='"+processInstanceID+"' AND (" +
                 "documentMetadata.type = 'REQUESTFORQUOTATION' OR documentMetadata.type = 'ORDER' OR documentMetadata.type = 'DESPATCHADVICE' OR " +
