@@ -2,6 +2,7 @@ package eu.nimble.service.bp.application.ubl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
+import eu.nimble.service.bp.impl.util.persistence.DataIntegratorUtil;
 import eu.nimble.service.bp.impl.util.persistence.DocumentDAOUtility;
 import eu.nimble.service.bp.impl.util.serialization.Serializer;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
@@ -264,6 +265,7 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
             documentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
             documentMetadata.setType(ProcessDocumentMetadata.TypeEnum.ITEMINFORMATIONRESPONSE);
         }
+        DataIntegratorUtil.checkExistingParties(document);
 
         // persist the document metadata
         DocumentDAOUtility.addDocumentWithMetadata(businessContextId,documentMetadata, document);

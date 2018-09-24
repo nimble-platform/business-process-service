@@ -74,7 +74,7 @@ public class DocumentDAOUtility {
 
         if (document != null)
         {
-            HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(document);
+            HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).update(document);
             // save Object
             businessProcessContext.setDocument(document);
         }
