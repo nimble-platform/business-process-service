@@ -119,6 +119,9 @@ public class StatisticsDAOUtility {
         double totalTime = 0;
         QualifyingPartyType qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID,bearerToken);
         for (CompletedTaskType completedTask:qualifyingParty.getCompletedTask()){
+            if(completedTask.getPeriod().getEndDate() == null || completedTask.getPeriod().getEndTime() == null){
+                continue;
+            }
             Date startDate = completedTask.getPeriod().getStartDate().toGregorianCalendar().getTime();
             Date endDate = completedTask.getPeriod().getEndDate().toGregorianCalendar().getTime();
             Date startTime = completedTask.getPeriod().getStartTime().toGregorianCalendar().getTime();

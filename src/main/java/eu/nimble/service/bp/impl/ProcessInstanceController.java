@@ -7,10 +7,12 @@ import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.impl.util.persistence.DAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.DocumentDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.HibernateUtilityRef;
+import eu.nimble.service.bp.impl.util.persistence.TrustUtility;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
@@ -18,10 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * Created by dogukan on 09.08.2018.
@@ -40,7 +39,8 @@ public class ProcessInstanceController {
     })
     @RequestMapping(value = "/processInstance",
             method = RequestMethod.DELETE)
-    public ResponseEntity cancelProcessInstance(@RequestParam(value = "processInstanceId", required = true) String processInstanceId) {
+    public ResponseEntity cancelProcessInstance(@RequestParam(value = "processInstanceId", required = true) String processInstanceId,
+                                                @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         logger.debug("Cancelling process instance with id: {}",processInstanceId);
 
         try {
@@ -55,6 +55,8 @@ public class ProcessInstanceController {
             // change status of the process
             instanceDAO.setStatus(ProcessInstanceStatus.CANCELLED);
             HibernateUtilityRef.getInstance("bp-data-model").update(instanceDAO);
+            // create completed tasks for both parties
+            TrustUtility.createCompletedTasksForBothParties(processInstanceId,bearerToken);
         }
         catch (Exception e) {
             logger.error("Failed to cancel the process instance with id:{}",processInstanceId,e);

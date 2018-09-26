@@ -1,6 +1,7 @@
 package eu.nimble.service.bp.impl.util.persistence;
 
 import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
+import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.utility.Configuration;
 
@@ -33,10 +34,16 @@ public class TrustUtility {
         completedTask.setAssociatedProcessInstanceID(processInstanceID);
         PeriodType periodType = new PeriodType();
 
-        periodType.setEndDate(DatatypeFactory.newInstance().newXMLGregorianCalendar(DocumentDAOUtility.getResponseMetadata(processInstanceID).getSubmissionDate()));
-        periodType.setEndTime(DatatypeFactory.newInstance().newXMLGregorianCalendar(DocumentDAOUtility.getResponseMetadata(processInstanceID).getSubmissionDate()));
-        periodType.setStartDate(DatatypeFactory.newInstance().newXMLGregorianCalendar(DocumentDAOUtility.getRequestMetadata(DAOUtility.getAllProcessInstanceIDs(processInstanceID).get(0)).getSubmissionDate()));
-        periodType.setStartTime(DatatypeFactory.newInstance().newXMLGregorianCalendar(DocumentDAOUtility.getRequestMetadata(DAOUtility.getAllProcessInstanceIDs(processInstanceID).get(0)).getSubmissionDate()));
+        ProcessDocumentMetadata responseMetadata = DocumentDAOUtility.getResponseMetadata(processInstanceID);
+        // TODO: End time and date are NULL for cancelled process for now
+        if(responseMetadata != null){
+            periodType.setEndDate(DatatypeFactory.newInstance().newXMLGregorianCalendar(responseMetadata.getSubmissionDate()));
+            periodType.setEndTime(DatatypeFactory.newInstance().newXMLGregorianCalendar(responseMetadata.getSubmissionDate()));
+        }
+
+        ProcessDocumentMetadata requestMetadata = DocumentDAOUtility.getRequestMetadata(DAOUtility.getAllProcessInstanceIDs(processInstanceID).get(0));
+        periodType.setStartDate(DatatypeFactory.newInstance().newXMLGregorianCalendar(requestMetadata.getSubmissionDate()));
+        periodType.setStartTime(DatatypeFactory.newInstance().newXMLGregorianCalendar(requestMetadata.getSubmissionDate()));
         completedTask.setPeriod(periodType);
 
         qualifyingParty.getCompletedTask().add(completedTask);
