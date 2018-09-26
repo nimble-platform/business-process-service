@@ -2,8 +2,10 @@ package eu.nimble.service.bp.impl.util.persistence;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.CatalogueLineType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.QualifyingPartyType;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.utility.Configuration;
 import eu.nimble.utility.HibernateUtility;
@@ -54,4 +56,20 @@ public class CatalogueDAOUtility {
         }
         return partyType;
     }
+
+    public static QualifyingPartyType getQualifyingPartyType(String partyID,String bearerToken){
+        String query = "SELECT qpt FROM QualifyingPartyType qpt WHERE qpt.party.ID = ?";
+        QualifyingPartyType qualifyingParty = HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).load(query,partyID);
+        if(qualifyingParty == null){
+            qualifyingParty = new QualifyingPartyType();
+            // get party using identity service
+            PartyType partyType = SpringBridge.getInstance().getIdentityClientTyped().getParty(bearerToken,partyID);
+
+            qualifyingParty.setParty(getParty(partyType));
+            qualifyingParty = (QualifyingPartyType) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).update(qualifyingParty);
+        }
+        return qualifyingParty;
+    }
+
+
 }

@@ -4,23 +4,22 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
+import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.impl.model.statistics.NonOrderedProducts;
 import eu.nimble.service.bp.impl.util.serialization.Serializer;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.CompletedTaskType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.QualifyingPartyType;
 import eu.nimble.utility.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.*;
+import javax.xml.datatype.DatatypeFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by suat on 12-Jun-18.
@@ -113,5 +112,61 @@ public class StatisticsDAOUtility {
             }
         });
         return inactiveParties;
+    }
+
+    public static double calculateAverageNegotiationTime(String partyID,String bearerToken){
+        int numberOfNegotiations = 0;
+        double totalTime = 0;
+        QualifyingPartyType qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID,bearerToken);
+        for (CompletedTaskType completedTask:qualifyingParty.getCompletedTask()){
+            Date startDate = completedTask.getPeriod().getStartDate().toGregorianCalendar().getTime();
+            Date endDate = completedTask.getPeriod().getEndDate().toGregorianCalendar().getTime();
+            Date startTime = completedTask.getPeriod().getStartTime().toGregorianCalendar().getTime();
+            Date endTime = completedTask.getPeriod().getEndTime().toGregorianCalendar().getTime();
+
+            numberOfNegotiations++;
+            totalTime += ((endDate.getTime()-startDate.getTime())+(endTime.getTime()-startTime.getTime()))/86400000.0;
+        }
+        if(numberOfNegotiations == 0){
+            return 0.0;
+        }
+        return totalTime/numberOfNegotiations;
+    }
+
+    public static double calculateAverageResponseTime(String partyID,String bearerToken) throws Exception{
+        // TODO: this function only calculates average response time for seller parties not buyers
+        int numberOfResponses = 0;
+        double totalTime = 0;
+        QualifyingPartyType qualifyingPartyType = CatalogueDAOUtility.getQualifyingPartyType(partyID,bearerToken);
+        for(CompletedTaskType completedTask:qualifyingPartyType.getCompletedTask()){
+            List<String> processInstanceIDs = DAOUtility.getAllProcessInstanceIDs(completedTask.getAssociatedProcessInstanceID());
+            for (String processInstanceID:processInstanceIDs){
+                List<ProcessDocumentMetadataDAO> processDocumentMetadataDAOS = DAOUtility.getProcessDocumentMetadataByProcessInstanceID(processInstanceID);
+                if (processDocumentMetadataDAOS.size() != 2){
+                    continue;
+                }
+                else if(!processDocumentMetadataDAOS.get(0).getResponderID().equals(partyID)){
+                    continue;
+                }
+
+                ProcessDocumentMetadataDAO docMetadata = processDocumentMetadataDAOS.get(1);
+                ProcessDocumentMetadataDAO reqMetadata = processDocumentMetadataDAOS.get(0);
+                // if the second document has a future submission date
+                if (processDocumentMetadataDAOS.get(0).getSubmissionDate().compareTo(processDocumentMetadataDAOS.get(1).getSubmissionDate()) > 0) {
+                    docMetadata = processDocumentMetadataDAOS.get(0);
+                    reqMetadata = processDocumentMetadataDAOS.get(1);
+                }
+
+                Date startDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(reqMetadata.getSubmissionDate()).toGregorianCalendar().getTime();
+                Date endDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(docMetadata.getSubmissionDate()).toGregorianCalendar().getTime();
+
+                numberOfResponses++;
+                totalTime += (endDate.getTime()-startDate.getTime())/86400000.0;
+            }
+        }
+        if(numberOfResponses == 0){
+            return 0.0;
+        }
+        return totalTime/numberOfResponses;
     }
 }

@@ -10,6 +10,7 @@ import eu.nimble.service.bp.hyperjaxb.model.*;
 import eu.nimble.service.bp.impl.model.statistics.BusinessProcessCount;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
+import eu.nimble.utility.HibernateUtility;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -233,6 +234,18 @@ public class DAOUtility {
             }
         }
         return null;
+    }
+
+    public static List<String> getAllProcessInstanceIDs(String processInstanceID){
+        List<String> processInstanceIDs = new ArrayList<>();
+        String query = "FROM ProcessInstanceDAO piDAO WHERE piDAO.processInstanceID = ?";
+        ProcessInstanceDAO processInstanceDAO = HibernateUtility.getInstance("bp-data-model").load(query,processInstanceID);
+        processInstanceIDs.add(0,processInstanceID);
+        while (processInstanceDAO.getPrecedingProcess() != null){
+            processInstanceDAO = HibernateUtility.getInstance("bp-data-model").load(query,processInstanceDAO.getPrecedingProcess().getProcessInstanceID());
+            processInstanceIDs.add(0,processInstanceDAO.getProcessInstanceID());
+        }
+        return processInstanceIDs;
     }
 
     private enum DocumentMetadataQuery {

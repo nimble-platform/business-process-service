@@ -362,6 +362,14 @@ public class DocumentDAOUtility {
         return HibernateSwaggerObjectMapper.createProcessDocumentMetadata(processDocumentDAO);
     }
 
+    public static ProcessDocumentMetadata getResponseMetadata(String processInstanceID){
+        String query = "FROM ProcessDocumentMetadataDAO documentMetadata WHERE documentMetadata.processInstanceID='"+processInstanceID+"' AND (" +
+                "documentMetadata.type = 'QUOTATION' OR documentMetadata.type = 'ORDERRESPONSESIMPLE' OR documentMetadata.type = 'RECEIPTADVICE' OR " +
+                "documentMetadata.type = 'PPAPRESPONSE' OR documentMetadata.type = 'TRANSPORTEXECUTIONPLAN' OR documentMetadata.type = 'ITEMINFORMATIONRESPONSE')";
+        ProcessDocumentMetadataDAO processDocumentDAO = (ProcessDocumentMetadataDAO) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query);
+        return HibernateSwaggerObjectMapper.createProcessDocumentMetadata(processDocumentDAO);
+    }
+
     public static boolean documentExists(String documentID) {
         String query = "SELECT count(*) FROM ProcessDocumentMetadataDAO document WHERE document.documentID = '" + documentID + "'";
         int count = ((Long) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query)).intValue();

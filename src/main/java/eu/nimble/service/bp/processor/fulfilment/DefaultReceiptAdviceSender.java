@@ -3,10 +3,10 @@ package eu.nimble.service.bp.processor.fulfilment;
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
 import eu.nimble.service.bp.impl.util.persistence.DocumentDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.TrustUtility;
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import eu.nimble.service.model.ubl.receiptadvice.ReceiptAdviceType;
-import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
 import org.slf4j.Logger;
@@ -38,6 +38,7 @@ public class DefaultReceiptAdviceSender implements JavaDelegate {
         String seller = variables.get("responderID").toString();
         String processContextId = variables.get("processContextId").toString();
         ReceiptAdviceType receiptAdvice = (ReceiptAdviceType) variables.get("receiptAdvice");
+        String bearerToken = variables.get("bearer_token").toString();
 
         // get application execution configuration
         ExecutionConfiguration executionConfiguration = DocumentDAOUtility.getExecutionConfiguration(buyer,
@@ -64,5 +65,7 @@ public class DefaultReceiptAdviceSender implements JavaDelegate {
         execution.removeVariables();
         execution.setVariable("initialDocumentID",initialDocumentID);
         execution.setVariable("responseDocumentID",receiptAdvice.getID());
+
+        TrustUtility.createCompletedTasksForBothParties(processInstanceId,bearerToken);
     }
 }

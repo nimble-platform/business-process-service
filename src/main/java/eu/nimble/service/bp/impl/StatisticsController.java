@@ -2,6 +2,7 @@ package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.impl.model.statistics.BusinessProcessCount;
 import eu.nimble.service.bp.impl.model.statistics.NonOrderedProducts;
+import eu.nimble.service.bp.impl.model.statistics.OverallStatistics;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.impl.util.controller.HttpResponseUtil;
 import eu.nimble.service.bp.impl.util.controller.InputValidatorUtil;
@@ -247,5 +248,66 @@ public class StatisticsController {
         } catch (Exception e) {
             return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting the inactive companies for start date: %s, end date: %s", startDateStr, endDateStr), e, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @ApiOperation(value = "Gets average response time for the party in terms of days")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Retrieved average response time for the party")
+    })
+    @RequestMapping(value = "/response-time",
+            produces = {"application/json"},
+            method = RequestMethod.GET)
+    public ResponseEntity getAverageResponseTime(@RequestParam(value = "partyID") String partyID,
+                                                 @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
+        logger.info("Getting average response time for the party with id: {}",partyID);
+        double averageResponseTime;
+        try {
+            averageResponseTime = StatisticsDAOUtility.calculateAverageResponseTime(partyID,bearerToken);
+        }
+        catch (Exception e){
+            return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting average response time for the party with id: %s", partyID), e, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        logger.info("Retrieved average response time for the party with id: {}",partyID);
+        return ResponseEntity.ok(averageResponseTime);
+    }
+
+    @ApiOperation(value = "Gets average negotiation time for the party in terms of days")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Retrieved average negotiation time for the party")
+    })
+    @RequestMapping(value = "/negotiation-time",
+            produces = {"application/json"},
+            method = RequestMethod.GET)
+    public ResponseEntity getAverageNegotiationTime(@RequestParam(value = "partyID") String partyID,
+                                                    @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
+        logger.info("Getting average negotiation time for the party with id: {}",partyID);
+        double averageNegotiationTime = StatisticsDAOUtility.calculateAverageNegotiationTime(partyID,bearerToken);
+        logger.info("Retrieved average negotiation time for the party with id: {}",partyID);
+        return ResponseEntity.ok(averageNegotiationTime);
+    }
+
+    @ApiOperation(value = "Gets statistics (average negotiation time,average response time,trading volume and number of transactions) for the party")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Retrieved average negotiation time for the party",response = OverallStatistics.class)
+    })
+    @RequestMapping(value = "/overall",
+            produces = {"application/json"},
+            method = RequestMethod.GET)
+    public ResponseEntity getStatistics(@RequestParam(value = "partyID") String partyID,
+                                        @ApiParam(value = "Role in business process. Can be SELLER or BUYER", required = false) @RequestParam(value = "role", required = false, defaultValue = "SELLER") String role,
+                                        @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
+        logger.info("Getting statistics for the party with id: {}",partyID);
+        OverallStatistics statistics = new OverallStatistics();
+        try {
+            statistics.setAverageNegotiationTime((double)getAverageNegotiationTime(partyID,bearerToken).getBody());
+            statistics.setAverageResponseTime((double)getAverageResponseTime(partyID,bearerToken).getBody());
+            statistics.setTradingVolume((double) getTradingVolume(null,null,Integer.valueOf(partyID), role,null).getBody());
+            statistics.setNumberOfTransactions((int)getProcessCount(null,null,null,Integer.valueOf(partyID),role,null).getBody());
+        }
+        catch (Exception e){
+            return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting statistics for the party with id: %s", partyID), e, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        logger.info("Retrieved statistics for the party with id: {}",partyID);
+        return ResponseEntity.ok(statistics);
     }
 }
