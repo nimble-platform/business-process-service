@@ -50,7 +50,7 @@ public class TrustServiceController {
 
             boolean completedTaskExist = TrustUtility.completedTaskExist(qualifyingParty,processInstanceID);
             if(!completedTaskExist){
-                TrustUtility.createCompletedTasksForBothParties(processInstanceID,bearerToken);
+                TrustUtility.createCompletedTasksForBothParties(processInstanceID,bearerToken,"Completed");
                 // get qualifyingParty (which contains the completed task) again
                 qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID,bearerToken);
             }

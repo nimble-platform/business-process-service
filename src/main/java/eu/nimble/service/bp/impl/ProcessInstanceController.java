@@ -56,7 +56,7 @@ public class ProcessInstanceController {
             instanceDAO.setStatus(ProcessInstanceStatus.CANCELLED);
             HibernateUtilityRef.getInstance("bp-data-model").update(instanceDAO);
             // create completed tasks for both parties
-            TrustUtility.createCompletedTasksForBothParties(processInstanceId,bearerToken);
+            TrustUtility.createCompletedTasksForBothParties(processInstanceId,bearerToken,"Cancelled");
         }
         catch (Exception e) {
             logger.error("Failed to cancel the process instance with id:{}",processInstanceId,e);

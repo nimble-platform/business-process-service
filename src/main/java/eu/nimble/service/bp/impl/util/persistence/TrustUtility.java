@@ -6,6 +6,7 @@ import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.utility.Configuration;
 
 import javax.xml.datatype.DatatypeFactory;
+import java.util.Arrays;
 import java.util.List;
 
 public class TrustUtility {
@@ -28,10 +29,11 @@ public class TrustUtility {
         }
     }
 
-    public static void createCompletedTask(String partyID,String processInstanceID,String bearerToken) throws Exception{
+    public static void createCompletedTask(String partyID,String processInstanceID,String bearerToken,String status) throws Exception{
         QualifyingPartyType qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID,bearerToken);
         CompletedTaskType completedTask = new CompletedTaskType();
         completedTask.setAssociatedProcessInstanceID(processInstanceID);
+        completedTask.setDescription(Arrays.asList(status));
         PeriodType periodType = new PeriodType();
 
         ProcessDocumentMetadata responseMetadata = DocumentDAOUtility.getResponseMetadata(processInstanceID);
@@ -50,12 +52,12 @@ public class TrustUtility {
         HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).update(qualifyingParty);
     }
 
-    public static void createCompletedTasksForBothParties(String processInstanceID,String bearerToken) throws Exception{
+    public static void createCompletedTasksForBothParties(String processInstanceID,String bearerToken,String status) throws Exception{
         List<ProcessDocumentMetadataDAO> processDocumentMetadatas= DAOUtility.getProcessDocumentMetadataByProcessInstanceID(processInstanceID);
         String initiatorID = processDocumentMetadatas.get(0).getInitiatorID();
         String responderID = processDocumentMetadatas.get(0).getResponderID();
 
-        TrustUtility.createCompletedTask(initiatorID,processInstanceID,bearerToken);
-        TrustUtility.createCompletedTask(responderID,processInstanceID,bearerToken);
+        TrustUtility.createCompletedTask(initiatorID,processInstanceID,bearerToken,status);
+        TrustUtility.createCompletedTask(responderID,processInstanceID,bearerToken,status);
     }
 }

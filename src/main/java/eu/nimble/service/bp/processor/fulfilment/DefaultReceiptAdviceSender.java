@@ -66,6 +66,6 @@ public class DefaultReceiptAdviceSender implements JavaDelegate {
         execution.setVariable("initialDocumentID",initialDocumentID);
         execution.setVariable("responseDocumentID",receiptAdvice.getID());
 
-        TrustUtility.createCompletedTasksForBothParties(processInstanceId,bearerToken);
+        TrustUtility.createCompletedTasksForBothParties(processInstanceId,bearerToken,"Completed");
     }
 }
