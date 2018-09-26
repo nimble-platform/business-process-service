@@ -2,6 +2,7 @@ package eu.nimble.service.bp.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.nimble.service.bp.impl.model.trust.NegotiationRatings;
 import eu.nimble.service.bp.impl.util.persistence.*;
 import eu.nimble.service.bp.impl.util.serialization.Serializer;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
@@ -79,6 +80,22 @@ public class TrustServiceController {
         JSONObject jsonResponse = createJSONResponse(qualifyingParty.getCompletedTask());
         logger.info("Retrieved ratings summary for the party with id: {}",partyID);
         return ResponseEntity.ok(jsonResponse.toString());
+    }
+
+    @ApiOperation(value = "",notes = "Gets all individual ratings and review")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Retrieved all individual ratings and review successfully",response = NegotiationRatings.class)
+    })
+    @RequestMapping(value = "/ratingsAndReviews",
+            produces = {"application/json"},
+            method = RequestMethod.GET)
+    public ResponseEntity listAllIndividualRatingsAndReviews(@RequestParam(value = "partyID") String partyID,
+                                                             @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
+        logger.info("Getting all individual ratings and review for the party with id: {}",partyID);
+        QualifyingPartyType qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID,bearerToken);
+        NegotiationRatings negotiationRatings = TrustUtility.createNegotiationRatings(qualifyingParty.getCompletedTask());
+        logger.info("Retrieved all individual ratings and review for the party with id: {}",partyID);
+        return ResponseEntity.ok(negotiationRatings);
     }
 
     private JSONObject createJSONResponse(List<CompletedTaskType> completedTasks){

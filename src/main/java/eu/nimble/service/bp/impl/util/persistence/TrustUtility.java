@@ -1,11 +1,13 @@
 package eu.nimble.service.bp.impl.util.persistence;
 
 import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
+import eu.nimble.service.bp.impl.model.trust.NegotiationRatings;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.utility.Configuration;
 
 import javax.xml.datatype.DatatypeFactory;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -59,5 +61,31 @@ public class TrustUtility {
 
         TrustUtility.createCompletedTask(initiatorID,processInstanceID,bearerToken,status);
         TrustUtility.createCompletedTask(responderID,processInstanceID,bearerToken,status);
+    }
+
+    public static NegotiationRatings createNegotiationRatings(List<CompletedTaskType> completedTasks){
+        NegotiationRatings negotiationRatings = new NegotiationRatings();
+
+        List<EvidenceSuppliedType> ratings = new ArrayList<>();
+        List<CommentType> reviews = new ArrayList<>();
+
+        for (CompletedTaskType completedTask:completedTasks){
+            // consider only Completed tasks
+            if(completedTask.getDescription().get(0).equals("Completed")){
+                // ratings
+                for (EvidenceSuppliedType evidenceSupplied:completedTask.getEvidenceSupplied()){
+                    ratings.add(evidenceSupplied);
+                }
+                // reviews
+                for(CommentType comment:completedTask.getComment()){
+                    reviews.add(comment);
+                }
+            }
+        }
+
+        negotiationRatings.setRatings(ratings);
+        negotiationRatings.setReviews(reviews);
+
+        return negotiationRatings;
     }
 }
