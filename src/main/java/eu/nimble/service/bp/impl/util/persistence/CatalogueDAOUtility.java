@@ -37,9 +37,9 @@ public class CatalogueDAOUtility {
         if(party == null){
             return null;
         }
-        String query = "SELECT party FROM PartyType party WHERE party.ID = ?";
-        PartyType partyType = HibernateUtility.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).load(query,party.getID());
-        if(partyType == null){
+        String query = "SELECT party FROM PartyType party WHERE party.ID = ? ORDER BY party.hjid ASC";
+        List<PartyType> partyTypes = (List<PartyType>) HibernateUtility.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadAll(query,party.getID());
+        if(partyTypes.size() == 0){
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper = objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
             try {
@@ -54,7 +54,7 @@ public class CatalogueDAOUtility {
             HibernateUtility.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(party);
             return party;
         }
-        return partyType;
+        return partyTypes.get(0);
     }
 
     public static QualifyingPartyType getQualifyingPartyType(String partyID,String bearerToken){
