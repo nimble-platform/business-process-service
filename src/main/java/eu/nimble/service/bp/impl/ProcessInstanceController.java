@@ -44,7 +44,7 @@ public class ProcessInstanceController {
         logger.debug("Cancelling process instance with id: {}",processInstanceId);
 
         try {
-            ProcessInstanceDAO instanceDAO = DAOUtility.getProcessIntanceDAOByID(processInstanceId);
+            ProcessInstanceDAO instanceDAO = DAOUtility.getProcessInstanceDAOByID(processInstanceId);
             // check whether the process instance with the given id exists or not
             if(instanceDAO == null){
                 logger.error("There does not exist a process instance with id:{}",processInstanceId);
@@ -85,7 +85,7 @@ public class ProcessInstanceController {
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
 
         try {
-            ProcessInstanceDAO instanceDAO = DAOUtility.getProcessIntanceDAOByID(processInstanceID);
+            ProcessInstanceDAO instanceDAO = DAOUtility.getProcessInstanceDAOByID(processInstanceID);
             // check whether the process instance with the given id exists or not
             if(instanceDAO == null){
                 logger.error("There does not exist a process instance with id:{}",processInstanceID);

@@ -198,7 +198,7 @@ public class DAOUtility {
         return query;
     }
 
-    public static ProcessInstanceDAO getProcessIntanceDAOByID(String processInstanceID) {
+    public static ProcessInstanceDAO getProcessInstanceDAOByID(String processInstanceID) {
         String query = "select processinstance from ProcessInstanceDAO processinstance where ( processinstance.processInstanceID ='" + processInstanceID + "') ";
         List<ProcessInstanceDAO> resultSet = (List<ProcessInstanceDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
         if(resultSet.size() == 0) {

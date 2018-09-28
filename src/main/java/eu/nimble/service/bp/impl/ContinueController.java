@@ -49,7 +49,7 @@ public class ContinueController implements ContinueApi {
 
             processInstance = CamundaEngine.continueProcessInstance(businessProcessContext.getId(),body, bearerToken);
 
-            ProcessInstanceDAO storedInstance = DAOUtility.getProcessIntanceDAOByID(processInstance.getProcessInstanceID());
+            ProcessInstanceDAO storedInstance = DAOUtility.getProcessInstanceDAOByID(processInstance.getProcessInstanceID());
 
             // save previous status
             businessProcessContext.setPreviousStatus(storedInstance.getStatus());
