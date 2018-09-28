@@ -76,9 +76,9 @@ public class ProcessInstanceController {
     @RequestMapping(value = "/processInstance",
             method = RequestMethod.PUT)
     public ResponseEntity updateProcessInstance(@RequestBody String content,
-                                                @RequestParam(value = "processID") DocumentType processID,
+                                                @ApiParam(value = "Type of the process instance document to be updated") @RequestParam(value = "processID") DocumentType processID,
                                                 @RequestParam(value = "processInstanceID") String processInstanceID,
-                                                @RequestParam(value = "creatorUserID") String creatorUserID) {
+                                                @ApiParam(value = "Id of the user who updated the process instance") @RequestParam(value = "creatorUserID") String creatorUserID) {
 
         logger.debug("Updating process instance with id: {}",processInstanceID);
 
@@ -88,7 +88,7 @@ public class ProcessInstanceController {
             ProcessInstanceDAO instanceDAO = DAOUtility.getProcessIntanceDAOByID(processInstanceID);
             // check whether the process instance with the given id exists or not
             if(instanceDAO == null){
-                logger.error("There does not exist a process instance with id:{}",processID);
+                logger.error("There does not exist a process instance with id:{}",processInstanceID);
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("There does not exist a process instance with the given id");
             }
             // update creator user id of metadata
