@@ -27,6 +27,18 @@ import java.util.*;
 public class StatisticsDAOUtility {
     private static final Logger logger = LoggerFactory.getLogger(StatisticsDAOUtility.class);
 
+    public static long getActionRequiredProcessCount(String partyID,String role,Boolean archived){
+        String query = "SELECT metadataDAO.processInstanceID FROM ProcessDocumentMetadataDAO metadataDAO,ProcessInstanceDAO instanceDAO,ProcessInstanceGroupDAO groupDAO join groupDAO.processInstanceIDsItems ids WHERE groupDAO.archived = "+archived+" AND groupDAO.partyID = '"+partyID+"' AND metadataDAO.processInstanceID = ids.item AND metadataDAO.processInstanceID = instanceDAO.processInstanceID AND instanceDAO.status <> 'CANCELLED' AND instanceDAO.processID ";
+        if(role.equals("seller")){
+            query += " <> 'Fulfilment' AND metadataDAO.responderID = '"+partyID+"' GROUP BY metadataDAO.processInstanceID HAVING count(*) = 1";
+        }
+        else{
+            query += " = 'Fulfilment' AND metadataDAO.responderID = '"+partyID+"' AND instanceDAO.status = 'STARTED' GROUP BY metadataDAO.processInstanceID HAVING count(*) = 1";
+        }
+        List<String> count = (List<String>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+        return count.size();
+    }
+
     public static double getTradingVolume(Integer partyId, String role, String startDate, String endDate, String status) {
         String query = "select sum(order_.anticipatedMonetaryTotal.payableAmount.value) from OrderType order_ where order_.anticipatedMonetaryTotal.payableAmount.value is not null";
         if (partyId != null || role != null || startDate != null || endDate != null || status != null) {

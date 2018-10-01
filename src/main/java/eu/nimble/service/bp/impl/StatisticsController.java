@@ -32,6 +32,30 @@ import java.util.List;
 public class StatisticsController {
     private final Logger logger = LoggerFactory.getLogger(StatisticsController.class);
 
+    @ApiOperation(value = "",notes = "Get the total number of process instances which require an action")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Retrieved the total number of process instances which require an action successfully",response = int.class),
+            @ApiResponse(code = 400, message = "Invalid role")
+    })
+    @RequestMapping(value = "/total-number/business-process/action-required",
+            produces = {"application/json"},
+            method = RequestMethod.GET)
+    public ResponseEntity getActionRequiredProcessCount(@ApiParam(value = "Company ID", required = true) @RequestParam(value = "companyId", required = true) Integer companyId,
+                                                        @ApiParam(value = "", defaultValue = "false") @RequestParam(value = "archived", required = true, defaultValue="false") Boolean archived,
+                                                        @ApiParam(value = "Role in business process. Can be seller or buyer", required = true) @RequestParam(value = "role", required = true, defaultValue = "seller") String role){
+        logger.info("Getting total number of process instances which require an action for company id:{},archived: {}, role: {}",companyId,archived,role);
+
+        // check role
+        ValidationResponse response = InputValidatorUtil.checkRole(role, false);
+        if (response.getInvalidResponse() != null) {
+            return response.getInvalidResponse();
+        }
+
+        long count = StatisticsDAOUtility.getActionRequiredProcessCount(String.valueOf(companyId),role,archived);
+        logger.info("Retrieved total number of process instances which require an action for company id:{},archived: {}, role: {}",companyId,archived,role);
+        return ResponseEntity.ok(count);
+    }
+
     @ApiOperation(value = "",notes = "Get the total number (active / completed) of specified business process")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Retrieved the number of processes successfully",response = int.class)
