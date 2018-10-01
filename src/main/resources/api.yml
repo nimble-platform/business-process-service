@@ -1024,6 +1024,11 @@ definitions:
         type: string
       lastActivityTime:
         type: string
+      status:
+        type: string
+        enum:
+        - INPROGRESS
+        - CANCELLED
 
   ProcessInstanceGroupResponse:
     title: Process Instance Group Response

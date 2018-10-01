@@ -1,6 +1,7 @@
 package eu.nimble.service.bp.impl.util.persistence;
 
 import eu.nimble.common.rest.identity.IdentityClientTyped;
+import eu.nimble.service.bp.hyperjaxb.model.GroupStatus;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceStatus;
@@ -216,6 +217,7 @@ public class ProcessInstanceGroupDAOUtility {
         group.setID(uuid);
         group.setName(relatedProducts);
         group.setPartyID(partyId);
+        group.setStatus(GroupStatus.INPROGRESS);
         group.setCollaborationRole(collaborationRole);
         List<String> processInstanceIds = new ArrayList<>();
         processInstanceIds.add(processInstanceId);
