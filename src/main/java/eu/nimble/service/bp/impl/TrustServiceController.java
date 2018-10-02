@@ -5,12 +5,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.impl.model.trust.NegotiationRatings;
 import eu.nimble.service.bp.impl.util.persistence.*;
 import eu.nimble.service.bp.impl.util.serialization.Serializer;
+import eu.nimble.service.bp.messaging.KafkaSender;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.utility.Configuration;
 import io.swagger.annotations.*;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -29,6 +31,9 @@ import java.util.List;
 public class TrustServiceController {
     private final Logger logger = LoggerFactory.getLogger(TrustServiceController.class);
 
+    @Autowired
+    private KafkaSender kafkaSender;
+
     @ApiOperation(value = "",notes = "Create rating and reviews for the company")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Created rating and reviews for the company successfully"),
@@ -37,8 +42,8 @@ public class TrustServiceController {
     @RequestMapping(value = "/ratingsAndReviews",
             produces = {"application/json"},
             method = RequestMethod.POST)
-    public ResponseEntity createRatingAndReview(@ApiParam(value = "JSON string which represents ratings") @RequestParam(value = "ratings",required = false) String ratingsString,
-                                                @ApiParam(value = "JSON string which represents comments") @RequestParam(value = "reviews",required = false) String reviewsString,
+    public ResponseEntity createRatingAndReview(@ApiParam(value = "JSON string which represents ratings") @RequestParam(value = "ratings",required = true) String ratingsString,
+                                                @ApiParam(value = "JSON string which represents comments") @RequestParam(value = "reviews",required = true) String reviewsString,
                                                 @RequestParam(value = "partyID") String partyID,
                                                 @RequestParam(value = "processInstanceID") String processInstanceID,
                                                 @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
@@ -57,6 +62,9 @@ public class TrustServiceController {
             }
             TrustUtility.fillCompletedTask(qualifyingParty,ratings,reviews,processInstanceID);
             HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).update(qualifyingParty);
+
+            // broadcast changes
+            kafkaSender.broadcastRatingsUpdate(partyID,bearerToken);
         }
         catch (Exception e){
             logger.error("Failed to create rating and reviews for the party with id: {} and process instance with id: {}",partyID,processInstanceID,e);

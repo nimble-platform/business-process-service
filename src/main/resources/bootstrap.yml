@@ -28,6 +28,14 @@ spring:
       min-evictable-idle-time-millis: 3600000
     maxActive: 6
     maxIdle: 3
+  kafka:
+      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+      consumer:
+        group-id: business-process-service${KAFKA_CONSUMER_GROUP_ID_SUFFIX:}
+      properties:
+        sasl:
+          jaas:
+            config: ${KAFKA_JAAS_CONFIG}
   jackson:
     date-format: com.fasterxml.jackson.databind.util.ISO8601DateFormat
     serialization:
@@ -172,7 +180,9 @@ nimble:
     url: ${IDENTITY_SERVICE_URL:http://nimble-staging.salzburgresearch.at/identity}
   data-channel:
     url: ${DATA_CHANNEL_SERVICE_URL:http://nimble-staging.salzburgresearch.at/data-channel}
-
+  kafka:
+      topics:
+        ratingsUpdates: ${KAFKA_TOPIC_RATINGS_UPDATES:ratings-updates}
 hystrix:
   command:
     default:
