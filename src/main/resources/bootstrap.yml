@@ -182,7 +182,7 @@ nimble:
     url: ${DATA_CHANNEL_SERVICE_URL:http://nimble-staging.salzburgresearch.at/data-channel}
   kafka:
       topics:
-        ratingsUpdates: ${KAFKA_TOPIC_RATINGS_UPDATES:ratings-updates}
+        businessProcessUpdates: ${KAFKA_TOPIC_BUSINESS_PROCESS_UPDATES:business-process-updates-staging}
 hystrix:
   command:
     default:
