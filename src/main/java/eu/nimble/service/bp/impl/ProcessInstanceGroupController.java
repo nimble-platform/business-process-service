@@ -1,17 +1,20 @@
 package eu.nimble.service.bp.impl;
 
+import eu.nimble.service.bp.hyperjaxb.model.GroupStatus;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
 import eu.nimble.service.bp.impl.util.controller.HttpResponseUtil;
 import eu.nimble.service.bp.impl.util.persistence.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.impl.util.persistence.HibernateUtilityRef;
 import eu.nimble.service.bp.impl.util.persistence.ProcessInstanceGroupDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.TrustUtility;
 import eu.nimble.service.bp.swagger.api.GroupApi;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroup;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupFilter;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupResponse;
 import eu.nimble.service.model.ubl.order.OrderType;
+import eu.nimble.utility.HibernateUtility;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -23,10 +26,7 @@ import org.springframework.boot.logging.LogLevel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -277,5 +277,45 @@ public class ProcessInstanceGroupController implements GroupApi {
         } catch (Exception e) {
             return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting the order content for process id: %s", processInstanceId), e, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @ApiOperation(value = "",notes = "Cancel the collaboration (negotiation) for the given group id")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Cancelled the collaboration for the given group id successfully "),
+            @ApiResponse(code = 404, message = "There does not exist a process instance group with the given id"),
+            @ApiResponse(code = 500, message = "Failed to cancel collaboration")
+    })
+    @RequestMapping(value = "/group/{ID}/cancel",
+            method = RequestMethod.POST)
+    public ResponseEntity cancelCollaboration(@PathVariable(value = "ID", required = true) String ID,
+                                              @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
+        logger.debug("Cancelling the collaboration for the group id: {}",ID);
+        ProcessInstanceGroupDAO groupDAO;
+        try {
+            groupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(ID);
+        }
+        catch (Exception e) {
+            logger.error("There does not exist a process instance group with the id: {}",ID,e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("There does not exist a process instance group with the given id");
+        }
+        groupDAO.setStatus(GroupStatus.CANCELLED);
+        HibernateUtility.getInstance("bp-data-model").update(groupDAO);
+
+        for(String id:groupDAO.getAssociatedGroups()){
+            ProcessInstanceGroupDAO group = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(id);
+            group.setStatus(GroupStatus.CANCELLED);
+            HibernateUtility.getInstance("bp-data-model").update(group);
+        }
+        // create completed tasks for both parties
+        String processInstanceID = groupDAO.getProcessInstanceIDs().get(groupDAO.getProcessInstanceIDs().size()-1);
+        try {
+            TrustUtility.createCompletedTasksForBothParties(processInstanceID,bearerToken,"Cancelled");
+        }
+        catch (Exception e){
+            logger.error("Failed to create completed task for the process instance id: {}",processInstanceID);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to create completed task for the process instance id: "+processInstanceID);
+        }
+        logger.debug("Cancelled the collaboration for the group id: {} successfully",ID);
+        return ResponseEntity.ok(null);
     }
 }
