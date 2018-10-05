@@ -33,9 +33,9 @@ public class ProcessInstanceController {
             @ApiResponse(code = 400, message = "There does not exist a process instance with the given id"),
             @ApiResponse(code = 500, message = "Unexpected error while cancelling the process instance with the given id")
     })
-    @RequestMapping(value = "/processInstance",
-            method = RequestMethod.DELETE)
-    public ResponseEntity cancelProcessInstance(@RequestParam(value = "processInstanceId", required = true) String processInstanceId,
+    @RequestMapping(value = "/processInstance/{processInstanceId}/cancel",
+            method = RequestMethod.POST)
+    public ResponseEntity cancelProcessInstance(@PathVariable(value = "processInstanceId", required = true) String processInstanceId,
                                                 @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         logger.debug("Cancelling process instance with id: {}",processInstanceId);
 
