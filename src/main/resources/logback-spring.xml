@@ -45,4 +45,7 @@
         <appender-ref ref="logstash"/>
         <appender-ref ref="CONSOLE"/>
     </root>
+
+    <logger name="org.springframework.cloud.config.client" level="warn"/>
+    <logger name="com.netflix.discovery.shared.resolver.aws" level="warn"/>
 </configuration>
