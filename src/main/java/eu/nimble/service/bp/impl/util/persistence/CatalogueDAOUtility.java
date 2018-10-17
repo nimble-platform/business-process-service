@@ -14,6 +14,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.List;
 
 public class CatalogueDAOUtility {
@@ -63,7 +64,14 @@ public class CatalogueDAOUtility {
         if(qualifyingParty == null){
             qualifyingParty = new QualifyingPartyType();
             // get party using identity service
-            PartyType partyType = SpringBridge.getInstance().getIdentityClientTyped().getParty(bearerToken,partyID);
+            PartyType partyType = null;
+            try {
+                partyType = SpringBridge.getInstance().getIdentityClientTyped().getParty(bearerToken,partyID);
+            } catch (IOException e) {
+                String msg = String.format("Failed to get qualifying party: %s", partyID);
+                logger.error(msg);
+                throw new RuntimeException(msg, e);
+            }
 
             qualifyingParty.setParty(getParty(partyType));
             qualifyingParty = (QualifyingPartyType) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).update(qualifyingParty);

@@ -7,6 +7,7 @@ package eu.nimble.service.bp.impl.util.persistence;
 
 import eu.nimble.common.rest.identity.IdentityClientTyped;
 import eu.nimble.service.bp.hyperjaxb.model.*;
+import eu.nimble.service.bp.impl.TrustServiceController;
 import eu.nimble.service.bp.impl.model.statistics.BusinessProcessCount;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
@@ -14,9 +15,12 @@ import eu.nimble.utility.HibernateUtility;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,6 +29,8 @@ import java.util.List;
  */
 @Component
 public class DAOUtility {
+
+    private static final Logger logger = LoggerFactory.getLogger(DAOUtility.class);
 
     private static IdentityClientTyped identityClient;
 
@@ -63,7 +69,7 @@ public class DAOUtility {
     public static List<ProcessDocumentMetadataDAO> getProcessDocumentMetadataByProcessInstanceID(String processInstanceID) {
         String query = "select document from ProcessDocumentMetadataDAO document where ( ";
         query += " document.processInstanceID ='" + processInstanceID + "' ";
-        query += " ) ";
+        query += " ) ORDER BY document.submissionDate ASC";
         List<ProcessDocumentMetadataDAO> resultSet = (List<ProcessDocumentMetadataDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
 
         return resultSet;
@@ -113,7 +119,14 @@ public class DAOUtility {
         BusinessProcessCount counts = new BusinessProcessCount();
         for(Object result : results) {
             Object[] resultItems = (Object[]) result;
-            PartyType partyType = identityClient.getParty(bearerToken,(String) resultItems[0]);
+            PartyType partyType = null;
+            try {
+                partyType = identityClient.getParty(bearerToken,(String) resultItems[0]);
+            } catch (IOException e) {
+                String msg = String.format("Failed to get transaction counts for party: %s, role: %s", partyId, role);
+                logger.error("msg");
+                throw new RuntimeException(msg, e);
+            }
             counts.addCount((String) resultItems[0], resultItems[1].toString(), resultItems[2].toString(), (Long) resultItems[3],partyType.getName());
         }
         return counts;
