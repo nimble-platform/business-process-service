@@ -42,10 +42,10 @@ public class TrustServiceController {
     @RequestMapping(value = "/ratingsAndReviews",
             produces = {"application/json"},
             method = RequestMethod.POST)
-    public ResponseEntity createRatingAndReview(@ApiParam(value = "JSON string which represents ratings") @RequestParam(value = "ratings",required = true) String ratingsString,
-                                                @ApiParam(value = "JSON string which represents comments") @RequestParam(value = "reviews",required = true) String reviewsString,
-                                                @RequestParam(value = "partyID") String partyID,
-                                                @RequestParam(value = "processInstanceID") String processInstanceID,
+    public ResponseEntity createRatingAndReview(@ApiParam(value = "JSON string representing an array of EvidenceSupplied instances.") @RequestParam(value = "ratings",required = true) String ratingsString,
+                                                @ApiParam(value = "JSON string representing an array of Comment instances.") @RequestParam(value = "reviews",required = true) String reviewsString,
+                                                @ApiParam(value = "Identifier of the party for which a rating and reviews will be created") @RequestParam(value = "partyID") String partyID,
+                                                @ApiParam(value = "Identifier of the process instance associated with the ratings and reviews") @RequestParam(value = "processInstanceID") String processInstanceID,
                                                 @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         logger.info("Creating rating and reviews for the party with id: {} and process instance with id: {}",partyID,processInstanceID);
         QualifyingPartyType qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID,bearerToken);

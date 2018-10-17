@@ -2,9 +2,13 @@ package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.hyperjaxb.model.*;
 import eu.nimble.service.bp.impl.util.controller.HttpResponseUtil;
+import eu.nimble.service.bp.impl.util.email.EmailSenderUtil;
 import eu.nimble.service.bp.impl.util.persistence.*;
 import eu.nimble.service.bp.swagger.api.GroupApi;
-import eu.nimble.service.bp.swagger.model.*;
+import eu.nimble.service.bp.swagger.model.ProcessInstance;
+import eu.nimble.service.bp.swagger.model.ProcessInstanceGroup;
+import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupFilter;
+import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupResponse;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.utility.HibernateUtility;
 import io.swagger.annotations.ApiOperation;
@@ -34,6 +38,8 @@ public class ProcessInstanceGroupController implements GroupApi {
     private ProcessInstanceGroupDAOUtility groupDaoUtility;
     @Autowired
     private DocumentController documentController;
+    @Autowired
+    private EmailSenderUtil emailSenderUtil;
 
     @Override
     @ApiOperation(value = "",notes = "Add a new process instance to the specified")
@@ -274,57 +280,61 @@ public class ProcessInstanceGroupController implements GroupApi {
     @ApiOperation(value = "",notes = "Cancel the collaboration (negotiation) for the given group id")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Cancelled the collaboration for the given group id successfully "),
-            @ApiResponse(code = 404, message = "There does not exist a process instance group with the given id"),
+            @ApiResponse(code = 400, message = "There does not exist a process instance group with the given id"),
             @ApiResponse(code = 500, message = "Failed to cancel collaboration")
     })
     @RequestMapping(value = "/group/{ID}/cancel",
             method = RequestMethod.POST)
-    public ResponseEntity cancelCollaboration(@PathVariable(value = "ID", required = true) String ID,
+    public ResponseEntity cancelCollaboration(@ApiParam(value="Identifier of the process instance group to be cancelled") @PathVariable(value = "ID", required = true) String ID,
                                               @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
-        logger.debug("Cancelling the collaboration for the group id: {}",ID);
-        ProcessInstanceGroupDAO groupDAO;
         try {
-            groupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(ID);
-        }
-        catch (Exception e) {
-            logger.error("There does not exist a process instance group with the id: {}",ID,e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("There does not exist a process instance group with the given id");
-        }
+            logger.debug("Cancelling the collaboration for the group id: {}", ID);
+            ProcessInstanceGroupDAO groupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(ID);
+            if (groupDAO == null) {
+                String msg = String.format("There does not exist a process instance group with the id: %s", ID);
+                logger.warn(msg);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(msg);
+            }
 
-        // check whether the group consists of an approved order or an accepted transport execution plan
-        List<String> processInstanceIDs = groupDAO.getProcessInstanceIDs();
-        for(String instanceID: processInstanceIDs){
-            List<ProcessDocumentMetadataDAO> metadataDAOS = DAOUtility.getProcessDocumentMetadataByProcessInstanceID(instanceID);
-            for (ProcessDocumentMetadataDAO metadataDAO: metadataDAOS){
-                if(metadataDAO.getType() == DocumentType.ORDERRESPONSESIMPLE && metadataDAO.getStatus() == ProcessDocumentStatus.APPROVED){
-                    logger.error("Process instance group with id:{} contains an approved order, therefore it can not be cancelled",ID);
-                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Collaboration which contains an approved order can not be cancelled");
-                }
-                else if(metadataDAO.getType() == DocumentType.TRANSPORTEXECUTIONPLAN && metadataDAO.getStatus() == ProcessDocumentStatus.APPROVED){
-                    logger.error("Process instance group with id:{} contains an accepted transport execution plan, therefore it can not be cancelled",ID);
-                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Collaboration which contains an accepted transport execution plan can not be cancelled");
+            // check whether the group consists of an approved order or an accepted transport execution plan
+            List<String> processInstanceIDs = groupDAO.getProcessInstanceIDs();
+            for(String instanceID: processInstanceIDs){
+                List<ProcessDocumentMetadataDAO> metadataDAOS = DAOUtility.getProcessDocumentMetadataByProcessInstanceID(instanceID);
+                for (ProcessDocumentMetadataDAO metadataDAO: metadataDAOS){
+                    if(metadataDAO.getType() == DocumentType.ORDERRESPONSESIMPLE && metadataDAO.getStatus() == ProcessDocumentStatus.APPROVED){
+                        logger.error("Process instance group with id:{} contains an approved order, therefore it can not be cancelled",ID);
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Collaboration which contains an approved order can not be cancelled");
+                    }
+                    else if(metadataDAO.getType() == DocumentType.TRANSPORTEXECUTIONPLAN && metadataDAO.getStatus() == ProcessDocumentStatus.APPROVED){
+                        logger.error("Process instance group with id:{} contains an accepted transport execution plan, therefore it can not be cancelled",ID);
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Collaboration which contains an accepted transport execution plan can not be cancelled");
+                    }
                 }
             }
-        }
 
-        groupDAO.setStatus(GroupStatus.CANCELLED);
-        HibernateUtility.getInstance("bp-data-model").update(groupDAO);
+            // update the group of the party initiating the cancel request
+            groupDAO.setStatus(GroupStatus.CANCELLED);
+            HibernateUtility.getInstance("bp-data-model").update(groupDAO);
 
-        for(String id:groupDAO.getAssociatedGroups()){
-            ProcessInstanceGroupDAO group = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(id);
-            group.setStatus(GroupStatus.CANCELLED);
-            HibernateUtility.getInstance("bp-data-model").update(group);
+            // update the groups associated with the first group
+            for (String id : groupDAO.getAssociatedGroups()) {
+                ProcessInstanceGroupDAO group = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(id);
+                group.setStatus(GroupStatus.CANCELLED);
+                HibernateUtility.getInstance("bp-data-model").update(group);
+            }
+
+            // create completed tasks for both parties
+            String processInstanceID = groupDAO.getProcessInstanceIDs().get(groupDAO.getProcessInstanceIDs().size() - 1);
+            TrustUtility.createCompletedTasksForBothParties(processInstanceID, bearerToken, "Cancelled");
+
+            // send email to the trading partner
+            emailSenderUtil.sendCancellationEmail(bearerToken, groupDAO);
+
+            logger.debug("Cancelled the collaboration for the group id: {} successfully", ID);
+            return ResponseEntity.ok(null);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(String.format("Unexpected error while cancelling the group: %s", ID));
         }
-        // create completed tasks for both parties
-        String processInstanceID = groupDAO.getProcessInstanceIDs().get(groupDAO.getProcessInstanceIDs().size()-1);
-        try {
-            TrustUtility.createCompletedTasksForBothParties(processInstanceID,bearerToken,"Cancelled");
-        }
-        catch (Exception e){
-            logger.error("Failed to create completed task for the process instance id: {}",processInstanceID);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to create completed task for the process instance id: "+processInstanceID);
-        }
-        logger.debug("Cancelled the collaboration for the group id: {} successfully",ID);
-        return ResponseEntity.ok(null);
     }
 }

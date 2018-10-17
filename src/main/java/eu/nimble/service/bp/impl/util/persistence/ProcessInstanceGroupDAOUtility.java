@@ -5,12 +5,16 @@ import eu.nimble.service.bp.hyperjaxb.model.GroupStatus;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceStatus;
+import eu.nimble.service.bp.impl.TrustServiceController;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupFilter;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.utility.HibernateUtility;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -20,6 +24,8 @@ import java.util.UUID;
  */
 @Component
 public class ProcessInstanceGroupDAOUtility {
+    private final Logger logger = LoggerFactory.getLogger(ProcessInstanceGroupDAOUtility.class);
+
     @Autowired
     private IdentityClientTyped identityClient;
 
@@ -104,7 +110,14 @@ public class ProcessInstanceGroupDAOUtility {
                 filter.getTradingPartnerIDs().add(resultColumn);
             }
 
-            List<PartyType> parties = identityClient.getParties(bearerToken, filter.getTradingPartnerIDs());
+            List<PartyType> parties = null;
+            try {
+                parties = identityClient.getParties(bearerToken, filter.getTradingPartnerIDs());
+            } catch (IOException e) {
+                String msg = String.format("Failed to get parties while getting categories for party: %s, collaboration role: %s, archived: %B", partyId, collaborationRole, archived);
+                logger.error(msg);
+                throw new RuntimeException(msg, e);
+            }
 
             // populate partners' names
             if(parties != null) {

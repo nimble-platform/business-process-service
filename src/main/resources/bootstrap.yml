@@ -36,6 +36,15 @@ spring:
         sasl:
           jaas:
             config: ${KAFKA_JAAS_CONFIG}
+  mail:
+    debug: false  # disable printing email to log output
+    host: ${SMTP_HOST:localhost}
+    port: ${SMTP_PORT:25}
+    defaultFrom: ${SMTP_DEFAULT_FROM:}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    smtp.auth: true
+    properties.mail.smtp.starttls.enable: true
   jackson:
     date-format: com.fasterxml.jackson.databind.util.ISO8601DateFormat
     serialization:
