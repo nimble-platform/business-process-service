@@ -1,18 +1,10 @@
 package eu.nimble.service.bp.impl;
 
-import eu.nimble.service.bp.hyperjaxb.model.GroupStatus;
-import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
-import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
+import eu.nimble.service.bp.hyperjaxb.model.*;
 import eu.nimble.service.bp.impl.util.controller.HttpResponseUtil;
-import eu.nimble.service.bp.impl.util.persistence.HibernateSwaggerObjectMapper;
-import eu.nimble.service.bp.impl.util.persistence.HibernateUtilityRef;
-import eu.nimble.service.bp.impl.util.persistence.ProcessInstanceGroupDAOUtility;
-import eu.nimble.service.bp.impl.util.persistence.TrustUtility;
+import eu.nimble.service.bp.impl.util.persistence.*;
 import eu.nimble.service.bp.swagger.api.GroupApi;
-import eu.nimble.service.bp.swagger.model.ProcessInstance;
-import eu.nimble.service.bp.swagger.model.ProcessInstanceGroup;
-import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupFilter;
-import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupResponse;
+import eu.nimble.service.bp.swagger.model.*;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.utility.HibernateUtility;
 import io.swagger.annotations.ApiOperation;
@@ -298,6 +290,23 @@ public class ProcessInstanceGroupController implements GroupApi {
             logger.error("There does not exist a process instance group with the id: {}",ID,e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("There does not exist a process instance group with the given id");
         }
+
+        // check whether the group consists of an approved order or an accepted transport execution plan
+        List<String> processInstanceIDs = groupDAO.getProcessInstanceIDs();
+        for(String instanceID: processInstanceIDs){
+            List<ProcessDocumentMetadataDAO> metadataDAOS = DAOUtility.getProcessDocumentMetadataByProcessInstanceID(instanceID);
+            for (ProcessDocumentMetadataDAO metadataDAO: metadataDAOS){
+                if(metadataDAO.getType() == DocumentType.ORDERRESPONSESIMPLE && metadataDAO.getStatus() == ProcessDocumentStatus.APPROVED){
+                    logger.error("Process instance group with id:{} contains an approved order, therefore it can not be cancelled",ID);
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Collaboration which contains an approved order can not be cancelled");
+                }
+                else if(metadataDAO.getType() == DocumentType.TRANSPORTEXECUTIONPLAN && metadataDAO.getStatus() == ProcessDocumentStatus.APPROVED){
+                    logger.error("Process instance group with id:{} contains an accepted transport execution plan, therefore it can not be cancelled",ID);
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Collaboration which contains an accepted transport execution plan can not be cancelled");
+                }
+            }
+        }
+
         groupDAO.setStatus(GroupStatus.CANCELLED);
         HibernateUtility.getInstance("bp-data-model").update(groupDAO);
 
