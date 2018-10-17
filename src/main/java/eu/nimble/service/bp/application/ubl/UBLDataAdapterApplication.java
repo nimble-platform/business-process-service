@@ -299,8 +299,16 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
         }else if(document instanceof QuotationType) {
             QuotationType quotation = (QuotationType) document;
             String rfqID = quotation.getRequestForQuotationDocumentReference().getID();
+            boolean isAccepted = quotation.getDocumentStatusCode().getName().equals("Accepted");
+
             initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(rfqID);
-            initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
+            if(isAccepted){
+                initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
+            }
+            else {
+                initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.DENIED);
+            }
+
 
         } else if(document instanceof ReceiptAdviceType) {
             ReceiptAdviceType receiptAdvice = (ReceiptAdviceType) document;
@@ -311,8 +319,15 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
         } else if(document instanceof TransportExecutionPlanType) {
             TransportExecutionPlanType transportExecutionPlanType = (TransportExecutionPlanType) document;
             String tepDocRefId = transportExecutionPlanType.getTransportExecutionPlanRequestDocumentReference().getID();
+            boolean isAccepted = transportExecutionPlanType.getDocumentStatusCode().getName().equals("Accepted");
+
             initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(tepDocRefId);
-            initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
+            if (isAccepted){
+                initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
+            }
+            else {
+                initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.DENIED);
+            }
 
         } else if(document instanceof ItemInformationResponseType) {
             ItemInformationResponseType itemInformationResponse = (ItemInformationResponseType) document;
