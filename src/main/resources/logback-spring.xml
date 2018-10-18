@@ -39,7 +39,7 @@
         </encoder>
     </appender>
 
-    <logger name="eu.nimble.service.bp" level="DEBUG"/>
+    <logger name="eu.nimble" level="DEBUG"/>
 
     <root level="INFO">
         <appender-ref ref="logstash"/>
