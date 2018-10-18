@@ -149,35 +149,27 @@ public class StatisticsDAOUtility {
     }
 
     public static double calculateAverageResponseTime(String partyID,String bearerToken) throws Exception{
-        // TODO: this function only calculates average response time for seller parties not buyers
+
         int numberOfResponses = 0;
         double totalTime = 0;
-        QualifyingPartyType qualifyingPartyType = CatalogueDAOUtility.getQualifyingPartyType(partyID,bearerToken);
-        for(CompletedTaskType completedTask:qualifyingPartyType.getCompletedTask()){
-            List<String> processInstanceIDs = DAOUtility.getAllProcessInstanceIDs(completedTask.getAssociatedProcessInstanceID());
-            for (String processInstanceID:processInstanceIDs){
+
+        String query = "SELECT DISTINCT metadataDAO.processInstanceID FROM ProcessDocumentMetadataDAO metadataDAO WHERE metadataDAO.responderID = ?";
+        List<String> processInstanceIDs = (List<String>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query,partyID);
+
+        for (String processInstanceID:processInstanceIDs){
                 List<ProcessDocumentMetadataDAO> processDocumentMetadataDAOS = DAOUtility.getProcessDocumentMetadataByProcessInstanceID(processInstanceID);
                 if (processDocumentMetadataDAOS.size() != 2){
-                    continue;
-                }
-                else if(!processDocumentMetadataDAOS.get(0).getResponderID().equals(partyID)){
                     continue;
                 }
 
                 ProcessDocumentMetadataDAO docMetadata = processDocumentMetadataDAOS.get(1);
                 ProcessDocumentMetadataDAO reqMetadata = processDocumentMetadataDAOS.get(0);
-                // if the second document has a future submission date
-                if (processDocumentMetadataDAOS.get(0).getSubmissionDate().compareTo(processDocumentMetadataDAOS.get(1).getSubmissionDate()) > 0) {
-                    docMetadata = processDocumentMetadataDAOS.get(0);
-                    reqMetadata = processDocumentMetadataDAOS.get(1);
-                }
 
                 Date startDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(reqMetadata.getSubmissionDate()).toGregorianCalendar().getTime();
                 Date endDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(docMetadata.getSubmissionDate()).toGregorianCalendar().getTime();
 
                 numberOfResponses++;
                 totalTime += (endDate.getTime()-startDate.getTime())/86400000.0;
-            }
         }
         if(numberOfResponses == 0){
             return 0.0;
