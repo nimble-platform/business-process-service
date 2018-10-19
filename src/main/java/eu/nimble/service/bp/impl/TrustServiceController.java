@@ -39,18 +39,23 @@ public class TrustServiceController {
     @ApiOperation(value = "", notes = "Create rating and reviews for the company")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Created rating and reviews for the company successfully"),
+            @ApiResponse(code = 400, message = "Party specified with the partyID or the correspond trading party does not exists. OR process instance does not exist. OR specified party is not included in the process instance"),
             @ApiResponse(code = 500, message = "Failed to create rating and reviews for the company")
     })
     @RequestMapping(value = "/ratingsAndReviews",
             produces = {"application/json"},
             method = RequestMethod.POST)
-    public ResponseEntity createRatingAndReview(@ApiParam(value = "JSON string representing an array of EvidenceSupplied instances.") @RequestParam(value = "ratings", required = true) String ratingsString,
-                                                @ApiParam(value = "JSON string representing an array of Comment instances.") @RequestParam(value = "reviews", required = true) String reviewsString,
+    public ResponseEntity createRatingAndReview(@ApiParam(value = "JSON string representing an array of EvidenceSupplied instances.") @RequestParam(value = "ratings", required = false) String ratingsString,
+                                                @ApiParam(value = "JSON string representing an array of Comment instances.") @RequestParam(value = "reviews", required = false) String reviewsString,
                                                 @ApiParam(value = "Identifier of the party for which a rating and reviews will be created") @RequestParam(value = "partyID") String partyID,
                                                 @ApiParam(value = "Identifier of the process instance associated with the ratings and reviews") @RequestParam(value = "processInstanceID") String processInstanceID,
                                                 @ApiParam(value = "", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
         try {
             logger.info("Creating rating and reviews for the party with id: {} and process instance with id: {}", partyID, processInstanceID);
+            /**
+             * CHECKS
+             */
+
             // check party
             QualifyingPartyType qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID, bearerToken);
             if (qualifyingParty == null) {
@@ -71,14 +76,27 @@ public class TrustServiceController {
             if(!(processDocumentMetadatas.get(0).getInitiatorID().contentEquals(partyID) || processDocumentMetadatas.get(0).getResponderID().contentEquals(partyID))) {
                 return HttpResponseUtil.createResponseEntityAndLog(String.format("Party: %s is not included in the process instance: {}", tradingPartnerId, processInstanceID), HttpStatus.BAD_REQUEST);
             }
-
+            // check the values
             ObjectMapper objectMapper = Serializer.getDefaultObjectMapper();
-            List<EvidenceSuppliedType> ratings = objectMapper.readValue(ratingsString, new TypeReference<List<EvidenceSuppliedType>>() {});
-            List<CommentType> reviews = objectMapper.readValue(reviewsString, new TypeReference<List<CommentType>>() {});
+            List<EvidenceSuppliedType> ratings = null;
+            List<CommentType> reviews = null;
+            if(ratingsString == null && reviewsString == null) {
+                return HttpResponseUtil.createResponseEntityAndLog(String.format("One of the ratings or reviews parameters must be {}", tradingPartnerId, processInstanceID), HttpStatus.BAD_REQUEST);
+            }
+            if(ratingsString != null) {
+                ratings = objectMapper.readValue(ratingsString, new TypeReference<List<EvidenceSuppliedType>>() {});
+            }
+            if(reviewsString != null) {
+                reviews = objectMapper.readValue(reviewsString, new TypeReference<List<CommentType>>() {});
+            }
+
+            /**
+             * LOGIC
+             */
 
             boolean completedTaskExist = TrustUtility.completedTaskExist(qualifyingParty, processInstanceID);
             if (!completedTaskExist) {
-                TrustUtility.createCompletedTasksForBothParties(processInstanceID, bearerToken, "Completed");
+                TrustUtility.createCompletedTasksForBothParties(processDocumentMetadatas.get(0), bearerToken, "Completed");
                 // get qualifyingParty (which contains the completed task) again
                 qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID, bearerToken);
             }

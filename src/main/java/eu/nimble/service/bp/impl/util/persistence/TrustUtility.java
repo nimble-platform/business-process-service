@@ -68,12 +68,17 @@ public class TrustUtility {
 
     public static void createCompletedTasksForBothParties(String processInstanceID,String bearerToken,String status) {
         List<ProcessDocumentMetadataDAO> processDocumentMetadatas= DAOUtility.getProcessDocumentMetadataByProcessInstanceID(processInstanceID);
-        String initiatorID = processDocumentMetadatas.get(0).getInitiatorID();
-        String responderID = processDocumentMetadatas.get(0).getResponderID();
-
-        TrustUtility.createCompletedTask(initiatorID,processInstanceID,bearerToken,status);
-        TrustUtility.createCompletedTask(responderID,processInstanceID,bearerToken,status);
+        createCompletedTasksForBothParties(processDocumentMetadatas.get(0), bearerToken, status);
     }
+
+    public static void createCompletedTasksForBothParties(ProcessDocumentMetadataDAO processDocumentMetadata,String bearerToken,String status) {
+        String initiatorID = processDocumentMetadata.getInitiatorID();
+        String responderID = processDocumentMetadata.getResponderID();
+
+        TrustUtility.createCompletedTask(initiatorID,processDocumentMetadata.getProcessInstanceID(),bearerToken,status);
+        TrustUtility.createCompletedTask(responderID,processDocumentMetadata.getProcessInstanceID(),bearerToken,status);
+    }
+
 
     public static NegotiationRatings createNegotiationRatings(List<CompletedTaskType> completedTasks){
         NegotiationRatings negotiationRatings = new NegotiationRatings();
