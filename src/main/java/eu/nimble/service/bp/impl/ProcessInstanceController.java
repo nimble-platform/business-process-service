@@ -127,7 +127,7 @@ public class ProcessInstanceController {
             logger.info("Getting rating status for process instance: {}, party: {}", processInstanceId, partyId);
             CompletedTaskType completedTask = ProcessInstanceDAOUtility.getCompletedTask(partyId, processInstanceId);
             Boolean rated = false;
-            if (completedTask != null) {
+            if (completedTask != null && completedTask.getEvidenceSupplied().size() > 0) {
                 rated = true;
             }
 
