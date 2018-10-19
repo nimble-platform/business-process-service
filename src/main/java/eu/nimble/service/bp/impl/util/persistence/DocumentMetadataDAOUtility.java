@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * Created by suat on 16-Oct-18.
  */
-public class DocumentMetadataUtil {
+public class DocumentMetadataDAOUtility {
     public static ProcessDocumentMetadataDAO getDocumentOfTheOtherParty(String processInstanceId, String thisPartyId) {
         List<ProcessDocumentMetadataDAO> documentMetadataDAOs = DAOUtility.getProcessDocumentMetadataByProcessInstanceID(processInstanceId);
         // if this party is the initiator party, return the second document metadata
@@ -24,10 +24,14 @@ public class DocumentMetadataUtil {
 
     public static String getTradingPartnerId(String processInstanceId, String thisPartyId) {
         ProcessDocumentMetadataDAO firstDocumentMetadataDAO = DAOUtility.getProcessDocumentMetadataByProcessInstanceID(processInstanceId).get(0);
-        if(firstDocumentMetadataDAO.getInitiatorID().contentEquals(thisPartyId)) {
-            return firstDocumentMetadataDAO.getResponderID();
+        return getTradingPartnerId(firstDocumentMetadataDAO, thisPartyId);
+    }
+
+    public static String getTradingPartnerId(ProcessDocumentMetadataDAO documentMetadata, String thisPartyId) {
+        if(documentMetadata.getInitiatorID().contentEquals(thisPartyId)) {
+            return documentMetadata.getResponderID();
         } else {
-            return firstDocumentMetadataDAO.getInitiatorID();
+            return documentMetadata.getInitiatorID();
         }
     }
 }

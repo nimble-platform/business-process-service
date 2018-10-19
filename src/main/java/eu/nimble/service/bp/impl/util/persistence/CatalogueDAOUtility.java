@@ -18,6 +18,8 @@ import java.io.IOException;
 import java.util.List;
 
 public class CatalogueDAOUtility {
+    private static final String GET_PARTY_QUERY = "SELECT party FROM PartyType party WHERE party.ID = ? ORDER BY party.hjid ASC";
+
     private static final Logger logger = LoggerFactory.getLogger(CatalogueDAOUtility.class);
 
     public static CatalogueLineType getCatalogueLine(OrderType order){
@@ -54,6 +56,14 @@ public class CatalogueDAOUtility {
 
             HibernateUtility.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(party);
             return party;
+        }
+        return partyTypes.get(0);
+    }
+
+    public static PartyType getParty(String partyId) {
+        List<PartyType>  partyTypes = (List<PartyType>) HibernateUtility.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadAll(GET_PARTY_QUERY, partyId);
+        if(partyTypes.size() == 0){
+            return null;
         }
         return partyTypes.get(0);
     }

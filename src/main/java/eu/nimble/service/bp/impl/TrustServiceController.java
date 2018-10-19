@@ -54,14 +54,23 @@ public class TrustServiceController {
             // check party
             QualifyingPartyType qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID, bearerToken);
             if (qualifyingParty == null) {
-                return HttpResponseUtil.createResponseEntityAndLog(String.format("No qualifying party for the given party id: %s", partyID), HttpStatus.BAD_REQUEST);
+                return HttpResponseUtil.createResponseEntityAndLog(String.format("No qualifying party exists for the given party id: %s", partyID), HttpStatus.BAD_REQUEST);
             }
             // check process instance id
             List<ProcessDocumentMetadataDAO> processDocumentMetadatas = DAOUtility.getProcessDocumentMetadataByProcessInstanceID(processInstanceID);
             if (processDocumentMetadatas.size() == 0) {
                 return HttpResponseUtil.createResponseEntityAndLog(String.format("No process document metadata for the given process instance id: %s", processInstanceID), HttpStatus.BAD_REQUEST);
             }
-            // TODO: check whether the party is included in the process
+            // check the trading partner existence
+            String tradingPartnerId = DocumentMetadataDAOUtility.getTradingPartnerId(processDocumentMetadatas.get(0), partyID);
+            PartyType tradingParty = CatalogueDAOUtility.getParty(tradingPartnerId);
+            if(tradingParty == null) {
+                return HttpResponseUtil.createResponseEntityAndLog(String.format("No party exists for the given party id: %s", tradingPartnerId), HttpStatus.BAD_REQUEST);
+            }
+            // check whether the party is included in the process
+            if(!(processDocumentMetadatas.get(0).getInitiatorID().contentEquals(partyID) || processDocumentMetadatas.get(0).getResponderID().contentEquals(partyID))) {
+                return HttpResponseUtil.createResponseEntityAndLog(String.format("Party: %s is not included in the process instance: {}", tradingPartnerId, processInstanceID), HttpStatus.BAD_REQUEST);
+            }
 
             ObjectMapper objectMapper = Serializer.getDefaultObjectMapper();
             List<EvidenceSuppliedType> ratings = objectMapper.readValue(ratingsString, new TypeReference<List<EvidenceSuppliedType>>() {});
