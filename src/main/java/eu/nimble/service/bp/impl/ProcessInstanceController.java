@@ -1,22 +1,30 @@
 package eu.nimble.service.bp.impl;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import eu.nimble.service.bp.hyperjaxb.model.*;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
+import eu.nimble.service.bp.impl.util.controller.HttpResponseUtil;
 import eu.nimble.service.bp.impl.util.persistence.*;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.CompletedTaskType;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.QualifyingPartyType;
 import eu.nimble.utility.HibernateUtility;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+
+import javax.ws.rs.QueryParam;
 
 /**
  * Created by dogukan on 09.08.2018.
@@ -103,5 +111,31 @@ public class ProcessInstanceController {
 
         logger.debug("Updated process instance with id: {}",processInstanceID);
         return ResponseEntity.ok(null);
+    }
+
+    @ApiOperation(value = "",notes = "Gets rating status for the specified process instance")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Retrieved rating status successfully")
+    })
+    @RequestMapping(value = "/processInstance/{processInstanceId}/isRated",
+            produces = {MediaType.TEXT_PLAIN_VALUE},
+            method = RequestMethod.GET)
+    public ResponseEntity hasGroup(@ApiParam(value = "Identifier of the process instance") @PathVariable(value = "processInstanceId", required = true) String processInstanceId,
+                                   @ApiParam(value = "Identifier of the party (the rated) for which the existence of a rating to be checked") @RequestParam(value = "partyId", required = true) String partyId,
+                                   @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
+        try {
+            logger.info("Getting rating status for process instance: {}, party: {}", processInstanceId, partyId);
+            CompletedTaskType completedTask = ProcessInstanceDAOUtility.getCompletedTask(partyId, processInstanceId);
+            Boolean rated = false;
+            if (completedTask != null && completedTask.getEvidenceSupplied().size() > 0) {
+                rated = true;
+            }
+
+            logger.info("Retrieved rating status for process instance: {}, party: {}", processInstanceId, partyId);
+            return ResponseEntity.ok(rated.toString());
+
+        } catch (Exception e) {
+            return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting the order content for process instance id: %s, party: %s", processInstanceId, partyId), e, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }
