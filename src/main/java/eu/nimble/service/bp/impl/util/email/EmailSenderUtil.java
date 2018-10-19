@@ -4,7 +4,7 @@ import eu.nimble.common.rest.identity.IdentityClientTyped;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
 import eu.nimble.service.bp.impl.util.persistence.DAOUtility;
-import eu.nimble.service.bp.impl.util.persistence.DocumentMetadataUtil;
+import eu.nimble.service.bp.impl.util.persistence.DocumentMetadataDAOUtility;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
 import eu.nimble.utility.email.EmailService;
@@ -37,7 +37,7 @@ public class EmailSenderUtil {
             // Collect the trading partner name
             String cancellingPartyId = groupDAO.getPartyID();
             PartyType tradingPartner;
-            String tradingPartnerId = DocumentMetadataUtil.getTradingPartnerId(groupDAO.getProcessInstanceIDs().get(0), cancellingPartyId);
+            String tradingPartnerId = DocumentMetadataDAOUtility.getTradingPartnerId(groupDAO.getProcessInstanceIDs().get(0), cancellingPartyId);
             try {
                 tradingPartner = identityClient.getParty(bearerToken, tradingPartnerId);
 
@@ -63,7 +63,7 @@ public class EmailSenderUtil {
             // person associated with the trading partner
             String toEmail;
             if (groupDAO.getProcessInstanceIDs().size() > 1) {
-                ProcessDocumentMetadataDAO documentMetadataDAO = DocumentMetadataUtil.getDocumentOfTheOtherParty(groupDAO.getProcessInstanceIDs().get(0), cancellingPartyId);
+                ProcessDocumentMetadataDAO documentMetadataDAO = DocumentMetadataDAOUtility.getDocumentOfTheOtherParty(groupDAO.getProcessInstanceIDs().get(0), cancellingPartyId);
                 // get person via the identity client
                 String personId = documentMetadataDAO.getCreatorUserID();
                 PersonType person;
