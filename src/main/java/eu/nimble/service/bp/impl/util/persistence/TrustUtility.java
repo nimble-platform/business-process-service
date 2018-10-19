@@ -26,13 +26,15 @@ public class TrustUtility {
         return false;
     }
 
-    public static void fillCompletedTask(QualifyingPartyType qualifyingParty, List<EvidenceSuppliedType> ratings, List<CommentType> reviews, String processInstanceID){
+    public static CompletedTaskType fillCompletedTask(QualifyingPartyType qualifyingParty, List<EvidenceSuppliedType> ratings, List<CommentType> reviews, String processInstanceID){
         for (CompletedTaskType completedTask:qualifyingParty.getCompletedTask()){
             if(completedTask.getAssociatedProcessInstanceID().equals(processInstanceID)){
                 completedTask.setComment(reviews);
                 completedTask.setEvidenceSupplied(ratings);
+                return completedTask;
             }
         }
+        return null;
     }
 
     public static void createCompletedTask(String partyID,String processInstanceID,String bearerToken,String status) {

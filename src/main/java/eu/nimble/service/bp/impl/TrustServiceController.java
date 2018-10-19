@@ -2,7 +2,9 @@ package eu.nimble.service.bp.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.impl.model.trust.NegotiationRatings;
+import eu.nimble.service.bp.impl.util.controller.HttpResponseUtil;
 import eu.nimble.service.bp.impl.util.persistence.*;
 import eu.nimble.service.bp.impl.util.serialization.Serializer;
 import eu.nimble.service.bp.messaging.KafkaSender;
@@ -34,7 +36,7 @@ public class TrustServiceController {
     @Autowired
     private KafkaSender kafkaSender;
 
-    @ApiOperation(value = "",notes = "Create rating and reviews for the company")
+    @ApiOperation(value = "", notes = "Create rating and reviews for the company")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Created rating and reviews for the company successfully"),
             @ApiResponse(code = 500, message = "Failed to create rating and reviews for the company")
@@ -42,36 +44,47 @@ public class TrustServiceController {
     @RequestMapping(value = "/ratingsAndReviews",
             produces = {"application/json"},
             method = RequestMethod.POST)
-    public ResponseEntity createRatingAndReview(@ApiParam(value = "JSON string representing an array of EvidenceSupplied instances.") @RequestParam(value = "ratings",required = true) String ratingsString,
-                                                @ApiParam(value = "JSON string representing an array of Comment instances.") @RequestParam(value = "reviews",required = true) String reviewsString,
+    public ResponseEntity createRatingAndReview(@ApiParam(value = "JSON string representing an array of EvidenceSupplied instances.") @RequestParam(value = "ratings", required = true) String ratingsString,
+                                                @ApiParam(value = "JSON string representing an array of Comment instances.") @RequestParam(value = "reviews", required = true) String reviewsString,
                                                 @ApiParam(value = "Identifier of the party for which a rating and reviews will be created") @RequestParam(value = "partyID") String partyID,
                                                 @ApiParam(value = "Identifier of the process instance associated with the ratings and reviews") @RequestParam(value = "processInstanceID") String processInstanceID,
-                                                @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
-        logger.info("Creating rating and reviews for the party with id: {} and process instance with id: {}",partyID,processInstanceID);
-        QualifyingPartyType qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID,bearerToken);
+                                                @ApiParam(value = "", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
         try {
-            ObjectMapper objectMapper = Serializer.getDefaultObjectMapper();
-            List<EvidenceSuppliedType> ratings = objectMapper.readValue(ratingsString,new TypeReference<List<EvidenceSuppliedType>>(){});
-            List<CommentType> reviews = objectMapper.readValue(reviewsString,new TypeReference<List<CommentType>>(){});
-
-            boolean completedTaskExist = TrustUtility.completedTaskExist(qualifyingParty,processInstanceID);
-            if(!completedTaskExist){
-                TrustUtility.createCompletedTasksForBothParties(processInstanceID,bearerToken,"Completed");
-                // get qualifyingParty (which contains the completed task) again
-                qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID,bearerToken);
+            logger.info("Creating rating and reviews for the party with id: {} and process instance with id: {}", partyID, processInstanceID);
+            // check party
+            QualifyingPartyType qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID, bearerToken);
+            if (qualifyingParty == null) {
+                return HttpResponseUtil.createResponseEntityAndLog(String.format("No qualifying party for the given party id: %s", partyID), HttpStatus.BAD_REQUEST);
             }
-            TrustUtility.fillCompletedTask(qualifyingParty,ratings,reviews,processInstanceID);
+            // check process instance id
+            List<ProcessDocumentMetadataDAO> processDocumentMetadatas = DAOUtility.getProcessDocumentMetadataByProcessInstanceID(processInstanceID);
+            if (processDocumentMetadatas.size() == 0) {
+                return HttpResponseUtil.createResponseEntityAndLog(String.format("No process document metadata for the given process instance id: %s", processInstanceID), HttpStatus.BAD_REQUEST);
+            }
+            // TODO: check whether the party is included in the process
+
+            ObjectMapper objectMapper = Serializer.getDefaultObjectMapper();
+            List<EvidenceSuppliedType> ratings = objectMapper.readValue(ratingsString, new TypeReference<List<EvidenceSuppliedType>>() {});
+            List<CommentType> reviews = objectMapper.readValue(reviewsString, new TypeReference<List<CommentType>>() {});
+
+            boolean completedTaskExist = TrustUtility.completedTaskExist(qualifyingParty, processInstanceID);
+            if (!completedTaskExist) {
+                TrustUtility.createCompletedTasksForBothParties(processInstanceID, bearerToken, "Completed");
+                // get qualifyingParty (which contains the completed task) again
+                qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID, bearerToken);
+            }
+            CompletedTaskType completedTaskType = TrustUtility.fillCompletedTask(qualifyingParty, ratings, reviews, processInstanceID);
             HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).update(qualifyingParty);
 
             // broadcast changes
-            kafkaSender.broadcastRatingsUpdate(partyID,bearerToken);
-        }
-        catch (Exception e){
-            logger.error("Failed to create rating and reviews for the party with id: {} and process instance with id: {}",partyID,processInstanceID,e);
+            kafkaSender.broadcastRatingsUpdate(partyID, bearerToken);
+
+            logger.info("Created rating and reviews for the party with id: {} and process instance with id: {}", partyID, processInstanceID);
+            return ResponseEntity.ok(completedTaskType);
+        } catch (Exception e) {
+            logger.error("Failed to create rating and reviews for the party with id: {} and process instance with id: {}", partyID, processInstanceID, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
-        logger.info("Created rating and reviews for the party with id: {} and process instance with id: {}",partyID,processInstanceID);
-        return ResponseEntity.ok(null);
     }
 
     @ApiOperation(value = "",notes = "Gets rating summary for the given company")
