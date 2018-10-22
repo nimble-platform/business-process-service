@@ -80,15 +80,16 @@ public class TrustUtility {
     }
 
 
-    public static NegotiationRatings createNegotiationRatings(List<CompletedTaskType> completedTasks){
-        NegotiationRatings negotiationRatings = new NegotiationRatings();
-
-        List<EvidenceSuppliedType> ratings = new ArrayList<>();
-        List<CommentType> reviews = new ArrayList<>();
+    public static List<NegotiationRatings> createNegotiationRatings(List<CompletedTaskType> completedTasks){
+        List<NegotiationRatings> negotiationRatings = new ArrayList<>();
 
         for (CompletedTaskType completedTask:completedTasks){
+
             // consider only Completed tasks
             if(completedTask.getDescription().get(0).equals("Completed")){
+                List<EvidenceSuppliedType> ratings = new ArrayList<>();
+                List<CommentType> reviews = new ArrayList<>();
+
                 // ratings
                 for (EvidenceSuppliedType evidenceSupplied:completedTask.getEvidenceSupplied()){
                     ratings.add(evidenceSupplied);
@@ -97,11 +98,9 @@ public class TrustUtility {
                 for(CommentType comment:completedTask.getComment()){
                     reviews.add(comment);
                 }
+                negotiationRatings.add(new NegotiationRatings(completedTask.getAssociatedProcessInstanceID(),ratings,reviews));
             }
         }
-
-        negotiationRatings.setRatings(ratings);
-        negotiationRatings.setReviews(reviews);
 
         return negotiationRatings;
     }

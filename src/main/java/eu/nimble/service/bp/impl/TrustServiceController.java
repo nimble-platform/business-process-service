@@ -132,18 +132,25 @@ public class TrustServiceController {
 
     @ApiOperation(value = "",notes = "Gets all individual ratings and review")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Retrieved all individual ratings and review successfully",response = NegotiationRatings.class)
+            @ApiResponse(code = 200, message = "Retrieved all individual ratings and review successfully")
     })
     @RequestMapping(value = "/ratingsAndReviews",
             produces = {"application/json"},
             method = RequestMethod.GET)
     public ResponseEntity listAllIndividualRatingsAndReviews(@RequestParam(value = "partyID") String partyID,
                                                              @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
-        logger.info("Getting all individual ratings and review for the party with id: {}",partyID);
-        QualifyingPartyType qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID,bearerToken);
-        NegotiationRatings negotiationRatings = TrustUtility.createNegotiationRatings(qualifyingParty.getCompletedTask());
-        logger.info("Retrieved all individual ratings and review for the party with id: {}",partyID);
-        return ResponseEntity.ok(negotiationRatings);
+        try {
+            logger.info("Getting all individual ratings and review for the party with id: {}",partyID);
+            QualifyingPartyType qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID,bearerToken);
+            List<NegotiationRatings> negotiationRatings = TrustUtility.createNegotiationRatings(qualifyingParty.getCompletedTask());
+            String ratingsAndReviews = new ObjectMapper().writeValueAsString(negotiationRatings);
+            logger.info("Retrieved all individual ratings and review for the party with id: {}",partyID);
+            return ResponseEntity.ok(ratingsAndReviews);
+        }
+        catch (Exception e){
+            logger.error("Unexpected error while getting negotiation ratings and reviews for the party: {}",partyID,e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
     }
 
     private JSONObject createJSONResponse(List<CompletedTaskType> completedTasks){
