@@ -37,6 +37,8 @@ public class ProcessInstanceGroupController implements GroupApi {
     @Autowired
     private ProcessInstanceGroupDAOUtility groupDaoUtility;
     @Autowired
+    private ProcessInstanceController processInstanceController;
+    @Autowired
     private DocumentController documentController;
     @Autowired
     private EmailSenderUtil emailSenderUtil;
@@ -298,18 +300,10 @@ public class ProcessInstanceGroupController implements GroupApi {
 
             // check whether the group consists of an approved order or an accepted transport execution plan
             List<String> processInstanceIDs = groupDAO.getProcessInstanceIDs();
-            for(String instanceID: processInstanceIDs){
-                List<ProcessDocumentMetadataDAO> metadataDAOS = DAOUtility.getProcessDocumentMetadataByProcessInstanceID(instanceID);
-                for (ProcessDocumentMetadataDAO metadataDAO: metadataDAOS){
-                    if(metadataDAO.getType() == DocumentType.ORDERRESPONSESIMPLE && metadataDAO.getStatus() == ProcessDocumentStatus.APPROVED){
-                        logger.error("Process instance group with id:{} contains an approved order, therefore it can not be cancelled",ID);
-                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Collaboration which contains an approved order can not be cancelled");
-                    }
-                    else if(metadataDAO.getType() == DocumentType.TRANSPORTEXECUTIONPLAN && metadataDAO.getStatus() == ProcessDocumentStatus.APPROVED){
-                        logger.error("Process instance group with id:{} contains an accepted transport execution plan, therefore it can not be cancelled",ID);
-                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Collaboration which contains an accepted transport execution plan can not be cancelled");
-                    }
-                }
+            boolean isCancellableGroup = cancellableGroup(processInstanceIDs);
+            if(!isCancellableGroup){
+                logger.error("Process instance group with id:{} can not be cancelled",ID);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
             }
 
             // update the group of the party initiating the cancel request
@@ -319,8 +313,25 @@ public class ProcessInstanceGroupController implements GroupApi {
             // update the groups associated with the first group
             for (String id : groupDAO.getAssociatedGroups()) {
                 ProcessInstanceGroupDAO group = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(id);
-                group.setStatus(GroupStatus.CANCELLED);
-                HibernateUtility.getInstance("bp-data-model").update(group);
+                // check whether the associated group can be cancelled or not
+                isCancellableGroup = cancellableGroup(group.getProcessInstanceIDs());
+                // if it is ok, change status of the associated group
+                if(isCancellableGroup){
+                    group.setStatus(GroupStatus.CANCELLED);
+                    HibernateUtility.getInstance("bp-data-model").update(group);
+                }
+                // otherwise, just cancel the process instances in the group
+                else {
+                    for(String processID :groupDAO.getProcessInstanceIDs()){
+                        ProcessInstanceDAO instanceDAO = DAOUtility.getProcessInstanceDAOByID(processID);
+                        // if process is completed or already cancelled, continue
+                        if(instanceDAO.getStatus() == ProcessInstanceStatus.COMPLETED || instanceDAO.getStatus() == ProcessInstanceStatus.CANCELLED){
+                            continue;
+                        }
+                        // otherwise, cancel the process
+                        processInstanceController.cancelProcessInstance(processID,bearerToken);
+                    }
+                }
             }
 
             // create completed tasks for both parties
@@ -336,5 +347,17 @@ public class ProcessInstanceGroupController implements GroupApi {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(String.format("Unexpected error while cancelling the group: %s", ID));
         }
+    }
+
+    private boolean cancellableGroup(List<String> processInstanceIDs){
+        for(String instanceID: processInstanceIDs){
+            List<ProcessDocumentMetadataDAO> metadataDAOS = DAOUtility.getProcessDocumentMetadataByProcessInstanceID(instanceID);
+            for (ProcessDocumentMetadataDAO metadataDAO: metadataDAOS){
+                if(metadataDAO.getType() == DocumentType.ORDERRESPONSESIMPLE && metadataDAO.getStatus() == ProcessDocumentStatus.APPROVED || metadataDAO.getType() == DocumentType.TRANSPORTEXECUTIONPLAN && metadataDAO.getStatus() == ProcessDocumentStatus.APPROVED){
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }
