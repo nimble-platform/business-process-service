@@ -310,6 +310,20 @@ public class ProcessInstanceGroupController implements GroupApi {
             groupDAO.setStatus(GroupStatus.CANCELLED);
             HibernateUtility.getInstance("bp-data-model").update(groupDAO);
 
+            // cancel processes in the group
+            for(String processID : groupDAO.getProcessInstanceIDs()){
+                ProcessInstanceDAO instanceDAO = DAOUtility.getProcessInstanceDAOByID(processID);
+                // if process is completed or already cancelled, continue
+                if(instanceDAO.getStatus() == ProcessInstanceStatus.COMPLETED || instanceDAO.getStatus() == ProcessInstanceStatus.CANCELLED){
+                    instanceDAO.setStatus(ProcessInstanceStatus.CANCELLED);
+                    HibernateUtility.getInstance("bp-data-model").update(instanceDAO);
+
+                    continue;
+                }
+                // otherwise, cancel the process
+                processInstanceController.cancelProcessInstance(processID,bearerToken);
+            }
+
             // update the groups associated with the first group
             for (String id : groupDAO.getAssociatedGroups()) {
                 ProcessInstanceGroupDAO group = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(id);
@@ -319,18 +333,6 @@ public class ProcessInstanceGroupController implements GroupApi {
                 if(isCancellableGroup){
                     group.setStatus(GroupStatus.CANCELLED);
                     HibernateUtility.getInstance("bp-data-model").update(group);
-                }
-                // otherwise, just cancel the process instances in the group
-                else {
-                    for(String processID :groupDAO.getProcessInstanceIDs()){
-                        ProcessInstanceDAO instanceDAO = DAOUtility.getProcessInstanceDAOByID(processID);
-                        // if process is completed or already cancelled, continue
-                        if(instanceDAO.getStatus() == ProcessInstanceStatus.COMPLETED || instanceDAO.getStatus() == ProcessInstanceStatus.CANCELLED){
-                            continue;
-                        }
-                        // otherwise, cancel the process
-                        processInstanceController.cancelProcessInstance(processID,bearerToken);
-                    }
                 }
             }
 
