@@ -4,29 +4,40 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
+import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.impl.model.statistics.NonOrderedProducts;
 import eu.nimble.service.bp.impl.util.serialization.Serializer;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.CompletedTaskType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.QualifyingPartyType;
 import eu.nimble.utility.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.*;
+import javax.xml.datatype.DatatypeFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by suat on 12-Jun-18.
  */
 public class StatisticsDAOUtility {
     private static final Logger logger = LoggerFactory.getLogger(StatisticsDAOUtility.class);
+
+    public static long getActionRequiredProcessCount(String partyID,String role,Boolean archived){
+        String query = "SELECT metadataDAO.processInstanceID FROM ProcessDocumentMetadataDAO metadataDAO,ProcessInstanceDAO instanceDAO,ProcessInstanceGroupDAO groupDAO join groupDAO.processInstanceIDsItems ids WHERE groupDAO.archived = "+archived+" AND groupDAO.partyID = '"+partyID+"' AND metadataDAO.processInstanceID = ids.item AND metadataDAO.processInstanceID = instanceDAO.processInstanceID AND instanceDAO.status <> 'CANCELLED' AND instanceDAO.processID ";
+        if(role.equals("seller")){
+            query += " <> 'Fulfilment' AND metadataDAO.responderID = '"+partyID+"' GROUP BY metadataDAO.processInstanceID HAVING count(*) = 1";
+        }
+        else{
+            query += " = 'Fulfilment' AND metadataDAO.responderID = '"+partyID+"' AND instanceDAO.status = 'STARTED' GROUP BY metadataDAO.processInstanceID HAVING count(*) = 1";
+        }
+        List<String> count = (List<String>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+        return count.size();
+    }
 
     public static double getTradingVolume(Integer partyId, String role, String startDate, String endDate, String status) {
         String query = "select sum(order_.anticipatedMonetaryTotal.payableAmount.value) from OrderType order_ where order_.anticipatedMonetaryTotal.payableAmount.value is not null";
@@ -113,5 +124,56 @@ public class StatisticsDAOUtility {
             }
         });
         return inactiveParties;
+    }
+
+    public static double calculateAverageNegotiationTime(String partyID,String bearerToken){
+        int numberOfNegotiations = 0;
+        double totalTime = 0;
+        QualifyingPartyType qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID,bearerToken);
+        for (CompletedTaskType completedTask:qualifyingParty.getCompletedTask()){
+            if(completedTask.getPeriod().getEndDate() == null || completedTask.getPeriod().getEndTime() == null){
+                continue;
+            }
+            Date startDate = completedTask.getPeriod().getStartDate().toGregorianCalendar().getTime();
+            Date endDate = completedTask.getPeriod().getEndDate().toGregorianCalendar().getTime();
+            Date startTime = completedTask.getPeriod().getStartTime().toGregorianCalendar().getTime();
+            Date endTime = completedTask.getPeriod().getEndTime().toGregorianCalendar().getTime();
+
+            numberOfNegotiations++;
+            totalTime += ((endDate.getTime()-startDate.getTime())+(endTime.getTime()-startTime.getTime()))/86400000.0;
+        }
+        if(numberOfNegotiations == 0){
+            return 0.0;
+        }
+        return totalTime/numberOfNegotiations;
+    }
+
+    public static double calculateAverageResponseTime(String partyID,String bearerToken) throws Exception{
+
+        int numberOfResponses = 0;
+        double totalTime = 0;
+
+        String query = "SELECT DISTINCT metadataDAO.processInstanceID FROM ProcessDocumentMetadataDAO metadataDAO WHERE metadataDAO.responderID = ?";
+        List<String> processInstanceIDs = (List<String>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query,partyID);
+
+        for (String processInstanceID:processInstanceIDs){
+                List<ProcessDocumentMetadataDAO> processDocumentMetadataDAOS = DAOUtility.getProcessDocumentMetadataByProcessInstanceID(processInstanceID);
+                if (processDocumentMetadataDAOS.size() != 2){
+                    continue;
+                }
+
+                ProcessDocumentMetadataDAO docMetadata = processDocumentMetadataDAOS.get(1);
+                ProcessDocumentMetadataDAO reqMetadata = processDocumentMetadataDAOS.get(0);
+
+                Date startDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(reqMetadata.getSubmissionDate()).toGregorianCalendar().getTime();
+                Date endDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(docMetadata.getSubmissionDate()).toGregorianCalendar().getTime();
+
+                numberOfResponses++;
+                totalTime += (endDate.getTime()-startDate.getTime())/86400000.0;
+        }
+        if(numberOfResponses == 0){
+            return 0.0;
+        }
+        return totalTime/numberOfResponses;
     }
 }

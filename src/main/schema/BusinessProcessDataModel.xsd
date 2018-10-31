@@ -90,6 +90,7 @@
 			<xsd:element name="processID" type="xsd:string"/>
 			<xsd:element name="initiatorID" type="xsd:string"/>
 			<xsd:element name="responderID" type="xsd:string"/>
+            <xsd:element name="creatorUserID" type="xsd:string"/>
 			<xsd:element name="contentUUID" type="xsd:string"/>
             <xsd:element name="relatedProducts" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
 			<xsd:element name="relatedProductCategories" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
@@ -164,6 +165,7 @@
 			<xsd:element name="processInstanceIDs" type="xsd:string" maxOccurs="unbounded"/>
 			<xsd:element name="archived" type="xsd:boolean"/>
 			<xsd:element name="collaborationRole" type="xsd:string"/>
+			<xsd:element name="status" type="GroupStatus"/>
 			<!-- TODO do not use string-based references, use the object itself as a reference -->
 			<!-- if the referred item is deleted the reference becomes obselete -->
 			<!-- Otherwise we need to define a foreign key constraint in the database -->
@@ -194,6 +196,12 @@
 			</xsd:element>
 		</xsd:sequence>
 	</xsd:complexType>
+	<xsd:simpleType name="GroupStatus">
+		<xsd:restriction base="xsd:token">
+			<xsd:enumeration value="INPROGRESS"/>
+			<xsd:enumeration value="CANCELLED"/>
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="AssociatedProcessInstanceGroup">
 		<xsd:sequence>
 			<xsd:element name="processInstances" type="ProcessInstanceGroupDAO" minOccurs="1" maxOccurs="1">
@@ -231,6 +239,7 @@
 			<xsd:element name="processInstanceID" type="xsd:string"/>
 			<xsd:element name="initiatorID" type="xsd:string"/>
 			<xsd:element name="responderID" type="xsd:string"/>
+            <xsd:element name="creatorUserID" type="xsd:string"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	<!--xsd:complexType name="ProcessDocumentContentDAO">

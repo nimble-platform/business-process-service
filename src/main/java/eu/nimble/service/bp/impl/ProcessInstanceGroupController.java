@@ -1,17 +1,16 @@
 package eu.nimble.service.bp.impl;
 
-import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
-import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
+import eu.nimble.service.bp.hyperjaxb.model.*;
 import eu.nimble.service.bp.impl.util.controller.HttpResponseUtil;
-import eu.nimble.service.bp.impl.util.persistence.HibernateSwaggerObjectMapper;
-import eu.nimble.service.bp.impl.util.persistence.HibernateUtilityRef;
-import eu.nimble.service.bp.impl.util.persistence.ProcessInstanceGroupDAOUtility;
+import eu.nimble.service.bp.impl.util.email.EmailSenderUtil;
+import eu.nimble.service.bp.impl.util.persistence.*;
 import eu.nimble.service.bp.swagger.api.GroupApi;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroup;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupFilter;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupResponse;
 import eu.nimble.service.model.ubl.order.OrderType;
+import eu.nimble.utility.HibernateUtility;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -23,10 +22,7 @@ import org.springframework.boot.logging.LogLevel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +37,11 @@ public class ProcessInstanceGroupController implements GroupApi {
     @Autowired
     private ProcessInstanceGroupDAOUtility groupDaoUtility;
     @Autowired
+    private ProcessInstanceController processInstanceController;
+    @Autowired
     private DocumentController documentController;
+    @Autowired
+    private EmailSenderUtil emailSenderUtil;
 
     @Override
     @ApiOperation(value = "",notes = "Add a new process instance to the specified")
@@ -162,7 +162,7 @@ public class ProcessInstanceGroupController implements GroupApi {
             @ApiParam(value = "Identifier of the party") @RequestParam(value = "partyID", required = false) String partyID,
             @ApiParam(value = "Related products") @RequestParam(value = "relatedProducts", required = false) List<String> relatedProducts,
             @ApiParam(value = "Related product categories") @RequestParam(value = "relatedProductCategories", required = false) List<String> relatedProductCategories,
-            @ApiParam(value = "Identifier of the corresponsing trading partner ID") @RequestParam(value = "tradingPartnerIDs", required = false) List<String> tradingPartnerIDs,
+            @ApiParam(value = "Identifier of the corresponding trading partner ID") @RequestParam(value = "tradingPartnerIDs", required = false) List<String> tradingPartnerIDs,
             @ApiParam(value = "Initiation date range for the first process instance in the group") @RequestParam(value = "initiationDateRange", required = false) String initiationDateRange,
             @ApiParam(value = "Last activity date range. It is the latest submission date of the document to last process instance in the group") @RequestParam(value = "lastActivityDateRange", required = false) String lastActivityDateRange,
             @ApiParam(value = "", defaultValue = "false") @RequestParam(value = "archived", required = false, defaultValue = "false") Boolean archived,
@@ -277,5 +277,89 @@ public class ProcessInstanceGroupController implements GroupApi {
         } catch (Exception e) {
             return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting the order content for process id: %s", processInstanceId), e, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @ApiOperation(value = "",notes = "Cancel the collaboration (negotiation) for the given group id")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Cancelled the collaboration for the given group id successfully "),
+            @ApiResponse(code = 400, message = "There does not exist a process instance group with the given id"),
+            @ApiResponse(code = 500, message = "Failed to cancel collaboration")
+    })
+    @RequestMapping(value = "/group/{ID}/cancel",
+            method = RequestMethod.POST)
+    public ResponseEntity cancelCollaboration(@ApiParam(value="Identifier of the process instance group to be cancelled") @PathVariable(value = "ID", required = true) String ID,
+                                              @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
+        try {
+            logger.debug("Cancelling the collaboration for the group id: {}", ID);
+            ProcessInstanceGroupDAO groupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(ID);
+            if (groupDAO == null) {
+                String msg = String.format("There does not exist a process instance group with the id: %s", ID);
+                logger.warn(msg);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(msg);
+            }
+
+            // check whether the group consists of an approved order or an accepted transport execution plan
+            List<String> processInstanceIDs = groupDAO.getProcessInstanceIDs();
+            boolean isCancellableGroup = cancellableGroup(processInstanceIDs);
+            if(!isCancellableGroup){
+                logger.error("Process instance group with id:{} can not be cancelled",ID);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+            }
+
+            // update the group of the party initiating the cancel request
+            groupDAO.setStatus(GroupStatus.CANCELLED);
+            HibernateUtility.getInstance("bp-data-model").update(groupDAO);
+
+            // cancel processes in the group
+            for(String processID : groupDAO.getProcessInstanceIDs()){
+                ProcessInstanceDAO instanceDAO = DAOUtility.getProcessInstanceDAOByID(processID);
+                // if process is completed or already cancelled, continue
+                if(instanceDAO.getStatus() == ProcessInstanceStatus.COMPLETED || instanceDAO.getStatus() == ProcessInstanceStatus.CANCELLED){
+                    instanceDAO.setStatus(ProcessInstanceStatus.CANCELLED);
+                    HibernateUtility.getInstance("bp-data-model").update(instanceDAO);
+
+                    continue;
+                }
+                // otherwise, cancel the process
+                processInstanceController.cancelProcessInstance(processID,bearerToken);
+            }
+
+            // update the groups associated with the first group
+            for (String id : groupDAO.getAssociatedGroups()) {
+                ProcessInstanceGroupDAO group = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(id);
+                // check whether the associated group can be cancelled or not
+                isCancellableGroup = cancellableGroup(group.getProcessInstanceIDs());
+                // if it is ok, change status of the associated group
+                if(isCancellableGroup){
+                    group.setStatus(GroupStatus.CANCELLED);
+                    HibernateUtility.getInstance("bp-data-model").update(group);
+                }
+            }
+
+            // create completed tasks for both parties
+            String processInstanceID = groupDAO.getProcessInstanceIDs().get(groupDAO.getProcessInstanceIDs().size() - 1);
+            TrustUtility.createCompletedTasksForBothParties(processInstanceID, bearerToken, "Cancelled");
+
+            // send email to the trading partner
+            emailSenderUtil.sendCancellationEmail(bearerToken, groupDAO);
+
+            logger.debug("Cancelled the collaboration for the group id: {} successfully", ID);
+            return ResponseEntity.ok(null);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(String.format("Unexpected error while cancelling the group: %s", ID));
+        }
+    }
+
+    private boolean cancellableGroup(List<String> processInstanceIDs){
+        for(String instanceID: processInstanceIDs){
+            List<ProcessDocumentMetadataDAO> metadataDAOS = DAOUtility.getProcessDocumentMetadataByProcessInstanceID(instanceID);
+            for (ProcessDocumentMetadataDAO metadataDAO: metadataDAOS){
+                if(metadataDAO.getType() == DocumentType.ORDERRESPONSESIMPLE && metadataDAO.getStatus() == ProcessDocumentStatus.APPROVED || metadataDAO.getType() == DocumentType.TRANSPORTEXECUTIONPLAN && metadataDAO.getStatus() == ProcessDocumentStatus.APPROVED){
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }

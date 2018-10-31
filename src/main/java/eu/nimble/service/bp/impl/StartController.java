@@ -59,7 +59,7 @@ public class StartController implements StartApi {
 
             // get the process previous process instance
             if(precedingPid != null) {
-                ProcessInstanceDAO precedingInstance = DAOUtility.getProcessIntanceDAOByID(precedingPid);
+                ProcessInstanceDAO precedingInstance = DAOUtility.getProcessInstanceDAOByID(precedingPid);
                 if (precedingInstance == null) {
                     String msg = "Invalid preceding process instance ID: %s";
                     logger.warn(String.format(msg, precedingPid));

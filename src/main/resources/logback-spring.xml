@@ -40,9 +40,14 @@
     </appender>
 
     <logger name="eu.nimble.service.bp" level="DEBUG"/>
+    <logger name="eu.nimble.utility" level="INFO"/>
 
     <root level="INFO">
         <appender-ref ref="logstash"/>
         <appender-ref ref="CONSOLE"/>
     </root>
+
+    <logger name="org.springframework.cloud.config.client" level="warn"/>
+    <logger name="com.netflix.discovery.shared.resolver.aws" level="warn"/>
+    <logger name="com.netflix.discovery.DiscoveryClient" level="warn"/>
 </configuration>

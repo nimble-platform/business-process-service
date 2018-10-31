@@ -129,7 +129,7 @@ public class ContractController {
         try {
             logger.info("Constructing contract starting from the process instance: {}", processInstanceId);
             // check existence and type of the process instance
-            ProcessInstanceDAO processInstance = DAOUtility.getProcessIntanceDAOByID(processInstanceId);
+            ProcessInstanceDAO processInstance = DAOUtility.getProcessInstanceDAOByID(processInstanceId);
             if (processInstance == null) {
                 return createResponseEntityAndLog(String.format("Invalid process instance id: %s", processInstanceId), HttpStatus.BAD_REQUEST);
             }

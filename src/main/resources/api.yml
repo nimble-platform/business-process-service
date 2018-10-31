@@ -970,6 +970,8 @@ definitions:
           type: string
       content:
         type: string
+      creatorUserID:
+        type: string
 
   ProcessInstanceInputMessage:
     title: Business Process Input Message Object
@@ -1022,6 +1024,11 @@ definitions:
         type: string
       lastActivityTime:
         type: string
+      status:
+        type: string
+        enum:
+        - INPROGRESS
+        - CANCELLED
 
   ProcessInstanceGroupResponse:
     title: Process Instance Group Response
@@ -1118,6 +1125,8 @@ definitions:
       initiatorID:
         type: string
       responderID:
+        type: string
+      creatorUserID:
         type: string
 
   ApiResponse:

@@ -9,32 +9,36 @@ import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.iteminformationrequest.ItemInformationRequestType;
 import eu.nimble.service.model.ubl.iteminformationresponse.ItemInformationResponseType;
 import eu.nimble.service.model.ubl.order.OrderType;
+import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
 import eu.nimble.service.model.ubl.ppaprequest.PpapRequestType;
 import eu.nimble.service.model.ubl.ppapresponse.PpapResponseType;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
+import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.util.Units;
 import org.apache.poi.xwpf.converter.pdf.PdfConverter;
 import org.apache.poi.xwpf.converter.pdf.PdfOptions;
 import org.apache.poi.xwpf.usermodel.*;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.LocalDateTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 
 public class ContractGenerator {
     private final Logger logger = LoggerFactory.getLogger(ContractGenerator.class);
@@ -74,6 +78,8 @@ public class ContractGenerator {
         XWPFDocument purchaseDetails = fillPurchaseDetails(order);
 
         getAndPopulateClauses(order,zos,purchaseDetails);
+        // additional documents of order
+        purchaseDetails = createOrderAdditionalDocuments(order,zos,purchaseDetails);
 
         addDocxToZipFile("Standard Purchase Order Terms and Conditions.pdf",orderTermsAndConditions,zos);
         addDocxToZipFile("Company Purchase Details.pdf",purchaseDetails,zos);
@@ -786,8 +792,12 @@ public class ContractGenerator {
                 // PPAP
                 table = document.getTableArray(document.getTables().size()-1);
                 document.removeBodyElement(document.getPosOfTable(table));
+                table = getTable(document,"PPAP Notes/Additional Documents");
+                document.removeBodyElement(document.getPosOfTable(table));
                 // Item Information Request
                 table = document.getTableArray(document.getTables().size()-1);
+                document.removeBodyElement(document.getPosOfTable(table));
+                table = getTable(document,"Item Information Request Notes/Additional Documents");
                 document.removeBodyElement(document.getPosOfTable(table));
                 return;
             }
@@ -810,19 +820,19 @@ public class ContractGenerator {
                 if(clause.getType().contentEquals("PPAP")){
                     PPAPClauseExists = true;
 
-                    ZipEntry zipEntry = new ZipEntry("PPAPDocuments/");
+                    ZipEntry zipEntry = new ZipEntry("PPAP/PPAPDocuments/");
                     zos.putNextEntry(zipEntry);
 
                     createPPAPEntry(document,zos,clause);
                 }
                 else if(clause.getType().contentEquals("ITEM_DETAILS")){
                     if(!ItemDetailsDirectoryCreated){
-                        ZipEntry zipEntry = new ZipEntry("TechnicalDataSheetResponses/");
+                        ZipEntry zipEntry = new ZipEntry("ItemInformation/TechnicalDataSheetResponses/");
                         zos.putNextEntry(zipEntry);
                         ItemDetailsDirectoryCreated = true;
                     }
                     if(!technicalDataSheetDirectoryCreated){
-                        ZipEntry zipEntry = new ZipEntry("TechnicalDataSheets/");
+                        ZipEntry zipEntry = new ZipEntry("ItemInformation/TechnicalDataSheets/");
                         zos.putNextEntry(zipEntry);
                         technicalDataSheetDirectoryCreated = true;
                     }
@@ -832,24 +842,118 @@ public class ContractGenerator {
                 }
                 else if(clause.getType().contentEquals("NEGOTIATION")){
                     negotiationClauseExists = true;
-                    createNegotiationEntry(document,clause);
+                    createNegotiationEntry(document,clause,zos);
                 }
             }
 
             if(!negotiationClauseExists){
                 document.removeBodyElement(document.getPosOfTable(getTable(document,"Negotiation")));
+                document.removeBodyElement(document.getPosOfTable(getTable(document,"Negotiation Notes/Additional Documents")));
             }
             if(!PPAPClauseExists){
                 document.removeBodyElement(document.getPosOfTable(getTable(document,"PPAP")));
+                document.removeBodyElement(document.getPosOfTable(getTable(document,"PPAP Notes/Additional Documents")));
             }
             if(!ItemDetailsDirectoryCreated){
                 document.removeBodyElement(document.getPosOfTable(getTable(document,"Item Information Request")));
+                document.removeBodyElement(document.getPosOfTable(getTable(document,"Item Information Request Notes/Additional Documents")));
             }
         }
         catch (Exception e){
             logger.error("Failed to create entries for clauses",e);
         }
 
+    }
+
+    private XWPFDocument createOrderAdditionalDocuments(OrderType order,ZipOutputStream zos,XWPFDocument document){
+        OrderResponseSimpleType orderResponse = (OrderResponseSimpleType) DocumentDAOUtility.getResponseDocument(order.getID(),DocumentType.ORDER);
+        try {
+            // request
+            for(DocumentReferenceType documentReference : order.getAdditionalDocumentReference()){
+                byte[] bytes = documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getValue();
+                ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
+                bos.write(bytes,0,bytes.length);
+
+                ZipEntry zipEntry2 = new ZipEntry("Order/BuyerDocuments/"+documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
+                zos.putNextEntry(zipEntry2);
+                bos.writeTo(zos);
+            }
+            // response
+            if(orderResponse != null){
+                for(DocumentReferenceType documentReference : orderResponse.getAdditionalDocumentReference()){
+                    byte[] bytes = documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getValue();
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
+                    bos.write(bytes,0,bytes.length);
+
+                    ZipEntry zipEntry2 = new ZipEntry("Order/SellerDocuments/"+documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
+                    zos.putNextEntry(zipEntry2);
+                    bos.writeTo(zos);
+                }
+            }
+            // notes in table
+            XWPFTable table = getTable(document,"Order Notes/Additional Documents");
+            if(order.getNote().size() == 0){
+                XWPFTableRow row = table.getRows().get(table.getNumberOfRows()-2);
+                XWPFRun run = row.getCell(1).getParagraphs().get(0).createRun();
+                run.setText("-");
+            }
+            else {
+                String requestNote = "";
+                for(String note: order.getNote()){
+                    requestNote += note + "\n";
+                }
+                XWPFTableRow row = table.getRows().get(table.getNumberOfRows()-2);
+                XWPFRun run = row.getCell(1).getParagraphs().get(0).createRun();
+                run.setText(requestNote);
+                run.setItalic(true);
+            }
+
+            if(orderResponse.getNote().size() == 0){
+                XWPFTableRow row = table.getRows().get(table.getNumberOfRows()-1);
+                XWPFRun run = row.getCell(1).getParagraphs().get(0).createRun();
+                run.setText("-");
+            }
+            else {
+                String responseNote = "";
+                for(String note: orderResponse.getNote()){
+                    responseNote += note + "\n";
+                }
+                XWPFTableRow row = table.getRows().get(table.getNumberOfRows()-1);
+                XWPFRun run = row.getCell(1).getParagraphs().get(0).createRun();
+                run.setText(responseNote);
+                run.setItalic(true);
+            }
+
+            // additional documents in table
+            // request
+            if(order.getAdditionalDocumentReference().size() == 0){
+                XWPFTableRow row = table.getRows().get(table.getNumberOfRows()-2);
+                XWPFRun run = row.getCell(3).getParagraphs().get(0).createRun();
+                run.setText("-");
+            }
+            for(DocumentReferenceType documentReference : order.getAdditionalDocumentReference()){
+                XWPFTableRow row = table.getRows().get(table.getNumberOfRows()-2);
+                XWPFRun run = row.getCell(3).getParagraphs().get(0).createRun();
+                run.setText(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName()+"\n");
+                run.setItalic(true);
+            }
+            if(orderResponse.getAdditionalDocumentReference().size() == 0){
+                XWPFTableRow row = table.getRows().get(table.getNumberOfRows()-1);
+                XWPFRun run = row.getCell(3).getParagraphs().get(0).createRun();
+                run.setText("-");
+            }
+            // response
+            for(DocumentReferenceType documentReference : orderResponse.getAdditionalDocumentReference()){
+                XWPFTableRow row = table.getRows().get(table.getNumberOfRows()-1);
+                XWPFRun run = row.getCell(3).getParagraphs().get(0).createRun();
+                run.setText(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName()+"\n");
+                run.setItalic(true);
+            }
+        }
+        catch (Exception e){
+            logger.error("Failed to create Order additional documents entry",e);
+        }
+        return document;
     }
 
     private void createPPAPEntry(XWPFDocument document,ZipOutputStream zos,ClauseType clause){
@@ -867,11 +971,33 @@ public class ContractGenerator {
                 ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
                 bos.write(bytes,0,bytes.length);
 
-                ZipEntry zipEntry2 = new ZipEntry("PPAPDocuments/" +documentReference.getDocumentType()+"/"+documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
+                ZipEntry zipEntry2 = new ZipEntry("PPAP/PPAPDocuments/" +documentReference.getDocumentType()+"/"+documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
                 zos.putNextEntry(zipEntry2);
                 bos.writeTo(zos);
 
                 map.get(documentReference.getDocumentType()).add(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
+            }
+
+            // additional documents
+            // request
+            for(DocumentReferenceType documentReference : ppapRequest.getAdditionalDocumentReference()){
+                byte[] bytes = documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getValue();
+                ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
+                bos.write(bytes,0,bytes.length);
+
+                ZipEntry zipEntry2 = new ZipEntry("PPAP/BuyerDocuments/"+documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
+                zos.putNextEntry(zipEntry2);
+                bos.writeTo(zos);
+            }
+            // response
+            for(DocumentReferenceType documentReference : ppapResponse.getAdditionalDocumentReference()){
+                byte[] bytes = documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getValue();
+                ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
+                bos.write(bytes,0,bytes.length);
+
+                ZipEntry zipEntry2 = new ZipEntry("PPAP/SellerDocuments/"+documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
+                zos.putNextEntry(zipEntry2);
+                bos.writeTo(zos);
             }
 
             XWPFTable table = getTable(document,"PPAP");
@@ -906,27 +1032,58 @@ public class ContractGenerator {
                 addRightBorder(row);
             }
 
-            if(ppapRequest.getNote() != null){
+            table = getTable(document,"PPAP Notes/Additional Documents");
+            // notes
+            if(ppapRequest.getNote().size() == 0){
                 XWPFTableRow row = table.getRows().get(table.getNumberOfRows()-2);
-                XWPFRun run = row.getCell(1).getParagraphs().get(0).createRun();
-                run.setText(ppapRequest.getNote());
-                run.setItalic(true);
+                row.getCell(1).getParagraphs().get(0).createRun().setText("-");
             }
             else {
-                XWPFTableRow row = table.getRows().get(table.getNumberOfRows()-2);
-                XWPFRun run = row.getCell(1).getParagraphs().get(0).createRun();
+                String requestNote = "";
+                for(String note:ppapRequest.getNote()){
+                    requestNote += note + "\n";
+                }
+                XWPFRun run5 = table.getRows().get(table.getNumberOfRows()-2).getCell(1).getParagraphs().get(0).createRun();
+                run5.setText(requestNote);
+                run5.setItalic(true);
+            }
+
+            if(ppapResponse.getNote().size() == 0){
+                XWPFTableRow row = table.getRows().get(table.getNumberOfRows()-1);
+                row.getCell(1).getParagraphs().get(0).createRun().setText("-");
+            }
+            else {
+                String responseNote = "";
+                for(String note:ppapResponse.getNote()){
+                    responseNote += note + "\n";
+                }
+                XWPFRun run5 = table.getRows().get(table.getNumberOfRows()-1).getCell(1).getParagraphs().get(0).createRun();
+                run5.setText(responseNote);
+                run5.setItalic(true);
+            }
+
+            // additional documents in table
+            // request
+            XWPFTableRow row = table.getRows().get(table.getNumberOfRows()-2);
+            if(ppapRequest.getAdditionalDocumentReference().size() == 0){
+                XWPFRun run = row.getCell(3).getParagraphs().get(0).createRun();
                 run.setText("-");
             }
-            if(ppapResponse.getNote() != null){
-                XWPFTableRow row = table.getRows().get(table.getNumberOfRows()-1);
-                XWPFRun run = row.getCell(1).getParagraphs().get(0).createRun();
-                run.setText(ppapResponse.getNote());
+            for(DocumentReferenceType documentReference : ppapRequest.getAdditionalDocumentReference()){
+                XWPFRun run = row.getCell(3).getParagraphs().get(0).createRun();
+                run.setText(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName()+"\n");
                 run.setItalic(true);
             }
-            else{
-                XWPFTableRow row = table.getRows().get(table.getNumberOfRows()-1);
-                XWPFRun run = row.getCell(1).getParagraphs().get(0).createRun();
+            XWPFTableRow row1 = table.getRows().get(table.getNumberOfRows()-1);
+            if(ppapResponse.getAdditionalDocumentReference().size() == 0){
+                XWPFRun run = row1.getCell(3).getParagraphs().get(0).createRun();
                 run.setText("-");
+            }
+            // response
+            for(DocumentReferenceType documentReference : ppapResponse.getAdditionalDocumentReference()){
+                XWPFRun run = row1.getCell(3).getParagraphs().get(0).createRun();
+                run.setText(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName()+"\n");
+                run.setItalic(true);
             }
 
             table.setInsideVBorder(XWPFTable.XWPFBorderType.NONE, 0, 0, null);
@@ -938,15 +1095,13 @@ public class ContractGenerator {
 
     private void createItemDetailsEntry(XWPFDocument document,ZipOutputStream zos,ClauseType clause,int id){
         try {
+            XWPFTable table = getTable(document,"Item Information Request");
+            XWPFTable noteAndDocumentTable = getTable(document,"Item Information Request Notes/Additional Documents");
             if(firstIIR){
                 firstIIR = false;
-                XWPFTable table = document.getTableArray(document.getTables().size()-1);
-
-                fillItemDetails(table,zos,clause,id);
+                fillItemDetails(document,table,noteAndDocumentTable,zos,clause,id);
             }
             else{
-                XWPFTable table = getTable(document,"Item Information Request");
-
                 CTTbl ctTbl = CTTbl.Factory.newInstance();
                 ctTbl.set(table.getCTTbl());
 
@@ -954,12 +1109,21 @@ public class ContractGenerator {
 
                 clearCell(copyTable.getRow(2).getCell(1));
                 clearCell(copyTable.getRow(3).getCell(1));
-                clearCell(copyTable.getRow(5).getCell(1));
-                clearCell(copyTable.getRow(6).getCell(1));
 
-                fillItemDetails(copyTable,zos,clause,id);
-                int pos = document.getPosOfTable(getTable(document,"Item Information Request"));
-                document.insertTable(pos,copyTable);
+                ctTbl = CTTbl.Factory.newInstance();
+                ctTbl.set(noteAndDocumentTable.getCTTbl());
+
+                XWPFTable copyNoteAndDocumentTable = new XWPFTable(ctTbl,document);
+                clearCell(copyNoteAndDocumentTable.getRow(2).getCell(1));
+                clearCell(copyNoteAndDocumentTable.getRow(2).getCell(3));
+                clearCell(copyNoteAndDocumentTable.getRow(3).getCell(1));
+                clearCell(copyNoteAndDocumentTable.getRow(3).getCell(3));
+
+                fillItemDetails(document,copyTable,copyNoteAndDocumentTable,zos,clause,id);
+                int pos = document.getPosOfTable(getTable(document,"Item Information Request Notes/Additional Documents"));
+                document.insertTable(pos+1,copyTable);
+                document.insertTable(pos+2,copyNoteAndDocumentTable);
+
             }
 
         }
@@ -968,9 +1132,31 @@ public class ContractGenerator {
         }
     }
 
-    private void createNegotiationEntry(XWPFDocument document,ClauseType clause){
+    private void createNegotiationEntry(XWPFDocument document,ClauseType clause,ZipOutputStream zos) throws Exception{
         QuotationType quotation = (QuotationType) DocumentDAOUtility.getUBLDocument(((DocumentClauseType) clause).getClauseDocumentRef().getID(), DocumentType.QUOTATION);
+        RequestForQuotationType requestForQuotation = (RequestForQuotationType) DocumentDAOUtility.getUBLDocument(quotation.getRequestForQuotationDocumentReference().getID(),DocumentType.REQUESTFORQUOTATION);
 
+        // additional documents
+        // request
+        for(DocumentReferenceType documentReference : requestForQuotation.getAdditionalDocumentReference()){
+            byte[] bytes = documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getValue();
+            ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
+            bos.write(bytes,0,bytes.length);
+
+            ZipEntry zipEntry = new ZipEntry("Negotiation/BuyerDocuments/"+ documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
+            zos.putNextEntry(zipEntry);
+            bos.writeTo(zos);
+        }
+        // response
+        for(DocumentReferenceType documentReference : quotation.getAdditionalDocumentReference()){
+            byte[] bytes = documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getValue();
+            ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
+            bos.write(bytes,0,bytes.length);
+
+            ZipEntry zipEntry = new ZipEntry("Negotiation/SellerDocuments/"+ documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
+            zos.putNextEntry(zipEntry);
+            bos.writeTo(zos);
+        }
         XWPFTable table = getTable(document,"Negotiation");
         int totalPriceExists = 0;
         try {
@@ -1124,6 +1310,42 @@ public class ContractGenerator {
                     }
                 }
             }
+            // negotiation table 'Notes and Additional Documents' part
+            // additional documents
+            table = getTable(document,"Negotiation Notes/Additional Documents");
+            if(requestForQuotation.getAdditionalDocumentReference().size() == 0){
+                table.getRow(table.getNumberOfRows()-2).getCell(3).getParagraphs().get(0).createRun().setText("-");
+            }
+            for(DocumentReferenceType documentReference : requestForQuotation.getAdditionalDocumentReference()){
+                XWPFRun run6 = table.getRow(table.getNumberOfRows()-2).getCell(3).getParagraphs().get(0).createRun();
+                run6.setText(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName()+"\n");
+                run6.setItalic(true);
+            }
+            if(quotation.getAdditionalDocumentReference().size() == 0){
+                table.getRow(table.getNumberOfRows()-1).getCell(3).getParagraphs().get(0).createRun().setText("-");
+            }
+            for(DocumentReferenceType documentReference : quotation.getAdditionalDocumentReference()){
+                XWPFRun run6 = table.getRow(table.getNumberOfRows()-1).getCell(3).getParagraphs().get(0).createRun();
+                run6.setText(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName()+"\n");
+                run6.setItalic(true);
+            }
+            // notes
+            if(requestForQuotation.getNote().size() == 0){
+                table.getRow(table.getNumberOfRows()-2).getCell(1).getParagraphs().get(0).createRun().setText("-");
+            }
+            for(String note : requestForQuotation.getNote()){
+                XWPFRun run6 = table.getRow(table.getNumberOfRows()-2).getCell(1).getParagraphs().get(0).createRun();
+                run6.setText(note+"\n");
+                run6.setItalic(true);
+            }
+            if(quotation.getNote().size() == 0){
+                table.getRow(table.getNumberOfRows()-1).getCell(1).getParagraphs().get(0).createRun().setText("-");
+            }
+            for(String note : quotation.getNote()){
+                XWPFRun run6 = table.getRow(table.getNumberOfRows()-1).getCell(1).getParagraphs().get(0).createRun();
+                run6.setText(note+"\n");
+                run6.setItalic(true);
+            }
         }
         catch (Exception e){
             logger.error("Failed to create negotiation entry",e);
@@ -1131,7 +1353,7 @@ public class ContractGenerator {
 
     }
 
-    private void fillItemDetails(XWPFTable table,ZipOutputStream zos,ClauseType clause,int id){
+    private void fillItemDetails(XWPFDocument document,XWPFTable table,XWPFTable noteAndDocumentTable,ZipOutputStream zos,ClauseType clause,int id){
         try {
             ItemInformationResponseType itemDetails = (ItemInformationResponseType) DocumentDAOUtility.getUBLDocument(((DocumentClauseType) clause).getClauseDocumentRef().getID(), DocumentType.ITEMINFORMATIONRESPONSE);
 
@@ -1147,13 +1369,49 @@ public class ContractGenerator {
                 ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
                 bos.write(bytes,0,bytes.length);
 
-                ZipEntry zipEntry = new ZipEntry("TechnicalDataSheets/ItemInformationRequest"+id+"/"+ documentReferences.get(0).getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
+                ZipEntry zipEntry = new ZipEntry("ItemInformation/ItemInformationRequest"+id+"/TechnicalDataSheets/"+ documentReferences.get(0).getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
                 zos.putNextEntry(zipEntry);
                 bos.writeTo(zos);
 
                 XWPFRun run2 = table.getRow(2).getCell(1).getParagraphs().get(0).createRun();
                 run2.setText(documentReferences.get(0).getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
                 run2.setItalic(true);
+            }
+
+            // additional documents
+            // request
+            if(itemInformationRequest.getAdditionalDocumentReference().size() == 0){
+                noteAndDocumentTable.getRow(noteAndDocumentTable.getNumberOfRows()-2).getCell(3).getParagraphs().get(0).createRun().setText("-");
+            }
+            for(DocumentReferenceType documentReference : itemInformationRequest.getAdditionalDocumentReference()){
+                byte[] bytes = documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getValue();
+                ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
+                bos.write(bytes,0,bytes.length);
+
+                ZipEntry zipEntry = new ZipEntry("ItemInformation/ItemInformationRequest"+id+"/BuyerDocuments/"+ documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
+                zos.putNextEntry(zipEntry);
+                bos.writeTo(zos);
+
+                XWPFRun run5 = noteAndDocumentTable.getRow(noteAndDocumentTable.getNumberOfRows()-2).getCell(3).getParagraphs().get(0).createRun();
+                run5.setText(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName()+"\n");
+                run5.setItalic(true);
+            }
+            // response
+            if(itemDetails.getAdditionalDocumentReference().size() == 0){
+                noteAndDocumentTable.getRow(noteAndDocumentTable.getNumberOfRows()-1).getCell(3).getParagraphs().get(0).createRun().setText("-");
+            }
+            for(DocumentReferenceType documentReference : itemDetails.getAdditionalDocumentReference()){
+                byte[] bytes = documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getValue();
+                ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
+                bos.write(bytes,0,bytes.length);
+
+                ZipEntry zipEntry = new ZipEntry("ItemInformation/ItemInformationRequest"+id+"/SellerDocuments/"+ documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
+                zos.putNextEntry(zipEntry);
+                bos.writeTo(zos);
+
+                XWPFRun run6 = noteAndDocumentTable.getRow(noteAndDocumentTable.getNumberOfRows()-1).getCell(3).getParagraphs().get(0).createRun();
+                run6.setText(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName()+"\n");
+                run6.setItalic(true);
             }
 
             documentReferences = itemDetails.getItem().get(0).getItemSpecificationDocumentReference();
@@ -1166,7 +1424,7 @@ public class ContractGenerator {
                 ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
                 bos.write(bytes,0,bytes.length);
 
-                ZipEntry zipEntry = new ZipEntry("TechnicalDataSheetResponses/ItemInformationRequest"+id+"/"+documentReferences.get(0).getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
+                ZipEntry zipEntry = new ZipEntry("ItemInformation/ItemInformationRequest"+id+"/TechnicalDataSheetResponses/"+documentReferences.get(0).getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
                 zos.putNextEntry(zipEntry);
                 bos.writeTo(zos);
 
@@ -1175,22 +1433,29 @@ public class ContractGenerator {
                 run3.setItalic(true);
             }
 
-            if(itemInformationRequest.getNote().get(0) != null) {
-                XWPFRun run5 = table.getRow(5).getCell(1).getParagraphs().get(0).createRun();
-                run5.setText(itemInformationRequest.getNote().get(0));
+            if(itemInformationRequest.getNote().size() == 0){
+                noteAndDocumentTable.getRow(noteAndDocumentTable.getNumberOfRows()-2).getCell(1).getParagraphs().get(0).createRun().setText("-");
+            }
+            else {
+                String requestNote = "";
+                for(String note:itemInformationRequest.getNote()){
+                    requestNote += note + "\n";
+                }
+                XWPFRun run5 = noteAndDocumentTable.getRow(noteAndDocumentTable.getNumberOfRows()-2).getCell(1).getParagraphs().get(0).createRun();
+                run5.setText(requestNote);
                 run5.setItalic(true);
             }
-            else {
-                table.getRow(5).getCell(1).getParagraphs().get(0).createRun().setText("-");
+            if(itemDetails.getNote().size() == 0){
+                noteAndDocumentTable.getRow(noteAndDocumentTable.getNumberOfRows()-1).getCell(1).getParagraphs().get(0).createRun().setText("-");
             }
-
-            if(itemDetails.getNote().get(0) != null) {
-                XWPFRun run6 = table.getRow(6).getCell(1).getParagraphs().get(0).createRun();
-                run6.setText(itemDetails.getNote().get(0));
+            else {
+                String responseNote = "";
+                for(String note:itemDetails.getNote()){
+                    responseNote += note + "\n";
+                }
+                XWPFRun run6 = noteAndDocumentTable.getRow(noteAndDocumentTable.getNumberOfRows()-1).getCell(1).getParagraphs().get(0).createRun();
+                run6.setText(responseNote);
                 run6.setItalic(true);
-            }
-            else {
-                table.getRow(6).getCell(1).getParagraphs().get(0).createRun().setText("-");
             }
         }
         catch (Exception e){
@@ -1243,6 +1508,9 @@ public class ContractGenerator {
         CTTcPr ctTcPr = ctTc.addNewTcPr();
         ctTcPr.addNewVMerge().setVal(STMerge.RESTART);
         ctTcPr.addNewTcBorders().addNewRight();
+
+        row.getCell(0).getCTTc().addNewTcPr().addNewTcBorders().addNewRight().setVal(STBorder.NIL);
+        row.getCell(1).getCTTc().getTcPr().getTcBorders().addNewLeft().setVal(STBorder.NIL);
     }
 
     private void setSpace(XWPFParagraph paragraph,int value){

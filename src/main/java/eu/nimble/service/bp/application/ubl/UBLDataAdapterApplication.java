@@ -2,6 +2,7 @@ package eu.nimble.service.bp.application.ubl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
+import eu.nimble.service.bp.impl.util.persistence.DataIntegratorUtil;
 import eu.nimble.service.bp.impl.util.persistence.DocumentDAOUtility;
 import eu.nimble.service.bp.impl.util.serialization.Serializer;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
@@ -180,12 +181,13 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
     }
 
     @Override
-    public void saveDocument(String businessContextId,String processInstanceId, String initiatorID, String responderID,
+    public void saveDocument(String businessContextId,String processInstanceId, String initiatorID, String responderID, String creatorUserID,
                             Object document, List<String> relatedProducts, List<String> relatedProductCategories) {
         ProcessDocumentMetadata documentMetadata = new ProcessDocumentMetadata();
         documentMetadata.setInitiatorID(initiatorID);
         documentMetadata.setResponderID(responderID);
         documentMetadata.setProcessInstanceID(processInstanceId);
+        documentMetadata.setCreatorUserID(creatorUserID);
 
         DateTime submissionDate = new DateTime();
         documentMetadata.setSubmissionDate(DateUtility.convert(submissionDate));
@@ -263,6 +265,7 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
             documentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
             documentMetadata.setType(ProcessDocumentMetadata.TypeEnum.ITEMINFORMATIONRESPONSE);
         }
+        DataIntegratorUtil.checkExistingParties(document);
 
         // persist the document metadata
         DocumentDAOUtility.addDocumentWithMetadata(businessContextId,documentMetadata, document);
@@ -296,8 +299,16 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
         }else if(document instanceof QuotationType) {
             QuotationType quotation = (QuotationType) document;
             String rfqID = quotation.getRequestForQuotationDocumentReference().getID();
+            boolean isAccepted = quotation.getDocumentStatusCode().getName().equals("Accepted");
+
             initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(rfqID);
-            initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
+            if(isAccepted){
+                initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
+            }
+            else {
+                initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.DENIED);
+            }
+
 
         } else if(document instanceof ReceiptAdviceType) {
             ReceiptAdviceType receiptAdvice = (ReceiptAdviceType) document;
@@ -308,8 +319,15 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
         } else if(document instanceof TransportExecutionPlanType) {
             TransportExecutionPlanType transportExecutionPlanType = (TransportExecutionPlanType) document;
             String tepDocRefId = transportExecutionPlanType.getTransportExecutionPlanRequestDocumentReference().getID();
+            boolean isAccepted = transportExecutionPlanType.getDocumentStatusCode().getName().equals("Accepted");
+
             initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(tepDocRefId);
-            initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
+            if (isAccepted){
+                initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
+            }
+            else {
+                initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.DENIED);
+            }
 
         } else if(document instanceof ItemInformationResponseType) {
             ItemInformationResponseType itemInformationResponse = (ItemInformationResponseType) document;

@@ -74,7 +74,7 @@ public class DocumentDAOUtility {
 
         if (document != null)
         {
-            HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(document);
+            HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).update(document);
             // save Object
             businessProcessContext.setDocument(document);
         }
@@ -343,6 +343,34 @@ public class DocumentDAOUtility {
             id = (String) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadIndividualItem(query);
         }
         return getDocumentMetadata(id);
+    }
+
+    public static Object getResponseDocument(String documentID,DocumentType documentType){
+        Object document = null;
+        if(documentType == DocumentType.ORDER){
+            String query = "SELECT orderResponse FROM OrderResponseSimpleType orderResponse WHERE orderResponse.orderReference.documentReference.ID = '"+documentID+"'";
+            document = (OrderResponseSimpleType) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadIndividualItem(query);
+        }
+        return document;
+    }
+
+    public static ProcessDocumentMetadata getRequestMetadata(String processInstanceID){
+        String query = "FROM ProcessDocumentMetadataDAO documentMetadata WHERE documentMetadata.processInstanceID='"+processInstanceID+"' AND (" +
+                "documentMetadata.type = 'REQUESTFORQUOTATION' OR documentMetadata.type = 'ORDER' OR documentMetadata.type = 'DESPATCHADVICE' OR " +
+                "documentMetadata.type = 'PPAPREQUEST' OR documentMetadata.type = 'TRANSPORTEXECUTIONPLANREQUEST' OR documentMetadata.type = 'ITEMINFORMATIONREQUEST')";
+        ProcessDocumentMetadataDAO processDocumentDAO = (ProcessDocumentMetadataDAO) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query);
+        return HibernateSwaggerObjectMapper.createProcessDocumentMetadata(processDocumentDAO);
+    }
+
+    public static ProcessDocumentMetadata getResponseMetadata(String processInstanceID){
+        String query = "FROM ProcessDocumentMetadataDAO documentMetadata WHERE documentMetadata.processInstanceID='"+processInstanceID+"' AND (" +
+                "documentMetadata.type = 'QUOTATION' OR documentMetadata.type = 'ORDERRESPONSESIMPLE' OR documentMetadata.type = 'RECEIPTADVICE' OR " +
+                "documentMetadata.type = 'PPAPRESPONSE' OR documentMetadata.type = 'TRANSPORTEXECUTIONPLAN' OR documentMetadata.type = 'ITEMINFORMATIONRESPONSE')";
+        ProcessDocumentMetadataDAO processDocumentDAO = (ProcessDocumentMetadataDAO) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query);
+        if(processDocumentDAO == null){
+            return null;
+        }
+        return HibernateSwaggerObjectMapper.createProcessDocumentMetadata(processDocumentDAO);
     }
 
     public static boolean documentExists(String documentID) {
