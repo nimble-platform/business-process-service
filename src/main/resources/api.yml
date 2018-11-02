@@ -1034,6 +1034,8 @@ definitions:
     title: Collaboration Group
     type: object
     properties:
+      ID:
+        type: string
       name:
         type: string
       archived:
