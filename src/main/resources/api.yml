@@ -1030,6 +1030,23 @@ definitions:
         - INPROGRESS
         - CANCELLED
 
+  CollaborationGroup:
+    title: Collaboration Group
+    type: object
+    properties:
+      name:
+        type: string
+      archived:
+        type: boolean
+      status:
+        type: string
+        enum:
+        - INPROGRESS
+      associatedProcessInstanceGroups:
+        type: array
+        items:
+          $ref: '#/definitions/ProcessInstanceGroup'
+
   ProcessInstanceGroupResponse:
     title: Process Instance Group Response
     type: object

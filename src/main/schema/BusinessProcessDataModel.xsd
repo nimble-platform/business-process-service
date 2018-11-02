@@ -202,6 +202,19 @@
 			<xsd:enumeration value="CANCELLED"/>
 		</xsd:restriction>
 	</xsd:simpleType>
+	<xsd:complexType name="CollaborationGroupDAO">
+		<xsd:sequence>
+			<xsd:element name="name" type="xsd:string"/>
+			<xsd:element name="associatedProcessInstanceGroups" type="ProcessInstanceGroupDAO" maxOccurs="unbounded"/>
+			<xsd:element name="archived" type="xsd:boolean"/>
+			<xsd:element name="status" type="CollaborationStatus"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:simpleType name="CollaborationStatus">
+		<xsd:restriction base="xsd:token">
+			<xsd:enumeration value="INPROGRESS"/>
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="AssociatedProcessInstanceGroup">
 		<xsd:sequence>
 			<xsd:element name="processInstances" type="ProcessInstanceGroupDAO" minOccurs="1" maxOccurs="1">
