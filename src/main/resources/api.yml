@@ -303,7 +303,11 @@ paths:
         description: The id of the preceding process instance
         required: false
         type: string
-
+      - in: query
+        name: collaborationGID
+        description: The id of the collaboration group which the process instance group belongs to
+        required: false
+        type: string
       responses:
         # Response code
         200:
@@ -1053,10 +1057,10 @@ definitions:
     title: Process Instance Group Response
     type: object
     properties:
-      processInstanceGroups:
+      collaborationGroups:
         type: array
         items:
-          $ref: '#/definitions/ProcessInstanceGroup'
+          $ref: '#/definitions/CollaborationGroup'
       size:
         type: integer
 

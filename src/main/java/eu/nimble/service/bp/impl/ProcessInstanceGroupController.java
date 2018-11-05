@@ -5,10 +5,7 @@ import eu.nimble.service.bp.impl.util.controller.HttpResponseUtil;
 import eu.nimble.service.bp.impl.util.email.EmailSenderUtil;
 import eu.nimble.service.bp.impl.util.persistence.*;
 import eu.nimble.service.bp.swagger.api.GroupApi;
-import eu.nimble.service.bp.swagger.model.ProcessInstance;
-import eu.nimble.service.bp.swagger.model.ProcessInstanceGroup;
-import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupFilter;
-import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupResponse;
+import eu.nimble.service.bp.swagger.model.*;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.utility.HibernateUtility;
 import io.swagger.annotations.ApiOperation;
@@ -136,22 +133,22 @@ public class ProcessInstanceGroupController implements GroupApi {
                                                                                  @ApiParam(value = "", defaultValue = "false") @RequestParam(value = "archived", required = false, defaultValue = "false") Boolean archived,
                                                                                  @ApiParam(value = "status") @RequestParam(value = "status",required = false) List<String> status,
                                                                                  @ApiParam(value = "") @RequestParam(value = "collaborationRole", required = false) String collaborationRole) {
-        logger.debug("Getting ProcessInstanceGroups for party: {}", partyID);
+        logger.debug("Getting collaboration groups for party: {}", partyID);
 
-        List<ProcessInstanceGroupDAO> results = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAOs(partyID, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, status,null, null, limit, offset);
-        int totalSize = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupSize(partyID, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, status,null, null);
-        logger.debug(" There are {} process instance groups in total", results.size());
-        List<ProcessInstanceGroup> processInstanceGroups = new ArrayList<>();
-        for (ProcessInstanceGroupDAO result : results) {
-            processInstanceGroups.add(HibernateSwaggerObjectMapper.convertProcessInstanceGroupDAO(result));
+        List<CollaborationGroupDAO> results = ProcessInstanceGroupDAOUtility.getCollaborationGroupDAOs(partyID, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, status,null, null, limit, offset);
+        int totalSize = ProcessInstanceGroupDAOUtility.getCollaborationGroupSize(partyID, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, status,null, null);
+        logger.debug(" There are {} collaboration groups in total", results.size());
+        List<CollaborationGroup> collaborationGroups = new ArrayList<>();
+        for (CollaborationGroupDAO result : results) {
+            collaborationGroups.add(HibernateSwaggerObjectMapper.convertCollaborationGroupDAO(result));
         }
 
         ProcessInstanceGroupResponse groupResponse = new ProcessInstanceGroupResponse();
-        groupResponse.setProcessInstanceGroups(processInstanceGroups);
+        groupResponse.setCollaborationGroups(collaborationGroups);
         groupResponse.setSize(totalSize);
 
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(groupResponse);
-        logger.debug("Retrieved ProcessInstanceGroups for party: {}", partyID);
+        logger.debug("Retrieved collaboration groups for party: {}", partyID);
         return response;
     }
 

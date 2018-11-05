@@ -292,4 +292,20 @@ public class HibernateSwaggerObjectMapper {
 
         return processInstanceGroup;
     }
+
+    public static CollaborationGroup convertCollaborationGroupDAO(CollaborationGroupDAO collaborationGroupDAO){
+        CollaborationGroup collaborationGroup = new CollaborationGroup();
+        collaborationGroup.setStatus(CollaborationGroup.StatusEnum.valueOf(collaborationGroupDAO.getStatus().value()));
+        collaborationGroup.setName(collaborationGroupDAO.getName());
+        collaborationGroup.setArchived(collaborationGroupDAO.isArchived());
+        collaborationGroup.setID(collaborationGroupDAO.getHjid().toString());
+
+        List<ProcessInstanceGroup> processInstanceGroups = new ArrayList<>();
+        for(ProcessInstanceGroupDAO processInstanceGroupDAO: collaborationGroupDAO.getAssociatedProcessInstanceGroups()){
+            processInstanceGroups.add(convertProcessInstanceGroupDAO(processInstanceGroupDAO));
+        }
+
+        collaborationGroup.setAssociatedProcessInstanceGroups(processInstanceGroups);
+        return collaborationGroup;
+    }
 }

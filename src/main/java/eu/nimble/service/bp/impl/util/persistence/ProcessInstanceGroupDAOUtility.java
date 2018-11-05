@@ -1,11 +1,7 @@
 package eu.nimble.service.bp.impl.util.persistence;
 
 import eu.nimble.common.rest.identity.IdentityClientTyped;
-import eu.nimble.service.bp.hyperjaxb.model.GroupStatus;
-import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
-import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
-import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceStatus;
-import eu.nimble.service.bp.impl.TrustServiceController;
+import eu.nimble.service.bp.hyperjaxb.model.*;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupFilter;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.utility.HibernateUtility;
@@ -29,7 +25,7 @@ public class ProcessInstanceGroupDAOUtility {
     @Autowired
     private IdentityClientTyped identityClient;
 
-    public static List<ProcessInstanceGroupDAO> getProcessInstanceGroupDAOs(
+    public static List<CollaborationGroupDAO> getCollaborationGroupDAOs(
             String partyId,
             String collaborationRole,
             Boolean archived,
@@ -43,19 +39,38 @@ public class ProcessInstanceGroupDAOUtility {
             int offset) {
 
         String query = getGroupRetrievalQuery(GroupQueryType.GROUP, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories,status, startTime, endTime);
-        List<Object> groups = (List<Object>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query, offset, limit);
-        List<ProcessInstanceGroupDAO> results = new ArrayList<>();
-        for(Object groupResult : groups) {
+        List<Object> collaborationGroups = (List<Object>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query, offset, limit);
+        List<CollaborationGroupDAO> results = new ArrayList<>();
+        for(Object groupResult : collaborationGroups) {
             Object[] resultItems = (Object[]) groupResult;
-            ProcessInstanceGroupDAO group = (ProcessInstanceGroupDAO) resultItems[0];
-            group.setLastActivityTime((String) resultItems[1]);
-            group.setFirstActivityTime((String) resultItems[2]);
-            results.add(group);
+            CollaborationGroupDAO collaborationGroupDAO = (CollaborationGroupDAO) resultItems[0];
+
+            CollaborationGroupDAO collaborationGroupInResults = null;
+
+            // check whether the collaborationGroup is the results or not
+            for(CollaborationGroupDAO collaborationGroup : results){
+                if(collaborationGroup.getHjid().equals(collaborationGroupDAO.getHjid())){
+                    collaborationGroupInResults = collaborationGroup;
+                }
+            }
+            if(collaborationGroupInResults == null){
+                collaborationGroupInResults = collaborationGroupDAO;
+                results.add(collaborationGroupInResults);
+            }
+
+            ProcessInstanceGroupDAO group = (ProcessInstanceGroupDAO) resultItems[1];
+            // find the group in the collaborationGroup
+            for(ProcessInstanceGroupDAO groupDAO:collaborationGroupInResults.getAssociatedProcessInstanceGroups()){
+                if(groupDAO.getID().equals(group.getID())){
+                    groupDAO.setLastActivityTime((String) resultItems[2]);
+                    groupDAO.setFirstActivityTime((String) resultItems[3]);
+                }
+            }
         }
         return results;
     }
 
-    public static int getProcessInstanceGroupSize(String partyId,
+    public static int getCollaborationGroupSize(String partyId,
                                                   String collaborationRole,
                                                   boolean archived,
                                                   List<String> tradingPartnerIds,
@@ -158,13 +173,13 @@ public class ProcessInstanceGroupDAOUtility {
         if(queryType == GroupQueryType.FILTER) {
             query += "select distinct new list(relProd.item, relCat.item, doc.initiatorID, doc.responderID, pi.status)";
         } else if(queryType == GroupQueryType.SIZE) {
-            query += "select count(distinct pig)";
+            query += "select count(distinct cg)";
         } else if(queryType == GroupQueryType.GROUP) {
-            query += "select pig, max(doc.submissionDate) as lastActivityTime, min(doc.submissionDate) as firstActivityTime";
+            query += "select cg,pig, max(doc.submissionDate) as lastActivityTime, min(doc.submissionDate) as firstActivityTime";
         }
 
         query += " from " +
-                "ProcessInstanceGroupDAO pig join pig.processInstanceIDsItems pid, " +
+                "CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups pig join pig.processInstanceIDsItems pid, " +
                 "ProcessInstanceDAO pi, " +
                 "ProcessDocumentMetadataDAO doc left join doc.relatedProductCategoriesItems relCat left join doc.relatedProductsItems relProd" +
                 " where " +
@@ -213,9 +228,12 @@ public class ProcessInstanceGroupDAOUtility {
         }
 
         if(queryType == GroupQueryType.GROUP) {
-            query += " group by pig.hjid";
+            query += " group by pig.hjid,cg.hjid";
             query += " order by firstActivityTime desc";
         }
+
+        query += ") > 0";
+
         return query;
     }
 
@@ -242,6 +260,15 @@ public class ProcessInstanceGroupDAOUtility {
         }
         HibernateUtilityRef.getInstance("bp-data-model").persist(group);
         return group;
+    }
+
+    public static CollaborationGroupDAO createCollaborationGroupDAO(){
+        CollaborationGroupDAO collaborationGroupDAO = new CollaborationGroupDAO();
+        collaborationGroupDAO.setStatus(CollaborationStatus.INPROGRESS);
+        collaborationGroupDAO.setArchived(false);
+
+        HibernateUtilityRef.getInstance("bp-data-model").persist(collaborationGroupDAO);
+        return collaborationGroupDAO;
     }
 
     public static ProcessInstanceGroupDAO getProcessInstanceGroupDAO(String groupID) {

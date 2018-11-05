@@ -46,16 +46,15 @@ public class Test04_ProcessInstanceGroupControllerTest {
         ObjectMapper objectMapper = new ObjectMapper();
         ProcessInstanceGroupResponse processInstanceGroupResponse = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ProcessInstanceGroupResponse.class);
         Assert.assertSame(test1_expectedValue, processInstanceGroupResponse.getSize());
-
-        for (ProcessInstanceGroup pig : processInstanceGroupResponse.getProcessInstanceGroups()) {
-            if (pig.getProcessInstanceIDs().get(0).contentEquals(Test01_StartControllerTest.processInstanceIdOrder1)) {
-                processInstanceGroupId1 = pig.getID();
-            } else if (pig.getProcessInstanceIDs().get(0).contentEquals(Test01_StartControllerTest.processInstanceIdIIR1)) {
-                processInstanceGroupIIR1 = pig.getID();
-            } else if (pig.getProcessInstanceIDs().get(0).contentEquals(Test01_StartControllerTest.processInstanceIdOrder2)) {
-                processInstanceGroupId2 = pig.getID();
-            }
-        }
+//        for (ProcessInstanceGroup pig : processInstanceGroupResponse.getProcessInstanceGroups()) {
+//            if (pig.getProcessInstanceIDs().get(0).contentEquals(Test01_StartControllerTest.processInstanceIdOrder1)) {
+//                processInstanceGroupId1 = pig.getID();
+//            } else if (pig.getProcessInstanceIDs().get(0).contentEquals(Test01_StartControllerTest.processInstanceIdIIR1)) {
+//                processInstanceGroupIIR1 = pig.getID();
+//            } else if (pig.getProcessInstanceIDs().get(0).contentEquals(Test01_StartControllerTest.processInstanceIdOrder2)) {
+//                processInstanceGroupId2 = pig.getID();
+//            }
+//        }
     }
 
     @Test
