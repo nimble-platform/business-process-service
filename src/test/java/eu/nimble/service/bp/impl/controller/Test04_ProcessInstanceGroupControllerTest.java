@@ -1,8 +1,8 @@
 package eu.nimble.service.bp.impl.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.nimble.service.bp.swagger.model.CollaborationGroupResponse;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroup;
-import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupResponse;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -44,7 +44,7 @@ public class Test04_ProcessInstanceGroupControllerTest {
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         ObjectMapper objectMapper = new ObjectMapper();
-        ProcessInstanceGroupResponse processInstanceGroupResponse = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ProcessInstanceGroupResponse.class);
+        CollaborationGroupResponse processInstanceGroupResponse = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), CollaborationGroupResponse.class);
         Assert.assertSame(test1_expectedValue, processInstanceGroupResponse.getSize());
 //        for (ProcessInstanceGroup pig : processInstanceGroupResponse.getProcessInstanceGroups()) {
 //            if (pig.getProcessInstanceIDs().get(0).contentEquals(Test01_StartControllerTest.processInstanceIdOrder1)) {

@@ -122,7 +122,7 @@ public class ProcessInstanceGroupController implements GroupApi {
 
     @Override
     @ApiOperation(value = "",notes = "Retrieve process instance groups for the specified party. If no partyID is specified, then all groups are returned")
-    public ResponseEntity<ProcessInstanceGroupResponse> getProcessInstanceGroups(@ApiParam(value = "Identifier of the party") @RequestParam(value = "partyID", required = false) String partyID,
+    public ResponseEntity<CollaborationGroupResponse> getProcessInstanceGroups(@ApiParam(value = "Identifier of the party") @RequestParam(value = "partyID", required = false) String partyID,
                                                                                  @ApiParam(value = "Related products") @RequestParam(value = "relatedProducts", required = false) List<String> relatedProducts,
                                                                                  @ApiParam(value = "Related product categories") @RequestParam(value = "relatedProductCategories", required = false) List<String> relatedProductCategories,
                                                                                  @ApiParam(value = "Identifier of the corresponsing trading partner ID") @RequestParam(value = "tradingPartnerIDs", required = false) List<String> tradingPartnerIDs,
@@ -143,7 +143,7 @@ public class ProcessInstanceGroupController implements GroupApi {
             collaborationGroups.add(HibernateSwaggerObjectMapper.convertCollaborationGroupDAO(result));
         }
 
-        ProcessInstanceGroupResponse groupResponse = new ProcessInstanceGroupResponse();
+        CollaborationGroupResponse groupResponse = new CollaborationGroupResponse();
         groupResponse.setCollaborationGroups(collaborationGroups);
         groupResponse.setSize(totalSize);
 

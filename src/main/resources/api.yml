@@ -551,7 +551,7 @@ paths:
         200:
           description: Retrieved the groups successfully
           schema:
-            $ref: '#/definitions/ProcessInstanceGroupResponse'
+            $ref: '#/definitions/CollaborationGroupResponse'
     post:
       operationId: saveProcessInstanceGroup
       consumes:
@@ -1053,7 +1053,7 @@ definitions:
         items:
           $ref: '#/definitions/ProcessInstanceGroup'
 
-  ProcessInstanceGroupResponse:
+  CollaborationGroupResponse:
     title: Process Instance Group Response
     type: object
     properties:
