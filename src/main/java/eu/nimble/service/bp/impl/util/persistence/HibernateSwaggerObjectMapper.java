@@ -107,6 +107,15 @@ public class HibernateSwaggerObjectMapper {
         return processInstanceDAO;
     }
 
+    public static ProcessInstance convertProcessInstance_DAO(ProcessInstanceDAO processInstanceDAO){
+        ProcessInstance processInstance = new ProcessInstance();
+        processInstance.setProcessInstanceID(processInstanceDAO.getProcessInstanceID());
+        processInstance.setProcessID(processInstanceDAO.getProcessID());
+        processInstance.setStatus(ProcessInstance.StatusEnum.valueOf(processInstanceDAO.getStatus().toString()));
+        processInstance.setCreationDate(processInstanceDAO.getCreationDate());
+        return processInstance;
+    }
+
     public static List<ProcessInstance> createProcessInstances(List<ProcessInstanceDAO> processInstanceDAOS){
         List<ProcessInstance> processInstances = new ArrayList<>();
         for(ProcessInstanceDAO processInstanceDAO : processInstanceDAOS){
@@ -274,6 +283,14 @@ public class HibernateSwaggerObjectMapper {
         processInstanceGroupDAO.setArchived(processInstanceGroup.getArchived());
         processInstanceGroupDAO.setPartyID(processInstanceGroup.getPartyID());
         processInstanceGroupDAO.setProcessInstanceIDs(processInstanceGroup.getProcessInstanceIDs());
+        processInstanceGroupDAO.setPrecedingProcess(createProcessInstance_DAO(processInstanceGroup.getPrecedingProcess()));
+        if(processInstanceGroup.getPrecedingProcessInstanceGroup() != null){
+            processInstanceGroupDAO.setPrecedingProcessInstanceGroup(createProcessInstanceGroup_DAO(processInstanceGroup.getPrecedingProcessInstanceGroup()));
+        }
+        else {
+            processInstanceGroupDAO.setPrecedingProcessInstanceGroup(null);
+        }
+
         processInstanceGroupDAO.setStatus(GroupStatus.INPROGRESS);
         return processInstanceGroupDAO;
     }
@@ -289,7 +306,13 @@ public class HibernateSwaggerObjectMapper {
         processInstanceGroup.setAssociatedGroups(processInstanceGroupDAO.getAssociatedGroups());
         processInstanceGroup.setLastActivityTime(processInstanceGroupDAO.getLastActivityTime());
         processInstanceGroup.setFirstActivityTime(processInstanceGroupDAO.getFirstActivityTime());
-
+        processInstanceGroup.setPrecedingProcess(convertProcessInstance_DAO(processInstanceGroupDAO.getPrecedingProcess()));
+        if(processInstanceGroupDAO.getPrecedingProcessInstanceGroup() != null){
+            processInstanceGroup.setPrecedingProcessInstanceGroup(convertProcessInstanceGroupDAO(processInstanceGroupDAO.getPrecedingProcessInstanceGroup()));
+        }
+        else {
+            processInstanceGroup.setPrecedingProcessInstanceGroup(null);
+        }
         return processInstanceGroup;
     }
 

@@ -5,10 +5,7 @@ import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceInputMessageDAO;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
-import eu.nimble.service.bp.impl.util.persistence.DAOUtility;
-import eu.nimble.service.bp.impl.util.persistence.HibernateSwaggerObjectMapper;
-import eu.nimble.service.bp.impl.util.persistence.HibernateUtilityRef;
-import eu.nimble.service.bp.impl.util.persistence.ProcessInstanceGroupDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.*;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.api.StartApi;
@@ -39,6 +36,7 @@ public class StartController implements StartApi {
     public ResponseEntity<ProcessInstance> startProcessInstance(@ApiParam(value = "", required = true) @RequestBody ProcessInstanceInputMessage body,
                                                                 @ApiParam(value = "The id of the process instance group owned by the party initiating the process") @RequestParam(value = "gid", required = false) String gid,
                                                                 @ApiParam(value = "The id of the preceding process instance") @RequestParam(value = "precedingPid", required = false) String precedingPid,
+                                                                @ApiParam(value = "The UUID of the previous process instance group") @RequestParam(value = "precedingGid", required = false) String precedingGid,
                                                                 @ApiParam(value = "The id of the collaboration group which the process instance group belongs to") @RequestParam(value = "collaborationGID", required = false) String collaborationGID) {
         logger.debug(" $$$ Start Process with ProcessInstanceInputMessage {}", body.toString());
         ProcessInstance processInstance = null;
@@ -59,8 +57,8 @@ public class StartController implements StartApi {
             // save ProcessInstanceDAO
             businessProcessContext.setProcessInstanceDAO(processInstanceDAO);
 
-            // get the process previous process instance
-            if(precedingPid != null) {
+            // get the process previous process instance if and only if precedingGid is null
+            if(precedingPid != null && precedingGid == null) {
                 ProcessInstanceDAO precedingInstance = DAOUtility.getProcessInstanceDAOByID(precedingPid);
                 if (precedingInstance == null) {
                     String msg = "Invalid preceding process instance ID: %s";
@@ -87,7 +85,7 @@ public class StartController implements StartApi {
 
             // create process instance groups if this is the first process initializing the process group
             if (gid == null) {
-                createProcessInstanceGroups(businessProcessContext.getId(),body, processInstance,initiatorCollaborationGroupDAO,responderCollaborationGroupDAO);
+                createProcessInstanceGroups(businessProcessContext.getId(),body, processInstance,initiatorCollaborationGroupDAO,responderCollaborationGroupDAO,precedingGid,precedingPid);
                 // the group exists for the initiator but the trading partner is a new one
                 // so, a new group should be created for the new party
             } else {
@@ -105,7 +103,7 @@ public class StartController implements StartApi {
         return new ResponseEntity<>(processInstance, HttpStatus.OK);
     }
 
-    private void createProcessInstanceGroups(String businessContextId,ProcessInstanceInputMessage body, ProcessInstance processInstance,CollaborationGroupDAO initiatorCollaborationGroupDAO,CollaborationGroupDAO responderCollaborationGroupDAO) {
+    private void createProcessInstanceGroups(String businessContextId,ProcessInstanceInputMessage body, ProcessInstance processInstance,CollaborationGroupDAO initiatorCollaborationGroupDAO,CollaborationGroupDAO responderCollaborationGroupDAO, String precedingGid,String precedingPid) {
         // create group for initiating party
         ProcessInstanceGroupDAO processInstanceGroupDAO1 = ProcessInstanceGroupDAOUtility.createProcessInstanceGroupDAO(
                 body.getVariables().getInitiatorID(),
@@ -147,13 +145,24 @@ public class StartController implements StartApi {
         // update collaboration group
         HibernateUtilityRef.getInstance("bp-data-model").update(responderCollaborationGroupDAO);
 
+        // when a negotiation is started for a transport service after an order
+        if(precedingGid != null){
+            processInstanceGroupDAO1.setPrecedingProcessInstanceGroup(ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(precedingGid));
+            processInstanceGroupDAO1.setPrecedingProcess(DAOUtility.getProcessInstanceDAOByID(precedingPid));
+            processInstanceGroupDAO1 = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceGroupDAO1);
+        }
+
         // save ProcessInstanceGroupDAOs
         BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId).setProcessInstanceGroupDAO1(processInstanceGroupDAO1);
         BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId).setProcessInstanceGroupDAO2(processInstanceGroupDAO2);
     }
 
     private void addNewProcessInstanceToGroup(String businessContextId,String sourceGid, String processInstanceId, ProcessInstanceInputMessage body) {
-        ProcessInstanceGroupDAO sourceGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(sourceGid);
+        ProcessInstanceGroupDAO sourceGroup;
+        sourceGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(sourceGid);
+        if(body.getVariables().getProcessID().equals("Fulfilment") && sourceGroup.getPrecedingProcessInstanceGroup() != null){
+            sourceGroup = sourceGroup.getPrecedingProcessInstanceGroup();
+        }
         sourceGroup.getProcessInstanceIDs().add(processInstanceId);
         sourceGroup = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").update(sourceGroup);
 
@@ -163,14 +172,14 @@ public class StartController implements StartApi {
 
         // add the new process instance to the recipient's group
         // if such a group exists add into it otherwise create a new group
-        ProcessInstanceGroupDAO associatedGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(body.getVariables().getResponderID(), sourceGid);
+        ProcessInstanceGroupDAO associatedGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(body.getVariables().getResponderID(), sourceGroup.getID());
         if (associatedGroup == null) {
             ProcessInstanceGroupDAO targetGroup = ProcessInstanceGroupDAOUtility.createProcessInstanceGroupDAO(
                     body.getVariables().getResponderID(),
                     processInstanceId,
                     CamundaEngine.getTransactions(body.getVariables().getProcessID()).get(0).getResponderRole().toString(),
                     body.getVariables().getRelatedProducts().toString(),
-                    sourceGid);
+                    sourceGroup.getID());
 
             sourceGroup.getAssociatedGroups().add(targetGroup.getID());
             sourceGroup = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").update(sourceGroup);

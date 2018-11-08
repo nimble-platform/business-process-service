@@ -304,6 +304,11 @@ paths:
         required: false
         type: string
       - in: query
+        name: preceding_gid
+        description: The UUID of the preceding process instance group
+        required: false
+        type: string
+      - in: query
         name: collaborationGID
         description: The id of the collaboration group which the process instance group belongs to
         required: false
@@ -1028,6 +1033,10 @@ definitions:
         type: string
       lastActivityTime:
         type: string
+      precedingProcessInstanceGroup:
+        $ref: '#/definitions/ProcessInstanceGroup'
+      precedingProcess:
+        $ref: '#/definitions/ProcessInstance'
       status:
         type: string
         enum:
