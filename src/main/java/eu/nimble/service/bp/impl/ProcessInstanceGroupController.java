@@ -204,6 +204,18 @@ public class ProcessInstanceGroupController implements GroupApi {
     }
 
     @Override
+    public ResponseEntity<CollaborationGroup> restoreCollaborationGroup(@ApiParam(value = "Identifier of the collaboration group to be restored",required=true ) @PathVariable("ID") String ID) {
+        logger.debug("Restoring CollaborationGroup: {}", ID);
+
+        CollaborationGroupDAO collaborationGroupDAO = ProcessInstanceGroupDAOUtility.restoreCollaborationGroup(ID);
+
+        CollaborationGroup collaborationGroup = HibernateSwaggerObjectMapper.convertCollaborationGroupDAO(collaborationGroupDAO);
+        ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(collaborationGroup);
+        logger.debug("Restored ProcessInstanceGroup: {}", ID);
+        return response;
+    }
+
+    @Override
     @ApiOperation(value = "",notes = "Restore the archived process instance group specified with ID")
     public ResponseEntity<ProcessInstanceGroup> restoreGroup(@ApiParam(value = "Identifier of the process instance group to be restored", required = true) @PathVariable("ID") String ID) {
         logger.debug("Restoring ProcessInstanceGroup: {}", ID);

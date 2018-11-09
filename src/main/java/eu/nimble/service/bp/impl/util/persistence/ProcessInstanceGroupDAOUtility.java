@@ -342,6 +342,18 @@ public class ProcessInstanceGroupDAOUtility {
         return collaborationGroupDAO;
     }
 
+    public static CollaborationGroupDAO restoreCollaborationGroup(String id){
+        CollaborationGroupDAO collaborationGroupDAO = (CollaborationGroupDAO) HibernateUtility.getInstance("bp-data-model").load(CollaborationGroupDAO.class,Long.parseLong(id));
+        // archive the collaboration group
+        collaborationGroupDAO.setArchived(false);
+        // archive the groups inside the given collaboration group
+        for(ProcessInstanceGroupDAO processInstanceGroupDAO : collaborationGroupDAO.getAssociatedProcessInstanceGroups()){
+            processInstanceGroupDAO.setArchived(false);
+        }
+        collaborationGroupDAO = (CollaborationGroupDAO) HibernateUtility.getInstance("bp-data-model").update(collaborationGroupDAO);
+        return collaborationGroupDAO;
+    }
+
     public static void deleteArchivedGroupsForParty(String partyId) {
         String query = "select pig.hjid from ProcessInstanceGroupDAO pig WHERE pig.archived = true and pig.partyID = '" + partyId + "'";
         List<Long> longs = (List<Long>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);

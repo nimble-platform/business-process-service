@@ -707,6 +707,21 @@ paths:
           schema:
             $ref: '#/definitions/CollaborationGroup'
 
+  /group/collaboration/{ID}/restore:
+    post:
+      operationId: restoreCollaborationGroup
+      parameters:
+      - in: path
+        name: ID
+        type: string
+        description: Identifier of the collaboration group to be restored
+        required: true
+      responses:
+        200:
+          description: Restored the collaboration group successfully
+          schema:
+            $ref: '#/definitions/CollaborationGroup'
+
   /group/{ID}/restore:
     post:
       operationId: restoreGroup
