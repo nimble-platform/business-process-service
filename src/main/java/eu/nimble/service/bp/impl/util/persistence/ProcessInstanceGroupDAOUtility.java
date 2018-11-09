@@ -339,24 +339,39 @@ public class ProcessInstanceGroupDAOUtility {
     }
 
     public static String getOrderIdInGroup(String processInstanceId) {
-        // get order
-        String query = "SELECT DISTINCT doc.documentID FROM ProcessInstanceGroupDAO pig join pig.processInstanceIDsItems pid," +
-                " ProcessInstanceDAO pi, " +
-                " ProcessDocumentMetadataDAO doc" +
-                " WHERE " +
-                " pid.item = pi.processInstanceID AND" +
-                " doc.processInstanceID = pi.processInstanceID AND" +
-                " doc.type = 'ORDER' AND pig.ID IN" +
-
-                " (" +
-                " SELECT pig2.ID FROM ProcessInstanceGroupDAO pig2 join pig2.processInstanceIDsItems pid2," +
-                " ProcessInstanceDAO pi2 " +
+        // get the id of preceding process instance if there is any
+        String query = "SELECT pig.precedingProcess.processInstanceID FROM ProcessInstanceGroupDAO pig join pig.processInstanceIDsItems pid," +
+                " ProcessInstanceDAO pi " +
                 " WHERE" +
-                " pid2.item = pi2.processInstanceID AND " +
-                " pi2.processInstanceID = ?" +
-                ")";
+                " pid.item = pi.processInstanceID AND " +
+                " pi.processInstanceID = ? AND pig.precedingProcess IS NOT NULL";
+        String precedingProcessInstanceID = HibernateUtility.getInstance("bp-data-model").load(query, processInstanceId);
+        String orderId;
+        // if there is a preceding process instance, using that, get the order id
+        if(precedingProcessInstanceID != null){
+            orderId = DocumentDAOUtility.getRequestMetadata(precedingProcessInstanceID).getDocumentID();
+        }
+        else {
+            // get order
+            query = "SELECT DISTINCT doc.documentID FROM ProcessInstanceGroupDAO pig join pig.processInstanceIDsItems pid," +
+                    " ProcessInstanceDAO pi, " +
+                    " ProcessDocumentMetadataDAO doc" +
+                    " WHERE " +
+                    " pid.item = pi.processInstanceID AND" +
+                    " doc.processInstanceID = pi.processInstanceID AND" +
+                    " doc.type = 'ORDER' AND pig.ID IN" +
 
-        String orderId = HibernateUtility.getInstance("bp-data-model").load(query, processInstanceId);
+                    " (" +
+                    " SELECT pig2.ID FROM ProcessInstanceGroupDAO pig2 join pig2.processInstanceIDsItems pid2," +
+                    " ProcessInstanceDAO pi2 " +
+                    " WHERE" +
+                    " pid2.item = pi2.processInstanceID AND " +
+                    " pi2.processInstanceID = ?" +
+                    ")";
+
+            orderId = HibernateUtility.getInstance("bp-data-model").load(query, processInstanceId);
+        }
+
         return orderId;
     }
 
