@@ -691,6 +691,22 @@ paths:
           description: Archived the group successfully
           schema:
             $ref: '#/definitions/ProcessInstanceGroup'
+
+  /group/collaboration/{ID}/archive:
+    post:
+      operationId: archiveCollaborationGroup
+      parameters:
+      - in: path
+        name: ID
+        type: string
+        description: Identifier of the collaboration group to be archived
+        required: true
+      responses:
+        200:
+          description: Archived the collaboration group successfully
+          schema:
+            $ref: '#/definitions/CollaborationGroup'
+
   /group/{ID}/restore:
     post:
       operationId: restoreGroup
