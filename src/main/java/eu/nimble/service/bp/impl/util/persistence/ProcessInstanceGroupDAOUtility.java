@@ -295,6 +295,13 @@ public class ProcessInstanceGroupDAOUtility {
         return group;
     }
 
+    public static CollaborationGroupDAO getCollaborationGroupDAO(String partyId,Long associatedGroupId){
+        String query = "select cg from CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups pig where pig.partyID = '"+partyId+"' and cg.hjid in " +
+                "(select acg.item from CollaborationGroupDAO cg2 join cg2.associatedCollaborationGroupsItems acg where cg2.hjid = "+associatedGroupId+")";
+        CollaborationGroupDAO group = (CollaborationGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query);
+        return group;
+    }
+
     public static ProcessInstanceDAO getProcessInstance(String processInstanceId) {
         String queryStr = "SELECT pi FROM ProcessInstanceDAO pi WHERE pi.processInstanceID = ?";
         ProcessInstanceDAO pi = HibernateUtility.getInstance("bp-data-model").load(queryStr, processInstanceId);

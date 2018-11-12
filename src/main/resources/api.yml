@@ -338,6 +338,11 @@ paths:
         description: The UUID of the process instance group owned by the party continuing the process
         required: false
         type: string
+      - in: query
+        name: collaborationGID
+        description: The id of the collaboration group which the process instance group belongs to
+        required: false
+        type: string
       - name: Authorization
         in: header
         type: string
@@ -1100,6 +1105,10 @@ definitions:
         type: string
         enum:
         - INPROGRESS
+      associatedCollaborationGroups:
+        type: array
+        items:
+          type: integer
       associatedProcessInstanceGroups:
         type: array
         items:

@@ -332,6 +332,9 @@ public class HibernateSwaggerObjectMapper {
         collaborationGroup.setName(collaborationGroupDAO.getName());
         collaborationGroup.setArchived(collaborationGroupDAO.isArchived());
         collaborationGroup.setID(collaborationGroupDAO.getHjid().toString());
+        for(Long id: collaborationGroupDAO.getAssociatedCollaborationGroups()){
+            collaborationGroup.getAssociatedCollaborationGroups().add(id.intValue());
+        }
 
         List<ProcessInstanceGroup> processInstanceGroups = new ArrayList<>();
         for(ProcessInstanceGroupDAO processInstanceGroupDAO: collaborationGroupDAO.getAssociatedProcessInstanceGroups()){

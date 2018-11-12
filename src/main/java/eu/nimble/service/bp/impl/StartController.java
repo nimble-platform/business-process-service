@@ -73,14 +73,33 @@ public class StartController implements StartApi {
             }
 
             CollaborationGroupDAO initiatorCollaborationGroupDAO;
-            CollaborationGroupDAO responderCollaborationGroupDAO = null;
+            CollaborationGroupDAO responderCollaborationGroupDAO;
+
             // create collaboration group if this is the first process initializing the collaboration group
             if(collaborationGID == null){
                 initiatorCollaborationGroupDAO = ProcessInstanceGroupDAOUtility.createCollaborationGroupDAO();
                 responderCollaborationGroupDAO = ProcessInstanceGroupDAOUtility.createCollaborationGroupDAO();
+
+                // set association between collaboration groups
+                initiatorCollaborationGroupDAO.getAssociatedCollaborationGroups().add(responderCollaborationGroupDAO.getHjid());
+                responderCollaborationGroupDAO.getAssociatedCollaborationGroups().add(initiatorCollaborationGroupDAO.getHjid());
+
+                initiatorCollaborationGroupDAO = (CollaborationGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").update(initiatorCollaborationGroupDAO);
+                responderCollaborationGroupDAO = (CollaborationGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").update(responderCollaborationGroupDAO);
             }
             else {
                 initiatorCollaborationGroupDAO = (CollaborationGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").load(CollaborationGroupDAO.class,Long.parseLong(collaborationGID));
+                // get responder collaboration group
+                responderCollaborationGroupDAO = ProcessInstanceGroupDAOUtility.getCollaborationGroupDAO(body.getVariables().getResponderID(),initiatorCollaborationGroupDAO.getHjid());
+                // check whether the responder collaboration group is null or not
+                if(responderCollaborationGroupDAO == null){
+                    responderCollaborationGroupDAO = ProcessInstanceGroupDAOUtility.createCollaborationGroupDAO();
+                    // set association between collaboration groups
+                    initiatorCollaborationGroupDAO.getAssociatedCollaborationGroups().add(responderCollaborationGroupDAO.getHjid());
+                    responderCollaborationGroupDAO.getAssociatedCollaborationGroups().add(initiatorCollaborationGroupDAO.getHjid());
+                    initiatorCollaborationGroupDAO = (CollaborationGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").update(initiatorCollaborationGroupDAO);
+                    responderCollaborationGroupDAO = (CollaborationGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").update(responderCollaborationGroupDAO);
+                }
             }
 
             // create process instance groups if this is the first process initializing the process group
@@ -89,7 +108,7 @@ public class StartController implements StartApi {
                 // the group exists for the initiator but the trading partner is a new one
                 // so, a new group should be created for the new party
             } else {
-                addNewProcessInstanceToGroup(businessProcessContext.getId(),gid, processInstance.getProcessInstanceID(), body);
+                addNewProcessInstanceToGroup(businessProcessContext.getId(),gid, processInstance.getProcessInstanceID(), body,responderCollaborationGroupDAO);
             }
         }
         catch (Exception e){
@@ -123,23 +142,19 @@ public class StartController implements StartApi {
         associatedGroups.add(processInstanceGroupDAO2.getID());
         processInstanceGroupDAO1.setAssociatedGroups(associatedGroups);
 
+        // below assignment fetches the hjids from the
+        processInstanceGroupDAO1 = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceGroupDAO1);
+
         // add this group to initiator collaboration group
         initiatorCollaborationGroupDAO.getAssociatedProcessInstanceGroups().add(processInstanceGroupDAO1);
         // update collaboration group
         HibernateUtilityRef.getInstance("bp-data-model").update(initiatorCollaborationGroupDAO);
 
-        // below assignment fetches the hjids from the
-        processInstanceGroupDAO1 = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceGroupDAO1);
-
         associatedGroups = new ArrayList<>();
         associatedGroups.add(processInstanceGroupDAO1.getID());
         processInstanceGroupDAO2.setAssociatedGroups(associatedGroups);
-        HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceGroupDAO2);
+        processInstanceGroupDAO2 = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceGroupDAO2);
 
-        // check whether the responder collaboration group is null or not
-        if(responderCollaborationGroupDAO == null){
-            responderCollaborationGroupDAO = ProcessInstanceGroupDAOUtility.createCollaborationGroupDAO();
-        }
         // add this group to responder collaboration group
         responderCollaborationGroupDAO.getAssociatedProcessInstanceGroups().add(processInstanceGroupDAO2);
         // update collaboration group
@@ -157,7 +172,7 @@ public class StartController implements StartApi {
         BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId).setProcessInstanceGroupDAO2(processInstanceGroupDAO2);
     }
 
-    private void addNewProcessInstanceToGroup(String businessContextId,String sourceGid, String processInstanceId, ProcessInstanceInputMessage body) {
+    private void addNewProcessInstanceToGroup(String businessContextId,String sourceGid, String processInstanceId, ProcessInstanceInputMessage body, CollaborationGroupDAO responderCollaborationGroupDAO) {
         ProcessInstanceGroupDAO sourceGroup;
         sourceGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(sourceGid);
         if(body.getVariables().getProcessID().equals("Fulfilment") && sourceGroup.getPrecedingProcessInstanceGroup() != null){
@@ -183,6 +198,10 @@ public class StartController implements StartApi {
 
             sourceGroup.getAssociatedGroups().add(targetGroup.getID());
             sourceGroup = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").update(sourceGroup);
+
+            // add new group to responder collaboration group
+            responderCollaborationGroupDAO.getAssociatedProcessInstanceGroups().add(targetGroup);
+            HibernateUtilityRef.getInstance("bp-data-model").update(responderCollaborationGroupDAO);
 
             // save targetGroup and sourceGroup
             businessProcessContext.setTargetGroup(targetGroup);
