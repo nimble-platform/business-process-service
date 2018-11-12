@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import sun.rmi.runtime.Log;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -336,6 +337,17 @@ public class ProcessInstanceGroupDAOUtility {
             HibernateUtilityRef.getInstance("bp-data-model").update(groupDAO);
         }
         HibernateUtilityRef.getInstance("bp-data-model").delete(ProcessInstanceGroupDAO.class, group.getHjid());
+    }
+
+    public static void deleteCollaborationGroupDAOByID(Long groupID) {
+        CollaborationGroupDAO group = (CollaborationGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").load(CollaborationGroupDAO.class,groupID);
+        // delete references to this group
+        for(Long id:group.getAssociatedCollaborationGroups()){
+            CollaborationGroupDAO groupDAO = (CollaborationGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").load(CollaborationGroupDAO.class,id);
+            groupDAO.getAssociatedCollaborationGroups().remove(groupID);
+            HibernateUtilityRef.getInstance("bp-data-model").update(groupDAO);
+        }
+        HibernateUtilityRef.getInstance("bp-data-model").delete(CollaborationGroupDAO.class,groupID);
     }
 
     public static void archiveAllGroupsForParty(String partyId) {
