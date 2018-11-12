@@ -132,6 +132,21 @@ public class ProcessInstanceGroupController implements GroupApi {
     }
 
     @Override
+    public ResponseEntity<CollaborationGroup> getCollaborationGroup(@ApiParam(value = "",required=true ) @PathVariable("ID") String ID) {
+        logger.debug("Getting CollaborationGroup: {}", ID);
+
+        CollaborationGroupDAO collaborationGroupDAO = (CollaborationGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").load(CollaborationGroupDAO.class,Long.parseLong(ID));
+        if(collaborationGroupDAO == null){
+            logger.error("There does not exist a collaboration group with id: {}",ID);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
+        CollaborationGroup collaborationGroup = HibernateSwaggerObjectMapper.convertCollaborationGroupDAO(collaborationGroupDAO);
+        ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(collaborationGroup);
+        logger.debug("Retrieved CollaborationGroup: {}", ID);
+        return response;
+    }
+
+    @Override
     @ApiOperation(value = "",notes = "Retrieve process instance groups for the specified party. If no partyID is specified, then all groups are returned")
     public ResponseEntity<CollaborationGroupResponse> getProcessInstanceGroups(@ApiParam(value = "Identifier of the party") @RequestParam(value = "partyID", required = false) String partyID,
                                                                                  @ApiParam(value = "Related products") @RequestParam(value = "relatedProducts", required = false) List<String> relatedProducts,

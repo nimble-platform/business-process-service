@@ -683,6 +683,18 @@ paths:
           description: Deleted the groups successfully
 
   /group/collaboration/{ID}:
+    get:
+      operationId: getCollaborationGroup
+      parameters:
+      - in: path
+        name: ID
+        type: string
+        required: true
+      responses:
+        200:
+          description: Retrieved the collaboration group successfully
+          schema:
+            $ref: '#/definitions/CollaborationGroup'
     delete:
       operationId: deleteCollaborationGroup
       parameters:
