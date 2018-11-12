@@ -172,8 +172,34 @@
 			<!-- see the temp element for proper referencing -->
 			<!-- first try to use manytomany annotation, see the second temp !!! -->
 			<xsd:element name="associatedGroups" type="xsd:string" maxOccurs="unbounded"/>
-            <xsd:element name="precedingProcessInstanceGroup" minOccurs="0" type="ProcessInstanceGroupDAO"/>
-            <xsd:element name="precedingProcess" minOccurs="0" type="ProcessInstanceDAO"/>
+            <xsd:element name="precedingProcessInstanceGroup" minOccurs="0" type="ProcessInstanceGroupDAO">
+                <xsd:annotation>
+                    <xsd:appinfo>
+                        <hj:one-to-one merge="false">
+                            <orm:cascade>
+                                <orm:cascade-detach/>
+                                <orm:cascade-persist/>
+                                <orm:cascade-merge/>
+                                <orm:cascade-refresh/>
+                            </orm:cascade>
+                        </hj:one-to-one>
+                    </xsd:appinfo>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="precedingProcess" minOccurs="0" type="ProcessInstanceDAO">
+                <xsd:annotation>
+                    <xsd:appinfo>
+                        <hj:one-to-one merge="false">
+                            <orm:cascade>
+                                <orm:cascade-detach/>
+                                <orm:cascade-persist/>
+                                <orm:cascade-merge/>
+                                <orm:cascade-refresh/>
+                            </orm:cascade>
+                        </hj:one-to-one>
+                    </xsd:appinfo>
+                </xsd:annotation>
+            </xsd:element>
 			<!--<xsd:element name="temp" type="AssociatedProcessInstanceGroup" maxOccurs="unbounded"/>-->
 			<!--<xsd:element name="temp" type="ProcessInstanceGroupDAO" maxOccurs="unbounded">-->
 				<!--<xsd:annotation>-->
