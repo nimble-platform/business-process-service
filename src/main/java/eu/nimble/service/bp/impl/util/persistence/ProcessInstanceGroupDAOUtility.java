@@ -329,6 +329,12 @@ public class ProcessInstanceGroupDAOUtility {
     public static void deleteProcessInstanceGroupDAOByID(String groupID) {
         String query = "select pig from ProcessInstanceGroupDAO pig where ( pig.ID ='" + groupID+ "') ";
         ProcessInstanceGroupDAO group = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query);
+        // delete references to this group
+        for(String id:group.getAssociatedGroups()){
+            ProcessInstanceGroupDAO groupDAO =  getProcessInstanceGroupDAO(id);
+            groupDAO.getAssociatedGroups().remove(groupID);
+            HibernateUtilityRef.getInstance("bp-data-model").update(groupDAO);
+        }
         HibernateUtilityRef.getInstance("bp-data-model").delete(ProcessInstanceGroupDAO.class, group.getHjid());
     }
 
@@ -362,10 +368,16 @@ public class ProcessInstanceGroupDAOUtility {
     }
 
     public static void deleteArchivedGroupsForParty(String partyId) {
-        String query = "select pig.hjid from ProcessInstanceGroupDAO pig WHERE pig.archived = true and pig.partyID = '" + partyId + "'";
-        List<Long> longs = (List<Long>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
-        for(Long hjid : longs){
-            HibernateUtilityRef.getInstance("bp-data-model").delete(ProcessInstanceGroupDAO.class,hjid);
+        String query = "select pig from ProcessInstanceGroupDAO pig WHERE pig.archived = true and pig.partyID = '" + partyId + "'";
+        List<ProcessInstanceGroupDAO> groupDAOS = (List<ProcessInstanceGroupDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+        for(ProcessInstanceGroupDAO groupDAO: groupDAOS){
+            // delete references to this group
+            for(String id: groupDAO.getAssociatedGroups()){
+                ProcessInstanceGroupDAO processInstanceGroupDAO = getProcessInstanceGroupDAO(id);
+                processInstanceGroupDAO.getAssociatedGroups().remove(groupDAO.getID());
+                HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceGroupDAO);
+            }
+            HibernateUtilityRef.getInstance("bp-data-model").delete(groupDAO);
         }
     }
 
