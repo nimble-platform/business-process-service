@@ -677,6 +677,18 @@ paths:
         200:
           description: Deleted the groups successfully
 
+  /group/collaboration/{ID}:
+    delete:
+      operationId: deleteCollaborationGroup
+      parameters:
+      - in: path
+        name: ID
+        type: string
+        required: true
+      responses:
+        200:
+          description: Deleted the collaboration group successfully
+
   /group/{ID}/archive:
     post:
       operationId: archiveGroup

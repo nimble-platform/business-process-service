@@ -108,6 +108,17 @@ public class ProcessInstanceGroupController implements GroupApi {
     }
 
     @Override
+    public ResponseEntity<Void> deleteCollaborationGroup(@ApiParam(value = "",required=true ) @PathVariable("ID") String ID) {
+        logger.debug("Deleting CollaborationGroup ID: {}", ID);
+
+        HibernateUtilityRef.getInstance("bp-data-model").delete(CollaborationGroupDAO.class,Long.parseLong(ID));
+
+        ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body("true");
+        logger.debug("Deleted CollaborationGroup ID: {}",ID);
+        return response;
+    }
+
+    @Override
     @ApiOperation(value = "",notes = "Retrieve the process instance group specified with the ID")
     public ResponseEntity<ProcessInstanceGroup> getProcessInstanceGroup(@ApiParam(value = "", required = true) @PathVariable("ID") String ID) {
         logger.debug("Getting ProcessInstanceGroup: {}", ID);
