@@ -328,15 +328,30 @@ public class ProcessInstanceGroupDAOUtility {
     }
 
     public static void deleteProcessInstanceGroupDAOByID(String groupID) {
-        String query = "select pig from ProcessInstanceGroupDAO pig where ( pig.ID ='" + groupID+ "') ";
-        ProcessInstanceGroupDAO group = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query);
-        // delete references to this group
-        for(String id:group.getAssociatedGroups()){
-            ProcessInstanceGroupDAO groupDAO =  getProcessInstanceGroupDAO(id);
-            groupDAO.getAssociatedGroups().remove(groupID);
-            HibernateUtilityRef.getInstance("bp-data-model").update(groupDAO);
+        // get collaboration group which the given group belongs to
+        String query = "select cg from CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups apig where apig.ID = '"+groupID+"'";
+
+        CollaborationGroupDAO collaborationGroupDAO = (CollaborationGroupDAO ) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query);
+        // if the collaboration group only contains the given group,then delete the collaboration group so that there will not be any garbage on the database
+        if(collaborationGroupDAO.getAssociatedProcessInstanceGroups().size() == 1){
+            deleteCollaborationGroupDAOByID(collaborationGroupDAO.getHjid());
         }
-        HibernateUtilityRef.getInstance("bp-data-model").delete(ProcessInstanceGroupDAO.class, group.getHjid());
+        else {
+            ProcessInstanceGroupDAO group = null;
+            for(ProcessInstanceGroupDAO groupDAO : collaborationGroupDAO.getAssociatedProcessInstanceGroups()){
+                if(groupDAO.getID().equals(groupID)){
+                    group = groupDAO;
+                    break;
+                }
+            }
+            // delete references to this group
+            for(String id:group.getAssociatedGroups()){
+                ProcessInstanceGroupDAO groupDAO =  getProcessInstanceGroupDAO(id);
+                groupDAO.getAssociatedGroups().remove(groupID);
+                HibernateUtilityRef.getInstance("bp-data-model").update(groupDAO);
+            }
+            HibernateUtilityRef.getInstance("bp-data-model").delete(ProcessInstanceGroupDAO.class, group.getHjid());
+        }
     }
 
     public static void deleteCollaborationGroupDAOByID(Long groupID) {
@@ -380,16 +395,10 @@ public class ProcessInstanceGroupDAOUtility {
     }
 
     public static void deleteArchivedGroupsForParty(String partyId) {
-        String query = "select pig from ProcessInstanceGroupDAO pig WHERE pig.archived = true and pig.partyID = '" + partyId + "'";
-        List<ProcessInstanceGroupDAO> groupDAOS = (List<ProcessInstanceGroupDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
-        for(ProcessInstanceGroupDAO groupDAO: groupDAOS){
-            // delete references to this group
-            for(String id: groupDAO.getAssociatedGroups()){
-                ProcessInstanceGroupDAO processInstanceGroupDAO = getProcessInstanceGroupDAO(id);
-                processInstanceGroupDAO.getAssociatedGroups().remove(groupDAO.getID());
-                HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceGroupDAO);
-            }
-            HibernateUtilityRef.getInstance("bp-data-model").delete(groupDAO);
+        String query = "select pig.ID from ProcessInstanceGroupDAO pig WHERE pig.archived = true and pig.partyID = '" + partyId + "'";
+        List<String> groupIds = (List<String>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+        for(String id : groupIds){
+            deleteProcessInstanceGroupDAOByID(id);
         }
     }
 
