@@ -38,8 +38,10 @@ node('nimble-jenkins-slave') {
     if (env.BRANCH_NAME == 'master') {
 
         stage('Push Docker') {
-            sh 'docker push nimbleplatform/business-process-service:latest'
+            sh 'mvn docker:build docker:push -P docker'
+            sh 'mvn docker:build docker:push -P docker -DdockerImageTag=latest'
         }
+
         stage('Deploy') {
             sh 'ssh nimble "cd /data/deployment_setup/prod/ && sudo ./run-prod.sh restart-single business-process-service"'
         }
