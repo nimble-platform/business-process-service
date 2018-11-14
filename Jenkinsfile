@@ -46,17 +46,4 @@ node('nimble-jenkins-slave') {
             sh 'ssh nimble "cd /data/deployment_setup/prod/ && sudo ./run-prod.sh restart-single business-process-service"'
         }
     }
-
-    // Kubernetes is disabled for now
-//    if (env.BRANCH_NAME == 'master') {
-//        stage('Push Docker') {
-//            withDockerRegistry([credentialsId: 'NimbleDocker']) {
-//                sh '/bin/bash -xe util.sh docker-push'
-//            }
-//        }
-//
-//        stage('Apply to Cluster') {
-//            sh 'kubectl apply -f kubernetes/deploy.yml -n prod --validate=false'
-//        }
-//    }
 }
