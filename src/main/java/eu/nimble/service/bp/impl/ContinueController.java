@@ -93,7 +93,7 @@ public class ContinueController implements ContinueApi {
             // create a new initiator collaboration group
             if(initiatorCollaborationGroup == null){
                 CollaborationGroupDAO responderCollaborationGroup = (CollaborationGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").load(CollaborationGroupDAO.class,Long.parseLong(responderCollaborationGID));
-                initiatorCollaborationGroup = ProcessInstanceGroupDAOUtility.createCollaborationGroupDAO();
+                initiatorCollaborationGroup = ProcessInstanceGroupDAOUtility.createCollaborationGroupDAO(body.getVariables().getRelatedProducts());
 
                 // set association between collaboration groups
                 initiatorCollaborationGroup.getAssociatedCollaborationGroups().add(responderCollaborationGroup.getHjid());

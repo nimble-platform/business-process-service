@@ -263,10 +263,20 @@ public class ProcessInstanceGroupDAOUtility {
         return group;
     }
 
-    public static CollaborationGroupDAO createCollaborationGroupDAO(){
+    public static CollaborationGroupDAO createCollaborationGroupDAO(List<String> productNames){
         CollaborationGroupDAO collaborationGroupDAO = new CollaborationGroupDAO();
         collaborationGroupDAO.setStatus(CollaborationStatus.INPROGRESS);
         collaborationGroupDAO.setArchived(false);
+        String name = "Activities on ";
+        for(int i = 0 ; i<productNames.size();i++){
+            if(productNames.size()-1 == i){
+                name += productNames.get(i);
+            }
+            else {
+                name += productNames.get(i) + ",";
+            }
+        }
+        collaborationGroupDAO.setName(name);
 
         HibernateUtilityRef.getInstance("bp-data-model").persist(collaborationGroupDAO);
         return collaborationGroupDAO;
@@ -344,6 +354,18 @@ public class ProcessInstanceGroupDAOUtility {
                     break;
                 }
             }
+            // update the collaboration group name by removing products of this group
+            String groupName = group.getName().replace("[","").replace("]","");
+            if(collaborationGroupDAO.getName().contains(groupName+",")){
+                collaborationGroupDAO.setName(collaborationGroupDAO.getName().replace(groupName+",",""));
+            }
+            else if(collaborationGroupDAO.getName().contains(","+groupName)){
+                collaborationGroupDAO.setName(collaborationGroupDAO.getName().replace(","+groupName,""));
+            }
+            else if(collaborationGroupDAO.getName().contains(groupName)){
+                collaborationGroupDAO.setName(collaborationGroupDAO.getName().replace(groupName,""));
+            }
+            HibernateUtilityRef.getInstance("bp-data-model").update(collaborationGroupDAO);
             // delete references to this group
             for(String id:group.getAssociatedGroups()){
                 ProcessInstanceGroupDAO groupDAO =  getProcessInstanceGroupDAO(id);
