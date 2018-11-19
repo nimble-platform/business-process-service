@@ -326,6 +326,24 @@ public class ProcessInstanceGroupController implements GroupApi {
         }
     }
 
+    @Override
+    public ResponseEntity<Void> updateCollaborationGroupName(@ApiParam(value = "",required=true ) @PathVariable("ID") String ID,
+                                                             @ApiParam(value = "", required = true) @RequestParam(value = "groupName", required = true) String groupName) {
+        logger.debug("Updating name of the collaboration group :"+ID);
+        CollaborationGroupDAO collaborationGroupDAO = (CollaborationGroupDAO) HibernateUtility.getInstance("bp-data-model").load(CollaborationGroupDAO.class,Long.parseLong(ID));
+        if(collaborationGroupDAO == null){
+            String msg = String.format("There does not exist a collaboration group with id: %s", ID);
+            logger.error(msg);
+            ResponseEntity response = ResponseEntity.status(HttpStatus.BAD_REQUEST).body(msg);
+            return response;
+        }
+        collaborationGroupDAO.setName(groupName);
+        HibernateUtility.getInstance("bp-data-model").update(collaborationGroupDAO);
+        logger.debug("Updated name of the collaboration group :"+ID);
+        ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body("true");
+        return response;
+    }
+
     @ApiOperation(value = "",notes = "Cancel the collaboration (negotiation) for the given group id")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Cancelled the collaboration for the given group id successfully "),

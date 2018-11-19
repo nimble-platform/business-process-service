@@ -705,6 +705,20 @@ paths:
       responses:
         200:
           description: Deleted the collaboration group successfully
+    patch:
+      operationId: updateCollaborationGroupName
+      parameters:
+      - in: path
+        name: ID
+        type: string
+        required: true
+      - in: query
+        name: groupName
+        type: string
+        required: true
+      responses:
+        200:
+          description: Updated the collaboration group name successfully
 
   /group/{ID}/archive:
     post:
