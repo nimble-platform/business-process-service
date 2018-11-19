@@ -77,8 +77,8 @@ public class StartController implements StartApi {
 
             // create collaboration group if this is the first process initializing the collaboration group
             if(collaborationGID == null){
-                initiatorCollaborationGroupDAO = ProcessInstanceGroupDAOUtility.createCollaborationGroupDAO(body.getVariables().getRelatedProducts());
-                responderCollaborationGroupDAO = ProcessInstanceGroupDAOUtility.createCollaborationGroupDAO(body.getVariables().getRelatedProducts());
+                initiatorCollaborationGroupDAO = ProcessInstanceGroupDAOUtility.createCollaborationGroupDAO();
+                responderCollaborationGroupDAO = ProcessInstanceGroupDAOUtility.createCollaborationGroupDAO();
 
                 // set association between collaboration groups
                 initiatorCollaborationGroupDAO.getAssociatedCollaborationGroups().add(responderCollaborationGroupDAO.getHjid());
@@ -89,31 +89,15 @@ public class StartController implements StartApi {
             }
             else {
                 initiatorCollaborationGroupDAO = (CollaborationGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").load(CollaborationGroupDAO.class,Long.parseLong(collaborationGID));
-                // update name of initiatorCollaborationGroupDAO
-                for(String productName:body.getVariables().getRelatedProducts()){
-                    if(!initiatorCollaborationGroupDAO.getName().contains(productName)){
-                        initiatorCollaborationGroupDAO.setName(initiatorCollaborationGroupDAO.getName()+","+productName);
-                    }
-                }
-                initiatorCollaborationGroupDAO = (CollaborationGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").update(initiatorCollaborationGroupDAO);
                 // get responder collaboration group
                 responderCollaborationGroupDAO = ProcessInstanceGroupDAOUtility.getCollaborationGroupDAO(body.getVariables().getResponderID(),initiatorCollaborationGroupDAO.getHjid());
                 // check whether the responder collaboration group is null or not
                 if(responderCollaborationGroupDAO == null){
-                    responderCollaborationGroupDAO = ProcessInstanceGroupDAOUtility.createCollaborationGroupDAO(body.getVariables().getRelatedProducts());
+                    responderCollaborationGroupDAO = ProcessInstanceGroupDAOUtility.createCollaborationGroupDAO();
                     // set association between collaboration groups
                     initiatorCollaborationGroupDAO.getAssociatedCollaborationGroups().add(responderCollaborationGroupDAO.getHjid());
                     responderCollaborationGroupDAO.getAssociatedCollaborationGroups().add(initiatorCollaborationGroupDAO.getHjid());
                     initiatorCollaborationGroupDAO = (CollaborationGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").update(initiatorCollaborationGroupDAO);
-                    responderCollaborationGroupDAO = (CollaborationGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").update(responderCollaborationGroupDAO);
-                }
-                else {
-                    // update name of responderCollaborationGroupDAO
-                    for(String productName:body.getVariables().getRelatedProducts()){
-                        if(!responderCollaborationGroupDAO.getName().contains(productName)){
-                            responderCollaborationGroupDAO.setName(responderCollaborationGroupDAO.getName()+","+productName);
-                        }
-                    }
                     responderCollaborationGroupDAO = (CollaborationGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").update(responderCollaborationGroupDAO);
                 }
             }
