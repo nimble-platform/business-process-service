@@ -128,14 +128,14 @@ public class StartController implements StartApi {
                 body.getVariables().getInitiatorID(),
                 processInstance.getProcessInstanceID(),
                 CamundaEngine.getTransactions(body.getVariables().getProcessID()).get(0).getInitiatorRole().toString(),
-                body.getVariables().getRelatedProducts().toString());
+                body.getVariables().getRelatedProducts());
 
         // create group for responder party
         ProcessInstanceGroupDAO processInstanceGroupDAO2 = ProcessInstanceGroupDAOUtility.createProcessInstanceGroupDAO(
                 body.getVariables().getResponderID(),
                 processInstance.getProcessInstanceID(),
                 CamundaEngine.getTransactions(body.getVariables().getProcessID()).get(1).getInitiatorRole().toString(),
-                body.getVariables().getRelatedProducts().toString());
+                body.getVariables().getRelatedProducts());
 
         // associate groups
         List<String> associatedGroups = new ArrayList<>();
@@ -193,7 +193,7 @@ public class StartController implements StartApi {
                     body.getVariables().getResponderID(),
                     processInstanceId,
                     CamundaEngine.getTransactions(body.getVariables().getProcessID()).get(0).getResponderRole().toString(),
-                    body.getVariables().getRelatedProducts().toString(),
+                    body.getVariables().getRelatedProducts(),
                     sourceGroup.getID());
 
             sourceGroup.getAssociatedGroups().add(targetGroup.getID());

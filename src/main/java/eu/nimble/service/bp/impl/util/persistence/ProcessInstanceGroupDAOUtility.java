@@ -238,16 +238,25 @@ public class ProcessInstanceGroupDAOUtility {
         return query;
     }
 
-    public static ProcessInstanceGroupDAO createProcessInstanceGroupDAO(String partyId, String processInstanceId, String collaborationRole, String relatedProducts) {
+    public static ProcessInstanceGroupDAO createProcessInstanceGroupDAO(String partyId, String processInstanceId, String collaborationRole, List<String> relatedProducts) {
         return createProcessInstanceGroupDAO(partyId, processInstanceId, collaborationRole, relatedProducts, null);
     }
 
-    public static ProcessInstanceGroupDAO createProcessInstanceGroupDAO(String partyId, String processInstanceId, String collaborationRole, String relatedProducts, String associatedGroup) {
+    public static ProcessInstanceGroupDAO createProcessInstanceGroupDAO(String partyId, String processInstanceId, String collaborationRole, List<String> relatedProducts, String associatedGroup) {
         String uuid = UUID.randomUUID().toString();
         ProcessInstanceGroupDAO group = new ProcessInstanceGroupDAO();
         group.setArchived(false);
         group.setID(uuid);
-        group.setName(relatedProducts);
+        String groupName = "";
+        for(int i = 0; i<relatedProducts.size();i++){
+            if(i == relatedProducts.size()-1){
+                groupName += relatedProducts.get(i);
+            }
+            else {
+                groupName += relatedProducts.get(i)+",";
+            }
+        }
+        group.setName(groupName);
         group.setPartyID(partyId);
         group.setStatus(GroupStatus.INPROGRESS);
         group.setCollaborationRole(collaborationRole);

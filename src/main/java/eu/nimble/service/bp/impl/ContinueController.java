@@ -86,7 +86,7 @@ public class ContinueController implements ContinueApi {
                     body.getVariables().getInitiatorID(),
                     processInstanceId,
                     CamundaEngine.getTransactions(body.getVariables().getProcessID()).get(0).getInitiatorRole().toString(),
-                    body.getVariables().getRelatedProducts().toString(),
+                    body.getVariables().getRelatedProducts(),
                     sourceGid);
 
             CollaborationGroupDAO initiatorCollaborationGroup = ProcessInstanceGroupDAOUtility.getCollaborationGroupDAO(body.getVariables().getInitiatorID(),Long.parseLong(responderCollaborationGID));

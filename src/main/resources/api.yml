@@ -1089,6 +1089,8 @@ definitions:
     properties:
       ID:
         type: string
+      name:
+        type: string
       partyID:
         type: string
       processInstanceIDs:
