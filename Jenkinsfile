@@ -29,15 +29,11 @@ node('nimble-jenkins-slave') {
         stage('Deploy') {
             sh 'ssh staging "cd /srv/nimble-staging/ && ./run-staging.sh restart-single business-process-service"'
         }
-    } else {
-        stage('Build Docker') {
-            sh '/bin/bash -xe util.sh docker-build'
-        }
     }
 
     if (env.BRANCH_NAME == 'master') {
 
-        stage('Push Docker') {
+        stage('Build Docker') {
             sh 'mvn docker:build -P docker'
         }
 
