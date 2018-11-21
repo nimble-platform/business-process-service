@@ -22,8 +22,6 @@ public class DefaultTransportExecutionPlanCreator implements JavaDelegate {
     @Override
     public void execute(DelegateExecution execution) throws Exception {
 
-        BusinessProcessPersistenceConfig config = BusinessProcessPersistenceConfig.getInstance();
-
         logger.info(" $$$ DefaultTransportExecutionPlanCreator: {}", execution);
         final Map<String, Object> variables = execution.getVariables();
         // for debug purposes

@@ -29,8 +29,6 @@ public class DefaultOrderCreator  implements JavaDelegate {
     @Override
     public void execute(DelegateExecution execution) throws Exception {
 
-        BusinessProcessPersistenceConfig config = BusinessProcessPersistenceConfig.getInstance();
-
         logger.info(" $$$ DefaultOrderCreator: {}", execution);
         final Map<String, Object> variables = execution.getVariables();
         // for debug purposes
