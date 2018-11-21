@@ -3,6 +3,7 @@ package eu.nimble.service.bp.impl.util.persistence;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.hyperjaxb.model.*;
 import eu.nimble.service.bp.impl.util.serialization.Serializer;
+import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.model.*;
@@ -34,7 +35,7 @@ public class DocumentDAOUtility {
         TransactionConfigurationDAO transactionConfigurationDAO = null;
         ExecutionConfigurationDAO executionConfigurationDAO = null;
         // Get buyer order application preference for data adapter
-        ProcessConfigurationDAO processConfiguration = DAOUtility.getProcessConfiguration(partnerID, processKey, roleType);
+        /*ProcessConfigurationDAO processConfiguration = DAOUtility.getProcessConfiguration(partnerID, processKey, roleType);
 
         if (processConfiguration != null) { // it is configured
             List<TransactionConfigurationDAO> configurations = processConfiguration.getTransactionConfigurations();
@@ -50,6 +51,7 @@ public class DocumentDAOUtility {
                 }
             }
         } else { // it is not configured by the partner
+            */
             transactionConfigurationDAO = new TransactionConfigurationDAO();
             // TODO: Retrieve it from the identity service or context
             transactionConfigurationDAO.setTransactionID(transactionID);
@@ -59,7 +61,7 @@ public class DocumentDAOUtility {
             executionConfigurationDAO.setExecutionType(ApplicationExecutionType.JAVA);
             executionConfigurationDAO.setApplicationType(ApplicationType.fromValue(applicationType.toString()));
             transactionConfigurationDAO.getExecutionConfigurations().add(executionConfigurationDAO);
-        }
+        //}
 
         ExecutionConfiguration executionConfiguration = HibernateSwaggerObjectMapper.createExecutionConfiguration(executionConfigurationDAO);
         return executionConfiguration;
@@ -67,14 +69,16 @@ public class DocumentDAOUtility {
 
     public static void addDocumentWithMetadata(String processContextId,ProcessDocumentMetadata documentMetadata, Object document) {
         ProcessDocumentMetadataDAO processDocumentDAO = HibernateSwaggerObjectMapper.createProcessDocumentMetadata_DAO(documentMetadata);
-        HibernateUtilityRef.getInstance("bp-data-model").persist(processDocumentDAO);
+//        HibernateUtilityRef.getInstance("bp-data-model").persist(processDocumentDAO);
+        SpringBridge.getInstance().getProcessDocumentMetadataDAORepository().save(processDocumentDAO);
         // save ProcessDocumentMetadataDAO
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(processContextId);
         businessProcessContext.setMetadataDAO(processDocumentDAO);
 
         if (document != null)
         {
-            HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).update(document);
+//            HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).update(document);
+            SpringBridge.getInstance().getGenericCatalogueRepository().updateEntity(document);
             // save Object
             businessProcessContext.setDocument(document);
         }
@@ -92,8 +96,10 @@ public class DocumentDAOUtility {
 
         ProcessDocumentMetadataDAO newDocumentDAO = HibernateSwaggerObjectMapper.createProcessDocumentMetadata_DAO(body);
 
-        HibernateUtilityRef.getInstance("bp-data-model").delete(storedDocumentDAO);
-        newDocumentDAO = (ProcessDocumentMetadataDAO) HibernateUtilityRef.getInstance("bp-data-model").update(newDocumentDAO);
+//        HibernateUtilityRef.getInstance("bp-data-model").delete(storedDocumentDAO);
+        SpringBridge.getInstance().getProcessDocumentMetadataDAORepository().delete(storedDocumentDAO.getHjid());
+//        newDocumentDAO = (ProcessDocumentMetadataDAO) HibernateUtilityRef.getInstance("bp-data-model").update(newDocumentDAO);
+        newDocumentDAO = SpringBridge.getInstance().getProcessDocumentMetadataDAORepository().save(newDocumentDAO);
 
         businessProcessContext.setUpdatedDocumentMetadata(newDocumentDAO);
 
@@ -109,11 +115,13 @@ public class DocumentDAOUtility {
                 ItemInformationRequestType itemInformationRequest = mapper.readValue(content, ItemInformationRequestType.class);
 
                 ItemInformationRequestType existingItemInformationRequest = (ItemInformationRequestType) getUBLDocument(itemInformationRequest.getID(),DocumentType.ITEMINFORMATIONREQUEST);
-                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(existingItemInformationRequest);
+//                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(existingItemInformationRequest);
+                SpringBridge.getInstance().getGenericCatalogueRepository().deleteEntity(existingItemInformationRequest);
 
                 businessProcessContext.setPreviousDocument(existingItemInformationRequest);
 
-                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(itemInformationRequest);
+//                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(itemInformationRequest);
+                SpringBridge.getInstance().getGenericCatalogueRepository().persistEntity(itemInformationRequest);
 
                 businessProcessContext.setDocument(itemInformationRequest);
             }

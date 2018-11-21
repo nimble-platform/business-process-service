@@ -2,7 +2,11 @@ package eu.nimble.service.bp.impl.util.spring;
 
 import eu.nimble.common.rest.identity.IdentityClient;
 import eu.nimble.common.rest.identity.IdentityClientTyped;
+import eu.nimble.service.bp.config.BusinessProcessPersistenceConfig;
 import eu.nimble.service.bp.config.GenericConfig;
+import eu.nimble.service.bp.impl.persistence.bp.ProcessDocumentMetadataDAORepository;
+import eu.nimble.service.bp.impl.persistence.catalogue.CatalogueRepositoryImpl;
+import eu.nimble.service.bp.impl.persistence.catalogue.GenericCatalogueRepository;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -26,6 +30,15 @@ public class SpringBridge implements ApplicationContextAware {
     @Autowired
     private IdentityClientTyped identityClientTyped;
 
+    @Autowired
+    private BusinessProcessPersistenceConfig bpConfig;
+
+    @Autowired
+    private ProcessDocumentMetadataDAORepository processDocumentMetadataDAORepository;
+
+    @Autowired
+    private GenericCatalogueRepository genericCatalogueRepository;
+
     public static SpringBridge getInstance() {
         return applicationContext.getBean(SpringBridge.class);
     }
@@ -46,5 +59,17 @@ public class SpringBridge implements ApplicationContextAware {
 
     public IdentityClient getIdentityClient() {
         return this.identityClient;
+    }
+
+    public BusinessProcessPersistenceConfig getBpConfig() {
+        return bpConfig;
+    }
+
+    public ProcessDocumentMetadataDAORepository getProcessDocumentMetadataDAORepository() {
+        return processDocumentMetadataDAORepository;
+    }
+
+    public GenericCatalogueRepository getGenericCatalogueRepository() {
+        return genericCatalogueRepository;
     }
 }

@@ -1,8 +1,11 @@
 package eu.nimble.service.bp.impl;
 
+import com.netflix.discovery.converters.Auto;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceInputMessageDAO;
+import eu.nimble.service.bp.impl.persistence.bp.ProcessInstanceDAORepository;
+import eu.nimble.service.bp.impl.persistence.bp.ProcessInstanceGroupDAORepository;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.impl.util.persistence.DAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.HibernateSwaggerObjectMapper;
@@ -17,9 +20,11 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -33,6 +38,11 @@ import java.util.List;
 public class StartController implements StartApi {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    @Autowired
+    private ProcessInstanceDAORepository processInstanceRepository;
+
+    @Autowired
+    private ProcessInstanceGroupDAORepository processInstanceGroupDAORepository;
     @Override
     @ApiOperation(value = "", notes = "Start an instance of a business process", response = ProcessInstance.class, tags={  })
     public ResponseEntity<ProcessInstance> startProcessInstance(@ApiParam(value = "", required = true) @RequestBody ProcessInstanceInputMessage body,
@@ -52,7 +62,8 @@ public class StartController implements StartApi {
             processInstance = CamundaEngine.startProcessInstance(businessProcessContext.getId(),body);
 
             ProcessInstanceDAO processInstanceDAO = HibernateSwaggerObjectMapper.createProcessInstance_DAO(processInstance);
-            HibernateUtilityRef.getInstance("bp-data-model").persist(processInstanceDAO);
+            processInstanceDAO = processInstanceRepository.save(processInstanceDAO);
+//            HibernateUtilityRef.getInstance("bp-data-model").persist(processInstanceDAO);
 
             // save ProcessInstanceDAO
             businessProcessContext.setProcessInstanceDAO(processInstanceDAO);
@@ -66,7 +77,8 @@ public class StartController implements StartApi {
                     return ResponseEntity.badRequest().body(null);
                 }
                 processInstanceDAO.setPrecedingProcess(precedingInstance);
-                HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceDAO);
+//                HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceDAO);
+                processInstanceDAO = processInstanceRepository.save(processInstanceDAO);
 
                 // update ProcessInstanceDAO
                 businessProcessContext.setProcessInstanceDAO(processInstanceDAO);
@@ -112,12 +124,14 @@ public class StartController implements StartApi {
         associatedGroups.add(processInstanceGroupDAO2.getID());
         processInstanceGroupDAO1.setAssociatedGroups(associatedGroups);
         // below assignment fetches the hjids from the
-        processInstanceGroupDAO1 = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceGroupDAO1);
+        //processInstanceGroupDAO1 = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceGroupDAO1);
+        processInstanceGroupDAO1 = processInstanceGroupDAORepository.save(processInstanceGroupDAO1);
 
         associatedGroups = new ArrayList<>();
         associatedGroups.add(processInstanceGroupDAO1.getID());
         processInstanceGroupDAO2.setAssociatedGroups(associatedGroups);
-        HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceGroupDAO2);
+        //HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceGroupDAO2);
+        processInstanceGroupDAO2 = processInstanceGroupDAORepository.save(processInstanceGroupDAO2);
 
         // save ProcessInstanceGroupDAOs
         BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId).setProcessInstanceGroupDAO1(processInstanceGroupDAO1);
@@ -127,7 +141,8 @@ public class StartController implements StartApi {
     private void addNewProcessInstanceToGroup(String businessContextId,String sourceGid, String processInstanceId, ProcessInstanceInputMessage body) {
         ProcessInstanceGroupDAO sourceGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(sourceGid);
         sourceGroup.getProcessInstanceIDs().add(processInstanceId);
-        sourceGroup = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").update(sourceGroup);
+        //sourceGroup = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").update(sourceGroup);
+        sourceGroup = processInstanceGroupDAORepository.save(sourceGroup);
 
         // save sourceGroup
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId);
@@ -145,14 +160,16 @@ public class StartController implements StartApi {
                     sourceGid);
 
             sourceGroup.getAssociatedGroups().add(targetGroup.getID());
-            sourceGroup = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").update(sourceGroup);
+            //sourceGroup = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").update(sourceGroup);
+            sourceGroup = processInstanceGroupDAORepository.save(sourceGroup);
 
             // save targetGroup and sourceGroup
             businessProcessContext.setTargetGroup(targetGroup);
             businessProcessContext.setSourceGroup(sourceGroup);
         } else {
             associatedGroup.getProcessInstanceIDs().add(processInstanceId);
-            associatedGroup = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").update(associatedGroup);
+            //associatedGroup = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").update(associatedGroup);
+            associatedGroup = processInstanceGroupDAORepository.save(associatedGroup);
 
             // save associatedGroup
             businessProcessContext.setAssociatedGroup(associatedGroup);

@@ -9,6 +9,7 @@ import eu.nimble.common.rest.identity.IdentityClientTyped;
 import eu.nimble.service.bp.hyperjaxb.model.*;
 import eu.nimble.service.bp.impl.TrustServiceController;
 import eu.nimble.service.bp.impl.model.statistics.BusinessProcessCount;
+import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.utility.HibernateUtility;
@@ -56,10 +57,12 @@ public class DAOUtility {
     }
 
     public static ProcessDocumentMetadataDAO getProcessDocumentMetadata(String documentID) {
-        String query = "select document from ProcessDocumentMetadataDAO document where ( ";
-        query += " document.documentID ='" + documentID + "' ";
-        query += " ) ";
-        List<ProcessDocumentMetadataDAO> resultSet = (List<ProcessDocumentMetadataDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+
+//        String query = "select document from ProcessDocumentMetadataDAO document where ( ";
+//        query += " document.documentID ='" + documentID + "' ";
+//        query += " ) ";
+//        List<ProcessDocumentMetadataDAO> resultSet = (List<ProcessDocumentMetadataDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+        List<ProcessDocumentMetadataDAO> resultSet = SpringBridge.getInstance().getProcessDocumentMetadataDAORepository().findByDocumentID(documentID);
         if(resultSet.size() == 0) {
             return null;
         }

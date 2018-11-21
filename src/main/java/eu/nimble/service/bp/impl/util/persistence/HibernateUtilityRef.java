@@ -1,6 +1,7 @@
 package eu.nimble.service.bp.impl.util.persistence;
 
 import eu.nimble.service.bp.config.BusinessProcessPersistenceConfig;
+import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.utility.Configuration;
 import eu.nimble.utility.HibernateUtility;
 
@@ -16,7 +17,7 @@ public class HibernateUtilityRef {
     public static HibernateUtility getInstance(String persistenceUnitName) {
         HibernateUtility utility = null;
         if(persistenceUnitName.contentEquals("bp-data-model")) {
-            Map<String, String> persistenceProperties = BusinessProcessPersistenceConfig.getInstance().getBusiness_process();
+            Map<String, String> persistenceProperties = SpringBridge.getInstance().getBpConfig().getBusiness_process();
             utility = HibernateUtility.getInstance(persistenceUnitName, persistenceProperties);
 
         }

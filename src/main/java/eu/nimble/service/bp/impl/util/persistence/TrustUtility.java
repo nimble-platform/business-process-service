@@ -38,6 +38,10 @@ public class TrustUtility {
     }
 
     public static void createCompletedTask(String partyID,String processInstanceID,String bearerToken,String status) {
+        /**
+         * IMPORTANT:
+         * {@link QualifyingPartyType}ies should be existing when a {@link CompletedTaskType} is about to be associated to it
+         */
         QualifyingPartyType qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID,bearerToken);
         CompletedTaskType completedTask = new CompletedTaskType();
         completedTask.setAssociatedProcessInstanceID(processInstanceID);
