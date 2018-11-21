@@ -38,8 +38,13 @@ node('nimble-jenkins-slave') {
     if (env.BRANCH_NAME == 'master') {
 
         stage('Push Docker') {
-            sh 'mvn docker:build docker:push -P docker'
-            sh 'mvn docker:build docker:push -P docker -DdockerImageTag=latest'
+            sh 'mvn docker:build -P docker'
+        }
+
+        stage('Push Docker') {
+            sh 'mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version' // fetch dependencies
+            sh 'docker push nimbleplatform/business-process-service:$(mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version | grep -v \'\\[\')'
+            sh 'docker push nimbleplatform/business-process-service:latest'
         }
 
         stage('Deploy MVP') {
