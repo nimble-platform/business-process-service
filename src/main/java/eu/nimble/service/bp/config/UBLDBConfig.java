@@ -1,6 +1,7 @@
 package eu.nimble.service.bp.config;
 
 import eu.nimble.service.bp.impl.persistence.catalogue.CatalogueRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceBuilder;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -31,10 +32,13 @@ import java.util.Properties;
 @ComponentScan(basePackages = {"eu.nimble.utility.config"})
 class UBLDBConfig {
 
+    @Autowired
+    private DataSourceCreator dataSourceCreator;
+
     @Bean(name = "ubldbDataSource")
     @ConfigurationProperties(prefix = "persistence.orm.ubl.hibernate.connection")
-    public DataSource dataSource() {
-        return DataSourceBuilder.create().build();
+    public DataSource getDataSource() {
+        return dataSourceCreator.createDatasource();
     }
 
     @Bean(name = "ubldbEmfBean")

@@ -14,6 +14,7 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
 import java.util.Arrays;
 import java.util.Map;
@@ -32,6 +33,7 @@ public class BusinessProcessPersistenceConfig {
 
     private Map<String, String> business_process;
 
+    @PostConstruct
     public void setupDbConnections() {
         // update persistence properties if kubernetes profile is active
         if (Arrays.stream(environment.getActiveProfiles()).anyMatch(profile -> profile.contentEquals("kubernetes"))) {

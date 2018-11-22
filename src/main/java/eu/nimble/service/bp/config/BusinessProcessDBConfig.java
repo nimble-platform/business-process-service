@@ -1,6 +1,7 @@
 package eu.nimble.service.bp.config;
 
 import eu.nimble.service.bp.impl.persistence.bp.BusinessProcessRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceBuilder;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -34,10 +35,13 @@ import java.util.Properties;
 @ComponentScan(basePackages = {"eu.nimble.service.bp.config"})
 public class BusinessProcessDBConfig {
 
+    @Autowired
+    private DataSourceCreator dataSourceCreator;
+
     @Bean(name = "bpdbDataSource")
     @ConfigurationProperties(prefix = "persistence.orm.business_process.hibernate.connection")
-    public DataSource bpdbDataSource() {
-        return DataSourceBuilder.create().build();
+    public DataSource getDataSource() {
+        return dataSourceCreator.createDatasource();
     }
 
     @Bean(name = "bpdbEmfBean")

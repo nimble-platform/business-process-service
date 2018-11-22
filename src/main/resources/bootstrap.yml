@@ -20,14 +20,15 @@ spring:
     url: jdbc:postgresql://${CAMUNDA_DB_HOST:localhost}:${CAMUNDA_DB_PORT:5432}/${CAMUNDA_DB_NAME:camunda}?currentSchema=public
     username: ${CAMUNDA_DB_USERNAME:postgres}
     password: ${CAMUNDA_DB_PASSWORD:nimble}
-    driverClassName: org.postgresql.Driver
+    driver-class-name: org.postgresql.Driver
     tomcat:
       initial-size: 3
       test-while-idle: true
       time-between-eviction-runs-millis: 600000
       min-evictable-idle-time-millis: 3600000
-    maxActive: 6
+    maxActive: 10
     maxIdle: 3
+    minIdle: 3
   kafka:
       bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
       consumer:
@@ -79,21 +80,11 @@ persistence:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         show_sql: false
         hbm2ddl:
-          auto: update
+          auto:
         cache:
           provider_class: org.hibernate.cache.HashtableCacheProvider
         jdbc:
-          batch_size: 0
-        c3p0:
-          acquire_increment: 3
-          initialPoolSize: 3
-          max_size: 6
-          min_size: 3
-          maxStatementsPerConnection: 5
-          acquireRetryAttempts: 10
-          acquireRetryDelay: 100
-          numHelperThreads: 10
-          idle_test_period: 600
+          batch_size: 10
         use_sql_comments: true
         transaction:
           factory_class: org.hibernate.transaction.JDBCTransactionFactory
@@ -113,21 +104,11 @@ persistence:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         show_sql: false
         hbm2ddl:
-          auto: validate
+          auto:
         cache:
           provider_class: org.hibernate.cache.HashtableCacheProvider
         jdbc:
-          batch_size: 0
-        c3p0:
-          acquire_increment: 3
-          initialPoolSize: 3
-          max_size: 6
-          min_size: 3
-          maxStatementsPerConnection: 5
-          acquireRetryAttempts: 10
-          acquireRetryDelay: 100
-          numHelperThreads: 10
-          idle_test_period: 600
+          batch_size: 10
         use_sql_comments: true
         transaction:
           factory_class: org.hibernate.transaction.JDBCTransactionFactory
