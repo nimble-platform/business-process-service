@@ -15,7 +15,7 @@ import java.util.Arrays;
  * Created by suat on 22-Nov-18.
  */
 @Component
-public class DataSourceCreator {
+public class DataSourceFactory {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 

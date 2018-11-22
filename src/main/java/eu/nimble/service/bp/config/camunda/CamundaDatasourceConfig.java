@@ -1,22 +1,18 @@
 package eu.nimble.service.bp.config.camunda;
 
-import eu.nimble.service.bp.config.DataSourceCreator;
-import eu.nimble.utility.config.BluemixDatabaseConfig;
+import eu.nimble.service.bp.config.DataSourceFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
-import org.springframework.core.env.Environment;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
-import java.util.Arrays;
 
 /**
  * Created by suat on 19-Nov-18.
@@ -27,12 +23,12 @@ public class CamundaDatasourceConfig {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    private DataSourceCreator dataSourceCreator;
+    private DataSourceFactory dataSourceFactory;
 
     @Bean
     @Primary
     public DataSource getDataSource() {
-        return dataSourceCreator.createDatasource();
+        return dataSourceFactory.createDatasource();
     }
 
     @Bean(name = "camundaEmfBean")
