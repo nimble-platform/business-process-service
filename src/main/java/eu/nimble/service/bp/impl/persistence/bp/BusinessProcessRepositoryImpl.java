@@ -72,7 +72,7 @@ public class BusinessProcessRepositoryImpl implements CustomBusinessProcessRepos
             }
         }
 
-        if(limit != null && limit != 0 && offset != null && offset != 0) {
+        if(limit != null && offset != null) {
             query.setFirstResult(offset);
             query.setMaxResults(limit);
         }

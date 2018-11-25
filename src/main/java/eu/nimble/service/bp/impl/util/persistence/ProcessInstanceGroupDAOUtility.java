@@ -199,7 +199,7 @@ public class ProcessInstanceGroupDAOUtility {
                 parameterNames.add("product" + i);
                 parameterValues.add(relatedProductIds.get(i));
             }
-            query += " relProd.item = :product'" + i + ")";
+            query += " relProd.item = :product" + i + ")";
 
             parameterNames.add("product" + i);
             parameterValues.add(relatedProductIds.get(i));
