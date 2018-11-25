@@ -1,28 +1,34 @@
-package eu.nimble.service.bp.impl.persistence.catalogue;
+package eu.nimble.service.bp.impl.persistence.bp;
 
 import org.apache.commons.lang.ArrayUtils;
-import org.apache.poi.ss.formula.functions.T;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import java.util.List;
 
 /**
- * Created by suat on 20-Nov-18.
+ * Created by suat on 23-Nov-18.
  */
 @Component
-@Primary
-@Transactional(transactionManager = "ubldbTransactionManager")
-public class CatalogueRepositoryImpl implements CustomCatalogueRepository {
+@Transactional(transactionManager = "bpdbTransactionManager")
+public class BusinessProcessRepositoryImpl implements CustomBusinessProcessRepository {
 
     private static final String QUERY_DELETE_BY_HJID = "DELETE FROM %s item WHERE item.hjid = :hjid";
 
-    @PersistenceContext(unitName = eu.nimble.utility.Configuration.UBL_PERSISTENCE_UNIT_NAME)
+    @PersistenceContext(unitName = "bp-data-model")
     private EntityManager em;
+
+    @Override
+    public <T> T getSingleEntityByHjid(Class<T> klass, long hjid) {
+        return em.find(klass, hjid);
+    }
 
     @Override
     public <T> T getSingleEntity(String queryStr, String[] parameterNames, Object[] parameterValues) {
@@ -45,13 +51,17 @@ public class CatalogueRepositoryImpl implements CustomCatalogueRepository {
     }
 
     @Override
-    public <T> T getSingleEntityByHjid(Class<T> klass, long hjid) {
-        return em.find(klass, hjid);
+    public <T> List<T> getEntities(String query) {
+        return getEntities(query, null, null);
     }
 
+    @Override
+    public <T> List<T> getEntities(String queryStr, String[] parameterNames, Object[] parameterValues) {
+        return getEntities(queryStr, parameterNames, parameterValues, null, null);
+    }
 
     @Override
-    public List<T> getEntities(String queryStr, String[] parameterNames, Object[] parameterValues) {
+    public <T> List<T> getEntities(String queryStr, String[] parameterNames, Object[] parameterValues, Integer limit, Integer offset) {
         Query query = em.createQuery(queryStr);
         if(!ArrayUtils.isEmpty(parameterNames) && !ArrayUtils.isEmpty(parameterValues)) {
             if(parameterNames.length != parameterValues.length) {
@@ -60,6 +70,11 @@ public class CatalogueRepositoryImpl implements CustomCatalogueRepository {
             for(int i=0; i<parameterNames.length; i++) {
                 query.setParameter(parameterNames[i], parameterValues[i]);
             }
+        }
+
+        if(limit != null && limit != 0 && offset != null && offset != 0) {
+            query.setFirstResult(offset);
+            query.setMaxResults(limit);
         }
 
         List<T> result = query.getResultList();
@@ -74,6 +89,10 @@ public class CatalogueRepositoryImpl implements CustomCatalogueRepository {
 
     @Override
     public <T> void deleteEntity(T entity) {
+        if(!em.contains(entity)) {
+            entity = em.merge(entity);
+            em.remove(entity);
+        }
         em.remove(entity);
     }
 

@@ -12,4 +12,5 @@ import java.util.List;
  * Created by suat on 20-Nov-18.
  */
 public interface ProcessInstanceDAORepository extends JpaRepository<ProcessInstanceDAO, Long> {
+    List<ProcessInstanceDAO> findByProcessInstanceID(String processInstanceId);
 }

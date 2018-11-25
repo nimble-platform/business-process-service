@@ -4,9 +4,9 @@ import eu.nimble.common.rest.identity.IdentityClient;
 import eu.nimble.common.rest.identity.IdentityClientTyped;
 import eu.nimble.service.bp.config.BusinessProcessPersistenceConfig;
 import eu.nimble.service.bp.config.GenericConfig;
-import eu.nimble.service.bp.impl.persistence.bp.ProcessDocumentMetadataDAORepository;
-import eu.nimble.service.bp.impl.persistence.catalogue.CatalogueRepositoryImpl;
-import eu.nimble.service.bp.impl.persistence.catalogue.GenericCatalogueRepository;
+import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
+import eu.nimble.service.bp.impl.persistence.bp.*;
+import eu.nimble.service.bp.impl.persistence.catalogue.CatalogueRepository;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -34,10 +34,22 @@ public class SpringBridge implements ApplicationContextAware {
     private BusinessProcessPersistenceConfig bpConfig;
 
     @Autowired
+    private CatalogueRepository genericCatalogueRepository;
+
+    @Autowired
+    private BusinessProcessRepository businessProcessRepository;
+
+    @Autowired
     private ProcessDocumentMetadataDAORepository processDocumentMetadataDAORepository;
 
     @Autowired
-    private GenericCatalogueRepository genericCatalogueRepository;
+    private ProcessInstanceDAORepository processInstanceDAORepository;
+
+    @Autowired
+    private ProcessInstanceGroupDAORepository processInstanceGroupDAORepository;
+
+    @Autowired
+    private ProcessDAORepository processDAORepository;
 
     public static SpringBridge getInstance() {
         return applicationContext.getBean(SpringBridge.class);
@@ -69,7 +81,23 @@ public class SpringBridge implements ApplicationContextAware {
         return processDocumentMetadataDAORepository;
     }
 
-    public GenericCatalogueRepository getGenericCatalogueRepository() {
+    public CatalogueRepository getGenericCatalogueRepository() {
         return genericCatalogueRepository;
+    }
+
+    public BusinessProcessRepository getBusinessProcessRepository() {
+        return businessProcessRepository;
+    }
+
+    public ProcessInstanceDAORepository getProcessInstanceDAORepository() {
+        return processInstanceDAORepository;
+    }
+
+    public ProcessDAORepository getProcessDAORepository() {
+        return processDAORepository;
+    }
+
+    public ProcessInstanceGroupDAORepository getProcessInstanceGroupDAORepository() {
+        return processInstanceGroupDAORepository;
     }
 }

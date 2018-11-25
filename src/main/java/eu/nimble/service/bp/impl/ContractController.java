@@ -6,19 +6,21 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
+import eu.nimble.service.bp.impl.persistence.bp.BusinessProcessRepository;
+import eu.nimble.service.bp.impl.persistence.catalogue.CatalogueRepository;
 import eu.nimble.service.bp.impl.util.persistence.ContractDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.DAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.DocumentDAOUtility;
-import eu.nimble.service.bp.impl.util.persistence.HibernateUtilityRef;
+import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
-import eu.nimble.utility.Configuration;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -28,7 +30,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
-import static eu.nimble.service.bp.impl.util.controller.HttpResponseUtil.*;
+import static eu.nimble.service.bp.impl.util.controller.HttpResponseUtil.createResponseEntityAndLog;
 
 /**
  * Created by suat on 25-Apr-18.
@@ -36,6 +38,12 @@ import static eu.nimble.service.bp.impl.util.controller.HttpResponseUtil.*;
 @Controller
 public class ContractController {
     private final Logger logger = LoggerFactory.getLogger(ContractController.class);
+
+    @Autowired
+    private BusinessProcessRepository businessProcessRepository;
+
+    @Autowired
+    private CatalogueRepository catalogueRepository;
 
     /**
      * Retrieves the {@link ClauseType} specified by the <code>clauseId</code>
@@ -109,7 +117,8 @@ public class ContractController {
 
             // update clause
             try {
-                clauseObject = HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).update(clauseObject);
+//                clauseObject = HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).update(clauseObject);
+                clauseObject = catalogueRepository.updateEntity(clauseObject);
             } catch (Exception e) {
                 return createResponseEntityAndLog("Failed to update the clause: " + clauseId, e, HttpStatus.INTERNAL_SERVER_ERROR);
             }
@@ -313,7 +322,8 @@ public class ContractController {
 
             // persist the update
             try {
-                document = HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).update(document);
+//                document = HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).update(document);
+                document = catalogueRepository.updateEntity(document);
             } catch (Exception e) {
                 return createResponseEntityAndLog(String.format("Failed to add document clause to contract. Bounded-document id: %s , clause type: %s , clause document id: %s", documentId, clauseType, clauseDocumentId), e, HttpStatus.INTERNAL_SERVER_ERROR);
             }
@@ -353,7 +363,8 @@ public class ContractController {
 
             // persist the update
             try {
-                document = HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).update(document);
+//                document = HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).update(document);
+                document = catalogueRepository.updateEntity(document);
             } catch (Exception e) {
                 return createResponseEntityAndLog("Failed to add monitoring clause to contract. Bounded-document id: " + documentId, e, HttpStatus.INTERNAL_SERVER_ERROR);
             }

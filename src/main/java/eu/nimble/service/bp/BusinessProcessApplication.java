@@ -2,7 +2,6 @@ package eu.nimble.service.bp;
 
 import com.netflix.hystrix.contrib.javanica.aop.aspectj.HystrixCommandAspect;
 import eu.nimble.service.bp.impl.util.persistence.HibernateUtilityRef;
-import eu.nimble.utility.HibernateUtility;
 import org.apache.ibatis.session.SqlSession;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.ProcessEngines;
@@ -80,7 +79,7 @@ public class BusinessProcessApplication {
       }
     }
 
-    HibernateUtility.getInstance(eu.nimble.utility.Configuration.UBL_PERSISTENCE_UNIT_NAME);
-    HibernateUtilityRef.getInstance("bp-data-model");
+//    HibernateUtility.getInstance(eu.nimble.utility.Configuration.UBL_PERSISTENCE_UNIT_NAME);
+//    HibernateUtilityRef.getInstance("bp-data-model");
   }
 }

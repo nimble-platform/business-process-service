@@ -1,30 +1,31 @@
 package eu.nimble.service.bp.impl;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
-import eu.nimble.service.bp.hyperjaxb.model.*;
+import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
+import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
+import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceStatus;
+import eu.nimble.service.bp.impl.persistence.bp.BusinessProcessRepository;
+import eu.nimble.service.bp.impl.persistence.bp.ProcessInstanceDAORepository;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.impl.util.controller.HttpResponseUtil;
-import eu.nimble.service.bp.impl.util.persistence.*;
+import eu.nimble.service.bp.impl.util.persistence.DAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.DocumentDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.ProcessInstanceDAOUtility;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.CompletedTaskType;
-import eu.nimble.service.model.ubl.commonaggregatecomponents.QualifyingPartyType;
-import eu.nimble.utility.HibernateUtility;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-
-import javax.ws.rs.QueryParam;
 
 /**
  * Created by dogukan on 09.08.2018.
@@ -34,6 +35,9 @@ import javax.ws.rs.QueryParam;
 public class ProcessInstanceController {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    @Autowired
+    private ProcessInstanceDAORepository processInstanceDAORepository;
 
     @ApiOperation(value = "",notes = "Cancel the process instance with the given id")
     @ApiResponses(value = {
@@ -58,7 +62,8 @@ public class ProcessInstanceController {
             CamundaEngine.cancelProcessInstance(processInstanceId);
             // change status of the process
             instanceDAO.setStatus(ProcessInstanceStatus.CANCELLED);
-            HibernateUtilityRef.getInstance("bp-data-model").update(instanceDAO);
+//            HibernateUtilityRef.getInstance("bp-data-model").update(instanceDAO);
+            processInstanceDAORepository.save(instanceDAO);
         }
         catch (Exception e) {
             logger.error("Failed to cancel the process instance with id:{}",processInstanceId,e);

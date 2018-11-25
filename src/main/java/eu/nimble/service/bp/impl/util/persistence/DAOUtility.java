@@ -7,12 +7,10 @@ package eu.nimble.service.bp.impl.util.persistence;
 
 import eu.nimble.common.rest.identity.IdentityClientTyped;
 import eu.nimble.service.bp.hyperjaxb.model.*;
-import eu.nimble.service.bp.impl.TrustServiceController;
 import eu.nimble.service.bp.impl.model.statistics.BusinessProcessCount;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
-import eu.nimble.utility.HibernateUtility;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -41,15 +39,16 @@ public class DAOUtility {
     }
 
     public static List<ProcessConfigurationDAO> getProcessConfigurationDAOByPartnerID(String partnerID) {
-        String query = "select conf from ProcessConfigurationDAO conf where ( conf.partnerID ='" + partnerID + "') ";
-        List<ProcessConfigurationDAO> resultSet = (List<ProcessConfigurationDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
-
+//        String query = "select conf from ProcessConfigurationDAO conf where ( conf.partnerID ='" + partnerID + "') ";
+//        List<ProcessConfigurationDAO> resultSet = (List<ProcessConfigurationDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+        List<ProcessConfigurationDAO> resultSet = SpringBridge.getInstance().getBusinessProcessRepository().getProcessConfigurations(partnerID);
         return resultSet;
     }
 
     public static ProcessPreferencesDAO getProcessPreferencesDAOByPartnerID(String partnerID) {
-        String query = "select conf from ProcessPreferencesDAO conf where ( conf.partnerID ='" + partnerID + "') ";
-        List<ProcessPreferencesDAO> resultSet = (List<ProcessPreferencesDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+//        String query = "select conf from ProcessPreferencesDAO conf where ( conf.partnerID ='" + partnerID + "') ";
+//        List<ProcessPreferencesDAO> resultSet = (List<ProcessPreferencesDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+        List<ProcessPreferencesDAO> resultSet = SpringBridge.getInstance().getBusinessProcessRepository().getProcessPreferences(partnerID);
         if(resultSet.size() == 0) {
             return null;
         }
@@ -70,11 +69,11 @@ public class DAOUtility {
     }
 
     public static List<ProcessDocumentMetadataDAO> getProcessDocumentMetadataByProcessInstanceID(String processInstanceID) {
-        String query = "select document from ProcessDocumentMetadataDAO document where ( ";
-        query += " document.processInstanceID ='" + processInstanceID + "' ";
-        query += " ) ORDER BY document.submissionDate ASC";
-        List<ProcessDocumentMetadataDAO> resultSet = (List<ProcessDocumentMetadataDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
-
+//        String query = "select document from ProcessDocumentMetadataDAO document where ( ";
+//        query += " document.processInstanceID ='" + processInstanceID + "' ";
+//        query += " ) ORDER BY document.submissionDate ASC";
+//        List<ProcessDocumentMetadataDAO> resultSet = (List<ProcessDocumentMetadataDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+        List<ProcessDocumentMetadataDAO> resultSet = SpringBridge.getInstance().getProcessDocumentMetadataDAORepository().findByProcessInstanceIDOrderBySubmissionDateAsc(processInstanceID);
         return resultSet;
     }
 
@@ -87,37 +86,58 @@ public class DAOUtility {
     }
 
     public static List<ProcessDocumentMetadataDAO> getProcessDocumentMetadata(String partnerID, String type, String status, String source) {
+        List<String> parameterNames = new ArrayList<>();
+        List<String> parameterValues = new ArrayList<>();
         String query = "select document from ProcessDocumentMetadataDAO document where ( ";
 
         if (source != null && partnerID != null) {
             String attribute = source.equals("SENT") ? "initiatorID" : "responderID";
-            query += " document." + attribute + " ='" + partnerID + "' ";
-        } else if (source == null && partnerID != null) query += " (document.initiatorID ='" + partnerID + "' or document.responderID ='" + partnerID + "') ";
+            query += " document." + attribute + " = :partnerId ";
+            parameterNames.add("partnerId");
+            parameterValues.add(partnerID);
 
-        if (type != null) query += " and document.type ='" + type + "' ";
+        } else if (source == null && partnerID != null) {
+            query += " (document.initiatorID = :partnerId or document.responderID = :partnerId) ";
+            parameterNames.add("partnerId");
+            parameterValues.add(partnerID);
+        }
 
-        if (status != null) query += " and document.status ='" + status + "' ";
+        if (type != null) {
+            query += " and document.type = :docType ";
+            parameterNames.add("docType");
+            parameterValues.add(type);
+        }
+
+        if (status != null) {
+            query += " and document.status = :status ";
+            parameterNames.add("status");
+            parameterValues.add(status);
+        }
         query += " ) ";
-        List<ProcessDocumentMetadataDAO> resultSet = (List<ProcessDocumentMetadataDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+//        List<ProcessDocumentMetadataDAO> resultSet = (List<ProcessDocumentMetadataDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+        List<ProcessDocumentMetadataDAO> resultSet = SpringBridge.getInstance().getBusinessProcessRepository().getEntities(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray(new String[parameterValues.size()]));
         return resultSet;
     }
 
 
     public static List<String> getDocumentIds(Integer partyId, List<String> documentTypes, String role, String startDateStr, String endDateStr, String status) {
-        String query = getDocumentMetadataQuery(partyId, documentTypes, role, startDateStr, endDateStr, status, DocumentMetadataQuery.DOCUMENT_IDS);
-        List<String> documentIds = (List<String>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+        DocumentMetadataQuery query = getDocumentMetadataQuery(partyId, documentTypes, role, startDateStr, endDateStr, status, DocumentMetadataQueryType.DOCUMENT_IDS);
+//        List<String> documentIds = (List<String>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+        List<String> documentIds = SpringBridge.getInstance().getBusinessProcessRepository().getEntities(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray());
         return documentIds;
     }
 
     public static int getTransactionCount(Integer partyId, List<String> documentTypes, String role, String startDateStr, String endDateStr, String status) {
-        String query = getDocumentMetadataQuery(partyId, documentTypes, role, startDateStr, endDateStr, status, DocumentMetadataQuery.TOTAL_TRANSACTION_COUNT);
-        int count = ((Long) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query)).intValue();
+        DocumentMetadataQuery query = getDocumentMetadataQuery(partyId, documentTypes, role, startDateStr, endDateStr, status, DocumentMetadataQueryType.TOTAL_TRANSACTION_COUNT);
+//        int count = ((Long) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query)).intValue();
+        int count = ((Long) SpringBridge.getInstance().getBusinessProcessRepository().getSingleEntity(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray())).intValue();
         return count;
     }
 
     public static BusinessProcessCount getGroupTransactionCounts(Integer partyId, String startDateStr, String endDateStr,String role,String bearerToken) {
-        String query = getDocumentMetadataQuery(partyId, new ArrayList<>(), role, startDateStr, endDateStr, null, DocumentMetadataQuery.GROUPED_TRANSACTION_COUNT);
-        List<Object> results = (List<Object>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+        DocumentMetadataQuery query = getDocumentMetadataQuery(partyId, new ArrayList<>(), role, startDateStr, endDateStr, null, DocumentMetadataQueryType.GROUPED_TRANSACTION_COUNT);
+//        List<Object> results = (List<Object>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+        List<Object> results = SpringBridge.getInstance().getBusinessProcessRepository().getEntities(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray());
 
         BusinessProcessCount counts = new BusinessProcessCount();
         for(Object result : results) {
@@ -135,14 +155,18 @@ public class DAOUtility {
         return counts;
     }
 
-    public static String getDocumentMetadataQuery(Integer partyId, List<String> documentTypes, String role, String startDateStr, String endDateStr, String status, DocumentMetadataQuery queryType) {
-        String query = null;
-        if(queryType.equals(DocumentMetadataQuery.TOTAL_TRANSACTION_COUNT)) {
-            query = "select count(*) from ProcessDocumentMetadataDAO documentMetadata ";
-        } else if(queryType.equals(DocumentMetadataQuery.DOCUMENT_IDS)){
-            query = "select documentMetadata.documentID from ProcessDocumentMetadataDAO documentMetadata ";
-        } else if(queryType.equals(DocumentMetadataQuery.GROUPED_TRANSACTION_COUNT)) {
-            query = "select documentMetadata.initiatorID, documentMetadata.type, documentMetadata.status, count(*) from ProcessDocumentMetadataDAO documentMetadata ";
+    public static DocumentMetadataQuery getDocumentMetadataQuery(Integer partyId, List<String> documentTypes, String role, String startDateStr, String endDateStr, String status, DocumentMetadataQueryType queryType) {
+        DocumentMetadataQuery query = new DocumentMetadataQuery();
+        List<String> parameterNames =query.parameterNames;
+        List<Object> parameterValues = query.parameterValues;
+
+        String queryStr = null;
+        if(queryType.equals(DocumentMetadataQueryType.TOTAL_TRANSACTION_COUNT)) {
+            queryStr = "select count(*) from ProcessDocumentMetadataDAO documentMetadata ";
+        } else if(queryType.equals(DocumentMetadataQueryType.DOCUMENT_IDS)){
+            queryStr = "select documentMetadata.documentID from ProcessDocumentMetadataDAO documentMetadata ";
+        } else if(queryType.equals(DocumentMetadataQueryType.GROUPED_TRANSACTION_COUNT)) {
+            queryStr = "select documentMetadata.initiatorID, documentMetadata.type, documentMetadata.status, count(*) from ProcessDocumentMetadataDAO documentMetadata ";
         }
 
         DateTimeFormatter sourceFormatter = DateTimeFormat.forPattern("dd-MM-yyyy");
@@ -152,71 +176,93 @@ public class DAOUtility {
 
         if (partyId != null) {
             String attribute = role.equals(RoleType.BUYER.toString()) ? "initiatorID" : "responderID";
-            query += " where documentMetadata." + attribute + " ='" + partyId + "' ";
+            queryStr += " where documentMetadata." + attribute + " = :partyId ";
             filterExists = true;
+
+            parameterNames.add("partyId");
+            parameterValues.add(partyId);
         }
 
         if(startDateStr != null || endDateStr != null){
             if(!filterExists){
-                query += " where";
+                queryStr += " where";
             }
             else {
-                query += " and";
+                queryStr += " and";
             }
 
             if(startDateStr != null && endDateStr != null){
                 DateTime startDate = sourceFormatter.parseDateTime(startDateStr);
                 DateTime endDate = sourceFormatter.parseDateTime(endDateStr);
                 endDate = endDate.plusDays(1).minusMillis(1);
-                query += " documentMetadata.submissionDate between '" + bpFormatter.print(startDate) + "' and '" + bpFormatter.print(endDate) + "'";
+                queryStr += " documentMetadata.submissionDate between :startTime and :endTime";
 
+                parameterNames.add("startTime");
+                parameterValues.add(bpFormatter.print(startDate));
+                parameterNames.add("endTime");
+                parameterValues.add(bpFormatter.print(endDate));
             }
             else if(startDateStr != null) {
                 DateTime startDate = sourceFormatter.parseDateTime(startDateStr);
-                query += " documentMetadata.submissionDate >= '" + bpFormatter.print(startDate) + "'";
+                queryStr += " documentMetadata.submissionDate >= :startTime";
 
+                parameterNames.add("startTime");
+                parameterValues.add(bpFormatter.print(startDate));
             }
             else {
                 DateTime endDate = sourceFormatter.parseDateTime(endDateStr);
                 endDate = endDate.plusDays(1).minusMillis(1);
-                query += " documentMetadata.submissionDate <= '" + bpFormatter.print(endDate) + "'";
+                queryStr += " documentMetadata.submissionDate <= :endTime";
 
+                parameterNames.add("endTime");
+                parameterValues.add(bpFormatter.print(endDate));
             }
             filterExists = true;
         }
 
         if(documentTypes.size() > 0) {
             if (!filterExists) {
-                query += " where (";
+                queryStr += " where (";
             } else {
-                query += " and(";
+                queryStr += " and(";
             }
             for (int i = 0; i < documentTypes.size() - 1; i++) {
-                query += " documentMetadata.type ='" + documentTypes.get(i).toString() + "' or";
+                queryStr += " documentMetadata.type = :type" + i + " or";
+
+                parameterNames.add("type" + i);
+                parameterValues.add(documentTypes.get(i).toString());
             }
-            query += " documentMetadata.type = '" + documentTypes.get(documentTypes.size() - 1).toString() + "')";
+            queryStr += " documentMetadata.type = :type" + (documentTypes.size() - 1) + ")";
+
+            parameterNames.add("type" + (documentTypes.size() - 1));
+            parameterValues.add(documentTypes.get(documentTypes.size() - 1).toString());
             filterExists = true;
         }
 
         if(status != null) {
             if (!filterExists) {
-                query += " where ";
+                queryStr += " where ";
             } else {
-                query += " and ";
+                queryStr += " and ";
             }
-            query += " documentMetadata.status ='" + status + "'";
+            queryStr += " documentMetadata.status = :status";
+
+            parameterNames.add("status");
+            parameterValues.add(status);
         }
 
-        if(queryType.equals(DocumentMetadataQuery.GROUPED_TRANSACTION_COUNT)) {
-            query += " group by documentMetadata.initiatorID, documentMetadata.type, documentMetadata.status";
+        if(queryType.equals(DocumentMetadataQueryType.GROUPED_TRANSACTION_COUNT)) {
+            queryStr += " group by documentMetadata.initiatorID, documentMetadata.type, documentMetadata.status";
         }
 
+        query.query = queryStr;
         return query;
     }
 
     public static ProcessInstanceDAO getProcessInstanceDAOByID(String processInstanceID) {
-        String query = "select processinstance from ProcessInstanceDAO processinstance where ( processinstance.processInstanceID ='" + processInstanceID + "') ";
-        List<ProcessInstanceDAO> resultSet = (List<ProcessInstanceDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+//        String query = "select processinstance from ProcessInstanceDAO processinstance where ( processinstance.processInstanceID ='" + processInstanceID + "') ";
+//        List<ProcessInstanceDAO> resultSet = (List<ProcessInstanceDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+        List<ProcessInstanceDAO> resultSet = SpringBridge.getInstance().getProcessInstanceDAORepository().findByProcessInstanceID(processInstanceID);
         if(resultSet.size() == 0) {
             return null;
         }
@@ -224,8 +270,9 @@ public class DAOUtility {
     }
 
     public static ProcessDAO getProcessDAOByID(String processID) {
-        String query = "select process from ProcessDAO process where ( process.processID ='" + processID + "') ";
-        List<ProcessDAO> resultSet = (List<ProcessDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+//        String query = "select process from ProcessDAO process where ( process.processID ='" + processID + "') ";
+//        List<ProcessDAO> resultSet = (List<ProcessDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+        List<ProcessDAO> resultSet = SpringBridge.getInstance().getProcessDAORepository().findByProcessID(processID);
         if(resultSet.size() == 0) {
             return null;
         }
@@ -233,14 +280,16 @@ public class DAOUtility {
     }
 
     public static List<ProcessDAO> getProcessDAOs() {
-        String query = "select process from ProcessDAO process ";
-        List<ProcessDAO> resultSet = (List<ProcessDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+//        String query = "select process from ProcessDAO process ";
+//        List<ProcessDAO> resultSet = (List<ProcessDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+        List<ProcessDAO> resultSet = SpringBridge.getInstance().getProcessDAORepository().findAll();
         return resultSet;
     }
 
     public static ProcessConfigurationDAO getProcessConfiguration(String partnerID, String processID, ProcessConfiguration.RoleTypeEnum roleType) {
-        String query = "select conf from ProcessConfigurationDAO conf where ( conf.partnerID ='" + partnerID + "' and conf.processID ='" + processID + "' ) ";
-        List<ProcessConfigurationDAO> resultSet = (List<ProcessConfigurationDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+//        String query = "select conf from ProcessConfigurationDAO conf where ( conf.partnerID ='" + partnerID + "' and conf.processID ='" + processID + "' ) ";
+//        List<ProcessConfigurationDAO> resultSet = (List<ProcessConfigurationDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+        List<ProcessConfigurationDAO> resultSet = SpringBridge.getInstance().getBusinessProcessRepository().getProcessConfigurations(partnerID, processID);
         if(resultSet.size() == 0) {
             return null;
         }
@@ -254,17 +303,25 @@ public class DAOUtility {
 
     public static List<String> getAllProcessInstanceIDs(String processInstanceID){
         List<String> processInstanceIDs = new ArrayList<>();
-        String query = "FROM ProcessInstanceDAO piDAO WHERE piDAO.processInstanceID = ?";
-        ProcessInstanceDAO processInstanceDAO = HibernateUtility.getInstance("bp-data-model").load(query,processInstanceID);
+//        String query = "FROM ProcessInstanceDAO piDAO WHERE piDAO.processInstanceID = ?";
+//        ProcessInstanceDAO processInstanceDAO = HibernateUtility.getInstance("bp-data-model").load(query,processInstanceID);
+        ProcessInstanceDAO processInstanceDAO = SpringBridge.getInstance().getProcessInstanceDAORepository().findByProcessInstanceID(processInstanceID).get(0);
         processInstanceIDs.add(0,processInstanceID);
         while (processInstanceDAO.getPrecedingProcess() != null){
-            processInstanceDAO = HibernateUtility.getInstance("bp-data-model").load(query,processInstanceDAO.getPrecedingProcess().getProcessInstanceID());
+//            processInstanceDAO = HibernateUtility.getInstance("bp-data-model").load(query,processInstanceDAO.getPrecedingProcess().getProcessInstanceID());
+            processInstanceDAO = SpringBridge.getInstance().getProcessInstanceDAORepository().findByProcessInstanceID(processInstanceDAO.getPrecedingProcess().getProcessInstanceID()).get(0);
             processInstanceIDs.add(0,processInstanceDAO.getProcessInstanceID());
         }
         return processInstanceIDs;
     }
 
-    private enum DocumentMetadataQuery {
+    private enum DocumentMetadataQueryType {
         DOCUMENT_IDS, TOTAL_TRANSACTION_COUNT, GROUPED_TRANSACTION_COUNT
+    }
+
+    private static class DocumentMetadataQuery {
+        private String query;
+        private List<String> parameterNames = new ArrayList<>();
+        private List<Object> parameterValues = new ArrayList<>();
     }
 }

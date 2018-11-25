@@ -286,7 +286,7 @@ public class StatisticsController {
         logger.info("Getting average response time for the party with id: {}",partyID);
         double averageResponseTime;
         try {
-            averageResponseTime = StatisticsDAOUtility.calculateAverageResponseTime(partyID,bearerToken);
+            averageResponseTime = StatisticsDAOUtility.calculateAverageResponseTime(partyID);
         }
         catch (Exception e){
             return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting average response time for the party with id: %s", partyID), e, HttpStatus.INTERNAL_SERVER_ERROR);

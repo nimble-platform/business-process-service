@@ -5,10 +5,9 @@ import eu.nimble.service.bp.hyperjaxb.model.GroupStatus;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceStatus;
-import eu.nimble.service.bp.impl.TrustServiceController;
+import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupFilter;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
-import eu.nimble.utility.HibernateUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,8 +41,9 @@ public class ProcessInstanceGroupDAOUtility {
             int limit,
             int offset) {
 
-        String query = getGroupRetrievalQuery(GroupQueryType.GROUP, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories,status, startTime, endTime);
-        List<Object> groups = (List<Object>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query, offset, limit);
+        QueryData query = getGroupRetrievalQuery(GroupQueryType.GROUP, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories,status, startTime, endTime);
+//        List<Object> groups = (List<Object>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query, offset, limit);
+        List<Object> groups = SpringBridge.getInstance().getBusinessProcessRepository().getEntities(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray(), limit, offset);
         List<ProcessInstanceGroupDAO> results = new ArrayList<>();
         for(Object groupResult : groups) {
             Object[] resultItems = (Object[]) groupResult;
@@ -64,8 +64,9 @@ public class ProcessInstanceGroupDAOUtility {
                                                   List<String> status,
                                                   String startTime,
                                                   String endTime) {
-        String query = getGroupRetrievalQuery(GroupQueryType.SIZE, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories,status, startTime, endTime);
-        int count = ((Long) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query)).intValue();
+        QueryData query = getGroupRetrievalQuery(GroupQueryType.SIZE, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories,status, startTime, endTime);
+//        int count = ((Long) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query)).intValue();
+        int count = ((Long) SpringBridge.getInstance().getBusinessProcessRepository().getSingleEntity(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray())).intValue();
         return count;
     }
 
@@ -81,10 +82,11 @@ public class ProcessInstanceGroupDAOUtility {
             String endTime,
             String bearerToken) {
 
-        String query = getGroupRetrievalQuery(GroupQueryType.FILTER, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories, status,startTime, endTime);
+        QueryData query = getGroupRetrievalQuery(GroupQueryType.FILTER, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories, status,startTime, endTime);
 
         ProcessInstanceGroupFilter filter = new ProcessInstanceGroupFilter();
-        List<Object> resultSet = (List<Object>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+//        List<Object> resultSet = (List<Object>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+        List<Object> resultSet = SpringBridge.getInstance().getBusinessProcessRepository().getEntities(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray());
         for (Object result : resultSet) {
             List<Object> returnedColumns = (List<Object>) result;
 
@@ -142,7 +144,7 @@ public class ProcessInstanceGroupDAOUtility {
         return filter;
     }
 
-    private static String getGroupRetrievalQuery(
+    private static QueryData getGroupRetrievalQuery(
             GroupQueryType queryType,
             String partyId,
             String collaborationRole,
@@ -153,6 +155,10 @@ public class ProcessInstanceGroupDAOUtility {
             List<String> status,
             String startTime,
             String endTime) {
+
+        QueryData queryData = new QueryData();
+        List<String> parameterNames = queryData.parameterNames;
+        List<Object> parameterValues = queryData.parameterValues;
 
         String query = "";
         if(queryType == GroupQueryType.FILTER) {
@@ -174,49 +180,83 @@ public class ProcessInstanceGroupDAOUtility {
             query += " and (";
             int i = 0;
             for (; i < relatedProductCategories.size() - 1; i++) {
-                query += " relCat.item = '" + relatedProductCategories.get(i) + "' or";
+                query += " relCat.item = :category" + i + " or";
+
+                parameterNames.add("category" + i);
+                parameterValues.add(relatedProductCategories.get(i));
             }
-            query += " relCat.item = '" + relatedProductCategories.get(i) + "')";
+            query += " relCat.item = :category" + i + ")";
+
+            parameterNames.add("category" + i);
+            parameterValues.add(relatedProductCategories.get(i));
         }
         if (relatedProductIds != null && relatedProductIds.size() > 0) {
             query += " and (";
             int i = 0;
             for (; i < relatedProductIds.size() - 1; i++) {
-                query += " relProd.item = '" + relatedProductIds.get(i) + "' or";
+                query += " relProd.item = :product" + i + " or";
+
+                parameterNames.add("product" + i);
+                parameterValues.add(relatedProductIds.get(i));
             }
-            query += " relProd.item = '" + relatedProductIds.get(i) + "')";
+            query += " relProd.item = :product'" + i + ")";
+
+            parameterNames.add("product" + i);
+            parameterValues.add(relatedProductIds.get(i));
         }
         if (tradingPartnerIds != null && tradingPartnerIds.size() > 0) {
             query += " and (";
             int i = 0;
             for (; i < tradingPartnerIds.size() - 1; i++) {
-                query += " (doc.initiatorID = '" + tradingPartnerIds.get(i) + "' or doc.responderID = '" + tradingPartnerIds.get(i) + "') or";
+                query += " (doc.initiatorID = :partner" + i + " or doc.responderID = :partner" + i + ") or";
+
+                parameterNames.add("partner" + i);
+                parameterValues.add(tradingPartnerIds.get(i));
             }
-            query += " (doc.initiatorID = '" + tradingPartnerIds.get(i) + "' or doc.responderID = '" + tradingPartnerIds.get(i) + "'))";
+            query += " (doc.initiatorID = :partner" + i + " or doc.responderID = :partner" + i + "))";
+            parameterNames.add("partner" + i);
+            parameterValues.add(tradingPartnerIds.get(i));
         }
         if (status != null && status.size() > 0) {
             query += " and (";
             int i = 0;
             for (; i < status.size() - 1; i++) {
-                query += " (pi.status = '" + status.get(i) + "') or";
+                query += " (pi.status = :status" + i + ") or";
+
+                parameterNames.add("status" + i);
+                parameterValues.add(status.get(i));
             }
-            query += " (pi.status = '" + status.get(i) + "'))";
+            query += " (pi.status = :status" + i + "))";
+
+            parameterNames.add("status" + i);
+            parameterValues.add(status.get(i));
         }
         if (archived != null) {
-            query += " and pig.archived = " + archived;
+            query += " and pig.archived = :archived";
+
+            parameterNames.add("archived");
+            parameterValues.add(archived);
         }
         if (partyId != null) {
-            query += " and pig.partyID ='" + partyId + "'";
+            query += " and pig.partyID = :partyId";
+
+            parameterNames.add("partyId");
+            parameterValues.add(partyId);
         }
         if (collaborationRole != null) {
-            query += " and pig.collaborationRole = '" + collaborationRole + "'";
+            query += " and pig.collaborationRole = :role";
+
+            parameterNames.add("role");
+            parameterValues.add(collaborationRole);
         }
 
         if(queryType == GroupQueryType.GROUP) {
             query += " group by pig.hjid";
             query += " order by firstActivityTime desc";
         }
-        return query;
+
+        queryData.query = query;
+        return queryData;
     }
 
     public static ProcessInstanceGroupDAO createProcessInstanceGroupDAO(String partyId, String processInstanceId, String collaborationRole, String relatedProducts) {
@@ -240,21 +280,24 @@ public class ProcessInstanceGroupDAOUtility {
             associatedGroups.add(associatedGroup);
             group.setAssociatedGroups(associatedGroups);
         }
-        HibernateUtilityRef.getInstance("bp-data-model").persist(group);
+//        HibernateUtilityRef.getInstance("bp-data-model").persist(group);
+        SpringBridge.getInstance().getBusinessProcessRepository().persistEntity(group);
         return group;
     }
 
     public static ProcessInstanceGroupDAO getProcessInstanceGroupDAO(String groupID) {
-        String query = "select pig, max(doc.submissionDate) as lastActivityTime, min(doc.submissionDate) as firstActivityTime from" +
-                " ProcessInstanceGroupDAO pig join pig.processInstanceIDsItems pid," +
-                " ProcessInstanceDAO pi," +
-                " ProcessDocumentMetadataDAO doc" +
-                " where" +
-                " ( pig.ID ='" + groupID+ "') and" +
-                " pid.item = pi.processInstanceID and" +
-                " doc.processInstanceID = pi.processInstanceID" +
-                " group by pig.hjid";
-        Object[] resultItems = (Object[]) (HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query));
+
+//        String query = "select pig, max(doc.submissionDate) as lastActivityTime, min(doc.submissionDate) as firstActivityTime from" +
+//                " ProcessInstanceGroupDAO pig join pig.processInstanceIDsItems pid," +
+//                " ProcessInstanceDAO pi," +
+//                " ProcessDocumentMetadataDAO doc" +
+//                " where" +
+//                " ( pig.ID ='" + groupID+ "') and" +
+//                " pid.item = pi.processInstanceID and" +
+//                " doc.processInstanceID = pi.processInstanceID" +
+//                " group by pig.hjid";
+//        Object[] resultItems = (Object[]) (HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query));
+        Object[] resultItems = (Object[]) SpringBridge.getInstance().getProcessInstanceGroupDAORepository().getProcessInstanceGroups(groupID);
         ProcessInstanceGroupDAO pig = (ProcessInstanceGroupDAO) resultItems[0];
         pig.setLastActivityTime((String) resultItems[1]);
         pig.setFirstActivityTime((String) resultItems[2]);
@@ -262,78 +305,94 @@ public class ProcessInstanceGroupDAOUtility {
     }
 
     public static ProcessInstanceGroupDAO getProcessInstanceGroupDAO(String partyId, String associatedGroupId) {
-        String query = "select pig from ProcessInstanceGroupDAO pig where pig.partyID = '" + partyId+ "' and pig.ID in " +
-                "(select agrp.item from ProcessInstanceGroupDAO pig2 join pig2.associatedGroupsItems agrp where pig2.ID = '" + associatedGroupId + "')";
-        ProcessInstanceGroupDAO group = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query);
+//        String query = "select pig from ProcessInstanceGroupDAO pig where pig.partyID = '" + partyId+ "' and pig.ID in " +
+//                "(select agrp.item from ProcessInstanceGroupDAO pig2 join pig2.associatedGroupsItems agrp where pig2.ID = '" + associatedGroupId + "')";
+//        ProcessInstanceGroupDAO group = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query);
+        ProcessInstanceGroupDAO group = SpringBridge.getInstance().getProcessInstanceGroupDAORepository().getProcessInstanceGroup(partyId, associatedGroupId);
         return group;
     }
 
-    public static ProcessInstanceDAO getProcessInstance(String processInstanceId) {
-        String queryStr = "SELECT pi FROM ProcessInstanceDAO pi WHERE pi.processInstanceID = ?";
-        ProcessInstanceDAO pi = HibernateUtility.getInstance("bp-data-model").load(queryStr, processInstanceId);
-        return pi;
-    }
-
     public static List<ProcessInstanceDAO> getProcessInstances(List<String> ids) {
+        String query = "select processInst from ProcessInstanceDAO processInst where processInst.processInstanceID in ";
+        List<String> parameterNames = new ArrayList<>();
+        List<Object> parameterValues = new ArrayList<>();
         String idsString = "(";
         int size = ids.size();
         for(int i=0;i<size;i++){
             if(i != size-1){
-                idsString = idsString + "'"+ids.get(i)+"',";
+                idsString = idsString + ":id" + i + ",";
             }
             else {
-                idsString = idsString + "'"+ids.get(i)+"'";
+                idsString = idsString + ":id"+i;
             }
+            parameterNames.add("id" + i);
+            parameterValues.add(ids.get(i));
         }
-        idsString = idsString + ")";
+        query += idsString + ")";
 
-        String query = "select processInst from ProcessInstanceDAO processInst where processInst.processInstanceID in "+idsString;
-        List<ProcessInstanceDAO> processInstanceDAOS = (List<ProcessInstanceDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+//        List<ProcessInstanceDAO> processInstanceDAOS = (List<ProcessInstanceDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+        List<ProcessInstanceDAO> processInstanceDAOS = SpringBridge.getInstance().getBusinessProcessRepository().getEntities(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
         return processInstanceDAOS;
     }
 
     public static void deleteProcessInstanceGroupDAOByID(String groupID) {
-        String query = "select pig from ProcessInstanceGroupDAO pig where ( pig.ID ='" + groupID+ "') ";
-        ProcessInstanceGroupDAO group = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query);
-        HibernateUtilityRef.getInstance("bp-data-model").delete(ProcessInstanceGroupDAO.class, group.getHjid());
+        //String query = "select pig from ProcessInstanceGroupDAO pig where ( pig.ID ='" + groupID+ "') ";
+        //ProcessInstanceGroupDAO group = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query);
+        //HibernateUtilityRef.getInstance("bp-data-model").delete(ProcessInstanceGroupDAO.class, group.getHjid());
+        ProcessInstanceGroupDAO group = SpringBridge.getInstance().getProcessInstanceGroupDAORepository().getGroupById(groupID);
+        //SpringBridge.getInstance().getProcessInstanceGroupDAORepository().ddeleteByID(groupID);
+
+        SpringBridge.getInstance().getProcessInstanceGroupDAORepository().delete(group.getHjid());
+        //SpringBridge.getInstance().getBusinessProcessRepository().deleteEntityByHjid(ProcessInstanceGroupDAO.class, group.getHjid());
+        //SpringBridge.getInstance().getBusinessProcessRepository().deleteEntity(group);
     }
 
     public static void archiveAllGroupsForParty(String partyId) {
-        String query = "update ProcessInstanceGroupDAO as pig set pig.archived = true WHERE pig.partyID = '" + partyId + "'";
-        HibernateUtilityRef.getInstance("bp-data-model").executeUpdate(query);
+//        String query = "update ProcessInstanceGroupDAO as pig set pig.archived = true WHERE pig.partyID = '" + partyId + "'";
+//        HibernateUtilityRef.getInstance("bp-data-model").executeUpdate(query);
+        SpringBridge.getInstance().getProcessInstanceGroupDAORepository().archiveAllGroupsOfParty(partyId);
     }
 
     public static void deleteArchivedGroupsForParty(String partyId) {
-        String query = "select pig.hjid from ProcessInstanceGroupDAO pig WHERE pig.archived = true and pig.partyID = '" + partyId + "'";
-        List<Long> longs = (List<Long>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
-        for(Long hjid : longs){
-            HibernateUtilityRef.getInstance("bp-data-model").delete(ProcessInstanceGroupDAO.class,hjid);
+//        String query = "select pig.hjid from ProcessInstanceGroupDAO pig WHERE pig.archived = true and pig.partyID = '" + partyId + "'";
+//        List<Long> longs = (List<Long>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+        List<Long> hjids = SpringBridge.getInstance().getProcessInstanceGroupDAORepository().getHjidsOfArchivedGroupsForParty(partyId);
+        for(Long hjid : hjids){
+//            HibernateUtilityRef.getInstance("bp-data-model").delete(ProcessInstanceGroupDAO.class,hjid);
+            SpringBridge.getInstance().getProcessInstanceGroupDAORepository().delete(hjid);
         }
     }
 
     public static String getOrderIdInGroup(String processInstanceId) {
         // get order
-        String query = "SELECT DISTINCT doc.documentID FROM ProcessInstanceGroupDAO pig join pig.processInstanceIDsItems pid," +
-                " ProcessInstanceDAO pi, " +
-                " ProcessDocumentMetadataDAO doc" +
-                " WHERE " +
-                " pid.item = pi.processInstanceID AND" +
-                " doc.processInstanceID = pi.processInstanceID AND" +
-                " doc.type = 'ORDER' AND pig.ID IN" +
-
-                " (" +
-                " SELECT pig2.ID FROM ProcessInstanceGroupDAO pig2 join pig2.processInstanceIDsItems pid2," +
-                " ProcessInstanceDAO pi2 " +
-                " WHERE" +
-                " pid2.item = pi2.processInstanceID AND " +
-                " pi2.processInstanceID = ?" +
-                ")";
-
-        String orderId = HibernateUtility.getInstance("bp-data-model").load(query, processInstanceId);
+//        String query = "SELECT DISTINCT doc.documentID FROM ProcessInstanceGroupDAO pig join pig.processInstanceIDsItems pid," +
+//                " ProcessInstanceDAO pi, " +
+//                " ProcessDocumentMetadataDAO doc" +
+//                " WHERE " +
+//                " pid.item = pi.processInstanceID AND" +
+//                " doc.processInstanceID = pi.processInstanceID AND" +
+//                " doc.type = 'ORDER' AND pig.ID IN" +
+//
+//                " (" +
+//                " SELECT pig2.ID FROM ProcessInstanceGroupDAO pig2 join pig2.processInstanceIDsItems pid2," +
+//                " ProcessInstanceDAO pi2 " +
+//                " WHERE" +
+//                " pid2.item = pi2.processInstanceID AND " +
+//                " pi2.processInstanceID = ?" +
+//                ")";
+//
+//        String orderId = HibernateUtility.getInstance("bp-data-model").load(query, processInstanceId);
+        String orderId = SpringBridge.getInstance().getProcessInstanceGroupDAORepository().getOrderIdInGroup(processInstanceId);
         return orderId;
     }
 
     private enum GroupQueryType {
         GROUP, FILTER, SIZE
+    }
+
+    private static class QueryData {
+        private String query;
+        private List<String> parameterNames = new ArrayList<>();
+        private List<Object> parameterValues = new ArrayList<>();
     }
 }

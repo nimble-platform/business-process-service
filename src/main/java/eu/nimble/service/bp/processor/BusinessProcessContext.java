@@ -1,8 +1,7 @@
 package eu.nimble.service.bp.processor;
 
 import eu.nimble.service.bp.hyperjaxb.model.*;
-import eu.nimble.service.bp.impl.util.persistence.HibernateUtilityRef;
-import eu.nimble.utility.Configuration;
+import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 
 public class BusinessProcessContext {
 
@@ -24,41 +23,51 @@ public class BusinessProcessContext {
 
     public void handleExceptions() {
         if (messageDAO != null) {
-            HibernateUtilityRef.getInstance("bp-data-model").delete(messageDAO);
+//            HibernateUtilityRef.getInstance("bp-data-model").delete(messageDAO);
+            SpringBridge.getInstance().getBusinessProcessRepository().deleteEntity(messageDAO);
         }
         if (metadataDAO != null) {
             if (previousDocumentMetadataStatus != null) {
                 updatedDocumentMetadata.setStatus(previousDocumentMetadataStatus);
-                HibernateUtilityRef.getInstance("bp-data-model").update(updatedDocumentMetadata);
+//                HibernateUtilityRef.getInstance("bp-data-model").update(updatedDocumentMetadata);
+                SpringBridge.getInstance().getBusinessProcessRepository().updateEntity(updatedDocumentMetadata);
             }
-            HibernateUtilityRef.getInstance("bp-data-model").delete(metadataDAO);
+//            HibernateUtilityRef.getInstance("bp-data-model").delete(metadataDAO);
+            SpringBridge.getInstance().getBusinessProcessRepository().deleteEntity(metadataDAO);
         }
         if (document != null) {
-            HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(document);
+//            HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(document);
+            SpringBridge.getInstance().getGenericCatalogueRepository().deleteEntity(document);
         }
         if (previousDocument != null){
-            HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(previousDocument);
+//            HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(previousDocument);
+            SpringBridge.getInstance().getBusinessProcessRepository().persistEntity(previousDocument);
         }
         if (previousStatus == null && processInstanceDAO != null) {
-            HibernateUtilityRef.getInstance("bp-data-model").delete(processInstanceDAO);
+//            HibernateUtilityRef.getInstance("bp-data-model").delete(processInstanceDAO);
+            SpringBridge.getInstance().getBusinessProcessRepository().deleteEntity(processInstanceDAO);
         }
 
         if (processInstanceGroupDAO1 != null) {
-            HibernateUtilityRef.getInstance("bp-data-model").delete(processInstanceGroupDAO1);
+//            HibernateUtilityRef.getInstance("bp-data-model").delete(processInstanceGroupDAO1);
+            SpringBridge.getInstance().getBusinessProcessRepository().deleteEntity(processInstanceGroupDAO1);
         }
         if (processInstanceGroupDAO2 != null) {
-            HibernateUtilityRef.getInstance("bp-data-model").delete(processInstanceGroupDAO2);
+//            HibernateUtilityRef.getInstance("bp-data-model").delete(processInstanceGroupDAO2);
+            SpringBridge.getInstance().getBusinessProcessRepository().deleteEntity(processInstanceGroupDAO2);
         }
         if (sourceGroup != null) {
             for (ProcessInstanceGroupDAO.ProcessInstanceGroupDAOProcessInstanceIDsItem p : sourceGroup.getProcessInstanceIDsItems()) {
                 if (p.getItem().equals(processInstanceDAO.getProcessInstanceID())) {
-                    HibernateUtilityRef.getInstance("bp-data-model").delete(p);
+//                    HibernateUtilityRef.getInstance("bp-data-model").delete(p);
+                    SpringBridge.getInstance().getBusinessProcessRepository().deleteEntity(p);
                 }
             }
             if (targetGroup != null) {
                 for (ProcessInstanceGroupDAO.ProcessInstanceGroupDAOAssociatedGroupsItem p : sourceGroup.getAssociatedGroupsItems()) {
                     if (p.getItem().equals(targetGroup.getID())) {
-                        HibernateUtilityRef.getInstance("bp-data-model").delete(p);
+//                        HibernateUtilityRef.getInstance("bp-data-model").delete(p);
+                        SpringBridge.getInstance().getBusinessProcessRepository().deleteEntity(p);
                     }
                 }
             }
@@ -66,19 +75,23 @@ public class BusinessProcessContext {
         if (associatedGroup != null) {
             for (ProcessInstanceGroupDAO.ProcessInstanceGroupDAOProcessInstanceIDsItem p : associatedGroup.getProcessInstanceIDsItems()) {
                 if (p.getItem().equals(processInstanceDAO.getProcessInstanceID())) {
-                    HibernateUtilityRef.getInstance("bp-data-model").delete(p);
+//                    HibernateUtilityRef.getInstance("bp-data-model").delete(p);
+                    SpringBridge.getInstance().getBusinessProcessRepository().deleteEntity(p);
                 }
             }
         }
         if (targetGroup != null) {
-            HibernateUtilityRef.getInstance("bp-data-model").delete(targetGroup);
+//            HibernateUtilityRef.getInstance("bp-data-model").delete(targetGroup);
+            SpringBridge.getInstance().getBusinessProcessRepository().deleteEntity(targetGroup);
         }
         if (previousStatus != null && processInstanceDAO != null) {
             processInstanceDAO.setStatus(ProcessInstanceStatus.fromValue(previousStatus.toString()));
-            HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceDAO);
+//            HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceDAO);
+            SpringBridge.getInstance().getBusinessProcessRepository().updateEntity(processInstanceDAO);
         }
         if (updatedAssociatedGroup != null) {
-            HibernateUtilityRef.getInstance("bp-data-model").delete(updatedAssociatedGroup);
+//            HibernateUtilityRef.getInstance("bp-data-model").delete(updatedAssociatedGroup);
+            SpringBridge.getInstance().getBusinessProcessRepository().deleteEntity(updatedAssociatedGroup);
         }
     }
 

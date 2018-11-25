@@ -1,17 +1,18 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.hyperjaxb.model.ProcessDAO;
+import eu.nimble.service.bp.impl.persistence.bp.BusinessProcessRepository;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
+import eu.nimble.service.bp.impl.util.jssequence.JSSequenceDiagramParser;
 import eu.nimble.service.bp.impl.util.persistence.DAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.HibernateSwaggerObjectMapper;
-import eu.nimble.service.bp.impl.util.jssequence.JSSequenceDiagramParser;
-import eu.nimble.service.bp.impl.util.persistence.HibernateUtilityRef;
 import eu.nimble.service.bp.swagger.api.ContentApi;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
 import eu.nimble.service.bp.swagger.model.Process;
 import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -27,6 +28,9 @@ import java.util.List;
 @Controller
 public class ContentController implements ContentApi {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    @Autowired
+    private BusinessProcessRepository businessProcessRepository;
 
     @Override
     @ApiOperation(value = "",notes = "Add a new business process")
@@ -46,7 +50,8 @@ public class ContentController implements ContentApi {
         CamundaEngine.addProcessDefinition(body.getProcessID(), bpmnContent);
 
         ProcessDAO processDAO = HibernateSwaggerObjectMapper.createProcess_DAO(body);
-        HibernateUtilityRef.getInstance("bp-data-model").persist(processDAO);
+//        HibernateUtilityRef.getInstance("bp-data-model").persist(processDAO);
+        businessProcessRepository.persistEntity(processDAO);
 
         return HibernateSwaggerObjectMapper.getApiResponse();
     }
@@ -60,7 +65,8 @@ public class ContentController implements ContentApi {
 
         ProcessDAO processDAO = DAOUtility.getProcessDAOByID(processID);
         if(processDAO != null)
-            HibernateUtilityRef.getInstance("bp-data-model").delete(ProcessDAO.class, processDAO.getHjid());
+//            HibernateUtilityRef.getInstance("bp-data-model").delete(ProcessDAO.class, processDAO.getHjid());
+            businessProcessRepository.deleteEntityByHjid(ProcessDAO.class, processDAO.getHjid());
 
         return HibernateSwaggerObjectMapper.getApiResponse();
     }
@@ -133,7 +139,8 @@ public class ContentController implements ContentApi {
 
         processDAONew.setHjid(processDAO.getHjid());
 
-        HibernateUtilityRef.getInstance("bp-data-model").update(processDAONew);
+//        HibernateUtilityRef.getInstance("bp-data-model").update(processDAONew);
+        businessProcessRepository.updateEntity(processDAONew);
 
         return HibernateSwaggerObjectMapper.getApiResponse();
     }

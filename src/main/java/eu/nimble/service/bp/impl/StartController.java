@@ -1,15 +1,14 @@
 package eu.nimble.service.bp.impl;
 
-import com.netflix.discovery.converters.Auto;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceInputMessageDAO;
+import eu.nimble.service.bp.impl.persistence.bp.BusinessProcessRepository;
 import eu.nimble.service.bp.impl.persistence.bp.ProcessInstanceDAORepository;
 import eu.nimble.service.bp.impl.persistence.bp.ProcessInstanceGroupDAORepository;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.impl.util.persistence.DAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.HibernateSwaggerObjectMapper;
-import eu.nimble.service.bp.impl.util.persistence.HibernateUtilityRef;
 import eu.nimble.service.bp.impl.util.persistence.ProcessInstanceGroupDAOUtility;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
@@ -24,7 +23,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -40,9 +38,11 @@ public class StartController implements StartApi {
 
     @Autowired
     private ProcessInstanceDAORepository processInstanceRepository;
-
     @Autowired
     private ProcessInstanceGroupDAORepository processInstanceGroupDAORepository;
+    @Autowired
+    private BusinessProcessRepository businessProcessRepository;
+
     @Override
     @ApiOperation(value = "", notes = "Start an instance of a business process", response = ProcessInstance.class, tags={  })
     public ResponseEntity<ProcessInstance> startProcessInstance(@ApiParam(value = "", required = true) @RequestBody ProcessInstanceInputMessage body,
@@ -54,7 +54,8 @@ public class StartController implements StartApi {
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
         try {
             ProcessInstanceInputMessageDAO processInstanceInputMessageDAO = HibernateSwaggerObjectMapper.createProcessInstanceInputMessage_DAO(body);
-            HibernateUtilityRef.getInstance("bp-data-model").persist(processInstanceInputMessageDAO);
+//            HibernateUtilityRef.getInstance("bp-data-model").persist(processInstanceInputMessageDAO);
+            businessProcessRepository.persistEntity(processInstanceInputMessageDAO);
 
             // save ProcessInstanceInputMessageDAO
             businessProcessContext.setMessageDAO(processInstanceInputMessageDAO);
