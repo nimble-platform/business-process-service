@@ -109,11 +109,10 @@ public class DocumentDAOUtility {
                 ItemInformationRequestType itemInformationRequest = mapper.readValue(content, ItemInformationRequestType.class);
 
                 ItemInformationRequestType existingItemInformationRequest = (ItemInformationRequestType) getUBLDocument(itemInformationRequest.getID(),DocumentType.ITEMINFORMATIONREQUEST);
-                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(existingItemInformationRequest);
 
                 businessProcessContext.setPreviousDocument(existingItemInformationRequest);
 
-                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(itemInformationRequest);
+                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).update(itemInformationRequest);
 
                 businessProcessContext.setDocument(itemInformationRequest);
             }
@@ -126,11 +125,10 @@ public class DocumentDAOUtility {
                 DespatchAdviceType despatchAdviceType = mapper.readValue(content, DespatchAdviceType.class);
 
                 DespatchAdviceType existingDespatchAdvice = (DespatchAdviceType) getUBLDocument(despatchAdviceType.getID(),DocumentType.DESPATCHADVICE);
-                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(existingDespatchAdvice);
 
                 businessProcessContext.setPreviousDocument(existingDespatchAdvice);
 
-                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(despatchAdviceType);
+                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).update(despatchAdviceType);
 
                 businessProcessContext.setDocument(despatchAdviceType);
             }
@@ -143,11 +141,10 @@ public class DocumentDAOUtility {
                 RequestForQuotationType requestForQuotationType = mapper.readValue(content, RequestForQuotationType.class);
 
                 RequestForQuotationType existingRequestForQuotation = (RequestForQuotationType) getUBLDocument(requestForQuotationType.getID(),DocumentType.REQUESTFORQUOTATION);
-                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(existingRequestForQuotation);
 
                 businessProcessContext.setPreviousDocument(existingRequestForQuotation);
 
-                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(requestForQuotationType);
+                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).update(requestForQuotationType);
 
                 businessProcessContext.setDocument(requestForQuotationType);
             }
@@ -160,11 +157,10 @@ public class DocumentDAOUtility {
                 OrderType orderType = mapper.readValue(content, OrderType.class);
 
                 OrderType existingOrderType = (OrderType) getUBLDocument(orderType.getID(),DocumentType.ORDER);
-                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(existingOrderType);
 
                 businessProcessContext.setPreviousDocument(existingOrderType);
 
-                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(orderType);
+                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).update(orderType);
 
                 businessProcessContext.setDocument(orderType);
             }
@@ -177,11 +173,10 @@ public class DocumentDAOUtility {
                 PpapRequestType ppapRequestType = mapper.readValue(content, PpapRequestType.class);
 
                 PpapRequestType existingPPAPRequest = (PpapRequestType) getUBLDocument(ppapRequestType.getID(),DocumentType.PPAPREQUEST);
-                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(existingPPAPRequest);
 
                 businessProcessContext.setPreviousDocument(existingPPAPRequest);
 
-                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(ppapRequestType);
+                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).update(ppapRequestType);
 
                 businessProcessContext.setDocument(ppapRequestType);
             }
@@ -194,11 +189,10 @@ public class DocumentDAOUtility {
                 TransportExecutionPlanRequestType transportExecutionPlanRequestType = mapper.readValue(content, TransportExecutionPlanRequestType.class);
 
                 TransportExecutionPlanRequestType existingTEPRequest = (TransportExecutionPlanRequestType) getUBLDocument(transportExecutionPlanRequestType.getID(),DocumentType.TRANSPORTEXECUTIONPLANREQUEST);
-                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(existingTEPRequest);
 
                 businessProcessContext.setPreviousDocument(existingTEPRequest);
 
-                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(transportExecutionPlanRequestType);
+                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).update(transportExecutionPlanRequestType);
 
                 businessProcessContext.setDocument(transportExecutionPlanRequestType);
             }
