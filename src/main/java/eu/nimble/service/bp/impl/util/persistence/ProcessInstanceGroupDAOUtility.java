@@ -221,15 +221,9 @@ public class ProcessInstanceGroupDAOUtility {
             query += " and (";
             int i = 0;
             for (; i < status.size() - 1; i++) {
-                query += " (pi.status = :status" + i + ") or";
-
-                parameterNames.add("status" + i);
-                parameterValues.add(status.get(i));
+                query += " (pi.status = '" + ProcessInstanceStatus.valueOf(status.get(i)).toString() + "') or";
             }
-            query += " (pi.status = :status" + i + "))";
-
-            parameterNames.add("status" + i);
-            parameterValues.add(status.get(i));
+            query += " (pi.status = '" + ProcessInstanceStatus.valueOf(status.get(i)).toString() + "'))";
         }
         if (archived != null) {
             query += " and pig.archived = :archived";
