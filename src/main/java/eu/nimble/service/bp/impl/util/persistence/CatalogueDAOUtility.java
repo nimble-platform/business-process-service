@@ -7,14 +7,11 @@ import eu.nimble.service.model.ubl.commonaggregatecomponents.CatalogueLineType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.QualifyingPartyType;
 import eu.nimble.service.model.ubl.order.OrderType;
-import eu.nimble.utility.Configuration;
-import eu.nimble.utility.HibernateUtility;
 import eu.nimble.utility.JsonSerializationUtility;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.util.List;
 
@@ -43,9 +40,12 @@ public class CatalogueDAOUtility {
         if(party == null){
             return null;
         }
-        String query = "SELECT party FROM PartyType party WHERE party.ID = ? ORDER BY party.hjid ASC";
-        List<PartyType> partyTypes = (List<PartyType>) HibernateUtility.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadAll(query,party.getID());
-        if(partyTypes.size() == 0){
+//        String query = "SELECT party FROM PartyType party WHERE party.ID = ? ORDER BY party.hjid ASC";
+//        List<PartyType> partyTypes = (List<PartyType>) HibernateUtility.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadAll(query,party.getID());
+        party = SpringBridge.getInstance().getGenericCatalogueRepository().getPartyByID(party.getID()).get(0);
+        if(party != null) {
+            return party;
+        } else {
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper = objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
             try {
@@ -61,7 +61,6 @@ public class CatalogueDAOUtility {
             SpringBridge.getInstance().getGenericCatalogueRepository().persistEntity(party);
             return party;
         }
-        return partyTypes.get(0);
     }
 
     public static PartyType getParty(String partyId) {

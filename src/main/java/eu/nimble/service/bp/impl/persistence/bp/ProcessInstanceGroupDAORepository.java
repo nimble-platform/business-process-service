@@ -1,6 +1,5 @@
 package eu.nimble.service.bp.impl.persistence.bp;
 
-import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;

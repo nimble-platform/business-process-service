@@ -94,7 +94,7 @@ public class StatisticsDAOUtility {
         if (partyId != null) {
             query += " and item.manufacturerParty.ID = :partyId";
             parameterNames.add("partyId");
-            parameterValues.add(partyId);
+            parameterValues.add(partyId.toString());
         }
 
         query += " and item.manufacturersItemIdentification.ID not in " +
@@ -145,7 +145,11 @@ public class StatisticsDAOUtility {
         JsonNode allParties = mapper.readTree(parser);
         Iterable<JsonNode> iterable = () -> allParties.elements();
         iterable.forEach(partyResult -> {
-            String partyId = partyResult.get("identifier").asText();
+            JsonNode idNode = partyResult.get("identifier");
+            if(idNode == null) {
+                return;
+            }
+            String partyId = idNode.asText();
             if(!activePartyIds.contains(partyId)) {
                 PartyType party = new PartyType();
                 party.setID(partyId);

@@ -14,6 +14,8 @@ import eu.nimble.service.model.ubl.ppaprequest.PpapRequestType;
 import eu.nimble.service.model.ubl.ppapresponse.PpapResponseType;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.util.Units;
 import org.apache.poi.xwpf.converter.pdf.PdfConverter;
@@ -318,7 +320,7 @@ public class ContractGenerator {
                                         }
                                     }
                                     else if(text.contains("$seller_tel")){
-                                        if(!order.getSellerSupplierParty().getParty().getPerson().get(0).getContact().getTelephone().contentEquals("")){
+                                        if(!CollectionUtils.isEmpty(order.getSellerSupplierParty().getParty().getPerson()) && !order.getSellerSupplierParty().getParty().getPerson().get(0).getContact().getTelephone().contentEquals("")){
                                             text = text.replace("$seller_tel",order.getSellerSupplierParty().getParty().getPerson().get(0).getContact().getTelephone());
                                             r.setText(text,0);
                                             r.setUnderline(UnderlinePatterns.SINGLE);
@@ -546,7 +548,7 @@ public class ContractGenerator {
                                         }
                                     }
                                     if(text.contains("$phone_supplier")){
-                                        if(!order.getSellerSupplierParty().getParty().getPerson().get(0).getContact().getTelephone().contentEquals("")){
+                                        if(!CollectionUtils.isEmpty(order.getSellerSupplierParty().getParty().getPerson()) && !order.getSellerSupplierParty().getParty().getPerson().get(0).getContact().getTelephone().contentEquals("")){
                                             text = text.replace("$phone_supplier",order.getSellerSupplierParty().getParty().getPerson().get(0).getContact().getTelephone());
                                             r.setText(text,0);
                                         }

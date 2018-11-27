@@ -13,8 +13,6 @@ import eu.nimble.service.bp.impl.util.persistence.DocumentDAOUtility;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.CatalogueLineType;
 import eu.nimble.service.model.ubl.order.OrderType;
-import eu.nimble.utility.Configuration;
-import eu.nimble.utility.HibernateUtility;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -189,8 +187,8 @@ public class EPCController {
             GenericConfig config = SpringBridge.getInstance().getGenericConfig();
             String dataChannelServiceUrlStr = config.getDataChannelServiceUrl()+"/epc/list?orders="+params;
 
-            HttpResponse<com.mashape.unirest.http.JsonNode> response = Unirest.get(dataChannelServiceUrlStr)
-                    .header("Authorization", bearerToken).asJson();
+            HttpResponse<String> response = Unirest.get(dataChannelServiceUrlStr)
+                    .header("Authorization", bearerToken).asString();
 
             List<String> epcCodes = new ArrayList<>();
             ObjectMapper objectMapper = new ObjectMapper();

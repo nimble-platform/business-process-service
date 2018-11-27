@@ -74,7 +74,10 @@ public class CatalogueRepositoryImpl implements CustomCatalogueRepository {
 
     @Override
     public <T> void deleteEntity(T entity) {
-        em.remove(entity);
+        if(!em.contains(entity)) {
+            entity = em.merge(entity);
+            em.remove(entity);
+        }
     }
 
     @Override

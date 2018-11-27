@@ -12,7 +12,6 @@ import eu.nimble.service.bp.swagger.model.ProcessInstanceGroup;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupFilter;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupResponse;
 import eu.nimble.service.model.ubl.order.OrderType;
-import eu.nimble.utility.HibernateUtility;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;

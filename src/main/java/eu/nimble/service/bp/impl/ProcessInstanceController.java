@@ -3,13 +3,12 @@ package eu.nimble.service.bp.impl;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceStatus;
-import eu.nimble.service.bp.impl.persistence.bp.BusinessProcessRepository;
 import eu.nimble.service.bp.impl.persistence.bp.ProcessInstanceDAORepository;
+import eu.nimble.service.bp.impl.persistence.catalogue.CatalogueRepository;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.impl.util.controller.HttpResponseUtil;
 import eu.nimble.service.bp.impl.util.persistence.DAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.DocumentDAOUtility;
-import eu.nimble.service.bp.impl.util.persistence.ProcessInstanceDAOUtility;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
@@ -38,6 +37,8 @@ public class ProcessInstanceController {
 
     @Autowired
     private ProcessInstanceDAORepository processInstanceDAORepository;
+    @Autowired
+    private CatalogueRepository catalogueRepository;
 
     @ApiOperation(value = "",notes = "Cancel the process instance with the given id")
     @ApiResponses(value = {
@@ -130,7 +131,8 @@ public class ProcessInstanceController {
                                    @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         try {
             logger.info("Getting rating status for process instance: {}, party: {}", processInstanceId, partyId);
-            CompletedTaskType completedTask = ProcessInstanceDAOUtility.getCompletedTask(partyId, processInstanceId);
+//            CompletedTaskType completedTask = ProcessInstanceDAOUtility.getCompletedTask(partyId, processInstanceId);
+            CompletedTaskType completedTask = catalogueRepository.getCompletedTaskByPartyIdAndProcessInstanceId(partyId, processInstanceId);
             Boolean rated = false;
             if (completedTask != null && (completedTask.getEvidenceSupplied().size() > 0 || completedTask.getComment().size() > 0)) {
                 rated = true;

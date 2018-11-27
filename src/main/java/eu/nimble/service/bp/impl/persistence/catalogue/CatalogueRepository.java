@@ -2,6 +2,7 @@ package eu.nimble.service.bp.impl.persistence.catalogue;
 
 import eu.nimble.service.model.ubl.catalogue.CatalogueType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.CatalogueLineType;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.CompletedTaskType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.QualifyingPartyType;
 import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
@@ -32,4 +33,10 @@ public interface CatalogueRepository extends JpaRepository<CatalogueType, Long>,
 
     @Query(value = "SELECT orderResponse FROM OrderResponseSimpleType orderResponse WHERE orderResponse.orderReference.documentReference.ID = :documentId")
     OrderResponseSimpleType getOrderResponseSimple(@Param("documentId") String documentId);
+
+
+    @Query(value =
+            "SELECT completedTask FROM QualifyingPartyType qParty JOIN qParty.completedTask completedTask " +
+                    "WHERE qParty.party.ID = :partyId AND completedTask.associatedProcessInstanceID = :processInstanceId")
+    CompletedTaskType getCompletedTaskByPartyIdAndProcessInstanceId(@Param("partyId") String partyId, @Param("processInstanceId") String processInstanceId);
 }

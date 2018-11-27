@@ -30,7 +30,7 @@ public class DocumentDAOUtility {
     private static final String QUERY_GET_REQUEST_METADATA = "FROM ProcessDocumentMetadataDAO documentMetadata WHERE documentMetadata.processInstanceID=:processInstanceId AND (" +
             "documentMetadata.type = 'REQUESTFORQUOTATION' OR documentMetadata.type = 'ORDER' OR documentMetadata.type = 'DESPATCHADVICE' OR " +
             "documentMetadata.type = 'PPAPREQUEST' OR documentMetadata.type = 'TRANSPORTEXECUTIONPLANREQUEST' OR documentMetadata.type = 'ITEMINFORMATIONREQUEST')";
-    private static final String QUERY_GET_RESPONSE_METADATA = "FROM ProcessDocumentMetadataDAO documentMetadata WHERE documentMetadata.processInstanceID=:processInstanceId AND (" +
+    private static final String QUERY_GET_RESPONSE_METADATA = "SELECT documentMetadata FROM ProcessDocumentMetadataDAO documentMetadata WHERE documentMetadata.processInstanceID=:processInstanceId AND (" +
             "documentMetadata.type = 'QUOTATION' OR documentMetadata.type = 'ORDERRESPONSESIMPLE' OR documentMetadata.type = 'RECEIPTADVICE' OR " +
             "documentMetadata.type = 'PPAPRESPONSE' OR documentMetadata.type = 'TRANSPORTEXECUTIONPLAN' OR documentMetadata.type = 'ITEMINFORMATIONRESPONSE')";
     private static final String QUERY_PROCESS_METADATA_DOCUMENT_EXISTS = "SELECT count(*) FROM ProcessDocumentMetadataDAO document WHERE document.documentID = :documentId";
@@ -381,7 +381,7 @@ public class DocumentDAOUtility {
         Object document = null;
         if(documentType == DocumentType.ORDER){
 //            String query = "SELECT orderResponse FROM OrderResponseSimpleType orderResponse WHERE orderResponse.orderReference.documentReference.ID = '"+documentID+"'";
-//            document = (OrderResponseSimpleType) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadIndividualItem(query);
+//            document = (OrderRes,ponseSimpleType) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadIndividualItem(query);
             document = SpringBridge.getInstance().getGenericCatalogueRepository().getOrderResponseSimple(documentID);
         }
         return document;
@@ -395,11 +395,11 @@ public class DocumentDAOUtility {
 
     public static ProcessDocumentMetadata getResponseMetadata(String processInstanceID){
 //        ProcessDocumentMetadataDAO processDocumentDAO = (ProcessDocumentMetadataDAO) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query);
-        ProcessDocumentMetadataDAO processDocumentDAO = (ProcessDocumentMetadataDAO) SpringBridge.getInstance().getBusinessProcessRepository().getEntities(QUERY_GET_RESPONSE_METADATA, new String[]{"processInstanceId"}, new Object[]{processInstanceID}).get(0);
-        if(processDocumentDAO == null){
+        List<ProcessDocumentMetadataDAO> processDocumentDAO = SpringBridge.getInstance().getBusinessProcessRepository().getEntities(QUERY_GET_RESPONSE_METADATA, new String[]{"processInstanceId"}, new Object[]{processInstanceID});
+        if(processDocumentDAO == null || processDocumentDAO.size() == 0){
             return null;
         }
-        return HibernateSwaggerObjectMapper.createProcessDocumentMetadata(processDocumentDAO);
+        return HibernateSwaggerObjectMapper.createProcessDocumentMetadata(processDocumentDAO.get(0));
     }
 
     public static boolean documentExists(String documentID) {

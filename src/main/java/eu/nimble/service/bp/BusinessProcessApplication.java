@@ -1,7 +1,6 @@
 package eu.nimble.service.bp;
 
 import com.netflix.hystrix.contrib.javanica.aop.aspectj.HystrixCommandAspect;
-import eu.nimble.service.bp.impl.util.persistence.HibernateUtilityRef;
 import org.apache.ibatis.session.SqlSession;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.ProcessEngines;

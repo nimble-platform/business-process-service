@@ -180,7 +180,7 @@ public class DAOUtility {
             filterExists = true;
 
             parameterNames.add("partyId");
-            parameterValues.add(partyId);
+            parameterValues.add(partyId.toString());
         }
 
         if(startDateStr != null || endDateStr != null){
@@ -227,15 +227,9 @@ public class DAOUtility {
                 queryStr += " and(";
             }
             for (int i = 0; i < documentTypes.size() - 1; i++) {
-                queryStr += " documentMetadata.type = :type" + i + " or";
-
-                parameterNames.add("type" + i);
-                parameterValues.add(documentTypes.get(i).toString());
+                queryStr += " documentMetadata.type = '" + DocumentType.valueOf(documentTypes.get(i)).toString() + "' or";
             }
-            queryStr += " documentMetadata.type = :type" + (documentTypes.size() - 1) + ")";
-
-            parameterNames.add("type" + (documentTypes.size() - 1));
-            parameterValues.add(documentTypes.get(documentTypes.size() - 1).toString());
+            queryStr += " documentMetadata.type = '" + DocumentType.valueOf(documentTypes.get(documentTypes.size() - 1)).toString() + "')";
             filterExists = true;
         }
 
@@ -245,10 +239,7 @@ public class DAOUtility {
             } else {
                 queryStr += " and ";
             }
-            queryStr += " documentMetadata.status = :status";
-
-            parameterNames.add("status");
-            parameterValues.add(status);
+            queryStr += " documentMetadata.status = '" + ProcessDocumentStatus.valueOf(status).toString() + "'";
         }
 
         if(queryType.equals(DocumentMetadataQueryType.GROUPED_TRANSACTION_COUNT)) {
