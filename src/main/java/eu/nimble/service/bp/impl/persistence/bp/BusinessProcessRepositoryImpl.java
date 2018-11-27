@@ -1,111 +1,73 @@
 package eu.nimble.service.bp.impl.persistence.bp;
 
-import org.apache.commons.lang.ArrayUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Primary;
+import eu.nimble.utility.persistence.GenericJPARepository;
+import eu.nimble.utility.persistence.GenericJPARepositoryImpl;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
 import java.util.List;
 
 /**
+ * In this class, we do not use the methods of @{@link GenericJPARepositoryImpl} directly since the transaction management
+ * is available only if the methods are defined in this class.
+ *
  * Created by suat on 23-Nov-18.
  */
 @Component
 @Transactional(transactionManager = "bpdbTransactionManager")
-public class BusinessProcessRepositoryImpl implements CustomBusinessProcessRepository {
+public class BusinessProcessRepositoryImpl implements GenericJPARepository {
 
-    private static final String QUERY_DELETE_BY_HJID = "DELETE FROM %s item WHERE item.hjid = :hjid";
+    private GenericJPARepositoryImpl hibernateUtility;
 
     @PersistenceContext(unitName = "bp-data-model")
-    private EntityManager em;
-
-    @Override
-    public <T> T getSingleEntityByHjid(Class<T> klass, long hjid) {
-        return em.find(klass, hjid);
+    private void setEm(EntityManager em) {
+        this.hibernateUtility = new GenericJPARepositoryImpl(em);
     }
 
     @Override
-    public <T> T getSingleEntity(String queryStr, String[] parameterNames, Object[] parameterValues) {
-        Query query = em.createQuery(queryStr);
-        if(!ArrayUtils.isEmpty(parameterNames) && !ArrayUtils.isEmpty(parameterValues)) {
-            if(parameterNames.length != parameterValues.length) {
-                throw new RuntimeException("Non matching sizes of parameter names ");
-            }
-            for(int i=0; i<parameterNames.length; i++) {
-                query.setParameter(parameterNames[i], parameterValues[i]);
-            }
-        }
+    public <T> T getSingleEntityByHjid(Class<T> klass, long hjid) {
+        return hibernateUtility.getSingleEntityByHjid(klass, hjid);
+    }
 
-        List<T> result = query.getResultList();
-        if (result == null || result.size() == 0) {
-            return null;
-        } else {
-            return result.get(0);
-        }
+    @Override
+    public <T> T getSingleEntity(String query, String[] parameterNames, Object[] parameterValues) {
+        return hibernateUtility.getSingleEntity(query, parameterNames, parameterValues);
     }
 
     @Override
     public <T> List<T> getEntities(String query) {
-        return getEntities(query, null, null);
+        return hibernateUtility.getEntities(query);
     }
 
     @Override
-    public <T> List<T> getEntities(String queryStr, String[] parameterNames, Object[] parameterValues) {
-        return getEntities(queryStr, parameterNames, parameterValues, null, null);
+    public <T> List<T> getEntities(String query, String[] parameterNames, Object[] parameterValues) {
+        return hibernateUtility.getEntities(query, parameterNames, parameterValues);
     }
 
     @Override
-    public <T> List<T> getEntities(String queryStr, String[] parameterNames, Object[] parameterValues, Integer limit, Integer offset) {
-        Query query = em.createQuery(queryStr);
-        if(!ArrayUtils.isEmpty(parameterNames) && !ArrayUtils.isEmpty(parameterValues)) {
-            if(parameterNames.length != parameterValues.length) {
-                throw new RuntimeException("Non matching sizes of parameter names ");
-            }
-            for(int i=0; i<parameterNames.length; i++) {
-                query.setParameter(parameterNames[i], parameterValues[i]);
-            }
-        }
-
-        if(limit != null && offset != null) {
-            query.setFirstResult(offset);
-            query.setMaxResults(limit);
-        }
-
-        List<T> result = query.getResultList();
-        return result;
+    public <T> List<T> getEntities(String query, String[] parameterNames, Object[] parameterValues, Integer limit, Integer offset) {
+        return hibernateUtility.getEntities(query, parameterNames, parameterValues, limit, offset);
     }
 
     @Override
     public <T> T updateEntity(T entity) {
-        entity = em.merge(entity);
-        return entity;
+        return hibernateUtility.updateEntity(entity);
     }
 
     @Override
     public <T> void deleteEntity(T entity) {
-        if(!em.contains(entity)) {
-            entity = em.merge(entity);
-            em.remove(entity);
-        }
-        em.remove(entity);
+        hibernateUtility.deleteEntity(entity);
     }
 
     @Override
     public <T> void deleteEntityByHjid(Class<T> klass, long hjid) {
-        String queryStr = String.format(QUERY_DELETE_BY_HJID, klass.getSimpleName());
-        Query query = em.createQuery(queryStr);
-        query.setParameter("hjid", hjid);
-        query.executeUpdate();
+        hibernateUtility.deleteEntityByHjid(klass, hjid);
     }
 
     @Override
     public <T> void persistEntity(T entity) {
-        em.persist(entity);
+        hibernateUtility.persistEntity(entity);
     }
 }

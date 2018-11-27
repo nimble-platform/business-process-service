@@ -85,7 +85,7 @@ public class DocumentDAOUtility {
         if (document != null)
         {
 //            HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).update(document);
-            SpringBridge.getInstance().getGenericCatalogueRepository().updateEntity(document);
+            document = SpringBridge.getInstance().getCatalogueRepository().updateEntity(document);
             // save Object
             businessProcessContext.setDocument(document);
         }
@@ -123,12 +123,12 @@ public class DocumentDAOUtility {
 
                 ItemInformationRequestType existingItemInformationRequest = (ItemInformationRequestType) getUBLDocument(itemInformationRequest.getID(),DocumentType.ITEMINFORMATIONREQUEST);
 //                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(existingItemInformationRequest);
-                SpringBridge.getInstance().getGenericCatalogueRepository().deleteEntity(existingItemInformationRequest);
+                SpringBridge.getInstance().getCatalogueRepository().deleteEntity(existingItemInformationRequest);
 
                 businessProcessContext.setPreviousDocument(existingItemInformationRequest);
 
 //                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(itemInformationRequest);
-                SpringBridge.getInstance().getGenericCatalogueRepository().persistEntity(itemInformationRequest);
+                SpringBridge.getInstance().getCatalogueRepository().persistEntity(itemInformationRequest);
 
                 businessProcessContext.setDocument(itemInformationRequest);
             }
@@ -142,12 +142,12 @@ public class DocumentDAOUtility {
 
                 DespatchAdviceType existingDespatchAdvice = (DespatchAdviceType) getUBLDocument(despatchAdviceType.getID(),DocumentType.DESPATCHADVICE);
 //                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(existingDespatchAdvice);
-                SpringBridge.getInstance().getGenericCatalogueRepository().deleteEntity(existingDespatchAdvice);
+                SpringBridge.getInstance().getCatalogueRepository().deleteEntity(existingDespatchAdvice);
 
                 businessProcessContext.setPreviousDocument(existingDespatchAdvice);
 
 //                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(despatchAdviceType);
-                SpringBridge.getInstance().getGenericCatalogueRepository().persistEntity(despatchAdviceType);
+                SpringBridge.getInstance().getCatalogueRepository().persistEntity(despatchAdviceType);
                 businessProcessContext.setDocument(despatchAdviceType);
             }
             catch (Exception e){
@@ -160,11 +160,11 @@ public class DocumentDAOUtility {
 
                 RequestForQuotationType existingRequestForQuotation = (RequestForQuotationType) getUBLDocument(requestForQuotationType.getID(),DocumentType.REQUESTFORQUOTATION);
 //                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(existingRequestForQuotation);
-                SpringBridge.getInstance().getGenericCatalogueRepository().deleteEntity(existingRequestForQuotation);
+                SpringBridge.getInstance().getCatalogueRepository().deleteEntity(existingRequestForQuotation);
                 businessProcessContext.setPreviousDocument(existingRequestForQuotation);
 
 //                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(requestForQuotationType);
-                SpringBridge.getInstance().getGenericCatalogueRepository().persistEntity(requestForQuotationType);
+                SpringBridge.getInstance().getCatalogueRepository().persistEntity(requestForQuotationType);
                 businessProcessContext.setDocument(requestForQuotationType);
             }
             catch (Exception e){
@@ -177,12 +177,12 @@ public class DocumentDAOUtility {
 
                 OrderType existingOrderType = (OrderType) getUBLDocument(orderType.getID(),DocumentType.ORDER);
 //                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(existingOrderType);
-                SpringBridge.getInstance().getGenericCatalogueRepository().deleteEntity(existingOrderType);
+                SpringBridge.getInstance().getCatalogueRepository().deleteEntity(existingOrderType);
 
                 businessProcessContext.setPreviousDocument(existingOrderType);
 
 //                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(orderType);
-                SpringBridge.getInstance().getGenericCatalogueRepository().persistEntity(orderType);
+                SpringBridge.getInstance().getCatalogueRepository().persistEntity(orderType);
 
                 businessProcessContext.setDocument(orderType);
             }
@@ -196,12 +196,12 @@ public class DocumentDAOUtility {
 
                 PpapRequestType existingPPAPRequest = (PpapRequestType) getUBLDocument(ppapRequestType.getID(),DocumentType.PPAPREQUEST);
 //                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(existingPPAPRequest);
-                SpringBridge.getInstance().getGenericCatalogueRepository().deleteEntity(existingPPAPRequest);
+                SpringBridge.getInstance().getCatalogueRepository().deleteEntity(existingPPAPRequest);
 
                 businessProcessContext.setPreviousDocument(existingPPAPRequest);
 
 //                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(ppapRequestType);
-                SpringBridge.getInstance().getGenericCatalogueRepository().persistEntity(ppapRequestType);
+                SpringBridge.getInstance().getCatalogueRepository().persistEntity(ppapRequestType);
 
                 businessProcessContext.setDocument(ppapRequestType);
             }
@@ -215,12 +215,12 @@ public class DocumentDAOUtility {
 
                 TransportExecutionPlanRequestType existingTEPRequest = (TransportExecutionPlanRequestType) getUBLDocument(transportExecutionPlanRequestType.getID(),DocumentType.TRANSPORTEXECUTIONPLANREQUEST);
 //                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(existingTEPRequest);
-                SpringBridge.getInstance().getGenericCatalogueRepository().deleteEntity(existingTEPRequest);
+                SpringBridge.getInstance().getCatalogueRepository().deleteEntity(existingTEPRequest);
 
                 businessProcessContext.setPreviousDocument(existingTEPRequest);
 
 //                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(transportExecutionPlanRequestType);
-                SpringBridge.getInstance().getGenericCatalogueRepository().persistEntity(transportExecutionPlanRequestType);
+                SpringBridge.getInstance().getCatalogueRepository().persistEntity(transportExecutionPlanRequestType);
 
                 businessProcessContext.setDocument(transportExecutionPlanRequestType);
             }
@@ -246,29 +246,29 @@ public class DocumentDAOUtility {
             switch (processDocumentMetadataDAO.getType()) {
                 case ORDER:
 //                    HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(OrderType.class, ((OrderType) document).getHjid());
-                    SpringBridge.getInstance().getGenericCatalogueRepository().deleteEntityByHjid(OrderType.class, ((OrderType) document).getHjid());
+                    SpringBridge.getInstance().getCatalogueRepository().deleteEntityByHjid(OrderType.class, ((OrderType) document).getHjid());
                     break;
                 case INVOICE:
                     break;
                 case CATALOGUE:
 //                    HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(CatalogueType.class, ((CatalogueType) document).getHjid());
-                    SpringBridge.getInstance().getGenericCatalogueRepository().deleteEntityByHjid(CatalogueType.class, ((CatalogueType) document).getHjid());
+                    SpringBridge.getInstance().getCatalogueRepository().deleteEntityByHjid(CatalogueType.class, ((CatalogueType) document).getHjid());
                     break;
                 case QUOTATION:
 //                    HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(QuotationType.class, ((QuotationType) document).getHjid());
-                    SpringBridge.getInstance().getGenericCatalogueRepository().deleteEntityByHjid(QuotationType.class, ((QuotationType) document).getHjid());
+                    SpringBridge.getInstance().getCatalogueRepository().deleteEntityByHjid(QuotationType.class, ((QuotationType) document).getHjid());
                     break;
                 case ORDERRESPONSESIMPLE:
 //                    HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(OrderResponseSimpleType.class, ((OrderResponseSimpleType) document).getHjid());
-                    SpringBridge.getInstance().getGenericCatalogueRepository().deleteEntityByHjid(OrderResponseSimpleType.class, ((OrderResponseSimpleType) document).getHjid());
+                    SpringBridge.getInstance().getCatalogueRepository().deleteEntityByHjid(OrderResponseSimpleType.class, ((OrderResponseSimpleType) document).getHjid());
                     break;
                 case RECEIPTADVICE:
 //                    HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(ReceiptAdviceType.class, ((ReceiptAdviceType) document).getHjid());
-                    SpringBridge.getInstance().getGenericCatalogueRepository().deleteEntityByHjid(ReceiptAdviceType.class, ((ReceiptAdviceType) document).getHjid());
+                    SpringBridge.getInstance().getCatalogueRepository().deleteEntityByHjid(ReceiptAdviceType.class, ((ReceiptAdviceType) document).getHjid());
                     break;
                 case DESPATCHADVICE:
 //                    HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(DespatchAdviceType.class, ((DespatchAdviceType) document).getHjid());
-                    SpringBridge.getInstance().getGenericCatalogueRepository().deleteEntityByHjid(DespatchAdviceType.class, ((DespatchAdviceType) document).getHjid());
+                    SpringBridge.getInstance().getCatalogueRepository().deleteEntityByHjid(DespatchAdviceType.class, ((DespatchAdviceType) document).getHjid());
                     break;
                 case REMITTANCEADVICE:
                     break;
@@ -276,7 +276,7 @@ public class DocumentDAOUtility {
                     break;
                 case REQUESTFORQUOTATION:
 //                    HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(RequestForQuotationType.class, ((RequestForQuotationType) document).getHjid());
-                    SpringBridge.getInstance().getGenericCatalogueRepository().deleteEntityByHjid(RequestForQuotationType.class, ((RequestForQuotationType) document).getHjid());
+                    SpringBridge.getInstance().getCatalogueRepository().deleteEntityByHjid(RequestForQuotationType.class, ((RequestForQuotationType) document).getHjid());
                     break;
                 case TRANSPORTATIONSTATUS:
                     break;
@@ -350,7 +350,7 @@ public class DocumentDAOUtility {
 
 //        List resultSet = HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME)
 //                .loadAll(query);
-        List resultSet = SpringBridge.getInstance().getGenericCatalogueRepository().getEntities(query, new String[]{"documentId"}, new Object[]{documentID});
+        List resultSet = SpringBridge.getInstance().getCatalogueRepository().getEntities(query, new String[]{"documentId"}, new Object[]{documentID});
 
         if(resultSet.size() > 0) {
             Object document = resultSet.get(0);
@@ -372,7 +372,7 @@ public class DocumentDAOUtility {
         if(documentType == DocumentType.ORDER){
 //            String query = "SELECT orderResponse.ID FROM OrderResponseSimpleType orderResponse WHERE orderResponse.orderReference.documentReference.ID = '"+documentID+"'";
 //            id = (String) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadIndividualItem(query);
-            id = SpringBridge.getInstance().getGenericCatalogueRepository().getOrderResponseId(documentID);
+            id = SpringBridge.getInstance().getCatalogueRepository().getOrderResponseId(documentID);
         }
         return getDocumentMetadata(id);
     }
@@ -382,7 +382,7 @@ public class DocumentDAOUtility {
         if(documentType == DocumentType.ORDER){
 //            String query = "SELECT orderResponse FROM OrderResponseSimpleType orderResponse WHERE orderResponse.orderReference.documentReference.ID = '"+documentID+"'";
 //            document = (OrderRes,ponseSimpleType) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadIndividualItem(query);
-            document = SpringBridge.getInstance().getGenericCatalogueRepository().getOrderResponseSimple(documentID);
+            document = SpringBridge.getInstance().getCatalogueRepository().getOrderResponseSimple(documentID);
         }
         return document;
     }

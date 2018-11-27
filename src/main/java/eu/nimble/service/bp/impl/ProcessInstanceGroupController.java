@@ -319,7 +319,7 @@ public class ProcessInstanceGroupController implements GroupApi {
 
             // update the group of the party initiating the cancel request
             groupDAO.setStatus(GroupStatus.CANCELLED);
-//            HibernateUtility.getInstance("bp-data-model").update(groupDAO);
+//            GenericJPARepositoryImpl.getInstance("bp-data-model").update(groupDAO);
             groupDAO = SpringBridge.getInstance().getProcessInstanceGroupDAORepository().save(groupDAO);
 
             // cancel processes in the group
@@ -328,7 +328,7 @@ public class ProcessInstanceGroupController implements GroupApi {
                 // if process is completed or already cancelled, continue
                 if(instanceDAO.getStatus() == ProcessInstanceStatus.COMPLETED || instanceDAO.getStatus() == ProcessInstanceStatus.CANCELLED){
                     instanceDAO.setStatus(ProcessInstanceStatus.CANCELLED);
-//                    HibernateUtility.getInstance("bp-data-model").update(instanceDAO);
+//                    GenericJPARepositoryImpl.getInstance("bp-data-model").update(instanceDAO);
                     SpringBridge.getInstance().getProcessInstanceDAORepository().save(instanceDAO);
                     continue;
                 }
@@ -344,7 +344,7 @@ public class ProcessInstanceGroupController implements GroupApi {
                 // if it is ok, change status of the associated group
                 if(isCancellableGroup){
                     group.setStatus(GroupStatus.CANCELLED);
-                    //HibernateUtility.getInstance("bp-data-model").update(group);
+                    //GenericJPARepositoryImpl.getInstance("bp-data-model").update(group);
                     group = SpringBridge.getInstance().getProcessInstanceGroupDAORepository().save(group);
                 }
             }

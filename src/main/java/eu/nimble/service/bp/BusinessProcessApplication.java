@@ -78,7 +78,7 @@ public class BusinessProcessApplication {
       }
     }
 
-//    HibernateUtility.getInstance(eu.nimble.utility.Configuration.UBL_PERSISTENCE_UNIT_NAME);
+//    GenericJPARepositoryImpl.getInstance(eu.nimble.utility.Configuration.UBL_PERSISTENCE_UNIT_NAME);
 //    HibernateUtilityRef.getInstance("bp-data-model");
   }
 }

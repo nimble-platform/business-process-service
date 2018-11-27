@@ -4,7 +4,6 @@ import eu.nimble.common.rest.identity.IdentityClient;
 import eu.nimble.common.rest.identity.IdentityClientTyped;
 import eu.nimble.service.bp.config.BusinessProcessPersistenceConfig;
 import eu.nimble.service.bp.config.GenericConfig;
-import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
 import eu.nimble.service.bp.impl.persistence.bp.*;
 import eu.nimble.service.bp.impl.persistence.catalogue.CatalogueRepository;
 import org.springframework.beans.BeansException;
@@ -34,7 +33,7 @@ public class SpringBridge implements ApplicationContextAware {
     private BusinessProcessPersistenceConfig bpConfig;
 
     @Autowired
-    private CatalogueRepository genericCatalogueRepository;
+    private CatalogueRepository catalogueRepository;
 
     @Autowired
     private BusinessProcessRepository businessProcessRepository;
@@ -81,8 +80,8 @@ public class SpringBridge implements ApplicationContextAware {
         return processDocumentMetadataDAORepository;
     }
 
-    public CatalogueRepository getGenericCatalogueRepository() {
-        return genericCatalogueRepository;
+    public CatalogueRepository getCatalogueRepository() {
+        return catalogueRepository;
     }
 
     public BusinessProcessRepository getBusinessProcessRepository() {

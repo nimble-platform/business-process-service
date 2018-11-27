@@ -6,6 +6,7 @@ import eu.nimble.service.model.ubl.commonaggregatecomponents.CompletedTaskType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.QualifyingPartyType;
 import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
+import eu.nimble.utility.persistence.GenericJPARepository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,7 +16,7 @@ import java.util.List;
 /**
  * Created by suat on 20-Nov-18.
  */
-public interface CatalogueRepository extends JpaRepository<CatalogueType, Long>, CustomCatalogueRepository {
+public interface CatalogueRepository extends JpaRepository<CatalogueType, Long>, GenericJPARepository {
     @Query(value = "SELECT party FROM PartyType party WHERE party.ID = :id ORDER BY party.hjid ASC")
     List<PartyType> getPartyByID(@Param("id") String id);
 

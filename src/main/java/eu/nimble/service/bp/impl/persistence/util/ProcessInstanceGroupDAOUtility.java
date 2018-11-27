@@ -375,7 +375,7 @@ public class ProcessInstanceGroupDAOUtility {
 //                " pi2.processInstanceID = ?" +
 //                ")";
 //
-//        String orderId = HibernateUtility.getInstance("bp-data-model").load(query, processInstanceId);
+//        String orderId = GenericJPARepositoryImpl.getInstance("bp-data-model").load(query, processInstanceId);
         String orderId = SpringBridge.getInstance().getProcessInstanceGroupDAORepository().getOrderIdInGroup(processInstanceId);
         return orderId;
     }

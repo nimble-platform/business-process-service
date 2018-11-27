@@ -80,7 +80,7 @@ public class StatisticsDAOUtility {
             parameterValues.add(orderIds.get(orderIds.size()-1));
         }
 
-        double tradingVolume = ((BigDecimal) SpringBridge.getInstance().getGenericCatalogueRepository().getSingleEntity(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray())).doubleValue();
+        double tradingVolume = ((BigDecimal) SpringBridge.getInstance().getCatalogueRepository().getSingleEntity(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray())).doubleValue();
         return tradingVolume;
     }
 
@@ -102,7 +102,7 @@ public class StatisticsDAOUtility {
 
         NonOrderedProducts nonOrderedProducts = new NonOrderedProducts();
 //        List<Object> results = (List<Object>) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadAll(query);
-        List<Object> results = SpringBridge.getInstance().getGenericCatalogueRepository().getEntities(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
+        List<Object> results = SpringBridge.getInstance().getCatalogueRepository().getEntities(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
         for (Object result : results) {
             List<String> dataArray = (List<String>) result;
             nonOrderedProducts.addProduct(dataArray.get(0), dataArray.get(1), dataArray.get(2), dataArray.get(3));

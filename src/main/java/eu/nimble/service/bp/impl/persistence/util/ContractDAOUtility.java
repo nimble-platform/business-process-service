@@ -29,7 +29,7 @@ public class ContractDAOUtility {
     public static boolean clauseExists(String clauseId) {
 //        String query = "SELECT count(*) FROM ClauseType contract WHERE clause.ID = '" + clauseId + "'";
 //        int count = ((Long) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadIndividualItem(query)).intValue();
-        int count = ((Long) SpringBridge.getInstance().getGenericCatalogueRepository().getSingleEntity(QUERY_CLAUSE_EXISTS, new String[]{"clauseId"}, new Object[]{clauseId})).intValue();
+        int count = ((Long) SpringBridge.getInstance().getCatalogueRepository().getSingleEntity(QUERY_CLAUSE_EXISTS, new String[]{"clauseId"}, new Object[]{clauseId})).intValue();
         if (count > 0) {
             return true;
         } else {
@@ -40,7 +40,7 @@ public class ContractDAOUtility {
     public static boolean contractHasClause(String contractId, String clauseId) {
 //        String query = "SELECT count(*) FROM ContractType contract join contract.clause clause WHERE contract.ID = '" + contractId + "' and clause.ID = '" + clauseId + "'";
 //        int count = ((Long) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadIndividualItem(query)).intValue();
-        int count = ((Long) SpringBridge.getInstance().getGenericCatalogueRepository().getSingleEntity(QUERY_CONTRACT_HAS_CLAUSE, new String[]{"contractId", "clauseId"}, new Object[]{contractId, clauseId})).intValue();
+        int count = ((Long) SpringBridge.getInstance().getCatalogueRepository().getSingleEntity(QUERY_CONTRACT_HAS_CLAUSE, new String[]{"contractId", "clauseId"}, new Object[]{contractId, clauseId})).intValue();
         if (count > 0) {
             return true;
         } else {
@@ -51,7 +51,7 @@ public class ContractDAOUtility {
     public static ClauseType getBaseClause(String clauseId) {
 //        String query = "SELECT clause FROM ClauseType clause WHERE clause.ID = '" + clauseId + "'";
 //        ClauseType clauseType = (ClauseType) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadIndividualItem(query);
-        ClauseType clauseType = SpringBridge.getInstance().getGenericCatalogueRepository().getSingleEntity(QUERY_GET_BASE_CLAUSE, new String[]{"clauseId"}, new Object[]{clauseId});
+        ClauseType clauseType = SpringBridge.getInstance().getCatalogueRepository().getSingleEntity(QUERY_GET_BASE_CLAUSE, new String[]{"clauseId"}, new Object[]{clauseId});
         return clauseType;
     }
 
@@ -104,33 +104,33 @@ public class ContractDAOUtility {
     public static ClauseType getContractClause(String contractId, String clauseId) {
 //        String query = "SELECT clause FROM ContractType contract join contract.clause clause WHERE contract.ID = '" + contractId + "' and clause.ID = '" + clauseId + "'";
 //        ClauseType clause = (ClauseType) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadIndividualItem(query);
-        ClauseType clause = SpringBridge.getInstance().getGenericCatalogueRepository().getSingleEntity(QUERY_GET_CONTRACT_CLAUSE, new String[]{"contractId", "clauseId"}, new Object[]{contractId, clauseId});
+        ClauseType clause = SpringBridge.getInstance().getCatalogueRepository().getSingleEntity(QUERY_GET_CONTRACT_CLAUSE, new String[]{"contractId", "clauseId"}, new Object[]{contractId, clauseId});
         return clause;
     }
 
     public static DataMonitoringClauseType getDataMonitoringClause(String clauseId) {
 //        String query = "SELECT clause from DataMonitoringClauseType clause where clause.ID = '" + clauseId + "'";
 //        DataMonitoringClauseType clause = (DataMonitoringClauseType) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadIndividualItem(query);
-        DataMonitoringClauseType clause = SpringBridge.getInstance().getGenericCatalogueRepository().getSingleEntity(QUERY_GET_DATA_MONITORING_CLAUSE, new String[]{"clauseId"}, new Object[]{clauseId});
+        DataMonitoringClauseType clause = SpringBridge.getInstance().getCatalogueRepository().getSingleEntity(QUERY_GET_DATA_MONITORING_CLAUSE, new String[]{"clauseId"}, new Object[]{clauseId});
         return clause;
     }
 
     public static DocumentClauseType getDocumentClause(String clauseId) {
 //        String query = "SELECT clause from DocumentClauseType clause where clause.ID = '" + clauseId + "'";
 //        DocumentClauseType clause = (DocumentClauseType) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadIndividualItem(query);
-        DocumentClauseType clause = SpringBridge.getInstance().getGenericCatalogueRepository().getSingleEntity(QUERY_GET_DOCUMENT_CLAUSE, new String[]{"clauseId"}, new Object[]{clauseId});
+        DocumentClauseType clause = SpringBridge.getInstance().getCatalogueRepository().getSingleEntity(QUERY_GET_DOCUMENT_CLAUSE, new String[]{"clauseId"}, new Object[]{clauseId});
         return clause;
     }
 
     public static void deleteClause(ClauseType clause) {
 //        HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(clause);
-        SpringBridge.getInstance().getGenericCatalogueRepository().deleteEntity(clause);
+        SpringBridge.getInstance().getCatalogueRepository().deleteEntity(clause);
     }
 
     public static boolean contractExists(String contractID) {
 //        String query = "SELECT count(*) FROM ContractType contract WHERE contract.ID = '" + contractID + "'";
 //        int count = ((Long) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadIndividualItem(query)).intValue();
-        int count = ((Long) SpringBridge.getInstance().getGenericCatalogueRepository().getSingleEntity(QUERY_CONTRACT_EXISTS, new String[]{"contractId"}, new Object[]{contractID})).intValue();
+        int count = ((Long) SpringBridge.getInstance().getCatalogueRepository().getSingleEntity(QUERY_CONTRACT_EXISTS, new String[]{"contractId"}, new Object[]{contractID})).intValue();
         if (count > 0) {
             return true;
         } else {
@@ -141,7 +141,7 @@ public class ContractDAOUtility {
     public static ContractType getContract(String contractId) {
 //        String query = "SELECT contract from ContractType contract where contract.ID = '" + contractId + "'";
 //        ContractType contract = (ContractType) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadIndividualItem(query);
-        ContractType contract = SpringBridge.getInstance().getGenericCatalogueRepository().getSingleEntity(QUERY_GET_CONTRACT, new String[]{"contractId"}, new Object[]{contractId});
+        ContractType contract = SpringBridge.getInstance().getCatalogueRepository().getSingleEntity(QUERY_GET_CONTRACT, new String[]{"contractId"}, new Object[]{contractId});
         return contract;
     }
 

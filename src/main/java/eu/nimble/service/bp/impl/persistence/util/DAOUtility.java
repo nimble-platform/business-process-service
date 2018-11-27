@@ -103,15 +103,11 @@ public class DAOUtility {
         }
 
         if (type != null) {
-            query += " and document.type = :docType ";
-            parameterNames.add("docType");
-            parameterValues.add(type);
+            query += " and document.type = '" + DocumentType.valueOf(type).toString() + "' ";
         }
 
         if (status != null) {
-            query += " and document.status = :status ";
-            parameterNames.add("status");
-            parameterValues.add(status);
+            query += " and document.status = '" + ProcessDocumentStatus.valueOf(status).toString() + "'";
         }
         query += " ) ";
 //        List<ProcessDocumentMetadataDAO> resultSet = (List<ProcessDocumentMetadataDAO>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
@@ -295,11 +291,11 @@ public class DAOUtility {
     public static List<String> getAllProcessInstanceIDs(String processInstanceID){
         List<String> processInstanceIDs = new ArrayList<>();
 //        String query = "FROM ProcessInstanceDAO piDAO WHERE piDAO.processInstanceID = ?";
-//        ProcessInstanceDAO processInstanceDAO = HibernateUtility.getInstance("bp-data-model").load(query,processInstanceID);
+//        ProcessInstanceDAO processInstanceDAO = GenericJPARepositoryImpl.getInstance("bp-data-model").load(query,processInstanceID);
         ProcessInstanceDAO processInstanceDAO = SpringBridge.getInstance().getProcessInstanceDAORepository().findByProcessInstanceID(processInstanceID).get(0);
         processInstanceIDs.add(0,processInstanceID);
         while (processInstanceDAO.getPrecedingProcess() != null){
-//            processInstanceDAO = HibernateUtility.getInstance("bp-data-model").load(query,processInstanceDAO.getPrecedingProcess().getProcessInstanceID());
+//            processInstanceDAO = GenericJPARepositoryImpl.getInstance("bp-data-model").load(query,processInstanceDAO.getPrecedingProcess().getProcessInstanceID());
             processInstanceDAO = SpringBridge.getInstance().getProcessInstanceDAORepository().findByProcessInstanceID(processInstanceDAO.getPrecedingProcess().getProcessInstanceID()).get(0);
             processInstanceIDs.add(0,processInstanceDAO.getProcessInstanceID());
         }

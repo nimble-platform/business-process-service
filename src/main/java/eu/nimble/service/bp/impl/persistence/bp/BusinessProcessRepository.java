@@ -4,6 +4,7 @@ import eu.nimble.service.bp.hyperjaxb.model.ProcessConfigurationDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessPreferencesDAO;
+import eu.nimble.utility.persistence.GenericJPARepository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,7 +14,7 @@ import java.util.List;
 /**
  * Created by suat on 20-Nov-18.
  */
-public interface BusinessProcessRepository extends JpaRepository<ProcessInstanceDAO, Long>, CustomBusinessProcessRepository {
+public interface BusinessProcessRepository extends JpaRepository<ProcessInstanceDAO, Long>, GenericJPARepository {
     @Query(value = "SELECT c FROM ProcessInstanceGroupDAO c WHERE c.hjid = :uuid")
     List<ProcessInstanceGroupDAO> getProcessInstanceGroupDAO(@Param("uuid") Long uuid);
 

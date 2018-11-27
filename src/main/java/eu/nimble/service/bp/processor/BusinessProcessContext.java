@@ -37,7 +37,7 @@ public class BusinessProcessContext {
         }
         if (document != null) {
 //            HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(document);
-            SpringBridge.getInstance().getGenericCatalogueRepository().deleteEntity(document);
+            SpringBridge.getInstance().getCatalogueRepository().deleteEntity(document);
         }
         if (previousDocument != null){
 //            HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(previousDocument);
