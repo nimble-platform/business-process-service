@@ -1,4 +1,4 @@
-package eu.nimble.service.bp.impl.util.persistence;
+package eu.nimble.service.bp.impl.persistence.util;
 
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
@@ -8,9 +8,7 @@ import eu.nimble.service.bp.swagger.model.Process;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
-import eu.nimble.utility.Configuration;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;

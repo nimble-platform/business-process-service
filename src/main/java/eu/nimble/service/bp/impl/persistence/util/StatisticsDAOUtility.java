@@ -1,4 +1,4 @@
-package eu.nimble.service.bp.impl.util.persistence;
+package eu.nimble.service.bp.impl.persistence.util;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
@@ -11,7 +11,6 @@ import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.CompletedTaskType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.QualifyingPartyType;
-import eu.nimble.utility.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

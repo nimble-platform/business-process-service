@@ -1,4 +1,4 @@
-package eu.nimble.service.bp.impl.util.persistence;
+package eu.nimble.service.bp.impl.persistence.util;
 
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;

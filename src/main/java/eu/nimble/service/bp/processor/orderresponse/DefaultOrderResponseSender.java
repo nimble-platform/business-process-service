@@ -4,7 +4,7 @@ import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
 import eu.nimble.service.bp.config.GenericConfig;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
-import eu.nimble.service.bp.impl.util.persistence.DocumentDAOUtility;
+import eu.nimble.service.bp.impl.persistence.util.DocumentDAOUtility;
 import eu.nimble.service.bp.impl.util.serialization.Serializer;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;

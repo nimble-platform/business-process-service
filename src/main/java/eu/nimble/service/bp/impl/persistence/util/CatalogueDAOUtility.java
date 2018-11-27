@@ -1,4 +1,4 @@
-package eu.nimble.service.bp.impl.util.persistence;
+package eu.nimble.service.bp.impl.persistence.util;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;

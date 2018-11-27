@@ -2,7 +2,7 @@ package eu.nimble.service.bp.impl.contract;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
-import eu.nimble.service.bp.impl.util.persistence.DocumentDAOUtility;
+import eu.nimble.service.bp.impl.persistence.util.DocumentDAOUtility;
 import eu.nimble.service.bp.impl.util.serialization.Serializer;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
@@ -15,7 +15,6 @@ import eu.nimble.service.model.ubl.ppapresponse.PpapResponseType;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.util.Units;
 import org.apache.poi.xwpf.converter.pdf.PdfConverter;
