@@ -22,11 +22,11 @@ public class DataSourceFactory {
     @Autowired
     private Environment environment;
 
-    public DataSource createDatasource() {
+    public DataSource createDatasource(String dataSourceName) {
         javax.sql.DataSource ds;
 
         if (Arrays.stream(environment.getActiveProfiles()).anyMatch(profile -> profile.contentEquals("kubernetes"))) {
-            String camundaDbCredentialsJson = environment.getProperty("nimble.db-credentials-json");
+            String camundaDbCredentialsJson = environment.getProperty("nimble." + dataSourceName + "-db-credentials-json");
             BluemixDatabaseConfig config = new BluemixDatabaseConfig(camundaDbCredentialsJson);
             ds = DataSourceBuilder.create()
                     .url(config.getUrl())
@@ -36,14 +36,14 @@ public class DataSourceFactory {
                     .build();
         } else {
             logger.info("Creating datasource: url={}, user={}",
-                    environment.getProperty("spring.datasource.url"),
-                    environment.getProperty("spring.datasource.username"));
+                    environment.getProperty("spring.datasource." + dataSourceName + ".url"),
+                    environment.getProperty("spring.datasource." + dataSourceName + ".username"));
 
             ds = DataSourceBuilder.create()
-                    .url(environment.getProperty("spring.datasource.url"))
-                    .username(environment.getProperty("spring.datasource.username"))
-                    .password(environment.getProperty("spring.datasource.password"))
-                    .driverClassName(environment.getProperty("spring.datasource.driverClassName"))
+                    .url(environment.getProperty("spring.datasource." + dataSourceName + ".url"))
+                    .username(environment.getProperty("spring.datasource." + dataSourceName + ".username"))
+                    .password(environment.getProperty("spring.datasource." + dataSourceName + ".password"))
+                    .driverClassName(environment.getProperty("spring.datasource." + dataSourceName + ".driverClassName"))
                     .build();
         }
         // Assume we make use of Apache Tomcat connection pooling (default in Spring Boot)

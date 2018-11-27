@@ -17,10 +17,21 @@ spring:
       # it can be set via an environment variable or the config server
       enabled: ${discovery.enabled:${DISCOVERY_ENABLED:false}}
   datasource:
-    url: jdbc:postgresql://${CAMUNDA_DB_HOST:localhost}:${CAMUNDA_DB_PORT:5432}/${CAMUNDA_DB_NAME:camunda}?currentSchema=public
-    username: ${CAMUNDA_DB_USERNAME:postgres}
-    password: ${CAMUNDA_DB_PASSWORD:nimble}
-    driver-class-name: org.postgresql.Driver
+    camunda:
+      url: jdbc:postgresql://${CAMUNDA_DB_HOST:localhost}:${CAMUNDA_DB_PORT:5432}/${CAMUNDA_DB_NAME:camunda}?currentSchema=public
+      username: ${CAMUNDA_DB_USERNAME:postgres}
+      password: ${CAMUNDA_DB_PASSWORD:nimble}
+      driver-class-name: org.postgresql.Driver
+    bpdb:
+      url: jdbc:postgresql://${BUSINESS_PROCESS_DB_HOST:localhost}:${BUSINESS_PROCESS_DB_PORT:5432}/${BUSINESS_PROCESS_DB_NAME:businessprocessengine}?currentSchema=public
+      username: ${BUSINESS_PROCESS_DB_USERNAME:postgres}
+      password: ${BUSINESS_PROCESS_DB_PASSWORD:nimble}
+      driver_class: org.postgresql.Driver
+    ubldb:
+      url: jdbc:postgresql://${UBL_DB_HOST:localhost}:${UBL_DB_HOST_PORT:5432}/${UBL_DB_NAME:ubldb}?currentSchema=public
+      username: ${UBL_DB_USERNAME:postgres}
+      password: ${UBL_DB_PASSWORD:nimble}
+      driver_class: org.postgresql.Driver
     tomcat:
       initial-size: 3
       test-while-idle: true
@@ -72,11 +83,6 @@ persistence:
   orm:
     business_process:
       hibernate:
-        connection:
-          url: jdbc:postgresql://${BUSINESS_PROCESS_DB_HOST:localhost}:${BUSINESS_PROCESS_DB_PORT:5432}/${BUSINESS_PROCESS_DB_NAME:businessprocessengine}?currentSchema=public
-          username: ${BUSINESS_PROCESS_DB_USERNAME:postgres}
-          password: ${BUSINESS_PROCESS_DB_PASSWORD:nimble}
-          driver_class: org.postgresql.Driver
         dialect: org.hibernate.dialect.PostgreSQLDialect
         show_sql: false
         hbm2ddl:
@@ -95,12 +101,6 @@ persistence:
             entity_copy_observer: allow
     ubl:
       hibernate:
-        connection:
-          #### Postgres Configs
-          url: jdbc:postgresql://${UBL_DB_HOST:localhost}:${UBL_DB_HOST_PORT:5432}/${UBL_DB_NAME:ubldb}?currentSchema=public
-          username: ${UBL_DB_USERNAME:postgres}
-          password: ${UBL_DB_PASSWORD:nimble}
-          driver_class: org.postgresql.Driver
         dialect: org.hibernate.dialect.PostgreSQLDialect
         show_sql: false
         hbm2ddl:

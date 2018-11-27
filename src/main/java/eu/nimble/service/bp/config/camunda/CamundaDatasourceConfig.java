@@ -28,7 +28,7 @@ public class CamundaDatasourceConfig {
     @Bean
     @Primary
     public DataSource getDataSource() {
-        return dataSourceFactory.createDatasource();
+        return dataSourceFactory.createDatasource("camunda");
     }
 
     @Bean(name = "camundaEmfBean")

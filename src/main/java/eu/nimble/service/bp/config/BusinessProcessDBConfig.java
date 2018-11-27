@@ -39,7 +39,7 @@ public class BusinessProcessDBConfig {
     @Bean(name = "bpdbDataSource")
     @ConfigurationProperties(prefix = "persistence.orm.business_process.hibernate.connection")
     public DataSource getDataSource() {
-        return dataSourceFactory.createDatasource();
+        return dataSourceFactory.createDatasource("bpdb");
     }
 
     @Bean(name = "bpdbEmfBean")
