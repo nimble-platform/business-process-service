@@ -26,7 +26,7 @@ public class KafkaConfig {
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
-    @Value("${spring.kafka.properties.sasl.jaas.config}")
+    @Value("${spring.kafka.properties.sasl.jaas.config:}")
     private String jaasConfig;
 
     @Value("${spring.kafka.consumer.group-id}")
@@ -36,9 +36,11 @@ public class KafkaConfig {
     public Map<String, Object> producerConfigs() {
         Map<String, Object> props = new HashMap<>();
         props.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_SSL");
-        props.put("sasl.mechanism", "PLAIN");
-        props.put("sasl.jaas.config", jaasConfig);
+        if (jaasConfig != null && jaasConfig.isEmpty() == false) {
+            props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_SSL");
+            props.put("sasl.mechanism", "PLAIN");
+            props.put("sasl.jaas.config", jaasConfig);
+        }
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
         return props;
@@ -58,9 +60,11 @@ public class KafkaConfig {
     public Map<String, Object> consumerConfigs() {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_SSL");
-        props.put("sasl.mechanism", "PLAIN");
-        props.put("sasl.jaas.config", jaasConfig);
+        if (jaasConfig != null && jaasConfig.isEmpty() == false) {
+            props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_SSL");
+            props.put("sasl.mechanism", "PLAIN");
+            props.put("sasl.jaas.config", jaasConfig);
+        }
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, consumerGroupId);

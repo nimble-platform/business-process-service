@@ -17,6 +17,7 @@ import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.service.model.ubl.receiptadvice.ReceiptAdviceType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
 import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
+import eu.nimble.utility.Configuration;
 import org.camunda.bpm.engine.ProcessEngines;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -123,12 +124,11 @@ public class DocumentDAOUtility {
 
                 ItemInformationRequestType existingItemInformationRequest = (ItemInformationRequestType) getUBLDocument(itemInformationRequest.getID(),DocumentType.ITEMINFORMATIONREQUEST);
 //                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(existingItemInformationRequest);
-                SpringBridge.getInstance().getCatalogueRepository().deleteEntity(existingItemInformationRequest);
 
                 businessProcessContext.setPreviousDocument(existingItemInformationRequest);
 
 //                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(itemInformationRequest);
-                SpringBridge.getInstance().getCatalogueRepository().persistEntity(itemInformationRequest);
+                SpringBridge.getInstance().getCatalogueRepository().updateEntity(itemInformationRequest);
 
                 businessProcessContext.setDocument(itemInformationRequest);
             }
@@ -142,12 +142,11 @@ public class DocumentDAOUtility {
 
                 DespatchAdviceType existingDespatchAdvice = (DespatchAdviceType) getUBLDocument(despatchAdviceType.getID(),DocumentType.DESPATCHADVICE);
 //                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(existingDespatchAdvice);
-                SpringBridge.getInstance().getCatalogueRepository().deleteEntity(existingDespatchAdvice);
 
                 businessProcessContext.setPreviousDocument(existingDespatchAdvice);
 
 //                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(despatchAdviceType);
-                SpringBridge.getInstance().getCatalogueRepository().persistEntity(despatchAdviceType);
+                SpringBridge.getInstance().getCatalogueRepository().updateEntity(despatchAdviceType);
                 businessProcessContext.setDocument(despatchAdviceType);
             }
             catch (Exception e){
@@ -160,11 +159,10 @@ public class DocumentDAOUtility {
 
                 RequestForQuotationType existingRequestForQuotation = (RequestForQuotationType) getUBLDocument(requestForQuotationType.getID(),DocumentType.REQUESTFORQUOTATION);
 //                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(existingRequestForQuotation);
-                SpringBridge.getInstance().getCatalogueRepository().deleteEntity(existingRequestForQuotation);
                 businessProcessContext.setPreviousDocument(existingRequestForQuotation);
 
 //                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(requestForQuotationType);
-                SpringBridge.getInstance().getCatalogueRepository().persistEntity(requestForQuotationType);
+                SpringBridge.getInstance().getCatalogueRepository().updateEntity(requestForQuotationType);
                 businessProcessContext.setDocument(requestForQuotationType);
             }
             catch (Exception e){
@@ -177,12 +175,11 @@ public class DocumentDAOUtility {
 
                 OrderType existingOrderType = (OrderType) getUBLDocument(orderType.getID(),DocumentType.ORDER);
 //                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(existingOrderType);
-                SpringBridge.getInstance().getCatalogueRepository().deleteEntity(existingOrderType);
 
                 businessProcessContext.setPreviousDocument(existingOrderType);
 
 //                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(orderType);
-                SpringBridge.getInstance().getCatalogueRepository().persistEntity(orderType);
+                SpringBridge.getInstance().getCatalogueRepository().updateEntity(orderType);
 
                 businessProcessContext.setDocument(orderType);
             }
@@ -196,12 +193,11 @@ public class DocumentDAOUtility {
 
                 PpapRequestType existingPPAPRequest = (PpapRequestType) getUBLDocument(ppapRequestType.getID(),DocumentType.PPAPREQUEST);
 //                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(existingPPAPRequest);
-                SpringBridge.getInstance().getCatalogueRepository().deleteEntity(existingPPAPRequest);
 
                 businessProcessContext.setPreviousDocument(existingPPAPRequest);
 
 //                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(ppapRequestType);
-                SpringBridge.getInstance().getCatalogueRepository().persistEntity(ppapRequestType);
+                SpringBridge.getInstance().getCatalogueRepository().updateEntity(ppapRequestType);
 
                 businessProcessContext.setDocument(ppapRequestType);
             }
@@ -215,12 +211,11 @@ public class DocumentDAOUtility {
 
                 TransportExecutionPlanRequestType existingTEPRequest = (TransportExecutionPlanRequestType) getUBLDocument(transportExecutionPlanRequestType.getID(),DocumentType.TRANSPORTEXECUTIONPLANREQUEST);
 //                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(existingTEPRequest);
-                SpringBridge.getInstance().getCatalogueRepository().deleteEntity(existingTEPRequest);
 
                 businessProcessContext.setPreviousDocument(existingTEPRequest);
 
 //                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(transportExecutionPlanRequestType);
-                SpringBridge.getInstance().getCatalogueRepository().persistEntity(transportExecutionPlanRequestType);
+                SpringBridge.getInstance().getCatalogueRepository().updateEntity(transportExecutionPlanRequestType);
 
                 businessProcessContext.setDocument(transportExecutionPlanRequestType);
             }

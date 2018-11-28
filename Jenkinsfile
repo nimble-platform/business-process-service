@@ -29,32 +29,26 @@ node('nimble-jenkins-slave') {
         stage('Deploy') {
             sh 'ssh staging "cd /srv/nimble-staging/ && ./run-staging.sh restart-single business-process-service"'
         }
-    } else {
-        stage('Build Docker') {
-            sh '/bin/bash -xe util.sh docker-build'
-        }
     }
 
     if (env.BRANCH_NAME == 'master') {
 
+        stage('Build Docker') {
+            sh 'mvn docker:build -P docker'
+        }
+
         stage('Push Docker') {
+            sh 'mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version' // fetch dependencies
+            sh 'docker push nimbleplatform/business-process-service:$(mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version | grep -v \'\\[\')'
             sh 'docker push nimbleplatform/business-process-service:latest'
         }
-        stage('Deploy') {
+
+        stage('Deploy MVP') {
             sh 'ssh nimble "cd /data/deployment_setup/prod/ && sudo ./run-prod.sh restart-single business-process-service"'
         }
-    }
 
-    // Kubernetes is disabled for now
-//    if (env.BRANCH_NAME == 'master') {
-//        stage('Push Docker') {
-//            withDockerRegistry([credentialsId: 'NimbleDocker']) {
-//                sh '/bin/bash -xe util.sh docker-push'
-//            }
-//        }
-//
-//        stage('Apply to Cluster') {
-//            sh 'kubectl apply -f kubernetes/deploy.yml -n prod --validate=false'
-//        }
-//    }
+        stage('Deploy FMP') {
+            sh 'ssh fmp-prod "cd /srv/nimble-fmp/ && ./run-fmp-prod.sh restart-single business-process-service"'
+        }
+    }
 }
