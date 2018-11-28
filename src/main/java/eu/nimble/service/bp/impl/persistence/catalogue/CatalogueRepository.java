@@ -17,8 +17,8 @@ import java.util.List;
  * Created by suat on 20-Nov-18.
  */
 public interface CatalogueRepository extends JpaRepository<CatalogueType, Long>, GenericJPARepository {
-    @Query(value = "SELECT party FROM PartyType party WHERE party.ID = :id ORDER BY party.hjid ASC")
-    List<PartyType> getPartyByID(@Param("id") String id);
+    @Query(value = "SELECT party FROM PartyType party WHERE party.ID = :id")
+    PartyType getPartyByID(@Param("id") String id);
 
     @Query(value = "SELECT cl FROM CatalogueLineType cl WHERE cl.ID = :lineId AND cl.goodsItem.item.manufacturerParty.ID = :partyId")
     List<CatalogueLineType> getCatalogueLine(@Param("lineId") String lineId, @Param("partyId") String partyId);

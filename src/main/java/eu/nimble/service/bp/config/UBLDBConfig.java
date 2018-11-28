@@ -34,7 +34,7 @@ class UBLDBConfig {
     private DataSourceFactory dataSourceFactory;
 
     @Bean(name = "ubldbDataSource")
-    @ConfigurationProperties(prefix = "persistence.orm.ubl.hibernate.connection")
+//    @ConfigurationProperties(prefix = "persistence.orm.ubl.hibernate.connection")
     public DataSource getDataSource() {
         return dataSourceFactory.createDatasource("ubldb");
     }

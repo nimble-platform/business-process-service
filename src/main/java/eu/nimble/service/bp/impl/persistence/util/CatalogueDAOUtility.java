@@ -40,9 +40,9 @@ public class CatalogueDAOUtility {
         }
 //        String query = "SELECT party FROM PartyType party WHERE party.ID = ? ORDER BY party.hjid ASC";
 //        List<PartyType> partyTypes = (List<PartyType>) GenericJPARepositoryImpl.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadAll(query,party.getID());
-        party = SpringBridge.getInstance().getCatalogueRepository().getPartyByID(party.getID()).get(0);
-        if(party != null) {
-            return party;
+        PartyType catalogueParty = SpringBridge.getInstance().getCatalogueRepository().getPartyByID(party.getID());
+        if(catalogueParty != null) {
+            return catalogueParty;
         } else {
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper = objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -63,11 +63,13 @@ public class CatalogueDAOUtility {
 
     public static PartyType getParty(String partyId) {
 //        List<PartyType>  partyTypes = (List<PartyType>) GenericJPARepositoryImpl.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadAll(GET_PARTY_QUERY, partyId);
-        List<PartyType> partyTypes = SpringBridge.getInstance().getCatalogueRepository().getPartyByID(partyId);
-        if(partyTypes.size() == 0){
-            return null;
-        }
-        return partyTypes.get(0);
+//        List<PartyType> partyTypes = SpringBridge.getInstance().getCatalogueRepository().getPartyByID(partyId);
+//        if(partyTypes.size() == 0){
+//            return null;
+//        }
+//        return partyTypes.get(0);
+        PartyType party = SpringBridge.getInstance().getCatalogueRepository().getPartyByID(partyId);
+        return party;
     }
 
     public static QualifyingPartyType getQualifyingPartyType(String partyID,String bearerToken){

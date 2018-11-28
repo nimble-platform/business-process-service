@@ -37,7 +37,7 @@ public class BusinessProcessDBConfig {
     private DataSourceFactory dataSourceFactory;
 
     @Bean(name = "bpdbDataSource")
-    @ConfigurationProperties(prefix = "persistence.orm.business_process.hibernate.connection")
+//    @ConfigurationProperties(prefix = "persistence.orm.business_process.hibernate.connection")
     public DataSource getDataSource() {
         return dataSourceFactory.createDatasource("bpdb");
     }
