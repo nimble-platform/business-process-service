@@ -20,7 +20,7 @@ public class CamundaDatasourceConfigurationImpl extends AbstractCamundaConfigura
     private DataSource dataSource;
 
     @Autowired
-    @Qualifier("camundaTm")
+    @Qualifier("transactionManager")
     private PlatformTransactionManager platformTransactionManager;
 
     @Override

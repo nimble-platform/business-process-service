@@ -7,12 +7,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import javax.annotation.Resource;
 import javax.sql.DataSource;
 
 /**
@@ -28,7 +30,7 @@ public class CamundaDatasourceConfig {
 
     @Bean
     @Primary
-    public DataSource getDataSource() {
+    public DataSource dataSource() {
         return dataSourceFactory.createDatasource("camunda");
     }
 
@@ -42,10 +44,15 @@ public class CamundaDatasourceConfig {
         return entityManagerFactoryBean;
     }
 
-    @Bean(name = "camundaTm")
-    public PlatformTransactionManager transactionManager(@Qualifier("camundaEmfBean") LocalContainerEntityManagerFactoryBean entityManagerFactory) {
-        JpaTransactionManager transactionManager = new JpaTransactionManager();
-        transactionManager.setEntityManagerFactory(entityManagerFactory.getObject());
-        return transactionManager;
+//    @Bean(name = "camundaTm")
+//    public PlatformTransactionManager transactionManager(@Qualifier("camundaEmfBean") LocalContainerEntityManagerFactoryBean entityManagerFactory) {
+//        JpaTransactionManager transactionManager = new JpaTransactionManager();
+//        transactionManager.setEntityManagerFactory(entityManagerFactory.getObject());
+//        return transactionManager;
+//    }
+
+    @Bean(name = "transactionManager")
+    public DataSourceTransactionManager transactionManager() {
+        return new DataSourceTransactionManager(dataSource());
     }
 }
