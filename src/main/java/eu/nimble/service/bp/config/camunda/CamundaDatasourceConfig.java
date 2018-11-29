@@ -34,15 +34,15 @@ public class CamundaDatasourceConfig {
         return dataSourceFactory.createDatasource("camunda");
     }
 
-    @Bean(name = "camundaEmfBean")
-    @Primary
-    public LocalContainerEntityManagerFactoryBean camundaEntityManagerFactory(DataSource dataSource) {
-        LocalContainerEntityManagerFactoryBean entityManagerFactoryBean = new LocalContainerEntityManagerFactoryBean();
-        entityManagerFactoryBean.setDataSource(dataSource);
-        entityManagerFactoryBean.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
-        entityManagerFactoryBean.setPackagesToScan("org.camunda");
-        return entityManagerFactoryBean;
-    }
+//    @Bean(name = "camundaEmfBean")
+//    @Primary
+//    public LocalContainerEntityManagerFactoryBean camundaEntityManagerFactory(DataSource dataSource) {
+//        LocalContainerEntityManagerFactoryBean entityManagerFactoryBean = new LocalContainerEntityManagerFactoryBean();
+//        entityManagerFactoryBean.setDataSource(dataSource);
+//        entityManagerFactoryBean.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
+//        entityManagerFactoryBean.setPackagesToScan("org.camunda");
+//        return entityManagerFactoryBean;
+//    }
 
 //    @Bean(name = "camundaTm")
 //    public PlatformTransactionManager transactionManager(@Qualifier("camundaEmfBean") LocalContainerEntityManagerFactoryBean entityManagerFactory) {

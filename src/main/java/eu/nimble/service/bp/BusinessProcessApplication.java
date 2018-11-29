@@ -36,7 +36,6 @@ import java.sql.Statement;
 @EnableEurekaClient
 @EnableFeignClients(basePackages = {"eu.nimble.common.rest"})
 @RestController
-@EnableSwagger2
 @EnableProcessApplication
 @ComponentScan(basePackages = "eu")
 public class BusinessProcessApplication {

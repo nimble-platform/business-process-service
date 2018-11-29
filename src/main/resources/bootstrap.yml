@@ -170,6 +170,8 @@ nimble:
     url: ${IDENTITY_SERVICE_URL:http://nimble-staging.salzburgresearch.at/identity}
   data-channel:
     url: ${DATA_CHANNEL_SERVICE_URL:http://nimble-staging.salzburgresearch.at/data-channel}
+  frontend:
+    url: ${FRONTEND_URL:http://nimble-staging.salzburgresearch.at/frontend/}
   kafka:
       topics:
         businessProcessUpdates: ${KAFKA_TOPIC_BUSINESS_PROCESS_UPDATES:business-process-updates-staging}
@@ -180,6 +182,9 @@ hystrix:
         isolation:
           thread:
             timeoutInMilliseconds: 10000
+
+build:
+  version: 5.0.0-Staging
 
 ################################################################################################
 ################################## KUBERNETES CONFIG ###########################################
@@ -357,6 +362,10 @@ nimble:
     url: ${IDENTITY_SERVICE_URL:http://nimble-staging.salzburgresearch.at/identity}
   data-channel:
     url: ${DATA_CHANNEL_SERVICE_URL:http://nimble-staging.salzburgresearch.at/data-channel}
+  frontend:
+    url: ${FRONTEND_URL:http://nimble-staging.salzburgresearch.at/frontend/}
   kafka:
       topics:
         businessProcessUpdates: ${KAFKA_TOPIC_BUSINESS_PROCESS_UPDATES:business-process-updates-staging}
+build:
+  version: 5.0.0-Staging
