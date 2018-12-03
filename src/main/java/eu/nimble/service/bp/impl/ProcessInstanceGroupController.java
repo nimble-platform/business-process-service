@@ -1,13 +1,17 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.hyperjaxb.model.*;
+import eu.nimble.service.bp.impl.persistence.bp.ProcessInstanceGroupDAORepository;
+import eu.nimble.service.bp.impl.persistence.util.DAOUtility;
+import eu.nimble.service.bp.impl.persistence.util.HibernateSwaggerObjectMapper;
+import eu.nimble.service.bp.impl.persistence.util.ProcessInstanceGroupDAOUtility;
+import eu.nimble.service.bp.impl.persistence.util.TrustUtility;
 import eu.nimble.service.bp.impl.util.controller.HttpResponseUtil;
 import eu.nimble.service.bp.impl.util.email.EmailSenderUtil;
-import eu.nimble.service.bp.impl.util.persistence.*;
+import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.swagger.api.GroupApi;
 import eu.nimble.service.bp.swagger.model.*;
 import eu.nimble.service.model.ubl.order.OrderType;
-import eu.nimble.utility.HibernateUtility;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -39,6 +43,8 @@ public class ProcessInstanceGroupController implements GroupApi {
     private DocumentController documentController;
     @Autowired
     private EmailSenderUtil emailSenderUtil;
+    @Autowired
+    private ProcessInstanceGroupDAORepository processInstanceGroupDAORepository;
 
     @Override
     @ApiOperation(value = "",notes = "Add a new process instance to the specified")
@@ -56,7 +62,8 @@ public class ProcessInstanceGroupController implements GroupApi {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
 
-        HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceGroupDAO);
+//        HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceGroupDAO);
+        processInstanceGroupDAORepository.save(processInstanceGroupDAO);
 
         // retrieve the group DAO again to populate the first/last activity times
         processInstanceGroupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(ID);
@@ -74,7 +81,8 @@ public class ProcessInstanceGroupController implements GroupApi {
 
         ProcessInstanceGroupDAO processInstanceGroupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(ID);
         processInstanceGroupDAO.getProcessInstanceIDs().remove(processInstanceID);
-        HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceGroupDAO);
+//        HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceGroupDAO);
+        processInstanceGroupDAORepository.save(processInstanceGroupDAO);
 
         processInstanceGroupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(ID);
         ProcessInstanceGroup processInstanceGroup = HibernateSwaggerObjectMapper.convertProcessInstanceGroupDAO(processInstanceGroupDAO);
@@ -209,7 +217,8 @@ public class ProcessInstanceGroupController implements GroupApi {
         ProcessInstanceGroupDAO processInstanceGroupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(ID);
         processInstanceGroupDAO.setArchived(true);
 
-        HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceGroupDAO);
+//        HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceGroupDAO);
+        processInstanceGroupDAORepository.save(processInstanceGroupDAO);
 
         ProcessInstanceGroup processInstanceGroup = HibernateSwaggerObjectMapper.convertProcessInstanceGroupDAO(processInstanceGroupDAO);
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(processInstanceGroup);
@@ -249,7 +258,8 @@ public class ProcessInstanceGroupController implements GroupApi {
         ProcessInstanceGroupDAO processInstanceGroupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(ID);
         processInstanceGroupDAO.setArchived(false);
 
-        HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceGroupDAO);
+//        HibernateUtilityRef.getInstance("bp-data-model").update(processInstanceGroupDAO);
+        processInstanceGroupDAORepository.save(processInstanceGroupDAO);
 
         ProcessInstanceGroup processInstanceGroup = HibernateSwaggerObjectMapper.convertProcessInstanceGroupDAO(processInstanceGroupDAO);
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(processInstanceGroup);
@@ -262,7 +272,8 @@ public class ProcessInstanceGroupController implements GroupApi {
     public ResponseEntity<Void> saveProcessInstanceGroup(@ApiParam(value = "The content of the process instance group to be saved", required = true) @RequestBody ProcessInstanceGroup processInstanceGroup) {
         logger.debug("Saving ProcessInstanceGroup {}", processInstanceGroup.toString());
         ProcessInstanceGroupDAO processInstanceGroupDAO = HibernateSwaggerObjectMapper.createProcessInstanceGroup_DAO(processInstanceGroup);
-        HibernateUtilityRef.getInstance("bp-data-model").persist(processInstanceGroupDAO);
+//        HibernateUtilityRef.getInstance("bp-data-model").persist(processInstanceGroupDAO);
+        processInstanceGroupDAORepository.save(processInstanceGroupDAO);
 
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body("true");
         logger.debug("Saved ProcessInstanceGroup {}", processInstanceGroup.toString());
@@ -303,7 +314,7 @@ public class ProcessInstanceGroupController implements GroupApi {
                                                 @ApiParam(value = "", required = true) @RequestHeader(value = "Authorization", required = true) String authorization) {
         try {
             // check whether the process instance id exists
-            ProcessInstanceDAO pi = ProcessInstanceGroupDAOUtility.getProcessInstance(processInstanceId);
+            ProcessInstanceDAO pi = DAOUtility.getProcessInstanceDAOByID(processInstanceId);
             if (pi == null) {
                 return HttpResponseUtil.createResponseEntityAndLog(String.format("No process ID exists for the process id: %s", processInstanceId), null, HttpStatus.NOT_FOUND, LogLevel.INFO);
             }
@@ -373,7 +384,8 @@ public class ProcessInstanceGroupController implements GroupApi {
 
             // update the group of the party initiating the cancel request
             groupDAO.setStatus(GroupStatus.CANCELLED);
-            HibernateUtility.getInstance("bp-data-model").update(groupDAO);
+//            GenericJPARepositoryImpl.getInstance("bp-data-model").update(groupDAO);
+            groupDAO = SpringBridge.getInstance().getProcessInstanceGroupDAORepository().save(groupDAO);
 
             // cancel processes in the group
             for(String processID : groupDAO.getProcessInstanceIDs()){
@@ -381,8 +393,8 @@ public class ProcessInstanceGroupController implements GroupApi {
                 // if process is completed or already cancelled, continue
                 if(instanceDAO.getStatus() == ProcessInstanceStatus.COMPLETED || instanceDAO.getStatus() == ProcessInstanceStatus.CANCELLED){
                     instanceDAO.setStatus(ProcessInstanceStatus.CANCELLED);
-                    HibernateUtility.getInstance("bp-data-model").update(instanceDAO);
-
+//                    GenericJPARepositoryImpl.getInstance("bp-data-model").update(instanceDAO);
+                    SpringBridge.getInstance().getProcessInstanceDAORepository().save(instanceDAO);
                     continue;
                 }
                 // otherwise, cancel the process
@@ -397,7 +409,8 @@ public class ProcessInstanceGroupController implements GroupApi {
                 // if it is ok, change status of the associated group
                 if(isCancellableGroup){
                     group.setStatus(GroupStatus.CANCELLED);
-                    HibernateUtility.getInstance("bp-data-model").update(group);
+                    //GenericJPARepositoryImpl.getInstance("bp-data-model").update(group);
+                    group = SpringBridge.getInstance().getProcessInstanceGroupDAORepository().save(group);
                 }
             }
 
@@ -412,7 +425,7 @@ public class ProcessInstanceGroupController implements GroupApi {
             return ResponseEntity.ok(null);
 
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(String.format("Unexpected error while cancelling the group: %s", ID));
+            return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while cancelling the group: %s", ID), e, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

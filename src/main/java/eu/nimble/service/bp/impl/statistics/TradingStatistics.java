@@ -1,7 +1,7 @@
 //package eu.nimble.service.bp.impl.statistics;
 //
 //import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
-//import eu.nimble.service.bp.impl.util.persistence.DAOUtility;
+//import eu.nimble.service.bp.impl.persistence.util.DAOUtility;
 //import org.springframework.stereotype.Component;
 //
 //import javax.print.Doc;

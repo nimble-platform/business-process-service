@@ -2,8 +2,7 @@ package eu.nimble.service.bp.processor.transport_execution_plan;
 
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
-import eu.nimble.service.bp.config.BusinessProcessPersistenceConfig;
-import eu.nimble.service.bp.impl.util.persistence.DocumentDAOUtility;
+import eu.nimble.service.bp.impl.persistence.util.DocumentDAOUtility;
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
@@ -21,8 +20,6 @@ public class DefaultTransportExecutionPlanCreator implements JavaDelegate {
     @HystrixCommand
     @Override
     public void execute(DelegateExecution execution) throws Exception {
-
-        BusinessProcessPersistenceConfig config = BusinessProcessPersistenceConfig.getInstance();
 
         logger.info(" $$$ DefaultTransportExecutionPlanCreator: {}", execution);
         final Map<String, Object> variables = execution.getVariables();

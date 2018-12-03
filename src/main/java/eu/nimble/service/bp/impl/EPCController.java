@@ -7,19 +7,19 @@ import com.mashape.unirest.http.Unirest;
 import eu.nimble.service.bp.config.GenericConfig;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
 import eu.nimble.service.bp.impl.model.tt.TTInfo;
-import eu.nimble.service.bp.impl.util.persistence.CatalogueDAOUtility;
-import eu.nimble.service.bp.impl.util.persistence.DocumentDAOUtility;
+import eu.nimble.service.bp.impl.persistence.catalogue.CatalogueRepository;
+import eu.nimble.service.bp.impl.persistence.util.CatalogueDAOUtility;
+import eu.nimble.service.bp.impl.persistence.util.DocumentDAOUtility;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.CatalogueLineType;
 import eu.nimble.service.model.ubl.order.OrderType;
-import eu.nimble.utility.Configuration;
-import eu.nimble.utility.HibernateUtility;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -37,6 +37,9 @@ import java.util.*;
 public class EPCController {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    @Autowired
+    private CatalogueRepository catalogueRepository;
 
     static class EpcCodes {
         private String orderId;
@@ -160,7 +163,7 @@ public class EPCController {
                                                       @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         logger.info("Getting epc codes for productId: {}", publishedProductID);
         try {
-            CatalogueLineType catalogueLine = (CatalogueLineType) HibernateUtility.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).load(CatalogueLineType.class, publishedProductID);
+            CatalogueLineType catalogueLine = catalogueRepository.getSingleEntityByHjid(CatalogueLineType.class, publishedProductID);
 
             if(catalogueLine == null){
                 String msg = "There is no catalogue line for hjid : %d";
@@ -184,8 +187,8 @@ public class EPCController {
             GenericConfig config = SpringBridge.getInstance().getGenericConfig();
             String dataChannelServiceUrlStr = config.getDataChannelServiceUrl()+"/epc/list?orders="+params;
 
-            HttpResponse<com.mashape.unirest.http.JsonNode> response = Unirest.get(dataChannelServiceUrlStr)
-                    .header("Authorization", bearerToken).asJson();
+            HttpResponse<String> response = Unirest.get(dataChannelServiceUrlStr)
+                    .header("Authorization", bearerToken).asString();
 
             List<String> epcCodes = new ArrayList<>();
             ObjectMapper objectMapper = new ObjectMapper();

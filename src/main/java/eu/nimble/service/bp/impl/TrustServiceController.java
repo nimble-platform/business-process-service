@@ -4,12 +4,15 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.impl.model.trust.NegotiationRatings;
+import eu.nimble.service.bp.impl.persistence.catalogue.CatalogueRepository;
+import eu.nimble.service.bp.impl.persistence.util.CatalogueDAOUtility;
+import eu.nimble.service.bp.impl.persistence.util.DAOUtility;
+import eu.nimble.service.bp.impl.persistence.util.DocumentMetadataDAOUtility;
+import eu.nimble.service.bp.impl.persistence.util.TrustUtility;
 import eu.nimble.service.bp.impl.util.controller.HttpResponseUtil;
-import eu.nimble.service.bp.impl.util.persistence.*;
 import eu.nimble.service.bp.impl.util.serialization.Serializer;
 import eu.nimble.service.bp.messaging.KafkaSender;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
-import eu.nimble.utility.Configuration;
 import io.swagger.annotations.*;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -35,6 +38,8 @@ public class TrustServiceController {
 
     @Autowired
     private KafkaSender kafkaSender;
+    @Autowired
+    private CatalogueRepository catalogueRepository;
 
     @ApiOperation(value = "", notes = "Create rating and reviews for the company")
     @ApiResponses(value = {
@@ -101,7 +106,8 @@ public class TrustServiceController {
                 qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID, bearerToken);
             }
             CompletedTaskType completedTaskType = TrustUtility.fillCompletedTask(qualifyingParty, ratings, reviews, processInstanceID);
-            HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).update(qualifyingParty);
+//            HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).update(qualifyingParty);
+            catalogueRepository.updateEntity(qualifyingParty);
 
             // broadcast changes
             kafkaSender.broadcastRatingsUpdate(partyID, bearerToken);

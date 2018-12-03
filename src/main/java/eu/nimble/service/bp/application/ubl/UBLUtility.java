@@ -19,7 +19,7 @@
 //
 //    private static PartyType getPartyType(String partyID) {
 //        /*String query = "SELECT party FROM PartyType party WHERE party.ID='" + partyID + "' ";
-//        List<PartyType> resultSet = (List<PartyType>) HibernateUtility.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME)
+//        List<PartyType> resultSet = (List<PartyType>) GenericJPARepositoryImpl.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME)
 //                .loadAll(query);
 //        PartyType party = null;
 //        if(resultSet.size() == 0) { */

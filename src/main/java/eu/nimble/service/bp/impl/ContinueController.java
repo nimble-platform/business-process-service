@@ -1,11 +1,14 @@
 package eu.nimble.service.bp.impl;
 
-import eu.nimble.service.bp.hyperjaxb.model.*;
+import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
+import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
+import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceInputMessageDAO;
+import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceStatus;
+import eu.nimble.service.bp.impl.persistence.bp.BusinessProcessRepository;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
-import eu.nimble.service.bp.impl.util.persistence.DAOUtility;
-import eu.nimble.service.bp.impl.util.persistence.HibernateSwaggerObjectMapper;
-import eu.nimble.service.bp.impl.util.persistence.HibernateUtilityRef;
-import eu.nimble.service.bp.impl.util.persistence.ProcessInstanceGroupDAOUtility;
+import eu.nimble.service.bp.impl.persistence.util.DAOUtility;
+import eu.nimble.service.bp.impl.persistence.util.HibernateSwaggerObjectMapper;
+import eu.nimble.service.bp.impl.persistence.util.ProcessInstanceGroupDAOUtility;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.api.ContinueApi;
@@ -15,6 +18,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -29,6 +33,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class ContinueController implements ContinueApi {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    @Autowired
+    private BusinessProcessRepository businessProcessRepository;
+
     @Override
     @ApiOperation(value = "",notes = "Send input to a waiting process instance (because of a human task)")
     public ResponseEntity<ProcessInstance> continueProcessInstance(@ApiParam(value = "", required = true) @RequestBody ProcessInstanceInputMessage body,
@@ -40,7 +47,8 @@ public class ContinueController implements ContinueApi {
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
         try {
             ProcessInstanceInputMessageDAO processInstanceInputMessageDAO = HibernateSwaggerObjectMapper.createProcessInstanceInputMessage_DAO(body);
-            HibernateUtilityRef.getInstance("bp-data-model").persist(processInstanceInputMessageDAO);
+//            HibernateUtilityRef.getInstance("bp-data-model").persist(processInstanceInputMessageDAO);
+            businessProcessRepository.persistEntity(processInstanceInputMessageDAO);
 
             // save ProcessInstanceInputMessageDAO
             businessProcessContext.setMessageDAO(processInstanceInputMessageDAO);
@@ -54,7 +62,8 @@ public class ContinueController implements ContinueApi {
 
             storedInstance.setStatus(ProcessInstanceStatus.fromValue(processInstance.getStatus().toString()));
 
-            HibernateUtilityRef.getInstance("bp-data-model").update(storedInstance);
+//            HibernateUtilityRef.getInstance("bp-data-model").update(storedInstance);
+            businessProcessRepository.updateEntity(storedInstance);
 
             // save ProcessInstanceDAO
             businessProcessContext.setProcessInstanceDAO(storedInstance);
@@ -109,7 +118,8 @@ public class ContinueController implements ContinueApi {
 
             // associate groups
             existingGroup.getAssociatedGroups().add(associatedGroup.getID());
-            HibernateUtilityRef.getInstance("bp-data-model").update(existingGroup);
+//            HibernateUtilityRef.getInstance("bp-data-model").update(existingGroup);
+            businessProcessRepository.updateEntity(existingGroup);
         }
     }
 }

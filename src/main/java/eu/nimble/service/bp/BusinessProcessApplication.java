@@ -1,8 +1,6 @@
 package eu.nimble.service.bp;
 
 import com.netflix.hystrix.contrib.javanica.aop.aspectj.HystrixCommandAspect;
-import eu.nimble.service.bp.impl.util.persistence.HibernateUtilityRef;
-import eu.nimble.utility.HibernateUtility;
 import org.apache.ibatis.session.SqlSession;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.ProcessEngines;
@@ -38,7 +36,6 @@ import java.sql.Statement;
 @EnableEurekaClient
 @EnableFeignClients(basePackages = {"eu.nimble.common.rest"})
 @RestController
-@EnableSwagger2
 @EnableProcessApplication
 @ComponentScan(basePackages = "eu")
 public class BusinessProcessApplication {
@@ -80,7 +77,7 @@ public class BusinessProcessApplication {
       }
     }
 
-    HibernateUtility.getInstance(eu.nimble.utility.Configuration.UBL_PERSISTENCE_UNIT_NAME);
-    HibernateUtilityRef.getInstance("bp-data-model");
+//    GenericJPARepositoryImpl.getInstance(eu.nimble.utility.Configuration.UBL_PERSISTENCE_UNIT_NAME);
+//    HibernateUtilityRef.getInstance("bp-data-model");
   }
 }
