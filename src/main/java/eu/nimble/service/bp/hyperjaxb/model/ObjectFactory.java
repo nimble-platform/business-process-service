@@ -125,6 +125,14 @@ public class ObjectFactory {
     }
 
     /**
+     * Create an instance of {@link CollaborationGroupDAO }
+     * 
+     */
+    public CollaborationGroupDAO createCollaborationGroupDAO() {
+        return new CollaborationGroupDAO();
+    }
+
+    /**
      * Create an instance of {@link AssociatedProcessInstanceGroup }
      * 
      */

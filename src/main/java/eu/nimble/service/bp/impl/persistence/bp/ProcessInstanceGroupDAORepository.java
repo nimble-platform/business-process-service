@@ -55,6 +55,13 @@ public interface ProcessInstanceGroupDAORepository extends JpaRepository<Process
     @Query(value = "UPDATE ProcessInstanceGroupDAO AS pig SET pig.archived = true WHERE pig.partyID = :partyId")
     void archiveAllGroupsOfParty(@Param("partyId") String partyId);
 
-    @Query(value = "SELECT pig.hjid FROM ProcessInstanceGroupDAO pig WHERE pig.archived = true AND pig.partyID = :partyId")
-    List<Long> getHjidsOfArchivedGroupsForParty(@Param("partyId") String partyId);
+    @Query(value = "SELECT pig.ID FROM ProcessInstanceGroupDAO pig WHERE pig.archived = true AND pig.partyID = :partyId")
+    List<String> getIDsOfArchivedGroupsForParty(@Param("partyId") String partyId);
+
+    @Query(value = "SELECT pig.precedingProcess.processInstanceID FROM ProcessInstanceGroupDAO pig join pig.processInstanceIDsItems pid," +
+                "ProcessInstanceDAO pi " +
+                "WHERE " +
+                "pid.item = pi.processInstanceID AND " +
+                "pi.processInstanceID = :processInstanceId AND pig.precedingProcess IS NOT NULL")
+    String getPrecedingProcessInstanceId(@Param("processInstanceId") String processInstanceId);
 }

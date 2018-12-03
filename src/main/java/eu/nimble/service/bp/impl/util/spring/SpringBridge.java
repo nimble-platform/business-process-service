@@ -50,6 +50,9 @@ public class SpringBridge implements ApplicationContextAware {
     @Autowired
     private ProcessDAORepository processDAORepository;
 
+    @Autowired
+    private CollaborationGroupDAORepository collaborationGroupDAORepository;
+
     public static SpringBridge getInstance() {
         return applicationContext.getBean(SpringBridge.class);
     }
@@ -98,5 +101,9 @@ public class SpringBridge implements ApplicationContextAware {
 
     public ProcessInstanceGroupDAORepository getProcessInstanceGroupDAORepository() {
         return processInstanceGroupDAORepository;
+    }
+
+    public CollaborationGroupDAORepository getCollaborationGroupDAORepository() {
+        return collaborationGroupDAORepository;
     }
 }

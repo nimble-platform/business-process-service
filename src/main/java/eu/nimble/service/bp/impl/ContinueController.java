@@ -1,10 +1,8 @@
 package eu.nimble.service.bp.impl;
 
-import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
-import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
-import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceInputMessageDAO;
-import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceStatus;
+import eu.nimble.service.bp.hyperjaxb.model.*;
 import eu.nimble.service.bp.impl.persistence.bp.BusinessProcessRepository;
+import eu.nimble.service.bp.impl.persistence.bp.CollaborationGroupDAORepository;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.impl.persistence.util.DAOUtility;
 import eu.nimble.service.bp.impl.persistence.util.HibernateSwaggerObjectMapper;
@@ -35,6 +33,9 @@ public class ContinueController implements ContinueApi {
 
     @Autowired
     private BusinessProcessRepository businessProcessRepository;
+
+    @Autowired
+    private CollaborationGroupDAORepository collaborationGroupDAORepository;
 
     @Override
     @ApiOperation(value = "",notes = "Send input to a waiting process instance (because of a human task)")
@@ -101,24 +102,22 @@ public class ContinueController implements ContinueApi {
             CollaborationGroupDAO initiatorCollaborationGroup = ProcessInstanceGroupDAOUtility.getCollaborationGroupDAO(body.getVariables().getInitiatorID(),Long.parseLong(responderCollaborationGID));
             // create a new initiator collaboration group
             if(initiatorCollaborationGroup == null){
-                CollaborationGroupDAO responderCollaborationGroup = (CollaborationGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").load(CollaborationGroupDAO.class,Long.parseLong(responderCollaborationGID));
+                CollaborationGroupDAO responderCollaborationGroup = collaborationGroupDAORepository.getOne(Long.parseLong(responderCollaborationGID));
                 initiatorCollaborationGroup = ProcessInstanceGroupDAOUtility.createCollaborationGroupDAO();
 
                 // set association between collaboration groups
                 initiatorCollaborationGroup.getAssociatedCollaborationGroups().add(responderCollaborationGroup.getHjid());
                 responderCollaborationGroup.getAssociatedCollaborationGroups().add(initiatorCollaborationGroup.getHjid());
-                HibernateUtilityRef.getInstance("bp-data-model").update(responderCollaborationGroup);
+                collaborationGroupDAORepository.save(responderCollaborationGroup);
             }
 
             // add new group to the collaboration group
             initiatorCollaborationGroup.getAssociatedProcessInstanceGroups().add(associatedGroup);
-            HibernateUtilityRef.getInstance("bp-data-model").update(initiatorCollaborationGroup);
-
+            collaborationGroupDAORepository.save(initiatorCollaborationGroup);
             BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId).setUpdatedAssociatedGroup(associatedGroup);
 
             // associate groups
             existingGroup.getAssociatedGroups().add(associatedGroup.getID());
-//            HibernateUtilityRef.getInstance("bp-data-model").update(existingGroup);
             businessProcessRepository.updateEntity(existingGroup);
         }
     }

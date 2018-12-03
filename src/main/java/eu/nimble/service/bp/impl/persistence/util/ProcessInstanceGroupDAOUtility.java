@@ -1,18 +1,16 @@
 package eu.nimble.service.bp.impl.persistence.util;
 
 import eu.nimble.common.rest.identity.IdentityClientTyped;
-import eu.nimble.service.bp.hyperjaxb.model.GroupStatus;
-import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
-import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
-import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceStatus;
+import eu.nimble.service.bp.hyperjaxb.model.*;
+import eu.nimble.service.bp.impl.persistence.bp.CollaborationGroupDAORepository;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupFilter;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
+import eu.nimble.utility.HibernateUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import sun.rmi.runtime.Log;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -29,6 +27,10 @@ public class ProcessInstanceGroupDAOUtility {
     @Autowired
     private IdentityClientTyped identityClient;
 
+    @Autowired
+    private CollaborationGroupDAORepository collaborationGroupDAORepository;
+
+
     public static List<CollaborationGroupDAO> getCollaborationGroupDAOs(
             String partyId,
             String collaborationRole,
@@ -42,8 +44,8 @@ public class ProcessInstanceGroupDAOUtility {
             int limit,
             int offset) {
 
-        String query = getGroupRetrievalQuery(GroupQueryType.GROUP, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories,status, startTime, endTime);
-        List<Object> collaborationGroups = (List<Object>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query, offset, limit);
+        QueryData query = getGroupRetrievalQuery(GroupQueryType.GROUP, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories,status, startTime, endTime);
+        List<Object> collaborationGroups = SpringBridge.getInstance().getBusinessProcessRepository().getEntities(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray());
         List<CollaborationGroupDAO> results = new ArrayList<>();
         for(Object groupResult : collaborationGroups) {
             Object[] resultItems = (Object[]) groupResult;
@@ -312,7 +314,7 @@ public class ProcessInstanceGroupDAOUtility {
         CollaborationGroupDAO collaborationGroupDAO = new CollaborationGroupDAO();
         collaborationGroupDAO.setStatus(CollaborationStatus.INPROGRESS);
         collaborationGroupDAO.setArchived(false);
-        HibernateUtilityRef.getInstance("bp-data-model").persist(collaborationGroupDAO);
+        SpringBridge.getInstance().getCollaborationGroupDAORepository().save(collaborationGroupDAO);
         return collaborationGroupDAO;
     }
 
@@ -336,17 +338,12 @@ public class ProcessInstanceGroupDAOUtility {
     }
 
     public static ProcessInstanceGroupDAO getProcessInstanceGroupDAO(String partyId, String associatedGroupId) {
-//        String query = "select pig from ProcessInstanceGroupDAO pig where pig.partyID = '" + partyId+ "' and pig.ID in " +
-//                "(select agrp.item from ProcessInstanceGroupDAO pig2 join pig2.associatedGroupsItems agrp where pig2.ID = '" + associatedGroupId + "')";
-//        ProcessInstanceGroupDAO group = (ProcessInstanceGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query);
         ProcessInstanceGroupDAO group = SpringBridge.getInstance().getProcessInstanceGroupDAORepository().getProcessInstanceGroup(partyId, associatedGroupId);
         return group;
     }
 
     public static CollaborationGroupDAO getCollaborationGroupDAO(String partyId,Long associatedGroupId){
-        String query = "select cg from CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups pig where pig.partyID = '"+partyId+"' and cg.hjid in " +
-                "(select acg.item from CollaborationGroupDAO cg2 join cg2.associatedCollaborationGroupsItems acg where cg2.hjid = "+associatedGroupId+")";
-        CollaborationGroupDAO group = (CollaborationGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query);
+        CollaborationGroupDAO group = SpringBridge.getInstance().getCollaborationGroupDAORepository().getAssociatedCollaborationGroup(partyId,associatedGroupId);
         return group;
     }
 
@@ -380,10 +377,7 @@ public class ProcessInstanceGroupDAOUtility {
     }
 
     public static void deleteProcessInstanceGroupDAOByID(String groupID) {
-        // get collaboration group which the given group belongs to
-        String query = "select cg from CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups apig where apig.ID = '"+groupID+"'";
-
-        CollaborationGroupDAO collaborationGroupDAO = (CollaborationGroupDAO ) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query);
+        CollaborationGroupDAO collaborationGroupDAO = SpringBridge.getInstance().getCollaborationGroupDAORepository().getCollaborationGroupOfProcessInstanceGroup(groupID);
         // if the collaboration group only contains the given group,then delete the collaboration group so that there will not be any garbage on the database
         if(collaborationGroupDAO.getAssociatedProcessInstanceGroups().size() == 1){
             deleteCollaborationGroupDAOByID(collaborationGroupDAO.getHjid());
@@ -400,26 +394,24 @@ public class ProcessInstanceGroupDAOUtility {
             for(String id:group.getAssociatedGroups()){
                 ProcessInstanceGroupDAO groupDAO =  getProcessInstanceGroupDAO(id);
                 groupDAO.getAssociatedGroups().remove(groupID);
-                HibernateUtilityRef.getInstance("bp-data-model").update(groupDAO);
+                SpringBridge.getInstance().getProcessInstanceGroupDAORepository().save(groupDAO);
             }
             SpringBridge.getInstance().getProcessInstanceGroupDAORepository().delete(group.getHjid());
         }
     }
 
     public static void deleteCollaborationGroupDAOByID(Long groupID) {
-        CollaborationGroupDAO group = (CollaborationGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").load(CollaborationGroupDAO.class,groupID);
+        CollaborationGroupDAO group = SpringBridge.getInstance().getCollaborationGroupDAORepository().getOne(groupID);
         // delete references to this group
         for(Long id:group.getAssociatedCollaborationGroups()){
-            CollaborationGroupDAO groupDAO = (CollaborationGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").load(CollaborationGroupDAO.class,id);
+            CollaborationGroupDAO groupDAO = SpringBridge.getInstance().getCollaborationGroupDAORepository().getOne(id);
             groupDAO.getAssociatedCollaborationGroups().remove(groupID);
-            HibernateUtilityRef.getInstance("bp-data-model").update(groupDAO);
+            SpringBridge.getInstance().getCollaborationGroupDAORepository().save(groupDAO);
         }
-        HibernateUtilityRef.getInstance("bp-data-model").delete(CollaborationGroupDAO.class,groupID);
+        SpringBridge.getInstance().getCollaborationGroupDAORepository().delete(groupID);
     }
 
     public static void archiveAllGroupsForParty(String partyId) {
-//        String query = "update ProcessInstanceGroupDAO as pig set pig.archived = true WHERE pig.partyID = '" + partyId + "'";
-//        HibernateUtilityRef.getInstance("bp-data-model").executeUpdate(query);
         SpringBridge.getInstance().getProcessInstanceGroupDAORepository().archiveAllGroupsOfParty(partyId);
     }
 
@@ -448,8 +440,7 @@ public class ProcessInstanceGroupDAOUtility {
     }
 
     public static void deleteArchivedGroupsForParty(String partyId) {
-        String query = "select pig.ID from ProcessInstanceGroupDAO pig WHERE pig.archived = true and pig.partyID = '" + partyId + "'";
-        List<String> groupIds = (List<String>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+        List<String> groupIds = SpringBridge.getInstance().getProcessInstanceGroupDAORepository().getIDsOfArchivedGroupsForParty(partyId);
         for(String id : groupIds){
             deleteProcessInstanceGroupDAOByID(id);
         }
@@ -457,36 +448,14 @@ public class ProcessInstanceGroupDAOUtility {
 
     public static String getOrderIdInGroup(String processInstanceId) {
         // get the id of preceding process instance if there is any
-        String query = "SELECT pig.precedingProcess.processInstanceID FROM ProcessInstanceGroupDAO pig join pig.processInstanceIDsItems pid," +
-                " ProcessInstanceDAO pi " +
-                " WHERE" +
-                " pid.item = pi.processInstanceID AND " +
-                " pi.processInstanceID = ? AND pig.precedingProcess IS NOT NULL";
-        String precedingProcessInstanceID = HibernateUtility.getInstance("bp-data-model").load(query, processInstanceId);
+        String precedingProcessInstanceID = SpringBridge.getInstance().getProcessInstanceGroupDAORepository().getPrecedingProcessInstanceId(processInstanceId);
         String orderId;
         // if there is a preceding process instance, using that, get the order id
         if(precedingProcessInstanceID != null){
             orderId = DocumentDAOUtility.getRequestMetadata(precedingProcessInstanceID).getDocumentID();
         }
         else {
-            // get order
-            query = "SELECT DISTINCT doc.documentID FROM ProcessInstanceGroupDAO pig join pig.processInstanceIDsItems pid," +
-                    " ProcessInstanceDAO pi, " +
-                    " ProcessDocumentMetadataDAO doc" +
-                    " WHERE " +
-                    " pid.item = pi.processInstanceID AND" +
-                    " doc.processInstanceID = pi.processInstanceID AND" +
-                    " doc.type = 'ORDER' AND pig.ID IN" +
-
-                    " (" +
-                    " SELECT pig2.ID FROM ProcessInstanceGroupDAO pig2 join pig2.processInstanceIDsItems pid2," +
-                    " ProcessInstanceDAO pi2 " +
-                    " WHERE" +
-                    " pid2.item = pi2.processInstanceID AND " +
-                    " pi2.processInstanceID = ?" +
-                    ")";
-
-            orderId = HibernateUtility.getInstance("bp-data-model").load(query, processInstanceId);
+            orderId = SpringBridge.getInstance().getProcessInstanceGroupDAORepository().getOrderIdInGroup(processInstanceId);
         }
         return orderId;
     }

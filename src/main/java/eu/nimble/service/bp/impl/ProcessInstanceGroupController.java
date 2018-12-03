@@ -1,6 +1,7 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.hyperjaxb.model.*;
+import eu.nimble.service.bp.impl.persistence.bp.CollaborationGroupDAORepository;
 import eu.nimble.service.bp.impl.persistence.bp.ProcessInstanceGroupDAORepository;
 import eu.nimble.service.bp.impl.persistence.util.DAOUtility;
 import eu.nimble.service.bp.impl.persistence.util.HibernateSwaggerObjectMapper;
@@ -45,6 +46,8 @@ public class ProcessInstanceGroupController implements GroupApi {
     private EmailSenderUtil emailSenderUtil;
     @Autowired
     private ProcessInstanceGroupDAORepository processInstanceGroupDAORepository;
+    @Autowired
+    private CollaborationGroupDAORepository collaborationGroupDAORepository;
 
     @Override
     @ApiOperation(value = "",notes = "Add a new process instance to the specified")
@@ -143,7 +146,7 @@ public class ProcessInstanceGroupController implements GroupApi {
     public ResponseEntity<CollaborationGroup> getCollaborationGroup(@ApiParam(value = "",required=true ) @PathVariable("ID") String ID) {
         logger.debug("Getting CollaborationGroup: {}", ID);
 
-        CollaborationGroupDAO collaborationGroupDAO = (CollaborationGroupDAO) HibernateUtilityRef.getInstance("bp-data-model").load(CollaborationGroupDAO.class,Long.parseLong(ID));
+        CollaborationGroupDAO collaborationGroupDAO = collaborationGroupDAORepository.getOne(Long.parseLong(ID));
         if(collaborationGroupDAO == null){
             logger.error("There does not exist a collaboration group with id: {}",ID);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
@@ -341,7 +344,7 @@ public class ProcessInstanceGroupController implements GroupApi {
     public ResponseEntity<Void> updateCollaborationGroupName(@ApiParam(value = "",required=true ) @PathVariable("ID") String ID,
                                                              @ApiParam(value = "", required = true) @RequestParam(value = "groupName", required = true) String groupName) {
         logger.debug("Updating name of the collaboration group :"+ID);
-        CollaborationGroupDAO collaborationGroupDAO = (CollaborationGroupDAO) HibernateUtility.getInstance("bp-data-model").load(CollaborationGroupDAO.class,Long.parseLong(ID));
+        CollaborationGroupDAO collaborationGroupDAO = collaborationGroupDAORepository.getOne(Long.parseLong(ID));
         if(collaborationGroupDAO == null){
             String msg = String.format("There does not exist a collaboration group with id: %s", ID);
             logger.error(msg);
@@ -349,7 +352,7 @@ public class ProcessInstanceGroupController implements GroupApi {
             return response;
         }
         collaborationGroupDAO.setName(groupName);
-        HibernateUtility.getInstance("bp-data-model").update(collaborationGroupDAO);
+        collaborationGroupDAORepository.save(collaborationGroupDAO);
         logger.debug("Updated name of the collaboration group :"+ID);
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body("true");
         return response;

@@ -23,6 +23,7 @@ import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -58,6 +59,8 @@ import org.jvnet.jaxb2_commons.locator.util.LocatorUtils;
  *         &lt;element name="collaborationRole" type="{http://www.w3.org/2001/XMLSchema}string"/&gt;
  *         &lt;element name="status" type="{}GroupStatus"/&gt;
  *         &lt;element name="associatedGroups" type="{http://www.w3.org/2001/XMLSchema}string" maxOccurs="unbounded"/&gt;
+ *         &lt;element name="precedingProcessInstanceGroup" type="{}ProcessInstanceGroupDAO" minOccurs="0"/&gt;
+ *         &lt;element name="precedingProcess" type="{}ProcessInstanceDAO" minOccurs="0"/&gt;
  *         &lt;element name="firstActivityTime" type="{http://www.w3.org/2001/XMLSchema}string"/&gt;
  *         &lt;element name="lastActivityTime" type="{http://www.w3.org/2001/XMLSchema}string"/&gt;
  *       &lt;/sequence&gt;
@@ -78,6 +81,8 @@ import org.jvnet.jaxb2_commons.locator.util.LocatorUtils;
     "collaborationRole",
     "status",
     "associatedGroups",
+    "precedingProcessInstanceGroup",
+    "precedingProcess",
     "firstActivityTime",
     "lastActivityTime"
 })
@@ -104,6 +109,8 @@ public class ProcessInstanceGroupDAO
     protected GroupStatus status;
     @XmlElement(required = true)
     protected List<String> associatedGroups;
+    protected ProcessInstanceGroupDAO precedingProcessInstanceGroup;
+    protected ProcessInstanceDAO precedingProcess;
     @XmlElement(required = true)
     protected String firstActivityTime;
     @XmlElement(required = true)
@@ -339,6 +346,64 @@ public class ProcessInstanceGroupDAO
     }
 
     /**
+     * Gets the value of the precedingProcessInstanceGroup property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link ProcessInstanceGroupDAO }
+     *     
+     */
+    @OneToOne(targetEntity = ProcessInstanceGroupDAO.class, cascade = {
+        CascadeType.REFRESH,
+        CascadeType.MERGE,
+        CascadeType.PERSIST
+    })
+    public ProcessInstanceGroupDAO getPrecedingProcessInstanceGroup() {
+        return precedingProcessInstanceGroup;
+    }
+
+    /**
+     * Sets the value of the precedingProcessInstanceGroup property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link ProcessInstanceGroupDAO }
+     *     
+     */
+    public void setPrecedingProcessInstanceGroup(ProcessInstanceGroupDAO value) {
+        this.precedingProcessInstanceGroup = value;
+    }
+
+    /**
+     * Gets the value of the precedingProcess property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link ProcessInstanceDAO }
+     *     
+     */
+    @OneToOne(targetEntity = ProcessInstanceDAO.class, cascade = {
+        CascadeType.REFRESH,
+        CascadeType.MERGE,
+        CascadeType.PERSIST
+    })
+    public ProcessInstanceDAO getPrecedingProcess() {
+        return precedingProcess;
+    }
+
+    /**
+     * Sets the value of the precedingProcess property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link ProcessInstanceDAO }
+     *     
+     */
+    public void setPrecedingProcess(ProcessInstanceDAO value) {
+        this.precedingProcess = value;
+    }
+
+    /**
      * Gets the value of the firstActivityTime property.
      * 
      * @return
@@ -465,6 +530,24 @@ public class ProcessInstanceGroupDAO
             List<String> rhsAssociatedGroups;
             rhsAssociatedGroups = (((that.associatedGroups!= null)&&(!that.associatedGroups.isEmpty()))?that.getAssociatedGroups():null);
             if (!strategy.equals(LocatorUtils.property(thisLocator, "associatedGroups", lhsAssociatedGroups), LocatorUtils.property(thatLocator, "associatedGroups", rhsAssociatedGroups), lhsAssociatedGroups, rhsAssociatedGroups)) {
+                return false;
+            }
+        }
+        {
+            ProcessInstanceGroupDAO lhsPrecedingProcessInstanceGroup;
+            lhsPrecedingProcessInstanceGroup = this.getPrecedingProcessInstanceGroup();
+            ProcessInstanceGroupDAO rhsPrecedingProcessInstanceGroup;
+            rhsPrecedingProcessInstanceGroup = that.getPrecedingProcessInstanceGroup();
+            if (!strategy.equals(LocatorUtils.property(thisLocator, "precedingProcessInstanceGroup", lhsPrecedingProcessInstanceGroup), LocatorUtils.property(thatLocator, "precedingProcessInstanceGroup", rhsPrecedingProcessInstanceGroup), lhsPrecedingProcessInstanceGroup, rhsPrecedingProcessInstanceGroup)) {
+                return false;
+            }
+        }
+        {
+            ProcessInstanceDAO lhsPrecedingProcess;
+            lhsPrecedingProcess = this.getPrecedingProcess();
+            ProcessInstanceDAO rhsPrecedingProcess;
+            rhsPrecedingProcess = that.getPrecedingProcess();
+            if (!strategy.equals(LocatorUtils.property(thisLocator, "precedingProcess", lhsPrecedingProcess), LocatorUtils.property(thatLocator, "precedingProcess", rhsPrecedingProcess), lhsPrecedingProcess, rhsPrecedingProcess)) {
                 return false;
             }
         }
