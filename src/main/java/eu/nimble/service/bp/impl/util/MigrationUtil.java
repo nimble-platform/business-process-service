@@ -3,19 +3,18 @@ package eu.nimble.service.bp.impl.util;
 import eu.nimble.service.bp.hyperjaxb.model.*;
 import eu.nimble.utility.HibernateUtility;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.env.YamlPropertySourceLoader;
+import org.springframework.core.env.MapPropertySource;
+import org.springframework.core.env.PropertySource;
+import org.springframework.core.io.ClassPathResource;
 
+import java.io.IOException;
 import java.util.*;
 
 public class MigrationUtil {
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(MigrationUtil.class);
-    private static final String environment = "local";
 
-    // connection parameters for 'local'
-    private static String url;
-    private static String username;
-    private static String password;
-
-    public static void main(String[] args) throws Exception{
+    public static void main(String[] args) {
         try {
             HibernateUtility hu = HibernateUtility.getInstance("bp-data-model", getConfigs());
 
@@ -163,19 +162,25 @@ public class MigrationUtil {
     }
 
     private static Map getConfigs(){
-        Map map = new HashMap();
+        YamlPropertySourceLoader loader = new YamlPropertySourceLoader();
+        try {
+            PropertySource<?> applicationYamlPropertySource = loader.load(
+                    "properties", new ClassPathResource("releases/r6/r6migration.yml"), null);
 
-        if(environment.equals("local")){
-            url = "jdbc:postgresql://localhost:5432/businessprocessengine?currentSchema=public";
-            username = "postgres";
-            password = "nimble";
+            Map map = ((MapPropertySource) applicationYamlPropertySource).getSource();
+
+            String url = (String) map.get("hibernate.connection.url");
+            url = url.replace("${DB_HOST}",System.getenv("DB_HOST")).replace("${DB_PORT}",System.getenv("DB_PORT"));
 
             map.put("hibernate.connection.url",url);
-            map.put("hibernate.connection.username",username);
-            map.put("hibernate.connection.password",password);
-            map.put("hibernate.enable_lazy_load_no_trans",true);
-        }
+            map.put("hibernate.connection.username",System.getenv("DB_USERNAME"));
+            map.put("hibernate.connection.password",System.getenv("DB_PASSWORD"));
 
-        return map;
+            return map;
+
+        } catch (IOException e) {
+            logger.error("", e);
+            throw new RuntimeException();
+        }
     }
 }

@@ -1,0 +1,6 @@
+hibernate:
+  connection:
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/businessprocessengine?currentSchema=public
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver_class: org.postgresql.Driver
