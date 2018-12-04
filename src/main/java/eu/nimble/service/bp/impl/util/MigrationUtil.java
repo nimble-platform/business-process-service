@@ -15,8 +15,9 @@ public class MigrationUtil {
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(MigrationUtil.class);
 
     public static void main(String[] args) {
+        MigrationUtil script = new MigrationUtil();
         try {
-            HibernateUtility hu = HibernateUtility.getInstance("bp-data-model", getConfigs());
+            HibernateUtility hu = HibernateUtility.getInstance("bp-data-model", script.getConfigs());
 
             createCollaborationGroups(hu);
 
@@ -42,7 +43,7 @@ public class MigrationUtil {
             hibernateUtility.update(collaborationGroupDAO);
             logger.info("Collaboration group is created for process instance group: {}",groupDAO.getID());
         }
-
+        logger.info("Collaboration groups are created for all process instance groups.");
         // set association between collaboration groups
         for(ProcessInstanceGroupDAO groupDAO: groupDAOS){
             // get collaboration group of the group
@@ -56,7 +57,9 @@ public class MigrationUtil {
             collaborationGroupDAO.setAssociatedCollaborationGroups(associatedCollaborationGroupIds);
 
             hibernateUtility.update(collaborationGroupDAO);
+            logger.info("Collaboration association is created for process instance group: {}",collaborationGroupDAO.getHjid());
         }
+        logger.info("Collaboration associations are created for all process instance groups.");
 
 //        // create groups and association between groups
 //        for (ProcessInstanceGroupDAO groupDAO: groupDAOS){
@@ -161,11 +164,11 @@ public class MigrationUtil {
         return group;
     }
 
-    private static Map getConfigs(){
+    private Map getConfigs(){
         YamlPropertySourceLoader loader = new YamlPropertySourceLoader();
         try {
             PropertySource<?> applicationYamlPropertySource = loader.load(
-                    "properties", new ClassPathResource("releases/r6/r6migration.yml"), null);
+                    "properties", new ClassPathResource("releases.r6/r6migration.yml"), null);
 
             Map map = ((MapPropertySource) applicationYamlPropertySource).getSource();
 

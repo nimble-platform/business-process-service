@@ -1,6 +1,7 @@
 hibernate:
   connection:
-    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/businessprocessengine?currentSchema=public
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/businessprocessdb?currentSchema=public
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver_class: org.postgresql.Driver
+  enable_lazy_load_no_trans: true
