@@ -1,6 +1,7 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.hyperjaxb.model.*;
+import eu.nimble.service.bp.impl.persistence.bp.CollaborationGroupDAORepository;
 import eu.nimble.service.bp.impl.persistence.bp.ProcessInstanceGroupDAORepository;
 import eu.nimble.service.bp.impl.persistence.util.DAOUtility;
 import eu.nimble.service.bp.impl.persistence.util.HibernateSwaggerObjectMapper;
@@ -10,10 +11,7 @@ import eu.nimble.service.bp.impl.util.controller.HttpResponseUtil;
 import eu.nimble.service.bp.impl.util.email.EmailSenderUtil;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.swagger.api.GroupApi;
-import eu.nimble.service.bp.swagger.model.ProcessInstance;
-import eu.nimble.service.bp.swagger.model.ProcessInstanceGroup;
-import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupFilter;
-import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupResponse;
+import eu.nimble.service.bp.swagger.model.*;
 import eu.nimble.service.model.ubl.order.OrderType;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -48,6 +46,8 @@ public class ProcessInstanceGroupController implements GroupApi {
     private EmailSenderUtil emailSenderUtil;
     @Autowired
     private ProcessInstanceGroupDAORepository processInstanceGroupDAORepository;
+    @Autowired
+    private CollaborationGroupDAORepository collaborationGroupDAORepository;
 
     @Override
     @ApiOperation(value = "",notes = "Add a new process instance to the specified")
@@ -119,6 +119,17 @@ public class ProcessInstanceGroupController implements GroupApi {
     }
 
     @Override
+    public ResponseEntity<Void> deleteCollaborationGroup(@ApiParam(value = "",required=true ) @PathVariable("ID") String ID) {
+        logger.debug("Deleting CollaborationGroup ID: {}", ID);
+
+        ProcessInstanceGroupDAOUtility.deleteCollaborationGroupDAOByID(Long.parseLong(ID));
+
+        ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body("true");
+        logger.debug("Deleted CollaborationGroup ID: {}",ID);
+        return response;
+    }
+
+    @Override
     @ApiOperation(value = "",notes = "Retrieve the process instance group specified with the ID")
     public ResponseEntity<ProcessInstanceGroup> getProcessInstanceGroup(@ApiParam(value = "", required = true) @PathVariable("ID") String ID) {
         logger.debug("Getting ProcessInstanceGroup: {}", ID);
@@ -132,8 +143,23 @@ public class ProcessInstanceGroupController implements GroupApi {
     }
 
     @Override
+    public ResponseEntity<CollaborationGroup> getCollaborationGroup(@ApiParam(value = "",required=true ) @PathVariable("ID") String ID) {
+        logger.debug("Getting CollaborationGroup: {}", ID);
+
+        CollaborationGroupDAO collaborationGroupDAO = collaborationGroupDAORepository.getOne(Long.parseLong(ID));
+        if(collaborationGroupDAO == null){
+            logger.error("There does not exist a collaboration group with id: {}",ID);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
+        CollaborationGroup collaborationGroup = HibernateSwaggerObjectMapper.convertCollaborationGroupDAO(collaborationGroupDAO);
+        ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(collaborationGroup);
+        logger.debug("Retrieved CollaborationGroup: {}", ID);
+        return response;
+    }
+
+    @Override
     @ApiOperation(value = "",notes = "Retrieve process instance groups for the specified party. If no partyID is specified, then all groups are returned")
-    public ResponseEntity<ProcessInstanceGroupResponse> getProcessInstanceGroups(@ApiParam(value = "Identifier of the party") @RequestParam(value = "partyID", required = false) String partyID,
+    public ResponseEntity<CollaborationGroupResponse> getProcessInstanceGroups(@ApiParam(value = "Identifier of the party") @RequestParam(value = "partyID", required = false) String partyID,
                                                                                  @ApiParam(value = "Related products") @RequestParam(value = "relatedProducts", required = false) List<String> relatedProducts,
                                                                                  @ApiParam(value = "Related product categories") @RequestParam(value = "relatedProductCategories", required = false) List<String> relatedProductCategories,
                                                                                  @ApiParam(value = "Identifier of the corresponsing trading partner ID") @RequestParam(value = "tradingPartnerIDs", required = false) List<String> tradingPartnerIDs,
@@ -144,22 +170,22 @@ public class ProcessInstanceGroupController implements GroupApi {
                                                                                  @ApiParam(value = "", defaultValue = "false") @RequestParam(value = "archived", required = false, defaultValue = "false") Boolean archived,
                                                                                  @ApiParam(value = "status") @RequestParam(value = "status",required = false) List<String> status,
                                                                                  @ApiParam(value = "") @RequestParam(value = "collaborationRole", required = false) String collaborationRole) {
-        logger.debug("Getting ProcessInstanceGroups for party: {}", partyID);
+        logger.debug("Getting collaboration groups for party: {}", partyID);
 
-        List<ProcessInstanceGroupDAO> results = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAOs(partyID, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, status,null, null, limit, offset);
-        int totalSize = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupSize(partyID, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, status,null, null);
-        logger.debug(" There are {} process instance groups in total", results.size());
-        List<ProcessInstanceGroup> processInstanceGroups = new ArrayList<>();
-        for (ProcessInstanceGroupDAO result : results) {
-            processInstanceGroups.add(HibernateSwaggerObjectMapper.convertProcessInstanceGroupDAO(result));
+        List<CollaborationGroupDAO> results = ProcessInstanceGroupDAOUtility.getCollaborationGroupDAOs(partyID, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, status,null, null, limit, offset);
+        int totalSize = ProcessInstanceGroupDAOUtility.getCollaborationGroupSize(partyID, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, status,null, null);
+        logger.debug(" There are {} collaboration groups in total", results.size());
+        List<CollaborationGroup> collaborationGroups = new ArrayList<>();
+        for (CollaborationGroupDAO result : results) {
+            collaborationGroups.add(HibernateSwaggerObjectMapper.convertCollaborationGroupDAO(result));
         }
 
-        ProcessInstanceGroupResponse groupResponse = new ProcessInstanceGroupResponse();
-        groupResponse.setProcessInstanceGroups(processInstanceGroups);
+        CollaborationGroupResponse groupResponse = new CollaborationGroupResponse();
+        groupResponse.setCollaborationGroups(collaborationGroups);
         groupResponse.setSize(totalSize);
 
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(groupResponse);
-        logger.debug("Retrieved ProcessInstanceGroups for party: {}", partyID);
+        logger.debug("Retrieved collaboration groups for party: {}", partyID);
         return response;
     }
 
@@ -200,6 +226,30 @@ public class ProcessInstanceGroupController implements GroupApi {
         ProcessInstanceGroup processInstanceGroup = HibernateSwaggerObjectMapper.convertProcessInstanceGroupDAO(processInstanceGroupDAO);
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(processInstanceGroup);
         logger.debug("Archived ProcessInstanceGroup: {}", ID);
+        return response;
+    }
+
+    @Override
+    public ResponseEntity<CollaborationGroup> archiveCollaborationGroup(@ApiParam(value = "Identifier of the collaboration group to be archived",required=true ) @PathVariable("ID") String ID) {
+        logger.debug("Archiving CollaborationGroup: {}", ID);
+
+        CollaborationGroupDAO collaborationGroupDAO = ProcessInstanceGroupDAOUtility.archiveCollaborationGroup(ID);
+
+        CollaborationGroup collaborationGroup = HibernateSwaggerObjectMapper.convertCollaborationGroupDAO(collaborationGroupDAO);
+        ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(collaborationGroup);
+        logger.debug("Archived ProcessInstanceGroup: {}", ID);
+        return response;
+    }
+
+    @Override
+    public ResponseEntity<CollaborationGroup> restoreCollaborationGroup(@ApiParam(value = "Identifier of the collaboration group to be restored",required=true ) @PathVariable("ID") String ID) {
+        logger.debug("Restoring CollaborationGroup: {}", ID);
+
+        CollaborationGroupDAO collaborationGroupDAO = ProcessInstanceGroupDAOUtility.restoreCollaborationGroup(ID);
+
+        CollaborationGroup collaborationGroup = HibernateSwaggerObjectMapper.convertCollaborationGroupDAO(collaborationGroupDAO);
+        ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(collaborationGroup);
+        logger.debug("Restored ProcessInstanceGroup: {}", ID);
         return response;
     }
 
@@ -288,6 +338,24 @@ public class ProcessInstanceGroupController implements GroupApi {
         } catch (Exception e) {
             return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting the order content for process id: %s", processInstanceId), e, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @Override
+    public ResponseEntity<Void> updateCollaborationGroupName(@ApiParam(value = "",required=true ) @PathVariable("ID") String ID,
+                                                             @ApiParam(value = "", required = true) @RequestParam(value = "groupName", required = true) String groupName) {
+        logger.debug("Updating name of the collaboration group :"+ID);
+        CollaborationGroupDAO collaborationGroupDAO = collaborationGroupDAORepository.getOne(Long.parseLong(ID));
+        if(collaborationGroupDAO == null){
+            String msg = String.format("There does not exist a collaboration group with id: %s", ID);
+            logger.error(msg);
+            ResponseEntity response = ResponseEntity.status(HttpStatus.BAD_REQUEST).body(msg);
+            return response;
+        }
+        collaborationGroupDAO.setName(groupName);
+        collaborationGroupDAORepository.save(collaborationGroupDAO);
+        logger.debug("Updated name of the collaboration group :"+ID);
+        ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body("true");
+        return response;
     }
 
     @ApiOperation(value = "",notes = "Cancel the collaboration (negotiation) for the given group id")

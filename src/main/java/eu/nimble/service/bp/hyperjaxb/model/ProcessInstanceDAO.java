@@ -201,10 +201,10 @@ public class ProcessInstanceDAO
      *     
      */
     @OneToOne(targetEntity = ProcessInstanceDAO.class, cascade = {
+        CascadeType.REFRESH,
         CascadeType.ALL,
         CascadeType.MERGE,
-        CascadeType.PERSIST,
-        CascadeType.REFRESH
+        CascadeType.PERSIST
     })
     @JoinColumn(name = "PRECEDING_PROCESS_PROCESS_IN_0")
     public ProcessInstanceDAO getPrecedingProcess() {

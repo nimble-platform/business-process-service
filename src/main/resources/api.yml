@@ -303,7 +303,16 @@ paths:
         description: The id of the preceding process instance
         required: false
         type: string
-
+      - in: query
+        name: preceding_gid
+        description: The UUID of the preceding process instance group
+        required: false
+        type: string
+      - in: query
+        name: collaborationGID
+        description: The id of the collaboration group which the process instance group belongs to
+        required: false
+        type: string
       responses:
         # Response code
         200:
@@ -327,6 +336,11 @@ paths:
       - in: query
         name: gid
         description: The UUID of the process instance group owned by the party continuing the process
+        required: false
+        type: string
+      - in: query
+        name: collaborationGID
+        description: The id of the collaboration group which the process instance group belongs to
         required: false
         type: string
       - name: Authorization
@@ -547,7 +561,7 @@ paths:
         200:
           description: Retrieved the groups successfully
           schema:
-            $ref: '#/definitions/ProcessInstanceGroupResponse'
+            $ref: '#/definitions/CollaborationGroupResponse'
     post:
       operationId: saveProcessInstanceGroup
       consumes:
@@ -668,6 +682,44 @@ paths:
         200:
           description: Deleted the groups successfully
 
+  /group/collaboration/{ID}:
+    get:
+      operationId: getCollaborationGroup
+      parameters:
+      - in: path
+        name: ID
+        type: string
+        required: true
+      responses:
+        200:
+          description: Retrieved the collaboration group successfully
+          schema:
+            $ref: '#/definitions/CollaborationGroup'
+    delete:
+      operationId: deleteCollaborationGroup
+      parameters:
+      - in: path
+        name: ID
+        type: string
+        required: true
+      responses:
+        200:
+          description: Deleted the collaboration group successfully
+    patch:
+      operationId: updateCollaborationGroupName
+      parameters:
+      - in: path
+        name: ID
+        type: string
+        required: true
+      - in: query
+        name: groupName
+        type: string
+        required: true
+      responses:
+        200:
+          description: Updated the collaboration group name successfully
+
   /group/{ID}/archive:
     post:
       operationId: archiveGroup
@@ -682,6 +734,37 @@ paths:
           description: Archived the group successfully
           schema:
             $ref: '#/definitions/ProcessInstanceGroup'
+
+  /group/collaboration/{ID}/archive:
+    post:
+      operationId: archiveCollaborationGroup
+      parameters:
+      - in: path
+        name: ID
+        type: string
+        description: Identifier of the collaboration group to be archived
+        required: true
+      responses:
+        200:
+          description: Archived the collaboration group successfully
+          schema:
+            $ref: '#/definitions/CollaborationGroup'
+
+  /group/collaboration/{ID}/restore:
+    post:
+      operationId: restoreCollaborationGroup
+      parameters:
+      - in: path
+        name: ID
+        type: string
+        description: Identifier of the collaboration group to be restored
+        required: true
+      responses:
+        200:
+          description: Restored the collaboration group successfully
+          schema:
+            $ref: '#/definitions/CollaborationGroup'
+
   /group/{ID}/restore:
     post:
       operationId: restoreGroup
@@ -1006,6 +1089,8 @@ definitions:
     properties:
       ID:
         type: string
+      name:
+        type: string
       partyID:
         type: string
       processInstanceIDs:
@@ -1024,20 +1109,47 @@ definitions:
         type: string
       lastActivityTime:
         type: string
+      precedingProcessInstanceGroup:
+        $ref: '#/definitions/ProcessInstanceGroup'
+      precedingProcess:
+        $ref: '#/definitions/ProcessInstance'
       status:
         type: string
         enum:
         - INPROGRESS
         - CANCELLED
 
-  ProcessInstanceGroupResponse:
-    title: Process Instance Group Response
+  CollaborationGroup:
+    title: Collaboration Group
     type: object
     properties:
-      processInstanceGroups:
+      ID:
+        type: string
+      name:
+        type: string
+      archived:
+        type: boolean
+      status:
+        type: string
+        enum:
+        - INPROGRESS
+      associatedCollaborationGroups:
+        type: array
+        items:
+          type: integer
+      associatedProcessInstanceGroups:
         type: array
         items:
           $ref: '#/definitions/ProcessInstanceGroup'
+
+  CollaborationGroupResponse:
+    title: Process Instance Group Response
+    type: object
+    properties:
+      collaborationGroups:
+        type: array
+        items:
+          $ref: '#/definitions/CollaborationGroup'
       size:
         type: integer
 
