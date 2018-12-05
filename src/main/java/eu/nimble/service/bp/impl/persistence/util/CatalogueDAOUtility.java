@@ -52,7 +52,9 @@ public class CatalogueDAOUtility {
                 party = objectMapper.readValue(object.toString(), PartyType.class);
             }
             catch (Exception e){
-                logger.error("Failed to remove hjid fields from the party",e);
+                String msg = String.format("Failed to remove hjid fields from the party: %s", party.getID());
+                logger.error(msg, e);
+                throw new RuntimeException(msg, e);
             }
 
 //            GenericJPARepositoryImpl.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(party);
