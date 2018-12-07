@@ -44,30 +44,30 @@ public class ProcessInstanceGroupDAOUtility {
             int limit,
             int offset) {
 
-        QueryData query = getGroupRetrievalQuery(GroupQueryType.GROUP, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories,status, startTime, endTime);
+        QueryData query = getGroupRetrievalQuery(GroupQueryType.GROUP, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories, status, startTime, endTime);
         List<Object> collaborationGroups = SpringBridge.getInstance().getBusinessProcessRepository().getEntities(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray());
         List<CollaborationGroupDAO> results = new ArrayList<>();
-        for(Object groupResult : collaborationGroups) {
+        for (Object groupResult : collaborationGroups) {
             Object[] resultItems = (Object[]) groupResult;
             CollaborationGroupDAO collaborationGroupDAO = (CollaborationGroupDAO) resultItems[0];
 
             CollaborationGroupDAO collaborationGroupInResults = null;
 
             // check whether the collaborationGroup is the results or not
-            for(CollaborationGroupDAO collaborationGroup : results){
-                if(collaborationGroup.getHjid().equals(collaborationGroupDAO.getHjid())){
+            for (CollaborationGroupDAO collaborationGroup : results) {
+                if (collaborationGroup.getHjid().equals(collaborationGroupDAO.getHjid())) {
                     collaborationGroupInResults = collaborationGroup;
                 }
             }
-            if(collaborationGroupInResults == null){
+            if (collaborationGroupInResults == null) {
                 collaborationGroupInResults = collaborationGroupDAO;
                 results.add(collaborationGroupInResults);
             }
 
             ProcessInstanceGroupDAO group = (ProcessInstanceGroupDAO) resultItems[1];
             // find the group in the collaborationGroup
-            for(ProcessInstanceGroupDAO groupDAO:collaborationGroupInResults.getAssociatedProcessInstanceGroups()){
-                if(groupDAO.getID().equals(group.getID())){
+            for (ProcessInstanceGroupDAO groupDAO : collaborationGroupInResults.getAssociatedProcessInstanceGroups()) {
+                if (groupDAO.getID().equals(group.getID())) {
                     groupDAO.setLastActivityTime((String) resultItems[2]);
                     groupDAO.setFirstActivityTime((String) resultItems[3]);
                 }
@@ -77,15 +77,15 @@ public class ProcessInstanceGroupDAOUtility {
     }
 
     public static int getCollaborationGroupSize(String partyId,
-                                                  String collaborationRole,
-                                                  boolean archived,
-                                                  List<String> tradingPartnerIds,
-                                                  List<String> relatedProductIds,
-                                                  List<String> relatedProductCategories,
-                                                  List<String> status,
-                                                  String startTime,
-                                                  String endTime) {
-        QueryData query = getGroupRetrievalQuery(GroupQueryType.SIZE, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories,status, startTime, endTime);
+                                                String collaborationRole,
+                                                boolean archived,
+                                                List<String> tradingPartnerIds,
+                                                List<String> relatedProductIds,
+                                                List<String> relatedProductCategories,
+                                                List<String> status,
+                                                String startTime,
+                                                String endTime) {
+        QueryData query = getGroupRetrievalQuery(GroupQueryType.SIZE, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories, status, startTime, endTime);
 //        int count = ((Long) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query)).intValue();
         int count = ((Long) SpringBridge.getInstance().getBusinessProcessRepository().getSingleEntity(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray())).intValue();
         return count;
@@ -103,7 +103,7 @@ public class ProcessInstanceGroupDAOUtility {
             String endTime,
             String bearerToken) {
 
-        QueryData query = getGroupRetrievalQuery(GroupQueryType.FILTER, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories, status,startTime, endTime);
+        QueryData query = getGroupRetrievalQuery(GroupQueryType.FILTER, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories, status, startTime, endTime);
 
         ProcessInstanceGroupFilter filter = new ProcessInstanceGroupFilter();
 //        List<Object> resultSet = (List<Object>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
@@ -143,7 +143,7 @@ public class ProcessInstanceGroupDAOUtility {
             }
 
             // populate partners' names
-            if(parties != null) {
+            if (parties != null) {
                 for (String tradingPartnerId : filter.getTradingPartnerIDs()) {
                     for (PartyType party : parties) {
                         if (party.getID().equals(tradingPartnerId)) {
@@ -158,7 +158,7 @@ public class ProcessInstanceGroupDAOUtility {
 
             // status
             ProcessInstanceStatus processInstanceStatus = (ProcessInstanceStatus) returnedColumns.get(4);
-            if(!filter.getStatus().contains(ProcessInstanceGroupFilter.StatusEnum.valueOf(processInstanceStatus.value()))){
+            if (!filter.getStatus().contains(ProcessInstanceGroupFilter.StatusEnum.valueOf(processInstanceStatus.value()))) {
                 filter.getStatus().add(ProcessInstanceGroupFilter.StatusEnum.valueOf(processInstanceStatus.value()));
             }
         }
@@ -182,11 +182,11 @@ public class ProcessInstanceGroupDAOUtility {
         List<Object> parameterValues = queryData.parameterValues;
 
         String query = "";
-        if(queryType == GroupQueryType.FILTER) {
+        if (queryType == GroupQueryType.FILTER) {
             query += "select distinct new list(relProd.item, relCat.item, doc.initiatorID, doc.responderID, pi.status)";
-        } else if(queryType == GroupQueryType.SIZE) {
+        } else if (queryType == GroupQueryType.SIZE) {
             query += "select count(distinct cg)";
-        } else if(queryType == GroupQueryType.GROUP) {
+        } else if (queryType == GroupQueryType.GROUP) {
             query += "select cg,pig, max(doc.submissionDate) as lastActivityTime, min(doc.submissionDate) as firstActivityTime";
         }
 
@@ -265,7 +265,7 @@ public class ProcessInstanceGroupDAOUtility {
             parameterValues.add(collaborationRole);
         }
 
-        if(queryType == GroupQueryType.GROUP) {
+        if (queryType == GroupQueryType.GROUP) {
             query += " group by pig.hjid,cg.hjid";
             query += " order by firstActivityTime desc";
         }
@@ -285,12 +285,11 @@ public class ProcessInstanceGroupDAOUtility {
         group.setArchived(false);
         group.setID(uuid);
         String groupName = "";
-        for(int i = 0; i<relatedProducts.size();i++){
-            if(i == relatedProducts.size()-1){
+        for (int i = 0; i < relatedProducts.size(); i++) {
+            if (i == relatedProducts.size() - 1) {
                 groupName += relatedProducts.get(i);
-            }
-            else {
-                groupName += relatedProducts.get(i)+",";
+            } else {
+                groupName += relatedProducts.get(i) + ",";
             }
         }
         group.setName(groupName);
@@ -300,7 +299,7 @@ public class ProcessInstanceGroupDAOUtility {
         List<String> processInstanceIds = new ArrayList<>();
         processInstanceIds.add(processInstanceId);
         group.setProcessInstanceIDs(processInstanceIds);
-        if(associatedGroup != null) {
+        if (associatedGroup != null) {
             List<String> associatedGroups = new ArrayList<>();
             associatedGroups.add(associatedGroup);
             group.setAssociatedGroups(associatedGroups);
@@ -310,7 +309,7 @@ public class ProcessInstanceGroupDAOUtility {
         return group;
     }
 
-    public static CollaborationGroupDAO createCollaborationGroupDAO(){
+    public static CollaborationGroupDAO createCollaborationGroupDAO() {
         CollaborationGroupDAO collaborationGroupDAO = new CollaborationGroupDAO();
         collaborationGroupDAO.setStatus(CollaborationStatus.INPROGRESS);
         collaborationGroupDAO.setArchived(false);
@@ -342,8 +341,8 @@ public class ProcessInstanceGroupDAOUtility {
         return group;
     }
 
-    public static CollaborationGroupDAO getCollaborationGroupDAO(String partyId,Long associatedGroupId){
-        CollaborationGroupDAO group = SpringBridge.getInstance().getCollaborationGroupDAORepository().getAssociatedCollaborationGroup(partyId,associatedGroupId);
+    public static CollaborationGroupDAO getCollaborationGroupDAO(String partyId, Long associatedGroupId) {
+        CollaborationGroupDAO group = SpringBridge.getInstance().getCollaborationGroupDAORepository().getAssociatedCollaborationGroup(partyId, associatedGroupId);
         return group;
     }
 
@@ -359,12 +358,11 @@ public class ProcessInstanceGroupDAOUtility {
         List<Object> parameterValues = new ArrayList<>();
         String idsString = "(";
         int size = ids.size();
-        for(int i=0;i<size;i++){
-            if(i != size-1){
+        for (int i = 0; i < size; i++) {
+            if (i != size - 1) {
                 idsString = idsString + ":id" + i + ",";
-            }
-            else {
-                idsString = idsString + ":id"+i;
+            } else {
+                idsString = idsString + ":id" + i;
             }
             parameterNames.add("id" + i);
             parameterValues.add(ids.get(i));
@@ -379,20 +377,19 @@ public class ProcessInstanceGroupDAOUtility {
     public static void deleteProcessInstanceGroupDAOByID(String groupID) {
         CollaborationGroupDAO collaborationGroupDAO = SpringBridge.getInstance().getCollaborationGroupDAORepository().getCollaborationGroupOfProcessInstanceGroup(groupID);
         // if the collaboration group only contains the given group,then delete the collaboration group so that there will not be any garbage on the database
-        if(collaborationGroupDAO.getAssociatedProcessInstanceGroups().size() == 1){
+        if (collaborationGroupDAO.getAssociatedProcessInstanceGroups().size() == 1) {
             deleteCollaborationGroupDAOByID(collaborationGroupDAO.getHjid());
-        }
-        else {
+        } else {
             ProcessInstanceGroupDAO group = null;
-            for(ProcessInstanceGroupDAO groupDAO : collaborationGroupDAO.getAssociatedProcessInstanceGroups()){
-                if(groupDAO.getID().equals(groupID)){
+            for (ProcessInstanceGroupDAO groupDAO : collaborationGroupDAO.getAssociatedProcessInstanceGroups()) {
+                if (groupDAO.getID().equals(groupID)) {
                     group = groupDAO;
                     break;
                 }
             }
             // delete references to this group
-            for(String id:group.getAssociatedGroups()){
-                ProcessInstanceGroupDAO groupDAO =  getProcessInstanceGroupDAO(id);
+            for (String id : group.getAssociatedGroups()) {
+                ProcessInstanceGroupDAO groupDAO = getProcessInstanceGroupDAO(id);
                 groupDAO.getAssociatedGroups().remove(groupID);
                 SpringBridge.getInstance().getProcessInstanceGroupDAORepository().save(groupDAO);
             }
@@ -403,7 +400,7 @@ public class ProcessInstanceGroupDAOUtility {
     public static void deleteCollaborationGroupDAOByID(Long groupID) {
         CollaborationGroupDAO group = SpringBridge.getInstance().getCollaborationGroupDAORepository().getOne(groupID);
         // delete references to this group
-        for(Long id:group.getAssociatedCollaborationGroups()){
+        for (Long id : group.getAssociatedCollaborationGroups()) {
             CollaborationGroupDAO groupDAO = SpringBridge.getInstance().getCollaborationGroupDAORepository().getOne(id);
             groupDAO.getAssociatedCollaborationGroups().remove(groupID);
             SpringBridge.getInstance().getCollaborationGroupDAORepository().save(groupDAO);
@@ -415,33 +412,33 @@ public class ProcessInstanceGroupDAOUtility {
         SpringBridge.getInstance().getProcessInstanceGroupDAORepository().archiveAllGroupsOfParty(partyId);
     }
 
-    public static CollaborationGroupDAO archiveCollaborationGroup(String id){
-        CollaborationGroupDAO collaborationGroupDAO = (CollaborationGroupDAO) HibernateUtility.getInstance("bp-data-model").load(CollaborationGroupDAO.class,Long.parseLong(id));
+    public static CollaborationGroupDAO archiveCollaborationGroup(String id) {
+        CollaborationGroupDAO collaborationGroupDAO = SpringBridge.getInstance().getCollaborationGroupDAORepository().getOne(Long.parseLong(id));
         // archive the collaboration group
         collaborationGroupDAO.setArchived(true);
         // archive the groups inside the given collaboration group
-        for(ProcessInstanceGroupDAO processInstanceGroupDAO : collaborationGroupDAO.getAssociatedProcessInstanceGroups()){
+        for (ProcessInstanceGroupDAO processInstanceGroupDAO : collaborationGroupDAO.getAssociatedProcessInstanceGroups()) {
             processInstanceGroupDAO.setArchived(true);
         }
-        collaborationGroupDAO = (CollaborationGroupDAO) HibernateUtility.getInstance("bp-data-model").update(collaborationGroupDAO);
+        collaborationGroupDAO = SpringBridge.getInstance().getCollaborationGroupDAORepository().save(collaborationGroupDAO);
         return collaborationGroupDAO;
     }
 
-    public static CollaborationGroupDAO restoreCollaborationGroup(String id){
-        CollaborationGroupDAO collaborationGroupDAO = (CollaborationGroupDAO) HibernateUtility.getInstance("bp-data-model").load(CollaborationGroupDAO.class,Long.parseLong(id));
+    public static CollaborationGroupDAO restoreCollaborationGroup(String id) {
+        CollaborationGroupDAO collaborationGroupDAO = SpringBridge.getInstance().getCollaborationGroupDAORepository().getOne(Long.parseLong(id));
         // archive the collaboration group
         collaborationGroupDAO.setArchived(false);
         // archive the groups inside the given collaboration group
-        for(ProcessInstanceGroupDAO processInstanceGroupDAO : collaborationGroupDAO.getAssociatedProcessInstanceGroups()){
+        for (ProcessInstanceGroupDAO processInstanceGroupDAO : collaborationGroupDAO.getAssociatedProcessInstanceGroups()) {
             processInstanceGroupDAO.setArchived(false);
         }
-        collaborationGroupDAO = (CollaborationGroupDAO) HibernateUtility.getInstance("bp-data-model").update(collaborationGroupDAO);
+        collaborationGroupDAO = SpringBridge.getInstance().getCollaborationGroupDAORepository().save(collaborationGroupDAO);
         return collaborationGroupDAO;
     }
 
     public static void deleteArchivedGroupsForParty(String partyId) {
         List<String> groupIds = SpringBridge.getInstance().getProcessInstanceGroupDAORepository().getIDsOfArchivedGroupsForParty(partyId);
-        for(String id : groupIds){
+        for (String id : groupIds) {
             deleteProcessInstanceGroupDAOByID(id);
         }
     }
@@ -451,10 +448,9 @@ public class ProcessInstanceGroupDAOUtility {
         String precedingProcessInstanceID = SpringBridge.getInstance().getProcessInstanceGroupDAORepository().getPrecedingProcessInstanceId(processInstanceId);
         String orderId;
         // if there is a preceding process instance, using that, get the order id
-        if(precedingProcessInstanceID != null){
+        if (precedingProcessInstanceID != null) {
             orderId = DocumentDAOUtility.getRequestMetadata(precedingProcessInstanceID).getDocumentID();
-        }
-        else {
+        } else {
             orderId = SpringBridge.getInstance().getProcessInstanceGroupDAORepository().getOrderIdInGroup(processInstanceId);
         }
         return orderId;

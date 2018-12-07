@@ -32,6 +32,11 @@ spring:
       username: ${UBL_DB_USERNAME:postgres}
       password: ${UBL_DB_PASSWORD:nimble}
       driver_class: org.postgresql.Driver
+    binarycontentdb:
+      url: jdbc:postgresql://${BINARY_CONTENT_DB_HOST:localhost}:${BINARY_CONTENT_DB_PORT:5432}/${BINARY_CONTENT_DB_NAME:binarycontentdb}?currentSchema=public
+      username: ${BINARY_CONTENT_DB_USERNAME:postgres}
+      password: ${BINARY_CONTENT_DB_PASSWORD:nimble}
+      driver_class: org.postgresql.Driver
     tomcat:
       initial-size: 3
       test-while-idle: true
@@ -165,6 +170,8 @@ camunda:
       password: superSecret
 
 nimble:
+  binary-content:
+      url: ${BINARY_CONTENT_URL}
   cors_enabled: false
   identity:
     url: ${IDENTITY_SERVICE_URL:http://nimble-staging.salzburgresearch.at/identity}
