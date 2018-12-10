@@ -146,7 +146,7 @@ public class DAOUtility {
                 logger.error("msg");
                 throw new RuntimeException(msg, e);
             }
-            counts.addCount((String) resultItems[0], resultItems[1].toString(), resultItems[2].toString(), (Long) resultItems[3],partyType.getName());
+            counts.addCount((String) resultItems[0], resultItems[1].toString(), resultItems[2].toString(), (Long) resultItems[3],partyType.getName().getValue());
         }
         return counts;
     }

@@ -108,8 +108,8 @@ public class ContractGenerator {
                 file.close();
 
                 // Fill placeholders
-                text = text.replace("$seller_id",order.getSellerSupplierParty().getParty().getName());
-                text = text.replace("$buyer_id",order.getBuyerCustomerParty().getParty().getName());
+                text = text.replace("$seller_id",order.getSellerSupplierParty().getParty().getName().getValue());
+                text = text.replace("$buyer_id",order.getBuyerCustomerParty().getParty().getName().getValue());
 
                 if(order.getPaymentTerms().getTradingTerms().size() > 0){
                     text = text.replace("$payment_id",getTradingTerms(order.getPaymentTerms().getTradingTerms()));
@@ -119,7 +119,7 @@ public class ContractGenerator {
                 }
 
                 if(order.getBuyerCustomerParty().getParty().getPostalAddress().getCountry().getName() != null){
-                    text = text.replace("$buyer_country",order.getBuyerCustomerParty().getParty().getPostalAddress().getCountry().getName());
+                    text = text.replace("$buyer_country",order.getBuyerCustomerParty().getParty().getPostalAddress().getCountry().getName().getValue());
                 }
                 else {
                     text = text.replace("$buyer_country",buyer_country_default);
@@ -146,7 +146,7 @@ public class ContractGenerator {
                     text = text.replace("$incoterms_id",incoterms_id_default);
                 }
 
-                text = text.replace("$notices_id",constructAddress(order.getBuyerCustomerParty().getParty().getName(),order.getBuyerCustomerParty().getParty().getPostalAddress()));
+                text = text.replace("$notices_id",constructAddress(order.getBuyerCustomerParty().getParty().getName().getValue(),order.getBuyerCustomerParty().getParty().getPostalAddress()));
 
                 // Use default values for the rest
                 text = text.replace("$action_day",action_day_default);
@@ -182,8 +182,8 @@ public class ContractGenerator {
                 }
 
                 // Fill placeholders
-                text = text.replace("$seller_id",supplierParty.getName());
-                text = text.replace("$buyer_id",customerParty.getName());
+                text = text.replace("$seller_id",supplierParty.getName().getValue());
+                text = text.replace("$buyer_id",customerParty.getName().getValue());
 
                 if(tradingTermTypeList.size() > 0){
                     text = text.replace("$payment_id",getTradingTerms(tradingTermTypeList));
@@ -193,7 +193,7 @@ public class ContractGenerator {
                 }
 
                 if(customerParty.getPostalAddress().getCountry().getName() != null){
-                    text = text.replace("$buyer_country",customerParty.getPostalAddress().getCountry().getName());
+                    text = text.replace("$buyer_country",customerParty.getPostalAddress().getCountry().getName().getValue());
                 }
                 else {
                     text = text.replace("$buyer_country",buyer_country_default);
@@ -220,7 +220,7 @@ public class ContractGenerator {
                     text = text.replace("$incoterms_id",incoterms_id_default);
                 }
 
-                text = text.replace("$notices_id",constructAddress(customerParty.getName(),customerParty.getPostalAddress()));
+                text = text.replace("$notices_id",constructAddress(customerParty.getName().getValue(),customerParty.getPostalAddress()));
 
                 // Use default values for the rest
                 text = text.replace("$action_day",action_day_default);
@@ -280,13 +280,13 @@ public class ContractGenerator {
                                 String text = r.getText(0);
                                 if(text != null){
                                     if(text.contains("$seller_id")){
-                                        text = text.replace("$seller_id",order.getSellerSupplierParty().getParty().getName());
+                                        text = text.replace("$seller_id",order.getSellerSupplierParty().getParty().getName().getValue());
                                         r.setText(text,0);
                                         r.setUnderline(UnderlinePatterns.SINGLE);
                                         setColor(r,red_hex);
                                     }
                                     else if(text.contains("$buyer_id")){
-                                        text = text.replace("$buyer_id",order.getBuyerCustomerParty().getParty().getName());
+                                        text = text.replace("$buyer_id",order.getBuyerCustomerParty().getParty().getName().getValue());
                                         r.setText(text,0);
                                         r.setUnderline(UnderlinePatterns.SINGLE);
                                         setColor(r,red_hex);
@@ -307,7 +307,7 @@ public class ContractGenerator {
                                     }
                                     else if(text.contains("$buyer_country")){
                                         if(order.getBuyerCustomerParty().getParty().getPostalAddress().getCountry().getName() != null){
-                                            text = text.replace("$buyer_country",order.getBuyerCustomerParty().getParty().getPostalAddress().getCountry().getName());
+                                            text = text.replace("$buyer_country",order.getBuyerCustomerParty().getParty().getPostalAddress().getCountry().getName().getValue());
                                             r.setText(text,0);
                                             r.setUnderline(UnderlinePatterns.SINGLE);
                                             setColor(r,red_hex);
@@ -362,7 +362,7 @@ public class ContractGenerator {
                                         }
                                     }
                                     else if(text.contains("$notices_id")){
-                                        text = text.replace("$notices_id",constructAddress(order.getBuyerCustomerParty().getParty().getName(),order.getBuyerCustomerParty().getParty().getPostalAddress()));
+                                        text = text.replace("$notices_id",constructAddress(order.getBuyerCustomerParty().getParty().getName().getValue(),order.getBuyerCustomerParty().getParty().getPostalAddress()));
                                         r.setText(text,0);
                                         r.setUnderline(UnderlinePatterns.SINGLE);
                                         setColor(r,red_hex);
@@ -484,12 +484,12 @@ public class ContractGenerator {
                                         r.setText(text,0);
                                     }
                                     if(text.contains("$company_id")){
-                                        text = text.replace("$company_id",order.getBuyerCustomerParty().getParty().getName());
+                                        text = text.replace("$company_id",order.getBuyerCustomerParty().getParty().getName().getValue());
                                         r.setText(text,0);
                                     }
                                     if(text.contains("$country_invoice_id")){
                                         if(order.getBuyerCustomerParty().getParty().getPostalAddress().getCountry().getName() != null){
-                                            text = text.replace("$country_invoice_id",order.getBuyerCustomerParty().getParty().getPostalAddress().getCountry().getName());
+                                            text = text.replace("$country_invoice_id",order.getBuyerCustomerParty().getParty().getPostalAddress().getCountry().getName().getValue());
                                             r.setText(text,0);
                                         }
                                         else {
@@ -519,7 +519,7 @@ public class ContractGenerator {
                                     }
                                     if(text.contains("$country_id")){
                                         if(order.getOrderLine().get(0).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCountry().getName() != null){
-                                            text = text.replace("$country_id",order.getOrderLine().get(0).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCountry().getName());
+                                            text = text.replace("$country_id",order.getOrderLine().get(0).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCountry().getName().getValue());
                                             r.setText(text,0);
                                         }
                                         else {
@@ -573,7 +573,7 @@ public class ContractGenerator {
                                     }
                                     if(text.contains("$country_supplier")){
                                         if(order.getSellerSupplierParty().getParty().getPostalAddress().getCountry().getName() != null){
-                                            text = text.replace("$country_supplier",order.getSellerSupplierParty().getParty().getPostalAddress().getCountry().getName());
+                                            text = text.replace("$country_supplier",order.getSellerSupplierParty().getParty().getPostalAddress().getCountry().getName().getValue());
                                             r.setText(text,0);
                                         }
                                         else {
@@ -596,7 +596,7 @@ public class ContractGenerator {
                                         }
                                     }
                                     if(text.contains("$supplier_id")){
-                                        text = text.replace("$supplier_id",order.getSellerSupplierParty().getParty().getName());
+                                        text = text.replace("$supplier_id",order.getSellerSupplierParty().getParty().getName().getValue());
                                         r.setFontSize(14);
                                         r.setText(text,0);
                                     }
@@ -617,7 +617,7 @@ public class ContractGenerator {
                                         }
                                     }
                                     if(text.contains("$item_id")){
-                                        text = text.replace("$item_id",order.getOrderLine().get(0).getLineItem().getItem().getName());
+                                        text = text.replace("$item_id",order.getOrderLine().get(0).getLineItem().getItem().getName().get(0).getValue());
                                         r.setText(text,0);
                                     }
                                     if(text.contains("$product_id")){
@@ -1269,7 +1269,7 @@ public class ContractGenerator {
                                     r.setText(text,0);
                                 }
                                 if(text.contains("$nego_country")){
-                                    String country = quotation.getQuotationLine().get(0).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCountry().getName();
+                                    String country = quotation.getQuotationLine().get(0).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCountry().getName().getValue();
                                     if(country == null){
                                         country = "";
                                     }
@@ -1277,7 +1277,7 @@ public class ContractGenerator {
                                     r.setText(text,0);
                                 }
                                 if(text.contains("$nego_specTerms")){
-                                    String specialTerms = quotation.getQuotationLine().get(0).getLineItem().getDeliveryTerms().getSpecialTerms();
+                                    String specialTerms = quotation.getQuotationLine().get(0).getLineItem().getDeliveryTerms().getSpecialTerms().get(0).getValue();
                                     if(specialTerms != null){
                                         text = text.replace("$nego_specTerms",specialTerms);
                                         r.setText(text,0);
@@ -1485,8 +1485,8 @@ public class ContractGenerator {
                 selectedTradingTerms.add(result);
             }
             else {
-                if(tradingTerm.getValue().get(0).toLowerCase().contentEquals("true")){
-                    result = tradingTerm.getDescription();
+                if(tradingTerm.getValue().get(0).getValue().toLowerCase().contentEquals("true")){
+                    result = tradingTerm.getDescription().get(0).getValue();
                     selectedTradingTerms.add(result);
                 }
             }
@@ -1496,7 +1496,7 @@ public class ContractGenerator {
     }
 
     private String constructAddress(String company_name,AddressType address){
-        String country = address.getCountry().getName();
+        String country = address.getCountry().getName().getValue();
         if(country == null){
             country = "";
         }

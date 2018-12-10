@@ -11,6 +11,7 @@ import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.CompletedTaskType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.QualifyingPartyType;
+import eu.nimble.service.model.ubl.commonbasiccomponents.TextType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -152,7 +153,10 @@ public class StatisticsDAOUtility {
             if(!activePartyIds.contains(partyId)) {
                 PartyType party = new PartyType();
                 party.setID(partyId);
-                party.setName(partyResult.get("name").asText());
+                TextType textType = new TextType();
+                textType.setValue(partyResult.get("name").asText());
+                textType.setLanguageID("en");
+                party.setName(textType);
                 inactiveParties.add(party);
             }
         });

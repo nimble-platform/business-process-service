@@ -2,11 +2,9 @@ package eu.nimble.service.bp.impl.model.statistics;
 
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ItemIdentificationType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ItemType;
+import eu.nimble.service.model.ubl.commonbasiccomponents.TextType;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by suat on 22-Jun-18.
@@ -30,7 +28,10 @@ public class NonOrderedProducts {
         ItemType item = new ItemType();
         item.setManufacturersItemIdentification(new ItemIdentificationType());
         item.getManufacturersItemIdentification().setID(itemManId);
-        item.setName(itemName);
+        TextType textType = new TextType();
+        textType.setValue(itemName);
+        textType.setLanguageID("en");
+        item.setName(Arrays.asList(textType));
         companyProducts.getProducts().add(item);
     }
 

@@ -5,6 +5,7 @@ import eu.nimble.service.bp.impl.model.trust.NegotiationRatings;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
+import eu.nimble.service.model.ubl.commonbasiccomponents.TextType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +46,10 @@ public class TrustUtility {
         QualifyingPartyType qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID,bearerToken);
         CompletedTaskType completedTask = new CompletedTaskType();
         completedTask.setAssociatedProcessInstanceID(processInstanceID);
-        completedTask.setDescription(Arrays.asList(status));
+        TextType textType = new TextType();
+        textType.setValue(status);
+        textType.setLanguageID("en");
+        completedTask.setDescription(Arrays.asList(textType));
         PeriodType periodType = new PeriodType();
 
         ProcessDocumentMetadata responseMetadata = DocumentDAOUtility.getResponseMetadata(processInstanceID);

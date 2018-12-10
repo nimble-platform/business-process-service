@@ -148,7 +148,7 @@ public class ProcessInstanceGroupDAOUtility {
                     for (PartyType party : parties) {
                         if (party.getID().equals(tradingPartnerId)) {
                             if (!filter.getTradingPartnerNames().contains(party.getName())) {
-                                filter.getTradingPartnerNames().add(party.getName());
+                                filter.getTradingPartnerNames().add(party.getName().getValue());
                             }
                             break;
                         }
