@@ -189,45 +189,45 @@ public class ContractController {
         }
     }
 
-    @ApiOperation(value = "",notes = "Delete clause from the contract")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200,message = "Deleted clause from the contract successfully",response = ContractType.class)
-    })
-    @RequestMapping(value = "/contracts/{contractId}/clauses/{clauseId}",
-            method = RequestMethod.DELETE)
-    public ResponseEntity deleteClauseFromContract(@PathVariable(value = "contractId") String contractId,
-                                                   @PathVariable(value = "clauseId") String clauseId) {
-        try {
-            logger.info("Deleting clause: {} from contract: {}", clauseId, contractId);
-
-            // check existence of contract
-            ContractType contract = ContractDAOUtility.getContract(contractId);
-            if (contract == null) {
-                return createResponseEntityAndLog("Invalid contract id: " + contractId, HttpStatus.BAD_REQUEST);
-            }
-
-            // check existence of clause
-            ClauseType clause = ContractDAOUtility.getContractClause(contractId, clauseId);
-            if (clause == null) {
-                return createResponseEntityAndLog("Invalid clause id: " + clauseId + " for contract: " + contractId, HttpStatus.BAD_REQUEST);
-            }
-
-            // delete the clause
-            try {
-                ContractDAOUtility.deleteClause(clause);
-            } catch (Exception e) {
-                return createResponseEntityAndLog("Failed to delete clause: " + clauseId + " from contract: " + contractId, e, HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-
-            // return updated version
-            contract = ContractDAOUtility.getContract(contractId);
-            logger.info("Deleted clause: {} from contract: {}", clauseId, contractId);
-            return ResponseEntity.ok().body(contract);
-
-        } catch (Exception e) {
-            return createResponseEntityAndLog("Unexpected error while deleting the clause: " + clauseId + " from contract: " + contractId, e, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
+//    @ApiOperation(value = "",notes = "Delete clause from the contract")
+//    @ApiResponses(value = {
+//            @ApiResponse(code = 200,message = "Deleted clause from the contract successfully",response = ContractType.class)
+//    })
+//    @RequestMapping(value = "/contracts/{contractId}/clauses/{clauseId}",
+//            method = RequestMethod.DELETE)
+//    public ResponseEntity deleteClauseFromContract(@PathVariable(value = "contractId") String contractId,
+//                                                   @PathVariable(value = "clauseId") String clauseId) {
+//        try {
+//            logger.info("Deleting clause: {} from contract: {}", clauseId, contractId);
+//
+//            // check existence of contract
+//            ContractType contract = ContractDAOUtility.getContract(contractId);
+//            if (contract == null) {
+//                return createResponseEntityAndLog("Invalid contract id: " + contractId, HttpStatus.BAD_REQUEST);
+//            }
+//
+//            // check existence of clause
+//            ClauseType clause = ContractDAOUtility.getContractClause(contractId, clauseId);
+//            if (clause == null) {
+//                return createResponseEntityAndLog("Invalid clause id: " + clauseId + " for contract: " + contractId, HttpStatus.BAD_REQUEST);
+//            }
+//
+//            // delete the clause
+//            try {
+//                ContractDAOUtility.deleteClause(clause);
+//            } catch (Exception e) {
+//                return createResponseEntityAndLog("Failed to delete clause: " + clauseId + " from contract: " + contractId, e, HttpStatus.INTERNAL_SERVER_ERROR);
+//            }
+//
+//            // return updated version
+//            contract = ContractDAOUtility.getContract(contractId);
+//            logger.info("Deleted clause: {} from contract: {}", clauseId, contractId);
+//            return ResponseEntity.ok().body(contract);
+//
+//        } catch (Exception e) {
+//            return createResponseEntityAndLog("Unexpected error while deleting the clause: " + clauseId + " from contract: " + contractId, e, HttpStatus.INTERNAL_SERVER_ERROR);
+//        }
+//    }
 
     /**
      * Retrieves the {@link ClauseType}s having the specified <code>clauseType</code> for the document specified with

@@ -122,11 +122,6 @@ public class ContractDAOUtility {
         return clause;
     }
 
-    public static void deleteClause(ClauseType clause) {
-//        HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(clause);
-        SpringBridge.getInstance().getCatalogueRepository().deleteEntity(clause);
-    }
-
     public static boolean contractExists(String contractID) {
 //        String query = "SELECT count(*) FROM ContractType contract WHERE contract.ID = '" + contractID + "'";
 //        int count = ((Long) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadIndividualItem(query)).intValue();

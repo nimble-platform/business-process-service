@@ -279,6 +279,9 @@ public class DocumentDAOUtility {
                     break;
             }
         }
+
+        ResourceValidationUtil.removeHjidsForObject(document, Configuration.Standard.UBL.toString());
+
 //        HibernateUtilityRef.getInstance("bp-data-model").delete(ProcessDocumentMetadataDAO.class, processDocumentMetadataDAO.getHjid());
         SpringBridge.getInstance().getBusinessProcessRepository().deleteEntityByHjid(ProcessDocumentMetadataDAO.class, processDocumentMetadataDAO.getHjid());
     }

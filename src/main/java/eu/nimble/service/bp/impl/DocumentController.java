@@ -19,6 +19,7 @@ import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
 import eu.nimble.utility.JAXBUtility;
 import io.swagger.annotations.ApiOperation;
+import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.logging.LogLevel;
@@ -100,33 +101,35 @@ public class DocumentController implements DocumentApi {
     @Override
     @ApiOperation(value = "",notes = "Add a business process document metadata")
     public ResponseEntity<ModelApiResponse> addDocumentMetadata(@RequestBody ProcessDocumentMetadata body) {
-        BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
-        try{
-            DocumentDAOUtility.addDocumentWithMetadata(businessProcessContext.getId(),body, null);
-        }
-        catch (Exception e){
-            businessProcessContext.handleExceptions();
-        }
-        finally {
-            BusinessProcessContextHandler.getBusinessProcessContextHandler().deleteBusinessProcessContext(businessProcessContext.getId());
-        }
-        return HibernateSwaggerObjectMapper.getApiResponse();
+        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(null);
+//        BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
+//        try{
+//            DocumentDAOUtility.addDocumentWithMetadata(businessProcessContext.getId(),body, null);
+//        }
+//        catch (Exception e){
+//            businessProcessContext.handleExceptions();
+//        }
+//        finally {
+//            BusinessProcessContextHandler.getBusinessProcessContextHandler().deleteBusinessProcessContext(businessProcessContext.getId());
+//        }
+//        return HibernateSwaggerObjectMapper.getApiResponse();
     }
 
     @Override
     @ApiOperation(value = "",notes = "Update a business process document metadata")
     public ResponseEntity<ModelApiResponse> updateDocumentMetadata(@RequestBody ProcessDocumentMetadata body) {
-        BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
-        try{
-            DocumentDAOUtility.updateDocumentMetadata(businessProcessContext.getId(),body);
-        }
-        catch (Exception e){
-            businessProcessContext.handleExceptions();
-        }
-        finally {
-            BusinessProcessContextHandler.getBusinessProcessContextHandler().deleteBusinessProcessContext(businessProcessContext.getId());
-        }
-        return HibernateSwaggerObjectMapper.getApiResponse();
+        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(null);
+//        BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
+//        try{
+//            DocumentDAOUtility.updateDocumentMetadata(businessProcessContext.getId(),body);
+//        }
+//        catch (Exception e){
+//            businessProcessContext.handleExceptions();
+//        }
+//        finally {
+//            BusinessProcessContextHandler.getBusinessProcessContextHandler().deleteBusinessProcessContext(businessProcessContext.getId());
+//        }
+//        return HibernateSwaggerObjectMapper.getApiResponse();
     }
 
     @Override
