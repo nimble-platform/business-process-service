@@ -1,9 +1,9 @@
 package eu.nimble.service.bp.impl.persistence.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import eu.nimble.service.bp.impl.util.serialization.Serializer;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonbasiccomponents.BinaryObjectType;
 import eu.nimble.service.model.ubl.despatchadvice.DespatchAdviceType;
@@ -54,8 +54,7 @@ public class BinaryContentUtil {
     public static Object removeBinaryContentFromDocument(Object document) throws IOException {
         String documentContent = new ObjectMapper().writeValueAsString(document);
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper = objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        ObjectMapper objectMapper = Serializer.getDefaultObjectMapper();
         SimpleModule simpleModule = new SimpleModule();
         simpleModule.addDeserializer(BinaryObjectType.class, SpringBridge.getInstance().getBinaryObjectDeserializer());
         objectMapper.registerModule(simpleModule);
