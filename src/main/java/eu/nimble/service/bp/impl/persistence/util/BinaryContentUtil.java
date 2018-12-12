@@ -36,8 +36,9 @@ public class BinaryContentUtil {
     }
 
     // gets uris of binary contents of the given document
-    public static List<String> getBinaryContentUris(Object document) throws JsonProcessingException {
-        ObjectMapper objectMapper = new ObjectMapper();
+    public static List<String> getBinaryContentUris(Object document) {
+
+        ObjectMapper objectMapper = Serializer.getDefaultObjectMapper();
         SimpleModule simpleModule = new SimpleModule();
 
         BinaryObjectSerializerGetUris binaryObjectSerializerGetUris = new BinaryObjectSerializerGetUris();
@@ -45,46 +46,35 @@ public class BinaryContentUtil {
         simpleModule.addSerializer(BinaryObjectType.class, binaryObjectSerializerGetUris);
         objectMapper.registerModule(simpleModule);
 
-        objectMapper.writeValueAsString(document);
+        try {
+            objectMapper.writeValueAsString(document);
+        } catch (JsonProcessingException e) {
+            String msg = String.format("Failed to get binary content uris from document: %s", document.getClass());
+            throw new RuntimeException(msg, e);
+        }
 
         return binaryObjectSerializerGetUris.getListOfUris();
     }
 
     // removes binary contents from the document and saves them to binary content database
-    public static Object removeBinaryContentFromDocument(Object document) throws IOException {
-        String documentContent = new ObjectMapper().writeValueAsString(document);
+    public static Object removeBinaryContentFromDocument(Object document) {
+        String documentContent;
+        try {
+            documentContent = Serializer.getDefaultObjectMapper().writeValueAsString(document);
 
-        ObjectMapper objectMapper = Serializer.getDefaultObjectMapper();
-        SimpleModule simpleModule = new SimpleModule();
-        simpleModule.addDeserializer(BinaryObjectType.class, SpringBridge.getInstance().getBinaryObjectDeserializer());
-        objectMapper.registerModule(simpleModule);
+            ObjectMapper objectMapper = Serializer.getDefaultObjectMapper();
+            SimpleModule simpleModule = new SimpleModule();
+            simpleModule.addDeserializer(BinaryObjectType.class, SpringBridge.getInstance().getBinaryObjectDeserializer());
+            objectMapper.registerModule(simpleModule);
 
-        if (document instanceof OrderType) {
-            return objectMapper.readValue(documentContent, OrderType.class);
-        } else if (document instanceof OrderResponseSimpleType) {
-            return objectMapper.readValue(documentContent, OrderResponseSimpleType.class);
-        } else if (document instanceof PpapRequestType) {
-            return objectMapper.readValue(documentContent, PpapRequestType.class);
-        } else if (document instanceof PpapResponseType) {
-            return objectMapper.readValue(documentContent, PpapResponseType.class);
-        } else if (document instanceof RequestForQuotationType) {
-            return objectMapper.readValue(documentContent, RequestForQuotationType.class);
-        } else if (document instanceof QuotationType) {
-            return objectMapper.readValue(documentContent, QuotationType.class);
-        } else if (document instanceof DespatchAdviceType) {
-            return objectMapper.readValue(documentContent, DespatchAdviceType.class);
-        } else if (document instanceof ReceiptAdviceType) {
-            return objectMapper.readValue(documentContent, ReceiptAdviceType.class);
-        } else if (document instanceof TransportExecutionPlanRequestType) {
-            return objectMapper.readValue(documentContent, TransportExecutionPlanRequestType.class);
-        } else if (document instanceof TransportExecutionPlanType) {
-            return objectMapper.readValue(documentContent, TransportExecutionPlanType.class);
-        } else if (document instanceof ItemInformationRequestType) {
-            return objectMapper.readValue(documentContent, ItemInformationRequestType.class);
-        } else if (document instanceof ItemInformationResponseType) {
-            return objectMapper.readValue(documentContent, ItemInformationResponseType.class);
+            document = objectMapper.readValue(documentContent, document.getClass());
+
+        } catch (IOException e) {
+            String msg = String.format("Failed to remove binary content from document: %s", document.getClass());
+            throw new RuntimeException(msg, e);
         }
-        return null;
+
+        return document;
     }
 
     // removes binary contents with the given ids from the database

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
 import eu.nimble.service.bp.impl.persistence.util.DataIntegratorUtil;
 import eu.nimble.service.bp.impl.persistence.util.DocumentDAOUtility;
+import eu.nimble.service.bp.impl.util.controller.HttpResponseUtil;
 import eu.nimble.service.bp.impl.util.serialization.Serializer;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.despatchadvice.DespatchAdviceType;
@@ -21,9 +22,12 @@ import eu.nimble.service.model.ubl.transportexecutionplan.TransportExecutionPlan
 import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
 import eu.nimble.utility.DateUtility;
 import eu.nimble.utility.JAXBUtility;
+import eu.nimble.utility.persistence.resource.ResourceValidationUtil;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.logging.LogLevel;
+import org.springframework.http.HttpStatus;
 
 import java.io.IOException;
 import java.util.List;
@@ -35,149 +39,129 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
+    //TODO pass generic class instead of enumeration to prevent checking document type for each case
     public Object createDocument(String initiatorID, String responderID, String content, ProcessDocumentMetadata.TypeEnum documentType) {
         ObjectMapper mapper = Serializer.getDefaultObjectMapper();
+        Object document = null;
 
         if(documentType == ProcessDocumentMetadata.TypeEnum.ORDER) {
             try {
                 OrderType order = mapper.readValue(content, OrderType.class);
+                document = order;
 
-                ObjectFactory factory = new ObjectFactory();
-                logger.debug(" $$$ Created document: {}", JAXBUtility.serialize(order, factory.createOrder(order)));
-
-                return order;
             } catch (IOException e) {
-                logger.error("", e);
+                String msg = String.format("Failed to deserialize document. initiator id: %s, responder id: %s, content: %s", initiatorID, responderID, content);
+                logger.error(msg, e);
+                throw new RuntimeException(msg, e);
             }
         } else if(documentType == ProcessDocumentMetadata.TypeEnum.ORDERRESPONSESIMPLE) {
             try {
-                OrderResponseSimpleType orderResponse = mapper.readValue(content, OrderResponseSimpleType.class);
+                document = mapper.readValue(content, OrderResponseSimpleType.class);
 
-                eu.nimble.service.model.ubl.orderresponsesimple.ObjectFactory factory = new eu.nimble.service.model.ubl.orderresponsesimple.ObjectFactory();
-                logger.debug(" $$$ Created document: {}", JAXBUtility.serialize(orderResponse, factory.createOrderResponseSimple(orderResponse)));
-
-                return orderResponse;
             } catch (IOException e) {
-                logger.error("", e);
+                String msg = String.format("Failed to deserialize document. initiator id: %s, responder id: %s, content: %s", initiatorID, responderID, content);
+                logger.error(msg, e);
+                throw new RuntimeException(msg, e);
             }
         }
         else if(documentType == ProcessDocumentMetadata.TypeEnum.PPAPREQUEST){
             try {
-                PpapRequestType ppapRequestType = mapper.readValue(content, PpapRequestType.class);
+                document = mapper.readValue(content, PpapRequestType.class);
 
-                eu.nimble.service.model.ubl.ppaprequest.ObjectFactory factory = new eu.nimble.service.model.ubl.ppaprequest.ObjectFactory();
-                logger.debug(" $$$ Created document: {}",JAXBUtility.serialize(ppapRequestType,factory.createPpapRequest(ppapRequestType)));
-
-                return ppapRequestType;
             } catch (IOException e) {
-                logger.error("", e);
+                String msg = String.format("Failed to deserialize document. initiator id: %s, responder id: %s, content: %s", initiatorID, responderID, content);
+                logger.error(msg, e);
+                throw new RuntimeException(msg, e);
             }
         }
         else if(documentType == ProcessDocumentMetadata.TypeEnum.PPAPRESPONSE){
             try {
-                PpapResponseType ppapResponseType = mapper.readValue(content, PpapResponseType.class);
-                eu.nimble.service.model.ubl.ppapresponse.ObjectFactory factory = new eu.nimble.service.model.ubl.ppapresponse.ObjectFactory();
-                logger.debug(" $$$ Created document: {}",JAXBUtility.serialize(ppapResponseType,factory.createPpapResponse(ppapResponseType)));
+                document = mapper.readValue(content, PpapResponseType.class);
 
-                return ppapResponseType;
             } catch (IOException e) {
-                logger.error("", e);
+                String msg = String.format("Failed to deserialize document. initiator id: %s, responder id: %s, content: %s", initiatorID, responderID, content);
+                logger.error(msg, e);
+                throw new RuntimeException(msg, e);
             }
         }  else if(documentType == ProcessDocumentMetadata.TypeEnum.REQUESTFORQUOTATION) {
             try {
-                RequestForQuotationType rfq = mapper.readValue(content, RequestForQuotationType.class);
+                document = mapper.readValue(content, RequestForQuotationType.class);
 
-                eu.nimble.service.model.ubl.requestforquotation.ObjectFactory factory = new eu.nimble.service.model.ubl.requestforquotation.ObjectFactory();
-                logger.debug(" $$$ Created document: {}", JAXBUtility.serialize(rfq, factory.createRequestForQuotation(rfq)));
-
-                return rfq;
             } catch (IOException e) {
-                logger.error("", e);
+                String msg = String.format("Failed to deserialize document. initiator id: %s, responder id: %s, content: %s", initiatorID, responderID, content);
+                logger.error(msg, e);
+                throw new RuntimeException(msg, e);
             }
         } else if(documentType == ProcessDocumentMetadata.TypeEnum.QUOTATION) {
             try {
-                QuotationType quotation = mapper.readValue(content, QuotationType.class);
+                document = mapper.readValue(content, QuotationType.class);
 
-                eu.nimble.service.model.ubl.quotation.ObjectFactory factory = new eu.nimble.service.model.ubl.quotation.ObjectFactory();
-                logger.debug(" $$$ Created document: {}", JAXBUtility.serialize(quotation, factory.createQuotation(quotation)));
-
-                return quotation;
             } catch (IOException e) {
-                logger.error("", e);
+                String msg = String.format("Failed to deserialize document. initiator id: %s, responder id: %s, content: %s", initiatorID, responderID, content);
+                logger.error(msg, e);
+                throw new RuntimeException(msg, e);
             }
         } else if(documentType == ProcessDocumentMetadata.TypeEnum.DESPATCHADVICE) {
             try {
-                DespatchAdviceType despatchAdvice = mapper.readValue(content, DespatchAdviceType.class);
+                document = mapper.readValue(content, DespatchAdviceType.class);
 
-                eu.nimble.service.model.ubl.despatchadvice.ObjectFactory factory = new eu.nimble.service.model.ubl.despatchadvice.ObjectFactory();
-                logger.debug(" $$$ Created document: {}", JAXBUtility.serialize(despatchAdvice, factory.createDespatchAdvice(despatchAdvice)));
-
-                return despatchAdvice;
             } catch (IOException e) {
-                logger.error("", e);
+                String msg = String.format("Failed to deserialize document. initiator id: %s, responder id: %s, content: %s", initiatorID, responderID, content);
+                logger.error(msg, e);
+                throw new RuntimeException(msg, e);
             }
         } else if(documentType == ProcessDocumentMetadata.TypeEnum.RECEIPTADVICE) {
             try {
-                ReceiptAdviceType receiptAdvice = mapper.readValue(content, ReceiptAdviceType.class);
+                document = mapper.readValue(content, ReceiptAdviceType.class);
 
-                eu.nimble.service.model.ubl.receiptadvice.ObjectFactory factory = new eu.nimble.service.model.ubl.receiptadvice.ObjectFactory();
-                logger.debug(" $$$ Created document: {}", JAXBUtility.serialize(receiptAdvice, factory.createReceiptAdvice(receiptAdvice)));
-
-                return receiptAdvice;
             } catch (IOException e) {
-                logger.error("", e);
+                String msg = String.format("Failed to deserialize document. initiator id: %s, responder id: %s, content: %s", initiatorID, responderID, content);
+                logger.error(msg, e);
+                throw new RuntimeException(msg, e);
             }
 
         } else if(documentType == ProcessDocumentMetadata.TypeEnum.TRANSPORTEXECUTIONPLANREQUEST) {
             try {
-                TransportExecutionPlanRequestType transportExecutionPlanRequest = mapper.readValue(content, TransportExecutionPlanRequestType.class);
+                document = mapper.readValue(content, TransportExecutionPlanRequestType.class);
 
-                eu.nimble.service.model.ubl.transportexecutionplanrequest.ObjectFactory factory = new eu.nimble.service.model.ubl.transportexecutionplanrequest.ObjectFactory();
-                logger.debug(" $$$ Created document: {}", JAXBUtility.serialize(transportExecutionPlanRequest, factory.createTransportExecutionPlanRequest(transportExecutionPlanRequest)));
-
-                return transportExecutionPlanRequest;
             } catch (IOException e) {
-                logger.error("", e);
+                String msg = String.format("Failed to deserialize document. initiator id: %s, responder id: %s, content: %s", initiatorID, responderID, content);
+                logger.error(msg, e);
+                throw new RuntimeException(msg, e);
             }
 
         } else if(documentType == ProcessDocumentMetadata.TypeEnum.TRANSPORTEXECUTIONPLAN) {
             try {
-                TransportExecutionPlanType transportExecutionPlan = mapper.readValue(content, TransportExecutionPlanType.class);
+                document = mapper.readValue(content, TransportExecutionPlanType.class);
 
-                eu.nimble.service.model.ubl.transportexecutionplan.ObjectFactory factory = new eu.nimble.service.model.ubl.transportexecutionplan.ObjectFactory();
-                logger.debug(" $$$ Created document: {}", JAXBUtility.serialize(transportExecutionPlan, factory.createTransportExecutionPlan(transportExecutionPlan)));
-
-                return transportExecutionPlan;
             } catch (IOException e) {
-                logger.error("", e);
+                String msg = String.format("Failed to deserialize document. initiator id: %s, responder id: %s, content: %s", initiatorID, responderID, content);
+                logger.error(msg, e);
+                throw new RuntimeException(msg, e);
             }
 
         } else if(documentType == ProcessDocumentMetadata.TypeEnum.ITEMINFORMATIONREQUEST) {
             try {
-                ItemInformationRequestType itemInformationRequest = mapper.readValue(content, ItemInformationRequestType.class);
+                document = mapper.readValue(content, ItemInformationRequestType.class);
 
-                eu.nimble.service.model.ubl.iteminformationrequest.ObjectFactory factory = new eu.nimble.service.model.ubl.iteminformationrequest.ObjectFactory();
-                logger.debug(" $$$ Created document: {}", JAXBUtility.serialize(itemInformationRequest, factory.createItemInformationRequest(itemInformationRequest)));
-
-                return itemInformationRequest;
             } catch (IOException e) {
-                logger.error("", e);
+                String msg = String.format("Failed to deserialize document. initiator id: %s, responder id: %s, content: %s", initiatorID, responderID, content);
+                logger.error(msg, e);
+                throw new RuntimeException(msg, e);
             }
 
         } else if(documentType == ProcessDocumentMetadata.TypeEnum.ITEMINFORMATIONRESPONSE) {
             try {
-                ItemInformationResponseType itemInformationResponse = mapper.readValue(content, ItemInformationResponseType.class);
+                document = mapper.readValue(content, ItemInformationResponseType.class);
 
-                eu.nimble.service.model.ubl.iteminformationresponse.ObjectFactory factory = new eu.nimble.service.model.ubl.iteminformationresponse.ObjectFactory();
-                logger.debug(" $$$ Created document: {}", JAXBUtility.serialize(itemInformationResponse, factory.createItemInformationResponse(itemInformationResponse)));
-
-                return itemInformationResponse;
             } catch (IOException e) {
-                logger.error("", e);
+                String msg = String.format("Failed to deserialize document. initiator id: %s, responder id: %s, content: %s", initiatorID, responderID, content);
+                logger.error(msg, e);
+                throw new RuntimeException(msg, e);
             }
         }
 
-        return null;
+        return document;
     }
 
     @Override

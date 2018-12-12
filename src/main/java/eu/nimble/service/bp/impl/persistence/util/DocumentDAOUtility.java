@@ -12,17 +12,25 @@ import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.catalogue.CatalogueType;
 import eu.nimble.service.model.ubl.despatchadvice.DespatchAdviceType;
 import eu.nimble.service.model.ubl.iteminformationrequest.ItemInformationRequestType;
+import eu.nimble.service.model.ubl.iteminformationresponse.ItemInformationResponseType;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
 import eu.nimble.service.model.ubl.ppaprequest.PpapRequestType;
+import eu.nimble.service.model.ubl.ppapresponse.PpapResponseType;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.service.model.ubl.receiptadvice.ReceiptAdviceType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
+import eu.nimble.service.model.ubl.transportexecutionplan.TransportExecutionPlanType;
 import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
+import eu.nimble.utility.Configuration;
+import eu.nimble.utility.persistence.resource.ResourceValidationUtil;
+import org.apache.poi.ss.formula.functions.T;
 import org.camunda.bpm.engine.ProcessEngines;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.persistence.criteria.Order;
+import javax.print.Doc;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -90,11 +98,7 @@ public class DocumentDAOUtility {
         if (document != null) {
 //            HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).update(document);
             // remove binary content from the document
-            try {
-                document = BinaryContentUtil.removeBinaryContentFromDocument(document);
-            } catch (IOException e) {
-                logger.error("Failed to delete binary content from the document: {}", document, e);
-            }
+            document = BinaryContentUtil.removeBinaryContentFromDocument(document);
             document = SpringBridge.getInstance().getCatalogueRepository().updateEntity(document);
             // save Object
             businessProcessContext.setDocument(document);
@@ -121,202 +125,99 @@ public class DocumentDAOUtility {
 
     }
 
-    public static void updateDocument(String processContextId, String content, DocumentType documentType) {
+    public static <T> Class<T> getDocumentClass(DocumentType documentType) {
+        Class<T> klass = null;
+        switch (documentType) {
+            case CATALOGUE:
+                klass = (Class<T>) CatalogueType.class;
+                break;
+            case ORDER:
+                klass = (Class<T>) OrderType.class;
+                break;
+            case ORDERRESPONSESIMPLE:
+                klass = (Class<T>) OrderResponseSimpleType.class;
+                break;
+            case REQUESTFORQUOTATION:
+                klass = (Class<T>) RequestForQuotationType.class;
+                break;
+            case QUOTATION:
+                klass = (Class<T>) QuotationType.class;
+                break;
+            case DESPATCHADVICE:
+                klass = (Class<T>) DespatchAdviceType.class;
+                break;
+            case RECEIPTADVICE:
+                klass = (Class<T>) ReceiptAdviceType.class;
+                break;
+            case TRANSPORTEXECUTIONPLANREQUEST:
+                klass = (Class<T>) TransportExecutionPlanRequestType.class;
+                break;
+            case TRANSPORTEXECUTIONPLAN:
+                klass = (Class<T>) TransportExecutionPlanType.class;
+                break;
+            case PPAPREQUEST:
+                klass = (Class<T>) PpapRequestType.class;
+                break;
+            case PPAPRESPONSE:
+                klass = (Class<T>) PpapResponseType.class;
+                break;
+            case ITEMINFORMATIONREQUEST:
+                klass = (Class<T>) ItemInformationRequestType.class;
+                break;
+            case ITEMINFORMATIONRESPONSE:
+                klass = (Class<T>) ItemInformationResponseType.class;
+                break;
+        }
+        if(klass == null) {
+            String msg = String.format("Unknown document type: %s", documentType.toString());
+            logger.warn(msg);
+            throw new RuntimeException(msg);
+        }
+        return klass;
+    }
+
+    public static <T> T readDocument(DocumentType documentType, String content) {
+        Class<T> klass = getDocumentClass(documentType);
+        ObjectMapper objectMapper = Serializer.getDefaultObjectMapper();
+        try {
+            return objectMapper.readValue(content, klass);
+
+        } catch (IOException e) {
+            String msg = String.format("Failed to deserialize document. type: %s, content: %s", klass.getName(), content);
+            logger.error(msg, e);
+            throw new RuntimeException(msg, e);
+        }
+    }
+
+    public static void updateDocument(String processContextId, Object document, String documentId, DocumentType documentType, String partyId) {
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(processContextId);
 
-        ObjectMapper mapper = Serializer.getDefaultObjectMapper();
+        Object existingDocument = getUBLDocument(documentId, documentType);
+        businessProcessContext.setPreviousDocument(existingDocument);
 
-        if (documentType == DocumentType.ITEMINFORMATIONREQUEST) {
-            try {
-                ItemInformationRequestType itemInformationRequest = mapper.readValue(content, ItemInformationRequestType.class);
+        // remove the identifiers from the resources
+        ResourceValidationUtil.removeHjidsForObject(existingDocument, Configuration.Standard.UBL.toString());
 
-                ItemInformationRequestType existingItemInformationRequest = (ItemInformationRequestType) getUBLDocument(itemInformationRequest.getID(), DocumentType.ITEMINFORMATIONREQUEST);
-//                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(existingItemInformationRequest);
-
-                businessProcessContext.setPreviousDocument(existingItemInformationRequest);
-
-//                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(itemInformationRequest);
-
-                // while updating the document, be sure that we update binary contents as well
-                // get uris of binary contents of existing item information request
-                List<String> existingUris = BinaryContentUtil.getBinaryContentUris(existingItemInformationRequest);
-                // get uris of binary contents of updated item information request
-                List<String> uris = BinaryContentUtil.getBinaryContentUris(itemInformationRequest);
-                // delete binary contents which do not exist in the updated one
-                List<String> urisToBeDeleted = new ArrayList<>();
-                for (String uri : existingUris) {
-                    if (!uris.contains(uri)) {
-                        urisToBeDeleted.add(uri);
-                    }
-                }
-                BinaryContentUtil.removeBinaryContentFromDatabase(urisToBeDeleted);
-                // remove binary content from the document
-                itemInformationRequest = (ItemInformationRequestType) BinaryContentUtil.removeBinaryContentFromDocument(itemInformationRequest);
-                SpringBridge.getInstance().getCatalogueRepository().updateEntity(itemInformationRequest);
-
-                businessProcessContext.setDocument(itemInformationRequest);
-            } catch (Exception e) {
-                logger.error("", e);
+        // while updating the document, be sure that we update binary contents as well
+        // get uris of binary contents of existing item information request
+        List<String> existingUris = BinaryContentUtil.getBinaryContentUris(existingDocument);
+        // get uris of binary contents of updated item information request
+        List<String> uris = BinaryContentUtil.getBinaryContentUris(document);
+        // delete binary contents which do not exist in the updated one
+        List<String> urisToBeDeleted = new ArrayList<>();
+        for (String uri : existingUris) {
+            if (!uris.contains(uri)) {
+                urisToBeDeleted.add(uri);
             }
         }
-        if (documentType == DocumentType.DESPATCHADVICE) {
-            try {
-                DespatchAdviceType despatchAdviceType = mapper.readValue(content, DespatchAdviceType.class);
+        BinaryContentUtil.removeBinaryContentFromDatabase(urisToBeDeleted);
+        // remove binary content from the document
+        document = BinaryContentUtil.removeBinaryContentFromDocument(document);
+        document = SpringBridge.getInstance().getCatalogueRepository().updateEntity(document);
+        businessProcessContext.setDocument(document);
 
-                DespatchAdviceType existingDespatchAdvice = (DespatchAdviceType) getUBLDocument(despatchAdviceType.getID(), DocumentType.DESPATCHADVICE);
-//                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(existingDespatchAdvice);
-
-                businessProcessContext.setPreviousDocument(existingDespatchAdvice);
-
-//                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(despatchAdviceType);
-                // while updating the document, be sure that we update binary contents as well
-                // get uris of binary contents of existing despatch advice
-                List<String> existingUris = BinaryContentUtil.getBinaryContentUris(existingDespatchAdvice);
-                // get uris of binary contents of updated despatch advice
-                List<String> uris = BinaryContentUtil.getBinaryContentUris(despatchAdviceType);
-                // delete binary contents which do not exist in the updated one
-                List<String> urisToBeDeleted = new ArrayList<>();
-                for (String uri : existingUris) {
-                    if (!uris.contains(uri)) {
-                        urisToBeDeleted.add(uri);
-                    }
-                }
-                BinaryContentUtil.removeBinaryContentFromDatabase(urisToBeDeleted);
-                // remove binary content from the document
-                despatchAdviceType = (DespatchAdviceType) BinaryContentUtil.removeBinaryContentFromDocument(despatchAdviceType);
-                SpringBridge.getInstance().getCatalogueRepository().updateEntity(despatchAdviceType);
-                businessProcessContext.setDocument(despatchAdviceType);
-            } catch (Exception e) {
-                logger.error("", e);
-            }
-        }
-        if (documentType == DocumentType.REQUESTFORQUOTATION) {
-            try {
-                RequestForQuotationType requestForQuotationType = mapper.readValue(content, RequestForQuotationType.class);
-
-                RequestForQuotationType existingRequestForQuotation = (RequestForQuotationType) getUBLDocument(requestForQuotationType.getID(), DocumentType.REQUESTFORQUOTATION);
-//                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(existingRequestForQuotation);
-                businessProcessContext.setPreviousDocument(existingRequestForQuotation);
-
-//                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(requestForQuotationType);
-                // while updating the document, be sure that we update binary contents as well
-                // get uris of binary contents of existing request for quotation
-                List<String> existingUris = BinaryContentUtil.getBinaryContentUris(existingRequestForQuotation);
-                // get uris of binary contents of updated request for quotation
-                List<String> uris = BinaryContentUtil.getBinaryContentUris(requestForQuotationType);
-                // delete binary contents which do not exist in the updated one
-                List<String> urisToBeDeleted = new ArrayList<>();
-                for (String uri : existingUris) {
-                    if (!uris.contains(uri)) {
-                        urisToBeDeleted.add(uri);
-                    }
-                }
-                BinaryContentUtil.removeBinaryContentFromDatabase(urisToBeDeleted);
-                // remove binary content from the document
-                requestForQuotationType = (RequestForQuotationType) BinaryContentUtil.removeBinaryContentFromDocument(requestForQuotationType);
-                SpringBridge.getInstance().getCatalogueRepository().updateEntity(requestForQuotationType);
-                businessProcessContext.setDocument(requestForQuotationType);
-            } catch (Exception e) {
-                logger.error("", e);
-            }
-        }
-        if (documentType == DocumentType.ORDER) {
-            try {
-                OrderType orderType = mapper.readValue(content, OrderType.class);
-
-                OrderType existingOrderType = (OrderType) getUBLDocument(orderType.getID(), DocumentType.ORDER);
-//                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(existingOrderType);
-
-                businessProcessContext.setPreviousDocument(existingOrderType);
-
-//                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(orderType);
-                // while updating the document, be sure that we update binary contents as well
-                // get uris of binary contents of existing order
-                List<String> existingUris = BinaryContentUtil.getBinaryContentUris(existingOrderType);
-                // get uris of binary contents of updated order
-                List<String> uris = BinaryContentUtil.getBinaryContentUris(orderType);
-                // delete binary contents which do not exist in the updated one
-                List<String> urisToBeDeleted = new ArrayList<>();
-                for (String uri : existingUris) {
-                    if (!uris.contains(uri)) {
-                        urisToBeDeleted.add(uri);
-                    }
-                }
-                BinaryContentUtil.removeBinaryContentFromDatabase(urisToBeDeleted);
-                // remove binary content from the document
-                orderType = (OrderType) BinaryContentUtil.removeBinaryContentFromDocument(orderType);
-                SpringBridge.getInstance().getCatalogueRepository().updateEntity(orderType);
-
-                businessProcessContext.setDocument(orderType);
-            } catch (Exception e) {
-                logger.error("", e);
-            }
-        }
-        if (documentType == DocumentType.PPAPREQUEST) {
-            try {
-                PpapRequestType ppapRequestType = mapper.readValue(content, PpapRequestType.class);
-
-                PpapRequestType existingPPAPRequest = (PpapRequestType) getUBLDocument(ppapRequestType.getID(), DocumentType.PPAPREQUEST);
-//                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(existingPPAPRequest);
-
-                businessProcessContext.setPreviousDocument(existingPPAPRequest);
-
-//                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(ppapRequestType);
-                // while updating the document, be sure that we update binary contents as well
-                // get uris of binary contents of existing PPAP request
-                List<String> existingUris = BinaryContentUtil.getBinaryContentUris(existingPPAPRequest);
-                // get uris of binary contents of updated PPAP request
-                List<String> uris = BinaryContentUtil.getBinaryContentUris(ppapRequestType);
-                // delete binary contents which do not exist in the updated one
-                List<String> urisToBeDeleted = new ArrayList<>();
-                for (String uri : existingUris) {
-                    if (!uris.contains(uri)) {
-                        urisToBeDeleted.add(uri);
-                    }
-                }
-                BinaryContentUtil.removeBinaryContentFromDatabase(urisToBeDeleted);
-                // remove binary content from the document
-                ppapRequestType = (PpapRequestType) BinaryContentUtil.removeBinaryContentFromDocument(ppapRequestType);
-                SpringBridge.getInstance().getCatalogueRepository().updateEntity(ppapRequestType);
-
-                businessProcessContext.setDocument(ppapRequestType);
-            } catch (Exception e) {
-                logger.error("", e);
-            }
-        }
-        if (documentType == DocumentType.TRANSPORTEXECUTIONPLANREQUEST) {
-            try {
-                TransportExecutionPlanRequestType transportExecutionPlanRequestType = mapper.readValue(content, TransportExecutionPlanRequestType.class);
-
-                TransportExecutionPlanRequestType existingTEPRequest = (TransportExecutionPlanRequestType) getUBLDocument(transportExecutionPlanRequestType.getID(), DocumentType.TRANSPORTEXECUTIONPLANREQUEST);
-//                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(existingTEPRequest);
-
-                businessProcessContext.setPreviousDocument(existingTEPRequest);
-
-//                HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).persist(transportExecutionPlanRequestType);
-                // while updating the document, be sure that we update binary contents as well
-                // get uris of binary contents of existing TEP request
-                List<String> existingUris = BinaryContentUtil.getBinaryContentUris(existingTEPRequest);
-                // get uris of binary contents of updated TEP request
-                List<String> uris = BinaryContentUtil.getBinaryContentUris(transportExecutionPlanRequestType);
-                // delete binary contents which do not exist in the updated one
-                List<String> urisToBeDeleted = new ArrayList<>();
-                for (String uri : existingUris) {
-                    if (!uris.contains(uri)) {
-                        urisToBeDeleted.add(uri);
-                    }
-                }
-                BinaryContentUtil.removeBinaryContentFromDatabase(urisToBeDeleted);
-                // remove binary content from the document
-                transportExecutionPlanRequestType = (TransportExecutionPlanRequestType) BinaryContentUtil.removeBinaryContentFromDocument(transportExecutionPlanRequestType);
-                SpringBridge.getInstance().getCatalogueRepository().updateEntity(transportExecutionPlanRequestType);
-
-                businessProcessContext.setDocument(transportExecutionPlanRequestType);
-            } catch (Exception e) {
-                logger.error("", e);
-            }
-        }
-
+        // insert identifiers for the new object
+        ResourceValidationUtil.insertHjidsForObject(document, partyId, Configuration.Standard.UBL.toString());
     }
 
     public static ProcessDocumentMetadata getDocumentMetadata(String documentID) {

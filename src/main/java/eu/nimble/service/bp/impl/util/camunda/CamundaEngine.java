@@ -267,6 +267,10 @@ public class CamundaEngine {
         return CamundaEngine.getTransactions(businessProcessType).get(0).getDocumentType();
     }
 
+    public static Transaction.DocumentTypeEnum getResponseDocumentForProcess(String businessProcessType) {
+        return CamundaEngine.getTransactions(businessProcessType).get(1).getDocumentType();
+    }
+
     public static List<Transaction.DocumentTypeEnum> getInitialDocumentsForAllProcesses() {
         List<Transaction.DocumentTypeEnum> initialDocuments = new ArrayList<>();
         List<ProcessDefinition> processDefinitions = repositoryService.createProcessDefinitionQuery().list();

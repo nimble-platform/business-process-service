@@ -1,13 +1,11 @@
 package eu.nimble.service.bp.impl;
 
-import eu.nimble.service.bp.hyperjaxb.model.CollaborationGroupDAO;
-import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
-import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
-import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceInputMessageDAO;
+import eu.nimble.service.bp.hyperjaxb.model.*;
 import eu.nimble.service.bp.impl.persistence.bp.BusinessProcessRepository;
 import eu.nimble.service.bp.impl.persistence.bp.CollaborationGroupDAORepository;
 import eu.nimble.service.bp.impl.persistence.bp.ProcessInstanceDAORepository;
 import eu.nimble.service.bp.impl.persistence.bp.ProcessInstanceGroupDAORepository;
+import eu.nimble.service.bp.impl.persistence.util.DocumentDAOUtility;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.impl.persistence.util.DAOUtility;
 import eu.nimble.service.bp.impl.persistence.util.HibernateSwaggerObjectMapper;
@@ -18,6 +16,8 @@ import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.api.StartApi;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
+import eu.nimble.service.bp.swagger.model.Transaction;
+import eu.nimble.utility.persistence.resource.ResourceValidationUtil;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
@@ -60,6 +60,17 @@ public class StartController implements StartApi {
         // get BusinessProcessContext
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
         try {
+            // check the entity ids in the passed document
+            Transaction.DocumentTypeEnum documentType = CamundaEngine.getInitialDocumentForProcess(body.getVariables().getProcessID());
+            Object document = DocumentDAOUtility.readDocument(DocumentType.valueOf(documentType.toString()), body.getVariables().getContent());
+
+            boolean hjidsExists = ResourceValidationUtil.hjidsExit(document);
+            if(hjidsExists) {
+                String msg = String.format("Entity IDs (hjid fields) found in the passed document. document type: %s, content: %s", documentType.toString(), body.getVariables().getContent());
+                logger.warn(msg);
+                throw new RuntimeException(msg);
+            }
+
             ProcessInstanceInputMessageDAO processInstanceInputMessageDAO = HibernateSwaggerObjectMapper.createProcessInstanceInputMessage_DAO(body);
 //            HibernateUtilityRef.getInstance("bp-data-model").persist(processInstanceInputMessageDAO);
             businessProcessRepository.persistEntity(processInstanceInputMessageDAO);
