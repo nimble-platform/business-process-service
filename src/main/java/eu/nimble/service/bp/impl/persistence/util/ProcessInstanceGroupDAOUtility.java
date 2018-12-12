@@ -45,7 +45,7 @@ public class ProcessInstanceGroupDAOUtility {
             int offset) {
 
         QueryData query = getGroupRetrievalQuery(GroupQueryType.GROUP, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories, status, startTime, endTime);
-        List<Object> collaborationGroups = SpringBridge.getInstance().getBusinessProcessRepository().getEntities(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray());
+        List<Object> collaborationGroups = SpringBridge.getInstance().getBusinessProcessRepository().getEntities(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray(),limit,offset);
         List<CollaborationGroupDAO> results = new ArrayList<>();
         for (Object groupResult : collaborationGroups) {
             Object[] resultItems = (Object[]) groupResult;
