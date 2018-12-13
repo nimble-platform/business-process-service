@@ -76,16 +76,6 @@ public class EPCController {
         logger.info("Getting track & tracing details for epc: {}", epc);
 
         try {
-            /*
-            TTInfo ttInfo = new TTInfo();
-            ttInfo.setMasterUrl("https://falcon-dev.ikap.biba.uni-bremen.de/masterData");
-            ttInfo.setEventUrl("https://falcon-dev.ikap.biba.uni-bremen.de/simpleTracking");
-            ttInfo.setProductionProcessTemplate("https://falcon-dev.ikap.biba.uni-bremen.de/productionProcessTemplate/lindbacks_test");
-            ttInfo.setRelatedProductId("temp-product-id");
-
-            ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(ttInfo);
-            logger.debug("Retrieved T6T details for epc: {}", epc);
-            return response;*/
             GenericConfig config = SpringBridge.getInstance().getGenericConfig();
             String dataChannelServiceUrlStr = config.getDataChannelServiceUrl()+"/epc/code/"+epc;
 
@@ -123,32 +113,6 @@ public class EPCController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(String.format(msg, epc));
         }
     }
-
-//    @ApiOperation(value = "Gets EPC codes associated with the given product id", response = List.class)
-//    @ApiResponses(value = {
-//            @ApiResponse(code = 200, message = "Retrieved the T&T details successfully", response = List.class)})
-//    @RequestMapping(value = "/t-t/epc-codes",
-//            produces = {"application/json"},
-//            method = RequestMethod.GET)
-//    public ResponseEntity getEPCCodes(@ApiParam(value = "The product ID for which the related EPC codes will be retrieved") @RequestParam(value = "productId", required = true) String productId) {
-//        logger.info("Getting epc codes for productId: {}", productId);
-//
-//        try {
-//            List<String> epcCodes = new ArrayList<>();
-//            epcCodes.add("urn:epc:id:sgtin:0614141.lindback.2017");
-//            epcCodes.add("urn:epc:id:sgtin:0614141.lindback.201702");
-//            epcCodes.add("urn:epc:id:sgtin:0614141.lindback.201703");
-//
-//            ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(epcCodes);
-//            logger.debug("Retrieved epc codes for productId: {}", productId);
-//            return response;
-//
-//        } catch (Exception e) {
-//            String msg = "Unexpected error while getting the epc codes for the productId: %s";
-//            logger.error(String.format(msg, productId));
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
-//        }
-//    }
 
     @ApiOperation(value = "",notes = "Get EPC codes that belongs to the same published product ID")
     @ApiResponses(value = {

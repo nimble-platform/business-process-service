@@ -8,6 +8,7 @@ import eu.nimble.service.model.ubl.order.OrderType;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("local_dev")
 @FixMethodOrder
 @RunWith(SpringJUnit4ClassRunner.class)
+@Ignore
 public class Test16_ContractControllerTest {
 
     @Autowired
