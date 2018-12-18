@@ -1,4 +1,4 @@
-package eu.nimble.service.bp.config;
+package eu.nimble.service.bp.config.camunda;
 
 import org.camunda.bpm.spring.boot.starter.rest.CamundaJerseyResourceConfig;
 import org.slf4j.Logger;

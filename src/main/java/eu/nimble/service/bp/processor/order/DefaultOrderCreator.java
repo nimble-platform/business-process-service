@@ -2,8 +2,7 @@ package eu.nimble.service.bp.processor.order;
 
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
-import eu.nimble.service.bp.config.BusinessProcessPersistenceConfig;
-import eu.nimble.service.bp.impl.util.persistence.DocumentDAOUtility;
+import eu.nimble.service.bp.impl.persistence.util.DocumentDAOUtility;
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
@@ -13,7 +12,6 @@ import org.camunda.bpm.engine.delegate.JavaDelegate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -28,8 +26,6 @@ public class DefaultOrderCreator  implements JavaDelegate {
     @HystrixCommand
     @Override
     public void execute(DelegateExecution execution) throws Exception {
-
-        BusinessProcessPersistenceConfig config = BusinessProcessPersistenceConfig.getInstance();
 
         logger.info(" $$$ DefaultOrderCreator: {}", execution);
         final Map<String, Object> variables = execution.getVariables();

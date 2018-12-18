@@ -1,10 +1,10 @@
-package eu.nimble.service.bp.impl.util.persistence;
+package eu.nimble.service.bp.impl.persistence.util;
 
 import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.impl.model.trust.NegotiationRatings;
+import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
-import eu.nimble.utility.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +38,10 @@ public class TrustUtility {
     }
 
     public static void createCompletedTask(String partyID,String processInstanceID,String bearerToken,String status) {
+        /**
+         * IMPORTANT:
+         * {@link QualifyingPartyType}ies should be existing when a {@link CompletedTaskType} is about to be associated to it
+         */
         QualifyingPartyType qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID,bearerToken);
         CompletedTaskType completedTask = new CompletedTaskType();
         completedTask.setAssociatedProcessInstanceID(processInstanceID);
@@ -63,7 +67,8 @@ public class TrustUtility {
         }
 
         qualifyingParty.getCompletedTask().add(completedTask);
-        HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).update(qualifyingParty);
+//        HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).update(qualifyingParty);
+        SpringBridge.getInstance().getCatalogueRepository().updateEntity(qualifyingParty);
     }
 
     public static void createCompletedTasksForBothParties(String processInstanceID,String bearerToken,String status) {

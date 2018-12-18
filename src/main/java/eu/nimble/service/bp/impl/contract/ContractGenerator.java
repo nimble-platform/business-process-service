@@ -2,8 +2,9 @@ package eu.nimble.service.bp.impl.contract;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
-import eu.nimble.service.bp.impl.util.persistence.DocumentDAOUtility;
+import eu.nimble.service.bp.impl.persistence.util.DocumentDAOUtility;
 import eu.nimble.service.bp.impl.util.serialization.Serializer;
+import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.iteminformationrequest.ItemInformationRequestType;
@@ -14,6 +15,7 @@ import eu.nimble.service.model.ubl.ppaprequest.PpapRequestType;
 import eu.nimble.service.model.ubl.ppapresponse.PpapResponseType;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.util.Units;
 import org.apache.poi.xwpf.converter.pdf.PdfConverter;
@@ -86,7 +88,7 @@ public class ContractGenerator {
 
     }
 
-    public String generateOrderTermsAndConditionsAsText(String orderId,String sellerParty,String buyerParty,String incoterms,String tradingTerms){
+    public String generateOrderTermsAndConditionsAsText(String orderId,String sellerPartyId,String buyerPartyId,String incoterms,String tradingTerms,String bearerToken){
         OrderType order = (OrderType) DocumentDAOUtility.getUBLDocument(orderId,DocumentType.ORDER);
 
         String text = "";
@@ -163,8 +165,8 @@ public class ContractGenerator {
                 ObjectMapper objectMapper = Serializer.getObjectMapperForContracts();
                 List<TradingTermType> tradingTermTypeList = objectMapper.readValue(tradingTerms,objectMapper.getTypeFactory().constructCollectionType(List.class,TradingTermType.class));
 
-                PartyType supplierParty = objectMapper.readValue(sellerParty,PartyType.class);
-                PartyType customerParty = objectMapper.readValue(buyerParty,PartyType.class);
+                PartyType supplierParty = SpringBridge.getInstance().getIdentityClientTyped().getParty(bearerToken,sellerPartyId);
+                PartyType customerParty = SpringBridge.getInstance().getIdentityClientTyped().getParty(bearerToken,buyerPartyId);
 
                 InputStream file = ContractGenerator.class.getResourceAsStream("/contract-bundle/Standard Purchase Order Terms and Conditions_Text.docx");
 
@@ -318,7 +320,7 @@ public class ContractGenerator {
                                         }
                                     }
                                     else if(text.contains("$seller_tel")){
-                                        if(!order.getSellerSupplierParty().getParty().getPerson().get(0).getContact().getTelephone().contentEquals("")){
+                                        if(!CollectionUtils.isEmpty(order.getSellerSupplierParty().getParty().getPerson()) && !order.getSellerSupplierParty().getParty().getPerson().get(0).getContact().getTelephone().contentEquals("")){
                                             text = text.replace("$seller_tel",order.getSellerSupplierParty().getParty().getPerson().get(0).getContact().getTelephone());
                                             r.setText(text,0);
                                             r.setUnderline(UnderlinePatterns.SINGLE);
@@ -546,7 +548,7 @@ public class ContractGenerator {
                                         }
                                     }
                                     if(text.contains("$phone_supplier")){
-                                        if(!order.getSellerSupplierParty().getParty().getPerson().get(0).getContact().getTelephone().contentEquals("")){
+                                        if(!CollectionUtils.isEmpty(order.getSellerSupplierParty().getParty().getPerson()) && !order.getSellerSupplierParty().getParty().getPerson().get(0).getContact().getTelephone().contentEquals("")){
                                             text = text.replace("$phone_supplier",order.getSellerSupplierParty().getParty().getPerson().get(0).getContact().getTelephone());
                                             r.setText(text,0);
                                         }

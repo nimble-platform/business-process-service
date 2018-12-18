@@ -65,16 +65,17 @@ public class ContractGeneratorController {
             produces = {MediaType.TEXT_PLAIN_VALUE},
             method = RequestMethod.GET)
     public ResponseEntity generateOrderTermsAndConditionsAsText(@RequestParam(value = "orderId", required = true) String orderId,
-                                                                @RequestParam(value = "sellerParty", required = true) String sellerParty,
-                                                                @RequestParam(value = "buyerParty", required = true) String buyerParty,
-                                                                @RequestParam(value = "incoterms", required = true) String incoterms,
-                                                                @RequestParam(value = "tradingTerms", required = true) String tradingTerms){
+                                                                @RequestParam(value = "sellerPartyId", required = false) String sellerPartyId,
+                                                                @RequestParam(value = "buyerPartyId", required = false) String buyerPartyId,
+                                                                @RequestParam(value = "incoterms", required = false) String incoterms,
+                                                                @RequestParam(value = "tradingTerms", required = false) String tradingTerms,
+                                                                @RequestHeader(value = "Authorization", required = true) String bearerToken){
         logger.info("Generating Order Terms and Conditions as text for the order with id : {}",orderId);
 
         try {
             ContractGenerator contractGenerator = new ContractGenerator();
 
-            String text = contractGenerator.generateOrderTermsAndConditionsAsText(orderId,sellerParty,buyerParty,incoterms,tradingTerms);
+            String text = contractGenerator.generateOrderTermsAndConditionsAsText(orderId,sellerPartyId,buyerPartyId,incoterms,tradingTerms,bearerToken);
 
             logger.info("Generated Order Terms and Conditions as text for the order with id : {}",orderId);
             return ResponseEntity.ok(text);

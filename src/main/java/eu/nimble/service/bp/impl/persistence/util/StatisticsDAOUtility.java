@@ -1,4 +1,4 @@
-package eu.nimble.service.bp.impl.util.persistence;
+package eu.nimble.service.bp.impl.persistence.util;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
@@ -11,7 +11,6 @@ import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.CompletedTaskType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.QualifyingPartyType;
-import eu.nimble.utility.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,19 +27,35 @@ public class StatisticsDAOUtility {
     private static final Logger logger = LoggerFactory.getLogger(StatisticsDAOUtility.class);
 
     public static long getActionRequiredProcessCount(String partyID,String role,Boolean archived){
-        String query = "SELECT metadataDAO.processInstanceID FROM ProcessDocumentMetadataDAO metadataDAO,ProcessInstanceDAO instanceDAO,ProcessInstanceGroupDAO groupDAO join groupDAO.processInstanceIDsItems ids WHERE groupDAO.archived = "+archived+" AND groupDAO.partyID = '"+partyID+"' AND metadataDAO.processInstanceID = ids.item AND metadataDAO.processInstanceID = instanceDAO.processInstanceID AND instanceDAO.status <> 'CANCELLED' AND instanceDAO.processID ";
+        List<String> parameterNames = new ArrayList<>();
+        List<Object> parameterValues = new ArrayList<>();
+        String query = "SELECT metadataDAO.processInstanceID FROM " +
+                "ProcessDocumentMetadataDAO metadataDAO,ProcessInstanceDAO instanceDAO,ProcessInstanceGroupDAO groupDAO join groupDAO.processInstanceIDsItems ids " +
+                "WHERE groupDAO.archived = :archived AND " +
+                "groupDAO.partyID = :partyId AND " +
+                "metadataDAO.processInstanceID = ids.item AND " +
+                "metadataDAO.processInstanceID = instanceDAO.processInstanceID AND " +
+                "instanceDAO.status <> 'CANCELLED' AND instanceDAO.processID ";
         if(role.equals("seller")){
-            query += " <> 'Fulfilment' AND metadataDAO.responderID = '"+partyID+"' GROUP BY metadataDAO.processInstanceID HAVING count(*) = 1";
+            query += " <> 'Fulfilment' AND metadataDAO.responderID = :partyId GROUP BY metadataDAO.processInstanceID HAVING count(*) = 1";
         }
         else{
-            query += " = 'Fulfilment' AND metadataDAO.responderID = '"+partyID+"' AND instanceDAO.status = 'STARTED' GROUP BY metadataDAO.processInstanceID HAVING count(*) = 1";
+            query += " = 'Fulfilment' AND metadataDAO.responderID = :partyId AND instanceDAO.status = 'STARTED' GROUP BY metadataDAO.processInstanceID HAVING count(*) = 1";
         }
-        List<String> count = (List<String>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+        parameterNames.add("archived");
+        parameterNames.add("partyId");
+        parameterValues.add(archived);
+        parameterValues.add(partyID);
+//        List<String> count = (List<String>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+        List<String> count = SpringBridge.getInstance().getBusinessProcessRepository().getEntities(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
         return count.size();
     }
 
     public static double getTradingVolume(Integer partyId, String role, String startDate, String endDate, String status) {
         String query = "select sum(order_.anticipatedMonetaryTotal.payableAmount.value) from OrderType order_ where order_.anticipatedMonetaryTotal.payableAmount.value is not null";
+        List<String> parameterNames = new ArrayList<>();
+        List<Object> parameterValues = new ArrayList<>();
+
         if (partyId != null || role != null || startDate != null || endDate != null || status != null) {
             List<String> documentTypes = new ArrayList<>();
             documentTypes.add("ORDER");
@@ -54,21 +69,31 @@ public class StatisticsDAOUtility {
 
             query += " and (";
             for (int i = 0; i < orderIds.size() - 1; i++) {
-                query += " order_.ID = '" + orderIds.get(i) + "' or ";
+                query += " order_.ID = :id" + i + " or ";
+
+                parameterNames.add("id" + i);
+                parameterValues.add(orderIds.get(i));
             }
-            query += " order_.ID = '" + orderIds.get(orderIds.size() - 1) + "')";
+            query += " order_.ID = :id" + (orderIds.size()-1) + ")";
+
+            parameterNames.add("id" + (orderIds.size()-1));
+            parameterValues.add(orderIds.get(orderIds.size()-1));
         }
 
-        double tradingVolume = ((BigDecimal) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadIndividualItem(query)).doubleValue();
+        double tradingVolume = ((BigDecimal) SpringBridge.getInstance().getCatalogueRepository().getSingleEntity(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray())).doubleValue();
         return tradingVolume;
     }
 
     public static NonOrderedProducts getNonOrderedProducts(Integer partyId) {
         String query = "select distinct new list(item.manufacturerParty.ID, item.manufacturerParty.name, item.manufacturersItemIdentification.ID, item.name) from ItemType item " +
                 " where item.transportationServiceDetails is null ";
+        List<String> parameterNames = new ArrayList<>();
+        List<Object> parameterValues = new ArrayList<>();
 
         if (partyId != null) {
-            query += " and item.manufacturerParty.ID = '" + partyId + "'";
+            query += " and item.manufacturerParty.ID = :partyId";
+            parameterNames.add("partyId");
+            parameterValues.add(partyId.toString());
         }
 
         query += " and item.manufacturersItemIdentification.ID not in " +
@@ -76,7 +101,8 @@ public class StatisticsDAOUtility {
                 " where line.lineItem.item.manufacturerParty.ID = item.manufacturerParty.ID) ";
 
         NonOrderedProducts nonOrderedProducts = new NonOrderedProducts();
-        List<Object> results = (List<Object>) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadAll(query);
+//        List<Object> results = (List<Object>) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadAll(query);
+        List<Object> results = SpringBridge.getInstance().getCatalogueRepository().getEntities(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
         for (Object result : results) {
             List<String> dataArray = (List<String>) result;
             nonOrderedProducts.addProduct(dataArray.get(0), dataArray.get(1), dataArray.get(2), dataArray.get(3));
@@ -89,18 +115,21 @@ public class StatisticsDAOUtility {
         // get active party ids
         // get parties for a process that have not completed yet. Therefore return only the initiatorID
         String query = "select docMetadata.initiatorID from ProcessDocumentMetadataDAO docMetadata where docMetadata.status = 'WAITINGRESPONSE'";
+
         if(startdateStr != null && endDateStr != null) {
             query = "select distinct new list(docMetadata.initiatorID, docMetadata.responderID) from ProcessDocumentMetadataDAO docMetadata where docMetadata.submissionDate ";
         }
 
         Set<String> activePartyIds = new HashSet<>();
-        List<String> results = (List<String>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+//        List<String> results = (List<String>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+        List<String> results = SpringBridge.getInstance().getBusinessProcessRepository().getEntities(query);
 
         activePartyIds.addAll(results);
 
         // get parties for a process that have completed already. Therefore return both the initiatorID and responderID
         query = "select distinct new list(docMetadata.initiatorID, docMetadata.responderID) from ProcessDocumentMetadataDAO docMetadata where docMetadata.status <> 'WAITINGRESPONSE'";
-        List<List<String>> secondResults = (List<List<String>>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+//        List<List<String>> secondResults = (List<List<String>>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
+        List<List<String>> secondResults = SpringBridge.getInstance().getBusinessProcessRepository().getEntities(query);
         for (List<String> processPartyIds : secondResults) {
             activePartyIds.add(processPartyIds.get(0));
             activePartyIds.add(processPartyIds.get(1));
@@ -115,7 +144,11 @@ public class StatisticsDAOUtility {
         JsonNode allParties = mapper.readTree(parser);
         Iterable<JsonNode> iterable = () -> allParties.elements();
         iterable.forEach(partyResult -> {
-            String partyId = partyResult.get("identifier").asText();
+            JsonNode idNode = partyResult.get("identifier");
+            if(idNode == null) {
+                return;
+            }
+            String partyId = idNode.asText();
             if(!activePartyIds.contains(partyId)) {
                 PartyType party = new PartyType();
                 party.setID(partyId);
@@ -148,13 +181,14 @@ public class StatisticsDAOUtility {
         return totalTime/numberOfNegotiations;
     }
 
-    public static double calculateAverageResponseTime(String partyID,String bearerToken) throws Exception{
+    public static double calculateAverageResponseTime(String partyID) throws Exception{
 
         int numberOfResponses = 0;
         double totalTime = 0;
 
         String query = "SELECT DISTINCT metadataDAO.processInstanceID FROM ProcessDocumentMetadataDAO metadataDAO WHERE metadataDAO.responderID = ?";
-        List<String> processInstanceIDs = (List<String>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query,partyID);
+//        List<String> processInstanceIDs = (List<String>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query,partyID);
+        List<String> processInstanceIDs = SpringBridge.getInstance().getProcessDocumentMetadataDAORepository().getProcessInstanceIds(partyID);
 
         for (String processInstanceID:processInstanceIDs){
                 List<ProcessDocumentMetadataDAO> processDocumentMetadataDAOS = DAOUtility.getProcessDocumentMetadataByProcessInstanceID(processInstanceID);

@@ -7,8 +7,8 @@ import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.impl.util.controller.HttpResponseUtil;
 import eu.nimble.service.bp.impl.util.controller.InputValidatorUtil;
 import eu.nimble.service.bp.impl.util.controller.ValidationResponse;
-import eu.nimble.service.bp.impl.util.persistence.DAOUtility;
-import eu.nimble.service.bp.impl.util.persistence.StatisticsDAOUtility;
+import eu.nimble.service.bp.impl.persistence.util.DAOUtility;
+import eu.nimble.service.bp.impl.persistence.util.StatisticsDAOUtility;
 import eu.nimble.service.bp.impl.util.serialization.Serializer;
 import eu.nimble.service.bp.swagger.model.Transaction;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
@@ -286,7 +286,7 @@ public class StatisticsController {
         logger.info("Getting average response time for the party with id: {}",partyID);
         double averageResponseTime;
         try {
-            averageResponseTime = StatisticsDAOUtility.calculateAverageResponseTime(partyID,bearerToken);
+            averageResponseTime = StatisticsDAOUtility.calculateAverageResponseTime(partyID);
         }
         catch (Exception e){
             return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting average response time for the party with id: %s", partyID), e, HttpStatus.INTERNAL_SERVER_ERROR);

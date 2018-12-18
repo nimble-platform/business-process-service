@@ -1,8 +1,10 @@
 package eu.nimble.service.bp.impl.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.nimble.service.bp.impl.persistence.bp.ProcessInstanceGroupDAORepository;
+import eu.nimble.service.bp.swagger.model.CollaborationGroup;
+import eu.nimble.service.bp.swagger.model.CollaborationGroupResponse;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroup;
-import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupResponse;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -29,6 +31,8 @@ public class Test04_ProcessInstanceGroupControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+    @Autowired
+    private ProcessInstanceGroupDAORepository piGroupRepository;
 
     private final String partyId = "706";
     public static String processInstanceGroupId1;
@@ -44,16 +48,15 @@ public class Test04_ProcessInstanceGroupControllerTest {
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         ObjectMapper objectMapper = new ObjectMapper();
-        ProcessInstanceGroupResponse processInstanceGroupResponse = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ProcessInstanceGroupResponse.class);
-        Assert.assertSame(test1_expectedValue, processInstanceGroupResponse.getSize());
-
-        for (ProcessInstanceGroup pig : processInstanceGroupResponse.getProcessInstanceGroups()) {
-            if (pig.getProcessInstanceIDs().get(0).contentEquals(Test01_StartControllerTest.processInstanceIdOrder1)) {
-                processInstanceGroupId1 = pig.getID();
-            } else if (pig.getProcessInstanceIDs().get(0).contentEquals(Test01_StartControllerTest.processInstanceIdIIR1)) {
-                processInstanceGroupIIR1 = pig.getID();
-            } else if (pig.getProcessInstanceIDs().get(0).contentEquals(Test01_StartControllerTest.processInstanceIdOrder2)) {
-                processInstanceGroupId2 = pig.getID();
+        CollaborationGroupResponse collaborationGroupResponse = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), CollaborationGroupResponse.class);
+        Assert.assertSame(test1_expectedValue, collaborationGroupResponse.getSize());
+        for (CollaborationGroup cg : collaborationGroupResponse.getCollaborationGroups()) {
+            if (cg.getAssociatedProcessInstanceGroups().get(0).getProcessInstanceIDs().get(0).contentEquals(Test01_StartControllerTest.processInstanceIdOrder1)) {
+                processInstanceGroupId1 = cg.getAssociatedProcessInstanceGroups().get(0).getID();
+            } else if (cg.getAssociatedProcessInstanceGroups().get(0).getProcessInstanceIDs().get(0).contentEquals(Test01_StartControllerTest.processInstanceIdIIR1)) {
+                processInstanceGroupIIR1 = cg.getAssociatedProcessInstanceGroups().get(0).getID();
+            } else if (cg.getAssociatedProcessInstanceGroups().get(0).getProcessInstanceIDs().get(0).contentEquals(Test01_StartControllerTest.processInstanceIdOrder2)) {
+                processInstanceGroupId2 = cg.getAssociatedProcessInstanceGroups().get(0).getID();
             }
         }
     }

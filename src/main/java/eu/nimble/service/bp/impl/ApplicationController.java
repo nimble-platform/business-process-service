@@ -1,15 +1,16 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.hyperjaxb.model.ProcessConfigurationDAO;
-import eu.nimble.service.bp.impl.util.persistence.DAOUtility;
-import eu.nimble.service.bp.impl.util.persistence.HibernateSwaggerObjectMapper;
-import eu.nimble.service.bp.impl.util.persistence.HibernateUtilityRef;
+import eu.nimble.service.bp.impl.persistence.bp.BusinessProcessRepository;
+import eu.nimble.service.bp.impl.persistence.util.DAOUtility;
+import eu.nimble.service.bp.impl.persistence.util.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.swagger.api.ApplicationApi;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -26,13 +27,17 @@ import java.util.List;
 public class ApplicationController implements ApplicationApi {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    @Autowired
+    private BusinessProcessRepository businessProcessRepository;
+
     @Override
     @ApiOperation(value = "",notes = "Add a new partner business process application preference")
     public ResponseEntity<ModelApiResponse> addProcessConfiguration(@RequestBody ProcessConfiguration body) {
         logger.info(" $$$ Adding ProcessApplicationConfigurations: ");
         logger.debug(" $$$ {}", body.toString());
         ProcessConfigurationDAO processConfigurationDAO = HibernateSwaggerObjectMapper.createProcessConfiguration_DAO(body);
-        HibernateUtilityRef.getInstance("bp-data-model").persist(processConfigurationDAO);
+//        HibernateUtilityRef.getInstance("bp-data-model").persist(processConfigurationDAO);
+        businessProcessRepository.persistEntity(processConfigurationDAO);
         return HibernateSwaggerObjectMapper.getApiResponse();
     }
 
@@ -41,7 +46,8 @@ public class ApplicationController implements ApplicationApi {
     public ResponseEntity<ModelApiResponse> deleteProcessConfiguration(@PathVariable("partnerID") String partnerID, @PathVariable("processID") String processID, @PathVariable("roleType") String roleType) {
         logger.info(" $$$ Deleting ProcessApplicationConfigurations for ... {}", partnerID);
         ProcessConfigurationDAO processConfigurationDAO = DAOUtility.getProcessConfiguration(partnerID, processID, ProcessConfiguration.RoleTypeEnum.valueOf(roleType));
-        HibernateUtilityRef.getInstance("bp-data-model").delete(ProcessConfigurationDAO.class, processConfigurationDAO.getHjid());
+//        HibernateUtilityRef.getInstance("bp-data-model").delete(ProcessConfigurationDAO.class, processConfigurationDAO.getHjid());
+        businessProcessRepository.deleteEntityByHjid(ProcessConfigurationDAO.class, processConfigurationDAO.getHjid());
         return HibernateSwaggerObjectMapper.getApiResponse();
     }
 
@@ -82,9 +88,11 @@ public class ApplicationController implements ApplicationApi {
 
         if(processApplicationConfigurationsDAO != null) {
             processApplicationConfigurationsDAONew.setHjid(processApplicationConfigurationsDAO.getHjid());
-            HibernateUtilityRef.getInstance("bp-data-model").update(processApplicationConfigurationsDAONew);
+//            HibernateUtilityRef.getInstance("bp-data-model").update(processApplicationConfigurationsDAONew);
+            businessProcessRepository.updateEntity(processApplicationConfigurationsDAONew);
         } else {
-            HibernateUtilityRef.getInstance("bp-data-model").persist(processApplicationConfigurationsDAONew);
+//            HibernateUtilityRef.getInstance("bp-data-model").persist(processApplicationConfigurationsDAONew);
+            businessProcessRepository.persistEntity(processApplicationConfigurationsDAONew);
         }
         return HibernateSwaggerObjectMapper.getApiResponse();
     }
