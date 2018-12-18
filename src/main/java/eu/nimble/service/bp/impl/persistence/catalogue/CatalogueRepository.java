@@ -17,16 +17,16 @@ import java.util.List;
  * Created by suat on 20-Nov-18.
  */
 public interface CatalogueRepository extends JpaRepository<CatalogueType, Long>, GenericJPARepository {
-    @Query(value = "SELECT party FROM PartyType party WHERE party.ID = :id")
+    @Query(value = "SELECT party FROM PartyType as party JOIN party.partyIdentification as partyIdentification WHERE partyIdentification.ID = :id")
     PartyType getPartyByID(@Param("id") String id);
 
-    @Query(value = "SELECT cl FROM CatalogueLineType cl WHERE cl.ID = :lineId AND cl.goodsItem.item.manufacturerParty.ID = :partyId")
+    @Query(value = "SELECT cl FROM CatalogueLineType cl JOIN cl.goodsItem.item.manufacturerParty.partyIdentification as partyIdentification WHERE cl.ID = :lineId AND partyIdentification.ID = :partyId")
     List<CatalogueLineType> getCatalogueLine(@Param("lineId") String lineId, @Param("partyId") String partyId);
 
-    @Query(value = "SELECT order_.ID from OrderType order_ join order_.orderLine line where line.lineItem.item.manufacturerParty.ID = :partyId AND line.lineItem.item.manufacturersItemIdentification.ID = :itemId")
+    @Query(value = "SELECT order_.ID from OrderType order_ join order_.orderLine line join line.lineItem.item.manufacturerParty.partyIdentification as partyIdentification where partyIdentification.ID = :partyId AND line.lineItem.item.manufacturersItemIdentification.ID = :itemId")
     List<String> getOrderIds(@Param("partyId") String partyId, @Param("itemId") String itemId);
 
-    @Query(value = "SELECT qpt FROM QualifyingPartyType qpt WHERE qpt.party.ID = :partyId")
+    @Query(value = "SELECT qpt FROM QualifyingPartyType qpt JOIN qpt.party.partyIdentification as partyIdentification WHERE partyIdentification.ID = :partyId")
     QualifyingPartyType getQualifyingParty(@Param("partyId") String partyId);
 
     @Query(value = "SELECT orderResponse.ID FROM OrderResponseSimpleType orderResponse WHERE orderResponse.orderReference.documentReference.ID = :documentId")
@@ -37,7 +37,7 @@ public interface CatalogueRepository extends JpaRepository<CatalogueType, Long>,
 
 
     @Query(value =
-            "SELECT completedTask FROM QualifyingPartyType qParty JOIN qParty.completedTask completedTask " +
-                    "WHERE qParty.party.ID = :partyId AND completedTask.associatedProcessInstanceID = :processInstanceId")
+            "SELECT completedTask FROM QualifyingPartyType qParty JOIN qParty.completedTask completedTask JOIN qParty.party.partyIdentification as partyIdentification " +
+                    "WHERE partyIdentification.ID = :partyId AND completedTask.associatedProcessInstanceID = :processInstanceId")
     CompletedTaskType getCompletedTaskByPartyIdAndProcessInstanceId(@Param("partyId") String partyId, @Param("processInstanceId") String processInstanceId);
 }

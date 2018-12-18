@@ -20,7 +20,7 @@ public class CatalogueDAOUtility {
 
     public static CatalogueLineType getCatalogueLine(OrderType order){
 //        String query = "SELECT cl FROM CatalogueLineType cl WHERE cl.ID = '"+order.getOrderLine().get(0).getLineItem().getLineReference().get(0).getLineID()+"' AND cl.goodsItem.item.manufacturerParty.ID = '"+order.getOrderLine().get(0).getLineItem().getItem().getManufacturerParty().getID()+"'";
-        List<CatalogueLineType> catalogueLineTypes = SpringBridge.getInstance().getCatalogueRepository().getCatalogueLine(order.getOrderLine().get(0).getLineItem().getLineReference().get(0).getLineID(), order.getOrderLine().get(0).getLineItem().getItem().getManufacturerParty().getID());
+        List<CatalogueLineType> catalogueLineTypes = SpringBridge.getInstance().getCatalogueRepository().getCatalogueLine(order.getOrderLine().get(0).getLineItem().getLineReference().get(0).getLineID(), order.getOrderLine().get(0).getLineItem().getItem().getManufacturerParty().getPartyIdentification().get(0).getID());
 //        List<CatalogueLineType> catalogueLineTypes = (List<CatalogueLineType>) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadAll(query);
         if(catalogueLineTypes.size() == 0){
             return null;
@@ -31,7 +31,7 @@ public class CatalogueDAOUtility {
     public static List<String> getOrderIds(CatalogueLineType catalogueLine){
 //        String query = "SELECT order_.ID from OrderType order_ join order_.orderLine line where line.lineItem.item.manufacturerParty.ID = '"+catalogueLine.getGoodsItem().getItem().getManufacturerParty().getID()+"' AND line.lineItem.item.manufacturersItemIdentification.ID = '"+catalogueLine.getGoodsItem().getItem().getManufacturersItemIdentification().getID()+"'";
 //        return (List<String>) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadAll(query);
-        return SpringBridge.getInstance().getCatalogueRepository().getOrderIds(catalogueLine.getGoodsItem().getItem().getManufacturerParty().getID(), catalogueLine.getGoodsItem().getItem().getManufacturersItemIdentification().getID());
+        return SpringBridge.getInstance().getCatalogueRepository().getOrderIds(catalogueLine.getGoodsItem().getItem().getManufacturerParty().getPartyIdentification().get(0).getID(), catalogueLine.getGoodsItem().getItem().getManufacturersItemIdentification().getID());
     }
 
     public static PartyType getParty(PartyType party){
@@ -40,7 +40,7 @@ public class CatalogueDAOUtility {
         }
 //        String query = "SELECT party FROM PartyType party WHERE party.ID = ? ORDER BY party.hjid ASC";
 //        List<PartyType> partyTypes = (List<PartyType>) GenericJPARepositoryImpl.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadAll(query,party.getID());
-        PartyType catalogueParty = SpringBridge.getInstance().getCatalogueRepository().getPartyByID(party.getID());
+        PartyType catalogueParty = SpringBridge.getInstance().getCatalogueRepository().getPartyByID(party.getPartyIdentification().get(0).getID());
         if(catalogueParty != null) {
             return catalogueParty;
         } else {
@@ -52,7 +52,7 @@ public class CatalogueDAOUtility {
                 party = objectMapper.readValue(object.toString(), PartyType.class);
             }
             catch (Exception e){
-                String msg = String.format("Failed to remove hjid fields from the party: %s", party.getID());
+                String msg = String.format("Failed to remove hjid fields from the party: %s", party.getPartyIdentification().get(0).getID());
                 logger.error(msg, e);
                 throw new RuntimeException(msg, e);
             }

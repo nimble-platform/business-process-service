@@ -108,8 +108,8 @@ public class ContractGenerator {
                 file.close();
 
                 // Fill placeholders
-                text = text.replace("$seller_id",order.getSellerSupplierParty().getParty().getName().getValue());
-                text = text.replace("$buyer_id",order.getBuyerCustomerParty().getParty().getName().getValue());
+                text = text.replace("$seller_id",order.getSellerSupplierParty().getParty().getPartyName().get(0).getName().getValue());
+                text = text.replace("$buyer_id",order.getBuyerCustomerParty().getParty().getPartyName().get(0).getName().getValue());
 
                 if(order.getPaymentTerms().getTradingTerms().size() > 0){
                     text = text.replace("$payment_id",getTradingTerms(order.getPaymentTerms().getTradingTerms()));
@@ -146,7 +146,7 @@ public class ContractGenerator {
                     text = text.replace("$incoterms_id",incoterms_id_default);
                 }
 
-                text = text.replace("$notices_id",constructAddress(order.getBuyerCustomerParty().getParty().getName().getValue(),order.getBuyerCustomerParty().getParty().getPostalAddress()));
+                text = text.replace("$notices_id",constructAddress(order.getBuyerCustomerParty().getParty().getPartyName().get(0).getName().getValue(),order.getBuyerCustomerParty().getParty().getPostalAddress()));
 
                 // Use default values for the rest
                 text = text.replace("$action_day",action_day_default);
@@ -182,8 +182,8 @@ public class ContractGenerator {
                 }
 
                 // Fill placeholders
-                text = text.replace("$seller_id",supplierParty.getName().getValue());
-                text = text.replace("$buyer_id",customerParty.getName().getValue());
+                text = text.replace("$seller_id",supplierParty.getPartyName().get(0).getName().getValue());
+                text = text.replace("$buyer_id",customerParty.getPartyName().get(0).getName().getValue());
 
                 if(tradingTermTypeList.size() > 0){
                     text = text.replace("$payment_id",getTradingTerms(tradingTermTypeList));
@@ -220,7 +220,7 @@ public class ContractGenerator {
                     text = text.replace("$incoterms_id",incoterms_id_default);
                 }
 
-                text = text.replace("$notices_id",constructAddress(customerParty.getName().getValue(),customerParty.getPostalAddress()));
+                text = text.replace("$notices_id",constructAddress(customerParty.getPartyName().get(0).getName().getValue(),customerParty.getPostalAddress()));
 
                 // Use default values for the rest
                 text = text.replace("$action_day",action_day_default);
@@ -280,13 +280,13 @@ public class ContractGenerator {
                                 String text = r.getText(0);
                                 if(text != null){
                                     if(text.contains("$seller_id")){
-                                        text = text.replace("$seller_id",order.getSellerSupplierParty().getParty().getName().getValue());
+                                        text = text.replace("$seller_id",order.getSellerSupplierParty().getParty().getPartyName().get(0).getName().getValue());
                                         r.setText(text,0);
                                         r.setUnderline(UnderlinePatterns.SINGLE);
                                         setColor(r,red_hex);
                                     }
                                     else if(text.contains("$buyer_id")){
-                                        text = text.replace("$buyer_id",order.getBuyerCustomerParty().getParty().getName().getValue());
+                                        text = text.replace("$buyer_id",order.getBuyerCustomerParty().getParty().getPartyName().get(0).getName().getValue());
                                         r.setText(text,0);
                                         r.setUnderline(UnderlinePatterns.SINGLE);
                                         setColor(r,red_hex);
@@ -362,7 +362,7 @@ public class ContractGenerator {
                                         }
                                     }
                                     else if(text.contains("$notices_id")){
-                                        text = text.replace("$notices_id",constructAddress(order.getBuyerCustomerParty().getParty().getName().getValue(),order.getBuyerCustomerParty().getParty().getPostalAddress()));
+                                        text = text.replace("$notices_id",constructAddress(order.getBuyerCustomerParty().getParty().getPartyName().get(0).getName().getValue(),order.getBuyerCustomerParty().getParty().getPostalAddress()));
                                         r.setText(text,0);
                                         r.setUnderline(UnderlinePatterns.SINGLE);
                                         setColor(r,red_hex);
@@ -484,7 +484,7 @@ public class ContractGenerator {
                                         r.setText(text,0);
                                     }
                                     if(text.contains("$company_id")){
-                                        text = text.replace("$company_id",order.getBuyerCustomerParty().getParty().getName().getValue());
+                                        text = text.replace("$company_id",order.getBuyerCustomerParty().getParty().getPartyName().get(0).getName().getValue());
                                         r.setText(text,0);
                                     }
                                     if(text.contains("$country_invoice_id")){
@@ -596,7 +596,7 @@ public class ContractGenerator {
                                         }
                                     }
                                     if(text.contains("$supplier_id")){
-                                        text = text.replace("$supplier_id",order.getSellerSupplierParty().getParty().getName().getValue());
+                                        text = text.replace("$supplier_id",order.getSellerSupplierParty().getParty().getPartyName().get(0).getName().getValue());
                                         r.setFontSize(14);
                                         r.setText(text,0);
                                     }

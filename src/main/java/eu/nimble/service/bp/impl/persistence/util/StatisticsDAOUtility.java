@@ -8,9 +8,7 @@ import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.impl.model.statistics.NonOrderedProducts;
 import eu.nimble.service.bp.impl.util.serialization.Serializer;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
-import eu.nimble.service.model.ubl.commonaggregatecomponents.CompletedTaskType;
-import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
-import eu.nimble.service.model.ubl.commonaggregatecomponents.QualifyingPartyType;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.commonbasiccomponents.TextType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -152,11 +150,15 @@ public class StatisticsDAOUtility {
             String partyId = idNode.asText();
             if(!activePartyIds.contains(partyId)) {
                 PartyType party = new PartyType();
-                party.setID(partyId);
+                PartyIdentificationType partyIdentificationType = new PartyIdentificationType();
+                partyIdentificationType.setID(partyId);
+                party.setPartyIdentification(Arrays.asList(partyIdentificationType));
                 TextType textType = new TextType();
                 textType.setValue(partyResult.get("name").asText());
                 textType.setLanguageID("en");
-                party.setName(textType);
+                PartyNameType partyNameType = new PartyNameType();
+                partyNameType.setName(textType);
+                party.setPartyName(Arrays.asList(partyNameType));
                 inactiveParties.add(party);
             }
         });
