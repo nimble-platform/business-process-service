@@ -23,11 +23,14 @@ import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
 import eu.nimble.service.model.ubl.transportexecutionplan.TransportExecutionPlanType;
 import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
 import eu.nimble.utility.Configuration;
+import eu.nimble.utility.persistence.GenericJPARepository;
+import eu.nimble.utility.persistence.resource.EntityIdAwareRepositoryWrapper;
 import eu.nimble.utility.persistence.resource.ResourceValidationUtil;
 import org.apache.poi.ss.formula.functions.T;
 import org.camunda.bpm.engine.ProcessEngines;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 import javax.persistence.criteria.Order;
 import javax.print.Doc;
@@ -99,7 +102,8 @@ public class DocumentDAOUtility {
 //            HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).update(document);
             // remove binary content from the document
             document = BinaryContentUtil.removeBinaryContentFromDocument(document);
-            document = SpringBridge.getInstance().getCatalogueRepository().updateEntity(document);
+            EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper((GenericJPARepository) SpringBridge.getInstance().getCatalogueRepository(), documentMetadata.getInitiatorID());
+            document = repositoryWrapper.updateEntity(document);
             // save Object
             businessProcessContext.setDocument(document);
         }
@@ -195,9 +199,6 @@ public class DocumentDAOUtility {
         Object existingDocument = getUBLDocument(documentId, documentType);
         businessProcessContext.setPreviousDocument(existingDocument);
 
-        // remove the identifiers from the resources
-        ResourceValidationUtil.removeHjidsForObject(existingDocument, Configuration.Standard.UBL.toString());
-
         // while updating the document, be sure that we update binary contents as well
         // get uris of binary contents of existing item information request
         List<String> existingUris = BinaryContentUtil.getBinaryContentUris(existingDocument);
@@ -213,11 +214,9 @@ public class DocumentDAOUtility {
         BinaryContentUtil.removeBinaryContentFromDatabase(urisToBeDeleted);
         // remove binary content from the document
         document = BinaryContentUtil.removeBinaryContentFromDocument(document);
-        document = SpringBridge.getInstance().getCatalogueRepository().updateEntity(document);
+        EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper((GenericJPARepository) SpringBridge.getInstance().getCatalogueRepository(), partyId);
+        document = repositoryWrapper.updateEntity(document);
         businessProcessContext.setDocument(document);
-
-        // insert identifiers for the new object
-        ResourceValidationUtil.insertHjidsForObject(document, partyId, Configuration.Standard.UBL.toString());
     }
 
     public static ProcessDocumentMetadata getDocumentMetadata(String documentID) {
@@ -238,49 +237,10 @@ public class DocumentDAOUtility {
             } catch (IOException e) {
                 logger.error("Failed to delete binary contents of the document with id:{} ", documentID, e);
             }
-            switch (processDocumentMetadataDAO.getType()) {
-                case ORDER:
-//                    HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(OrderType.class, ((OrderType) document).getHjid());
-                    SpringBridge.getInstance().getCatalogueRepository().deleteEntityByHjid(OrderType.class, ((OrderType) document).getHjid());
-                    break;
-                case INVOICE:
-                    break;
-                case CATALOGUE:
-//                    HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(CatalogueType.class, ((CatalogueType) document).getHjid());
-                    SpringBridge.getInstance().getCatalogueRepository().deleteEntityByHjid(CatalogueType.class, ((CatalogueType) document).getHjid());
-                    break;
-                case QUOTATION:
-//                    HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(QuotationType.class, ((QuotationType) document).getHjid());
-                    SpringBridge.getInstance().getCatalogueRepository().deleteEntityByHjid(QuotationType.class, ((QuotationType) document).getHjid());
-                    break;
-                case ORDERRESPONSESIMPLE:
-//                    HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(OrderResponseSimpleType.class, ((OrderResponseSimpleType) document).getHjid());
-                    SpringBridge.getInstance().getCatalogueRepository().deleteEntityByHjid(OrderResponseSimpleType.class, ((OrderResponseSimpleType) document).getHjid());
-                    break;
-                case RECEIPTADVICE:
-//                    HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(ReceiptAdviceType.class, ((ReceiptAdviceType) document).getHjid());
-                    SpringBridge.getInstance().getCatalogueRepository().deleteEntityByHjid(ReceiptAdviceType.class, ((ReceiptAdviceType) document).getHjid());
-                    break;
-                case DESPATCHADVICE:
-//                    HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(DespatchAdviceType.class, ((DespatchAdviceType) document).getHjid());
-                    SpringBridge.getInstance().getCatalogueRepository().deleteEntityByHjid(DespatchAdviceType.class, ((DespatchAdviceType) document).getHjid());
-                    break;
-                case REMITTANCEADVICE:
-                    break;
-                case APPLICATIONRESPONSE:
-                    break;
-                case REQUESTFORQUOTATION:
-//                    HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(RequestForQuotationType.class, ((RequestForQuotationType) document).getHjid());
-                    SpringBridge.getInstance().getCatalogueRepository().deleteEntityByHjid(RequestForQuotationType.class, ((RequestForQuotationType) document).getHjid());
-                    break;
-                case TRANSPORTATIONSTATUS:
-                    break;
-                default:
-                    break;
-            }
-        }
 
-        ResourceValidationUtil.removeHjidsForObject(document, Configuration.Standard.UBL.toString());
+            EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper((JpaRepository) SpringBridge.getInstance().getCatalogueRepository(), processDocumentMetadataDAO.getInitiatorID());
+            repositoryWrapper.delete(documentID);
+        }
 
 //        HibernateUtilityRef.getInstance("bp-data-model").delete(ProcessDocumentMetadataDAO.class, processDocumentMetadataDAO.getHjid());
         SpringBridge.getInstance().getBusinessProcessRepository().deleteEntityByHjid(ProcessDocumentMetadataDAO.class, processDocumentMetadataDAO.getHjid());

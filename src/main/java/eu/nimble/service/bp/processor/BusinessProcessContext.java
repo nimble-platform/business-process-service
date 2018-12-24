@@ -3,6 +3,8 @@ package eu.nimble.service.bp.processor;
 import eu.nimble.service.bp.hyperjaxb.model.*;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.utility.Configuration;
+import eu.nimble.utility.persistence.GenericJPARepository;
+import eu.nimble.utility.persistence.resource.EntityIdAwareRepositoryWrapper;
 import eu.nimble.utility.persistence.resource.ResourceValidationUtil;
 
 public class BusinessProcessContext {
@@ -38,8 +40,8 @@ public class BusinessProcessContext {
             SpringBridge.getInstance().getBusinessProcessRepository().deleteEntity(metadataDAO);
         }
         if (document != null) {
-//            HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).delete(document);
-            SpringBridge.getInstance().getCatalogueRepository().deleteEntity(document);
+            EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper((GenericJPARepository) SpringBridge.getInstance().getCatalogueRepository(), metadataDAO.getInitiatorID());
+            repositoryWrapper.deleteEntity(document);
             ResourceValidationUtil.removeHjidsForObject(document, Configuration.Standard.UBL.toString());
         }
         if (previousDocument != null){
