@@ -30,9 +30,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("local_dev")
-@FixMethodOrder
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringJUnit4ClassRunner.class)
-@Ignore
 public class Test12_DocumentControllerTest2 {
     @Autowired
     private MockMvc mockMvc;
@@ -87,31 +86,5 @@ public class Test12_DocumentControllerTest2 {
         });
 
         Assert.assertSame(numberOfDocuments3, response.size());
-    }
-
-    @Test
-    public void test4_updateDocumentMetadata() throws Exception {
-        // get document
-        MockHttpServletRequestBuilder request = get("/document/" + partnerID + "/" + type);
-
-        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
-
-        List<ProcessDocumentMetadata> response = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), new TypeReference<List<ProcessDocumentMetadata>>() {
-        });
-
-        ProcessDocumentMetadata processDocumentMetadata = response.get(0);
-        processDocumentMetadata.setRelatedProducts(listOfProducts);
-
-        documentId = response.get(0).getDocumentID();
-
-        // update the document
-        request = put("/document")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(processDocumentMetadata));
-        mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
-        ModelApiResponse response1 = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ModelApiResponse.class);
-
-        Assert.assertEquals(expectedType, response1.getType());
-
     }
 }

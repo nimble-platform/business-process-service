@@ -101,35 +101,33 @@ public class DocumentController implements DocumentApi {
     @Override
     @ApiOperation(value = "",notes = "Add a business process document metadata")
     public ResponseEntity<ModelApiResponse> addDocumentMetadata(@RequestBody ProcessDocumentMetadata body) {
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(null);
-//        BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
-//        try{
-//            DocumentDAOUtility.addDocumentWithMetadata(businessProcessContext.getId(),body, null);
-//        }
-//        catch (Exception e){
-//            businessProcessContext.handleExceptions();
-//        }
-//        finally {
-//            BusinessProcessContextHandler.getBusinessProcessContextHandler().deleteBusinessProcessContext(businessProcessContext.getId());
-//        }
-//        return HibernateSwaggerObjectMapper.getApiResponse();
+        BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
+        try{
+            DocumentDAOUtility.addDocumentWithMetadata(businessProcessContext.getId(),body, null);
+        }
+        catch (Exception e){
+            businessProcessContext.handleExceptions();
+        }
+        finally {
+            BusinessProcessContextHandler.getBusinessProcessContextHandler().deleteBusinessProcessContext(businessProcessContext.getId());
+        }
+        return HibernateSwaggerObjectMapper.getApiResponse();
     }
 
     @Override
     @ApiOperation(value = "",notes = "Update a business process document metadata")
     public ResponseEntity<ModelApiResponse> updateDocumentMetadata(@RequestBody ProcessDocumentMetadata body) {
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(null);
-//        BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
-//        try{
-//            DocumentDAOUtility.updateDocumentMetadata(businessProcessContext.getId(),body);
-//        }
-//        catch (Exception e){
-//            businessProcessContext.handleExceptions();
-//        }
-//        finally {
-//            BusinessProcessContextHandler.getBusinessProcessContextHandler().deleteBusinessProcessContext(businessProcessContext.getId());
-//        }
-//        return HibernateSwaggerObjectMapper.getApiResponse();
+        BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
+        try{
+            DocumentDAOUtility.updateDocumentMetadata(businessProcessContext.getId(),body);
+        }
+        catch (Exception e){
+            businessProcessContext.handleExceptions();
+        }
+        finally {
+            BusinessProcessContextHandler.getBusinessProcessContextHandler().deleteBusinessProcessContext(businessProcessContext.getId());
+        }
+        return HibernateSwaggerObjectMapper.getApiResponse();
     }
 
     @Override

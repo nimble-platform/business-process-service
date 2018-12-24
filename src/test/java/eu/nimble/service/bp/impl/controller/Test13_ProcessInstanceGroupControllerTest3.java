@@ -11,6 +11,7 @@ import org.junit.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -31,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("local_dev")
-@FixMethodOrder
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringJUnit4ClassRunner.class)
 public class Test13_ProcessInstanceGroupControllerTest3 {
 
@@ -66,19 +67,5 @@ public class Test13_ProcessInstanceGroupControllerTest3 {
         ProcessInstanceGroup processInstanceGroup = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ProcessInstanceGroup.class);
 
         Assert.assertEquals(test2_expectedValue, processInstanceGroup.getArchived());
-    }
-
-    @Test
-    public void test3_saveProcessInstanceGroup() throws Exception {
-        String processInstanceGroup = IOUtils.toString(ProcessInstanceGroup.class.getResourceAsStream(processInstanceGroupJSON));
-
-        MockHttpServletRequestBuilder request = post("/group")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(processInstanceGroup);
-        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
-
-        String body = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), String.class);
-
-        Assert.assertEquals(test3_expectedValue, body);
     }
 }

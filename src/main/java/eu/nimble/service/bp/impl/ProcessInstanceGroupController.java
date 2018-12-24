@@ -271,19 +271,6 @@ public class ProcessInstanceGroupController implements GroupApi {
     }
 
     @Override
-    @ApiOperation(value = "",notes = "Save a process group along with the initial process instance")
-    public ResponseEntity<Void> saveProcessInstanceGroup(@ApiParam(value = "The content of the process instance group to be saved", required = true) @RequestBody ProcessInstanceGroup processInstanceGroup) {
-        logger.debug("Saving ProcessInstanceGroup {}", processInstanceGroup.toString());
-        ProcessInstanceGroupDAO processInstanceGroupDAO = HibernateSwaggerObjectMapper.createProcessInstanceGroup_DAO(processInstanceGroup);
-//        HibernateUtilityRef.getInstance("bp-data-model").persist(processInstanceGroupDAO);
-        processInstanceGroupDAORepository.save(processInstanceGroupDAO);
-
-        ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body("true");
-        logger.debug("Saved ProcessInstanceGroup {}", processInstanceGroup.toString());
-        return response;
-    }
-
-    @Override
     @ApiOperation(value = "",notes = "Archive all the groups of the given party")
     public ResponseEntity<Void> archiveAllGroups(@ApiParam(value = "Identifier of the party of which groups will be archived", required = true) @RequestParam(value = "partyID", required = true) String partyID) {
         logger.debug("Archiving ProcessInstanceGroups for party {}", partyID);

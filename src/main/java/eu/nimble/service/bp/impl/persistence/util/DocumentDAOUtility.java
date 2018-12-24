@@ -239,7 +239,7 @@ public class DocumentDAOUtility {
             }
 
             EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper((JpaRepository) SpringBridge.getInstance().getCatalogueRepository(), processDocumentMetadataDAO.getInitiatorID());
-            repositoryWrapper.delete(documentID);
+            repositoryWrapper.delete(document);
         }
 
 //        HibernateUtilityRef.getInstance("bp-data-model").delete(ProcessDocumentMetadataDAO.class, processDocumentMetadataDAO.getHjid());

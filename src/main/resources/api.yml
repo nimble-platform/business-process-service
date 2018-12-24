@@ -562,23 +562,6 @@ paths:
           description: Retrieved the groups successfully
           schema:
             $ref: '#/definitions/CollaborationGroupResponse'
-    post:
-      operationId: saveProcessInstanceGroup
-      consumes:
-      - application/json
-      produces:
-      - application/json
-      parameters:
-      - in: body
-        name: processInstanceGroup
-        description: The content of the process instance group to be saved
-        required: true
-        schema:
-          $ref: '#/definitions/ProcessInstanceGroup'
-      responses:
-        # Response code
-        201:
-          description: Saved the group successfully
 
   /group/order-process:
     get:
