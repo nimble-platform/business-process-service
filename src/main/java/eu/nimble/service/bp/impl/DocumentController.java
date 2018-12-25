@@ -3,15 +3,14 @@ package eu.nimble.service.bp.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.impl.persistence.util.DAOUtility;
-import eu.nimble.service.bp.impl.persistence.util.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.impl.persistence.util.DocumentDAOUtility;
-import eu.nimble.service.bp.impl.util.controller.HttpResponseUtil;
+import eu.nimble.service.bp.impl.persistence.util.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.impl.util.serialization.Serializer;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.api.DocumentApi;
-import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
+import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.order.ObjectFactory;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
@@ -19,10 +18,8 @@ import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
 import eu.nimble.utility.JAXBUtility;
 import io.swagger.annotations.ApiOperation;
-import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.logging.LogLevel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -34,7 +31,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import java.util.ArrayList;
 import java.util.List;
 
-import static eu.nimble.service.bp.impl.util.controller.HttpResponseUtil.*;
+import static eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog;
 
 /**
  * Created by yildiray on 5/25/2017.

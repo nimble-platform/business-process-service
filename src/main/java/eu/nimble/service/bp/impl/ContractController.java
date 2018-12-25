@@ -10,12 +10,12 @@ import eu.nimble.service.bp.impl.persistence.catalogue.CatalogueRepository;
 import eu.nimble.service.bp.impl.persistence.util.ContractDAOUtility;
 import eu.nimble.service.bp.impl.persistence.util.DAOUtility;
 import eu.nimble.service.bp.impl.persistence.util.DocumentDAOUtility;
-import eu.nimble.service.bp.impl.util.controller.HttpResponseUtil;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
 import eu.nimble.utility.Configuration;
+import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.resource.EntityIdAwareRepositoryWrapper;
 import eu.nimble.utility.persistence.resource.ResourceValidationUtil;
@@ -35,7 +35,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
-import static eu.nimble.service.bp.impl.util.controller.HttpResponseUtil.createResponseEntityAndLog;
+import static eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog;
 
 /**
  * Created by suat on 25-Apr-18.
