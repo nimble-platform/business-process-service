@@ -50,11 +50,11 @@ public class TrustServiceController {
     @RequestMapping(value = "/ratingsAndReviews",
             produces = {"application/json"},
             method = RequestMethod.POST)
-    public ResponseEntity createRatingAndReview(@ApiParam(value = "JSON string representing an array of EvidenceSupplied instances.") @RequestParam(value = "ratings", required = false) String ratingsString,
-                                                @ApiParam(value = "JSON string representing an array of Comment instances.") @RequestParam(value = "reviews", required = false) String reviewsString,
+    public ResponseEntity createRatingAndReview(@ApiParam(value = "JSON string representing an array of EvidenceSupplied instances.\nExample:[{\"id\":\"QualityOfTheNegotiationProcess\",\"valueDecimal\":5},{\"id\":\"QualityOfTheOrderingProcess\",\"valueDecimal\":3},{\"id\":\"ResponseTime\",\"valueDecimal\":4},{\"id\":\"ProductListingAccuracy\",\"valueDecimal\":2},{\"id\":\"ConformanceToOtherAgreedTerms\",\"valueDecimal\":5},{\"id\":\"DeliveryAndPackaging\",\"valueDecimal\":3}]") @RequestParam(value = "ratings", required = false) String ratingsString,
+                                                @ApiParam(value = "JSON string representing an array of Comment instances.\nExample:[{\"comment\":\"Awesome trading partner\",\"typeCode\":{\"value\":\"\",\"name\":\"\",\"uri\":\"\",\"listID\":\"\",\"listURI\":\"\"}},{\"comment\":\"Perfect collaboration\",\"typeCode\":{\"value\":\"\",\"name\":\"\",\"uri\":\"\",\"listID\":\"\",\"listURI\":\"\"}}]") @RequestParam(value = "reviews", required = false) String reviewsString,
                                                 @ApiParam(value = "Identifier of the party for which a rating and reviews will be created") @RequestParam(value = "partyID") String partyID,
-                                                @ApiParam(value = "Identifier of the process instance associated with the ratings and reviews") @RequestParam(value = "processInstanceID") String processInstanceID,
-                                                @ApiParam(value = "", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
+                                                @ApiParam(value = "Identifier of the process instance associated with the ratings and reviews.Usually,it is the identifier of the last process instance which concludes the collaboration") @RequestParam(value = "processInstanceID") String processInstanceID,
+                                                @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
         try {
             logger.info("Creating rating and reviews for the party with id: {} and process instance with id: {}", partyID, processInstanceID);
             /**
@@ -127,8 +127,8 @@ public class TrustServiceController {
     @RequestMapping(value = "/ratingsSummary",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity getRatingsSummary(@RequestParam(value = "partyID") String partyID,
-                                            @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
+    public ResponseEntity getRatingsSummary(@ApiParam(value = "Identifier of the party whose ratings will be received") @RequestParam(value = "partyID") String partyID,
+                                            @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         logger.info("Getting ratings summary for the party with id: {}",partyID);
         QualifyingPartyType qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID,bearerToken);
         JSONObject jsonResponse = createJSONResponse(qualifyingParty.getCompletedTask());
@@ -143,8 +143,8 @@ public class TrustServiceController {
     @RequestMapping(value = "/ratingsAndReviews",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity listAllIndividualRatingsAndReviews(@RequestParam(value = "partyID") String partyID,
-                                                             @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
+    public ResponseEntity listAllIndividualRatingsAndReviews(@ApiParam(value = "Identifier of the party whose individual ratings and reviews will be received") @RequestParam(value = "partyID") String partyID,
+                                                             @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         try {
             logger.info("Getting all individual ratings and review for the party with id: {}",partyID);
             QualifyingPartyType qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID,bearerToken);

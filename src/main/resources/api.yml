@@ -500,7 +500,7 @@ paths:
 
   /group:
     get:
-      operationId: getProcessInstanceGroups
+      operationId: getCollaborationGroups
       parameters:
       - in: query
         name: partyID

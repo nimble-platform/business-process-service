@@ -72,7 +72,7 @@ public class EPCController {
             produces = {"application/json"},
             method = RequestMethod.GET)
     public ResponseEntity getTTDetails(@ApiParam(value = "The electronic product code for which the track & tracing details are requested") @RequestParam(value = "epc", required = true) String epc,
-                                       @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
+                                       @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         logger.info("Getting track & tracing details for epc: {}", epc);
 
         try {
@@ -159,8 +159,8 @@ public class EPCController {
     @RequestMapping(value = "/t-t/epc-codes",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity getEPCCodesBelongsToProduct(@ApiParam(value = "The published product ID") @RequestParam(value = "productId", required = true) Long publishedProductID,
-                                                      @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
+    public ResponseEntity getEPCCodesBelongsToProduct(@ApiParam(value = "The identifier of the published product") @RequestParam(value = "productId", required = true) Long publishedProductID,
+                                                      @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         logger.info("Getting epc codes for productId: {}", publishedProductID);
         try {
             CatalogueLineType catalogueLine = catalogueRepository.getSingleEntityByHjid(CatalogueLineType.class, publishedProductID);

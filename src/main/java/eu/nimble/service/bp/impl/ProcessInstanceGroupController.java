@@ -51,7 +51,7 @@ public class ProcessInstanceGroupController implements GroupApi {
 
     @Override
     @ApiOperation(value = "", notes = "Delete the process instance group along with the included process instances")
-    public ResponseEntity<Void> deleteProcessInstanceGroup(@ApiParam(value = "", required = true) @PathVariable("ID") String ID) {
+    public ResponseEntity<Void> deleteProcessInstanceGroup(@ApiParam(value = "Identifier of the process instance group to be deleted", required = true) @PathVariable("ID") String ID) {
         logger.debug("Deleting ProcessInstanceGroup ID: {}", ID);
 
         ProcessInstanceGroupDAOUtility.deleteProcessInstanceGroupDAOByID(ID);
@@ -62,7 +62,7 @@ public class ProcessInstanceGroupController implements GroupApi {
     }
 
     @Override
-    public ResponseEntity<Void> deleteCollaborationGroup(@ApiParam(value = "", required = true) @PathVariable("ID") String ID) {
+    public ResponseEntity<Void> deleteCollaborationGroup(@ApiParam(value = "Identifier of the collaboration group to be deleted", required = true) @PathVariable("ID") String ID) {
         logger.debug("Deleting CollaborationGroup ID: {}", ID);
 
         ProcessInstanceGroupDAOUtility.deleteCollaborationGroupDAOByID(Long.parseLong(ID));
@@ -74,7 +74,7 @@ public class ProcessInstanceGroupController implements GroupApi {
 
     @Override
     @ApiOperation(value = "", notes = "Retrieve the process instance group specified with the ID")
-    public ResponseEntity<ProcessInstanceGroup> getProcessInstanceGroup(@ApiParam(value = "", required = true) @PathVariable("ID") String ID) {
+    public ResponseEntity<ProcessInstanceGroup> getProcessInstanceGroup(@ApiParam(value = "Identifier of the process instance group to be received", required = true) @PathVariable("ID") String ID) {
         logger.debug("Getting ProcessInstanceGroup: {}", ID);
 
         ProcessInstanceGroupDAO processInstanceGroupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(ID);
@@ -86,7 +86,7 @@ public class ProcessInstanceGroupController implements GroupApi {
     }
 
     @Override
-    public ResponseEntity<CollaborationGroup> getCollaborationGroup(@ApiParam(value = "", required = true) @PathVariable("ID") String ID) {
+    public ResponseEntity<CollaborationGroup> getCollaborationGroup(@ApiParam(value = "Identifier of the collaboration group to be received", required = true) @PathVariable("ID") String ID) {
         logger.debug("Getting CollaborationGroup: {}", ID);
 
         CollaborationGroupDAO collaborationGroupDAO = collaborationGroupDAORepository.getOne(Long.parseLong(ID));
@@ -102,15 +102,15 @@ public class ProcessInstanceGroupController implements GroupApi {
 
     @Override
     @ApiOperation(value = "", notes = "Retrieve process instance groups for the specified party. If no partyID is specified, then all groups are returned")
-    public ResponseEntity<CollaborationGroupResponse> getProcessInstanceGroups(@ApiParam(value = "Identifier of the party") @RequestParam(value = "partyID", required = false) String partyID,
+    public ResponseEntity<CollaborationGroupResponse> getCollaborationGroups(@ApiParam(value = "Identifier of the party as specified by the identity service") @RequestParam(value = "partyID", required = false) String partyID,
                                                                                @ApiParam(value = "Related products") @RequestParam(value = "relatedProducts", required = false) List<String> relatedProducts,
                                                                                @ApiParam(value = "Related product categories") @RequestParam(value = "relatedProductCategories", required = false) List<String> relatedProductCategories,
                                                                                @ApiParam(value = "Identifier of the corresponsing trading partner ID") @RequestParam(value = "tradingPartnerIDs", required = false) List<String> tradingPartnerIDs,
                                                                                @ApiParam(value = "Offset of the first result among the complete result set satisfying the given criteria", defaultValue = "0") @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset,
                                                                                @ApiParam(value = "Number of results to be included in the result set", defaultValue = "10") @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit,
                                                                                @ApiParam(value = "", defaultValue = "false") @RequestParam(value = "archived", required = false, defaultValue = "false") Boolean archived,
-                                                                               @ApiParam(value = "status") @RequestParam(value = "status", required = false) List<String> status,
-                                                                               @ApiParam(value = "") @RequestParam(value = "collaborationRole", required = false) String collaborationRole) {
+                                                                               @ApiParam(value = "Status of the process instance included in the group\nPossible values:STARTED,WAITING,CANCELLED,COMPLETED") @RequestParam(value = "status", required = false) List<String> status,
+                                                                               @ApiParam(value = "Role of the party in the collaboration.\nPossible values:SELLER,BUYER") @RequestParam(value = "collaborationRole", required = false) String collaborationRole) {
         logger.debug("Getting collaboration groups for party: {}", partyID);
 
         List<CollaborationGroupDAO> results = ProcessInstanceGroupDAOUtility.getCollaborationGroupDAOs(partyID, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, status, null, null, limit, offset);
@@ -133,14 +133,14 @@ public class ProcessInstanceGroupController implements GroupApi {
     @Override
     @ApiOperation(value = "", notes = "Generate detailed filtering criteria for the current query parameters in place")
     public ResponseEntity<ProcessInstanceGroupFilter> getProcessInstanceGroupFilters(
-            @ApiParam(value = "", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
-            @ApiParam(value = "Identifier of the party") @RequestParam(value = "partyID", required = false) String partyID,
+            @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
+            @ApiParam(value = "Identifier of the party as specified by the identity service") @RequestParam(value = "partyID", required = false) String partyID,
             @ApiParam(value = "Related products") @RequestParam(value = "relatedProducts", required = false) List<String> relatedProducts,
             @ApiParam(value = "Related product categories") @RequestParam(value = "relatedProductCategories", required = false) List<String> relatedProductCategories,
             @ApiParam(value = "Identifier of the corresponding trading partner ID") @RequestParam(value = "tradingPartnerIDs", required = false) List<String> tradingPartnerIDs,
-            @ApiParam(value = "", defaultValue = "false") @RequestParam(value = "archived", required = false, defaultValue = "false") Boolean archived,
-            @ApiParam(value = "") @RequestParam(value = "collaborationRole", required = false) String collaborationRole,
-            @ApiParam(value = "Status") @RequestParam(value = "status", required = false) List<String> status) {
+            @ApiParam(value = "Whether the collaboration group is archived or not", defaultValue = "false") @RequestParam(value = "archived", required = false, defaultValue = "false") Boolean archived,
+            @ApiParam(value = "Role of the party in the collaboration.\nPossible values:SELLER,BUYER") @RequestParam(value = "collaborationRole", required = false) String collaborationRole,
+            @ApiParam(value = "Status of the process instance included in the group\nPossible values:STARTED,WAITING,CANCELLED,COMPLETED") @RequestParam(value = "status", required = false) List<String> status) {
 
         ProcessInstanceGroupFilter filters = groupDaoUtility.getFilterDetails(partyID, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, status, null, null, bearerToken);
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(filters);
@@ -160,7 +160,7 @@ public class ProcessInstanceGroupController implements GroupApi {
 
         CollaborationGroup collaborationGroup = HibernateSwaggerObjectMapper.convertCollaborationGroupDAO(collaborationGroupDAO);
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(collaborationGroup);
-        logger.debug("Archived ProcessInstanceGroup: {}", ID);
+        logger.debug("Archived CollaborationGroup: {}", ID);
         return response;
     }
 
@@ -172,7 +172,7 @@ public class ProcessInstanceGroupController implements GroupApi {
 
         CollaborationGroup collaborationGroup = HibernateSwaggerObjectMapper.convertCollaborationGroupDAO(collaborationGroupDAO);
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(collaborationGroup);
-        logger.debug("Restored ProcessInstanceGroup: {}", ID);
+        logger.debug("Restored CollaborationGroup: {}", ID);
         return response;
     }
 
@@ -184,7 +184,7 @@ public class ProcessInstanceGroupController implements GroupApi {
             @ApiResponse(code = 404, message = "No order exists")
     })
     public ResponseEntity<Void> getOrderProcess(@ApiParam(value = "Identifier of a process instance included in the group", required = true) @RequestParam(value = "processInstanceId", required = true) String processInstanceId,
-                                                @ApiParam(value = "", required = true) @RequestHeader(value = "Authorization", required = true) String authorization) {
+                                                @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String authorization) {
         try {
             // check whether the process instance id exists
             ProcessInstanceDAO pi = DAOUtility.getProcessInstanceDAOByID(processInstanceId);
@@ -211,8 +211,8 @@ public class ProcessInstanceGroupController implements GroupApi {
     }
 
     @Override
-    public ResponseEntity<Void> updateCollaborationGroupName(@ApiParam(value = "", required = true) @PathVariable("ID") String ID,
-                                                             @ApiParam(value = "", required = true) @RequestParam(value = "groupName", required = true) String groupName) {
+    public ResponseEntity<Void> updateCollaborationGroupName(@ApiParam(value = "Identifier of the collaboration group", required = true) @PathVariable("ID") String ID,
+                                                             @ApiParam(value = "Value to be set as name of the collaboration group", required = true) @RequestParam(value = "groupName", required = true) String groupName) {
         logger.debug("Updating name of the collaboration group :" + ID);
         CollaborationGroupDAO collaborationGroupDAO = collaborationGroupDAORepository.getOne(Long.parseLong(ID));
         if (collaborationGroupDAO == null) {
@@ -237,7 +237,7 @@ public class ProcessInstanceGroupController implements GroupApi {
     @RequestMapping(value = "/group/{ID}/cancel",
             method = RequestMethod.POST)
     public ResponseEntity cancelCollaboration(@ApiParam(value = "Identifier of the process instance group to be cancelled") @PathVariable(value = "ID", required = true) String ID,
-                                              @ApiParam(value = "", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
+                                              @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
         try {
             logger.debug("Cancelling the collaboration for the group id: {}", ID);
             ProcessInstanceGroupDAO groupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(ID);

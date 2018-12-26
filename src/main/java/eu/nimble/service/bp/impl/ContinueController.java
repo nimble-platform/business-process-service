@@ -41,7 +41,7 @@ public class ContinueController implements ContinueApi {
     @ApiOperation(value = "",notes = "Send input to a waiting process instance (because of a human task)")
     public ResponseEntity<ProcessInstance> continueProcessInstance(@ApiParam(value = "", required = true) @RequestBody ProcessInstanceInputMessage body,
                                                                    @ApiParam(value = "The id of the process instance group owned by the party continuing the process") @RequestParam(value = "gid", required = false) String gid,
-                                                                   @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
+                                                                   @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
                                                                    @ApiParam(value = "The id of the collaboration group which the process instance group belongs to") @RequestParam(value = "collaborationGID", required = false) String collaborationGID) {
         logger.debug(" $$$ Continue Process with ProcessInstanceInputMessage {}", body.toString());
         ProcessInstance processInstance = null;

@@ -18,6 +18,7 @@ import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
 import eu.nimble.utility.JAXBUtility;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -44,7 +45,7 @@ public class DocumentController implements DocumentApi {
     @RequestMapping(value = "/document/json/{documentID}",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity<Object> getDocumentJsonContent(@PathVariable("documentID") String documentID) {
+    public ResponseEntity<Object> getDocumentJsonContent(@ApiParam(value = "The identifier of the document to be received") @PathVariable("documentID") String documentID) {
         try {
             logger.info("Getting content of document: {}", documentID);
             Object document = DocumentDAOUtility.getUBLDocument(documentID);
@@ -69,7 +70,7 @@ public class DocumentController implements DocumentApi {
     @RequestMapping(value = "/document/xml/{documentID}",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    ResponseEntity<String> getDocumentXMLContent(@PathVariable("documentID") String documentID) {
+    ResponseEntity<String> getDocumentXMLContent(@ApiParam(value = "The identifier of the document to be received") @PathVariable("documentID") String documentID) {
         Object document = DocumentDAOUtility.getUBLDocument(documentID);
 
         String documentContentXML = null;
