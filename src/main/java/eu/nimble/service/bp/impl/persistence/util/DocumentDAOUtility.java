@@ -22,20 +22,13 @@ import eu.nimble.service.model.ubl.receiptadvice.ReceiptAdviceType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
 import eu.nimble.service.model.ubl.transportexecutionplan.TransportExecutionPlanType;
 import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
-import eu.nimble.utility.Configuration;
-import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.resource.EntityIdAwareRepositoryWrapper;
-import eu.nimble.utility.persistence.resource.ResourceValidationUtil;
-import org.apache.poi.ss.formula.functions.T;
 import org.camunda.bpm.engine.ProcessEngines;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import javax.persistence.criteria.Order;
-import javax.print.Doc;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -99,10 +92,8 @@ public class DocumentDAOUtility {
         businessProcessContext.setMetadataDAO(processDocumentDAO);
 
         if (document != null) {
-//            HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).update(document);
             // remove binary content from the document
-            document = BinaryContentUtil.removeBinaryContentFromDocument(document);
-            EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper((GenericJPARepository) SpringBridge.getInstance().getCatalogueRepository(), documentMetadata.getInitiatorID());
+            EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(documentMetadata.getInitiatorID());
             document = repositoryWrapper.updateEntity(document);
             // save Object
             businessProcessContext.setDocument(document);
@@ -198,23 +189,7 @@ public class DocumentDAOUtility {
 
         Object existingDocument = getUBLDocument(documentId, documentType);
         businessProcessContext.setPreviousDocument(existingDocument);
-
-        // while updating the document, be sure that we update binary contents as well
-        // get uris of binary contents of existing item information request
-        List<String> existingUris = BinaryContentUtil.getBinaryContentUris(existingDocument);
-        // get uris of binary contents of updated item information request
-        List<String> uris = BinaryContentUtil.getBinaryContentUris(document);
-        // delete binary contents which do not exist in the updated one
-        List<String> urisToBeDeleted = new ArrayList<>();
-        for (String uri : existingUris) {
-            if (!uris.contains(uri)) {
-                urisToBeDeleted.add(uri);
-            }
-        }
-        BinaryContentUtil.removeBinaryContentFromDatabase(urisToBeDeleted);
-        // remove binary content from the document
-        document = BinaryContentUtil.removeBinaryContentFromDocument(document);
-        EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper((GenericJPARepository) SpringBridge.getInstance().getCatalogueRepository(), partyId);
+        EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(partyId);
         document = repositoryWrapper.updateEntity(document);
         businessProcessContext.setDocument(document);
     }
@@ -231,13 +206,6 @@ public class DocumentDAOUtility {
         Object document = getUBLDocument(documentID, processDocumentMetadataDAO.getType());
 
         if (document != null) {
-            // delete binary contents of the document from the database
-            try {
-                BinaryContentUtil.removeBinaryContentFromDatabase(document);
-            } catch (IOException e) {
-                logger.error("Failed to delete binary contents of the document with id:{} ", documentID, e);
-            }
-
             EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper((JpaRepository) SpringBridge.getInstance().getCatalogueRepository(), processDocumentMetadataDAO.getInitiatorID());
             repositoryWrapper.delete(document);
         }

@@ -135,7 +135,7 @@ public class ContractController {
 
             // update clause
             try {
-                EntityIdAwareRepositoryWrapper<ClauseType> repositoryWrapper = new EntityIdAwareRepositoryWrapper((GenericJPARepository) catalogueRepository, party.getID());
+                EntityIdAwareRepositoryWrapper<ClauseType> repositoryWrapper = new EntityIdAwareRepositoryWrapper(party.getID());
                 clauseObject = repositoryWrapper.updateEntity(clauseObject);
             } catch (Exception e) {
                 return createResponseEntityAndLog("Failed to update the clause: " + clauseId, e, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -238,7 +238,7 @@ public class ContractController {
 
             // delete the clause
             try {
-                EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper((GenericJPARepository) catalogueRepository, party.getID());
+                EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(party.getID());
                 repositoryWrapper.deleteEntity(clause);
             } catch (Exception e) {
                 return createResponseEntityAndLog("Failed to delete clause: " + clauseId + " from contract: " + contractId, e, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -352,7 +352,7 @@ public class ContractController {
 
             // persist the update
             try {
-                EntityIdAwareRepositoryWrapper<ClauseType> repositoryWrapper = new EntityIdAwareRepositoryWrapper((GenericJPARepository) catalogueRepository, party.getID());
+                EntityIdAwareRepositoryWrapper<ClauseType> repositoryWrapper = new EntityIdAwareRepositoryWrapper(party.getID());
                 document = repositoryWrapper.updateEntity(document);
             } catch (Exception e) {
                 return createResponseEntityAndLog(String.format("Failed to add document clause to contract. Bounded-document id: %s , clause type: %s , clause document id: %s", documentId, clauseType, clauseDocumentId), e, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -399,7 +399,7 @@ public class ContractController {
 
             // persist the update
             try {
-                EntityIdAwareRepositoryWrapper<ClauseType> repositoryWrapper = new EntityIdAwareRepositoryWrapper((GenericJPARepository) catalogueRepository, party.getID());
+                EntityIdAwareRepositoryWrapper<ClauseType> repositoryWrapper = new EntityIdAwareRepositoryWrapper(party.getID());
                 document = repositoryWrapper.updateEntity(document);
             } catch (Exception e) {
                 return createResponseEntityAndLog("Failed to add monitoring clause to contract. Bounded-document id: " + documentId, e, HttpStatus.INTERNAL_SERVER_ERROR);

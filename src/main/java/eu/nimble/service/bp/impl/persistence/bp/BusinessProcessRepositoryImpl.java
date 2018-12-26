@@ -1,11 +1,15 @@
 package eu.nimble.service.bp.impl.persistence.bp;
 
+import com.netflix.discovery.converters.Auto;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.GenericJPARepositoryImpl;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.PostConstruct;
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceContext;
 import java.util.List;
 
@@ -21,14 +25,24 @@ public class BusinessProcessRepositoryImpl implements GenericJPARepository {
 
     private GenericJPARepositoryImpl hibernateUtility;
 
-    @PersistenceContext(unitName = "bp-data-model")
-    private void setEm(EntityManager em) {
-        this.hibernateUtility = new GenericJPARepositoryImpl(em);
-    }
+    @Autowired
+    private EntityManagerFactory emf;
 
+    @PersistenceContext(unitName = "bp-data-model")
+    private EntityManager em;
+
+    @PostConstruct
+    private void initializeHibernateUtility() {
+        this.hibernateUtility = new GenericJPARepositoryImpl(emf, em);
+    }
     @Override
     public <T> T getSingleEntityByHjid(Class<T> klass, long hjid) {
         return hibernateUtility.getSingleEntityByHjid(klass, hjid);
+    }
+
+    @Override
+    public <T> T getSingleEntityByHjidWithCleanEm(Class<T> klass, long hjid) {
+        return hibernateUtility.getSingleEntityByHjidWithCleanEm(klass, hjid);
     }
 
     @Override

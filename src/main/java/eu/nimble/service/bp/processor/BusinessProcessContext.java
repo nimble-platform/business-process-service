@@ -40,7 +40,7 @@ public class BusinessProcessContext {
             SpringBridge.getInstance().getBusinessProcessRepository().deleteEntity(metadataDAO);
         }
         if (document != null) {
-            EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper((GenericJPARepository) SpringBridge.getInstance().getCatalogueRepository(), metadataDAO.getInitiatorID());
+            EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(metadataDAO.getInitiatorID());
             repositoryWrapper.deleteEntity(document);
             ResourceValidationUtil.removeHjidsForObject(document, Configuration.Standard.UBL.toString());
         }

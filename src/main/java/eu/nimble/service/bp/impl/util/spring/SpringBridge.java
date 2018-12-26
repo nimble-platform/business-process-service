@@ -7,7 +7,6 @@ import eu.nimble.service.bp.config.GenericConfig;
 import eu.nimble.service.bp.impl.persistence.bp.*;
 import eu.nimble.service.bp.impl.persistence.catalogue.CatalogueRepository;
 import eu.nimble.utility.persistence.binary.BinaryContentService;
-import eu.nimble.utility.persistence.binary.BinaryObjectDeserializer;
 import eu.nimble.utility.persistence.binary.BinaryObjectSerializerDelete;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,9 +57,6 @@ public class SpringBridge implements ApplicationContextAware {
 
     @Autowired
     private BinaryContentService binaryContentService;
-
-    @Autowired
-    private BinaryObjectDeserializer binaryObjectDeserializer;
 
     @Autowired
     private BinaryObjectSerializerDelete binaryObjectSerializerDelete;
@@ -117,17 +113,5 @@ public class SpringBridge implements ApplicationContextAware {
 
     public CollaborationGroupDAORepository getCollaborationGroupDAORepository() {
         return collaborationGroupDAORepository;
-    }
-
-    public BinaryContentService getBinaryContentService() {
-        return binaryContentService;
-    }
-
-    public BinaryObjectDeserializer getBinaryObjectDeserializer() {
-        return binaryObjectDeserializer;
-    }
-
-    public BinaryObjectSerializerDelete getBinaryObjectSerializerDelete() {
-        return binaryObjectSerializerDelete;
     }
 }
