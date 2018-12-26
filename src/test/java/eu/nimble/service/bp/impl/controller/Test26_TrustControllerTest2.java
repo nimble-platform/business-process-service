@@ -1,7 +1,8 @@
 package eu.nimble.service.bp.impl.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.nimble.service.bp.swagger.model.ProcessInstanceGroup;
+import eu.nimble.service.bp.impl.model.trust.NegotiationRatings;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -10,14 +11,17 @@ import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.env.Environment;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
+import java.util.List;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -25,33 +29,35 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("local_dev")
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringJUnit4ClassRunner.class)
-public class Test05_ProcessInstanceGroupControllerTest2 {
+public class Test26_TrustControllerTest2 {
 
     @Autowired
     private MockMvc mockMvc;
+    @Autowired
+    private ObjectMapper objectMapper;
 
-    ObjectMapper objectMapper = new ObjectMapper();
-    private final int test1_expectedValue = 2;
-    private final boolean test2_expectedValue = true;
+    @Autowired
+    private Environment environment;
+
+    private final String partyID = "706";
 
     @Test
-    public void test1_addProcessInstanceToGroup() throws Exception {
-        MockHttpServletRequestBuilder request = post("/group/" + Test04_ProcessInstanceGroupControllerTest.processInstanceGroupId1 + "/process-instance")
-                .param("processInstanceID", Test01_StartControllerTest.processInstanceIdOrder3);
+    public void test1_getRatingsSummary() throws Exception {
+        MockHttpServletRequestBuilder request = get("/ratingsSummary")
+                .header("Authorization", environment.getProperty("nimble.test-responder-token"))
+                .param("partyID",partyID);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
-
-        ProcessInstanceGroup processInstanceGroup = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ProcessInstanceGroup.class);
-
-        Assert.assertSame(test1_expectedValue, processInstanceGroup.getProcessInstanceIDs().size());
     }
 
     @Test
-    public void test2_archiveGroup() throws Exception {
-        MockHttpServletRequestBuilder request = post("/group/" + Test04_ProcessInstanceGroupControllerTest.processInstanceGroupIIR1 + "/archive");
+    public void test2_listAllIndividualRatingsAndReviews() throws Exception {
+        MockHttpServletRequestBuilder request = get("/ratingsAndReviews")
+                .header("Authorization", environment.getProperty("nimble.test-responder-token"))
+                .param("partyID",partyID);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
-        ProcessInstanceGroup processInstanceGroup = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ProcessInstanceGroup.class);
+        List<NegotiationRatings> negotiationRatings = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),new TypeReference<List<NegotiationRatings>>(){});
 
-        Assert.assertEquals(test2_expectedValue, processInstanceGroup.getArchived());
+        Assert.assertEquals(6,negotiationRatings.get(0).getRatings().size());
     }
 }
