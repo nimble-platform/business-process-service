@@ -338,6 +338,14 @@ spring:
       username: sa
       password:
       driver_class: org.h2.Driver
+  kafka:
+      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+      consumer:
+        group-id: business-process-service${KAFKA_CONSUMER_GROUP_ID_SUFFIX:}
+      properties:
+        sasl:
+          jaas:
+            config: ${KAFKA_JAAS_CONFIG}
   h2:
     console:
       enabled: true

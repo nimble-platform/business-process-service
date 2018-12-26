@@ -28,7 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("local_dev")
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringJUnit4ClassRunner.class)
-public class Test15_ProcessInstanceGroupControllerTest5 {
+public class Test15_ProcessInstanceGroupControllerTest3 {
 
     @Autowired
     private MockMvc mockMvc;
@@ -54,34 +54,5 @@ public class Test15_ProcessInstanceGroupControllerTest5 {
 
         Assert.assertSame(test1_expectedSize, processInstanceGroupFilter.getTradingPartnerIDs().size());
 
-    }
-
-    @Test
-    public void test2_finalProcessInstanceGroupControllerTest() throws Exception {
-        // test archiveAllGroups
-        MockHttpServletRequestBuilder request = post("/group/archive-all")
-                .param("partyID", partyId);
-
-        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
-
-        String body = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), String.class);
-
-        Assert.assertEquals(test2_expectedValue, body);
-
-        // test deleteAllArchivedGroups
-        request = post("/group/delete-all")
-                .param("partyID", partyId);
-
-        mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
-
-        body = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), String.class);
-
-        Assert.assertEquals("true", body);
-        // check whether all groups are deleted or not
-        request = get("/group").param("partyID", partyId);
-        mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
-
-        CollaborationGroupResponse processInstanceGroupResponse = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), CollaborationGroupResponse.class);
-        Assert.assertSame(test2_expectedSize, processInstanceGroupResponse.getSize());
     }
 }
