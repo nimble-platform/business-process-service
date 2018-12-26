@@ -519,14 +519,6 @@ paths:
         type: array
         description: Identifier of the corresponsing trading partner ID
       - in: query
-        name: initiationDateRange
-        type: string
-        description: Initiation date range for the first process instance in the group
-      - in: query
-        name: lastActivityDateRange
-        type: string
-        description: Last activity date range. It is the latest submission date of the document to last process instance in the group
-      - in: query
         name: offset
         type: integer
         description: Offset of the first result among the complete result set satisfying the given criteria
@@ -602,14 +594,6 @@ paths:
         name: tradingPartnerIDs
         type: array
         description: Identifier of the corresponsing trading partner ID
-      - in: query
-        name: initiationDateRange
-        type: string
-        description: Initiation date range for the first process instance in the group
-      - in: query
-        name: lastActivityDateRange
-        type: string
-        description: Last activity date range. It is the latest submission date of the document to last process instance in the group
       - in: query
         name: archived
         type: boolean
