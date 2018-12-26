@@ -27,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("local_dev")
 @FixMethodOrder
 @RunWith(SpringJUnit4ClassRunner.class)
-public class Test04_ProcessInstanceGroupControllerTest {
+public class Test05_ProcessInstanceGroupControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -38,7 +38,7 @@ public class Test04_ProcessInstanceGroupControllerTest {
     public static String processInstanceGroupId1;
     public static String processInstanceGroupId2;
     public static String processInstanceGroupIIR1;
-    private final int test1_expectedValue = 4;
+    private final int test1_expectedValue = 5;
     private final int test2_expectedValue = 1;
 
     @Test
@@ -63,7 +63,7 @@ public class Test04_ProcessInstanceGroupControllerTest {
 
     @Test
     public void test2_getProcessInstanceGroup() throws Exception {
-        MockHttpServletRequestBuilder request = get("/group/" + Test04_ProcessInstanceGroupControllerTest.processInstanceGroupIIR1);
+        MockHttpServletRequestBuilder request = get("/group/" + Test05_ProcessInstanceGroupControllerTest.processInstanceGroupIIR1);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         ObjectMapper objectMapper = new ObjectMapper();

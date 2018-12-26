@@ -40,7 +40,7 @@ public class Test12_DocumentControllerTest2 {
     private final String partnerID2 = "1339";
     private final String type = "ORDER";
 
-    private final int numberOfDocuments1 = 4;
+    private final int numberOfDocuments1 = 5;
     private final int numberOfDocuments2 = 1;
     private final int numberOfDocuments3 = 1;
     private final List<String> listOfProducts = Arrays.asList("Product1", "Product2", "Product3");
