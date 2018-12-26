@@ -562,23 +562,6 @@ paths:
           description: Retrieved the groups successfully
           schema:
             $ref: '#/definitions/CollaborationGroupResponse'
-    post:
-      operationId: saveProcessInstanceGroup
-      consumes:
-      - application/json
-      produces:
-      - application/json
-      parameters:
-      - in: body
-        name: processInstanceGroup
-        description: The content of the process instance group to be saved
-        required: true
-        schema:
-          $ref: '#/definitions/ProcessInstanceGroup'
-      responses:
-        # Response code
-        201:
-          description: Saved the group successfully
 
   /group/order-process:
     get:
@@ -720,21 +703,6 @@ paths:
         200:
           description: Updated the collaboration group name successfully
 
-  /group/{ID}/archive:
-    post:
-      operationId: archiveGroup
-      parameters:
-      - in: path
-        name: ID
-        type: string
-        description: Identifier of the process instance group to be archived
-        required: true
-      responses:
-        200:
-          description: Archived the group successfully
-          schema:
-            $ref: '#/definitions/ProcessInstanceGroup'
-
   /group/collaboration/{ID}/archive:
     post:
       operationId: archiveCollaborationGroup
@@ -764,101 +732,6 @@ paths:
           description: Restored the collaboration group successfully
           schema:
             $ref: '#/definitions/CollaborationGroup'
-
-  /group/{ID}/restore:
-    post:
-      operationId: restoreGroup
-      parameters:
-      - in: path
-        name: ID
-        type: string
-        description: Identifier of the process instance group to be restored
-        required: true
-      responses:
-        200:
-          description: Restored the group successfully
-          schema:
-            $ref: '#/definitions/ProcessInstanceGroup'
-
-  /group/archive-all:
-    post:
-      operationId: archiveAllGroups
-      parameters:
-      - in: query
-        name: partyID
-        type: string
-        description: Identifier of the party of which groups will be archived
-        required: true
-      responses:
-        200:
-          description: Archived the groups successfully
-  /group/delete-all:
-    post:
-      operationId: deleteAllArchivedGroups
-      parameters:
-      - in: query
-        name: partyID
-        type: string
-        description: Identifier of the party of which groups will be deleted
-        required: true
-      responses:
-        200:
-          description: Deleted the groups successfully
-
-  /group/{ID}/process-instance:
-    get:
-      operationId: getProcessInstancesOfGroup
-      produces:
-      - application/json
-      parameters:
-      - in: path
-        name: ID
-        type: string
-        description: Identifier of the process instance group for which the associated process instances will be retrieved
-        required: true
-      responses:
-        200:
-          description: Retrieved the process instances successfully
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/ProcessInstance'
-    post:
-      operationId: addProcessInstanceToGroup
-      parameters:
-      - in: path
-        name: ID
-        type: string
-        description: Identifier of the process instance group to which a new process instance id is added
-        required: true
-      - in: query
-        name: processInstanceID
-        type: string
-        description: Identifier of the process instance to be added
-        required: true
-      responses:
-        200:
-          description: Added the process instance to the group successfully
-          schema:
-            $ref: '#/definitions/ProcessInstanceGroup'
-    delete:
-      operationId: deleteProcessInstanceFromGroup
-      parameters:
-      - in: path
-        name: ID
-        type: string
-        description: Identifier of the process instance group from which the process instance id is deleted
-        required: true
-      - in: query
-        name: processInstanceID
-        type: string
-        description: Identifier of the process instance to be deleted
-        required: true
-      responses:
-        200:
-          description: Deleted the process instance from the group successfully
-          schema:
-            $ref: '#/definitions/ProcessInstanceGroup'
 
 definitions:
 
