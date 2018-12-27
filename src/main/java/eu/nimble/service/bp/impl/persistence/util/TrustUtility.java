@@ -67,7 +67,6 @@ public class TrustUtility {
         }
 
         qualifyingParty.getCompletedTask().add(completedTask);
-//        HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).update(qualifyingParty);
         SpringBridge.getInstance().getCatalogueRepository().updateEntity(qualifyingParty);
     }
 

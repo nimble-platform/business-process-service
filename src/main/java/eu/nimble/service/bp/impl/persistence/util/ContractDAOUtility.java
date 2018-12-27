@@ -17,8 +17,6 @@ import java.util.UUID;
  * Created by suat on 26-Apr-18.
  */
 public class ContractDAOUtility {
-    private static final String QUERY_CLAUSE_EXISTS = "SELECT count(*) FROM ClauseType contract WHERE clause.ID = :clauseId";
-    private static final String QUERY_CONTRACT_HAS_CLAUSE = "SELECT count(*) FROM ContractType contract join contract.clause clause WHERE contract.ID = :contractId and clause.ID = :clauseId";
     private static final String QUERY_GET_BASE_CLAUSE = "SELECT clause FROM ClauseType clause WHERE clause.ID = :clauseId";
     private static final String QUERY_GET_CONTRACT_CLAUSE = "SELECT clause FROM ContractType contract join contract.clause clause WHERE contract.ID = :contractId AND clause.ID = :clauseId";
     private static final String QUERY_GET_DATA_MONITORING_CLAUSE = "SELECT clause FROM DataMonitoringClauseType clause WHERE clause.ID = :clauseId";
@@ -26,31 +24,7 @@ public class ContractDAOUtility {
     private static final String QUERY_CONTRACT_EXISTS = "SELECT count(*) FROM ContractType contract WHERE contract.ID = :contractId'";
     private static final String QUERY_GET_CONTRACT = "SELECT contract FROM ContractType contract WHERE contract.ID = :contractId";
 
-    public static boolean clauseExists(String clauseId) {
-//        String query = "SELECT count(*) FROM ClauseType contract WHERE clause.ID = '" + clauseId + "'";
-//        int count = ((Long) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadIndividualItem(query)).intValue();
-        int count = ((Long) SpringBridge.getInstance().getCatalogueRepository().getSingleEntity(QUERY_CLAUSE_EXISTS, new String[]{"clauseId"}, new Object[]{clauseId})).intValue();
-        if (count > 0) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    public static boolean contractHasClause(String contractId, String clauseId) {
-//        String query = "SELECT count(*) FROM ContractType contract join contract.clause clause WHERE contract.ID = '" + contractId + "' and clause.ID = '" + clauseId + "'";
-//        int count = ((Long) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadIndividualItem(query)).intValue();
-        int count = ((Long) SpringBridge.getInstance().getCatalogueRepository().getSingleEntity(QUERY_CONTRACT_HAS_CLAUSE, new String[]{"contractId", "clauseId"}, new Object[]{contractId, clauseId})).intValue();
-        if (count > 0) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
     public static ClauseType getBaseClause(String clauseId) {
-//        String query = "SELECT clause FROM ClauseType clause WHERE clause.ID = '" + clauseId + "'";
-//        ClauseType clauseType = (ClauseType) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadIndividualItem(query);
         ClauseType clauseType = SpringBridge.getInstance().getCatalogueRepository().getSingleEntity(QUERY_GET_BASE_CLAUSE, new String[]{"clauseId"}, new Object[]{clauseId});
         return clauseType;
     }
@@ -73,24 +47,24 @@ public class ContractDAOUtility {
 
     public static List<ClauseType> getClause(String documentId, DocumentType documentType, eu.nimble.service.bp.impl.model.ClauseType clauseType) {
         List<ClauseType> clauseTypes = new ArrayList<>();
-        if(documentType.equals(DocumentType.ORDER)) {
-            OrderType orderType = (OrderType) DocumentDAOUtility.getUBLDocument(documentId,DocumentType.ORDER);
-            for(ContractType contractType : orderType.getContract()){
-                for(ClauseType clause : contractType.getClause()){
-                    if(eu.nimble.service.bp.impl.model.ClauseType.valueOf(clause.getType()) == clauseType){
+        if (documentType.equals(DocumentType.ORDER)) {
+            OrderType orderType = (OrderType) DocumentDAOUtility.getUBLDocument(documentId, DocumentType.ORDER);
+            for (ContractType contractType : orderType.getContract()) {
+                for (ClauseType clause : contractType.getClause()) {
+                    if (eu.nimble.service.bp.impl.model.ClauseType.valueOf(clause.getType()) == clauseType) {
                         clauseTypes.add(clause);
                     }
                 }
             }
 
-        } else if(documentType.equals(DocumentType.TRANSPORTEXECUTIONPLANREQUEST)) {
-            TransportExecutionPlanRequestType transportExecutionPlanRequestType = (TransportExecutionPlanRequestType) DocumentDAOUtility.getUBLDocument(documentId,DocumentType.TRANSPORTEXECUTIONPLANREQUEST);
+        } else if (documentType.equals(DocumentType.TRANSPORTEXECUTIONPLANREQUEST)) {
+            TransportExecutionPlanRequestType transportExecutionPlanRequestType = (TransportExecutionPlanRequestType) DocumentDAOUtility.getUBLDocument(documentId, DocumentType.TRANSPORTEXECUTIONPLANREQUEST);
             ContractType contractType = transportExecutionPlanRequestType.getTransportContract();
-            if(contractType == null){
+            if (contractType == null) {
                 return null;
             }
-            for(ClauseType clause : contractType.getClause()){
-                if(eu.nimble.service.bp.impl.model.ClauseType.valueOf(clause.getType()) == clauseType){
+            for (ClauseType clause : contractType.getClause()) {
+                if (eu.nimble.service.bp.impl.model.ClauseType.valueOf(clause.getType()) == clauseType) {
                     clauseTypes.add(clause);
                 }
             }
@@ -102,29 +76,21 @@ public class ContractDAOUtility {
     }
 
     public static ClauseType getContractClause(String contractId, String clauseId) {
-//        String query = "SELECT clause FROM ContractType contract join contract.clause clause WHERE contract.ID = '" + contractId + "' and clause.ID = '" + clauseId + "'";
-//        ClauseType clause = (ClauseType) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadIndividualItem(query);
         ClauseType clause = SpringBridge.getInstance().getCatalogueRepository().getSingleEntity(QUERY_GET_CONTRACT_CLAUSE, new String[]{"contractId", "clauseId"}, new Object[]{contractId, clauseId});
         return clause;
     }
 
     public static DataMonitoringClauseType getDataMonitoringClause(String clauseId) {
-//        String query = "SELECT clause from DataMonitoringClauseType clause where clause.ID = '" + clauseId + "'";
-//        DataMonitoringClauseType clause = (DataMonitoringClauseType) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadIndividualItem(query);
         DataMonitoringClauseType clause = SpringBridge.getInstance().getCatalogueRepository().getSingleEntity(QUERY_GET_DATA_MONITORING_CLAUSE, new String[]{"clauseId"}, new Object[]{clauseId});
         return clause;
     }
 
     public static DocumentClauseType getDocumentClause(String clauseId) {
-//        String query = "SELECT clause from DocumentClauseType clause where clause.ID = '" + clauseId + "'";
-//        DocumentClauseType clause = (DocumentClauseType) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadIndividualItem(query);
         DocumentClauseType clause = SpringBridge.getInstance().getCatalogueRepository().getSingleEntity(QUERY_GET_DOCUMENT_CLAUSE, new String[]{"clauseId"}, new Object[]{clauseId});
         return clause;
     }
 
     public static boolean contractExists(String contractID) {
-//        String query = "SELECT count(*) FROM ContractType contract WHERE contract.ID = '" + contractID + "'";
-//        int count = ((Long) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadIndividualItem(query)).intValue();
         int count = ((Long) SpringBridge.getInstance().getCatalogueRepository().getSingleEntity(QUERY_CONTRACT_EXISTS, new String[]{"contractId"}, new Object[]{contractID})).intValue();
         if (count > 0) {
             return true;
@@ -134,8 +100,6 @@ public class ContractDAOUtility {
     }
 
     public static ContractType getContract(String contractId) {
-//        String query = "SELECT contract from ContractType contract where contract.ID = '" + contractId + "'";
-//        ContractType contract = (ContractType) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadIndividualItem(query);
         ContractType contract = SpringBridge.getInstance().getCatalogueRepository().getSingleEntity(QUERY_GET_CONTRACT, new String[]{"contractId"}, new Object[]{contractId});
         return contract;
     }
@@ -161,7 +125,7 @@ public class ContractDAOUtility {
             List<ProcessDocumentMetadataDAO> documents = DAOUtility.getProcessDocumentMetadataByProcessInstanceID(processInstance.getProcessInstanceID());
 
             // if the process is completed
-            if(documents.size() > 1) {
+            if (documents.size() > 1) {
                 ProcessDocumentMetadataDAO docMetadata = documents.get(1);
                 ProcessDocumentMetadataDAO reqMetadata = documents.get(0);
                 // if the second document has a future submission date
@@ -171,23 +135,22 @@ public class ContractDAOUtility {
                 }
 
                 // Check whether a contract already exists or not
-                if(reqMetadata.getType().equals(DocumentType.ORDER)){
-                    OrderType orderType = (OrderType) DocumentDAOUtility.getUBLDocument(reqMetadata.getDocumentID(),DocumentType.ORDER);
-                    if(orderType.getContract().size() > 0){
+                if (reqMetadata.getType().equals(DocumentType.ORDER)) {
+                    OrderType orderType = (OrderType) DocumentDAOUtility.getUBLDocument(reqMetadata.getDocumentID(), DocumentType.ORDER);
+                    if (orderType.getContract().size() > 0) {
                         realContract = orderType.getContract().get(0);
                     }
                     break;
-                }
-                else if(reqMetadata.getType().equals(DocumentType.TRANSPORTEXECUTIONPLANREQUEST)){
-                    TransportExecutionPlanRequestType transportExecutionPlanRequestType = (TransportExecutionPlanRequestType) DocumentDAOUtility.getUBLDocument(reqMetadata.getDocumentID(),DocumentType.TRANSPORTEXECUTIONPLANREQUEST);
+                } else if (reqMetadata.getType().equals(DocumentType.TRANSPORTEXECUTIONPLANREQUEST)) {
+                    TransportExecutionPlanRequestType transportExecutionPlanRequestType = (TransportExecutionPlanRequestType) DocumentDAOUtility.getUBLDocument(reqMetadata.getDocumentID(), DocumentType.TRANSPORTEXECUTIONPLANREQUEST);
                     realContract = transportExecutionPlanRequestType.getTransportContract();
                     break;
                 }
 
                 DocumentType documentType = docMetadata.getType();
-                if(documentType.equals(DocumentType.ITEMINFORMATIONRESPONSE) ||
-                   documentType.equals(DocumentType.QUOTATION) ||
-                   documentType.equals(DocumentType.PPAPRESPONSE)) {
+                if (documentType.equals(DocumentType.ITEMINFORMATIONRESPONSE) ||
+                        documentType.equals(DocumentType.QUOTATION) ||
+                        documentType.equals(DocumentType.PPAPRESPONSE)) {
 
                     DocumentClauseType clause = new DocumentClauseType();
                     contract.getClause().add(clause);
@@ -226,17 +189,16 @@ public class ContractDAOUtility {
                         skipNextInstance = true;
                     }
                 }
-            } while (skipNextInstance == true) ;
+            } while (skipNextInstance == true);
 
         } while (processInstance != null);
 
         // Add new clauses to the contract
-        if(realContract != null){
-            for (ClauseType clause : contract.getClause()){
+        if (realContract != null) {
+            for (ClauseType clause : contract.getClause()) {
                 realContract.getClause().add(clause);
             }
-        }
-        else {
+        } else {
             return contract;
         }
         return realContract;

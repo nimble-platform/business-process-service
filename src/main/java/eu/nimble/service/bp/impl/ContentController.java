@@ -50,7 +50,6 @@ public class ContentController implements ContentApi {
         CamundaEngine.addProcessDefinition(body.getProcessID(), bpmnContent);
 
         ProcessDAO processDAO = HibernateSwaggerObjectMapper.createProcess_DAO(body);
-//        HibernateUtilityRef.getInstance("bp-data-model").persist(processDAO);
         businessProcessRepository.persistEntity(processDAO);
 
         return HibernateSwaggerObjectMapper.getApiResponse();
@@ -65,7 +64,6 @@ public class ContentController implements ContentApi {
 
         ProcessDAO processDAO = DAOUtility.getProcessDAOByID(processID);
         if(processDAO != null)
-//            HibernateUtilityRef.getInstance("bp-data-model").delete(ProcessDAO.class, processDAO.getHjid());
             businessProcessRepository.deleteEntityByHjid(ProcessDAO.class, processDAO.getHjid());
 
         return HibernateSwaggerObjectMapper.getApiResponse();
@@ -139,7 +137,6 @@ public class ContentController implements ContentApi {
 
         processDAONew.setHjid(processDAO.getHjid());
 
-//        HibernateUtilityRef.getInstance("bp-data-model").update(processDAONew);
         businessProcessRepository.updateEntity(processDAONew);
 
         return HibernateSwaggerObjectMapper.getApiResponse();

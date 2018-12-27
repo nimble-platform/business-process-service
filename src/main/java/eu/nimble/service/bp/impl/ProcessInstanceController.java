@@ -66,7 +66,6 @@ public class ProcessInstanceController {
             CamundaEngine.cancelProcessInstance(processInstanceId);
             // change status of the process
             instanceDAO.setStatus(ProcessInstanceStatus.CANCELLED);
-//            HibernateUtilityRef.getInstance("bp-data-model").update(instanceDAO);
             processInstanceDAORepository.save(instanceDAO);
         }
         catch (Exception e) {
@@ -141,7 +140,6 @@ public class ProcessInstanceController {
                                    @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         try {
             logger.info("Getting rating status for process instance: {}, party: {}", processInstanceId, partyId);
-//            CompletedTaskType completedTask = ProcessInstanceDAOUtility.getCompletedTask(partyId, processInstanceId);
             CompletedTaskType completedTask = catalogueRepository.getCompletedTaskByPartyIdAndProcessInstanceId(partyId, processInstanceId);
             Boolean rated = false;
             if (completedTask != null && (completedTask.getEvidenceSupplied().size() > 0 || completedTask.getComment().size() > 0)) {

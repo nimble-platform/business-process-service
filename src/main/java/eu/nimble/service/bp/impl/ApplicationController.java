@@ -36,7 +36,6 @@ public class ApplicationController implements ApplicationApi {
         logger.info(" $$$ Adding ProcessApplicationConfigurations: ");
         logger.debug(" $$$ {}", body.toString());
         ProcessConfigurationDAO processConfigurationDAO = HibernateSwaggerObjectMapper.createProcessConfiguration_DAO(body);
-//        HibernateUtilityRef.getInstance("bp-data-model").persist(processConfigurationDAO);
         businessProcessRepository.persistEntity(processConfigurationDAO);
         return HibernateSwaggerObjectMapper.getApiResponse();
     }
@@ -46,7 +45,6 @@ public class ApplicationController implements ApplicationApi {
     public ResponseEntity<ModelApiResponse> deleteProcessConfiguration(@PathVariable("partnerID") String partnerID, @PathVariable("processID") String processID, @PathVariable("roleType") String roleType) {
         logger.info(" $$$ Deleting ProcessApplicationConfigurations for ... {}", partnerID);
         ProcessConfigurationDAO processConfigurationDAO = DAOUtility.getProcessConfiguration(partnerID, processID, ProcessConfiguration.RoleTypeEnum.valueOf(roleType));
-//        HibernateUtilityRef.getInstance("bp-data-model").delete(ProcessConfigurationDAO.class, processConfigurationDAO.getHjid());
         businessProcessRepository.deleteEntityByHjid(ProcessConfigurationDAO.class, processConfigurationDAO.getHjid());
         return HibernateSwaggerObjectMapper.getApiResponse();
     }
@@ -88,10 +86,8 @@ public class ApplicationController implements ApplicationApi {
 
         if(processApplicationConfigurationsDAO != null) {
             processApplicationConfigurationsDAONew.setHjid(processApplicationConfigurationsDAO.getHjid());
-//            HibernateUtilityRef.getInstance("bp-data-model").update(processApplicationConfigurationsDAONew);
             businessProcessRepository.updateEntity(processApplicationConfigurationsDAONew);
         } else {
-//            HibernateUtilityRef.getInstance("bp-data-model").persist(processApplicationConfigurationsDAONew);
             businessProcessRepository.persistEntity(processApplicationConfigurationsDAONew);
         }
         return HibernateSwaggerObjectMapper.getApiResponse();

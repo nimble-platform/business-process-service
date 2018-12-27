@@ -62,7 +62,6 @@ public class ContinueController implements ContinueApi {
             }
 
             ProcessInstanceInputMessageDAO processInstanceInputMessageDAO = HibernateSwaggerObjectMapper.createProcessInstanceInputMessage_DAO(body);
-//            HibernateUtilityRef.getInstance("bp-data-model").persist(processInstanceInputMessageDAO);
             businessProcessRepository.persistEntity(processInstanceInputMessageDAO);
 
             // save ProcessInstanceInputMessageDAO
@@ -77,7 +76,6 @@ public class ContinueController implements ContinueApi {
 
             storedInstance.setStatus(ProcessInstanceStatus.fromValue(processInstance.getStatus().toString()));
 
-//            HibernateUtilityRef.getInstance("bp-data-model").update(storedInstance);
             businessProcessRepository.updateEntity(storedInstance);
 
             // save ProcessInstanceDAO

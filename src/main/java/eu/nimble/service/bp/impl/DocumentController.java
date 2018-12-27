@@ -135,19 +135,6 @@ public class DocumentController implements DocumentApi {
         return HibernateSwaggerObjectMapper.getApiResponse();
     }
 
-    /*@Override
-    public ResponseEntity<ProcessDocumentContent> getDocumentContent(@PathVariable("documentID") String documentID) {
-        logger.info(" $$$ Getting Document for ... {}", documentID);
-        ProcessDocumentContent processDocumentContent = new ProcessDocumentContent();
-        processDocumentContent.setDocumentID(documentID);
-
-        String documentJsonContent = DocumentDAOUtility.createJsonContent(documentID);
-
-        processDocumentContent.setContent(documentJsonContent);
-
-        return new ResponseEntity<>(processDocumentContent, HttpStatus.OK);
-    }*/
-
     @Override
     @ApiOperation(value = "",notes = "Get the business process document metadata")
     public ResponseEntity<List<ProcessDocumentMetadata>> getDocuments(@PathVariable("partnerID") String partnerID, @PathVariable("type") String type) {

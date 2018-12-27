@@ -46,7 +46,6 @@ public class StatisticsDAOUtility {
         parameterNames.add("partyId");
         parameterValues.add(archived);
         parameterValues.add(partyID);
-//        List<String> count = (List<String>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
         List<String> count = SpringBridge.getInstance().getBusinessProcessRepository().getEntities(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
         return count.size();
     }
@@ -101,7 +100,6 @@ public class StatisticsDAOUtility {
                 " where line.lineItem.item.manufacturerParty.ID = item.manufacturerParty.ID) ";
 
         NonOrderedProducts nonOrderedProducts = new NonOrderedProducts();
-//        List<Object> results = (List<Object>) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadAll(query);
         List<Object> results = SpringBridge.getInstance().getCatalogueRepository().getEntities(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
         for (Object result : results) {
             List<String> dataArray = (List<String>) result;
@@ -121,14 +119,12 @@ public class StatisticsDAOUtility {
         }
 
         Set<String> activePartyIds = new HashSet<>();
-//        List<String> results = (List<String>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
         List<String> results = SpringBridge.getInstance().getBusinessProcessRepository().getEntities(query);
 
         activePartyIds.addAll(results);
 
         // get parties for a process that have completed already. Therefore return both the initiatorID and responderID
         query = "select distinct new list(docMetadata.initiatorID, docMetadata.responderID) from ProcessDocumentMetadataDAO docMetadata where docMetadata.status <> 'WAITINGRESPONSE'";
-//        List<List<String>> secondResults = (List<List<String>>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query);
         List<List<String>> secondResults = SpringBridge.getInstance().getBusinessProcessRepository().getEntities(query);
         for (List<String> processPartyIds : secondResults) {
             activePartyIds.add(processPartyIds.get(0));
@@ -186,8 +182,6 @@ public class StatisticsDAOUtility {
         int numberOfResponses = 0;
         double totalTime = 0;
 
-        String query = "SELECT DISTINCT metadataDAO.processInstanceID FROM ProcessDocumentMetadataDAO metadataDAO WHERE metadataDAO.responderID = ?";
-//        List<String> processInstanceIDs = (List<String>) HibernateUtilityRef.getInstance("bp-data-model").loadAll(query,partyID);
         List<String> processInstanceIDs = SpringBridge.getInstance().getProcessDocumentMetadataDAORepository().getProcessInstanceIds(partyID);
 
         for (String processInstanceID:processInstanceIDs){

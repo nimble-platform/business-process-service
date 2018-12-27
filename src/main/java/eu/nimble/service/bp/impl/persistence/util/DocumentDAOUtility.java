@@ -85,7 +85,6 @@ public class DocumentDAOUtility {
 
     public static void addDocumentWithMetadata(String processContextId, ProcessDocumentMetadata documentMetadata, Object document) {
         ProcessDocumentMetadataDAO processDocumentDAO = HibernateSwaggerObjectMapper.createProcessDocumentMetadata_DAO(documentMetadata);
-//        HibernateUtilityRef.getInstance("bp-data-model").persist(processDocumentDAO);
         SpringBridge.getInstance().getProcessDocumentMetadataDAORepository().save(processDocumentDAO);
         // save ProcessDocumentMetadataDAO
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(processContextId);
@@ -111,9 +110,7 @@ public class DocumentDAOUtility {
 
         ProcessDocumentMetadataDAO newDocumentDAO = HibernateSwaggerObjectMapper.createProcessDocumentMetadata_DAO(body);
 
-//        HibernateUtilityRef.getInstance("bp-data-model").delete(storedDocumentDAO);
         SpringBridge.getInstance().getProcessDocumentMetadataDAORepository().delete(storedDocumentDAO.getHjid());
-//        newDocumentDAO = (ProcessDocumentMetadataDAO) HibernateUtilityRef.getInstance("bp-data-model").update(newDocumentDAO);
         newDocumentDAO = SpringBridge.getInstance().getProcessDocumentMetadataDAORepository().save(newDocumentDAO);
 
         businessProcessContext.setUpdatedDocumentMetadata(newDocumentDAO);
@@ -210,7 +207,6 @@ public class DocumentDAOUtility {
             repositoryWrapper.delete(document);
         }
 
-//        HibernateUtilityRef.getInstance("bp-data-model").delete(ProcessDocumentMetadataDAO.class, processDocumentMetadataDAO.getHjid());
         SpringBridge.getInstance().getBusinessProcessRepository().deleteEntityByHjid(ProcessDocumentMetadataDAO.class, processDocumentMetadataDAO.getHjid());
     }
 
@@ -274,8 +270,6 @@ public class DocumentDAOUtility {
         String query = "SELECT document FROM " + hibernateEntityName + " document "
                 + " WHERE document.ID = :documentId";
 
-//        List resultSet = HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME)
-//                .loadAll(query);
         List resultSet = SpringBridge.getInstance().getCatalogueRepository().getEntities(query, new String[]{"documentId"}, new Object[]{documentID});
 
         if (resultSet.size() > 0) {
@@ -296,8 +290,6 @@ public class DocumentDAOUtility {
     public static ProcessDocumentMetadata getCorrespondingResponseMetadata(String documentID, DocumentType documentType) {
         String id = "";
         if (documentType == DocumentType.ORDER) {
-//            String query = "SELECT orderResponse.ID FROM OrderResponseSimpleType orderResponse WHERE orderResponse.orderReference.documentReference.ID = '"+documentID+"'";
-//            id = (String) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadIndividualItem(query);
             id = SpringBridge.getInstance().getCatalogueRepository().getOrderResponseId(documentID);
         }
         return getDocumentMetadata(id);
@@ -306,36 +298,21 @@ public class DocumentDAOUtility {
     public static Object getResponseDocument(String documentID, DocumentType documentType) {
         Object document = null;
         if (documentType == DocumentType.ORDER) {
-//            String query = "SELECT orderResponse FROM OrderResponseSimpleType orderResponse WHERE orderResponse.orderReference.documentReference.ID = '"+documentID+"'";
-//            document = (OrderRes,ponseSimpleType) HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).loadIndividualItem(query);
             document = SpringBridge.getInstance().getCatalogueRepository().getOrderResponseSimple(documentID);
         }
         return document;
     }
 
     public static ProcessDocumentMetadata getRequestMetadata(String processInstanceID) {
-//        ProcessDocumentMetadataDAO processDocumentDAO = (ProcessDocumentMetadataDAO) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query);
         ProcessDocumentMetadataDAO processDocumentDAO = (ProcessDocumentMetadataDAO) SpringBridge.getInstance().getBusinessProcessRepository().getEntities(QUERY_GET_REQUEST_METADATA, new String[]{"processInstanceId"}, new Object[]{processInstanceID}).get(0);
         return HibernateSwaggerObjectMapper.createProcessDocumentMetadata(processDocumentDAO);
     }
 
     public static ProcessDocumentMetadata getResponseMetadata(String processInstanceID) {
-//        ProcessDocumentMetadataDAO processDocumentDAO = (ProcessDocumentMetadataDAO) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query);
         List<ProcessDocumentMetadataDAO> processDocumentDAO = SpringBridge.getInstance().getBusinessProcessRepository().getEntities(QUERY_GET_RESPONSE_METADATA, new String[]{"processInstanceId"}, new Object[]{processInstanceID});
         if (processDocumentDAO == null || processDocumentDAO.size() == 0) {
             return null;
         }
         return HibernateSwaggerObjectMapper.createProcessDocumentMetadata(processDocumentDAO.get(0));
-    }
-
-    public static boolean documentExists(String documentID) {
-//        String query = "SELECT count(*) FROM ProcessDocumentMetadataDAO document WHERE document.documentID = '" + documentID + "'";
-//        int count = ((Long) HibernateUtilityRef.getInstance("bp-data-model").loadIndividualItem(query)).intValue();
-        int count = ((Long) SpringBridge.getInstance().getBusinessProcessRepository().getSingleEntity(QUERY_PROCESS_METADATA_DOCUMENT_EXISTS, new String[]{"documentId"}, new Object[]{documentID})).intValue();
-        if (count > 0) {
-            return true;
-        } else {
-            return false;
-        }
     }
 }

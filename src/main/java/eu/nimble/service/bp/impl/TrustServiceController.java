@@ -106,7 +106,6 @@ public class TrustServiceController {
                 qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID, bearerToken);
             }
             CompletedTaskType completedTaskType = TrustUtility.fillCompletedTask(qualifyingParty, ratings, reviews, processInstanceID);
-//            HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).update(qualifyingParty);
             catalogueRepository.updateEntity(qualifyingParty);
 
             // broadcast changes
