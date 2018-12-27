@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ClauseType;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 
@@ -17,7 +18,6 @@ public class Serializer {
         ObjectMapper mapper = new ObjectMapper();
         mapper = mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         mapper = mapper.configure(MapperFeature.PROPAGATE_TRANSIENT_MARKER, true);
-        mapper = mapper.enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
         SimpleModule module = new SimpleModule();
         module.addDeserializer(ClauseType.class, new ClauseDeserializer());
         mapper.registerModule(module);
@@ -38,6 +38,14 @@ public class Serializer {
         ObjectMapper mapper = getDefaultObjectMapper();
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         mapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+        return mapper;
+    }
+
+    public static ObjectMapper getObjectMapperForSerializingParties() {
+        ObjectMapper mapper = getDefaultObjectMapper();
+        SimpleModule simpleModule = new SimpleModule();
+        simpleModule.addSerializer(PartyType.class, new PartySerializerReplace());
+        mapper.registerModule(simpleModule);
         return mapper;
     }
 }
