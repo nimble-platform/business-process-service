@@ -187,6 +187,7 @@ public class DocumentDAOUtility {
         Object existingDocument = getUBLDocument(documentId, documentType);
         businessProcessContext.setPreviousDocument(existingDocument);
         EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(partyId);
+        DataIntegratorUtil.checkExistingParties(document);
         document = repositoryWrapper.updateEntity(document);
         businessProcessContext.setDocument(document);
     }
