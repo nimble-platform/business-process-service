@@ -3,6 +3,7 @@ package eu.nimble.service.bp.impl.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
 import eu.nimble.service.bp.impl.persistence.util.DocumentDAOUtility;
+import eu.nimble.service.bp.impl.util.serialization.Serializer;
 import eu.nimble.service.bp.processor.orderresponse.DefaultOrderResponseSender;
 import eu.nimble.service.bp.swagger.model.CollaborationGroupResponse;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
@@ -397,10 +398,13 @@ public class Test04_BusinessProcessesTest {
     @Test
     public void test17_dataChannelCreationConditions() throws Exception {
         DefaultOrderResponseSender defaultOrderResponseSender = new DefaultOrderResponseSender();
-        String orderString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(orderRequestJSON));
-        String orderResponseString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(orderResponseJSON));
-        OrderType order = JsonSerializationUtility.getObjectMapper().readValue(orderString, OrderType.class);
-        OrderResponseSimpleType orderResponse = JsonSerializationUtility.getObjectMapper().readValue(orderResponseString, OrderResponseSimpleType.class);
+        String orderProcessInstanceInputMessageString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(orderRequestJSON));
+        String orderResponseProcessInstanceInputMessageString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(orderResponseJSON));
+        ProcessInstanceInputMessage orderProcessInstanceInputMessage = JsonSerializationUtility.getObjectMapper().readValue(orderProcessInstanceInputMessageString, ProcessInstanceInputMessage.class);
+        ProcessInstanceInputMessage orderResponseProcessInstanceInputMessage = JsonSerializationUtility.getObjectMapper().readValue(orderResponseProcessInstanceInputMessageString, ProcessInstanceInputMessage.class);
+
+        OrderType order = Serializer.getDefaultObjectMapper().readValue(orderProcessInstanceInputMessage.getVariables().getContent(), OrderType.class);
+        OrderResponseSimpleType orderResponse = Serializer.getDefaultObjectMapper().readValue(orderResponseProcessInstanceInputMessage.getVariables().getContent(), OrderResponseSimpleType.class);
 
         Method method = DefaultOrderResponseSender.class.getDeclaredMethod("needToCreateDataChannel", OrderType.class, OrderResponseSimpleType.class);
         method.setAccessible(true);
