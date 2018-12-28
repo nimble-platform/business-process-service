@@ -1,9 +1,18 @@
 package eu.nimble.service.bp.impl.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
+import eu.nimble.service.bp.impl.persistence.util.DocumentDAOUtility;
+import eu.nimble.service.bp.processor.orderresponse.DefaultOrderResponseSender;
 import eu.nimble.service.bp.swagger.model.CollaborationGroupResponse;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.ClauseType;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.DocumentClauseType;
+import eu.nimble.service.model.ubl.order.OrderType;
+import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
+import eu.nimble.service.model.ubl.quotation.QuotationType;
+import eu.nimble.utility.JsonSerializationUtility;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
@@ -19,6 +28,9 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+
+import java.lang.reflect.Method;
+import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -80,7 +92,7 @@ public class Test04_BusinessProcessesTest {
     private ObjectMapper objectMapper;
 
     @Test
-    public void test_businessProcesses() throws Exception{
+    public void test00_businessProcesses() throws Exception{
         test01_ItemInformationRequest();
         test02_ItemInformationResponse();
         test03_PPAPRequest();
@@ -380,5 +392,20 @@ public class Test04_BusinessProcessesTest {
                 .param("gid",buyerProcessInstanceGroupID)
                 .param("collaborationGID",buyerCollaborationGroupID);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+    }
+
+    @Test
+    public void test17_dataChannelCreationConditions() throws Exception {
+        DefaultOrderResponseSender defaultOrderResponseSender = new DefaultOrderResponseSender();
+        String orderString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(orderRequestJSON));
+        String orderResponseString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(orderResponseJSON));
+        OrderType order = JsonSerializationUtility.getObjectMapper().readValue(orderString, OrderType.class);
+        OrderResponseSimpleType orderResponse = JsonSerializationUtility.getObjectMapper().readValue(orderResponseString, OrderResponseSimpleType.class);
+
+        Method method = DefaultOrderResponseSender.class.getDeclaredMethod("needToCreateDataChannel", OrderType.class, OrderResponseSimpleType.class);
+        method.setAccessible(true);
+        Boolean needToCreateDataChannel = (Boolean) method.invoke(defaultOrderResponseSender, order, orderResponse);
+        method.setAccessible(false);
+        Assert.assertTrue(needToCreateDataChannel);
     }
 }
