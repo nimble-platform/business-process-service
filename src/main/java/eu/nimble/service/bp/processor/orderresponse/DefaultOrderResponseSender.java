@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import request.CreateChannel;
 
+import javax.print.Doc;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -98,11 +99,14 @@ public class DefaultOrderResponseSender  implements JavaDelegate {
         if(order.getContract().size() > 0){
             List<ClauseType> clauses = order.getContract().get(0).getClause();
             for(ClauseType clause : clauses) {
-                if(clause.getType().equals(eu.nimble.service.bp.impl.model.ClauseType.NEGOTIATION.toString())) {
-                    QuotationType quotation = (QuotationType) DocumentDAOUtility.getUBLDocument(((DocumentClauseType) clause).getClauseDocumentRef().getID(), DocumentType.QUOTATION);
-                    if(quotation.isDataMonitoringPromised()) {
-                        dataMonitoringDemanded = true;
-                        break;
+                if(clause.getType().contentEquals(eu.nimble.service.model.ubl.extension.ClauseType.DOCUMENT.toString())) {
+                    DocumentClauseType docClause = (DocumentClauseType) clause;
+                    if(docClause.getClauseDocumentRef().getDocumentType().contentEquals(DocumentType.QUOTATION.toString())) {
+                        QuotationType quotation = (QuotationType) DocumentDAOUtility.getUBLDocument(docClause.getClauseDocumentRef().getID(), DocumentType.QUOTATION);
+                        if (quotation.isDataMonitoringPromised()) {
+                            dataMonitoringDemanded = true;
+                            break;
+                        }
                     }
                 }
             }

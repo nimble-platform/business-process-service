@@ -6,6 +6,8 @@ import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.swagger.model.Process;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.ClauseType;
+import eu.nimble.service.model.ubl.extension.*;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
 
@@ -33,38 +35,36 @@ public class ContractDAOUtility {
         ClauseType baseClause = getBaseClause(clauseId);
         ClauseType clause = null;
         if (baseClause != null) {
-            if (baseClause.getType().contentEquals(eu.nimble.service.bp.impl.model.ClauseType.DATA_MONITORING.toString())) {
+            if (baseClause.getType().contentEquals(eu.nimble.service.model.ubl.extension.ClauseType.DATA_MONITORING.toString())) {
                 clause = getDataMonitoringClause(baseClause.getID());
 
-            } else if (baseClause.getType().contentEquals(eu.nimble.service.bp.impl.model.ClauseType.ITEM_DETAILS.toString()) ||
-                    baseClause.getType().contentEquals(eu.nimble.service.bp.impl.model.ClauseType.NEGOTIATION.toString()) ||
-                    baseClause.getType().contentEquals(eu.nimble.service.bp.impl.model.ClauseType.PPAP.toString())) {
+            } else if (baseClause.getType().contentEquals(eu.nimble.service.model.ubl.extension.ClauseType.DOCUMENT.toString())) {
                 clause = getDocumentClause(baseClause.getID());
             }
         }
         return clause;
     }
 
-    public static List<ClauseType> getClause(String documentId, DocumentType documentType, eu.nimble.service.bp.impl.model.ClauseType clauseType) {
+    public static List<ClauseType> getClause(String documentId, DocumentType documentType, eu.nimble.service.model.ubl.extension.ClauseType clauseType) {
         List<ClauseType> clauseTypes = new ArrayList<>();
-        if (documentType.equals(DocumentType.ORDER)) {
-            OrderType orderType = (OrderType) DocumentDAOUtility.getUBLDocument(documentId, DocumentType.ORDER);
-            for (ContractType contractType : orderType.getContract()) {
-                for (ClauseType clause : contractType.getClause()) {
-                    if (eu.nimble.service.bp.impl.model.ClauseType.valueOf(clause.getType()) == clauseType) {
+        if(documentType.equals(DocumentType.ORDER)) {
+            OrderType orderType = (OrderType) DocumentDAOUtility.getUBLDocument(documentId,DocumentType.ORDER);
+            for(ContractType contractType : orderType.getContract()){
+                for(ClauseType clause : contractType.getClause()){
+                    if(eu.nimble.service.model.ubl.extension.ClauseType.valueOf(clause.getType()) == clauseType){
                         clauseTypes.add(clause);
                     }
                 }
             }
 
-        } else if (documentType.equals(DocumentType.TRANSPORTEXECUTIONPLANREQUEST)) {
-            TransportExecutionPlanRequestType transportExecutionPlanRequestType = (TransportExecutionPlanRequestType) DocumentDAOUtility.getUBLDocument(documentId, DocumentType.TRANSPORTEXECUTIONPLANREQUEST);
+        } else if(documentType.equals(DocumentType.TRANSPORTEXECUTIONPLANREQUEST)) {
+            TransportExecutionPlanRequestType transportExecutionPlanRequestType = (TransportExecutionPlanRequestType) DocumentDAOUtility.getUBLDocument(documentId,DocumentType.TRANSPORTEXECUTIONPLANREQUEST);
             ContractType contractType = transportExecutionPlanRequestType.getTransportContract();
-            if (contractType == null) {
+            if(contractType == null){
                 return null;
             }
-            for (ClauseType clause : contractType.getClause()) {
-                if (eu.nimble.service.bp.impl.model.ClauseType.valueOf(clause.getType()) == clauseType) {
+            for(ClauseType clause : contractType.getClause()){
+                if(eu.nimble.service.model.ubl.extension.ClauseType.valueOf(clause.getType()) == clauseType){
                     clauseTypes.add(clause);
                 }
             }
@@ -125,7 +125,7 @@ public class ContractDAOUtility {
             List<ProcessDocumentMetadataDAO> documents = DAOUtility.getProcessDocumentMetadataByProcessInstanceID(processInstance.getProcessInstanceID());
 
             // if the process is completed
-            if (documents.size() > 1) {
+            if(documents.size() > 1) {
                 ProcessDocumentMetadataDAO docMetadata = documents.get(1);
                 ProcessDocumentMetadataDAO reqMetadata = documents.get(0);
                 // if the second document has a future submission date
@@ -135,42 +135,41 @@ public class ContractDAOUtility {
                 }
 
                 // Check whether a contract already exists or not
-                if (reqMetadata.getType().equals(DocumentType.ORDER)) {
-                    OrderType orderType = (OrderType) DocumentDAOUtility.getUBLDocument(reqMetadata.getDocumentID(), DocumentType.ORDER);
-                    if (orderType.getContract().size() > 0) {
+                if(reqMetadata.getType().equals(DocumentType.ORDER)){
+                    OrderType orderType = (OrderType) DocumentDAOUtility.getUBLDocument(reqMetadata.getDocumentID(),DocumentType.ORDER);
+                    if(orderType.getContract().size() > 0){
                         realContract = orderType.getContract().get(0);
                     }
                     break;
-                } else if (reqMetadata.getType().equals(DocumentType.TRANSPORTEXECUTIONPLANREQUEST)) {
-                    TransportExecutionPlanRequestType transportExecutionPlanRequestType = (TransportExecutionPlanRequestType) DocumentDAOUtility.getUBLDocument(reqMetadata.getDocumentID(), DocumentType.TRANSPORTEXECUTIONPLANREQUEST);
+                }
+                else if(reqMetadata.getType().equals(DocumentType.TRANSPORTEXECUTIONPLANREQUEST)){
+                    TransportExecutionPlanRequestType transportExecutionPlanRequestType = (TransportExecutionPlanRequestType) DocumentDAOUtility.getUBLDocument(reqMetadata.getDocumentID(),DocumentType.TRANSPORTEXECUTIONPLANREQUEST);
                     realContract = transportExecutionPlanRequestType.getTransportContract();
                     break;
                 }
 
                 DocumentType documentType = docMetadata.getType();
-                if (documentType.equals(DocumentType.ITEMINFORMATIONRESPONSE) ||
-                        documentType.equals(DocumentType.QUOTATION) ||
-                        documentType.equals(DocumentType.PPAPRESPONSE)) {
+                if(documentType.equals(DocumentType.ITEMINFORMATIONRESPONSE) ||
+                   documentType.equals(DocumentType.QUOTATION) ||
+                   documentType.equals(DocumentType.PPAPRESPONSE)) {
 
                     DocumentClauseType clause = new DocumentClauseType();
                     contract.getClause().add(clause);
                     DocumentReferenceType docRef = new DocumentReferenceType();
                     clause.setClauseDocumentRef(docRef);
+                    clause.setType(eu.nimble.service.model.ubl.extension.ClauseType.DOCUMENT.toString());
 
                     clause.setID(UUID.randomUUID().toString());
                     docRef.setID(docMetadata.getDocumentID());
 
                     if (docMetadata.getType().equals(DocumentType.ITEMINFORMATIONRESPONSE)) {
-                        clause.setType(eu.nimble.service.bp.impl.model.ClauseType.ITEM_DETAILS.toString());
                         docRef.setDocumentType(DocumentType.ITEMINFORMATIONRESPONSE.toString());
 
                     } else if (docMetadata.getType().equals(DocumentType.QUOTATION)) {
-                        clause.setType(eu.nimble.service.bp.impl.model.ClauseType.NEGOTIATION.toString());
                         docRef.setDocumentType(DocumentType.QUOTATION.toString());
                         negotiationClauseFound = true;
 
                     } else if (docMetadata.getType().equals(DocumentType.PPAPRESPONSE)) {
-                        clause.setType(eu.nimble.service.bp.impl.model.ClauseType.PPAP.toString());
                         docRef.setDocumentType(DocumentType.PPAPRESPONSE.toString());
                         ppapClauseFound = true;
                     }
@@ -189,16 +188,17 @@ public class ContractDAOUtility {
                         skipNextInstance = true;
                     }
                 }
-            } while (skipNextInstance == true);
+            } while (skipNextInstance == true) ;
 
         } while (processInstance != null);
 
         // Add new clauses to the contract
-        if (realContract != null) {
-            for (ClauseType clause : contract.getClause()) {
+        if(realContract != null){
+            for (ClauseType clause : contract.getClause()){
                 realContract.getClause().add(clause);
             }
-        } else {
+        }
+        else {
             return contract;
         }
         return realContract;

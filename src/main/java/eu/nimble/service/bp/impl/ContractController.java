@@ -12,6 +12,8 @@ import eu.nimble.service.bp.impl.persistence.util.DAOUtility;
 import eu.nimble.service.bp.impl.persistence.util.DocumentDAOUtility;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.ClauseType;
+import eu.nimble.service.model.ubl.extension.*;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
 import eu.nimble.utility.Configuration;
@@ -111,7 +113,7 @@ public class ContractController {
 
             // parse the derived clause object
             Object clauseObject;
-            if (clause.getType().contentEquals(eu.nimble.service.bp.impl.model.ClauseType.DATA_MONITORING.toString())) {
+            if (clause.getType().contentEquals(eu.nimble.service.model.ubl.extension.ClauseType.DATA_MONITORING.toString())) {
                 try {
                     clauseObject = objectMapper.readValue(serializedClause, DataMonitoringClauseType.class);
                 } catch (IOException e) {
@@ -268,7 +270,7 @@ public class ContractController {
             produces = {"application/json"},
             method = RequestMethod.GET)
     public ResponseEntity getClauseDetails(@PathVariable(value = "documentId", required = true) String documentId,
-                                                       @RequestParam(value = "clauseType", required = true) eu.nimble.service.bp.impl.model.ClauseType clauseType) {
+                                                       @RequestParam(value = "clauseType", required = true) eu.nimble.service.model.ubl.extension.ClauseType clauseType) {
         try {
             logger.info("Getting clause for document: {}, type: {}", documentId, clauseType);
             // check existence and type of the document bound to the contract
@@ -298,21 +300,12 @@ public class ContractController {
             produces = {"application/json"},
             method = RequestMethod.PATCH)
     public ResponseEntity addDocumentClauseToContract(@PathVariable(value = "documentId") String documentId,
-                                                      @RequestParam(value = "clauseType") String clauseType,
                                                       @RequestParam(value = "clauseDocumentId") String clauseDocumentId,
                                                       @RequestHeader(value = "Authorization", required = true) String bearerToken) {
         try {
-            logger.info("Adding document clause to contract. Bounded-document id: {}, clause type: {}, clause document id: {}", documentId, clauseType, clauseDocumentId);
+            logger.info("Adding document clause to contract. Bounded-document id: {}, clause document id: {}", documentId, clauseDocumentId);
 
             // check the passed parameters
-            // check clause type
-            eu.nimble.service.bp.impl.model.ClauseType clauseTypeEnum;
-            try {
-                clauseTypeEnum = eu.nimble.service.bp.impl.model.ClauseType.valueOf(clauseType);
-            } catch (Exception e) {
-                return createResponseEntityAndLog(String.format("Invalid clause type: %s. Possible values are: ", clauseType, eu.nimble.service.bp.impl.model.ClauseType.values().toString()), e, HttpStatus.BAD_REQUEST);
-            }
-
             // check existence and type of the document bound to the contract
             ResponseEntity response = validateDocumentExistence(documentId);
             if (response != null) {
@@ -337,31 +330,25 @@ public class ContractController {
 
             contract.getClause().add(clause);
             clause.setID(UUID.randomUUID().toString());
-            clause.setType(clauseType);
+            clause.setType(eu.nimble.service.model.ubl.extension.ClauseType.DOCUMENT.toString());
             clause.setClauseDocumentRef(docRef);
 
             docRef.setID(clauseDocumentId);
-            if (clauseTypeEnum == eu.nimble.service.bp.impl.model.ClauseType.ITEM_DETAILS) {
-                docRef.setDocumentType(DocumentType.ITEMINFORMATIONRESPONSE.toString());
-            } else if (clauseTypeEnum == eu.nimble.service.bp.impl.model.ClauseType.NEGOTIATION) {
-                docRef.setDocumentType(DocumentType.QUOTATION.toString());
-            } else if (clauseTypeEnum == eu.nimble.service.bp.impl.model.ClauseType.PPAP) {
-                docRef.setDocumentType(DocumentType.PPAPRESPONSE.toString());
-            }
+            docRef.setDocumentType(clauseDocumentMetadata.getType().toString());
 
             // persist the update
             try {
                 EntityIdAwareRepositoryWrapper<ClauseType> repositoryWrapper = new EntityIdAwareRepositoryWrapper(party.getID());
                 document = repositoryWrapper.updateEntity(document);
             } catch (Exception e) {
-                return createResponseEntityAndLog(String.format("Failed to add document clause to contract. Bounded-document id: %s , clause type: %s , clause document id: %s", documentId, clauseType, clauseDocumentId), e, HttpStatus.INTERNAL_SERVER_ERROR);
+                return createResponseEntityAndLog(String.format("Failed to add document clause to contract. Bounded-document id: %s, clause document id: %s", documentId, clauseDocumentId), e, HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
-            logger.info("Added document clause to contract. Bounded-document id: {}, clause type: {}, clause document id: {}, clause id: {}", documentId, clauseType, clauseDocumentId, clause.getID());
+            logger.info("Added document clause to contract. Bounded-document id: {}, clause document id: {}, clause id: {}", documentId, clauseDocumentId, clause.getID());
             return ResponseEntity.ok(document);
 
         } catch (Exception e) {
-            return createResponseEntityAndLog(String.format("Unexpected error while adding clause to contract. Bounded-document id: %s , clause type: %s , clause document id: %s", documentId, clauseType, clauseDocumentId), e, HttpStatus.INTERNAL_SERVER_ERROR);
+            return createResponseEntityAndLog(String.format("Unexpected error while adding clause to contract. Bounded-document id: %s , clause document id: %s", documentId, clauseDocumentId), e, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -393,7 +380,7 @@ public class ContractController {
             ContractType contract = checkDocumentContract(document);
 
             dataMonitoringClause.setID(UUID.randomUUID().toString());
-            dataMonitoringClause.setType(eu.nimble.service.bp.impl.model.ClauseType.DATA_MONITORING.toString());
+            dataMonitoringClause.setType(eu.nimble.service.model.ubl.extension.ClauseType.DATA_MONITORING.toString());
             contract.getClause().add(dataMonitoringClause);
 
             // persist the update

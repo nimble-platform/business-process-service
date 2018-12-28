@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ClauseType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
+import eu.nimble.utility.serialization.ClauseDeserializer;
+import eu.nimble.utility.serialization.XMLGregorianCalendarSerializer;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 

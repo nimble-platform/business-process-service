@@ -50,12 +50,12 @@ public class Test17_ContractControllerTest2 {
     private final int test2_expectedSize = 2;
     private final int test3_expectedSize = 2;
     private final int test4_expectedSize = 2;
-    private final String expectedType = "ITEM_DETAILS";
+    private final String expectedType = "DOCUMENT";
 
     @Test
     public void test1_getClauseDetails() throws Exception {
         MockHttpServletRequestBuilder request = get("/documents/" + Test01_StartControllerTest.orderId1 + "/clauses")
-                .param("clauseType", "ITEM_DETAILS");
+                .param("clauseType", "DOCUMENT");
 
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
