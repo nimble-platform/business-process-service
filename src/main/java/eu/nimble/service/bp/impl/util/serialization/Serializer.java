@@ -36,13 +36,6 @@ public class Serializer {
         return mapper;
     }
 
-    public static ObjectMapper getDefaultObjectMapperForFilledFields() {
-        ObjectMapper mapper = getDefaultObjectMapper();
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
-        return mapper;
-    }
-
     public static ObjectMapper getObjectMapperForSerializingParties() {
         ObjectMapper mapper = getDefaultObjectMapper();
         SimpleModule simpleModule = new SimpleModule();

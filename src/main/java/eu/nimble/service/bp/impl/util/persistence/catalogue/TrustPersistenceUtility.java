@@ -1,10 +1,11 @@
-package eu.nimble.service.bp.impl.persistence.util;
+package eu.nimble.service.bp.impl.util.persistence.catalogue;
 
 import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.impl.model.trust.NegotiationRatings;
-import eu.nimble.service.bp.impl.util.spring.SpringBridge;
+import eu.nimble.service.bp.impl.util.persistence.bp.DAOUtility;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
+import eu.nimble.utility.persistence.JPARepositoryFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,8 +15,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class TrustUtility {
-    private static final Logger logger = LoggerFactory.getLogger(TrustUtility.class);
+public class TrustPersistenceUtility {
+    private static final Logger logger = LoggerFactory.getLogger(TrustPersistenceUtility.class);
+
+    private static final String QUERY_GET_COMPLETED_TASK_BY_PARTY_ID_AND_PROCESS_INSTANCE_ID =
+            "SELECT completedTask FROM QualifyingPartyType qParty JOIN qParty.completedTask completedTask " +
+                    "WHERE qParty.party.ID = :partyId AND completedTask.associatedProcessInstanceID = :processInstanceId";
+
+    public static CompletedTaskType getCompletedTaskByPartyIdAndProcessInstanceId(String partyId, String processInstanceId) {
+        return new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(QUERY_GET_COMPLETED_TASK_BY_PARTY_ID_AND_PROCESS_INSTANCE_ID,
+                new String[]{"partyId", "processInstanceId"}, new Object[]{partyId, processInstanceId});
+    }
 
     public static boolean completedTaskExist(QualifyingPartyType qualifyingParty,String processInstanceID){
         for (CompletedTaskType completedTask:qualifyingParty.getCompletedTask()){
@@ -42,7 +52,7 @@ public class TrustUtility {
          * IMPORTANT:
          * {@link QualifyingPartyType}ies should be existing when a {@link CompletedTaskType} is about to be associated to it
          */
-        QualifyingPartyType qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID,bearerToken);
+        QualifyingPartyType qualifyingParty = CataloguePersistenceUtil.getQualifyingPartyType(partyID,bearerToken);
         CompletedTaskType completedTask = new CompletedTaskType();
         completedTask.setAssociatedProcessInstanceID(processInstanceID);
         completedTask.setDescription(Arrays.asList(status));
@@ -67,7 +77,7 @@ public class TrustUtility {
         }
 
         qualifyingParty.getCompletedTask().add(completedTask);
-        SpringBridge.getInstance().getCatalogueRepository().updateEntity(qualifyingParty);
+        new JPARepositoryFactory().forCatalogueRepository().updateEntity(qualifyingParty);
     }
 
     public static void createCompletedTasksForBothParties(String processInstanceID,String bearerToken,String status) {
@@ -79,8 +89,8 @@ public class TrustUtility {
         String initiatorID = processDocumentMetadata.getInitiatorID();
         String responderID = processDocumentMetadata.getResponderID();
 
-        TrustUtility.createCompletedTask(initiatorID,processDocumentMetadata.getProcessInstanceID(),bearerToken,status);
-        TrustUtility.createCompletedTask(responderID,processDocumentMetadata.getProcessInstanceID(),bearerToken,status);
+        TrustPersistenceUtility.createCompletedTask(initiatorID,processDocumentMetadata.getProcessInstanceID(),bearerToken,status);
+        TrustPersistenceUtility.createCompletedTask(responderID,processDocumentMetadata.getProcessInstanceID(),bearerToken,status);
     }
 
 

@@ -1,9 +1,11 @@
-package eu.nimble.service.bp.impl.persistence.util;
+package eu.nimble.service.bp.impl.util.persistence.catalogue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.hyperjaxb.model.*;
+import eu.nimble.service.bp.impl.util.persistence.bp.DAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.DataIntegratorUtil;
+import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.impl.util.serialization.Serializer;
-import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
@@ -22,11 +24,12 @@ import eu.nimble.service.model.ubl.receiptadvice.ReceiptAdviceType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
 import eu.nimble.service.model.ubl.transportexecutionplan.TransportExecutionPlanType;
 import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
+import eu.nimble.utility.persistence.GenericJPARepository;
+import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.persistence.resource.EntityIdAwareRepositoryWrapper;
 import org.camunda.bpm.engine.ProcessEngines;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.io.IOException;
 import java.util.List;
@@ -35,15 +38,29 @@ import java.util.List;
  * Created by yildiray on 6/7/2017.
  */
 public class DocumentDAOUtility {
+    private static Logger logger = LoggerFactory.getLogger(DocumentDAOUtility.class);
+
     private static final String QUERY_GET_REQUEST_METADATA = "FROM ProcessDocumentMetadataDAO documentMetadata WHERE documentMetadata.processInstanceID=:processInstanceId AND (" +
             "documentMetadata.type = 'REQUESTFORQUOTATION' OR documentMetadata.type = 'ORDER' OR documentMetadata.type = 'DESPATCHADVICE' OR " +
             "documentMetadata.type = 'PPAPREQUEST' OR documentMetadata.type = 'TRANSPORTEXECUTIONPLANREQUEST' OR documentMetadata.type = 'ITEMINFORMATIONREQUEST')";
     private static final String QUERY_GET_RESPONSE_METADATA = "SELECT documentMetadata FROM ProcessDocumentMetadataDAO documentMetadata WHERE documentMetadata.processInstanceID=:processInstanceId AND (" +
             "documentMetadata.type = 'QUOTATION' OR documentMetadata.type = 'ORDERRESPONSESIMPLE' OR documentMetadata.type = 'RECEIPTADVICE' OR " +
             "documentMetadata.type = 'PPAPRESPONSE' OR documentMetadata.type = 'TRANSPORTEXECUTIONPLAN' OR documentMetadata.type = 'ITEMINFORMATIONRESPONSE')";
-    private static final String QUERY_PROCESS_METADATA_DOCUMENT_EXISTS = "SELECT count(*) FROM ProcessDocumentMetadataDAO document WHERE document.documentID = :documentId";
+    private static final String QUERY_GET_ORDER_IDS_FOR_PARTY = "SELECT order_.ID from OrderType order_ join order_.orderLine line where line.lineItem.item.manufacturerParty.ID = :partyId AND line.lineItem.item.manufacturersItemIdentification.ID = :itemId";
+    private static final String QUERY_GET_ORDER_RESPONSE_ID = "SELECT orderResponse.ID FROM OrderResponseSimpleType orderResponse WHERE orderResponse.orderReference.documentReference.ID = :documentId";
+    private static final String QUERY_GET_ORDER_RESPONSE_BY_ID = "SELECT orderResponse FROM OrderResponseSimpleType orderResponse WHERE orderResponse.orderReference.documentReference.ID = :documentId";
 
-    private static Logger logger = LoggerFactory.getLogger(DocumentDAOUtility.class);
+    public static List<String> getOrderIds(String partyId, String itemId) {
+        return new JPARepositoryFactory().forCatalogueRepository().getEntities(QUERY_GET_ORDER_IDS_FOR_PARTY, new String[]{"partyId", "itemId"}, new Object[]{partyId, itemId});
+    }
+
+    public static String getOrderResponseId(String documentId) {
+        return new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(QUERY_GET_ORDER_RESPONSE_ID, new String[]{"documentId"}, new Object[]{documentId});
+    }
+
+    public static OrderResponseSimpleType getOrderResponseSimple(String documentId) {
+        return new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(QUERY_GET_ORDER_RESPONSE_BY_ID, new String[]{"documentId"}, new Object[]{documentId});
+    }
 
     public static ExecutionConfiguration getExecutionConfiguration(String partnerID, String processID, ProcessConfiguration.RoleTypeEnum roleType, String transactionID, ExecutionConfiguration.ApplicationTypeEnum applicationType) {
         String processKey = ProcessEngines.getDefaultProcessEngine().getRepositoryService().getProcessDefinition(processID).getKey();
@@ -85,7 +102,7 @@ public class DocumentDAOUtility {
 
     public static void addDocumentWithMetadata(String processContextId, ProcessDocumentMetadata documentMetadata, Object document) {
         ProcessDocumentMetadataDAO processDocumentDAO = HibernateSwaggerObjectMapper.createProcessDocumentMetadata_DAO(documentMetadata);
-        SpringBridge.getInstance().getProcessDocumentMetadataDAORepository().save(processDocumentDAO);
+        new JPARepositoryFactory().forBpRepository().persistEntity(processDocumentDAO);
         // save ProcessDocumentMetadataDAO
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(processContextId);
         businessProcessContext.setMetadataDAO(processDocumentDAO);
@@ -93,7 +110,7 @@ public class DocumentDAOUtility {
         if (document != null) {
             // remove binary content from the document
             EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(documentMetadata.getInitiatorID());
-            document = repositoryWrapper.updateEntity(document);
+            repositoryWrapper.updateEntityForPersistCases(document);
             // save Object
             businessProcessContext.setDocument(document);
         }
@@ -110,8 +127,9 @@ public class DocumentDAOUtility {
 
         ProcessDocumentMetadataDAO newDocumentDAO = HibernateSwaggerObjectMapper.createProcessDocumentMetadata_DAO(body);
 
-        SpringBridge.getInstance().getProcessDocumentMetadataDAORepository().delete(storedDocumentDAO.getHjid());
-        newDocumentDAO = SpringBridge.getInstance().getProcessDocumentMetadataDAORepository().save(newDocumentDAO);
+        GenericJPARepository repo = new JPARepositoryFactory().forBpRepository();
+        repo.deleteEntityByHjid(ProcessDocumentMetadataDAO.class, storedDocumentDAO.getHjid());
+        repo.persistEntity(newDocumentDAO);
 
         businessProcessContext.setUpdatedDocumentMetadata(newDocumentDAO);
 
@@ -204,11 +222,11 @@ public class DocumentDAOUtility {
         Object document = getUBLDocument(documentID, processDocumentMetadataDAO.getType());
 
         if (document != null) {
-            EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper((JpaRepository) SpringBridge.getInstance().getCatalogueRepository(), processDocumentMetadataDAO.getInitiatorID());
-            repositoryWrapper.delete(document);
+            EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(processDocumentMetadataDAO.getInitiatorID());
+            repositoryWrapper.deleteEntity(document);
         }
 
-        SpringBridge.getInstance().getBusinessProcessRepository().deleteEntityByHjid(ProcessDocumentMetadataDAO.class, processDocumentMetadataDAO.getHjid());
+        new JPARepositoryFactory().forBpRepository().deleteEntityByHjid(ProcessDocumentMetadataDAO.class, processDocumentMetadataDAO.getHjid());
     }
 
     public static Object getUBLDocument(String documentID, DocumentType documentType) {
@@ -271,7 +289,7 @@ public class DocumentDAOUtility {
         String query = "SELECT document FROM " + hibernateEntityName + " document "
                 + " WHERE document.ID = :documentId";
 
-        List resultSet = SpringBridge.getInstance().getCatalogueRepository().getEntities(query, new String[]{"documentId"}, new Object[]{documentID});
+        List resultSet = new JPARepositoryFactory().forCatalogueRepository().getEntities(query, new String[]{"documentId"}, new Object[]{documentID});
 
         if (resultSet.size() > 0) {
             Object document = resultSet.get(0);
@@ -291,7 +309,7 @@ public class DocumentDAOUtility {
     public static ProcessDocumentMetadata getCorrespondingResponseMetadata(String documentID, DocumentType documentType) {
         String id = "";
         if (documentType == DocumentType.ORDER) {
-            id = SpringBridge.getInstance().getCatalogueRepository().getOrderResponseId(documentID);
+            id = getOrderResponseId(documentID);
         }
         return getDocumentMetadata(id);
     }
@@ -299,18 +317,18 @@ public class DocumentDAOUtility {
     public static Object getResponseDocument(String documentID, DocumentType documentType) {
         Object document = null;
         if (documentType == DocumentType.ORDER) {
-            document = SpringBridge.getInstance().getCatalogueRepository().getOrderResponseSimple(documentID);
+            document = getOrderResponseSimple(documentID);
         }
         return document;
     }
 
     public static ProcessDocumentMetadata getRequestMetadata(String processInstanceID) {
-        ProcessDocumentMetadataDAO processDocumentDAO = (ProcessDocumentMetadataDAO) SpringBridge.getInstance().getBusinessProcessRepository().getEntities(QUERY_GET_REQUEST_METADATA, new String[]{"processInstanceId"}, new Object[]{processInstanceID}).get(0);
+        ProcessDocumentMetadataDAO processDocumentDAO = (ProcessDocumentMetadataDAO) new JPARepositoryFactory().forBpRepository().getEntities(QUERY_GET_REQUEST_METADATA, new String[]{"processInstanceId"}, new Object[]{processInstanceID}).get(0);
         return HibernateSwaggerObjectMapper.createProcessDocumentMetadata(processDocumentDAO);
     }
 
     public static ProcessDocumentMetadata getResponseMetadata(String processInstanceID) {
-        List<ProcessDocumentMetadataDAO> processDocumentDAO = SpringBridge.getInstance().getBusinessProcessRepository().getEntities(QUERY_GET_RESPONSE_METADATA, new String[]{"processInstanceId"}, new Object[]{processInstanceID});
+        List<ProcessDocumentMetadataDAO> processDocumentDAO = new JPARepositoryFactory().forBpRepository().getEntities(QUERY_GET_RESPONSE_METADATA, new String[]{"processInstanceId"}, new Object[]{processInstanceID});
         if (processDocumentDAO == null || processDocumentDAO.size() == 0) {
             return null;
         }

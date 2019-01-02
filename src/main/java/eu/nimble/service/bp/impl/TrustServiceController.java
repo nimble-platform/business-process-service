@@ -4,16 +4,19 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.impl.model.trust.NegotiationRatings;
-import eu.nimble.service.bp.impl.persistence.catalogue.CatalogueRepository;
-import eu.nimble.service.bp.impl.persistence.util.CatalogueDAOUtility;
-import eu.nimble.service.bp.impl.persistence.util.DAOUtility;
-import eu.nimble.service.bp.impl.persistence.util.DocumentMetadataDAOUtility;
-import eu.nimble.service.bp.impl.persistence.util.TrustUtility;
+import eu.nimble.service.bp.impl.util.persistence.bp.DAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.bp.DocumentMetadataDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.CataloguePersistenceUtil;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.TrustPersistenceUtility;
 import eu.nimble.service.bp.impl.util.serialization.Serializer;
 import eu.nimble.service.bp.messaging.KafkaSender;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.utility.HttpResponseUtil;
-import io.swagger.annotations.*;
+import eu.nimble.utility.persistence.JPARepositoryFactory;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,8 +41,6 @@ public class TrustServiceController {
 
     @Autowired
     private KafkaSender kafkaSender;
-    @Autowired
-    private CatalogueRepository catalogueRepository;
 
     @ApiOperation(value = "", notes = "Create rating and reviews for the company")
     @ApiResponses(value = {
@@ -62,7 +63,7 @@ public class TrustServiceController {
              */
 
             // check party
-            QualifyingPartyType qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID, bearerToken);
+            QualifyingPartyType qualifyingParty = CataloguePersistenceUtil.getQualifyingPartyType(partyID, bearerToken);
             if (qualifyingParty == null) {
                 return HttpResponseUtil.createResponseEntityAndLog(String.format("No qualifying party exists for the given party id: %s", partyID), HttpStatus.BAD_REQUEST);
             }
@@ -73,7 +74,7 @@ public class TrustServiceController {
             }
             // check the trading partner existence
             String tradingPartnerId = DocumentMetadataDAOUtility.getTradingPartnerId(processDocumentMetadatas.get(0), partyID);
-            PartyType tradingParty = CatalogueDAOUtility.getParty(tradingPartnerId);
+            PartyType tradingParty = CataloguePersistenceUtil.getParty(tradingPartnerId);
             if(tradingParty == null) {
                 return HttpResponseUtil.createResponseEntityAndLog(String.format("No party exists for the given party id: %s", tradingPartnerId), HttpStatus.BAD_REQUEST);
             }
@@ -99,14 +100,14 @@ public class TrustServiceController {
              * LOGIC
              */
 
-            boolean completedTaskExist = TrustUtility.completedTaskExist(qualifyingParty, processInstanceID);
+            boolean completedTaskExist = TrustPersistenceUtility.completedTaskExist(qualifyingParty, processInstanceID);
             if (!completedTaskExist) {
-                TrustUtility.createCompletedTasksForBothParties(processDocumentMetadatas.get(0), bearerToken, "Completed");
+                TrustPersistenceUtility.createCompletedTasksForBothParties(processDocumentMetadatas.get(0), bearerToken, "Completed");
                 // get qualifyingParty (which contains the completed task) again
-                qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID, bearerToken);
+                qualifyingParty = CataloguePersistenceUtil.getQualifyingPartyType(partyID, bearerToken);
             }
-            CompletedTaskType completedTaskType = TrustUtility.fillCompletedTask(qualifyingParty, ratings, reviews, processInstanceID);
-            catalogueRepository.updateEntity(qualifyingParty);
+            CompletedTaskType completedTaskType = TrustPersistenceUtility.fillCompletedTask(qualifyingParty, ratings, reviews, processInstanceID);
+            new JPARepositoryFactory().forCatalogueRepository().updateEntity(qualifyingParty);
 
             // broadcast changes
             kafkaSender.broadcastRatingsUpdate(partyID, bearerToken);
@@ -129,7 +130,7 @@ public class TrustServiceController {
     public ResponseEntity getRatingsSummary(@RequestParam(value = "partyID") String partyID,
                                             @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         logger.info("Getting ratings summary for the party with id: {}",partyID);
-        QualifyingPartyType qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID,bearerToken);
+        QualifyingPartyType qualifyingParty = CataloguePersistenceUtil.getQualifyingPartyType(partyID,bearerToken);
         JSONObject jsonResponse = createJSONResponse(qualifyingParty.getCompletedTask());
         logger.info("Retrieved ratings summary for the party with id: {}",partyID);
         return ResponseEntity.ok(jsonResponse.toString());
@@ -146,8 +147,8 @@ public class TrustServiceController {
                                                              @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         try {
             logger.info("Getting all individual ratings and review for the party with id: {}",partyID);
-            QualifyingPartyType qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID,bearerToken);
-            List<NegotiationRatings> negotiationRatings = TrustUtility.createNegotiationRatings(qualifyingParty.getCompletedTask());
+            QualifyingPartyType qualifyingParty = CataloguePersistenceUtil.getQualifyingPartyType(partyID,bearerToken);
+            List<NegotiationRatings> negotiationRatings = TrustPersistenceUtility.createNegotiationRatings(qualifyingParty.getCompletedTask());
             String ratingsAndReviews = new ObjectMapper().writeValueAsString(negotiationRatings);
             logger.info("Retrieved all individual ratings and review for the party with id: {}",partyID);
             return ResponseEntity.ok(ratingsAndReviews);

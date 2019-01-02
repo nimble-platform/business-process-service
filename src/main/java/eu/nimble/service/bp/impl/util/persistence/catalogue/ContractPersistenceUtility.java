@@ -1,15 +1,15 @@
-package eu.nimble.service.bp.impl.persistence.util;
+package eu.nimble.service.bp.impl.util.persistence.catalogue;
 
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
-import eu.nimble.service.bp.impl.util.spring.SpringBridge;
+import eu.nimble.service.bp.impl.util.persistence.bp.DAOUtility;
 import eu.nimble.service.bp.swagger.model.Process;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ClauseType;
-import eu.nimble.service.model.ubl.extension.*;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
+import eu.nimble.utility.persistence.JPARepositoryFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +18,7 @@ import java.util.UUID;
 /**
  * Created by suat on 26-Apr-18.
  */
-public class ContractDAOUtility {
+public class ContractPersistenceUtility {
     private static final String QUERY_GET_BASE_CLAUSE = "SELECT clause FROM ClauseType clause WHERE clause.ID = :clauseId";
     private static final String QUERY_GET_CONTRACT_CLAUSE = "SELECT clause FROM ContractType contract join contract.clause clause WHERE contract.ID = :contractId AND clause.ID = :clauseId";
     private static final String QUERY_GET_DATA_MONITORING_CLAUSE = "SELECT clause FROM DataMonitoringClauseType clause WHERE clause.ID = :clauseId";
@@ -27,7 +27,7 @@ public class ContractDAOUtility {
     private static final String QUERY_GET_CONTRACT = "SELECT contract FROM ContractType contract WHERE contract.ID = :contractId";
 
     public static ClauseType getBaseClause(String clauseId) {
-        ClauseType clauseType = SpringBridge.getInstance().getCatalogueRepository().getSingleEntity(QUERY_GET_BASE_CLAUSE, new String[]{"clauseId"}, new Object[]{clauseId});
+        ClauseType clauseType = new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(QUERY_GET_BASE_CLAUSE, new String[]{"clauseId"}, new Object[]{clauseId});
         return clauseType;
     }
 
@@ -76,22 +76,22 @@ public class ContractDAOUtility {
     }
 
     public static ClauseType getContractClause(String contractId, String clauseId) {
-        ClauseType clause = SpringBridge.getInstance().getCatalogueRepository().getSingleEntity(QUERY_GET_CONTRACT_CLAUSE, new String[]{"contractId", "clauseId"}, new Object[]{contractId, clauseId});
+        ClauseType clause = new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(QUERY_GET_CONTRACT_CLAUSE, new String[]{"contractId", "clauseId"}, new Object[]{contractId, clauseId});
         return clause;
     }
 
     public static DataMonitoringClauseType getDataMonitoringClause(String clauseId) {
-        DataMonitoringClauseType clause = SpringBridge.getInstance().getCatalogueRepository().getSingleEntity(QUERY_GET_DATA_MONITORING_CLAUSE, new String[]{"clauseId"}, new Object[]{clauseId});
+        DataMonitoringClauseType clause = new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(QUERY_GET_DATA_MONITORING_CLAUSE, new String[]{"clauseId"}, new Object[]{clauseId});
         return clause;
     }
 
     public static DocumentClauseType getDocumentClause(String clauseId) {
-        DocumentClauseType clause = SpringBridge.getInstance().getCatalogueRepository().getSingleEntity(QUERY_GET_DOCUMENT_CLAUSE, new String[]{"clauseId"}, new Object[]{clauseId});
+        DocumentClauseType clause = new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(QUERY_GET_DOCUMENT_CLAUSE, new String[]{"clauseId"}, new Object[]{clauseId});
         return clause;
     }
 
     public static boolean contractExists(String contractID) {
-        int count = ((Long) SpringBridge.getInstance().getCatalogueRepository().getSingleEntity(QUERY_CONTRACT_EXISTS, new String[]{"contractId"}, new Object[]{contractID})).intValue();
+        int count = ((Long) new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(QUERY_CONTRACT_EXISTS, new String[]{"contractId"}, new Object[]{contractID})).intValue();
         if (count > 0) {
             return true;
         } else {
@@ -100,7 +100,7 @@ public class ContractDAOUtility {
     }
 
     public static ContractType getContract(String contractId) {
-        ContractType contract = SpringBridge.getInstance().getCatalogueRepository().getSingleEntity(QUERY_GET_CONTRACT, new String[]{"contractId"}, new Object[]{contractId});
+        ContractType contract = new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(QUERY_GET_CONTRACT, new String[]{"contractId"}, new Object[]{contractId});
         return contract;
     }
 

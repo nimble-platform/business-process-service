@@ -3,10 +3,11 @@ package eu.nimble.service.bp.impl;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceStatus;
-import eu.nimble.service.bp.impl.persistence.bp.ProcessInstanceDAORepository;
-import eu.nimble.service.bp.impl.persistence.catalogue.CatalogueRepository;
-import eu.nimble.service.bp.impl.persistence.util.DAOUtility;
-import eu.nimble.service.bp.impl.persistence.util.DocumentDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.bp.DAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.CataloguePersistenceUtil;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.PartyPersistenceUtil;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.TrustPersistenceUtility;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
@@ -14,6 +15,7 @@ import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.CompletedTaskType;
 import eu.nimble.utility.Configuration;
 import eu.nimble.utility.HttpResponseUtil;
+import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.persistence.resource.ResourceValidationUtil;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -39,9 +41,7 @@ public class ProcessInstanceController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    private ProcessInstanceDAORepository processInstanceDAORepository;
-    @Autowired
-    private CatalogueRepository catalogueRepository;
+    private ResourceValidationUtil resourceValidationUtil;
 
     @ApiOperation(value = "",notes = "Cancel the process instance with the given id")
     @ApiResponses(value = {
@@ -66,7 +66,7 @@ public class ProcessInstanceController {
             CamundaEngine.cancelProcessInstance(processInstanceId);
             // change status of the process
             instanceDAO.setStatus(ProcessInstanceStatus.CANCELLED);
-            processInstanceDAORepository.save(instanceDAO);
+            new JPARepositoryFactory().forBpRepository().updateEntity(instanceDAO);
         }
         catch (Exception e) {
             logger.error("Failed to cancel the process instance with id:{}",processInstanceId,e);
@@ -98,7 +98,7 @@ public class ProcessInstanceController {
             ProcessDocumentMetadata processDocumentMetadata = DocumentDAOUtility.getRequestMetadata(processInstanceID);
             Object document = DocumentDAOUtility.readDocument(documentType, content);
             // validate the entity ids
-            boolean hjidsBelongToCompany = ResourceValidationUtil.hjidsBelongsToParty(document, processDocumentMetadata.getInitiatorID(), Configuration.Standard.UBL.toString());
+            boolean hjidsBelongToCompany = resourceValidationUtil.hjidsBelongsToParty(document, processDocumentMetadata.getInitiatorID(), Configuration.Standard.UBL.toString());
             if(!hjidsBelongToCompany) {
                 return HttpResponseUtil.createResponseEntityAndLog(String.format("Some of the identifiers (hjid fields) do not belong to the party in the passed catalogue: %s", content), null, HttpStatus.BAD_REQUEST, LogLevel.INFO);
             }
@@ -140,7 +140,7 @@ public class ProcessInstanceController {
                                    @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         try {
             logger.info("Getting rating status for process instance: {}, party: {}", processInstanceId, partyId);
-            CompletedTaskType completedTask = catalogueRepository.getCompletedTaskByPartyIdAndProcessInstanceId(partyId, processInstanceId);
+            CompletedTaskType completedTask = TrustPersistenceUtility.getCompletedTaskByPartyIdAndProcessInstanceId(partyId, processInstanceId);
             Boolean rated = false;
             if (completedTask != null && (completedTask.getEvidenceSupplied().size() > 0 || completedTask.getComment().size() > 0)) {
                 rated = true;
