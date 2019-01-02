@@ -1,7 +1,6 @@
 package eu.nimble.service.bp.impl.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.nimble.service.bp.impl.util.serialization.Serializer;
 import eu.nimble.service.bp.processor.orderresponse.DefaultOrderResponseSender;
 import eu.nimble.service.bp.swagger.model.CollaborationGroupResponse;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;

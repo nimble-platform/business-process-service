@@ -15,6 +15,7 @@ import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
 import eu.nimble.utility.Configuration;
 import eu.nimble.utility.HttpResponseUtil;
+import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.resource.EntityIdAwareRepositoryWrapper;
 import eu.nimble.utility.persistence.resource.ResourceValidationUtil;
 import io.swagger.annotations.ApiOperation;
@@ -95,7 +96,7 @@ public class ContractController {
             PartyType party = SpringBridge.getInstance().getIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
 
             // parse the base clause object to get the type
-            ObjectMapper objectMapper = new ObjectMapper().
+            ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper().
                     configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).
                     configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
             ClauseType clause;
@@ -159,7 +160,7 @@ public class ContractController {
             ContractType contract = ContractPersistenceUtility.constructContractForProcessInstances(processInstance);
             logger.info("Constructed contract starting from the process instance: {}", processInstanceId);
 
-            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
             return ResponseEntity.ok().body(objectMapper.writeValueAsString(contract));
         } catch (Exception e) {
             return createResponseEntityAndLog(String.format("Unexpected error while constructing contract for process: ", processInstanceId), e, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -193,7 +194,7 @@ public class ContractController {
                 return createResponseEntityAndLog(String.format("No contract for the given id: %s", contractId), HttpStatus.BAD_REQUEST);
             }
 
-            ObjectMapper mapper = new ObjectMapper();
+            ObjectMapper mapper = JsonSerializationUtility.getObjectMapper();;
 
             logger.info("Retrieved clauses for contract: {}", contractId);
             return ResponseEntity.ok().body(mapper.writeValueAsString(contract.getClause()));

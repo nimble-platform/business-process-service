@@ -3,6 +3,7 @@ package eu.nimble.service.bp.impl.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
 import eu.nimble.service.bp.swagger.model.ProcessPreferences;
+import eu.nimble.utility.JsonSerializationUtility;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
@@ -34,7 +35,7 @@ public class Test08_PreferenceControllerTest {
     private MockMvc mockMvc;
 
     private final String preferenceJSON = "/controller/processPreferenceJSON.txt";
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
     private final String expectedType = "SUCCESS";
 
     @Test

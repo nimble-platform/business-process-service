@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.DataMonitoringClauseType;
 import eu.nimble.service.model.ubl.order.OrderType;
+import eu.nimble.utility.JsonSerializationUtility;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
@@ -39,9 +40,7 @@ public class Test16_ContractControllerTest {
     @Autowired
     private Environment environment;
 
-    private ObjectMapper objectMapper = new ObjectMapper().
-            configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).
-            configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
+    private ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
     private final String dataMonitoringJSON = "/controller/dataMonitoringJSON.txt";
     private final int test1_expectedResult = 1;
     private final int test2_expectedSize = 2;
@@ -57,9 +56,6 @@ public class Test16_ContractControllerTest {
                 .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
-        ObjectMapper objectMapper = new ObjectMapper().
-                configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).
-                configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
         OrderType order = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), OrderType.class);
 
         Assert.assertEquals(test1_expectedResult, order.getContract().get(0).getClause().size());

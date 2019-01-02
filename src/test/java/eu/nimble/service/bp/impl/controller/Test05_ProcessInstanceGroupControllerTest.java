@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.swagger.model.CollaborationGroup;
 import eu.nimble.service.bp.swagger.model.CollaborationGroupResponse;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroup;
+import eu.nimble.utility.JsonSerializationUtility;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -47,7 +48,7 @@ public class Test05_ProcessInstanceGroupControllerTest {
                 .param("partyID", partyId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
-        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
         CollaborationGroupResponse collaborationGroupResponse = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), CollaborationGroupResponse.class);
         Assert.assertSame(test1_expectedValue, collaborationGroupResponse.getSize());
         for (CollaborationGroup cg : collaborationGroupResponse.getCollaborationGroups()) {
@@ -66,7 +67,7 @@ public class Test05_ProcessInstanceGroupControllerTest {
         MockHttpServletRequestBuilder request = get("/group/" + Test05_ProcessInstanceGroupControllerTest.processInstanceGroupIIR1);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
-        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
         ProcessInstanceGroup processInstanceGroup = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ProcessInstanceGroup.class);
 
         Assert.assertSame(test2_expectedValue, processInstanceGroup.getProcessInstanceIDs().size());

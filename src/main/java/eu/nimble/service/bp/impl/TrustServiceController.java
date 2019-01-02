@@ -8,7 +8,6 @@ import eu.nimble.service.bp.impl.util.persistence.bp.DAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.bp.DocumentMetadataDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.catalogue.CataloguePersistenceUtil;
 import eu.nimble.service.bp.impl.util.persistence.catalogue.TrustPersistenceUtility;
-import eu.nimble.service.bp.impl.util.serialization.Serializer;
 import eu.nimble.service.bp.messaging.KafkaSender;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.utility.HttpResponseUtil;
@@ -150,7 +149,7 @@ public class TrustServiceController {
             logger.info("Getting all individual ratings and review for the party with id: {}",partyID);
             QualifyingPartyType qualifyingParty = CataloguePersistenceUtil.getQualifyingPartyType(partyID,bearerToken);
             List<NegotiationRatings> negotiationRatings = TrustPersistenceUtility.createNegotiationRatings(qualifyingParty.getCompletedTask());
-            String ratingsAndReviews = new ObjectMapper().writeValueAsString(negotiationRatings);
+            String ratingsAndReviews = JsonSerializationUtility.getObjectMapper().writeValueAsString(negotiationRatings);
             logger.info("Retrieved all individual ratings and review for the party with id: {}",partyID);
             return ResponseEntity.ok(ratingsAndReviews);
         }

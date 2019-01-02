@@ -1,6 +1,7 @@
 package eu.nimble.service.bp.impl.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.nimble.utility.JsonSerializationUtility;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -29,7 +30,7 @@ public class Test14_ProcessInstanceGroupControllerTest2 {
     @Autowired
     private MockMvc mockMvc;
 
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
 
     private final String test1_expectedValue = "true";
 

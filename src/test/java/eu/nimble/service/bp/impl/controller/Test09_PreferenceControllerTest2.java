@@ -3,6 +3,7 @@ package eu.nimble.service.bp.impl.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
 import eu.nimble.service.bp.swagger.model.ProcessPreferences;
+import eu.nimble.utility.JsonSerializationUtility;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
@@ -37,7 +38,7 @@ public class Test09_PreferenceControllerTest2 {
     private final String partnerId = "706";
     private final String targetPartnerID = "1024";
     private final String expectedType = "SUCCESS";
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
 
     @Test
     public void getProcessPartnerPreference() throws Exception {

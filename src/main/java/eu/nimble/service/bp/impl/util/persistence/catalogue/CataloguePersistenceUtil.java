@@ -34,7 +34,7 @@ public class CataloguePersistenceUtil {
         if (catalogueParty != null) {
             return catalogueParty;
         } else {
-            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();;
             objectMapper = objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
             try {
                 JSONObject object = new JSONObject(objectMapper.writeValueAsString(party));

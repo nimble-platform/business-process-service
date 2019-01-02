@@ -12,6 +12,7 @@ import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentDAOUtility;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.CatalogueLineType;
 import eu.nimble.service.model.ubl.order.OrderType;
+import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -81,7 +82,7 @@ public class EPCController {
             HttpResponse<com.mashape.unirest.http.JsonNode> response = Unirest.get(dataChannelServiceUrlStr)
                     .header("Authorization", bearerToken).asJson();
 
-            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
             List<EpcCodes> epcCodesList = objectMapper.readValue(response.getBody().toString(),new TypeReference<List<EpcCodes>>(){});
 
             if(epcCodesList.size() <= 0){
@@ -154,7 +155,7 @@ public class EPCController {
                     .header("Authorization", bearerToken).asString();
 
             List<String> epcCodes = new ArrayList<>();
-            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();;
             List<EpcCodes> epcCodesList = objectMapper.readValue(response.getBody().toString(),new TypeReference<List<EpcCodes>>(){});
 
             for(EpcCodes epcCodes1 : epcCodesList){

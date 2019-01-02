@@ -1,6 +1,5 @@
 package eu.nimble.service.bp.impl.controller;
 
-import eu.nimble.service.bp.impl.util.serialization.Serializer;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
 import eu.nimble.service.model.ubl.commonbasiccomponents.BinaryObjectType;
