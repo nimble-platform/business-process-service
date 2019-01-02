@@ -63,7 +63,7 @@ public class Test28_HjidCheckTest {
 
         ItemInformationRequestType itemInformationRequest = Serializer.getDefaultObjectMapper().readValue(mvcResult.getResponse().getContentAsString(), ItemInformationRequestType.class);
         // update hjid field
-        itemInformationRequest.getItemInformationRequestLine().get(0).getSalesItem().get(0).getItem().getCommodityClassification().get(0).getItemClassificationCode().setHjid(iir.getSellerSupplierParty().getParty().getPostalAddress().getHjid());
+        itemInformationRequest.getItemInformationRequestLine().get(0).getSalesItem().get(0).getItem().getCommodityClassification().get(0).getItemClassificationCode().setHjid(iir.getHjid());
 
         request = put("/processInstance")
                 .contentType(MediaType.APPLICATION_JSON)
