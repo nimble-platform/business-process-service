@@ -24,6 +24,7 @@ import eu.nimble.service.model.ubl.receiptadvice.ReceiptAdviceType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
 import eu.nimble.service.model.ubl.transportexecutionplan.TransportExecutionPlanType;
 import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
+import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.persistence.resource.EntityIdAwareRepositoryWrapper;
@@ -188,7 +189,7 @@ public class DocumentDAOUtility {
 
     public static <T> T readDocument(DocumentType documentType, String content) {
         Class<T> klass = getDocumentClass(documentType);
-        ObjectMapper objectMapper = Serializer.getDefaultObjectMapper();
+        ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
         try {
             return objectMapper.readValue(content, klass);
 

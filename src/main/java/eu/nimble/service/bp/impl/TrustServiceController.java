@@ -12,6 +12,7 @@ import eu.nimble.service.bp.impl.util.serialization.Serializer;
 import eu.nimble.service.bp.messaging.KafkaSender;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.utility.HttpResponseUtil;
+import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -83,7 +84,7 @@ public class TrustServiceController {
                 return HttpResponseUtil.createResponseEntityAndLog(String.format("Party: %s is not included in the process instance: {}", tradingPartnerId, processInstanceID), HttpStatus.BAD_REQUEST);
             }
             // check the values
-            ObjectMapper objectMapper = Serializer.getDefaultObjectMapper();
+            ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
             List<EvidenceSuppliedType> ratings = null;
             List<CommentType> reviews = null;
             if(ratingsString == null && reviewsString == null) {

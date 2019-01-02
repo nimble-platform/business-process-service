@@ -5,6 +5,7 @@ import eu.nimble.service.bp.impl.util.serialization.Serializer;
 import eu.nimble.service.bp.swagger.model.CollaborationGroup;
 import eu.nimble.service.bp.swagger.model.CollaborationGroupResponse;
 import eu.nimble.service.model.ubl.order.OrderType;
+import eu.nimble.utility.JsonSerializationUtility;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -85,7 +86,7 @@ public class Test24_CollaborationGroupTest2 {
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
        // OrderType order = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), OrderType.class);
-        OrderType order = Serializer.getDefaultObjectMapper().readValue(mvcResult.getResponse().getContentAsString(),OrderType.class);
+        OrderType order = JsonSerializationUtility.getObjectMapper().readValue(mvcResult.getResponse().getContentAsString(),OrderType.class);
         Assert.assertEquals(productName,order.getOrderLine().get(0).getLineItem().getItem().getName());
     }
 }

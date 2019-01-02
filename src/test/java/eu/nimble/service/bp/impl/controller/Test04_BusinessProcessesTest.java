@@ -400,8 +400,8 @@ public class Test04_BusinessProcessesTest {
         ProcessInstanceInputMessage orderProcessInstanceInputMessage = JsonSerializationUtility.getObjectMapper().readValue(orderProcessInstanceInputMessageString, ProcessInstanceInputMessage.class);
         ProcessInstanceInputMessage orderResponseProcessInstanceInputMessage = JsonSerializationUtility.getObjectMapper().readValue(orderResponseProcessInstanceInputMessageString, ProcessInstanceInputMessage.class);
 
-        OrderType order = Serializer.getDefaultObjectMapper().readValue(orderProcessInstanceInputMessage.getVariables().getContent(), OrderType.class);
-        OrderResponseSimpleType orderResponse = Serializer.getDefaultObjectMapper().readValue(orderResponseProcessInstanceInputMessage.getVariables().getContent(), OrderResponseSimpleType.class);
+        OrderType order = JsonSerializationUtility.getObjectMapper().readValue(orderProcessInstanceInputMessage.getVariables().getContent(), OrderType.class);
+        OrderResponseSimpleType orderResponse = JsonSerializationUtility.getObjectMapper().readValue(orderResponseProcessInstanceInputMessage.getVariables().getContent(), OrderResponseSimpleType.class);
 
         Method method = DefaultOrderResponseSender.class.getDeclaredMethod("needToCreateDataChannel", OrderType.class, OrderResponseSimpleType.class);
         method.setAccessible(true);

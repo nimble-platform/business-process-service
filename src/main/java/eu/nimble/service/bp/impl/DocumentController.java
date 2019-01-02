@@ -17,6 +17,7 @@ import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
 import eu.nimble.utility.JAXBUtility;
+import eu.nimble.utility.JsonSerializationUtility;
 import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +53,7 @@ public class DocumentController implements DocumentApi {
                 return createResponseEntityAndLog(String.format("No document for id: %s", documentID), HttpStatus.NOT_FOUND);
             }
             try {
-                String serializedDocument = Serializer.getDefaultObjectMapper().writeValueAsString(document);
+                String serializedDocument = JsonSerializationUtility.getObjectMapper().writeValueAsString(document);
                 logger.info("Retrieved details of the document: {}", documentID);
                 return new ResponseEntity<>(serializedDocument, HttpStatus.OK);
 

@@ -8,11 +8,11 @@ import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.impl.model.statistics.NonOrderedProducts;
 import eu.nimble.service.bp.impl.util.persistence.bp.DAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
-import eu.nimble.service.bp.impl.util.serialization.Serializer;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.CompletedTaskType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.QualifyingPartyType;
+import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -137,7 +137,7 @@ public class StatisticsPersistenceUtility {
         // get inactive companies
         List<PartyType> inactiveParties = new ArrayList<>();
         InputStream parties = SpringBridge.getInstance().getIdentityClient().getAllPartyIds(bearerToken, new ArrayList<>()).body().asInputStream();
-        ObjectMapper mapper = Serializer.getDefaultObjectMapper();
+        ObjectMapper mapper = JsonSerializationUtility.getObjectMapper();
         JsonFactory factory = mapper.getFactory();
         JsonParser parser = factory.createParser(parties);
         JsonNode allParties = mapper.readTree(parser);
