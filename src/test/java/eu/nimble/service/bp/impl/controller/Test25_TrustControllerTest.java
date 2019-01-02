@@ -2,6 +2,7 @@ package eu.nimble.service.bp.impl.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.swagger.model.CollaborationGroupResponse;
+import org.junit.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,6 +40,8 @@ public class Test25_TrustControllerTest {
     private final String buyerPartyID = "1339";
     private final String collaborationRole = "BUYER";
     private final String relatedProduct = "QDeneme";
+
+    private static String processInstanceId;
     @Test
     public void test1_createRatingAndReview() throws Exception {
         // get Receipt advice process instance id
@@ -51,18 +54,27 @@ public class Test25_TrustControllerTest {
         CollaborationGroupResponse collaborationGroupResponse = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), CollaborationGroupResponse.class);
 
         int size = collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().get(0).getProcessInstanceIDs().size();
-        String processInstanceID = collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().get(0).getProcessInstanceIDs().get(size - 1);
+        processInstanceId = collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().get(0).getProcessInstanceIDs().get(size - 1);
 
         String ratings = "[{\"id\":\"QualityOfTheNegotiationProcess\",\"valueDecimal\":5},{\"id\":\"QualityOfTheOrderingProcess\",\"valueDecimal\":3},{\"id\":\"ResponseTime\",\"valueDecimal\":4},{\"id\":\"ProductListingAccuracy\",\"valueDecimal\":2},{\"id\":\"ConformanceToOtherAgreedTerms\",\"valueDecimal\":5},{\"id\":\"DeliveryAndPackaging\",\"valueDecimal\":3}]";
         String reviews = "[{\"comment\":\"It's working\",\"typeCode\":{\"value\":\"that's ok\",\"name\":\"\",\"uri\":\"\",\"listID\":\"\",\"listURI\":\"\"}},{\"comment\":\"not bad\",\"typeCode\":{\"value\":\"cool\",\"name\":\"\",\"uri\":\"\",\"listID\":\"\",\"listURI\":\"\"}}]";
         // create ratings and reviews
         request = post("/ratingsAndReviews")
                 .header("Authorization",environment.getProperty("nimble.test-responder-token"))
-                .param("processInstanceID",processInstanceID)
+                .param("processInstanceID",processInstanceId)
                 .param("reviews", reviews)
                 .param("ratings",ratings)
                 .param("partyID", partyID);
         mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
+    }
+
+    @Test
+    public void test2_isRated() throws Exception{
+        MockHttpServletRequestBuilder request = get("/processInstance/"+processInstanceId+"/isRated")
+                .header("Authorization", environment.getProperty("nimble.test-responder-token"))
+                .param("partyId","706");
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+        Assert.assertEquals("true",mvcResult.getResponse().getContentAsString());
     }
 }
