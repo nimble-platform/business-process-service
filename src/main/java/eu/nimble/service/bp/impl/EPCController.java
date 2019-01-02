@@ -7,19 +7,19 @@ import com.mashape.unirest.http.Unirest;
 import eu.nimble.service.bp.config.GenericConfig;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
 import eu.nimble.service.bp.impl.model.tt.TTInfo;
-import eu.nimble.service.bp.impl.persistence.catalogue.CatalogueRepository;
-import eu.nimble.service.bp.impl.persistence.util.CatalogueDAOUtility;
-import eu.nimble.service.bp.impl.persistence.util.DocumentDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.CataloguePersistenceUtil;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentDAOUtility;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.CatalogueLineType;
 import eu.nimble.service.model.ubl.order.OrderType;
+import eu.nimble.utility.JsonSerializationUtility;
+import eu.nimble.utility.persistence.JPARepositoryFactory;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -28,7 +28,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Created by suat on 06-Jun-18.
@@ -37,9 +40,6 @@ import java.util.*;
 public class EPCController {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
-    @Autowired
-    private CatalogueRepository catalogueRepository;
 
     static class EpcCodes {
         private String orderId;
@@ -82,7 +82,7 @@ public class EPCController {
             HttpResponse<com.mashape.unirest.http.JsonNode> response = Unirest.get(dataChannelServiceUrlStr)
                     .header("Authorization", bearerToken).asJson();
 
-            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
             List<EpcCodes> epcCodesList = objectMapper.readValue(response.getBody().toString(),new TypeReference<List<EpcCodes>>(){});
 
             if(epcCodesList.size() <= 0){
@@ -95,7 +95,7 @@ public class EPCController {
 
             OrderType order = (OrderType) DocumentDAOUtility.getUBLDocument(orderId, DocumentType.ORDER);
 
-            CatalogueLineType catalogueLine = CatalogueDAOUtility.getCatalogueLine(order);
+            CatalogueLineType catalogueLine = CataloguePersistenceUtil.getCatalogueLine(order);
 
 
             TTInfo ttInfo = new TTInfo();
@@ -127,7 +127,7 @@ public class EPCController {
                                                       @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         logger.info("Getting epc codes for productId: {}", publishedProductID);
         try {
-            CatalogueLineType catalogueLine = catalogueRepository.getSingleEntityByHjid(CatalogueLineType.class, publishedProductID);
+            CatalogueLineType catalogueLine = new JPARepositoryFactory().forCatalogueRepository().getSingleEntityByHjid(CatalogueLineType.class, publishedProductID);
 
             if(catalogueLine == null){
                 String msg = "There is no catalogue line for hjid : %d";
@@ -135,7 +135,7 @@ public class EPCController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(String.format(msg,publishedProductID));
             }
 
-            List<String> orderIds = CatalogueDAOUtility.getOrderIds(catalogueLine);
+            List<String> orderIds = DocumentDAOUtility.getOrderIds(catalogueLine.getGoodsItem().getItem().getManufacturerParty().getID(), catalogueLine.getGoodsItem().getItem().getManufacturersItemIdentification().getID());
 
             String params = "";
             int size = orderIds.size();
@@ -155,7 +155,7 @@ public class EPCController {
                     .header("Authorization", bearerToken).asString();
 
             List<String> epcCodes = new ArrayList<>();
-            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();;
             List<EpcCodes> epcCodesList = objectMapper.readValue(response.getBody().toString(),new TypeReference<List<EpcCodes>>(){});
 
             for(EpcCodes epcCodes1 : epcCodesList){

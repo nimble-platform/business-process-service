@@ -1,10 +1,10 @@
 package eu.nimble.service.bp.impl.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.nimble.service.bp.impl.util.serialization.Serializer;
 import eu.nimble.service.bp.swagger.model.CollaborationGroup;
 import eu.nimble.service.bp.swagger.model.CollaborationGroupResponse;
 import eu.nimble.service.model.ubl.order.OrderType;
+import eu.nimble.utility.JsonSerializationUtility;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -20,9 +20,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -85,7 +83,7 @@ public class Test24_CollaborationGroupTest2 {
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
        // OrderType order = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), OrderType.class);
-        OrderType order = Serializer.getDefaultObjectMapper().readValue(mvcResult.getResponse().getContentAsString(),OrderType.class);
+        OrderType order = JsonSerializationUtility.getObjectMapper().readValue(mvcResult.getResponse().getContentAsString(),OrderType.class);
         Assert.assertEquals(productName,order.getOrderLine().get(0).getLineItem().getItem().getName());
     }
 }

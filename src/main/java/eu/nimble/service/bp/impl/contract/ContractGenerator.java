@@ -2,8 +2,7 @@ package eu.nimble.service.bp.impl.contract;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
-import eu.nimble.service.bp.impl.persistence.util.DocumentDAOUtility;
-import eu.nimble.service.bp.impl.util.serialization.Serializer;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentDAOUtility;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
@@ -15,6 +14,7 @@ import eu.nimble.service.model.ubl.ppaprequest.PpapRequestType;
 import eu.nimble.service.model.ubl.ppapresponse.PpapResponseType;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
+import eu.nimble.utility.JsonSerializationUtility;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.util.Units;
@@ -162,7 +162,7 @@ public class ContractGenerator {
                 text = text.replace("$decision_id",decision_id_default);
             }
             else {
-                ObjectMapper objectMapper = Serializer.getObjectMapperForContracts();
+                ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
                 List<TradingTermType> tradingTermTypeList = objectMapper.readValue(tradingTerms,objectMapper.getTypeFactory().constructCollectionType(List.class,TradingTermType.class));
 
                 PartyType supplierParty = SpringBridge.getInstance().getIdentityClientTyped().getParty(bearerToken,sellerPartyId);

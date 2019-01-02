@@ -6,18 +6,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
-import eu.nimble.service.bp.impl.persistence.catalogue.CatalogueRepository;
-import eu.nimble.service.bp.impl.persistence.util.ContractDAOUtility;
-import eu.nimble.service.bp.impl.persistence.util.DAOUtility;
-import eu.nimble.service.bp.impl.persistence.util.DocumentDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.bp.DAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.ContractPersistenceUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentDAOUtility;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
-import eu.nimble.service.model.ubl.commonaggregatecomponents.ClauseType;
-import eu.nimble.service.model.ubl.extension.*;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
 import eu.nimble.utility.Configuration;
 import eu.nimble.utility.HttpResponseUtil;
+import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.resource.EntityIdAwareRepositoryWrapper;
 import eu.nimble.utility.persistence.resource.ResourceValidationUtil;
 import io.swagger.annotations.ApiOperation;
@@ -44,12 +42,9 @@ import static eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog;
 @Controller
 public class ContractController {
     private final Logger logger = LoggerFactory.getLogger(ContractController.class);
-//
-//    @Autowired
-//    private BusinessProcessRepository businessProcessRepository;
 
     @Autowired
-    private CatalogueRepository catalogueRepository;
+    private ResourceValidationUtil resourceValidationUtil;
 
     /**
      * Retrieves the {@link ClauseType} specified by the <code>clauseId</code>
@@ -73,7 +68,7 @@ public class ContractController {
     public ResponseEntity getClauseDetails(@PathVariable(value = "clauseId", required = true) String clauseId) {
         try {
             logger.info("Getting clause with id: {}", clauseId);
-            ClauseType clause = ContractDAOUtility.getClause(clauseId);
+            ClauseType clause = ContractPersistenceUtility.getClause(clauseId);
             if (clause == null) {
                 return createResponseEntityAndLog(String.format("No clause for the given id: %s", clauseId), HttpStatus.NOT_FOUND);
             }
@@ -101,7 +96,7 @@ public class ContractController {
             PartyType party = SpringBridge.getInstance().getIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
 
             // parse the base clause object to get the type
-            ObjectMapper objectMapper = new ObjectMapper().
+            ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper().
                     configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).
                     configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
             ClauseType clause;
@@ -129,14 +124,14 @@ public class ContractController {
             }
 
             // validate the entity ids
-            boolean hjidsBelongToCompany = ResourceValidationUtil.hjidsBelongsToParty(clauseObject, party.getID(), Configuration.Standard.UBL.toString());
+            boolean hjidsBelongToCompany = resourceValidationUtil.hjidsBelongsToParty(clauseObject, party.getID(), Configuration.Standard.UBL.toString());
             if(!hjidsBelongToCompany) {
                 return HttpResponseUtil.createResponseEntityAndLog(String.format("Some of the identifiers (hjid fields) do not belong to the party in the passed clause: %s", serializedClause), null, HttpStatus.BAD_REQUEST, LogLevel.INFO);
             }
 
             // update clause
             try {
-                EntityIdAwareRepositoryWrapper<ClauseType> repositoryWrapper = new EntityIdAwareRepositoryWrapper(party.getID());
+                EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(party.getID());
                 clauseObject = repositoryWrapper.updateEntity(clauseObject);
             } catch (Exception e) {
                 return createResponseEntityAndLog("Failed to update the clause: " + clauseId, e, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -162,10 +157,10 @@ public class ContractController {
                 return createResponseEntityAndLog(String.format("Invalid process instance id: %s", processInstanceId), HttpStatus.BAD_REQUEST);
             }
 
-            ContractType contract = ContractDAOUtility.constructContractForProcessInstances(processInstance);
+            ContractType contract = ContractPersistenceUtility.constructContractForProcessInstances(processInstance);
             logger.info("Constructed contract starting from the process instance: {}", processInstanceId);
 
-            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
             return ResponseEntity.ok().body(objectMapper.writeValueAsString(contract));
         } catch (Exception e) {
             return createResponseEntityAndLog(String.format("Unexpected error while constructing contract for process: ", processInstanceId), e, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -194,12 +189,12 @@ public class ContractController {
     public ResponseEntity getClausesOfContract(@PathVariable(value = "contractId") String contractId) {
         try {
             logger.info("Getting clauses for contract: {}", contractId);
-            ContractType contract = ContractDAOUtility.getContract(contractId);
+            ContractType contract = ContractPersistenceUtility.getContract(contractId);
             if (contract == null) {
                 return createResponseEntityAndLog(String.format("No contract for the given id: %s", contractId), HttpStatus.BAD_REQUEST);
             }
 
-            ObjectMapper mapper = new ObjectMapper();
+            ObjectMapper mapper = JsonSerializationUtility.getObjectMapper();;
 
             logger.info("Retrieved clauses for contract: {}", contractId);
             return ResponseEntity.ok().body(mapper.writeValueAsString(contract.getClause()));
@@ -226,13 +221,13 @@ public class ContractController {
             PartyType party = SpringBridge.getInstance().getIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
 
             // check existence of contract
-            ContractType contract = ContractDAOUtility.getContract(contractId);
+            ContractType contract = ContractPersistenceUtility.getContract(contractId);
             if (contract == null) {
                 return createResponseEntityAndLog("Invalid contract id: " + contractId, HttpStatus.BAD_REQUEST);
             }
 
             // check existence of clause
-            ClauseType clause = ContractDAOUtility.getContractClause(contractId, clauseId);
+            ClauseType clause = ContractPersistenceUtility.getContractClause(contractId, clauseId);
             if (clause == null) {
                 return createResponseEntityAndLog("Invalid clause id: " + clauseId + " for contract: " + contractId, HttpStatus.BAD_REQUEST);
             }
@@ -246,7 +241,7 @@ public class ContractController {
             }
 
             // return updated version
-            contract = ContractDAOUtility.getContract(contractId);
+            contract = ContractPersistenceUtility.getContract(contractId);
             logger.info("Deleted clause: {} from contract: {}", clauseId, contractId);
             return ResponseEntity.ok().body(contract);
 
@@ -283,7 +278,7 @@ public class ContractController {
                 return createResponseEntityAndLog(String.format("Invalid bounded-document type: %s", documentType), HttpStatus.BAD_REQUEST);
             }
 
-            List<ClauseType> clause = ContractDAOUtility.getClause(documentMetadata.getDocumentID(), documentType, clauseType);
+            List<ClauseType> clause = ContractPersistenceUtility.getClause(documentMetadata.getDocumentID(), documentType, clauseType);
             if (clause == null || clause.size() == 0) {
                return createResponseEntityAndLog(String.format("No clause for the document: %s, clause type: %s", documentId, clauseType), HttpStatus.NOT_FOUND);
             }
@@ -338,7 +333,7 @@ public class ContractController {
 
             // persist the update
             try {
-                EntityIdAwareRepositoryWrapper<ClauseType> repositoryWrapper = new EntityIdAwareRepositoryWrapper(party.getID());
+                EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(party.getID());
                 document = repositoryWrapper.updateEntity(document);
             } catch (Exception e) {
                 return createResponseEntityAndLog(String.format("Failed to add document clause to contract. Bounded-document id: %s, clause document id: %s", documentId, clauseDocumentId), e, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -385,7 +380,7 @@ public class ContractController {
 
             // persist the update
             try {
-                EntityIdAwareRepositoryWrapper<ClauseType> repositoryWrapper = new EntityIdAwareRepositoryWrapper(party.getID());
+                EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(party.getID());
                 document = repositoryWrapper.updateEntity(document);
             } catch (Exception e) {
                 return createResponseEntityAndLog("Failed to add monitoring clause to contract. Bounded-document id: " + documentId, e, HttpStatus.INTERNAL_SERVER_ERROR);

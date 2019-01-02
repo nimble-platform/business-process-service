@@ -1,4 +1,4 @@
-package eu.nimble.service.bp.impl.persistence.util;
+package eu.nimble.service.bp.impl.util.persistence.catalogue;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
@@ -6,11 +6,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.impl.model.statistics.NonOrderedProducts;
-import eu.nimble.service.bp.impl.util.serialization.Serializer;
+import eu.nimble.service.bp.impl.util.persistence.bp.DAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.CompletedTaskType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.QualifyingPartyType;
+import eu.nimble.utility.JsonSerializationUtility;
+import eu.nimble.utility.persistence.JPARepositoryFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,8 +26,8 @@ import java.util.*;
 /**
  * Created by suat on 12-Jun-18.
  */
-public class StatisticsDAOUtility {
-    private static final Logger logger = LoggerFactory.getLogger(StatisticsDAOUtility.class);
+public class StatisticsPersistenceUtility {
+    private static final Logger logger = LoggerFactory.getLogger(StatisticsPersistenceUtility.class);
 
     public static long getActionRequiredProcessCount(String partyID,String role,Boolean archived){
         List<String> parameterNames = new ArrayList<>();
@@ -46,7 +49,7 @@ public class StatisticsDAOUtility {
         parameterNames.add("partyId");
         parameterValues.add(archived);
         parameterValues.add(partyID);
-        List<String> count = SpringBridge.getInstance().getBusinessProcessRepository().getEntities(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
+        List<String> count = new JPARepositoryFactory().forBpRepository().getEntities(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
         return count.size();
     }
 
@@ -79,7 +82,7 @@ public class StatisticsDAOUtility {
             parameterValues.add(orderIds.get(orderIds.size()-1));
         }
 
-        double tradingVolume = ((BigDecimal) SpringBridge.getInstance().getCatalogueRepository().getSingleEntity(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray())).doubleValue();
+        double tradingVolume = ((BigDecimal) new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray())).doubleValue();
         return tradingVolume;
     }
 
@@ -100,7 +103,7 @@ public class StatisticsDAOUtility {
                 " where line.lineItem.item.manufacturerParty.ID = item.manufacturerParty.ID) ";
 
         NonOrderedProducts nonOrderedProducts = new NonOrderedProducts();
-        List<Object> results = SpringBridge.getInstance().getCatalogueRepository().getEntities(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
+        List<Object> results = new JPARepositoryFactory().forCatalogueRepository().getEntities(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
         for (Object result : results) {
             List<String> dataArray = (List<String>) result;
             nonOrderedProducts.addProduct(dataArray.get(0), dataArray.get(1), dataArray.get(2), dataArray.get(3));
@@ -119,13 +122,13 @@ public class StatisticsDAOUtility {
         }
 
         Set<String> activePartyIds = new HashSet<>();
-        List<String> results = SpringBridge.getInstance().getBusinessProcessRepository().getEntities(query);
+        List<String> results = new JPARepositoryFactory().forCatalogueRepository().getEntities(query);
 
         activePartyIds.addAll(results);
 
         // get parties for a process that have completed already. Therefore return both the initiatorID and responderID
         query = "select distinct new list(docMetadata.initiatorID, docMetadata.responderID) from ProcessDocumentMetadataDAO docMetadata where docMetadata.status <> 'WAITINGRESPONSE'";
-        List<List<String>> secondResults = SpringBridge.getInstance().getBusinessProcessRepository().getEntities(query);
+        List<List<String>> secondResults = new JPARepositoryFactory().forCatalogueRepository().getEntities(query);
         for (List<String> processPartyIds : secondResults) {
             activePartyIds.add(processPartyIds.get(0));
             activePartyIds.add(processPartyIds.get(1));
@@ -134,7 +137,7 @@ public class StatisticsDAOUtility {
         // get inactive companies
         List<PartyType> inactiveParties = new ArrayList<>();
         InputStream parties = SpringBridge.getInstance().getIdentityClient().getAllPartyIds(bearerToken, new ArrayList<>()).body().asInputStream();
-        ObjectMapper mapper = Serializer.getDefaultObjectMapper();
+        ObjectMapper mapper = JsonSerializationUtility.getObjectMapper();
         JsonFactory factory = mapper.getFactory();
         JsonParser parser = factory.createParser(parties);
         JsonNode allParties = mapper.readTree(parser);
@@ -158,7 +161,7 @@ public class StatisticsDAOUtility {
     public static double calculateAverageNegotiationTime(String partyID,String bearerToken){
         int numberOfNegotiations = 0;
         double totalTime = 0;
-        QualifyingPartyType qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID,bearerToken);
+        QualifyingPartyType qualifyingParty = CataloguePersistenceUtil.getQualifyingPartyType(partyID,bearerToken);
         for (CompletedTaskType completedTask:qualifyingParty.getCompletedTask()){
             if(completedTask.getPeriod().getEndDate() == null || completedTask.getPeriod().getEndTime() == null){
                 continue;
@@ -182,7 +185,7 @@ public class StatisticsDAOUtility {
         int numberOfResponses = 0;
         double totalTime = 0;
 
-        List<String> processInstanceIDs = SpringBridge.getInstance().getProcessDocumentMetadataDAORepository().getProcessInstanceIds(partyID);
+        List<String> processInstanceIDs = ProcessDocumentMetadataDAOUtility.getProcessInstanceIds(partyID);
 
         for (String processInstanceID:processInstanceIDs){
                 List<ProcessDocumentMetadataDAO> processDocumentMetadataDAOS = DAOUtility.getProcessDocumentMetadataByProcessInstanceID(processInstanceID);

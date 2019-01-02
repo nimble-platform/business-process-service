@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package eu.nimble.service.bp.impl.persistence.util;
+package eu.nimble.service.bp.impl.util.persistence.bp;
 
 import eu.nimble.service.bp.hyperjaxb.model.*;
 import eu.nimble.service.bp.swagger.model.*;

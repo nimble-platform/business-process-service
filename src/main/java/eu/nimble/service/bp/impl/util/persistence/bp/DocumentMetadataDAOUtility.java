@@ -1,4 +1,4 @@
-package eu.nimble.service.bp.impl.persistence.util;
+package eu.nimble.service.bp.impl.util.persistence.bp;
 
 import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
 

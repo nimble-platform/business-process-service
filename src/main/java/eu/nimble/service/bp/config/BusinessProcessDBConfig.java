@@ -19,14 +19,8 @@ import java.util.Map;
 import java.util.Properties;
 
 @Configuration
-@EnableTransactionManagement
 @EnableConfigurationProperties
 @PropertySource("classpath:bootstrap.yml")
-@EnableJpaRepositories(
-        entityManagerFactoryRef = "bpdbEntityManagerFactory",
-        transactionManagerRef = "bpdbTransactionManager",
-        basePackages = {"eu.nimble.service.bp.impl.persistence.bp"}
-)
 @ComponentScan(basePackages = {"eu.nimble.service.bp.config"})
 public class BusinessProcessDBConfig {
 
@@ -34,7 +28,6 @@ public class BusinessProcessDBConfig {
     private DataSourceFactory dataSourceFactory;
 
     @Bean(name = "bpdbDataSource")
-//    @ConfigurationProperties(prefix = "persistence.orm.business_process.hibernate.connection")
     public DataSource getDataSource() {
         return dataSourceFactory.createDatasource("bpdb");
     }
@@ -61,11 +54,5 @@ public class BusinessProcessDBConfig {
     @Bean(name = "bpdbEntityManagerFactory")
     public EntityManagerFactory bpdbEntityManagerFactory(@Qualifier("bpdbEmfBean") LocalContainerEntityManagerFactoryBean emfBean) {
         return emfBean.getObject();
-    }
-
-    @Bean(name = "bpdbTransactionManager")
-    public PlatformTransactionManager bpdbTransactionManager(
-            @Qualifier("bpdbEntityManagerFactory") EntityManagerFactory bpdbEntityManagerFactory) {
-        return new JpaTransactionManager(bpdbEntityManagerFactory);
     }
 }

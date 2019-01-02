@@ -4,8 +4,7 @@ import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
 import eu.nimble.service.bp.config.GenericConfig;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
-import eu.nimble.service.bp.impl.persistence.util.DocumentDAOUtility;
-import eu.nimble.service.bp.impl.util.serialization.Serializer;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentDAOUtility;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
@@ -15,6 +14,7 @@ import eu.nimble.service.model.ubl.commonaggregatecomponents.DocumentClauseType;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
+import eu.nimble.utility.JsonSerializationUtility;
 import org.apache.commons.io.IOUtils;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
@@ -27,7 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import request.CreateChannel;
 
-import javax.print.Doc;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -154,7 +153,7 @@ public class DefaultOrderResponseSender  implements JavaDelegate {
             consumerIds.add(sellerId);
             CreateChannel.Request request = new CreateChannel.Request(buyerId, consumerIds, String.format("Data channel for product %s", order.getOrderLine().get(0).getLineItem().getItem().getName()), startTime.toDate(), endTime.toDate(), processInstanceId);
 
-            Serializer.getDefaultObjectMapper().writeValue(os, request);
+            JsonSerializationUtility.getObjectMapper().writeValue(os, request);
             os.flush();
 
             logger.info("Data channel request has been sent for processInstanceId: {}, buyerId: {}, sellerId: {}, received HTTP response: {}", processInstanceId, buyerId, sellerId, conn.getResponseCode());

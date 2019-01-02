@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
+import eu.nimble.utility.JsonSerializationUtility;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Ignore;
@@ -40,9 +41,7 @@ public class Test22_DocumentControllerTest3 {
     @Autowired
     private MockMvc mockMvc;
 
-    private ObjectMapper objectMapper = new ObjectMapper().
-            configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).
-            configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
+    private ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
     private final String partnerID = "706";
     private final String type = "ORDER";
 

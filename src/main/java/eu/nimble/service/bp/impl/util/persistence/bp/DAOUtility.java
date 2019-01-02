@@ -3,14 +3,14 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package eu.nimble.service.bp.impl.persistence.util;
+package eu.nimble.service.bp.impl.util.persistence.bp;
 
 import eu.nimble.common.rest.identity.IdentityClientTyped;
 import eu.nimble.service.bp.hyperjaxb.model.*;
 import eu.nimble.service.bp.impl.model.statistics.BusinessProcessCount;
-import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
+import eu.nimble.utility.persistence.JPARepositoryFactory;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -34,12 +34,12 @@ public class DAOUtility {
     private static IdentityClientTyped identityClient;
 
     public static List<ProcessConfigurationDAO> getProcessConfigurationDAOByPartnerID(String partnerID) {
-        List<ProcessConfigurationDAO> resultSet = SpringBridge.getInstance().getBusinessProcessRepository().getProcessConfigurations(partnerID);
+        List<ProcessConfigurationDAO> resultSet = ProcessConfigurationDAOUtility.getProcessConfigurations(partnerID);
         return resultSet;
     }
 
     public static ProcessPreferencesDAO getProcessPreferencesDAOByPartnerID(String partnerID) {
-        List<ProcessPreferencesDAO> resultSet = SpringBridge.getInstance().getBusinessProcessRepository().getProcessPreferences(partnerID);
+        List<ProcessPreferencesDAO> resultSet = ProcessProferencesDAOUtility.getProcessPreferences(partnerID);
         if (resultSet.size() == 0) {
             return null;
         }
@@ -47,7 +47,7 @@ public class DAOUtility {
     }
 
     public static ProcessDocumentMetadataDAO getProcessDocumentMetadata(String documentID) {
-        List<ProcessDocumentMetadataDAO> resultSet = SpringBridge.getInstance().getProcessDocumentMetadataDAORepository().findByDocumentID(documentID);
+        List<ProcessDocumentMetadataDAO> resultSet = ProcessDocumentMetadataDAOUtility.findByDocumentID(documentID);
         if (resultSet.size() == 0) {
             return null;
         }
@@ -55,7 +55,7 @@ public class DAOUtility {
     }
 
     public static List<ProcessDocumentMetadataDAO> getProcessDocumentMetadataByProcessInstanceID(String processInstanceID) {
-        List<ProcessDocumentMetadataDAO> resultSet = SpringBridge.getInstance().getProcessDocumentMetadataDAORepository().findByProcessInstanceIDOrderBySubmissionDateAsc(processInstanceID);
+        List<ProcessDocumentMetadataDAO> resultSet = ProcessDocumentMetadataDAOUtility.findByProcessInstanceIDOrderBySubmissionDateAsc(processInstanceID);
         return resultSet;
     }
 
@@ -92,25 +92,25 @@ public class DAOUtility {
             query += " and document.status = '" + ProcessDocumentStatus.valueOf(status).toString() + "'";
         }
         query += " ) ";
-        List<ProcessDocumentMetadataDAO> resultSet = SpringBridge.getInstance().getBusinessProcessRepository().getEntities(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray(new String[parameterValues.size()]));
+        List<ProcessDocumentMetadataDAO> resultSet = new JPARepositoryFactory().forBpRepository().getEntities(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray(new String[parameterValues.size()]));
         return resultSet;
     }
 
     public static List<String> getDocumentIds(Integer partyId, List<String> documentTypes, String role, String startDateStr, String endDateStr, String status) {
         DocumentMetadataQuery query = getDocumentMetadataQuery(partyId, documentTypes, role, startDateStr, endDateStr, status, DocumentMetadataQueryType.DOCUMENT_IDS);
-        List<String> documentIds = SpringBridge.getInstance().getBusinessProcessRepository().getEntities(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray());
+        List<String> documentIds = new JPARepositoryFactory().forBpRepository().getEntities(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray());
         return documentIds;
     }
 
     public static int getTransactionCount(Integer partyId, List<String> documentTypes, String role, String startDateStr, String endDateStr, String status) {
         DocumentMetadataQuery query = getDocumentMetadataQuery(partyId, documentTypes, role, startDateStr, endDateStr, status, DocumentMetadataQueryType.TOTAL_TRANSACTION_COUNT);
-        int count = ((Long) SpringBridge.getInstance().getBusinessProcessRepository().getSingleEntity(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray())).intValue();
+        int count = ((Long) new JPARepositoryFactory().forBpRepository().getSingleEntity(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray())).intValue();
         return count;
     }
 
     public static BusinessProcessCount getGroupTransactionCounts(Integer partyId, String startDateStr, String endDateStr, String role, String bearerToken) {
         DocumentMetadataQuery query = getDocumentMetadataQuery(partyId, new ArrayList<>(), role, startDateStr, endDateStr, null, DocumentMetadataQueryType.GROUPED_TRANSACTION_COUNT);
-        List<Object> results = SpringBridge.getInstance().getBusinessProcessRepository().getEntities(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray());
+        List<Object> results = new JPARepositoryFactory().forBpRepository().getEntities(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray());
 
         BusinessProcessCount counts = new BusinessProcessCount();
         for (Object result : results) {
@@ -221,7 +221,7 @@ public class DAOUtility {
     }
 
     public static ProcessInstanceDAO getProcessInstanceDAOByID(String processInstanceID) {
-        List<ProcessInstanceDAO> resultSet = SpringBridge.getInstance().getProcessInstanceDAORepository().findByProcessInstanceID(processInstanceID);
+        List<ProcessInstanceDAO> resultSet = ProcessInstanceDAOUtility.findByProcessInstanceId(processInstanceID);
         if (resultSet.size() == 0) {
             return null;
         }
@@ -229,7 +229,7 @@ public class DAOUtility {
     }
 
     public static ProcessDAO getProcessDAOByID(String processID) {
-        List<ProcessDAO> resultSet = SpringBridge.getInstance().getProcessDAORepository().findByProcessID(processID);
+        List<ProcessDAO> resultSet = ProcessDAOUtility.findByProcessID(processID);
         if (resultSet.size() == 0) {
             return null;
         }
@@ -237,12 +237,12 @@ public class DAOUtility {
     }
 
     public static List<ProcessDAO> getProcessDAOs() {
-        List<ProcessDAO> resultSet = SpringBridge.getInstance().getProcessDAORepository().findAll();
+        List<ProcessDAO> resultSet = new JPARepositoryFactory().forBpRepository().getEntities(ProcessDAO.class);
         return resultSet;
     }
 
     public static ProcessConfigurationDAO getProcessConfiguration(String partnerID, String processID, ProcessConfiguration.RoleTypeEnum roleType) {
-        List<ProcessConfigurationDAO> resultSet = SpringBridge.getInstance().getBusinessProcessRepository().getProcessConfigurations(partnerID, processID);
+        List<ProcessConfigurationDAO> resultSet = ProcessConfigurationDAOUtility.getProcessConfigurations(partnerID, processID);
         if (resultSet.size() == 0) {
             return null;
         }
@@ -256,10 +256,10 @@ public class DAOUtility {
 
     public static List<String> getAllProcessInstanceIDs(String processInstanceID) {
         List<String> processInstanceIDs = new ArrayList<>();
-        ProcessInstanceDAO processInstanceDAO = SpringBridge.getInstance().getProcessInstanceDAORepository().findByProcessInstanceID(processInstanceID).get(0);
+        ProcessInstanceDAO processInstanceDAO = ProcessInstanceDAOUtility.findByProcessInstanceId(processInstanceID).get(0);
         processInstanceIDs.add(0, processInstanceID);
         while (processInstanceDAO.getPrecedingProcess() != null) {
-            processInstanceDAO = SpringBridge.getInstance().getProcessInstanceDAORepository().findByProcessInstanceID(processInstanceDAO.getPrecedingProcess().getProcessInstanceID()).get(0);
+            processInstanceDAO = ProcessInstanceDAOUtility.findByProcessInstanceId(processInstanceDAO.getPrecedingProcess().getProcessInstanceID()).get(0);
             processInstanceIDs.add(0, processInstanceDAO.getProcessInstanceID());
         }
         return processInstanceIDs;

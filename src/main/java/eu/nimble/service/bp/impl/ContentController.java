@@ -1,14 +1,14 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.hyperjaxb.model.ProcessDAO;
-import eu.nimble.service.bp.impl.persistence.bp.BusinessProcessRepository;
+import eu.nimble.service.bp.impl.util.persistence.bp.DAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.impl.util.jssequence.JSSequenceDiagramParser;
-import eu.nimble.service.bp.impl.persistence.util.DAOUtility;
-import eu.nimble.service.bp.impl.persistence.util.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.swagger.api.ContentApi;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
 import eu.nimble.service.bp.swagger.model.Process;
+import eu.nimble.utility.persistence.JPARepositoryFactory;
 import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +30,7 @@ public class ContentController implements ContentApi {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    private BusinessProcessRepository businessProcessRepository;
+    private JPARepositoryFactory repoFactory;
 
     @Override
     @ApiOperation(value = "",notes = "Add a new business process")
@@ -50,7 +50,7 @@ public class ContentController implements ContentApi {
         CamundaEngine.addProcessDefinition(body.getProcessID(), bpmnContent);
 
         ProcessDAO processDAO = HibernateSwaggerObjectMapper.createProcess_DAO(body);
-        businessProcessRepository.persistEntity(processDAO);
+        repoFactory.forBpRepository().persistEntity(processDAO);
 
         return HibernateSwaggerObjectMapper.getApiResponse();
     }
@@ -64,7 +64,7 @@ public class ContentController implements ContentApi {
 
         ProcessDAO processDAO = DAOUtility.getProcessDAOByID(processID);
         if(processDAO != null)
-            businessProcessRepository.deleteEntityByHjid(ProcessDAO.class, processDAO.getHjid());
+            repoFactory.forBpRepository().deleteEntityByHjid(ProcessDAO.class, processDAO.getHjid());
 
         return HibernateSwaggerObjectMapper.getApiResponse();
     }
@@ -137,7 +137,7 @@ public class ContentController implements ContentApi {
 
         processDAONew.setHjid(processDAO.getHjid());
 
-        businessProcessRepository.updateEntity(processDAONew);
+        repoFactory.forBpRepository().updateEntity(processDAONew);
 
         return HibernateSwaggerObjectMapper.getApiResponse();
     }

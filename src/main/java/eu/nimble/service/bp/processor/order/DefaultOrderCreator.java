@@ -2,7 +2,7 @@ package eu.nimble.service.bp.processor.order;
 
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
-import eu.nimble.service.bp.impl.persistence.util.DocumentDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentDAOUtility;
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;

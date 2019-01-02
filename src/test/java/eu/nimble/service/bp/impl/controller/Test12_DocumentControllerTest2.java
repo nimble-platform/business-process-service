@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
+import eu.nimble.utility.JsonSerializationUtility;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Ignore;
@@ -36,7 +37,7 @@ public class Test12_DocumentControllerTest2 {
     @Autowired
     private MockMvc mockMvc;
 
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
 
     private final String partnerID = "706";
     private final String partnerID2 = "1339";

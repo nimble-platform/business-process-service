@@ -2,10 +2,9 @@ package eu.nimble.service.bp.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
-import eu.nimble.service.bp.impl.persistence.util.DAOUtility;
-import eu.nimble.service.bp.impl.persistence.util.DocumentDAOUtility;
-import eu.nimble.service.bp.impl.persistence.util.HibernateSwaggerObjectMapper;
-import eu.nimble.service.bp.impl.util.serialization.Serializer;
+import eu.nimble.service.bp.impl.util.persistence.bp.DAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.api.DocumentApi;
@@ -17,6 +16,7 @@ import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
 import eu.nimble.utility.JAXBUtility;
+import eu.nimble.utility.JsonSerializationUtility;
 import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +52,7 @@ public class DocumentController implements DocumentApi {
                 return createResponseEntityAndLog(String.format("No document for id: %s", documentID), HttpStatus.NOT_FOUND);
             }
             try {
-                String serializedDocument = Serializer.getDefaultObjectMapper().writeValueAsString(document);
+                String serializedDocument = JsonSerializationUtility.getObjectMapper().writeValueAsString(document);
                 logger.info("Retrieved details of the document: {}", documentID);
                 return new ResponseEntity<>(serializedDocument, HttpStatus.OK);
 

@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ContractType;
+import eu.nimble.utility.JsonSerializationUtility;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Ignore;
@@ -40,9 +41,7 @@ public class Test18_ContractControllerTest3 {
     @Autowired
     private Environment environment;
 
-    private ObjectMapper objectMapper = new ObjectMapper().
-            configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).
-            configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
+    private ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
 
     private final int expectedSize = 1;
 

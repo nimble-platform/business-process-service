@@ -1,9 +1,9 @@
 package eu.nimble.service.bp.impl.controller;
 
-import eu.nimble.service.bp.impl.util.serialization.Serializer;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
 import eu.nimble.service.model.ubl.iteminformationrequest.ItemInformationRequestType;
+import eu.nimble.utility.JsonSerializationUtility;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
@@ -20,9 +20,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -47,27 +45,27 @@ public class Test28_HjidCheckTest {
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
-        ProcessInstance processInstance = Serializer.getDefaultObjectMapper().readValue(mvcResult.getResponse().getContentAsString(), ProcessInstance.class);
+        ProcessInstance processInstance = JsonSerializationUtility.getObjectMapper().readValue(mvcResult.getResponse().getContentAsString(), ProcessInstance.class);
         Assert.assertEquals(processInstance.getStatus(), ProcessInstance.StatusEnum.STARTED);
 
         // get document content
         request = get("/document/json/2890ce89-b695-4c51-bae5-c8acd2a48cc6");
         mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
-        ItemInformationRequestType iir = Serializer.getDefaultObjectMapper().readValue(mvcResult.getResponse().getContentAsString(), ItemInformationRequestType.class);
+        ItemInformationRequestType iir = JsonSerializationUtility.getObjectMapper().readValue(mvcResult.getResponse().getContentAsString(), ItemInformationRequestType.class);
 
 
         // get document content
         request = get("/document/json/154d8ee1-f6f5-4bh5-9957-58068565eb41");
         mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
-        ItemInformationRequestType itemInformationRequest = Serializer.getDefaultObjectMapper().readValue(mvcResult.getResponse().getContentAsString(), ItemInformationRequestType.class);
+        ItemInformationRequestType itemInformationRequest = JsonSerializationUtility.getObjectMapper().readValue(mvcResult.getResponse().getContentAsString(), ItemInformationRequestType.class);
         // update hjid field
         itemInformationRequest.getItemInformationRequestLine().get(0).getSalesItem().get(0).getItem().getCommodityClassification().get(0).getItemClassificationCode().setHjid(iir.getHjid());
 
         request = put("/processInstance")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(Serializer.getDefaultObjectMapper().writeValueAsString(itemInformationRequest))
+                .content(JsonSerializationUtility.getObjectMapper().writeValueAsString(itemInformationRequest))
                 .param("processID", "ITEMINFORMATIONREQUEST")
                 .param("processInstanceID", processInstance.getProcessInstanceID())
                 .param("creatorUserID", "1337");

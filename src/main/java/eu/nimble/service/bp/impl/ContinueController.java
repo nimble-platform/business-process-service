@@ -1,19 +1,18 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.hyperjaxb.model.*;
-import eu.nimble.service.bp.impl.persistence.bp.BusinessProcessRepository;
-import eu.nimble.service.bp.impl.persistence.bp.CollaborationGroupDAORepository;
-import eu.nimble.service.bp.impl.persistence.util.DocumentDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.bp.DAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMapper;
+import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceGroupDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentDAOUtility;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
-import eu.nimble.service.bp.impl.persistence.util.DAOUtility;
-import eu.nimble.service.bp.impl.persistence.util.HibernateSwaggerObjectMapper;
-import eu.nimble.service.bp.impl.persistence.util.ProcessInstanceGroupDAOUtility;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.api.ContinueApi;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
 import eu.nimble.service.bp.swagger.model.Transaction;
+import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.persistence.resource.ResourceValidationUtil;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -35,10 +34,9 @@ public class ContinueController implements ContinueApi {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    private BusinessProcessRepository businessProcessRepository;
-
+    private ResourceValidationUtil resourceValidationUtil;
     @Autowired
-    private CollaborationGroupDAORepository collaborationGroupDAORepository;
+    private JPARepositoryFactory repoFactory;
 
     @Override
     @ApiOperation(value = "",notes = "Send input to a waiting process instance (because of a human task)")
@@ -54,7 +52,7 @@ public class ContinueController implements ContinueApi {
             Transaction.DocumentTypeEnum documentType = CamundaEngine.getResponseDocumentForProcess(body.getVariables().getProcessID());
             Object document = DocumentDAOUtility.readDocument(DocumentType.valueOf(documentType.toString()), body.getVariables().getContent());
 
-            boolean hjidsExists = ResourceValidationUtil.hjidsExit(document);
+            boolean hjidsExists = resourceValidationUtil.hjidsExit(document);
             if(hjidsExists) {
                 String msg = String.format("Entity IDs (hjid fields) found in the passed document. document type: %s, content: %s", documentType.toString(), body.getVariables().getContent());
                 logger.warn(msg);
@@ -62,7 +60,7 @@ public class ContinueController implements ContinueApi {
             }
 
             ProcessInstanceInputMessageDAO processInstanceInputMessageDAO = HibernateSwaggerObjectMapper.createProcessInstanceInputMessage_DAO(body);
-            businessProcessRepository.persistEntity(processInstanceInputMessageDAO);
+            new JPARepositoryFactory().forBpRepository().persistEntity(processInstanceInputMessageDAO);
 
             // save ProcessInstanceInputMessageDAO
             businessProcessContext.setMessageDAO(processInstanceInputMessageDAO);
@@ -76,7 +74,7 @@ public class ContinueController implements ContinueApi {
 
             storedInstance.setStatus(ProcessInstanceStatus.fromValue(processInstance.getStatus().toString()));
 
-            businessProcessRepository.updateEntity(storedInstance);
+            storedInstance = new JPARepositoryFactory().forBpRepository().updateEntity(storedInstance);
 
             // save ProcessInstanceDAO
             businessProcessContext.setProcessInstanceDAO(storedInstance);
@@ -114,23 +112,23 @@ public class ContinueController implements ContinueApi {
             CollaborationGroupDAO initiatorCollaborationGroup = ProcessInstanceGroupDAOUtility.getCollaborationGroupDAO(body.getVariables().getInitiatorID(),Long.parseLong(responderCollaborationGID));
             // create a new initiator collaboration group
             if(initiatorCollaborationGroup == null){
-                CollaborationGroupDAO responderCollaborationGroup = collaborationGroupDAORepository.getOne(Long.parseLong(responderCollaborationGID));
+                CollaborationGroupDAO responderCollaborationGroup = repoFactory.forBpRepository().getSingleEntityByHjid(CollaborationGroupDAO.class, Long.parseLong(responderCollaborationGID));
                 initiatorCollaborationGroup = ProcessInstanceGroupDAOUtility.createCollaborationGroupDAO();
 
                 // set association between collaboration groups
                 initiatorCollaborationGroup.getAssociatedCollaborationGroups().add(responderCollaborationGroup.getHjid());
                 responderCollaborationGroup.getAssociatedCollaborationGroups().add(initiatorCollaborationGroup.getHjid());
-                collaborationGroupDAORepository.save(responderCollaborationGroup);
+                repoFactory.forBpRepository().updateEntity(responderCollaborationGroup);
             }
 
             // add new group to the collaboration group
             initiatorCollaborationGroup.getAssociatedProcessInstanceGroups().add(associatedGroup);
-            collaborationGroupDAORepository.save(initiatorCollaborationGroup);
+            repoFactory.forBpRepository().updateEntity(initiatorCollaborationGroup);
             BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId).setUpdatedAssociatedGroup(associatedGroup);
 
             // associate groups
             existingGroup.getAssociatedGroups().add(associatedGroup.getID());
-            businessProcessRepository.updateEntity(existingGroup);
+            repoFactory.forBpRepository().updateEntity(existingGroup);
         }
     }
 }

@@ -3,7 +3,7 @@ package eu.nimble.service.bp.impl.util.serialization;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
-import eu.nimble.service.bp.impl.persistence.util.CatalogueDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.CataloguePersistenceUtil;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import util.DataModelUtility;
 
@@ -20,7 +20,7 @@ public class PartySerializerReplace extends JsonSerializer<PartyType> {
     @Override
     public void serialize(PartyType partyType, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
 
-        PartyType catalogueParty = CatalogueDAOUtility.getParty(partyType);
+        PartyType catalogueParty = CataloguePersistenceUtil.getParty(partyType);
         DataModelUtility.nullifyPartyFields(partyType);
         DataModelUtility.copyParty(partyType, catalogueParty);
 

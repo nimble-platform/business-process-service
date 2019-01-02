@@ -3,6 +3,7 @@ package eu.nimble.service.bp.impl.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.swagger.model.CollaborationGroupResponse;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupFilter;
+import eu.nimble.utility.JsonSerializationUtility;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -36,7 +37,7 @@ public class Test15_ProcessInstanceGroupControllerTest3 {
     private Environment environment;
 
     private final String partyId = "706";
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
 
     private final int test1_expectedSize = 2;
     private final String test2_expectedValue = "true";

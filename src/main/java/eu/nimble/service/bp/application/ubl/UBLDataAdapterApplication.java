@@ -2,9 +2,8 @@ package eu.nimble.service.bp.application.ubl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
-import eu.nimble.service.bp.impl.persistence.util.DataIntegratorUtil;
-import eu.nimble.service.bp.impl.persistence.util.DocumentDAOUtility;
-import eu.nimble.service.bp.impl.util.serialization.Serializer;
+import eu.nimble.service.bp.impl.util.persistence.DataIntegratorUtil;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentDAOUtility;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.despatchadvice.DespatchAdviceType;
 import eu.nimble.service.model.ubl.iteminformationrequest.ItemInformationRequestType;
@@ -19,6 +18,7 @@ import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
 import eu.nimble.service.model.ubl.transportexecutionplan.TransportExecutionPlanType;
 import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
 import eu.nimble.utility.DateUtility;
+import eu.nimble.utility.JsonSerializationUtility;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +35,7 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
     @Override
     //TODO pass generic class instead of enumeration to prevent checking document type for each case
     public Object createDocument(String initiatorID, String responderID, String content, ProcessDocumentMetadata.TypeEnum documentType) {
-        ObjectMapper mapper = Serializer.getDefaultObjectMapper();
+        ObjectMapper mapper = JsonSerializationUtility.getObjectMapper();
         Object document = null;
 
         if(documentType == ProcessDocumentMetadata.TypeEnum.ORDER) {

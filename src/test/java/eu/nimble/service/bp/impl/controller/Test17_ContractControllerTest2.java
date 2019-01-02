@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ClauseType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ContractType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.DocumentClauseType;
+import eu.nimble.utility.JsonSerializationUtility;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Ignore;
@@ -42,9 +43,7 @@ public class Test17_ContractControllerTest2 {
     @Autowired
     private Environment environment;
 
-    private ObjectMapper objectMapper = new ObjectMapper().
-            configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).
-            configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
+    private ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
 
     private final int test1_expectedSize = 1;
     private final int test2_expectedSize = 2;
@@ -106,7 +105,7 @@ public class Test17_ContractControllerTest2 {
         //updateClause
         request = put("/clauses/" + Test16_ContractControllerTest.clauseId)
                 .header("Authorization", environment.getProperty("nimble.test-initiator-token"))
-                .content(new ObjectMapper().writeValueAsString(clause));
+                .content(objectMapper.writeValueAsString(clause));
         mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         clause = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ClauseType.class);

@@ -1,7 +1,6 @@
 package eu.nimble.service.bp.impl.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.nimble.service.bp.impl.util.serialization.Serializer;
 import eu.nimble.service.bp.processor.orderresponse.DefaultOrderResponseSender;
 import eu.nimble.service.bp.swagger.model.CollaborationGroupResponse;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
@@ -400,8 +399,8 @@ public class Test04_BusinessProcessesTest {
         ProcessInstanceInputMessage orderProcessInstanceInputMessage = JsonSerializationUtility.getObjectMapper().readValue(orderProcessInstanceInputMessageString, ProcessInstanceInputMessage.class);
         ProcessInstanceInputMessage orderResponseProcessInstanceInputMessage = JsonSerializationUtility.getObjectMapper().readValue(orderResponseProcessInstanceInputMessageString, ProcessInstanceInputMessage.class);
 
-        OrderType order = Serializer.getDefaultObjectMapper().readValue(orderProcessInstanceInputMessage.getVariables().getContent(), OrderType.class);
-        OrderResponseSimpleType orderResponse = Serializer.getDefaultObjectMapper().readValue(orderResponseProcessInstanceInputMessage.getVariables().getContent(), OrderResponseSimpleType.class);
+        OrderType order = JsonSerializationUtility.getObjectMapper().readValue(orderProcessInstanceInputMessage.getVariables().getContent(), OrderType.class);
+        OrderResponseSimpleType orderResponse = JsonSerializationUtility.getObjectMapper().readValue(orderResponseProcessInstanceInputMessage.getVariables().getContent(), OrderResponseSimpleType.class);
 
         Method method = DefaultOrderResponseSender.class.getDeclaredMethod("needToCreateDataChannel", OrderType.class, OrderResponseSimpleType.class);
         method.setAccessible(true);

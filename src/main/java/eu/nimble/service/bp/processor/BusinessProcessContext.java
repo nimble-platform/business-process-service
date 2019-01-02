@@ -4,6 +4,7 @@ import eu.nimble.service.bp.hyperjaxb.model.*;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.utility.Configuration;
 import eu.nimble.utility.persistence.GenericJPARepository;
+import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.persistence.resource.EntityIdAwareRepositoryWrapper;
 import eu.nimble.utility.persistence.resource.ResourceValidationUtil;
 
@@ -26,44 +27,45 @@ public class BusinessProcessContext {
     private String id;
 
     public void handleExceptions() {
+        GenericJPARepository repo = new JPARepositoryFactory().forBpRepository();
         if (messageDAO != null) {
-            SpringBridge.getInstance().getBusinessProcessRepository().deleteEntity(messageDAO);
+            repo.deleteEntity(messageDAO);
         }
         if (metadataDAO != null) {
             if (previousDocumentMetadataStatus != null) {
                 updatedDocumentMetadata.setStatus(previousDocumentMetadataStatus);
-                SpringBridge.getInstance().getBusinessProcessRepository().updateEntity(updatedDocumentMetadata);
+                repo.updateEntity(updatedDocumentMetadata);
             }
-            SpringBridge.getInstance().getBusinessProcessRepository().deleteEntity(metadataDAO);
+            repo.deleteEntity(metadataDAO);
         }
         if (document != null) {
             EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(metadataDAO.getInitiatorID());
             repositoryWrapper.deleteEntity(document);
-            ResourceValidationUtil.removeHjidsForObject(document, Configuration.Standard.UBL.toString());
+            SpringBridge.getInstance().getResourceValidationUtil().removeHjidsForObject(document, Configuration.Standard.UBL.toString());
         }
         if (previousDocument != null){
-            SpringBridge.getInstance().getBusinessProcessRepository().persistEntity(previousDocument);
+            repo.persistEntity(previousDocument);
         }
         if (previousStatus == null && processInstanceDAO != null) {
-            SpringBridge.getInstance().getBusinessProcessRepository().deleteEntity(processInstanceDAO);
+            repo.deleteEntity(processInstanceDAO);
         }
 
         if (processInstanceGroupDAO1 != null) {
-            SpringBridge.getInstance().getBusinessProcessRepository().deleteEntity(processInstanceGroupDAO1);
+            repo.deleteEntity(processInstanceGroupDAO1);
         }
         if (processInstanceGroupDAO2 != null) {
-            SpringBridge.getInstance().getBusinessProcessRepository().deleteEntity(processInstanceGroupDAO2);
+            repo.deleteEntity(processInstanceGroupDAO2);
         }
         if (sourceGroup != null) {
             for (ProcessInstanceGroupDAO.ProcessInstanceGroupDAOProcessInstanceIDsItem p : sourceGroup.getProcessInstanceIDsItems()) {
                 if (p.getItem().equals(processInstanceDAO.getProcessInstanceID())) {
-                    SpringBridge.getInstance().getBusinessProcessRepository().deleteEntity(p);
+                    repo.deleteEntity(p);
                 }
             }
             if (targetGroup != null) {
                 for (ProcessInstanceGroupDAO.ProcessInstanceGroupDAOAssociatedGroupsItem p : sourceGroup.getAssociatedGroupsItems()) {
                     if (p.getItem().equals(targetGroup.getID())) {
-                        SpringBridge.getInstance().getBusinessProcessRepository().deleteEntity(p);
+                        repo.deleteEntity(p);
                     }
                 }
             }
@@ -71,19 +73,19 @@ public class BusinessProcessContext {
         if (associatedGroup != null) {
             for (ProcessInstanceGroupDAO.ProcessInstanceGroupDAOProcessInstanceIDsItem p : associatedGroup.getProcessInstanceIDsItems()) {
                 if (p.getItem().equals(processInstanceDAO.getProcessInstanceID())) {
-                    SpringBridge.getInstance().getBusinessProcessRepository().deleteEntity(p);
+                    repo.deleteEntity(p);
                 }
             }
         }
         if (targetGroup != null) {
-            SpringBridge.getInstance().getBusinessProcessRepository().deleteEntity(targetGroup);
+            repo.deleteEntity(targetGroup);
         }
         if (previousStatus != null && processInstanceDAO != null) {
             processInstanceDAO.setStatus(ProcessInstanceStatus.fromValue(previousStatus.toString()));
-            SpringBridge.getInstance().getBusinessProcessRepository().updateEntity(processInstanceDAO);
+            repo.updateEntity(processInstanceDAO);
         }
         if (updatedAssociatedGroup != null) {
-            SpringBridge.getInstance().getBusinessProcessRepository().deleteEntity(updatedAssociatedGroup);
+            repo.deleteEntity(updatedAssociatedGroup);
         }
     }
 

@@ -6,12 +6,12 @@ import eu.nimble.service.bp.impl.model.statistics.OverallStatistics;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.impl.util.controller.InputValidatorUtil;
 import eu.nimble.service.bp.impl.util.controller.ValidationResponse;
-import eu.nimble.service.bp.impl.persistence.util.DAOUtility;
-import eu.nimble.service.bp.impl.persistence.util.StatisticsDAOUtility;
-import eu.nimble.service.bp.impl.util.serialization.Serializer;
+import eu.nimble.service.bp.impl.util.persistence.bp.DAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.StatisticsPersistenceUtility;
 import eu.nimble.service.bp.swagger.model.Transaction;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.utility.HttpResponseUtil;
+import eu.nimble.utility.JsonSerializationUtility;
 import io.swagger.annotations.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +51,7 @@ public class StatisticsController {
             return response.getInvalidResponse();
         }
 
-        long count = StatisticsDAOUtility.getActionRequiredProcessCount(String.valueOf(companyId),role,archived);
+        long count = StatisticsPersistenceUtility.getActionRequiredProcessCount(String.valueOf(companyId),role,archived);
         logger.info("Retrieved total number of process instances which require an action for company id:{},archived: {}, role: {}",companyId,archived,role);
         return ResponseEntity.ok(count);
     }
@@ -176,8 +176,8 @@ public class StatisticsController {
         try {
             logger.info("Getting non-ordered products for company id: {}", companyId);
 
-            NonOrderedProducts nonOrderedProducts = StatisticsDAOUtility.getNonOrderedProducts(companyId);
-            String serializedResponse = Serializer.getDefaultObjectMapperForFilledFields().writeValueAsString(nonOrderedProducts);
+            NonOrderedProducts nonOrderedProducts = StatisticsPersistenceUtility.getNonOrderedProducts(companyId);
+            String serializedResponse = JsonSerializationUtility.getObjectMapperForFilledFields().writeValueAsString(nonOrderedProducts);
             logger.info("Retrieved the products that are not ordered for company id: {}", companyId);
             return ResponseEntity.ok().body(serializedResponse);
 
@@ -228,7 +228,7 @@ public class StatisticsController {
             }
             status = response.getValidatedObject() != null ? (String) response.getValidatedObject() : null;
 
-            double tradingVolume = StatisticsDAOUtility.getTradingVolume(companyId, role, startDateStr, endDateStr, status);
+            double tradingVolume = StatisticsPersistenceUtility.getTradingVolume(companyId, role, startDateStr, endDateStr, status);
 
             logger.info("Number of business process for start date: {}, end date: {}, company id: {}, role: {}, state: {}", startDateStr, endDateStr, companyId, role, status);
             return ResponseEntity.ok().body(tradingVolume);
@@ -264,8 +264,8 @@ public class StatisticsController {
                 return response.getInvalidResponse();
             }
 
-            List<PartyType> inactiveCompanies = StatisticsDAOUtility.getInactiveCompanies(startDateStr, endDateStr, bearerToken);
-            String serializedResponse = Serializer.getDefaultObjectMapperForFilledFields().writeValueAsString(inactiveCompanies);
+            List<PartyType> inactiveCompanies = StatisticsPersistenceUtility.getInactiveCompanies(startDateStr, endDateStr, bearerToken);
+            String serializedResponse = JsonSerializationUtility.getObjectMapperForFilledFields().writeValueAsString(inactiveCompanies);
             logger.info("Retrieved the inactive companies for start date: {}, end date: {}", startDateStr, endDateStr);
             return ResponseEntity.ok().body(serializedResponse);
 
@@ -286,7 +286,7 @@ public class StatisticsController {
         logger.info("Getting average response time for the party with id: {}",partyID);
         double averageResponseTime;
         try {
-            averageResponseTime = StatisticsDAOUtility.calculateAverageResponseTime(partyID);
+            averageResponseTime = StatisticsPersistenceUtility.calculateAverageResponseTime(partyID);
         }
         catch (Exception e){
             return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting average response time for the party with id: %s", partyID), e, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -305,7 +305,7 @@ public class StatisticsController {
     public ResponseEntity getAverageNegotiationTime(@RequestParam(value = "partyID") String partyID,
                                                     @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         logger.info("Getting average negotiation time for the party with id: {}",partyID);
-        double averageNegotiationTime = StatisticsDAOUtility.calculateAverageNegotiationTime(partyID,bearerToken);
+        double averageNegotiationTime = StatisticsPersistenceUtility.calculateAverageNegotiationTime(partyID,bearerToken);
         logger.info("Retrieved average negotiation time for the party with id: {}",partyID);
         return ResponseEntity.ok(averageNegotiationTime);
     }

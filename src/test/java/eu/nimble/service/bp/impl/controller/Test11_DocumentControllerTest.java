@@ -3,6 +3,7 @@ package eu.nimble.service.bp.impl.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
+import eu.nimble.utility.JsonSerializationUtility;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
@@ -34,7 +35,7 @@ public class Test11_DocumentControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
     private final String documentMetadataJSON = "/controller/documentMetaDataJSON1.txt";
     private final String documentMetadataJSON2 = "/controller/documentMetaDataJSON2.txt";
     private final String documentMetadataJSON3 = "/controller/documentMetaDataJSON3.txt";
