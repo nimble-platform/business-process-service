@@ -788,6 +788,7 @@ public class ContractGenerator {
 
     private void getAndPopulateClauses(OrderType order,ZipOutputStream zos,XWPFDocument document){
         try{
+            // if there is no contract, simple remove the tables and return
             if(order.getContract().size() <= 0){
                 // Negotiation
                 XWPFTable table = document.getTableArray(document.getTables().size()-1);
@@ -805,60 +806,42 @@ public class ContractGenerator {
                 return;
             }
 
-            boolean ItemDetailsDirectoryCreated = false;
-            boolean technicalDataSheetDirectoryCreated = false;
+            // get clauses
+            Map<DocumentType,List<ClauseType>> clauses = getClauses(order);
 
-            boolean PPAPClauseExists = false;
-            boolean negotiationClauseExists = false;
+            // create PPAP entry
+            for(ClauseType clause : clauses.get(DocumentType.PPAPRESPONSE)){
+                ZipEntry zipEntry = new ZipEntry("PPAP/PPAPDocuments/");
+                zos.putNextEntry(zipEntry);
 
-            int numberOfItemInformationRequest = 0;
-
-            for(ClauseType clause : order.getContract().get(0).getClause()) {
-                if (clause.getType().contentEquals(eu.nimble.service.model.ubl.extension.ClauseType.DOCUMENT.toString()) &&
-                        (((DocumentClauseType) clause).getClauseDocumentRef().getDocumentType().contentEquals(DocumentType.ITEMINFORMATIONRESPONSE.toString()))) {
-                    numberOfItemInformationRequest++;
+                createPPAPEntry(document, zos, clause);
+            }
+            // create Negotiation entry
+            for(ClauseType clause : clauses.get(DocumentType.QUOTATION)){
+                createNegotiationEntry(document, clause, zos);
+            }
+            // create Item information entries
+            int numberOfItemInformationRequest = clauses.get(DocumentType.ITEMINFORMATIONRESPONSE).size();
+            if(numberOfItemInformationRequest > 0){
+                // create directories
+                ZipEntry zipEntry = new ZipEntry("ItemInformation/TechnicalDataSheetResponses/");
+                zos.putNextEntry(zipEntry);
+                zipEntry = new ZipEntry("ItemInformation/TechnicalDataSheets/");
+                zos.putNextEntry(zipEntry);
+                for(ClauseType clause : clauses.get(DocumentType.ITEMINFORMATIONRESPONSE)){
+                    createItemDetailsEntry(document, zos, clause, numberOfItemInformationRequest);
+                    numberOfItemInformationRequest--;
                 }
             }
-
-            for(ClauseType clause : order.getContract().get(0).getClause()) {
-                if (clause.getType().contentEquals(eu.nimble.service.model.ubl.extension.ClauseType.DOCUMENT.toString())) {
-                    String documentType = ((DocumentClauseType) clause).getClauseDocumentRef().getDocumentType();
-                    if (documentType.contentEquals(DocumentType.PPAPRESPONSE.toString())) {
-                        PPAPClauseExists = true;
-
-                        ZipEntry zipEntry = new ZipEntry("PPAP/PPAPDocuments/");
-                        zos.putNextEntry(zipEntry);
-
-                        createPPAPEntry(document, zos, clause);
-                    } else if (documentType.contentEquals(DocumentType.ITEMINFORMATIONRESPONSE.toString())) {
-                        if (!ItemDetailsDirectoryCreated) {
-                            ZipEntry zipEntry = new ZipEntry("ItemInformation/TechnicalDataSheetResponses/");
-                            zos.putNextEntry(zipEntry);
-                            ItemDetailsDirectoryCreated = true;
-                        }
-                        if (!technicalDataSheetDirectoryCreated) {
-                            ZipEntry zipEntry = new ZipEntry("ItemInformation/TechnicalDataSheets/");
-                            zos.putNextEntry(zipEntry);
-                            technicalDataSheetDirectoryCreated = true;
-                        }
-
-                        createItemDetailsEntry(document, zos, clause, numberOfItemInformationRequest);
-                        numberOfItemInformationRequest--;
-                    } else if (documentType.contentEquals(DocumentType.QUOTATION.toString())) {
-                        negotiationClauseExists = true;
-                        createNegotiationEntry(document, clause, zos);
-                    }
-                }
-            }
-            if (!negotiationClauseExists) {
+            if (clauses.get(DocumentType.QUOTATION).size() == 0) {
                 document.removeBodyElement(document.getPosOfTable(getTable(document, "Negotiation")));
                 document.removeBodyElement(document.getPosOfTable(getTable(document, "Negotiation Notes/Additional Documents")));
             }
-            if (!PPAPClauseExists) {
+            if (clauses.get(DocumentType.PPAPRESPONSE).size() == 0) {
                 document.removeBodyElement(document.getPosOfTable(getTable(document, "PPAP")));
                 document.removeBodyElement(document.getPosOfTable(getTable(document, "PPAP Notes/Additional Documents")));
             }
-            if (!ItemDetailsDirectoryCreated) {
+            if (clauses.get(DocumentType.ITEMINFORMATIONRESPONSE).size() == 0) {
                 document.removeBodyElement(document.getPosOfTable(getTable(document, "Item Information Request")));
                 document.removeBodyElement(document.getPosOfTable(getTable(document, "Item Information Request Notes/Additional Documents")));
             }
@@ -869,12 +852,37 @@ public class ContractGenerator {
 
     }
 
+    private Map<DocumentType,List<ClauseType>> getClauses(OrderType order){
+        List<ClauseType> PPAPResponse = new ArrayList<>();
+        List<ClauseType> quotation = new ArrayList<>();
+        List<ClauseType> itemInformationResponse = new ArrayList<>();
+        // check clauses
+        for(ClauseType clause : order.getContract().get(0).getClause()){
+            if (clause.getType().contentEquals(eu.nimble.service.model.ubl.extension.ClauseType.DOCUMENT.toString())){
+                String documentType = ((DocumentClauseType) clause).getClauseDocumentRef().getDocumentType();
+                if (documentType.contentEquals(DocumentType.PPAPRESPONSE.toString())) {
+                    PPAPResponse.add(clause);
+                } else if (documentType.contentEquals(DocumentType.ITEMINFORMATIONRESPONSE.toString())) {
+                    itemInformationResponse.add(clause);
+                } else if (documentType.contentEquals(DocumentType.QUOTATION.toString())) {
+                    quotation.add(clause);
+                }
+            }
+        }
+        // create the map
+        Map<DocumentType,List<ClauseType>> map = new HashMap<>();
+        map.put(DocumentType.PPAPRESPONSE,PPAPResponse);
+        map.put(DocumentType.QUOTATION,quotation);
+        map.put(DocumentType.ITEMINFORMATIONRESPONSE,itemInformationResponse);
+        return map;
+    }
+
     private XWPFDocument createOrderAdditionalDocuments(OrderType order,ZipOutputStream zos,XWPFDocument document){
         OrderResponseSimpleType orderResponse = (OrderResponseSimpleType) DocumentPersistenceUtility.getResponseDocument(order.getID(),DocumentType.ORDER);
         try {
             // request
             for(DocumentReferenceType documentReference : order.getAdditionalDocumentReference()){
-                byte[] bytes = documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getValue();
+                byte[] bytes = SpringBridge.getInstance().getBinaryContentService().retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
                 ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
                 bos.write(bytes,0,bytes.length);
 
@@ -885,7 +893,7 @@ public class ContractGenerator {
             // response
             if(orderResponse != null){
                 for(DocumentReferenceType documentReference : orderResponse.getAdditionalDocumentReference()){
-                    byte[] bytes = documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getValue();
+                    byte[] bytes = SpringBridge.getInstance().getBinaryContentService().retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
                     ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
                     bos.write(bytes,0,bytes.length);
 
@@ -971,7 +979,7 @@ public class ContractGenerator {
             }
 
             for(DocumentReferenceType documentReference : ppapResponse.getRequestedDocument()){
-                byte[] bytes = documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getValue();
+                byte[] bytes = SpringBridge.getInstance().getBinaryContentService().retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
                 ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
                 bos.write(bytes,0,bytes.length);
 
@@ -985,7 +993,7 @@ public class ContractGenerator {
             // additional documents
             // request
             for(DocumentReferenceType documentReference : ppapRequest.getAdditionalDocumentReference()){
-                byte[] bytes = documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getValue();
+                byte[] bytes = SpringBridge.getInstance().getBinaryContentService().retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
                 ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
                 bos.write(bytes,0,bytes.length);
 
@@ -995,7 +1003,7 @@ public class ContractGenerator {
             }
             // response
             for(DocumentReferenceType documentReference : ppapResponse.getAdditionalDocumentReference()){
-                byte[] bytes = documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getValue();
+                byte[] bytes = SpringBridge.getInstance().getBinaryContentService().retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
                 ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
                 bos.write(bytes,0,bytes.length);
 
@@ -1143,7 +1151,7 @@ public class ContractGenerator {
         // additional documents
         // request
         for(DocumentReferenceType documentReference : requestForQuotation.getAdditionalDocumentReference()){
-            byte[] bytes = documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getValue();
+            byte[] bytes = SpringBridge.getInstance().getBinaryContentService().retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
             ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
             bos.write(bytes,0,bytes.length);
 
@@ -1153,7 +1161,7 @@ public class ContractGenerator {
         }
         // response
         for(DocumentReferenceType documentReference : quotation.getAdditionalDocumentReference()){
-            byte[] bytes = documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getValue();
+            byte[] bytes = SpringBridge.getInstance().getBinaryContentService().retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
             ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
             bos.write(bytes,0,bytes.length);
 
@@ -1369,7 +1377,7 @@ public class ContractGenerator {
                 table.getRow(2).getCell(1).getParagraphs().get(0).createRun().setText("-");
             }
             else {
-                byte[] bytes = documentReferences.get(0).getAttachment().getEmbeddedDocumentBinaryObject().getValue();
+                byte[] bytes = SpringBridge.getInstance().getBinaryContentService().retrieveContent(documentReferences.get(0).getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
                 ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
                 bos.write(bytes,0,bytes.length);
 
@@ -1388,7 +1396,7 @@ public class ContractGenerator {
                 noteAndDocumentTable.getRow(noteAndDocumentTable.getNumberOfRows()-2).getCell(3).getParagraphs().get(0).createRun().setText("-");
             }
             for(DocumentReferenceType documentReference : itemInformationRequest.getAdditionalDocumentReference()){
-                byte[] bytes = documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getValue();
+                byte[] bytes = SpringBridge.getInstance().getBinaryContentService().retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
                 ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
                 bos.write(bytes,0,bytes.length);
 
@@ -1405,7 +1413,7 @@ public class ContractGenerator {
                 noteAndDocumentTable.getRow(noteAndDocumentTable.getNumberOfRows()-1).getCell(3).getParagraphs().get(0).createRun().setText("-");
             }
             for(DocumentReferenceType documentReference : itemDetails.getAdditionalDocumentReference()){
-                byte[] bytes = documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getValue();
+                byte[] bytes = SpringBridge.getInstance().getBinaryContentService().retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
                 ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
                 bos.write(bytes,0,bytes.length);
 
@@ -1424,7 +1432,7 @@ public class ContractGenerator {
                 table.getRow(3).getCell(1).getParagraphs().get(0).createRun().setText("-");
             }
             else {
-                byte[] bytes = documentReferences.get(0).getAttachment().getEmbeddedDocumentBinaryObject().getValue();
+                byte[] bytes = SpringBridge.getInstance().getBinaryContentService().retrieveContent(documentReferences.get(0).getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
                 ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
                 bos.write(bytes,0,bytes.length);
 

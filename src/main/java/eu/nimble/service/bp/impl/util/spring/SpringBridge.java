@@ -4,6 +4,7 @@ import eu.nimble.common.rest.identity.IdentityClient;
 import eu.nimble.common.rest.identity.IdentityClientTyped;
 import eu.nimble.service.bp.config.BusinessProcessPersistenceConfig;
 import eu.nimble.service.bp.config.GenericConfig;
+import eu.nimble.utility.persistence.binary.BinaryContentService;
 import eu.nimble.utility.persistence.resource.ResourceValidationUtil;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +35,9 @@ public class SpringBridge implements ApplicationContextAware {
     @Autowired
     private ResourceValidationUtil resourceValidationUtil;
 
+    @Autowired
+    private BinaryContentService binaryContentService;
+
     public static SpringBridge getInstance() {
         return applicationContext.getBean(SpringBridge.class);
     }
@@ -62,5 +66,9 @@ public class SpringBridge implements ApplicationContextAware {
 
     public ResourceValidationUtil getResourceValidationUtil() {
         return resourceValidationUtil;
+    }
+
+    public BinaryContentService getBinaryContentService() {
+        return binaryContentService;
     }
 }
