@@ -2,11 +2,13 @@ package eu.nimble.service.bp.impl.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
+import eu.nimble.service.bp.impl.contract.ContractGenerator;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.processor.orderresponse.DefaultOrderResponseSender;
 import eu.nimble.service.bp.swagger.model.*;
 import eu.nimble.service.bp.swagger.model.Process;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.ClauseType;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
 import eu.nimble.utility.JsonSerializationUtility;
@@ -29,6 +31,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Map;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -432,5 +435,24 @@ public class Test04_BusinessProcessesTest {
         }
 
         method.setAccessible(false);
+    }
+
+    @Test
+    public void test19_getClauses() throws Exception{
+        // get the order
+        String orderProcessInstanceInputMessageString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(orderRequestJSON));
+        ProcessInstanceInputMessage orderProcessInstanceInputMessage = JsonSerializationUtility.getObjectMapper().readValue(orderProcessInstanceInputMessageString, ProcessInstanceInputMessage.class);
+        OrderType order = JsonSerializationUtility.getObjectMapper().readValue(orderProcessInstanceInputMessage.getVariables().getContent(), OrderType.class);
+
+        // getClauses method will be tested
+        Method method = ContractGenerator.class.getDeclaredMethod("getClauses", OrderType.class);
+        method.setAccessible(true);
+
+        Map<DocumentType,List<ClauseType>> clauses = (Map<DocumentType, List<ClauseType>>) method.invoke(new ContractGenerator(),order);
+
+        // we expect to have one clause for each possible document type (Quotation,PPAPResponse and ItemInformationResponse)
+        Assert.assertSame(1,clauses.get(DocumentType.QUOTATION).size());
+        Assert.assertSame(1,clauses.get(DocumentType.PPAPRESPONSE).size());
+        Assert.assertSame(1,clauses.get(DocumentType.ITEMINFORMATIONRESPONSE).size());
     }
 }
