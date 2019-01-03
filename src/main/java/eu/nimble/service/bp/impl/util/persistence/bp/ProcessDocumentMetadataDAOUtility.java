@@ -7,6 +7,7 @@ import eu.nimble.service.bp.hyperjaxb.model.RoleType;
 import eu.nimble.service.bp.impl.model.statistics.BusinessProcessCount;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
+import eu.nimble.utility.DateUtility;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -151,9 +152,6 @@ public class ProcessDocumentMetadataDAOUtility {
         List<Object> parameterValues = query.parameterValues;
 
         String conditions = "";
-        DateTimeFormatter sourceFormatter = DateTimeFormat.forPattern("dd-MM-yyyy");
-        DateTimeFormatter bpFormatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
-
         boolean filterExists = false;
 
         if (partyId != null) {
@@ -173,28 +171,24 @@ public class ProcessDocumentMetadataDAOUtility {
             }
 
             if (startDateStr != null && endDateStr != null) {
-                DateTime startDate = sourceFormatter.parseDateTime(startDateStr);
-                DateTime endDate = sourceFormatter.parseDateTime(endDateStr);
-                endDate = endDate.plusDays(1).minusMillis(1);
                 conditions += " documentMetadata.submissionDate between :startTime and :endTime";
 
                 parameterNames.add("startTime");
-                parameterValues.add(bpFormatter.print(startDate));
+                parameterValues.add(DateUtility.transformInputDateToDbDate(startDateStr));
                 parameterNames.add("endTime");
-                parameterValues.add(bpFormatter.print(endDate));
+                parameterValues.add(DateUtility.transformInputDateToMaxDbDate(endDateStr));
+
             } else if (startDateStr != null) {
-                DateTime startDate = sourceFormatter.parseDateTime(startDateStr);
                 conditions += " documentMetadata.submissionDate >= :startTime";
 
                 parameterNames.add("startTime");
-                parameterValues.add(bpFormatter.print(startDate));
+                parameterValues.add(DateUtility.transformInputDateToDbDate(startDateStr));
+
             } else {
-                DateTime endDate = sourceFormatter.parseDateTime(endDateStr);
-                endDate = endDate.plusDays(1).minusMillis(1);
                 conditions += " documentMetadata.submissionDate <= :endTime";
 
                 parameterNames.add("endTime");
-                parameterValues.add(bpFormatter.print(endDate));
+                parameterValues.add(DateUtility.transformInputDateToMaxDbDate(endDateStr));
             }
             filterExists = true;
         }
