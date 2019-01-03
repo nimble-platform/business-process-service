@@ -46,14 +46,11 @@ public class DocumentPersistenceUtility {
     /**
      * the query below is completed in the {@code getRequestMetadata} method
      */
-    private static final String QUERY_GET_REQUEST_METADATA = "SELECT documentMetadata FROM ProcessDocumentMetadataDAO documentMetadata WHERE documentMetadata.processInstanceID=:processInstanceId AND ";
-    /**
-     * the query below is completed in the {@code getResponseMetadata} method
-     */
-    private static final String QUERY_GET_RESPONSE_METADATA = "SELECT documentMetadata FROM ProcessDocumentMetadataDAO documentMetadata WHERE documentMetadata.processInstanceID=:processInstanceId AND ";
+    private static final String QUERY_GET_METADATA = "SELECT documentMetadata FROM ProcessDocumentMetadataDAO documentMetadata WHERE documentMetadata.processInstanceID=:processInstanceId AND %s";
     private static final String QUERY_GET_ORDER_IDS_FOR_PARTY = "SELECT order_.ID from OrderType order_ join order_.orderLine line where line.lineItem.item.manufacturerParty.ID = :partyId AND line.lineItem.item.manufacturersItemIdentification.ID = :itemId";
     private static final String QUERY_GET_ORDER_RESPONSE_ID = "SELECT orderResponse.ID FROM OrderResponseSimpleType orderResponse WHERE orderResponse.orderReference.documentReference.ID = :documentId";
     private static final String QUERY_GET_ORDER_RESPONSE_BY_ID = "SELECT orderResponse FROM OrderResponseSimpleType orderResponse WHERE orderResponse.orderReference.documentReference.ID = :documentId";
+    private static final String QUERY_GET_DOCUMENT = "SELECT document FROM %s document WHERE document.ID = :documentId";
 
     public static List<String> getOrderIds(String partyId, String itemId) {
         return new JPARepositoryFactory().forCatalogueRepository().getEntities(QUERY_GET_ORDER_IDS_FOR_PARTY, new String[]{"partyId", "itemId"}, new Object[]{partyId, itemId});
@@ -140,7 +137,120 @@ public class DocumentPersistenceUtility {
 
     }
 
-    public static <T> Class<T> getDocumentClass(DocumentType documentType) {
+    public static <T> T readDocument(DocumentType documentType, String content) {
+        Class<T> klass = getDocumentClass(documentType);
+        ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
+        try {
+            return objectMapper.readValue(content, klass);
+
+        } catch (IOException e) {
+            String msg = String.format("Failed to deserialize document. type: %s, content: %s", klass.getName(), content);
+            logger.error(msg, e);
+            throw new RuntimeException(msg, e);
+        }
+    }
+
+    public static void updateDocument(String processContextId, Object document, String documentId, DocumentType documentType, String partyId) {
+        BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(processContextId);
+
+        Object existingDocument = getUBLDocument(documentId, documentType);
+        businessProcessContext.setPreviousDocument(existingDocument);
+        EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(partyId);
+        DataIntegratorUtil.checkExistingParties(document);
+        document = repositoryWrapper.updateEntity(document);
+        businessProcessContext.setDocument(document);
+    }
+
+    public static ProcessDocumentMetadata getDocumentMetadata(String documentId) {
+        ProcessDocumentMetadataDAO processDocumentDAO = ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId);
+        ProcessDocumentMetadata processDocument = HibernateSwaggerObjectMapper.createProcessDocumentMetadata(processDocumentDAO);
+        return processDocument;
+    }
+
+    public static void deleteDocumentWithMetadata(String documentId) {
+        ProcessDocumentMetadataDAO processDocumentMetadataDAO = ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId);
+
+        Object document = getUBLDocument(documentId, processDocumentMetadataDAO.getType());
+
+        if (document != null) {
+            EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(processDocumentMetadataDAO.getInitiatorID());
+            repositoryWrapper.deleteEntity(document);
+        }
+
+        new JPARepositoryFactory().forBpRepository().deleteEntityByHjid(ProcessDocumentMetadataDAO.class, processDocumentMetadataDAO.getHjid());
+    }
+
+    public static Object getUBLDocument(String documentID, DocumentType documentType) {
+        Class documentClass = getDocumentClass(documentType);
+        String hibernateEntityName = documentClass.getSimpleName();
+        String query = String.format(QUERY_GET_DOCUMENT, hibernateEntityName);
+        Object document = new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(query, new String[]{"documentId"}, new Object[]{documentID});
+        return document;
+    }
+
+    public static Object getUBLDocument(String documentId) {
+        ProcessDocumentMetadataDAO processDocumentMetadataDAO = ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId);
+        logger.debug(" $$$ Document metadata for {} is {}...", documentId, processDocumentMetadataDAO);
+        return getUBLDocument(documentId, processDocumentMetadataDAO.getType());
+    }
+
+    public static ProcessDocumentMetadata getCorrespondingResponseMetadata(String documentID, DocumentType documentType) {
+        String id = "";
+        if (documentType == DocumentType.ORDER) {
+            id = getOrderResponseId(documentID);
+        }
+        return getDocumentMetadata(id);
+    }
+
+    public static Object getResponseDocument(String documentID, DocumentType documentType) {
+        Object document = null;
+        if (documentType == DocumentType.ORDER) {
+            document = getOrderResponseSimple(documentID);
+        }
+        return document;
+    }
+
+    public static ProcessDocumentMetadata getRequestMetadata(String processInstanceId) {
+        List<Transaction.DocumentTypeEnum> documentTypes = CamundaEngine.getInitialDocumentsForAllProcesses();
+        List<String> parameterNames = new ArrayList<>();
+        List<Object> parameterValues = new ArrayList<>();
+        parameterNames.add("processInstanceId");
+        parameterValues.add(processInstanceId);
+        String query = String.format(QUERY_GET_METADATA, createConditionsForMetadataQuery(documentTypes, parameterNames, parameterValues));
+        ProcessDocumentMetadataDAO processDocumentDAO = new JPARepositoryFactory().forBpRepository().getSingleEntity(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
+        return HibernateSwaggerObjectMapper.createProcessDocumentMetadata(processDocumentDAO);
+    }
+
+    public static ProcessDocumentMetadata getResponseMetadata(String processInstanceId) {
+        List<Transaction.DocumentTypeEnum> documentTypes = CamundaEngine.getResponseDocumentsForAllProcesses();
+        List<String> parameterNames = new ArrayList<>();
+        List<Object> parameterValues = new ArrayList<>();
+        parameterNames.add("processInstanceId");
+        parameterValues.add(processInstanceId);
+        String query = String.format(QUERY_GET_METADATA, createConditionsForMetadataQuery(documentTypes, parameterNames, parameterValues));
+        ProcessDocumentMetadataDAO processDocumentDAO = new JPARepositoryFactory().forBpRepository().getSingleEntity(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
+        if (processDocumentDAO == null) {
+            return null;
+        }
+        return HibernateSwaggerObjectMapper.createProcessDocumentMetadata(processDocumentDAO);
+    }
+
+    private static String createConditionsForMetadataQuery(List<Transaction.DocumentTypeEnum> documentTypes, List<String> parameterNames, List<Object> parameterValues) {
+        StringBuilder sb = new StringBuilder("(");
+        int i=0;
+        for(; i<documentTypes.size()-1; i++) {
+            sb.append("documentMetadata.type = :doc").append(i).append(" OR ");
+            parameterNames.add("doc" + i);
+            parameterValues.add(DocumentType.valueOf(documentTypes.get(i).toString()));
+        }
+        sb.append("documentMetadata.type = :doc").append(i);
+        parameterNames.add("doc" + i);
+        parameterValues.add(DocumentType.valueOf(documentTypes.get(i).toString()));
+        sb.append(")");
+        return sb.toString();
+    }
+
+    private static <T> Class<T> getDocumentClass(DocumentType documentType) {
         Class<T> klass = null;
         switch (documentType) {
             case CATALOGUE:
@@ -189,181 +299,5 @@ public class DocumentPersistenceUtility {
             throw new RuntimeException(msg);
         }
         return klass;
-    }
-
-    public static <T> T readDocument(DocumentType documentType, String content) {
-        Class<T> klass = getDocumentClass(documentType);
-        ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
-        try {
-            return objectMapper.readValue(content, klass);
-
-        } catch (IOException e) {
-            String msg = String.format("Failed to deserialize document. type: %s, content: %s", klass.getName(), content);
-            logger.error(msg, e);
-            throw new RuntimeException(msg, e);
-        }
-    }
-
-    public static void updateDocument(String processContextId, Object document, String documentId, DocumentType documentType, String partyId) {
-        BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(processContextId);
-
-        Object existingDocument = getUBLDocument(documentId, documentType);
-        businessProcessContext.setPreviousDocument(existingDocument);
-        EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(partyId);
-        DataIntegratorUtil.checkExistingParties(document);
-        document = repositoryWrapper.updateEntity(document);
-        businessProcessContext.setDocument(document);
-    }
-
-    public static ProcessDocumentMetadata getDocumentMetadata(String documentId) {
-        ProcessDocumentMetadataDAO processDocumentDAO = ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId);
-        ProcessDocumentMetadata processDocument = HibernateSwaggerObjectMapper.createProcessDocumentMetadata(processDocumentDAO);
-        return processDocument;
-    }
-
-    public static void deleteDocumentWithMetadata(String documentId) {
-        ProcessDocumentMetadataDAO processDocumentMetadataDAO = ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId);
-
-        Object document = getUBLDocument(documentId, processDocumentMetadataDAO.getType());
-
-        if (document != null) {
-            EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(processDocumentMetadataDAO.getInitiatorID());
-            repositoryWrapper.deleteEntity(document);
-        }
-
-        new JPARepositoryFactory().forBpRepository().deleteEntityByHjid(ProcessDocumentMetadataDAO.class, processDocumentMetadataDAO.getHjid());
-    }
-
-    public static Object getUBLDocument(String documentID, DocumentType documentType) {
-        String hibernateEntityName = "";
-        switch (documentType) {
-            case ORDER:
-                hibernateEntityName = "OrderType";
-                break;
-            case INVOICE:
-                hibernateEntityName = "InvoiceType";
-                break;
-            case CATALOGUE:
-                hibernateEntityName = "CatalogueType";
-                break;
-            case QUOTATION:
-                hibernateEntityName = "QuotationType";
-                break;
-            case ORDERRESPONSESIMPLE:
-                hibernateEntityName = "OrderResponseSimpleType";
-                break;
-            case RECEIPTADVICE:
-                hibernateEntityName = "ReceiptAdviceType";
-                break;
-            case DESPATCHADVICE:
-                hibernateEntityName = "DespatchAdviceType";
-                break;
-            case REMITTANCEADVICE:
-                hibernateEntityName = "RemittanceAdviceType";
-                break;
-            case APPLICATIONRESPONSE:
-                hibernateEntityName = "ApplicationResponseType";
-                break;
-            case REQUESTFORQUOTATION:
-                hibernateEntityName = "RequestForQuotationType";
-                break;
-            case TRANSPORTATIONSTATUS:
-                hibernateEntityName = "TransportationStatusType";
-                break;
-            case TRANSPORTEXECUTIONPLANREQUEST:
-                hibernateEntityName = "TransportExecutionPlanRequestType";
-                break;
-            case TRANSPORTEXECUTIONPLAN:
-                hibernateEntityName = "TransportExecutionPlanType";
-                break;
-            case PPAPREQUEST:
-                hibernateEntityName = "PpapRequestType";
-                break;
-            case PPAPRESPONSE:
-                hibernateEntityName = "PpapResponseType";
-                break;
-            case ITEMINFORMATIONREQUEST:
-                hibernateEntityName = "ItemInformationRequestType";
-                break;
-            case ITEMINFORMATIONRESPONSE:
-                hibernateEntityName = "ItemInformationResponseType";
-                break;
-            default:
-                break;
-        }
-        String query = "SELECT document FROM " + hibernateEntityName + " document "
-                + " WHERE document.ID = :documentId";
-
-        List resultSet = new JPARepositoryFactory().forCatalogueRepository().getEntities(query, new String[]{"documentId"}, new Object[]{documentID});
-
-        if (resultSet.size() > 0) {
-            Object document = resultSet.get(0);
-
-            return document;
-        }
-
-        return null;
-    }
-
-    public static Object getUBLDocument(String documentId) {
-        ProcessDocumentMetadataDAO processDocumentMetadataDAO = ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId);
-        logger.debug(" $$$ Document metadata for {} is {}...", documentId, processDocumentMetadataDAO);
-        return getUBLDocument(documentId, processDocumentMetadataDAO.getType());
-    }
-
-    public static ProcessDocumentMetadata getCorrespondingResponseMetadata(String documentID, DocumentType documentType) {
-        String id = "";
-        if (documentType == DocumentType.ORDER) {
-            id = getOrderResponseId(documentID);
-        }
-        return getDocumentMetadata(id);
-    }
-
-    public static Object getResponseDocument(String documentID, DocumentType documentType) {
-        Object document = null;
-        if (documentType == DocumentType.ORDER) {
-            document = getOrderResponseSimple(documentID);
-        }
-        return document;
-    }
-
-    public static ProcessDocumentMetadata getRequestMetadata(String processInstanceId) {
-        List<Transaction.DocumentTypeEnum> documentTypes = CamundaEngine.getInitialDocumentsForAllProcesses();
-        List<String> parameterNames = new ArrayList<>();
-        List<Object> parameterValues = new ArrayList<>();
-        parameterNames.add("processInstanceId");
-        parameterValues.add(processInstanceId);
-        String query = QUERY_GET_REQUEST_METADATA + createConditionsForMetadataQuery(documentTypes, parameterNames, parameterValues);
-        ProcessDocumentMetadataDAO processDocumentDAO = new JPARepositoryFactory().forBpRepository().getSingleEntity(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
-        return HibernateSwaggerObjectMapper.createProcessDocumentMetadata(processDocumentDAO);
-    }
-
-    public static ProcessDocumentMetadata getResponseMetadata(String processInstanceId) {
-        List<Transaction.DocumentTypeEnum> documentTypes = CamundaEngine.getResponseDocumentsForAllProcesses();
-        List<String> parameterNames = new ArrayList<>();
-        List<Object> parameterValues = new ArrayList<>();
-        parameterNames.add("processInstanceId");
-        parameterValues.add(processInstanceId);
-        String query = QUERY_GET_RESPONSE_METADATA + createConditionsForMetadataQuery(documentTypes, parameterNames, parameterValues);
-        ProcessDocumentMetadataDAO processDocumentDAO = new JPARepositoryFactory().forBpRepository().getSingleEntity(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
-        if (processDocumentDAO == null) {
-            return null;
-        }
-        return HibernateSwaggerObjectMapper.createProcessDocumentMetadata(processDocumentDAO);
-    }
-
-    private static String createConditionsForMetadataQuery(List<Transaction.DocumentTypeEnum> documentTypes, List<String> parameterNames, List<Object> parameterValues) {
-        StringBuilder sb = new StringBuilder("(");
-        int i=0;
-        for(; i<documentTypes.size()-1; i++) {
-            sb.append("documentMetadata.type = :doc").append(i).append(" OR ");
-            parameterNames.add("doc" + i);
-            parameterValues.add(DocumentType.valueOf(documentTypes.get(i).toString()));
-        }
-        sb.append("documentMetadata.type = :doc").append(i);
-        parameterNames.add("doc" + i);
-        parameterValues.add(DocumentType.valueOf(documentTypes.get(i).toString()));
-        sb.append(")");
-        return sb.toString();
     }
 }

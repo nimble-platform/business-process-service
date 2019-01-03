@@ -1,10 +1,12 @@
 package eu.nimble.service.bp.impl.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
+import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.processor.orderresponse.DefaultOrderResponseSender;
-import eu.nimble.service.bp.swagger.model.CollaborationGroupResponse;
-import eu.nimble.service.bp.swagger.model.ProcessInstance;
-import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
+import eu.nimble.service.bp.swagger.model.*;
+import eu.nimble.service.bp.swagger.model.Process;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
 import eu.nimble.utility.JsonSerializationUtility;
@@ -26,6 +28,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import java.lang.reflect.Method;
+import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -407,5 +410,27 @@ public class Test04_BusinessProcessesTest {
         Boolean needToCreateDataChannel = (Boolean) method.invoke(defaultOrderResponseSender, order, orderResponse);
         method.setAccessible(false);
         Assert.assertTrue(needToCreateDataChannel);
+    }
+
+    /**
+     * Checks whether all the documents types included in the business processes are resolvable i.e. a Class can be inferred
+     * given a {@link eu.nimble.service.bp.swagger.model.Transaction.DocumentTypeEnum}
+     * @throws Exception
+     */
+    @Test
+    public void test18_resolveDocumentTypes() throws Exception {
+        Method method = DocumentPersistenceUtility.class.getDeclaredMethod("getDocumentClass", DocumentType.class);
+        method.setAccessible(true);
+
+        List<Process> processDefinitions = CamundaEngine.getProcessDefinitions();
+        for(Process process : processDefinitions) {
+            List<Transaction> transactions = process.getTransactions();
+            for(Transaction transaction : transactions) {
+                Class messageClass = (Class) method.invoke(null, DocumentType.valueOf(transaction.getDocumentType().toString()));
+                Assert.assertNotNull(messageClass);
+            }
+        }
+
+        method.setAccessible(false);
     }
 }
