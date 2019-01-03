@@ -129,6 +129,10 @@ public class CamundaEngine {
         return data;
     }
 
+    public static List<ProcessDefinition> getCamundaProcessDefinitions() {
+        return repositoryService.createProcessDefinitionQuery().list();
+    }
+
     public static void addProcessDefinition(String processID, String bpmnContent) {
         repositoryService.createDeployment().addString(processID + ".bpmn", bpmnContent).deploy();
         //getProcessDefinitions();
@@ -261,31 +265,6 @@ public class CamundaEngine {
                 return null;
         }
         return transactions;
-    }
-
-    public static Transaction.DocumentTypeEnum getInitialDocumentForProcess(String businessProcessType) {
-        return CamundaEngine.getTransactions(businessProcessType).get(0).getDocumentType();
-    }
-
-    public static Transaction.DocumentTypeEnum getResponseDocumentForProcess(String businessProcessType) {
-        return CamundaEngine.getTransactions(businessProcessType).get(1).getDocumentType();
-    }
-
-    public static List<Transaction.DocumentTypeEnum> getInitialDocumentsForAllProcesses() {
-        return getSpecifiedDocumentsForAllProcesses(0);
-    }
-
-    public static List<Transaction.DocumentTypeEnum> getResponseDocumentsForAllProcesses() {
-        return getSpecifiedDocumentsForAllProcesses(1);
-    }
-
-    private static List<Transaction.DocumentTypeEnum> getSpecifiedDocumentsForAllProcesses(int index) {
-        List<Transaction.DocumentTypeEnum> initialDocuments = new ArrayList<>();
-        List<ProcessDefinition> processDefinitions = repositoryService.createProcessDefinitionQuery().list();
-        for (ProcessDefinition processDefinition : processDefinitions) {
-            initialDocuments.add(getTransactions(processDefinition.getKey()).get(index).getDocumentType());
-        }
-        return initialDocuments;
     }
 
     public static void cancelProcessInstance(String processInstanceId){

@@ -1,6 +1,7 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.hyperjaxb.model.*;
+import eu.nimble.service.bp.impl.util.bp.BusinessProcessUtility;
 import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceGroupDAOUtility;
@@ -49,7 +50,7 @@ public class ContinueController implements ContinueApi {
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
         try {
             // check the entity ids in the passed document
-            Transaction.DocumentTypeEnum documentType = CamundaEngine.getResponseDocumentForProcess(body.getVariables().getProcessID());
+            Transaction.DocumentTypeEnum documentType = BusinessProcessUtility.getResponseDocumentForProcess(body.getVariables().getProcessID());
             Object document = DocumentPersistenceUtility.readDocument(DocumentType.valueOf(documentType.toString()), body.getVariables().getContent());
 
             boolean hjidsExists = resourceValidationUtil.hjidsExit(document);

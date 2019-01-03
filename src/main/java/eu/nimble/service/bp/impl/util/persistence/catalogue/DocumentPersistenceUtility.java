@@ -2,6 +2,8 @@ package eu.nimble.service.bp.impl.util.persistence.catalogue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.hyperjaxb.model.*;
+import eu.nimble.service.bp.impl.util.bp.BusinessProcessUtility;
+import eu.nimble.service.bp.impl.util.bp.DocumentEnumClassMapper;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.impl.util.persistence.DataIntegratorUtil;
 import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMapper;
@@ -12,19 +14,7 @@ import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.bp.swagger.model.Transaction;
-import eu.nimble.service.model.ubl.catalogue.CatalogueType;
-import eu.nimble.service.model.ubl.despatchadvice.DespatchAdviceType;
-import eu.nimble.service.model.ubl.iteminformationrequest.ItemInformationRequestType;
-import eu.nimble.service.model.ubl.iteminformationresponse.ItemInformationResponseType;
-import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
-import eu.nimble.service.model.ubl.ppaprequest.PpapRequestType;
-import eu.nimble.service.model.ubl.ppapresponse.PpapResponseType;
-import eu.nimble.service.model.ubl.quotation.QuotationType;
-import eu.nimble.service.model.ubl.receiptadvice.ReceiptAdviceType;
-import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
-import eu.nimble.service.model.ubl.transportexecutionplan.TransportExecutionPlanType;
-import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
@@ -134,11 +124,10 @@ public class DocumentPersistenceUtility {
         repo.persistEntity(newDocumentDAO);
 
         businessProcessContext.setUpdatedDocumentMetadata(newDocumentDAO);
-
     }
 
     public static <T> T readDocument(DocumentType documentType, String content) {
-        Class<T> klass = getDocumentClass(documentType);
+        Class<T> klass = DocumentEnumClassMapper.getDocumentClass(documentType);
         ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
         try {
             return objectMapper.readValue(content, klass);
@@ -181,7 +170,7 @@ public class DocumentPersistenceUtility {
     }
 
     public static Object getUBLDocument(String documentID, DocumentType documentType) {
-        Class documentClass = getDocumentClass(documentType);
+        Class documentClass = DocumentEnumClassMapper.getDocumentClass(documentType);
         String hibernateEntityName = documentClass.getSimpleName();
         String query = String.format(QUERY_GET_DOCUMENT, hibernateEntityName);
         Object document = new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(query, new String[]{"documentId"}, new Object[]{documentID});
@@ -211,7 +200,7 @@ public class DocumentPersistenceUtility {
     }
 
     public static ProcessDocumentMetadata getRequestMetadata(String processInstanceId) {
-        List<Transaction.DocumentTypeEnum> documentTypes = CamundaEngine.getInitialDocumentsForAllProcesses();
+        List<Transaction.DocumentTypeEnum> documentTypes = BusinessProcessUtility.getInitialDocumentsForAllProcesses();
         List<String> parameterNames = new ArrayList<>();
         List<Object> parameterValues = new ArrayList<>();
         parameterNames.add("processInstanceId");
@@ -222,7 +211,7 @@ public class DocumentPersistenceUtility {
     }
 
     public static ProcessDocumentMetadata getResponseMetadata(String processInstanceId) {
-        List<Transaction.DocumentTypeEnum> documentTypes = CamundaEngine.getResponseDocumentsForAllProcesses();
+        List<Transaction.DocumentTypeEnum> documentTypes = BusinessProcessUtility.getResponseDocumentsForAllProcesses();
         List<String> parameterNames = new ArrayList<>();
         List<Object> parameterValues = new ArrayList<>();
         parameterNames.add("processInstanceId");
@@ -248,56 +237,5 @@ public class DocumentPersistenceUtility {
         parameterValues.add(DocumentType.valueOf(documentTypes.get(i).toString()));
         sb.append(")");
         return sb.toString();
-    }
-
-    private static <T> Class<T> getDocumentClass(DocumentType documentType) {
-        Class<T> klass = null;
-        switch (documentType) {
-            case CATALOGUE:
-                klass = (Class<T>) CatalogueType.class;
-                break;
-            case ORDER:
-                klass = (Class<T>) OrderType.class;
-                break;
-            case ORDERRESPONSESIMPLE:
-                klass = (Class<T>) OrderResponseSimpleType.class;
-                break;
-            case REQUESTFORQUOTATION:
-                klass = (Class<T>) RequestForQuotationType.class;
-                break;
-            case QUOTATION:
-                klass = (Class<T>) QuotationType.class;
-                break;
-            case DESPATCHADVICE:
-                klass = (Class<T>) DespatchAdviceType.class;
-                break;
-            case RECEIPTADVICE:
-                klass = (Class<T>) ReceiptAdviceType.class;
-                break;
-            case TRANSPORTEXECUTIONPLANREQUEST:
-                klass = (Class<T>) TransportExecutionPlanRequestType.class;
-                break;
-            case TRANSPORTEXECUTIONPLAN:
-                klass = (Class<T>) TransportExecutionPlanType.class;
-                break;
-            case PPAPREQUEST:
-                klass = (Class<T>) PpapRequestType.class;
-                break;
-            case PPAPRESPONSE:
-                klass = (Class<T>) PpapResponseType.class;
-                break;
-            case ITEMINFORMATIONREQUEST:
-                klass = (Class<T>) ItemInformationRequestType.class;
-                break;
-            case ITEMINFORMATIONRESPONSE:
-                klass = (Class<T>) ItemInformationResponseType.class;
-                break;
-        }
-        if(klass == null) {
-            String msg = String.format("Unknown document type: %s", documentType.toString());
-            logger.warn(msg);
-            throw new RuntimeException(msg);
-        }
-        return klass;
     }
 }

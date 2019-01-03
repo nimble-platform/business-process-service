@@ -3,6 +3,7 @@ package eu.nimble.service.bp.impl;
 import eu.nimble.service.bp.impl.model.statistics.BusinessProcessCount;
 import eu.nimble.service.bp.impl.model.statistics.NonOrderedProducts;
 import eu.nimble.service.bp.impl.model.statistics.OverallStatistics;
+import eu.nimble.service.bp.impl.util.bp.BusinessProcessUtility;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.impl.util.controller.InputValidatorUtil;
 import eu.nimble.service.bp.impl.util.controller.ValidationResponse;
@@ -102,11 +103,11 @@ public class StatisticsController {
             // get initiating document for the business process
             List<String> documentTypes = new ArrayList<>();
             if (businessProcessType != null) {
-                documentTypes.add(CamundaEngine.getInitialDocumentForProcess(businessProcessType).toString());
+                documentTypes.add(BusinessProcessUtility.getInitialDocumentForProcess(businessProcessType).toString());
 
                 // if there is no process specified, get the document list for all business processes
             } else {
-                List<Transaction.DocumentTypeEnum> initialDocuments = CamundaEngine.getInitialDocumentsForAllProcesses();
+                List<Transaction.DocumentTypeEnum> initialDocuments = BusinessProcessUtility.getInitialDocumentsForAllProcesses();
                 initialDocuments.stream().forEach(type -> documentTypes.add(type.toString()));
             }
 

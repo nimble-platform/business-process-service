@@ -1,20 +1,68 @@
-//package eu.nimble.service.bp.application.ubl;
-//
-//import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
-//import eu.nimble.service.model.ubl.commonbasiccomponents.AmountType;
-//import eu.nimble.service.model.ubl.commonbasiccomponents.CodeType;
-//import eu.nimble.service.model.ubl.order.OrderType;
-//import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
-//import org.slf4j.Logger;
-//import org.slf4j.LoggerFactory;
-//
-//import java.math.BigDecimal;
-//import java.util.*;
-//
-///**
-// * Created by yildiray on 6/8/2017.
-// */
-//class UBLUtility {
+package eu.nimble.service.bp.impl.util;
+
+import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
+import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
+import eu.nimble.service.model.ubl.iteminformationresponse.ItemInformationResponseType;
+import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
+import eu.nimble.service.model.ubl.ppapresponse.PpapResponseType;
+import eu.nimble.service.model.ubl.quotation.QuotationType;
+import eu.nimble.service.model.ubl.receiptadvice.ReceiptAdviceType;
+import eu.nimble.service.model.ubl.transportexecutionplan.TransportExecutionPlanType;
+import org.apache.poi.ss.formula.functions.T;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.lang.reflect.Field;
+
+/**
+ * Created by yildiray on 6/8/2017.
+ */
+public class UBLUtility {
+    private static Logger logger = LoggerFactory.getLogger(UBLUtility.class);
+
+    public static String getDocumentId(Object document) {
+        try {
+            Field f = document.getClass().getDeclaredField("id");
+            f.setAccessible(true);
+            String id = (String) f.get(document);
+            f.setAccessible(false);
+            return id;
+
+        } catch (Exception e) {
+            String msg = String.format("Failed to get id of the document: %s", document.getClass());
+            logger.error(msg, e);
+            throw new RuntimeException(msg, e);
+        }
+    }
+
+
+    public boolean documentHasAlternativeResponseOptions(Object document) {
+        Class documentClass = document.getClass();
+        if(documentClass.equals(OrderResponseSimpleType.class) ||
+                documentClass.equals(QuotationType.class) ||
+                documentClass.equals(TransportExecutionPlanType.class)) {
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean documentIndicatesPositiveResponse(Object document) {
+        boolean result = true;
+        if(document instanceof OrderResponseSimpleType) {
+            OrderResponseSimpleType orderResponse = (OrderResponseSimpleType) document;
+            result = orderResponse.isAcceptedIndicator();
+
+        }else if(document instanceof QuotationType) {
+            QuotationType quotation = (QuotationType) document;
+            result = quotation.getDocumentStatusCode().getName().equals("Accepted");
+
+        } else if(document instanceof TransportExecutionPlanType) {
+            TransportExecutionPlanType transportExecutionPlanType = (TransportExecutionPlanType) document;
+            result = transportExecutionPlanType.getDocumentStatusCode().getName().equals("Accepted");
+        }
+        return result;
+    }
+
 //    private static Logger logger = LoggerFactory.getLogger(UBLUtility.class);
 //
 //    private static PartyType getPartyType(String partyID) {
@@ -185,4 +233,4 @@
 //
 //        return total;
 //    }
-//}
+}
