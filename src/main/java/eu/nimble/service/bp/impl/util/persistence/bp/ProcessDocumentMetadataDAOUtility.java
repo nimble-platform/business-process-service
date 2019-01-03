@@ -26,6 +26,14 @@ public class ProcessDocumentMetadataDAOUtility {
     private static final String QUERY_GET_BY_PROCESS_INSTANCE_ID = "SELECT pdm FROM ProcessDocumentMetadataDAO pdm WHERE pdm.processInstanceID = :processInstanceId ORDER BY pdm.submissionDate ASC";
     private static final String QUERY_GET_BY_RESPONDER_ID = "SELECT DISTINCT metadataDAO.processInstanceID FROM ProcessDocumentMetadataDAO metadataDAO WHERE metadataDAO.responderID = :responderId";
 
+    /**
+     * The conditions for the queries below are initialized during the query instantiation
+     */
+    private static final String QUERY_GET_TRANSACTION_COUNT = "SELECT count(*) FROM ProcessDocumentMetadataDAO documentMetadata %s";
+    private static final String QUERY_GET_DOCUMENT_IDS = "SELECT documentMetadata.documentID FROM ProcessDocumentMetadataDAO documentMetadata %s";
+    private static final String QUERY_GET_GROUPED_TRANSACTIONS = "SELECT documentMetadata.initiatorID, documentMetadata.type, documentMetadata.status, count(*) FROM ProcessDocumentMetadataDAO documentMetadata %s";
+    private static final String QUERY_GET = "SELECT document FROM ProcessDocumentMetadataDAO document WHERE (%s)";
+
     private static final Logger logger = LoggerFactory.getLogger(ProcessDocumentMetadataDAOUtility.class);
 
     public static ProcessDocumentMetadataDAO findByDocumentID(String documentId) {
@@ -78,28 +86,29 @@ public class ProcessDocumentMetadataDAOUtility {
     public static List<ProcessDocumentMetadataDAO> getProcessDocumentMetadata(String partnerID, String type, String status, String source) {
         List<String> parameterNames = new ArrayList<>();
         List<String> parameterValues = new ArrayList<>();
-        String query = "select document from ProcessDocumentMetadataDAO document where ( ";
+        String conditions = "";
 
         if (source != null && partnerID != null) {
             String attribute = source.equals("SENT") ? "initiatorID" : "responderID";
-            query += " document." + attribute + " = :partnerId ";
+            conditions += " document." + attribute + " = :partnerId ";
             parameterNames.add("partnerId");
             parameterValues.add(partnerID);
 
         } else if (source == null && partnerID != null) {
-            query += " (document.initiatorID = :partnerId or document.responderID = :partnerId) ";
+            conditions += " (document.initiatorID = :partnerId or document.responderID = :partnerId) ";
             parameterNames.add("partnerId");
             parameterValues.add(partnerID);
         }
 
         if (type != null) {
-            query += " and document.type = '" + DocumentType.valueOf(type).toString() + "' ";
+            conditions += " and document.type = '" + DocumentType.valueOf(type).toString() + "' ";
         }
 
         if (status != null) {
-            query += " and document.status = '" + ProcessDocumentStatus.valueOf(status).toString() + "'";
+            conditions += " and document.status = '" + ProcessDocumentStatus.valueOf(status).toString() + "'";
         }
-        query += " ) ";
+
+        String query = String.format(QUERY_GET, conditions);
         List<ProcessDocumentMetadataDAO> resultSet = new JPARepositoryFactory().forBpRepository().getEntities(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray(new String[parameterValues.size()]));
         return resultSet;
     }
@@ -141,15 +150,7 @@ public class ProcessDocumentMetadataDAOUtility {
         List<String> parameterNames = query.parameterNames;
         List<Object> parameterValues = query.parameterValues;
 
-        String queryStr = null;
-        if (queryType.equals(DocumentMetadataQueryType.TOTAL_TRANSACTION_COUNT)) {
-            queryStr = "select count(*) from ProcessDocumentMetadataDAO documentMetadata ";
-        } else if (queryType.equals(DocumentMetadataQueryType.DOCUMENT_IDS)) {
-            queryStr = "select documentMetadata.documentID from ProcessDocumentMetadataDAO documentMetadata ";
-        } else if (queryType.equals(DocumentMetadataQueryType.GROUPED_TRANSACTION_COUNT)) {
-            queryStr = "select documentMetadata.initiatorID, documentMetadata.type, documentMetadata.status, count(*) from ProcessDocumentMetadataDAO documentMetadata ";
-        }
-
+        String conditions = "";
         DateTimeFormatter sourceFormatter = DateTimeFormat.forPattern("dd-MM-yyyy");
         DateTimeFormatter bpFormatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
 
@@ -157,7 +158,7 @@ public class ProcessDocumentMetadataDAOUtility {
 
         if (partyId != null) {
             String attribute = role.equals(RoleType.BUYER.toString()) ? "initiatorID" : "responderID";
-            queryStr += " where documentMetadata." + attribute + " = :partyId ";
+            conditions += " where documentMetadata." + attribute + " = :partyId ";
             filterExists = true;
 
             parameterNames.add("partyId");
@@ -166,16 +167,16 @@ public class ProcessDocumentMetadataDAOUtility {
 
         if (startDateStr != null || endDateStr != null) {
             if (!filterExists) {
-                queryStr += " where";
+                conditions += " where";
             } else {
-                queryStr += " and";
+                conditions += " and";
             }
 
             if (startDateStr != null && endDateStr != null) {
                 DateTime startDate = sourceFormatter.parseDateTime(startDateStr);
                 DateTime endDate = sourceFormatter.parseDateTime(endDateStr);
                 endDate = endDate.plusDays(1).minusMillis(1);
-                queryStr += " documentMetadata.submissionDate between :startTime and :endTime";
+                conditions += " documentMetadata.submissionDate between :startTime and :endTime";
 
                 parameterNames.add("startTime");
                 parameterValues.add(bpFormatter.print(startDate));
@@ -183,14 +184,14 @@ public class ProcessDocumentMetadataDAOUtility {
                 parameterValues.add(bpFormatter.print(endDate));
             } else if (startDateStr != null) {
                 DateTime startDate = sourceFormatter.parseDateTime(startDateStr);
-                queryStr += " documentMetadata.submissionDate >= :startTime";
+                conditions += " documentMetadata.submissionDate >= :startTime";
 
                 parameterNames.add("startTime");
                 parameterValues.add(bpFormatter.print(startDate));
             } else {
                 DateTime endDate = sourceFormatter.parseDateTime(endDateStr);
                 endDate = endDate.plusDays(1).minusMillis(1);
-                queryStr += " documentMetadata.submissionDate <= :endTime";
+                conditions += " documentMetadata.submissionDate <= :endTime";
 
                 parameterNames.add("endTime");
                 parameterValues.add(bpFormatter.print(endDate));
@@ -200,31 +201,37 @@ public class ProcessDocumentMetadataDAOUtility {
 
         if (documentTypes.size() > 0) {
             if (!filterExists) {
-                queryStr += " where (";
+                conditions += " where (";
             } else {
-                queryStr += " and(";
+                conditions += " and(";
             }
             for (int i = 0; i < documentTypes.size() - 1; i++) {
-                queryStr += " documentMetadata.type = '" + DocumentType.valueOf(documentTypes.get(i)).toString() + "' or";
+                conditions += " documentMetadata.type = '" + DocumentType.valueOf(documentTypes.get(i)).toString() + "' or";
             }
-            queryStr += " documentMetadata.type = '" + DocumentType.valueOf(documentTypes.get(documentTypes.size() - 1)).toString() + "')";
+            conditions += " documentMetadata.type = '" + DocumentType.valueOf(documentTypes.get(documentTypes.size() - 1)).toString() + "')";
             filterExists = true;
         }
 
         if (status != null) {
             if (!filterExists) {
-                queryStr += " where ";
+                conditions += " where ";
             } else {
-                queryStr += " and ";
+                conditions += " and ";
             }
-            queryStr += " documentMetadata.status = '" + ProcessDocumentStatus.valueOf(status).toString() + "'";
+            conditions += " documentMetadata.status = '" + ProcessDocumentStatus.valueOf(status).toString() + "'";
         }
 
         if (queryType.equals(DocumentMetadataQueryType.GROUPED_TRANSACTION_COUNT)) {
-            queryStr += " group by documentMetadata.initiatorID, documentMetadata.type, documentMetadata.status";
+            conditions += " group by documentMetadata.initiatorID, documentMetadata.type, documentMetadata.status";
         }
 
-        query.query = queryStr;
+        if (queryType.equals(DocumentMetadataQueryType.TOTAL_TRANSACTION_COUNT)) {
+            query.query = String.format(QUERY_GET_TRANSACTION_COUNT, conditions);
+        } else if (queryType.equals(DocumentMetadataQueryType.DOCUMENT_IDS)) {
+            query.query = String.format(QUERY_GET_DOCUMENT_IDS, conditions);
+        } else if (queryType.equals(DocumentMetadataQueryType.GROUPED_TRANSACTION_COUNT)) {
+            query.query = String.format(QUERY_GET_GROUPED_TRANSACTIONS, conditions);
+        }
         return query;
     }
 
