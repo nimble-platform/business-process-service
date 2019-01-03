@@ -2,7 +2,8 @@ package eu.nimble.service.bp.impl.util.persistence.catalogue;
 
 import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.impl.model.trust.NegotiationRatings;
-import eu.nimble.service.bp.impl.util.persistence.bp.DAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceDAOUtility;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
@@ -52,20 +53,20 @@ public class TrustPersistenceUtility {
          * IMPORTANT:
          * {@link QualifyingPartyType}ies should be existing when a {@link CompletedTaskType} is about to be associated to it
          */
-        QualifyingPartyType qualifyingParty = CataloguePersistenceUtil.getQualifyingPartyType(partyID,bearerToken);
+        QualifyingPartyType qualifyingParty = CataloguePersistenceUtility.getQualifyingPartyType(partyID,bearerToken);
         CompletedTaskType completedTask = new CompletedTaskType();
         completedTask.setAssociatedProcessInstanceID(processInstanceID);
         completedTask.setDescription(Arrays.asList(status));
         PeriodType periodType = new PeriodType();
 
-        ProcessDocumentMetadata responseMetadata = DocumentDAOUtility.getResponseMetadata(processInstanceID);
+        ProcessDocumentMetadata responseMetadata = DocumentPersistenceUtility.getResponseMetadata(processInstanceID);
         // TODO: End time and date are NULL for cancelled process for now
         try {
             if (responseMetadata != null) {
                 periodType.setEndDate(DatatypeFactory.newInstance().newXMLGregorianCalendar(responseMetadata.getSubmissionDate()));
                 periodType.setEndTime(DatatypeFactory.newInstance().newXMLGregorianCalendar(responseMetadata.getSubmissionDate()));
             }
-            ProcessDocumentMetadata requestMetadata = DocumentDAOUtility.getRequestMetadata(DAOUtility.getAllProcessInstanceIDs(processInstanceID).get(0));
+            ProcessDocumentMetadata requestMetadata = DocumentPersistenceUtility.getRequestMetadata(ProcessInstanceDAOUtility.getAllProcessInstanceIdsInCollaborationHistory(processInstanceID).get(0));
             periodType.setStartDate(DatatypeFactory.newInstance().newXMLGregorianCalendar(requestMetadata.getSubmissionDate()));
             periodType.setStartTime(DatatypeFactory.newInstance().newXMLGregorianCalendar(requestMetadata.getSubmissionDate()));
             completedTask.setPeriod(periodType);
@@ -81,7 +82,7 @@ public class TrustPersistenceUtility {
     }
 
     public static void createCompletedTasksForBothParties(String processInstanceID,String bearerToken,String status) {
-        List<ProcessDocumentMetadataDAO> processDocumentMetadatas= DAOUtility.getProcessDocumentMetadataByProcessInstanceID(processInstanceID);
+        List<ProcessDocumentMetadataDAO> processDocumentMetadatas= ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(processInstanceID);
         createCompletedTasksForBothParties(processDocumentMetadatas.get(0), bearerToken, status);
     }
 

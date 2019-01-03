@@ -272,10 +272,18 @@ public class CamundaEngine {
     }
 
     public static List<Transaction.DocumentTypeEnum> getInitialDocumentsForAllProcesses() {
+        return getSpecifiedDocumentsForAllProcesses(0);
+    }
+
+    public static List<Transaction.DocumentTypeEnum> getResponseDocumentsForAllProcesses() {
+        return getSpecifiedDocumentsForAllProcesses(1);
+    }
+
+    private static List<Transaction.DocumentTypeEnum> getSpecifiedDocumentsForAllProcesses(int index) {
         List<Transaction.DocumentTypeEnum> initialDocuments = new ArrayList<>();
         List<ProcessDefinition> processDefinitions = repositoryService.createProcessDefinitionQuery().list();
         for (ProcessDefinition processDefinition : processDefinitions) {
-            initialDocuments.add(getTransactions(processDefinition.getKey()).get(0).getDocumentType());
+            initialDocuments.add(getTransactions(processDefinition.getKey()).get(index).getDocumentType());
         }
         return initialDocuments;
     }

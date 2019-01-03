@@ -1,8 +1,8 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.hyperjaxb.model.ProcessConfigurationDAO;
-import eu.nimble.service.bp.impl.util.persistence.bp.DAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMapper;
+import eu.nimble.service.bp.impl.util.persistence.bp.ProcessConfigurationDAOUtility;
 import eu.nimble.service.bp.swagger.api.ApplicationApi;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
@@ -44,7 +44,7 @@ public class ApplicationController implements ApplicationApi {
     @ApiOperation(value = "",notes = "Delete the business process application preference of a partner for a process")
     public ResponseEntity<ModelApiResponse> deleteProcessConfiguration(@PathVariable("partnerID") String partnerID, @PathVariable("processID") String processID, @PathVariable("roleType") String roleType) {
         logger.info(" $$$ Deleting ProcessApplicationConfigurations for ... {}", partnerID);
-        ProcessConfigurationDAO processConfigurationDAO = DAOUtility.getProcessConfiguration(partnerID, processID, ProcessConfiguration.RoleTypeEnum.valueOf(roleType));
+        ProcessConfigurationDAO processConfigurationDAO = ProcessConfigurationDAOUtility.getProcessConfiguration(partnerID, processID, ProcessConfiguration.RoleTypeEnum.valueOf(roleType));
         repositoryFactory.forBpRepository().deleteEntityByHjid(ProcessConfigurationDAO.class, processConfigurationDAO.getHjid());
         return HibernateSwaggerObjectMapper.getApiResponse();
     }
@@ -53,7 +53,7 @@ public class ApplicationController implements ApplicationApi {
     @ApiOperation(value = "",notes = "Get the business process application preferences of a partner for all processes")
     public ResponseEntity<List<ProcessConfiguration>> getProcessConfiguration(@PathVariable("partnerID") String partnerID) {
         logger.info(" $$$ Getting ProcessApplicationConfigurations for ... {}", partnerID);
-        List<ProcessConfigurationDAO> processApplicationConfigurationsDAO = DAOUtility.getProcessConfigurationDAOByPartnerID(partnerID);
+        List<ProcessConfigurationDAO> processApplicationConfigurationsDAO = ProcessConfigurationDAOUtility.getProcessConfigurations(partnerID);
 
         List<ProcessConfiguration> processApplicationConfigurations = new ArrayList<>();
 
@@ -69,7 +69,7 @@ public class ApplicationController implements ApplicationApi {
     @ApiOperation(value = "",notes = "Get the business process application preferences of a partner for a specific process")
     public ResponseEntity<ProcessConfiguration> getProcessConfigurationByProcessID(@PathVariable("partnerID") String partnerID, @PathVariable("processID") String processID, @PathVariable("roleType") String roleType) {
         logger.info(" $$$ Deleting ProcessApplicationConfigurations for ... {}", partnerID);
-        ProcessConfigurationDAO processConfigurationDAO = DAOUtility.getProcessConfiguration(partnerID, processID, ProcessConfiguration.RoleTypeEnum.valueOf(roleType));
+        ProcessConfigurationDAO processConfigurationDAO = ProcessConfigurationDAOUtility.getProcessConfiguration(partnerID, processID, ProcessConfiguration.RoleTypeEnum.valueOf(roleType));
         ProcessConfiguration processConfiguration = null;
         if(processConfigurationDAO != null)
             processConfiguration = HibernateSwaggerObjectMapper.createProcessConfiguration(processConfigurationDAO);
@@ -81,7 +81,7 @@ public class ApplicationController implements ApplicationApi {
     public ResponseEntity<ModelApiResponse> updateProcessConfiguration(@RequestBody ProcessConfiguration body) {
         logger.info(" $$$ Updating ProcessApplicationConfigurations: ");
         logger.debug(" $$$ {}", body.toString());
-        ProcessConfigurationDAO processApplicationConfigurationsDAO = DAOUtility.getProcessConfiguration(body.getPartnerID(), body.getProcessID(), body.getRoleType());
+        ProcessConfigurationDAO processApplicationConfigurationsDAO = ProcessConfigurationDAOUtility.getProcessConfiguration(body.getPartnerID(), body.getProcessID(), body.getRoleType());
         ProcessConfigurationDAO processApplicationConfigurationsDAONew = HibernateSwaggerObjectMapper.createProcessConfiguration_DAO(body);
 
         if(processApplicationConfigurationsDAO != null) {

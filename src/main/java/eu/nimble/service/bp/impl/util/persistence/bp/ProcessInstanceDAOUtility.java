@@ -3,6 +3,7 @@ package eu.nimble.service.bp.impl.util.persistence.bp;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -11,7 +12,18 @@ import java.util.List;
 public class ProcessInstanceDAOUtility {
     private static final String QUERY_GET_BY_ID = "SELECT pi FROM ProcessInstanceDAO pi WHERE pi.processInstanceID = :processInstanceId";
 
-    public static List<ProcessInstanceDAO> findByProcessInstanceId(String processInstanceId) {
-        return new JPARepositoryFactory().forBpRepository().getEntities(QUERY_GET_BY_ID, new String[]{"processInstanceId"}, new Object[]{processInstanceId});
+    public static ProcessInstanceDAO getById(String processInstanceId) {
+        return new JPARepositoryFactory().forBpRepository().getSingleEntity(QUERY_GET_BY_ID, new String[]{"processInstanceId"}, new Object[]{processInstanceId});
+    }
+
+    public static List<String> getAllProcessInstanceIdsInCollaborationHistory(String processInstanceID) {
+        List<String> processInstanceIDs = new ArrayList<>();
+        ProcessInstanceDAO processInstanceDAO = ProcessInstanceDAOUtility.getById(processInstanceID);
+        processInstanceIDs.add(0, processInstanceID);
+        while (processInstanceDAO.getPrecedingProcess() != null) {
+            processInstanceDAO = ProcessInstanceDAOUtility.getById(processInstanceDAO.getPrecedingProcess().getProcessInstanceID());
+            processInstanceIDs.add(0, processInstanceDAO.getProcessInstanceID());
+        }
+        return processInstanceIDs;
     }
 }

@@ -4,7 +4,7 @@ import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
 import eu.nimble.service.bp.config.GenericConfig;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
-import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
@@ -59,10 +59,10 @@ public class DefaultOrderResponseSender  implements JavaDelegate {
         String seller = variables.get("initiatorID").toString();
         String processContextId = variables.get("processContextId").toString();
         OrderResponseSimpleType orderResponse = (OrderResponseSimpleType) variables.get("orderResponse");
-        OrderType order = (OrderType) DocumentDAOUtility.getUBLDocument((String) variables.get("initialDocumentID"));
+        OrderType order = (OrderType) DocumentPersistenceUtility.getUBLDocument((String) variables.get("initialDocumentID"));
 
         // get application execution configuration
-        ExecutionConfiguration executionConfiguration = DocumentDAOUtility.getExecutionConfiguration(seller,
+        ExecutionConfiguration executionConfiguration = DocumentPersistenceUtility.getExecutionConfiguration(seller,
                 execution.getProcessInstance().getProcessDefinitionId(), ProcessConfiguration.RoleTypeEnum.SELLER, "ORDERRESPONSE",
                 ExecutionConfiguration.ApplicationTypeEnum.DATACHANNEL);
         String applicationURI = executionConfiguration.getExecutionUri();
@@ -101,7 +101,7 @@ public class DefaultOrderResponseSender  implements JavaDelegate {
                 if(clause.getType().contentEquals(eu.nimble.service.model.ubl.extension.ClauseType.DOCUMENT.toString())) {
                     DocumentClauseType docClause = (DocumentClauseType) clause;
                     if(docClause.getClauseDocumentRef().getDocumentType().contentEquals(DocumentType.QUOTATION.toString())) {
-                        QuotationType quotation = (QuotationType) DocumentDAOUtility.getUBLDocument(docClause.getClauseDocumentRef().getID(), DocumentType.QUOTATION);
+                        QuotationType quotation = (QuotationType) DocumentPersistenceUtility.getUBLDocument(docClause.getClauseDocumentRef().getID(), DocumentType.QUOTATION);
                         if (quotation.isDataMonitoringPromised()) {
                             dataMonitoringDemanded = true;
                             break;
@@ -134,7 +134,7 @@ public class DefaultOrderResponseSender  implements JavaDelegate {
 
         // adjust the start end data
         DateTimeFormatter bpFormatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
-        ProcessDocumentMetadata orderResponseMetadata = DocumentDAOUtility.getDocumentMetadata(orderResponse.getID());
+        ProcessDocumentMetadata orderResponseMetadata = DocumentPersistenceUtility.getDocumentMetadata(orderResponse.getID());
         LocalDateTime localTime = bpFormatter.parseLocalDateTime(orderResponseMetadata.getSubmissionDate());
         DateTime startTime = new DateTime(localTime.toDateTime(), DateTimeZone.UTC);
         DateTime endTime = startTime.plusWeeks(2);

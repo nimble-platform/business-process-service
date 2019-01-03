@@ -1,9 +1,7 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.hyperjaxb.model.*;
-import eu.nimble.service.bp.impl.util.persistence.bp.DAOUtility;
-import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMapper;
-import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceGroupDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.bp.*;
 import eu.nimble.service.bp.impl.util.persistence.catalogue.TrustPersistenceUtility;
 import eu.nimble.service.bp.impl.util.email.EmailSenderUtil;
 import eu.nimble.service.bp.swagger.api.GroupApi;
@@ -190,7 +188,7 @@ public class ProcessInstanceGroupController implements GroupApi {
                                                 @ApiParam(value = "", required = true) @RequestHeader(value = "Authorization", required = true) String authorization) {
         try {
             // check whether the process instance id exists
-            ProcessInstanceDAO pi = DAOUtility.getProcessInstanceDAOByID(processInstanceId);
+            ProcessInstanceDAO pi = ProcessInstanceDAOUtility.getById(processInstanceId);
             if (pi == null) {
                 return HttpResponseUtil.createResponseEntityAndLog(String.format("No process ID exists for the process id: %s", processInstanceId), null, HttpStatus.NOT_FOUND, LogLevel.INFO);
             }
@@ -266,7 +264,7 @@ public class ProcessInstanceGroupController implements GroupApi {
 
             // cancel processes in the group
             for (String processID : groupDAO.getProcessInstanceIDs()) {
-                ProcessInstanceDAO instanceDAO = DAOUtility.getProcessInstanceDAOByID(processID);
+                ProcessInstanceDAO instanceDAO = ProcessInstanceDAOUtility.getById(processID);
                 // if process is completed or already cancelled, continue
                 if (instanceDAO.getStatus() == ProcessInstanceStatus.COMPLETED || instanceDAO.getStatus() == ProcessInstanceStatus.CANCELLED) {
                     instanceDAO.setStatus(ProcessInstanceStatus.CANCELLED);
@@ -306,7 +304,7 @@ public class ProcessInstanceGroupController implements GroupApi {
 
     private boolean cancellableGroup(List<String> processInstanceIDs) {
         for (String instanceID : processInstanceIDs) {
-            List<ProcessDocumentMetadataDAO> metadataDAOS = DAOUtility.getProcessDocumentMetadataByProcessInstanceID(instanceID);
+            List<ProcessDocumentMetadataDAO> metadataDAOS = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(instanceID);
             for (ProcessDocumentMetadataDAO metadataDAO : metadataDAOS) {
                 if (metadataDAO.getType() == DocumentType.ORDERRESPONSESIMPLE && metadataDAO.getStatus() == ProcessDocumentStatus.APPROVED || metadataDAO.getType() == DocumentType.TRANSPORTEXECUTIONPLAN && metadataDAO.getStatus() == ProcessDocumentStatus.APPROVED) {
                     return false;

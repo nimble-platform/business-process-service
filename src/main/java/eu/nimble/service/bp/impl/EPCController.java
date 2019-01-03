@@ -7,8 +7,8 @@ import com.mashape.unirest.http.Unirest;
 import eu.nimble.service.bp.config.GenericConfig;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
 import eu.nimble.service.bp.impl.model.tt.TTInfo;
-import eu.nimble.service.bp.impl.util.persistence.catalogue.CataloguePersistenceUtil;
-import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.CataloguePersistenceUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.CatalogueLineType;
 import eu.nimble.service.model.ubl.order.OrderType;
@@ -93,9 +93,9 @@ public class EPCController {
 
             String orderId = epcCodesList.get(0).getOrderId();
 
-            OrderType order = (OrderType) DocumentDAOUtility.getUBLDocument(orderId, DocumentType.ORDER);
+            OrderType order = (OrderType) DocumentPersistenceUtility.getUBLDocument(orderId, DocumentType.ORDER);
 
-            CatalogueLineType catalogueLine = CataloguePersistenceUtil.getCatalogueLine(order);
+            CatalogueLineType catalogueLine = CataloguePersistenceUtility.getCatalogueLine(order);
 
 
             TTInfo ttInfo = new TTInfo();
@@ -135,7 +135,7 @@ public class EPCController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(String.format(msg,publishedProductID));
             }
 
-            List<String> orderIds = DocumentDAOUtility.getOrderIds(catalogueLine.getGoodsItem().getItem().getManufacturerParty().getID(), catalogueLine.getGoodsItem().getItem().getManufacturersItemIdentification().getID());
+            List<String> orderIds = DocumentPersistenceUtility.getOrderIds(catalogueLine.getGoodsItem().getItem().getManufacturerParty().getID(), catalogueLine.getGoodsItem().getItem().getManufacturersItemIdentification().getID());
 
             String params = "";
             int size = orderIds.size();

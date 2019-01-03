@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.impl.model.statistics.NonOrderedProducts;
-import eu.nimble.service.bp.impl.util.persistence.bp.DAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.CompletedTaskType;
@@ -61,7 +60,7 @@ public class StatisticsPersistenceUtility {
         if (partyId != null || role != null || startDate != null || endDate != null || status != null) {
             List<String> documentTypes = new ArrayList<>();
             documentTypes.add("ORDER");
-            List<String> orderIds = DAOUtility.getDocumentIds(partyId, documentTypes, role, startDate, endDate, status);
+            List<String> orderIds = ProcessDocumentMetadataDAOUtility.getDocumentIds(partyId, documentTypes, role, startDate, endDate, status);
 
             // no orders for the specified criteria
             if (orderIds.size() == 0) {
@@ -161,7 +160,7 @@ public class StatisticsPersistenceUtility {
     public static double calculateAverageNegotiationTime(String partyID,String bearerToken){
         int numberOfNegotiations = 0;
         double totalTime = 0;
-        QualifyingPartyType qualifyingParty = CataloguePersistenceUtil.getQualifyingPartyType(partyID,bearerToken);
+        QualifyingPartyType qualifyingParty = CataloguePersistenceUtility.getQualifyingPartyType(partyID,bearerToken);
         for (CompletedTaskType completedTask:qualifyingParty.getCompletedTask()){
             if(completedTask.getPeriod().getEndDate() == null || completedTask.getPeriod().getEndTime() == null){
                 continue;
@@ -188,7 +187,7 @@ public class StatisticsPersistenceUtility {
         List<String> processInstanceIDs = ProcessDocumentMetadataDAOUtility.getProcessInstanceIds(partyID);
 
         for (String processInstanceID:processInstanceIDs){
-                List<ProcessDocumentMetadataDAO> processDocumentMetadataDAOS = DAOUtility.getProcessDocumentMetadataByProcessInstanceID(processInstanceID);
+                List<ProcessDocumentMetadataDAO> processDocumentMetadataDAOS = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(processInstanceID);
                 if (processDocumentMetadataDAOS.size() != 2){
                     continue;
                 }

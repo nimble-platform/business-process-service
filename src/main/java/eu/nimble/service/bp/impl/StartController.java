@@ -1,10 +1,10 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.hyperjaxb.model.*;
-import eu.nimble.service.bp.impl.util.persistence.bp.DAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMapper;
+import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceGroupDAOUtility;
-import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
@@ -56,7 +56,7 @@ public class StartController implements StartApi {
         try {
             // check the entity ids in the passed document
             Transaction.DocumentTypeEnum documentType = CamundaEngine.getInitialDocumentForProcess(body.getVariables().getProcessID());
-            Object document = DocumentDAOUtility.readDocument(DocumentType.valueOf(documentType.toString()), body.getVariables().getContent());
+            Object document = DocumentPersistenceUtility.readDocument(DocumentType.valueOf(documentType.toString()), body.getVariables().getContent());
 
             boolean hjidsExists = resourceValidationUtil.hjidsExit(document);
             if(hjidsExists) {
@@ -81,7 +81,7 @@ public class StartController implements StartApi {
 
             // get the process previous process instance if and only if precedingGid is null
             if(precedingPid != null && precedingGid == null) {
-                ProcessInstanceDAO precedingInstance = DAOUtility.getProcessInstanceDAOByID(precedingPid);
+                ProcessInstanceDAO precedingInstance = ProcessInstanceDAOUtility.getById(precedingPid);
                 if (precedingInstance == null) {
                     String msg = "Invalid preceding process instance ID: %s";
                     logger.warn(String.format(msg, precedingPid));
@@ -184,7 +184,7 @@ public class StartController implements StartApi {
         // when a negotiation is started for a transport service after an order
         if(precedingGid != null){
             processInstanceGroupDAO1.setPrecedingProcessInstanceGroup(ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(precedingGid));
-            processInstanceGroupDAO1.setPrecedingProcess(DAOUtility.getProcessInstanceDAOByID(precedingPid));
+            processInstanceGroupDAO1.setPrecedingProcess(ProcessInstanceDAOUtility.getById(precedingPid));
             processInstanceGroupDAO1 = repo.updateEntity(processInstanceGroupDAO1);
         }
 

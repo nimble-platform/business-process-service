@@ -3,7 +3,7 @@ package eu.nimble.service.bp.application.ubl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
 import eu.nimble.service.bp.impl.util.persistence.DataIntegratorUtil;
-import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.despatchadvice.DespatchAdviceType;
 import eu.nimble.service.model.ubl.iteminformationrequest.ItemInformationRequestType;
@@ -246,7 +246,7 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
         DataIntegratorUtil.checkExistingParties(document);
 
         // persist the document metadata
-        DocumentDAOUtility.addDocumentWithMetadata(businessContextId,documentMetadata, document);
+        DocumentPersistenceUtility.addDocumentWithMetadata(businessContextId,documentMetadata, document);
     }
 
     @Override
@@ -261,7 +261,7 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
             String orderID = orderResponse.getOrderReference().getDocumentReference().getID();
             boolean isAccepted = orderResponse.isAcceptedIndicator();
 
-            initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(orderID);
+            initiatingDocumentMetadata = DocumentPersistenceUtility.getDocumentMetadata(orderID);
             if(isAccepted)
                 initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
             else
@@ -271,7 +271,7 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
         else if(document instanceof PpapResponseType){
             PpapResponseType ppapResponseType = (PpapResponseType) document;
             String ppapREQUESTID = ppapResponseType.getPpapDocumentReference().getID();
-            initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(ppapREQUESTID);
+            initiatingDocumentMetadata = DocumentPersistenceUtility.getDocumentMetadata(ppapREQUESTID);
             initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
 
         }else if(document instanceof QuotationType) {
@@ -279,7 +279,7 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
             String rfqID = quotation.getRequestForQuotationDocumentReference().getID();
             boolean isAccepted = quotation.getDocumentStatusCode().getName().equals("Accepted");
 
-            initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(rfqID);
+            initiatingDocumentMetadata = DocumentPersistenceUtility.getDocumentMetadata(rfqID);
             if(isAccepted){
                 initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
             }
@@ -291,7 +291,7 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
         } else if(document instanceof ReceiptAdviceType) {
             ReceiptAdviceType receiptAdvice = (ReceiptAdviceType) document;
             String despatchAdviceID = receiptAdvice.getDespatchDocumentReference().get(0).getID();
-            initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(despatchAdviceID);
+            initiatingDocumentMetadata = DocumentPersistenceUtility.getDocumentMetadata(despatchAdviceID);
             initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
 
         } else if(document instanceof TransportExecutionPlanType) {
@@ -299,7 +299,7 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
             String tepDocRefId = transportExecutionPlanType.getTransportExecutionPlanRequestDocumentReference().getID();
             boolean isAccepted = transportExecutionPlanType.getDocumentStatusCode().getName().equals("Accepted");
 
-            initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(tepDocRefId);
+            initiatingDocumentMetadata = DocumentPersistenceUtility.getDocumentMetadata(tepDocRefId);
             if (isAccepted){
                 initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
             }
@@ -310,13 +310,13 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
         } else if(document instanceof ItemInformationResponseType) {
             ItemInformationResponseType itemInformationResponse = (ItemInformationResponseType) document;
             String itemInformationRequestId = itemInformationResponse.getItemInformationRequestDocumentReference().getID();
-            initiatingDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(itemInformationRequestId);
+            initiatingDocumentMetadata = DocumentPersistenceUtility.getDocumentMetadata(itemInformationRequestId);
             initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.APPROVED);
 
         }
 
         if(initiatingDocumentMetadata != null) {
-            DocumentDAOUtility.updateDocumentMetadata(businessContextId,initiatingDocumentMetadata);
+            DocumentPersistenceUtility.updateDocumentMetadata(businessContextId,initiatingDocumentMetadata);
         }
     }
 }

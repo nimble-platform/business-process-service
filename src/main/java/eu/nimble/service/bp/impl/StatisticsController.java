@@ -6,7 +6,7 @@ import eu.nimble.service.bp.impl.model.statistics.OverallStatistics;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.impl.util.controller.InputValidatorUtil;
 import eu.nimble.service.bp.impl.util.controller.ValidationResponse;
-import eu.nimble.service.bp.impl.util.persistence.bp.DAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.catalogue.StatisticsPersistenceUtility;
 import eu.nimble.service.bp.swagger.model.Transaction;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
@@ -117,7 +117,7 @@ public class StatisticsController {
             }
             status = response.getValidatedObject() != null ? (String) response.getValidatedObject() : null;
 
-            int count = DAOUtility.getTransactionCount(companyId, documentTypes, role, startDateStr, endDateStr, status);
+            int count = ProcessDocumentMetadataDAOUtility.getTransactionCount(companyId, documentTypes, role, startDateStr, endDateStr, status);
 
             logger.info("Number of business process for start date: {}, end date: {}, type: {}, company id: {}, role: {}, state: {}", startDateStr, endDateStr, businessProcessType, companyId, role, status);
             return ResponseEntity.ok().body(count);
@@ -156,7 +156,7 @@ public class StatisticsController {
                 return response.getInvalidResponse();
             }
 
-            BusinessProcessCount counts = DAOUtility.getGroupTransactionCounts(companyId, startDateStr, endDateStr,role,bearerToken);
+            BusinessProcessCount counts = ProcessDocumentMetadataDAOUtility.getGroupTransactionCounts(companyId, startDateStr, endDateStr,role,bearerToken);
             logger.info("Number of business process for start date: {}, end date: {}, company id: {}, role: {}", startDateStr, endDateStr, companyId, role);
             return ResponseEntity.ok().body(counts);
 

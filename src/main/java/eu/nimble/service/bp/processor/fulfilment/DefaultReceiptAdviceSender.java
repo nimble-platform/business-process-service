@@ -2,7 +2,7 @@ package eu.nimble.service.bp.processor.fulfilment;
 
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
-import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.impl.util.persistence.catalogue.TrustPersistenceUtility;
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
@@ -41,7 +41,7 @@ public class DefaultReceiptAdviceSender implements JavaDelegate {
         String bearerToken = variables.get("bearer_token").toString();
 
         // get application execution configuration
-        ExecutionConfiguration executionConfiguration = DocumentDAOUtility.getExecutionConfiguration(buyer,
+        ExecutionConfiguration executionConfiguration = DocumentPersistenceUtility.getExecutionConfiguration(buyer,
                 execution.getProcessInstance().getProcessDefinitionId(), ProcessConfiguration.RoleTypeEnum.BUYER, "RECEIPTADVICE",
                 ExecutionConfiguration.ApplicationTypeEnum.DATACHANNEL);
         String applicationURI = executionConfiguration.getExecutionUri();

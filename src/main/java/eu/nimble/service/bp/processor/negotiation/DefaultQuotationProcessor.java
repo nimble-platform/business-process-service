@@ -2,7 +2,7 @@ package eu.nimble.service.bp.processor.negotiation;
 
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
-import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
 
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
 
@@ -46,7 +46,7 @@ public class DefaultQuotationProcessor  implements JavaDelegate {
         QuotationType quotation = (QuotationType) variables.get("quotation");
 
         // get application execution configuration
-        ExecutionConfiguration executionConfiguration = DocumentDAOUtility.getExecutionConfiguration(seller,
+        ExecutionConfiguration executionConfiguration = DocumentPersistenceUtility.getExecutionConfiguration(seller,
                 execution.getProcessInstance().getProcessDefinitionId(), ProcessConfiguration.RoleTypeEnum.SELLER,"QUOTATION",
                 ExecutionConfiguration.ApplicationTypeEnum.DATAPROCESSOR);
         String applicationURI = executionConfiguration.getExecutionUri();

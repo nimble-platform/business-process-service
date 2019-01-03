@@ -15,8 +15,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-public class CataloguePersistenceUtil {
-    private static final Logger logger = LoggerFactory.getLogger(CataloguePersistenceUtil.class);
+public class CataloguePersistenceUtility {
+    private static final Logger logger = LoggerFactory.getLogger(CataloguePersistenceUtility.class);
 
     private static final String QUERY_SELECT_BY_ID_AND_PARTY_ID = "SELECT cl FROM CatalogueLineType cl WHERE cl.ID = :lineId AND cl.goodsItem.item.manufacturerParty.ID = :partyId";
 
@@ -30,7 +30,7 @@ public class CataloguePersistenceUtil {
         if (party == null) {
             return null;
         }
-        PartyType catalogueParty = PartyPersistenceUtil.getPartyByID(party.getID());
+        PartyType catalogueParty = PartyPersistenceUtility.getPartyByID(party.getID());
         if (catalogueParty != null) {
             return catalogueParty;
         } else {
@@ -52,12 +52,12 @@ public class CataloguePersistenceUtil {
     }
 
     public static PartyType getParty(String partyId) {
-        PartyType party = PartyPersistenceUtil.getPartyByID(partyId);
+        PartyType party = PartyPersistenceUtility.getPartyByID(partyId);
         return party;
     }
 
     public static QualifyingPartyType getQualifyingPartyType(String partyID, String bearerToken) {
-        QualifyingPartyType qualifyingParty = PartyPersistenceUtil.getQualifyingParty(partyID);
+        QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingParty(partyID);
         if (qualifyingParty == null) {
             qualifyingParty = new QualifyingPartyType();
             // get party using identity service

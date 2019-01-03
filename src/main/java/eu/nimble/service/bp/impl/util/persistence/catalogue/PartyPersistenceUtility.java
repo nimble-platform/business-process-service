@@ -7,7 +7,7 @@ import eu.nimble.utility.persistence.JPARepositoryFactory;
 /**
  * Created by suat on 01-Jan-19.
  */
-public class PartyPersistenceUtil {
+public class PartyPersistenceUtility {
     private static final String QUERY_SELECT_BY_ID = "SELECT party FROM PartyType party WHERE party.ID = :partyId";
     private static final String QUERY_GET_QUALIFIYING_PARTY = "SELECT qpt FROM QualifyingPartyType qpt WHERE qpt.party.ID = :partyId";
 

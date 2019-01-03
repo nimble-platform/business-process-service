@@ -3,8 +3,7 @@ package eu.nimble.service.bp.impl.util.email;
 import eu.nimble.common.rest.identity.IdentityClientTyped;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
-import eu.nimble.service.bp.impl.util.persistence.bp.DAOUtility;
-import eu.nimble.service.bp.impl.util.persistence.bp.DocumentMetadataDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
 import eu.nimble.utility.email.EmailService;
@@ -37,7 +36,7 @@ public class EmailSenderUtil {
             // Collect the trading partner name
             String cancellingPartyId = groupDAO.getPartyID();
             PartyType tradingPartner;
-            String tradingPartnerId = DocumentMetadataDAOUtility.getTradingPartnerId(groupDAO.getProcessInstanceIDs().get(0), cancellingPartyId);
+            String tradingPartnerId = ProcessDocumentMetadataDAOUtility.getTradingPartnerId(groupDAO.getProcessInstanceIDs().get(0), cancellingPartyId);
             try {
                 tradingPartner = identityClient.getParty(bearerToken, tradingPartnerId);
 
@@ -48,7 +47,7 @@ public class EmailSenderUtil {
             }
 
             // collect product name
-            List<String> productNameList = DAOUtility.getProcessDocumentMetadataByProcessInstanceID(groupDAO.getProcessInstanceIDs().get(0)).get(0).getRelatedProducts();
+            List<String> productNameList = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(groupDAO.getProcessInstanceIDs().get(0)).get(0).getRelatedProducts();
             StringBuilder productNames = new StringBuilder("");
             for (int i = 0; i < productNameList.size() - 1; i++) {
                 productNames.append(productNameList.get(i)).append(", ");
@@ -63,7 +62,7 @@ public class EmailSenderUtil {
             // person associated with the trading partner
             String toEmail;
             if (groupDAO.getProcessInstanceIDs().size() > 1) {
-                ProcessDocumentMetadataDAO documentMetadataDAO = DocumentMetadataDAOUtility.getDocumentOfTheOtherParty(groupDAO.getProcessInstanceIDs().get(0), cancellingPartyId);
+                ProcessDocumentMetadataDAO documentMetadataDAO = ProcessDocumentMetadataDAOUtility.getDocumentOfTheOtherParty(groupDAO.getProcessInstanceIDs().get(0), cancellingPartyId);
                 // get person via the identity client
                 String personId = documentMetadataDAO.getCreatorUserID();
                 PersonType person;

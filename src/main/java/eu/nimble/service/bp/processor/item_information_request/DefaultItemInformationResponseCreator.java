@@ -2,7 +2,7 @@ package eu.nimble.service.bp.processor.item_information_request;
 
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
-import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
@@ -35,7 +35,7 @@ public class DefaultItemInformationResponseCreator implements JavaDelegate {
         String content = variables.get("content").toString();
 
         // get application execution configuration of the party
-        ExecutionConfiguration executionConfiguration = DocumentDAOUtility.getExecutionConfiguration(seller,
+        ExecutionConfiguration executionConfiguration = DocumentPersistenceUtility.getExecutionConfiguration(seller,
                 execution.getProcessInstance().getProcessDefinitionId(), ProcessConfiguration.RoleTypeEnum.SELLER, "ITEM_INFORMATION_RESPONSE", ExecutionConfiguration.ApplicationTypeEnum.DATAADAPTER);
         String applicationURI = executionConfiguration.getExecutionUri();
         ExecutionConfiguration.ExecutionTypeEnum executionType = executionConfiguration.getExecutionType();

@@ -9,10 +9,10 @@ import java.util.List;
 /**
  * Created by suat on 02-Jan-19.
  */
-public class ProcessProferencesDAOUtility {
+public class ProcessPreferencesDAOUtility {
     private static final String QUERY_GET_BY_PARTNER_ID = "SELECT conf FROM ProcessPreferencesDAO conf WHERE conf.partnerID = :partnerId";
 
-    public static List<ProcessPreferencesDAO> getProcessPreferences(@Param("partnerId") String partnerId) {
-        return new JPARepositoryFactory().forBpRepository().getEntities(QUERY_GET_BY_PARTNER_ID, new String[]{"partnerId"}, new Object[]{partnerId});
+    public static ProcessPreferencesDAO getProcessPreferences(@Param("partnerId") String partnerId) {
+        return new JPARepositoryFactory().forBpRepository().getSingleEntity(QUERY_GET_BY_PARTNER_ID, new String[]{"partnerId"}, new Object[]{partnerId});
     }
 }

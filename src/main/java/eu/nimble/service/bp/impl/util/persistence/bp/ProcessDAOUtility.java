@@ -11,7 +11,16 @@ import java.util.List;
 public class ProcessDAOUtility {
     private static final String QUERY_GET_BY_PROCESS_ID = "SELECT p FROM ProcessDAO p WHERE p.processID = :processId";
 
-    public static List<ProcessDAO> findByProcessID(String processId) {
-        return new JPARepositoryFactory().forBpRepository().getEntities(QUERY_GET_BY_PROCESS_ID, new String[]{"processId"}, new Object[]{processId});
+    public static ProcessDAO findByProcessID(String processId) {
+        List<ProcessDAO> results = new JPARepositoryFactory().forBpRepository().getEntities(QUERY_GET_BY_PROCESS_ID, new String[]{"processId"}, new Object[]{processId});
+        if(results.size() == 0) {
+            return null;
+        }
+        return results.get(0);
+    }
+
+    public static List<ProcessDAO> getProcessDAOs() {
+        List<ProcessDAO> resultSet = new JPARepositoryFactory().forBpRepository().getEntities(ProcessDAO.class);
+        return resultSet;
     }
 }

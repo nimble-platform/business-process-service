@@ -2,10 +2,11 @@ package eu.nimble.service.bp.impl.contract;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
-import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.ClauseType;
 import eu.nimble.service.model.ubl.iteminformationrequest.ItemInformationRequestType;
 import eu.nimble.service.model.ubl.iteminformationresponse.ItemInformationResponseType;
 import eu.nimble.service.model.ubl.order.OrderType;
@@ -74,7 +75,7 @@ public class ContractGenerator {
     private boolean firstIIR = true;
 
     public void generateContract(String orderId,ZipOutputStream zos){
-        OrderType order = (OrderType) DocumentDAOUtility.getUBLDocument(orderId,DocumentType.ORDER);
+        OrderType order = (OrderType) DocumentPersistenceUtility.getUBLDocument(orderId,DocumentType.ORDER);
 
         XWPFDocument orderTermsAndConditions = fillOrderTermsAndConditions(order);
         XWPFDocument purchaseDetails = fillPurchaseDetails(order);
@@ -89,7 +90,7 @@ public class ContractGenerator {
     }
 
     public String generateOrderTermsAndConditionsAsText(String orderId,String sellerPartyId,String buyerPartyId,String incoterms,String tradingTerms,String bearerToken){
-        OrderType order = (OrderType) DocumentDAOUtility.getUBLDocument(orderId,DocumentType.ORDER);
+        OrderType order = (OrderType) DocumentPersistenceUtility.getUBLDocument(orderId,DocumentType.ORDER);
 
         String text = "";
         try {
@@ -813,52 +814,53 @@ public class ContractGenerator {
             int numberOfItemInformationRequest = 0;
 
             for(ClauseType clause : order.getContract().get(0).getClause()) {
-                if (clause.getType().contentEquals("ITEM_DETAILS")) {
+                if (clause.getType().contentEquals(eu.nimble.service.model.ubl.extension.ClauseType.DOCUMENT.toString()) &&
+                        (((DocumentClauseType) clause).getClauseDocumentRef().getDocumentType().contentEquals(DocumentType.ITEMINFORMATIONRESPONSE.toString()))) {
                     numberOfItemInformationRequest++;
                 }
             }
 
-            for(ClauseType clause : order.getContract().get(0).getClause()){
-                if(clause.getType().contentEquals("PPAP")){
-                    PPAPClauseExists = true;
+            for(ClauseType clause : order.getContract().get(0).getClause()) {
+                if (clause.getType().contentEquals(eu.nimble.service.model.ubl.extension.ClauseType.DOCUMENT.toString())) {
+                    String documentType = ((DocumentClauseType) clause).getClauseDocumentRef().getDocumentType();
+                    if (documentType.contentEquals(DocumentType.PPAPRESPONSE.toString())) {
+                        PPAPClauseExists = true;
 
-                    ZipEntry zipEntry = new ZipEntry("PPAP/PPAPDocuments/");
-                    zos.putNextEntry(zipEntry);
-
-                    createPPAPEntry(document,zos,clause);
-                }
-                else if(clause.getType().contentEquals("ITEM_DETAILS")){
-                    if(!ItemDetailsDirectoryCreated){
-                        ZipEntry zipEntry = new ZipEntry("ItemInformation/TechnicalDataSheetResponses/");
+                        ZipEntry zipEntry = new ZipEntry("PPAP/PPAPDocuments/");
                         zos.putNextEntry(zipEntry);
-                        ItemDetailsDirectoryCreated = true;
-                    }
-                    if(!technicalDataSheetDirectoryCreated){
-                        ZipEntry zipEntry = new ZipEntry("ItemInformation/TechnicalDataSheets/");
-                        zos.putNextEntry(zipEntry);
-                        technicalDataSheetDirectoryCreated = true;
-                    }
 
-                    createItemDetailsEntry(document,zos,clause,numberOfItemInformationRequest);
-                    numberOfItemInformationRequest--;
-                }
-                else if(clause.getType().contentEquals("NEGOTIATION")){
-                    negotiationClauseExists = true;
-                    createNegotiationEntry(document,clause,zos);
-                }
-            }
+                        createPPAPEntry(document, zos, clause);
+                    } else if (documentType.contentEquals(DocumentType.ITEMINFORMATIONRESPONSE.toString())) {
+                        if (!ItemDetailsDirectoryCreated) {
+                            ZipEntry zipEntry = new ZipEntry("ItemInformation/TechnicalDataSheetResponses/");
+                            zos.putNextEntry(zipEntry);
+                            ItemDetailsDirectoryCreated = true;
+                        }
+                        if (!technicalDataSheetDirectoryCreated) {
+                            ZipEntry zipEntry = new ZipEntry("ItemInformation/TechnicalDataSheets/");
+                            zos.putNextEntry(zipEntry);
+                            technicalDataSheetDirectoryCreated = true;
+                        }
 
-            if(!negotiationClauseExists){
-                document.removeBodyElement(document.getPosOfTable(getTable(document,"Negotiation")));
-                document.removeBodyElement(document.getPosOfTable(getTable(document,"Negotiation Notes/Additional Documents")));
+                        createItemDetailsEntry(document, zos, clause, numberOfItemInformationRequest);
+                        numberOfItemInformationRequest--;
+                    } else if (documentType.contentEquals(DocumentType.QUOTATION.toString())) {
+                        negotiationClauseExists = true;
+                        createNegotiationEntry(document, clause, zos);
+                    }
+                }
             }
-            if(!PPAPClauseExists){
-                document.removeBodyElement(document.getPosOfTable(getTable(document,"PPAP")));
-                document.removeBodyElement(document.getPosOfTable(getTable(document,"PPAP Notes/Additional Documents")));
+            if (!negotiationClauseExists) {
+                document.removeBodyElement(document.getPosOfTable(getTable(document, "Negotiation")));
+                document.removeBodyElement(document.getPosOfTable(getTable(document, "Negotiation Notes/Additional Documents")));
             }
-            if(!ItemDetailsDirectoryCreated){
-                document.removeBodyElement(document.getPosOfTable(getTable(document,"Item Information Request")));
-                document.removeBodyElement(document.getPosOfTable(getTable(document,"Item Information Request Notes/Additional Documents")));
+            if (!PPAPClauseExists) {
+                document.removeBodyElement(document.getPosOfTable(getTable(document, "PPAP")));
+                document.removeBodyElement(document.getPosOfTable(getTable(document, "PPAP Notes/Additional Documents")));
+            }
+            if (!ItemDetailsDirectoryCreated) {
+                document.removeBodyElement(document.getPosOfTable(getTable(document, "Item Information Request")));
+                document.removeBodyElement(document.getPosOfTable(getTable(document, "Item Information Request Notes/Additional Documents")));
             }
         }
         catch (Exception e){
@@ -868,7 +870,7 @@ public class ContractGenerator {
     }
 
     private XWPFDocument createOrderAdditionalDocuments(OrderType order,ZipOutputStream zos,XWPFDocument document){
-        OrderResponseSimpleType orderResponse = (OrderResponseSimpleType) DocumentDAOUtility.getResponseDocument(order.getID(),DocumentType.ORDER);
+        OrderResponseSimpleType orderResponse = (OrderResponseSimpleType) DocumentPersistenceUtility.getResponseDocument(order.getID(),DocumentType.ORDER);
         try {
             // request
             for(DocumentReferenceType documentReference : order.getAdditionalDocumentReference()){
@@ -960,9 +962,9 @@ public class ContractGenerator {
 
     private void createPPAPEntry(XWPFDocument document,ZipOutputStream zos,ClauseType clause){
         try {
-            PpapResponseType ppapResponse = (PpapResponseType) DocumentDAOUtility.getUBLDocument(((DocumentClauseType) clause).getClauseDocumentRef().getID(), DocumentType.PPAPRESPONSE);
+            PpapResponseType ppapResponse = (PpapResponseType) DocumentPersistenceUtility.getUBLDocument(((DocumentClauseType) clause).getClauseDocumentRef().getID(), DocumentType.PPAPRESPONSE);
 
-            PpapRequestType ppapRequest = (PpapRequestType) DocumentDAOUtility.getUBLDocument(ppapResponse.getPpapDocumentReference().getID(),DocumentType.PPAPREQUEST);
+            PpapRequestType ppapRequest = (PpapRequestType) DocumentPersistenceUtility.getUBLDocument(ppapResponse.getPpapDocumentReference().getID(),DocumentType.PPAPREQUEST);
             Map<String,List<String>> map = new HashMap<>();
             for(String documentType:ppapRequest.getDocumentType()){
                 map.put(documentType,new ArrayList<>());
@@ -1135,8 +1137,8 @@ public class ContractGenerator {
     }
 
     private void createNegotiationEntry(XWPFDocument document,ClauseType clause,ZipOutputStream zos) throws Exception{
-        QuotationType quotation = (QuotationType) DocumentDAOUtility.getUBLDocument(((DocumentClauseType) clause).getClauseDocumentRef().getID(), DocumentType.QUOTATION);
-        RequestForQuotationType requestForQuotation = (RequestForQuotationType) DocumentDAOUtility.getUBLDocument(quotation.getRequestForQuotationDocumentReference().getID(),DocumentType.REQUESTFORQUOTATION);
+        QuotationType quotation = (QuotationType) DocumentPersistenceUtility.getUBLDocument(((DocumentClauseType) clause).getClauseDocumentRef().getID(), DocumentType.QUOTATION);
+        RequestForQuotationType requestForQuotation = (RequestForQuotationType) DocumentPersistenceUtility.getUBLDocument(quotation.getRequestForQuotationDocumentReference().getID(),DocumentType.REQUESTFORQUOTATION);
 
         // additional documents
         // request
@@ -1357,9 +1359,9 @@ public class ContractGenerator {
 
     private void fillItemDetails(XWPFDocument document,XWPFTable table,XWPFTable noteAndDocumentTable,ZipOutputStream zos,ClauseType clause,int id){
         try {
-            ItemInformationResponseType itemDetails = (ItemInformationResponseType) DocumentDAOUtility.getUBLDocument(((DocumentClauseType) clause).getClauseDocumentRef().getID(), DocumentType.ITEMINFORMATIONRESPONSE);
+            ItemInformationResponseType itemDetails = (ItemInformationResponseType) DocumentPersistenceUtility.getUBLDocument(((DocumentClauseType) clause).getClauseDocumentRef().getID(), DocumentType.ITEMINFORMATIONRESPONSE);
 
-            ItemInformationRequestType itemInformationRequest = (ItemInformationRequestType) DocumentDAOUtility
+            ItemInformationRequestType itemInformationRequest = (ItemInformationRequestType) DocumentPersistenceUtility
                     .getUBLDocument(itemDetails.getItemInformationRequestDocumentReference().getID(),DocumentType.ITEMINFORMATIONREQUEST);
             List<DocumentReferenceType> documentReferences = itemInformationRequest.getItemInformationRequestLine().get(0).getSalesItem().get(0).getItem().getItemSpecificationDocumentReference();
 
@@ -1561,7 +1563,7 @@ public class ContractGenerator {
     private String getDate(String type,String orderId){
         String date = "";
         if(type.contentEquals("issue")){
-            ProcessDocumentMetadata processDocumentMetadata = DocumentDAOUtility.getDocumentMetadata(orderId);
+            ProcessDocumentMetadata processDocumentMetadata = DocumentPersistenceUtility.getDocumentMetadata(orderId);
             DateTimeFormatter bpFormatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
             LocalDateTime localTime = bpFormatter.parseLocalDateTime(processDocumentMetadata.getSubmissionDate());
             DateTime issueDate = new DateTime(localTime.toDateTime(), DateTimeZone.UTC);
@@ -1570,7 +1572,7 @@ public class ContractGenerator {
             date = issueDate.toString(format);
         }
         else {
-            ProcessDocumentMetadata responseMetadata = DocumentDAOUtility.getCorrespondingResponseMetadata(orderId,DocumentType.ORDER);
+            ProcessDocumentMetadata responseMetadata = DocumentPersistenceUtility.getCorrespondingResponseMetadata(orderId,DocumentType.ORDER);
             DateTimeFormatter bpFormatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
             LocalDateTime localTime = bpFormatter.parseLocalDateTime(responseMetadata.getSubmissionDate());
             DateTime issueDate = new DateTime(localTime.toDateTime(), DateTimeZone.UTC);

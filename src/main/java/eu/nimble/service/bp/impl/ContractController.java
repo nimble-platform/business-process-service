@@ -6,9 +6,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
-import eu.nimble.service.bp.impl.util.persistence.bp.DAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.catalogue.ContractPersistenceUtility;
-import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.order.OrderType;
@@ -152,7 +153,7 @@ public class ContractController {
         try {
             logger.info("Constructing contract starting from the process instance: {}", processInstanceId);
             // check existence and type of the process instance
-            ProcessInstanceDAO processInstance = DAOUtility.getProcessInstanceDAOByID(processInstanceId);
+            ProcessInstanceDAO processInstance = ProcessInstanceDAOUtility.getById(processInstanceId);
             if (processInstance == null) {
                 return createResponseEntityAndLog(String.format("Invalid process instance id: %s", processInstanceId), HttpStatus.BAD_REQUEST);
             }
@@ -269,7 +270,7 @@ public class ContractController {
         try {
             logger.info("Getting clause for document: {}, type: {}", documentId, clauseType);
             // check existence and type of the document bound to the contract
-            ProcessDocumentMetadataDAO documentMetadata = DAOUtility.getProcessDocumentMetadata(documentId);
+            ProcessDocumentMetadataDAO documentMetadata = ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId);
             if (documentMetadata == null) {
                 return createResponseEntityAndLog(String.format("Invalid bounded-document id: %s", documentMetadata.getDocumentID()), HttpStatus.BAD_REQUEST);
             }
@@ -308,7 +309,7 @@ public class ContractController {
             }
 
             // check existence and type of the clause document
-            ProcessDocumentMetadataDAO clauseDocumentMetadata = DAOUtility.getProcessDocumentMetadata(documentId);
+            ProcessDocumentMetadataDAO clauseDocumentMetadata = ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId);
             if (clauseDocumentMetadata == null) {
                 return createResponseEntityAndLog(String.format("Invalid clause document id: %s", clauseDocumentId), HttpStatus.BAD_REQUEST);
             }
@@ -318,7 +319,7 @@ public class ContractController {
             // get party for the person
             PartyType party = SpringBridge.getInstance().getIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
 
-            Object document = DocumentDAOUtility.getUBLDocument(documentId, clauseDocumentMetadata.getType());
+            Object document = DocumentPersistenceUtility.getUBLDocument(documentId, clauseDocumentMetadata.getType());
             ContractType contract = checkDocumentContract(document);
             DocumentClauseType clause = new DocumentClauseType();
             DocumentReferenceType docRef = new DocumentReferenceType();
@@ -370,8 +371,8 @@ public class ContractController {
             PartyType party = SpringBridge.getInstance().getIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
 
             // check contract of the document
-            ProcessDocumentMetadataDAO documentMetadata = DAOUtility.getProcessDocumentMetadata(documentId);
-            Object document = DocumentDAOUtility.getUBLDocument(documentId, documentMetadata.getType());
+            ProcessDocumentMetadataDAO documentMetadata = ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId);
+            Object document = DocumentPersistenceUtility.getUBLDocument(documentId, documentMetadata.getType());
             ContractType contract = checkDocumentContract(document);
 
             dataMonitoringClause.setID(UUID.randomUUID().toString());
@@ -432,7 +433,7 @@ public class ContractController {
     }
 
     private ResponseEntity validateDocumentExistence(String documentId) {
-        ProcessDocumentMetadataDAO documentMetadata = DAOUtility.getProcessDocumentMetadata(documentId);
+        ProcessDocumentMetadataDAO documentMetadata = ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId);
         return validateDocumentExistence(documentMetadata);
     }
 }

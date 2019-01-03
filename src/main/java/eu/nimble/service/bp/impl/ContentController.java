@@ -1,10 +1,10 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.hyperjaxb.model.ProcessDAO;
-import eu.nimble.service.bp.impl.util.persistence.bp.DAOUtility;
-import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.impl.util.jssequence.JSSequenceDiagramParser;
+import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMapper;
+import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDAOUtility;
 import eu.nimble.service.bp.swagger.api.ContentApi;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
 import eu.nimble.service.bp.swagger.model.Process;
@@ -62,7 +62,7 @@ public class ContentController implements ContentApi {
 
         CamundaEngine.deleteProcessDefinition(processID);
 
-        ProcessDAO processDAO = DAOUtility.getProcessDAOByID(processID);
+        ProcessDAO processDAO = ProcessDAOUtility.findByProcessID(processID);
         if(processDAO != null)
             repoFactory.forBpRepository().deleteEntityByHjid(ProcessDAO.class, processDAO.getHjid());
 
@@ -74,7 +74,7 @@ public class ContentController implements ContentApi {
     public ResponseEntity<Process> getProcessDefinition(@PathVariable("processID") String processID) {
         logger.info(" $$$ Getting business process definition for ... {}", processID);
 
-        ProcessDAO processDAO = DAOUtility.getProcessDAOByID(processID);
+        ProcessDAO processDAO = ProcessDAOUtility.findByProcessID(processID);
         // The process definition is not in the database...
         Process process = null;
         if (processDAO != null)
@@ -92,7 +92,7 @@ public class ContentController implements ContentApi {
         logger.info(" $$$ Getting business process definitions");
 
         // first get the ones in the database
-        List<ProcessDAO> processDAOs = DAOUtility.getProcessDAOs();
+        List<ProcessDAO> processDAOs = ProcessDAOUtility.getProcessDAOs();
         List<Process> processes = new ArrayList<>();
         for (ProcessDAO processDAO : processDAOs) {
             Process process = HibernateSwaggerObjectMapper.createProcess(processDAO);
@@ -132,7 +132,7 @@ public class ContentController implements ContentApi {
 
         CamundaEngine.updateProcessDefinition(body.getProcessID(), bpmnContent);
 
-        ProcessDAO processDAO = DAOUtility.getProcessDAOByID(body.getProcessID());
+        ProcessDAO processDAO = ProcessDAOUtility.findByProcessID(body.getProcessID());
         ProcessDAO processDAONew = HibernateSwaggerObjectMapper.createProcess_DAO(body);
 
         processDAONew.setHjid(processDAO.getHjid());

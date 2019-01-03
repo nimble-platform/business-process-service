@@ -2,7 +2,7 @@ package eu.nimble.service.bp.processor.ppap;
 
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
-import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
 
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
@@ -40,7 +40,7 @@ public class DefaultPpapSender implements JavaDelegate {
         PpapRequestType ppapRequestType = (PpapRequestType) variables.get("ppapRequest");
 
         // get application execution configuration
-        ExecutionConfiguration executionConfiguration = DocumentDAOUtility.getExecutionConfiguration(buyer,
+        ExecutionConfiguration executionConfiguration = DocumentPersistenceUtility.getExecutionConfiguration(buyer,
                 execution.getProcessInstance().getProcessDefinitionId(), ProcessConfiguration.RoleTypeEnum.BUYER, "PPAPREQUEST",
                 ExecutionConfiguration.ApplicationTypeEnum.DATACHANNEL);
         String applicationURI = executionConfiguration.getExecutionUri();

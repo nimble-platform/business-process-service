@@ -2,7 +2,7 @@ package eu.nimble.service.bp.processor.transport_execution_plan;
 
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
-import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
@@ -40,7 +40,7 @@ public class DefaultTransportExecutionPlanRequestProcessor implements JavaDelega
         TransportExecutionPlanRequestType transportExecutionPlanRequest = (TransportExecutionPlanRequestType) variables.get("transportExecutionPlanRequest");
 
         // get application execution configuration
-        ExecutionConfiguration executionConfiguration = DocumentDAOUtility.getExecutionConfiguration(buyer, execution.getProcessInstance().getProcessDefinitionId(), ProcessConfiguration.RoleTypeEnum.BUYER, "TRANSPORT_EXECUTION_PLAN_REQUEST",
+        ExecutionConfiguration executionConfiguration = DocumentPersistenceUtility.getExecutionConfiguration(buyer, execution.getProcessInstance().getProcessDefinitionId(), ProcessConfiguration.RoleTypeEnum.BUYER, "TRANSPORT_EXECUTION_PLAN_REQUEST",
                 ExecutionConfiguration.ApplicationTypeEnum.DATAPROCESSOR);
         String applicationURI = executionConfiguration.getExecutionUri();
         ExecutionConfiguration.ExecutionTypeEnum executionType = executionConfiguration.getExecutionType();

@@ -3,10 +3,9 @@ package eu.nimble.service.bp.impl.util.persistence.catalogue;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
-import eu.nimble.service.bp.impl.util.persistence.bp.DAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.swagger.model.Process;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
-import eu.nimble.service.model.ubl.commonaggregatecomponents.ClauseType;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
@@ -48,7 +47,7 @@ public class ContractPersistenceUtility {
     public static List<ClauseType> getClause(String documentId, DocumentType documentType, eu.nimble.service.model.ubl.extension.ClauseType clauseType) {
         List<ClauseType> clauseTypes = new ArrayList<>();
         if(documentType.equals(DocumentType.ORDER)) {
-            OrderType orderType = (OrderType) DocumentDAOUtility.getUBLDocument(documentId,DocumentType.ORDER);
+            OrderType orderType = (OrderType) DocumentPersistenceUtility.getUBLDocument(documentId,DocumentType.ORDER);
             for(ContractType contractType : orderType.getContract()){
                 for(ClauseType clause : contractType.getClause()){
                     if(eu.nimble.service.model.ubl.extension.ClauseType.valueOf(clause.getType()) == clauseType){
@@ -58,7 +57,7 @@ public class ContractPersistenceUtility {
             }
 
         } else if(documentType.equals(DocumentType.TRANSPORTEXECUTIONPLANREQUEST)) {
-            TransportExecutionPlanRequestType transportExecutionPlanRequestType = (TransportExecutionPlanRequestType) DocumentDAOUtility.getUBLDocument(documentId,DocumentType.TRANSPORTEXECUTIONPLANREQUEST);
+            TransportExecutionPlanRequestType transportExecutionPlanRequestType = (TransportExecutionPlanRequestType) DocumentPersistenceUtility.getUBLDocument(documentId,DocumentType.TRANSPORTEXECUTIONPLANREQUEST);
             ContractType contractType = transportExecutionPlanRequestType.getTransportContract();
             if(contractType == null){
                 return null;
@@ -122,7 +121,7 @@ public class ContractPersistenceUtility {
         boolean ppapClauseFound = false;
 
         do {
-            List<ProcessDocumentMetadataDAO> documents = DAOUtility.getProcessDocumentMetadataByProcessInstanceID(processInstance.getProcessInstanceID());
+            List<ProcessDocumentMetadataDAO> documents = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(processInstance.getProcessInstanceID());
 
             // if the process is completed
             if(documents.size() > 1) {
@@ -136,14 +135,14 @@ public class ContractPersistenceUtility {
 
                 // Check whether a contract already exists or not
                 if(reqMetadata.getType().equals(DocumentType.ORDER)){
-                    OrderType orderType = (OrderType) DocumentDAOUtility.getUBLDocument(reqMetadata.getDocumentID(),DocumentType.ORDER);
+                    OrderType orderType = (OrderType) DocumentPersistenceUtility.getUBLDocument(reqMetadata.getDocumentID(),DocumentType.ORDER);
                     if(orderType.getContract().size() > 0){
                         realContract = orderType.getContract().get(0);
                     }
                     break;
                 }
                 else if(reqMetadata.getType().equals(DocumentType.TRANSPORTEXECUTIONPLANREQUEST)){
-                    TransportExecutionPlanRequestType transportExecutionPlanRequestType = (TransportExecutionPlanRequestType) DocumentDAOUtility.getUBLDocument(reqMetadata.getDocumentID(),DocumentType.TRANSPORTEXECUTIONPLANREQUEST);
+                    TransportExecutionPlanRequestType transportExecutionPlanRequestType = (TransportExecutionPlanRequestType) DocumentPersistenceUtility.getUBLDocument(reqMetadata.getDocumentID(),DocumentType.TRANSPORTEXECUTIONPLANREQUEST);
                     realContract = transportExecutionPlanRequestType.getTransportContract();
                     break;
                 }

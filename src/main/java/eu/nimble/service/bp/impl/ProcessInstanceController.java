@@ -3,10 +3,8 @@ package eu.nimble.service.bp.impl;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceStatus;
-import eu.nimble.service.bp.impl.util.persistence.bp.DAOUtility;
-import eu.nimble.service.bp.impl.util.persistence.catalogue.CataloguePersistenceUtil;
-import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentDAOUtility;
-import eu.nimble.service.bp.impl.util.persistence.catalogue.PartyPersistenceUtil;
+import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.impl.util.persistence.catalogue.TrustPersistenceUtility;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
@@ -56,7 +54,7 @@ public class ProcessInstanceController {
         logger.debug("Cancelling process instance with id: {}",processInstanceId);
 
         try {
-            ProcessInstanceDAO instanceDAO = DAOUtility.getProcessInstanceDAOByID(processInstanceId);
+            ProcessInstanceDAO instanceDAO = ProcessInstanceDAOUtility.getById(processInstanceId);
             // check whether the process instance with the given id exists or not
             if(instanceDAO == null){
                 logger.error("There does not exist a process instance with id:{}",processInstanceId);
@@ -95,15 +93,15 @@ public class ProcessInstanceController {
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
 
         try {
-            ProcessDocumentMetadata processDocumentMetadata = DocumentDAOUtility.getRequestMetadata(processInstanceID);
-            Object document = DocumentDAOUtility.readDocument(documentType, content);
+            ProcessDocumentMetadata processDocumentMetadata = DocumentPersistenceUtility.getRequestMetadata(processInstanceID);
+            Object document = DocumentPersistenceUtility.readDocument(documentType, content);
             // validate the entity ids
             boolean hjidsBelongToCompany = resourceValidationUtil.hjidsBelongsToParty(document, processDocumentMetadata.getInitiatorID(), Configuration.Standard.UBL.toString());
             if(!hjidsBelongToCompany) {
                 return HttpResponseUtil.createResponseEntityAndLog(String.format("Some of the identifiers (hjid fields) do not belong to the party in the passed catalogue: %s", content), null, HttpStatus.BAD_REQUEST, LogLevel.INFO);
             }
 
-            ProcessInstanceDAO instanceDAO = DAOUtility.getProcessInstanceDAOByID(processInstanceID);
+            ProcessInstanceDAO instanceDAO = ProcessInstanceDAOUtility.getById(processInstanceID);
             // check whether the process instance with the given id exists or not
             if(instanceDAO == null){
                 logger.error("There does not exist a process instance with id:{}",processInstanceID);
@@ -111,9 +109,9 @@ public class ProcessInstanceController {
             }
             // update creator user id of metadata
             processDocumentMetadata.setCreatorUserID(creatorUserID);
-            DocumentDAOUtility.updateDocumentMetadata(businessProcessContext.getId(),processDocumentMetadata);
+            DocumentPersistenceUtility.updateDocumentMetadata(businessProcessContext.getId(),processDocumentMetadata);
             // update the corresponding document
-            DocumentDAOUtility.updateDocument(businessProcessContext.getId(), document, processDocumentMetadata.getDocumentID(), documentType, processDocumentMetadata.getInitiatorID());
+            DocumentPersistenceUtility.updateDocument(businessProcessContext.getId(), document, processDocumentMetadata.getDocumentID(), documentType, processDocumentMetadata.getInitiatorID());
         }
         catch (Exception e) {
             logger.error("Failed to update the process instance with id:{}",processInstanceID,e);

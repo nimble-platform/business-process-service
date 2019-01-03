@@ -1,8 +1,8 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.hyperjaxb.model.ProcessPreferencesDAO;
-import eu.nimble.service.bp.impl.util.persistence.bp.DAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMapper;
+import eu.nimble.service.bp.impl.util.persistence.bp.ProcessPreferencesDAOUtility;
 import eu.nimble.service.bp.swagger.api.PreferenceApi;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
 import eu.nimble.service.bp.swagger.model.ProcessPreferences;
@@ -41,7 +41,7 @@ public class PreferenceController implements PreferenceApi {
     @ApiOperation(value = "",notes = "Deletes the business process preference of a partner")
     public ResponseEntity<ModelApiResponse> deleteProcessPartnerPreference(@PathVariable("partnerID") String partnerID) {
         logger.info(" $$$ Deleting ProcessPreferences for ... {}", partnerID);
-        ProcessPreferencesDAO processPreferencesDAO = DAOUtility.getProcessPreferencesDAOByPartnerID(partnerID);
+        ProcessPreferencesDAO processPreferencesDAO = ProcessPreferencesDAOUtility.getProcessPreferences(partnerID);
         repositoryFactory.forBpRepository().deleteEntityByHjid(ProcessPreferencesDAO.class, processPreferencesDAO.getHjid());
         return HibernateSwaggerObjectMapper.getApiResponse();
     }
@@ -50,7 +50,7 @@ public class PreferenceController implements PreferenceApi {
     @ApiOperation(value = "",notes = "Get the business process preference of a partner")
     public ResponseEntity<ProcessPreferences> getProcessPartnerPreference(@PathVariable("partnerID") String partnerID) {
         logger.info(" $$$ Getting ProcessPreferences for ... {}", partnerID);
-        ProcessPreferencesDAO businessProcessPreferencesDAO = DAOUtility.getProcessPreferencesDAOByPartnerID(partnerID);
+        ProcessPreferencesDAO businessProcessPreferencesDAO = ProcessPreferencesDAOUtility.getProcessPreferences(partnerID);
         ProcessPreferences businessProcessPreferences = null;
         if(businessProcessPreferencesDAO == null) {
             businessProcessPreferences = HibernateSwaggerObjectMapper.createDefaultProcessPreferences();
@@ -66,7 +66,7 @@ public class PreferenceController implements PreferenceApi {
     public ResponseEntity<ModelApiResponse> updateProcessPartnerPreference(@RequestBody ProcessPreferences body) {
         logger.info(" $$$ Updating ProcessPreferences: ");
         logger.debug(" $$$ {}", body.toString());
-        ProcessPreferencesDAO processPreferencesDAO = DAOUtility.getProcessPreferencesDAOByPartnerID(body.getPartnerID());
+        ProcessPreferencesDAO processPreferencesDAO = ProcessPreferencesDAOUtility.getProcessPreferences(body.getPartnerID());
         ProcessPreferencesDAO processPreferencesDAONew = HibernateSwaggerObjectMapper.createProcessPreferences_DAO(body);
         processPreferencesDAONew.setHjid(processPreferencesDAO.getHjid());
         repositoryFactory.forBpRepository().updateEntity(processPreferencesDAONew);

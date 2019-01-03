@@ -1,10 +1,10 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.hyperjaxb.model.*;
-import eu.nimble.service.bp.impl.util.persistence.bp.DAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMapper;
+import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceGroupDAOUtility;
-import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
@@ -50,7 +50,7 @@ public class ContinueController implements ContinueApi {
         try {
             // check the entity ids in the passed document
             Transaction.DocumentTypeEnum documentType = CamundaEngine.getResponseDocumentForProcess(body.getVariables().getProcessID());
-            Object document = DocumentDAOUtility.readDocument(DocumentType.valueOf(documentType.toString()), body.getVariables().getContent());
+            Object document = DocumentPersistenceUtility.readDocument(DocumentType.valueOf(documentType.toString()), body.getVariables().getContent());
 
             boolean hjidsExists = resourceValidationUtil.hjidsExit(document);
             if(hjidsExists) {
@@ -67,7 +67,7 @@ public class ContinueController implements ContinueApi {
 
             processInstance = CamundaEngine.continueProcessInstance(businessProcessContext.getId(),body, bearerToken);
 
-            ProcessInstanceDAO storedInstance = DAOUtility.getProcessInstanceDAOByID(processInstance.getProcessInstanceID());
+            ProcessInstanceDAO storedInstance = ProcessInstanceDAOUtility.getById(processInstance.getProcessInstanceID());
 
             // save previous status
             businessProcessContext.setPreviousStatus(storedInstance.getStatus());

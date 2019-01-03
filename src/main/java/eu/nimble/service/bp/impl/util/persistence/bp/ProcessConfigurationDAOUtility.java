@@ -1,6 +1,7 @@
 package eu.nimble.service.bp.impl.util.persistence.bp;
 
 import eu.nimble.service.bp.hyperjaxb.model.ProcessConfigurationDAO;
+import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 
 import java.util.List;
@@ -18,5 +19,18 @@ public class ProcessConfigurationDAOUtility {
 
     public static List<ProcessConfigurationDAO> getProcessConfigurations(String partnerId, String processId) {
         return new JPARepositoryFactory().forBpRepository().getEntities(QUERY_GET_BY_PARTNER_ID_AND_PROCESS_ID, new String[]{"partnerId", "processId"}, new Object[]{partnerId, processId});
+    }
+
+    public static ProcessConfigurationDAO getProcessConfiguration(String partnerID, String processID, ProcessConfiguration.RoleTypeEnum roleType) {
+        List<ProcessConfigurationDAO> resultSet = ProcessConfigurationDAOUtility.getProcessConfigurations(partnerID, processID);
+        if (resultSet.size() == 0) {
+            return null;
+        }
+        for (ProcessConfigurationDAO processConfigurationDAO : resultSet) {
+            if (processConfigurationDAO.getRoleType().value().equals(roleType.toString())) {
+                return processConfigurationDAO;
+            }
+        }
+        return null;
     }
 }
