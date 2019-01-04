@@ -15,7 +15,7 @@ import eu.nimble.service.model.ubl.commonaggregatecomponents.CompletedTaskType;
 import eu.nimble.utility.Configuration;
 import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
-import eu.nimble.utility.persistence.resource.ResourceValidationUtil;
+import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -40,7 +40,7 @@ public class ProcessInstanceController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    private ResourceValidationUtil resourceValidationUtil;
+    private ResourceValidationUtility resourceValidationUtil;
 
     @ApiOperation(value = "",notes = "Cancel the process instance with the given id")
     @ApiResponses(value = {

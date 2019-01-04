@@ -29,6 +29,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import springfox.documentation.spring.web.json.Json;
 
 import java.lang.reflect.Method;
 import java.util.List;
@@ -92,8 +93,7 @@ public class Test04_BusinessProcessesTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    private ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
 
     @Test
     public void test00_businessProcesses() throws Exception {

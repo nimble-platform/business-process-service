@@ -18,7 +18,7 @@ import eu.nimble.utility.Configuration;
 import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.resource.EntityIdAwareRepositoryWrapper;
-import eu.nimble.utility.persistence.resource.ResourceValidationUtil;
+import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -45,7 +45,7 @@ public class ContractController {
     private final Logger logger = LoggerFactory.getLogger(ContractController.class);
 
     @Autowired
-    private ResourceValidationUtil resourceValidationUtil;
+    private ResourceValidationUtility resourceValidationUtil;
 
     /**
      * Retrieves the {@link ClauseType} specified by the <code>clauseId</code>
