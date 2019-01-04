@@ -41,7 +41,7 @@ public class Test15_ProcessInstanceGroupControllerTest3 {
 
     @Test
     public void test1_getProcessInstanceGroupFilters() throws Exception {
-        MockHttpServletRequestBuilder request = get("/group/filters")
+        MockHttpServletRequestBuilder request = get("/process-instance-groups/filters")
                 .header("Authorization", token)
                 .param("collaborationRole", "SELLER")
                 .param("partyID", "706");

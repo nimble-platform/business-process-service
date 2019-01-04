@@ -498,7 +498,72 @@ paths:
             items:
               $ref: '#/definitions/ProcessDocumentMetadata'
 
-  /group:
+  /collaboration-groups/{ID}:
+    patch:
+      operationId: updateCollaborationGroupName
+      parameters:
+      - in: path
+        name: ID
+        type: string
+        required: true
+      - in: query
+        name: groupName
+        type: string
+        required: true
+      responses:
+        200:
+          description: Updated the collaboration group name successfully
+    delete:
+      operationId: deleteCollaborationGroup
+      parameters:
+      - in: path
+        name: ID
+        type: string
+        required: true
+      responses:
+        200:
+          description: Deleted the collaboration group successfully
+    get:
+      operationId: getCollaborationGroup
+      parameters:
+      - in: path
+        name: ID
+        type: string
+        required: true
+      responses:
+        200:
+          description: Retrieved the collaboration group successfully
+          schema:
+            $ref: '#/definitions/CollaborationGroup'
+  /collaboration-groups/{ID}/archive:
+      post:
+        operationId: archiveCollaborationGroup
+        parameters:
+        - in: path
+          name: ID
+          type: string
+          description: Identifier of the collaboration group to be archived
+          required: true
+        responses:
+          200:
+            description: Archived the collaboration group successfully
+            schema:
+              $ref: '#/definitions/CollaborationGroup'
+  /collaboration-groups/{ID}/restore:
+      post:
+        operationId: restoreCollaborationGroup
+        parameters:
+        - in: path
+          name: ID
+          type: string
+          description: Identifier of the collaboration group to be restored
+          required: true
+        responses:
+          200:
+            description: Restored the collaboration group successfully
+            schema:
+              $ref: '#/definitions/CollaborationGroup'
+  /collaboration-groups:
     get:
       operationId: getCollaborationGroups
       parameters:
@@ -555,7 +620,7 @@ paths:
           schema:
             $ref: '#/definitions/CollaborationGroupResponse'
 
-  /group/order-process:
+  /process-instance-groups/order-process:
     get:
       operationId: getOrderProcess
       parameters:
@@ -574,7 +639,7 @@ paths:
         200:
           description: Retrieved the order content successfuly
 
-  /group/filters:
+  /process-instance-groups/filters:
     get:
       operationId: getProcessInstanceGroupFilters
       parameters:
@@ -625,7 +690,7 @@ paths:
           schema:
             $ref: '#/definitions/ProcessInstanceGroupFilter'
 
-  /group/{ID}:
+  /process-instance-groups/{ID}:
     get:
       operationId: getProcessInstanceGroup
       parameters:
@@ -648,74 +713,6 @@ paths:
       responses:
         200:
           description: Deleted the groups successfully
-
-  /group/collaboration/{ID}:
-    get:
-      operationId: getCollaborationGroup
-      parameters:
-      - in: path
-        name: ID
-        type: string
-        required: true
-      responses:
-        200:
-          description: Retrieved the collaboration group successfully
-          schema:
-            $ref: '#/definitions/CollaborationGroup'
-    delete:
-      operationId: deleteCollaborationGroup
-      parameters:
-      - in: path
-        name: ID
-        type: string
-        required: true
-      responses:
-        200:
-          description: Deleted the collaboration group successfully
-    patch:
-      operationId: updateCollaborationGroupName
-      parameters:
-      - in: path
-        name: ID
-        type: string
-        required: true
-      - in: query
-        name: groupName
-        type: string
-        required: true
-      responses:
-        200:
-          description: Updated the collaboration group name successfully
-
-  /group/collaboration/{ID}/archive:
-    post:
-      operationId: archiveCollaborationGroup
-      parameters:
-      - in: path
-        name: ID
-        type: string
-        description: Identifier of the collaboration group to be archived
-        required: true
-      responses:
-        200:
-          description: Archived the collaboration group successfully
-          schema:
-            $ref: '#/definitions/CollaborationGroup'
-
-  /group/collaboration/{ID}/restore:
-    post:
-      operationId: restoreCollaborationGroup
-      parameters:
-      - in: path
-        name: ID
-        type: string
-        description: Identifier of the collaboration group to be restored
-        required: true
-      responses:
-        200:
-          description: Restored the collaboration group successfully
-          schema:
-            $ref: '#/definitions/CollaborationGroup'
 
 definitions:
 

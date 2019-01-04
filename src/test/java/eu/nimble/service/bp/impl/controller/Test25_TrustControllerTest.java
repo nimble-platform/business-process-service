@@ -39,7 +39,7 @@ public class Test25_TrustControllerTest {
     @Test
     public void test1_createRatingAndReview() throws Exception {
         // get Receipt advice process instance id
-        MockHttpServletRequestBuilder request = get("/group")
+        MockHttpServletRequestBuilder request = get("/collaboration-groups")
                 .param("collaborationRole", collaborationRole)
                 .param("relatedProducts",relatedProduct)
                 .param("partyID", buyerPartyID);

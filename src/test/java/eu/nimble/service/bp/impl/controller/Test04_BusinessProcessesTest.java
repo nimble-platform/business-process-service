@@ -112,7 +112,7 @@ public class Test04_BusinessProcessesTest {
         itemInformationProcessInstanceID = processInstance.getProcessInstanceID();
 
         // get collaboration group information for seller
-        request = get("/group")
+        request = get("/collaboration-groups")
                 .param("partyID",partyID)
                 .param("relatedProducts",productName)
                 .param("collaborationRole","SELLER")
@@ -257,7 +257,7 @@ public class Test04_BusinessProcessesTest {
         tepItemInformationProcessInstanceID = processInstance.getProcessInstanceID();
 
         // get process instance group info
-        request = get("/group")
+        request = get("/collaboration-groups")
                 .param("partyID",partyID)
                 .param("relatedProducts",serviceName)
                 .param("collaborationRole","BUYER")

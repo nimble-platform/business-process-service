@@ -44,7 +44,7 @@ public class Test24_CollaborationGroupTest2 {
 
     @Test
     public void test1_getCollaborationGroup() throws Exception {
-        MockHttpServletRequestBuilder request = get("/group/collaboration/"+Test23_CollaborationGroupTest.collaborationGroupID);
+        MockHttpServletRequestBuilder request = get("/collaboration-groups/"+Test23_CollaborationGroupTest.collaborationGroupID);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         CollaborationGroup collaborationGroup = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), CollaborationGroup.class);
@@ -53,17 +53,17 @@ public class Test24_CollaborationGroupTest2 {
 
     @Test
     public void test2_restoreCollaborationGroup() throws Exception{
-        MockHttpServletRequestBuilder request = post("/group/collaboration/"+Test23_CollaborationGroupTest.collaborationGroupID+"/restore");
+        MockHttpServletRequestBuilder request = post("/collaboration-groups/"+Test23_CollaborationGroupTest.collaborationGroupID+"/restore");
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
     }
 
     @Test
     public void test3_deleteCollaborationGroup() throws Exception{
-        MockHttpServletRequestBuilder request = delete("/group/collaboration/"+Test23_CollaborationGroupTest.collaborationGroupToBeDeletedId);
+        MockHttpServletRequestBuilder request = delete("/collaboration-groups/"+Test23_CollaborationGroupTest.collaborationGroupToBeDeletedId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         // check whether the deletion is successful or not
-        request = get("/group")
+        request = get("/collaboration-groups")
                 .param("collaborationRole", collaborationRole)
                 .param("relatedProducts",relatedProduct)
                 .param("partyID", partyID);
@@ -76,7 +76,7 @@ public class Test24_CollaborationGroupTest2 {
 
     @Test
     public void test4_getOrderProcess() throws Exception{
-        MockHttpServletRequestBuilder request = get("/group/order-process")
+        MockHttpServletRequestBuilder request = get("/process-instance-groups/order-process")
                 .header("Authorization", token)
                 .param("processInstanceId",Test23_CollaborationGroupTest.idOfTheLastProcessInstance);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();

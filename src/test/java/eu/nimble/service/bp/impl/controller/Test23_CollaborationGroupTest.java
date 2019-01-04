@@ -51,7 +51,7 @@ public class Test23_CollaborationGroupTest {
     @Test
     public void test1_updateCollaborationGroupName() throws Exception {
         // get the collaboration group
-        MockHttpServletRequestBuilder request = get("/group")
+        MockHttpServletRequestBuilder request = get("/collaboration-groups")
                 .param("collaborationRole", collaborationRoleBuyer)
                 .param("relatedProducts",serviceName)
                 .param("partyID", partyID);
@@ -67,7 +67,7 @@ public class Test23_CollaborationGroupTest {
         idOfTheLastProcessInstance = collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().get(1).getProcessInstanceIDs().get(sizeOfProcessInstances - 1);
 
         // update collaboration group name
-        request = patch("/group/collaboration/"+collaborationGroupID)
+        request = patch("/collaboration-groups/"+collaborationGroupID)
                 .param("groupName",groupName);
         mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
@@ -75,14 +75,14 @@ public class Test23_CollaborationGroupTest {
 
     @Test
     public void test2_archiveCollaborationGroup() throws Exception{
-        MockHttpServletRequestBuilder request = post("/group/collaboration/"+collaborationGroupID+"/archive");
+        MockHttpServletRequestBuilder request = post("/collaboration-groups/"+collaborationGroupID+"/archive");
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
     }
 
     @Test
     public void test3_cancelCollaboration() throws Exception{
         // get the collaboration group
-        MockHttpServletRequestBuilder request = get("/group")
+        MockHttpServletRequestBuilder request = get("/collaboration-groups")
                 .param("collaborationRole", collaborationRoleSeller)
                 .param("relatedProducts",productName)
                 .param("partyID", partyID);
@@ -95,7 +95,7 @@ public class Test23_CollaborationGroupTest {
 
         String groupID = collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().get(0).getID();
         // cancel collaboration group
-        request = post("/group/"+ groupID +"/cancel")
+        request = post("/process-instance-groups/"+ groupID +"/cancel")
                 .header("Authorization",token);
         mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
     }
