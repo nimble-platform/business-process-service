@@ -47,26 +47,26 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
 
     @Override
     @ApiOperation(value = "", notes = "Delete the process instance group along with the included process instances")
-    public ResponseEntity<Void> deleteProcessInstanceGroup(@ApiParam(value = "Identifier of the process instance group to be deleted", required = true) @PathVariable("ID") String ID) {
-        logger.debug("Deleting ProcessInstanceGroup ID: {}", ID);
+    public ResponseEntity<Void> deleteProcessInstanceGroup(@ApiParam(value = "Identifier of the process instance group to be deleted", required = true) @PathVariable("id") String id) {
+        logger.debug("Deleting ProcessInstanceGroup ID: {}", id);
 
-        ProcessInstanceGroupDAOUtility.deleteProcessInstanceGroupDAOByID(ID);
+        ProcessInstanceGroupDAOUtility.deleteProcessInstanceGroupDAOByID(id);
 
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body("true");
-        logger.debug("Deleted ProcessInstanceGroups: {}", ID);
+        logger.debug("Deleted ProcessInstanceGroups: {}", id);
         return response;
     }
 
     @Override
     @ApiOperation(value = "", notes = "Retrieve the process instance group specified with the ID")
-    public ResponseEntity<ProcessInstanceGroup> getProcessInstanceGroup(@ApiParam(value = "Identifier of the process instance group to be received", required = true) @PathVariable("ID") String ID) {
-        logger.debug("Getting ProcessInstanceGroup: {}", ID);
+    public ResponseEntity<ProcessInstanceGroup> getProcessInstanceGroup(@ApiParam(value = "Identifier of the process instance group to be received", required = true) @PathVariable("id") String id) {
+        logger.debug("Getting ProcessInstanceGroup: {}", id);
 
-        ProcessInstanceGroupDAO processInstanceGroupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(ID);
+        ProcessInstanceGroupDAO processInstanceGroupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(id);
 
         ProcessInstanceGroup processInstanceGroup = HibernateSwaggerObjectMapper.convertProcessInstanceGroupDAO(processInstanceGroupDAO);
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(processInstanceGroup);
-        logger.debug("Retrieved ProcessInstanceGroup: {}", ID);
+        logger.debug("Retrieved ProcessInstanceGroup: {}", id);
         return response;
     }
 
@@ -74,17 +74,17 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
     @ApiOperation(value = "", notes = "Generate detailed filtering criteria for the current query parameters in place")
     public ResponseEntity<ProcessInstanceGroupFilter> getProcessInstanceGroupFilters(
             @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
-            @ApiParam(value = "Identifier of the party as specified by the identity service") @RequestParam(value = "partyID", required = false) String partyID,
-            @ApiParam(value = "Related products") @RequestParam(value = "relatedProducts", required = false) List<String> relatedProducts,
-            @ApiParam(value = "Related product categories") @RequestParam(value = "relatedProductCategories", required = false) List<String> relatedProductCategories,
-            @ApiParam(value = "Identifier of the corresponding trading partner ID") @RequestParam(value = "tradingPartnerIDs", required = false) List<String> tradingPartnerIDs,
+            @ApiParam(value = "Identifier of the party as specified by the identity service") @RequestParam(value = "partyId", required = false) String partyId,
+            @ApiParam(value = "Names of the products for which the collaboration activities are performed") @RequestParam(value = "relatedProducts", required = false) List<String> relatedProducts,
+            @ApiParam(value = "Categories of the products.\nFor example:MDF raw,Split air conditioner") @RequestParam(value = "relatedProductCategories", required = false) List<String> relatedProductCategories,
+            @ApiParam(value = "Identifier (party id) of the corresponding trading partners") @RequestParam(value = "tradingPartnerIDs", required = false) List<String> tradingPartnerIDs,
             @ApiParam(value = "Whether the collaboration group is archived or not", defaultValue = "false") @RequestParam(value = "archived", required = false, defaultValue = "false") Boolean archived,
             @ApiParam(value = "Role of the party in the collaboration.\nPossible values:SELLER,BUYER") @RequestParam(value = "collaborationRole", required = false) String collaborationRole,
             @ApiParam(value = "Status of the process instance included in the group\nPossible values:STARTED,WAITING,CANCELLED,COMPLETED") @RequestParam(value = "status", required = false) List<String> status) {
 
-        ProcessInstanceGroupFilter filters = groupDaoUtility.getFilterDetails(partyID, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, status, null, null, bearerToken);
+        ProcessInstanceGroupFilter filters = groupDaoUtility.getFilterDetails(partyId, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, status, null, null, bearerToken);
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(filters);
-        logger.debug("Filters retrieved for partyId: {}, archived: {}, products: {}, categories: {}, parties: {}", partyID, archived,
+        logger.debug("Filters retrieved for partyId: {}, archived: {}, products: {}, categories: {}, parties: {}", partyId, archived,
                 relatedProducts != null ? relatedProducts.toString() : "[]",
                 relatedProductCategories != null ? relatedProductCategories.toString() : "[]",
                 tradingPartnerIDs != null ? tradingPartnerIDs.toString() : "[]");
@@ -124,21 +124,21 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
         }
     }
 
-    @ApiOperation(value = "", notes = "Cancel the collaboration (negotiation) for the given group id")
+    @ApiOperation(value = "", notes = "Cancel the collaboration (negotiation) which is represented by the given group id")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Cancelled the collaboration for the given group id successfully "),
             @ApiResponse(code = 400, message = "There does not exist a process instance group with the given id"),
             @ApiResponse(code = 500, message = "Failed to cancel collaboration")
     })
-    @RequestMapping(value = "/process-instance-groups/{ID}/cancel",
+    @RequestMapping(value = "/process-instance-groups/{id}/cancel",
             method = RequestMethod.POST)
-    public ResponseEntity cancelCollaboration(@ApiParam(value = "Identifier of the process instance group to be cancelled") @PathVariable(value = "ID", required = true) String ID,
+    public ResponseEntity cancelCollaboration(@ApiParam(value = "Identifier of the process instance group to be cancelled") @PathVariable(value = "id", required = true) String id,
                                               @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
         try {
-            logger.debug("Cancelling the collaboration for the group id: {}", ID);
-            ProcessInstanceGroupDAO groupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(ID);
+            logger.debug("Cancelling the collaboration for the group id: {}", id);
+            ProcessInstanceGroupDAO groupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(id);
             if (groupDAO == null) {
-                String msg = String.format("There does not exist a process instance group with the id: %s", ID);
+                String msg = String.format("There does not exist a process instance group with the id: %s", id);
                 logger.warn(msg);
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(msg);
             }
@@ -147,7 +147,7 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
             List<String> processInstanceIDs = groupDAO.getProcessInstanceIDs();
             boolean isCancellableGroup = cancellableGroup(processInstanceIDs);
             if (!isCancellableGroup) {
-                logger.error("Process instance group with id:{} can not be cancelled", ID);
+                logger.error("Process instance group with id:{} can not be cancelled", id);
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
             }
 
@@ -171,8 +171,8 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
             }
 
             // update the groups associated with the first group
-            for (String id : groupDAO.getAssociatedGroups()) {
-                ProcessInstanceGroupDAO group = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(id);
+            for (String groupId : groupDAO.getAssociatedGroups()) {
+                ProcessInstanceGroupDAO group = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(groupId);
                 // check whether the associated group can be cancelled or not
                 isCancellableGroup = cancellableGroup(group.getProcessInstanceIDs());
                 // if it is ok, change status of the associated group
@@ -190,11 +190,11 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
             // send email to the trading partner
             emailSenderUtil.sendCancellationEmail(bearerToken, groupDAO);
 
-            logger.debug("Cancelled the collaboration for the group id: {} successfully", ID);
+            logger.debug("Cancelled the collaboration for the group id: {} successfully", id);
             return ResponseEntity.ok(null);
 
         } catch (Exception e) {
-            return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while cancelling the group: %s", ID), e, HttpStatus.INTERNAL_SERVER_ERROR);
+            return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while cancelling the group: %s", id), e, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

@@ -2,6 +2,7 @@ package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.impl.contract.ContractGenerator;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
@@ -27,7 +28,7 @@ public class ContractGeneratorController {
     @RequestMapping(value = "/contracts/create-bundle",
             method = RequestMethod.GET,
             produces = {"application/zip"})
-    public void generateContract(@RequestParam(value = "orderId", required = true) String orderId, HttpServletResponse response){
+    public void generateContract(@ApiParam(value = "Identifier of the order for which the contract will be generated") @RequestParam(value = "orderId", required = true) String orderId, HttpServletResponse response){
         try{
             logger.info("Generating contract for the order with id : {}",orderId);
 
@@ -64,12 +65,12 @@ public class ContractGeneratorController {
     @RequestMapping(value = "/contracts/create-terms",
             produces = {MediaType.TEXT_PLAIN_VALUE},
             method = RequestMethod.GET)
-    public ResponseEntity generateOrderTermsAndConditionsAsText(@RequestParam(value = "orderId", required = true) String orderId,
-                                                                @RequestParam(value = "sellerPartyId", required = false) String sellerPartyId,
-                                                                @RequestParam(value = "buyerPartyId", required = false) String buyerPartyId,
-                                                                @RequestParam(value = "incoterms", required = false) String incoterms,
-                                                                @RequestParam(value = "tradingTerms", required = false) String tradingTerms,
-                                                                @RequestHeader(value = "Authorization", required = true) String bearerToken){
+    public ResponseEntity generateOrderTermsAndConditionsAsText(@ApiParam(value = "Identifier of the order for which terms and conditions are generated") @RequestParam(value = "orderId", required = true) String orderId,
+                                                                @ApiParam(value = "Identifier of the seller party") @RequestParam(value = "sellerPartyId", required = false) String sellerPartyId,
+                                                                @ApiParam(value = "Identifier of the buyer party") @RequestParam(value = "buyerPartyId", required = false) String buyerPartyId,
+                                                                @ApiParam(value = "The selected incoterms while negotiating.\nExample:DDP (Delivery Duty Paid)") @RequestParam(value = "incoterms", required = false) String incoterms,
+                                                                @ApiParam(value = "The list of selected trading terms while negotiating.\nExample:[{\"id\":\"Cash_on_delivery\",\"description\":\"Cash on delivery\",\"tradingTermFormat\":\"COD\",\"value\":[\"true\"]}]") @RequestParam(value = "tradingTerms", required = false) String tradingTerms,
+                                                                @ApiParam(value = "The Bearer token provided by the identity service") @RequestHeader(value = "Authorization", required = true) String bearerToken){
         logger.info("Generating Order Terms and Conditions as text for the order with id : {}",orderId);
 
         try {

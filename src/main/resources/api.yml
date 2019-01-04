@@ -498,12 +498,12 @@ paths:
             items:
               $ref: '#/definitions/ProcessDocumentMetadata'
 
-  /collaboration-groups/{ID}:
+  /collaboration-groups/{id}:
     patch:
       operationId: updateCollaborationGroupName
       parameters:
       - in: path
-        name: ID
+        name: id
         type: string
         required: true
       - in: query
@@ -517,7 +517,7 @@ paths:
       operationId: deleteCollaborationGroup
       parameters:
       - in: path
-        name: ID
+        name: id
         type: string
         required: true
       responses:
@@ -527,7 +527,7 @@ paths:
       operationId: getCollaborationGroup
       parameters:
       - in: path
-        name: ID
+        name: id
         type: string
         required: true
       responses:
@@ -535,12 +535,12 @@ paths:
           description: Retrieved the collaboration group successfully
           schema:
             $ref: '#/definitions/CollaborationGroup'
-  /collaboration-groups/{ID}/archive:
+  /collaboration-groups/{id}/archive:
       post:
         operationId: archiveCollaborationGroup
         parameters:
         - in: path
-          name: ID
+          name: id
           type: string
           description: Identifier of the collaboration group to be archived
           required: true
@@ -549,12 +549,12 @@ paths:
             description: Archived the collaboration group successfully
             schema:
               $ref: '#/definitions/CollaborationGroup'
-  /collaboration-groups/{ID}/restore:
+  /collaboration-groups/{id}/restore:
       post:
         operationId: restoreCollaborationGroup
         parameters:
         - in: path
-          name: ID
+          name: id
           type: string
           description: Identifier of the collaboration group to be restored
           required: true
@@ -568,7 +568,7 @@ paths:
       operationId: getCollaborationGroups
       parameters:
       - in: query
-        name: partyID
+        name: partyId
         type: string
         description: Identifier of the party
       - in: query
@@ -644,7 +644,7 @@ paths:
       operationId: getProcessInstanceGroupFilters
       parameters:
       - in: query
-        name: partyID
+        name: partyId
         type: string
         description: Identifier of the party
       - in: query
@@ -690,12 +690,12 @@ paths:
           schema:
             $ref: '#/definitions/ProcessInstanceGroupFilter'
 
-  /process-instance-groups/{ID}:
+  /process-instance-groups/{id}:
     get:
       operationId: getProcessInstanceGroup
       parameters:
       - in: path
-        name: ID
+        name: id
         type: string
         required: true
       responses:
@@ -707,7 +707,7 @@ paths:
       operationId: deleteProcessInstanceGroup
       parameters:
       - in: path
-        name: ID
+        name: id
         type: string
         required: true
       responses:

@@ -54,7 +54,7 @@ public class Test23_CollaborationGroupTest {
         MockHttpServletRequestBuilder request = get("/collaboration-groups")
                 .param("collaborationRole", collaborationRoleBuyer)
                 .param("relatedProducts",serviceName)
-                .param("partyID", partyID);
+                .param("partyId", partyID);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         CollaborationGroupResponse collaborationGroupResponse = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), CollaborationGroupResponse.class);
@@ -85,7 +85,7 @@ public class Test23_CollaborationGroupTest {
         MockHttpServletRequestBuilder request = get("/collaboration-groups")
                 .param("collaborationRole", collaborationRoleSeller)
                 .param("relatedProducts",productName)
-                .param("partyID", partyID);
+                .param("partyId", partyID);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         CollaborationGroupResponse collaborationGroupResponse = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), CollaborationGroupResponse.class);

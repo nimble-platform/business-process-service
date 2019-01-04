@@ -51,10 +51,12 @@ public class StartController implements StartApi {
     @Override
     @ApiOperation(value = "", notes = "Start an instance of a business process", response = ProcessInstance.class, tags={  })
     public ResponseEntity<ProcessInstance> startProcessInstance(@ApiParam(value = "", required = true) @RequestBody ProcessInstanceInputMessage body,
-                                                                @ApiParam(value = "The id of the process instance group owned by the party initiating the process") @RequestParam(value = "gid", required = false) String gid,
-                                                                @ApiParam(value = "The id of the preceding process instance") @RequestParam(value = "precedingPid", required = false) String precedingPid,
-                                                                @ApiParam(value = "The UUID of the previous process instance group") @RequestParam(value = "precedingGid", required = false) String precedingGid,
-                                                                @ApiParam(value = "The id of the collaboration group which the process instance group belongs to") @RequestParam(value = "collaborationGID", required = false) String collaborationGID) {
+                                                                @ApiParam(value = "Identifier of the process instance group owned by the party initiating the process") @RequestParam(value = "gid", required = false) String gid,
+                                                                @ApiParam(value = "Identifier of the preceding process instance.If we want to start a new process (for example,PPAP) after a completed process (for example, item information request)," +
+                                                                        "then this parameter should be the identifier of the completed process instance") @RequestParam(value = "precedingPid", required = false) String precedingPid,
+                                                                @ApiParam(value = "Identifier of the preceding process instance group.When we want to create a new process instance group" +
+                                                                        "inside the same collaboration group,we should set this parameter to identifier of the existing process instance group.") @RequestParam(value = "precedingGid", required = false) String precedingGid,
+                                                                @ApiParam(value = "Identifier of the collaboration group which the process instance group belongs to") @RequestParam(value = "collaborationGID", required = false) String collaborationGID) {
         logger.debug(" $$$ Start Process with ProcessInstanceInputMessage {}", body.toString());
         ProcessInstance processInstance = null;
         // get BusinessProcessContext

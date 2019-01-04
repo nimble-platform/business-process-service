@@ -58,7 +58,7 @@ public class Test25_TrustControllerTest {
                 .param("processInstanceID",processInstanceID)
                 .param("reviews", reviews)
                 .param("ratings",ratings)
-                .param("partyID", partyID);
+                .param("partyId", partyID);
         mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
     }

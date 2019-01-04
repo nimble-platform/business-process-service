@@ -41,7 +41,7 @@ public class Test26_TrustControllerTest2 {
     public void test1_getRatingsSummary() throws Exception {
         MockHttpServletRequestBuilder request = get("/ratingsSummary")
                 .header("Authorization", token)
-                .param("partyID",partyID);
+                .param("partyId",partyID);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
     }
 
@@ -49,7 +49,7 @@ public class Test26_TrustControllerTest2 {
     public void test2_listAllIndividualRatingsAndReviews() throws Exception {
         MockHttpServletRequestBuilder request = get("/ratingsAndReviews")
                 .header("Authorization", token)
-                .param("partyID",partyID);
+                .param("partyId",partyID);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         List<NegotiationRatings> negotiationRatings = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),new TypeReference<List<NegotiationRatings>>(){});

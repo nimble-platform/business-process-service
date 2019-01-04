@@ -52,19 +52,19 @@ public class TrustServiceController {
             method = RequestMethod.POST)
     public ResponseEntity createRatingAndReview(@ApiParam(value = "JSON string representing an array of EvidenceSupplied instances.\nExample:[{\"id\":\"QualityOfTheNegotiationProcess\",\"valueDecimal\":5},{\"id\":\"QualityOfTheOrderingProcess\",\"valueDecimal\":3},{\"id\":\"ResponseTime\",\"valueDecimal\":4},{\"id\":\"ProductListingAccuracy\",\"valueDecimal\":2},{\"id\":\"ConformanceToOtherAgreedTerms\",\"valueDecimal\":5},{\"id\":\"DeliveryAndPackaging\",\"valueDecimal\":3}]") @RequestParam(value = "ratings", required = false) String ratingsString,
                                                 @ApiParam(value = "JSON string representing an array of Comment instances.\nExample:[{\"comment\":\"Awesome trading partner\",\"typeCode\":{\"value\":\"\",\"name\":\"\",\"uri\":\"\",\"listID\":\"\",\"listURI\":\"\"}},{\"comment\":\"Perfect collaboration\",\"typeCode\":{\"value\":\"\",\"name\":\"\",\"uri\":\"\",\"listID\":\"\",\"listURI\":\"\"}}]") @RequestParam(value = "reviews", required = false) String reviewsString,
-                                                @ApiParam(value = "Identifier of the party for which a rating and reviews will be created") @RequestParam(value = "partyID") String partyID,
+                                                @ApiParam(value = "Identifier of the party for which a rating and reviews will be created") @RequestParam(value = "partyId") String partyId,
                                                 @ApiParam(value = "Identifier of the process instance associated with the ratings and reviews.Usually,it is the identifier of the last process instance which concludes the collaboration") @RequestParam(value = "processInstanceID") String processInstanceID,
                                                 @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
         try {
-            logger.info("Creating rating and reviews for the party with id: {} and process instance with id: {}", partyID, processInstanceID);
+            logger.info("Creating rating and reviews for the party with id: {} and process instance with id: {}", partyId, processInstanceID);
             /**
              * CHECKS
              */
 
             // check party
-            QualifyingPartyType qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID, bearerToken);
+            QualifyingPartyType qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyId, bearerToken);
             if (qualifyingParty == null) {
-                return HttpResponseUtil.createResponseEntityAndLog(String.format("No qualifying party exists for the given party id: %s", partyID), HttpStatus.BAD_REQUEST);
+                return HttpResponseUtil.createResponseEntityAndLog(String.format("No qualifying party exists for the given party id: %s", partyId), HttpStatus.BAD_REQUEST);
             }
             // check process instance id
             List<ProcessDocumentMetadataDAO> processDocumentMetadatas = DAOUtility.getProcessDocumentMetadataByProcessInstanceID(processInstanceID);
@@ -72,13 +72,13 @@ public class TrustServiceController {
                 return HttpResponseUtil.createResponseEntityAndLog(String.format("No process document metadata for the given process instance id: %s", processInstanceID), HttpStatus.BAD_REQUEST);
             }
             // check the trading partner existence
-            String tradingPartnerId = DocumentMetadataDAOUtility.getTradingPartnerId(processDocumentMetadatas.get(0), partyID);
+            String tradingPartnerId = DocumentMetadataDAOUtility.getTradingPartnerId(processDocumentMetadatas.get(0), partyId);
             PartyType tradingParty = CatalogueDAOUtility.getParty(tradingPartnerId);
             if(tradingParty == null) {
                 return HttpResponseUtil.createResponseEntityAndLog(String.format("No party exists for the given party id: %s", tradingPartnerId), HttpStatus.BAD_REQUEST);
             }
             // check whether the party is included in the process
-            if(!(processDocumentMetadatas.get(0).getInitiatorID().contentEquals(partyID) || processDocumentMetadatas.get(0).getResponderID().contentEquals(partyID))) {
+            if(!(processDocumentMetadatas.get(0).getInitiatorID().contentEquals(partyId) || processDocumentMetadatas.get(0).getResponderID().contentEquals(partyId))) {
                 return HttpResponseUtil.createResponseEntityAndLog(String.format("Party: %s is not included in the process instance: {}", tradingPartnerId, processInstanceID), HttpStatus.BAD_REQUEST);
             }
             // check the values
@@ -103,19 +103,19 @@ public class TrustServiceController {
             if (!completedTaskExist) {
                 TrustUtility.createCompletedTasksForBothParties(processDocumentMetadatas.get(0), bearerToken, "Completed");
                 // get qualifyingParty (which contains the completed task) again
-                qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID, bearerToken);
+                qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyId, bearerToken);
             }
             CompletedTaskType completedTaskType = TrustUtility.fillCompletedTask(qualifyingParty, ratings, reviews, processInstanceID);
 //            HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).update(qualifyingParty);
             catalogueRepository.updateEntity(qualifyingParty);
 
             // broadcast changes
-            kafkaSender.broadcastRatingsUpdate(partyID, bearerToken);
+            kafkaSender.broadcastRatingsUpdate(partyId, bearerToken);
 
-            logger.info("Created rating and reviews for the party with id: {} and process instance with id: {}", partyID, processInstanceID);
+            logger.info("Created rating and reviews for the party with id: {} and process instance with id: {}", partyId, processInstanceID);
             return ResponseEntity.ok(completedTaskType);
         } catch (Exception e) {
-            logger.error("Failed to create rating and reviews for the party with id: {} and process instance with id: {}", partyID, processInstanceID, e);
+            logger.error("Failed to create rating and reviews for the party with id: {} and process instance with id: {}", partyId, processInstanceID, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
@@ -127,12 +127,12 @@ public class TrustServiceController {
     @RequestMapping(value = "/ratingsSummary",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity getRatingsSummary(@ApiParam(value = "Identifier of the party whose ratings will be received") @RequestParam(value = "partyID") String partyID,
+    public ResponseEntity getRatingsSummary(@ApiParam(value = "Identifier of the party whose ratings will be received") @RequestParam(value = "partyId") String partyId,
                                             @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
-        logger.info("Getting ratings summary for the party with id: {}",partyID);
-        QualifyingPartyType qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID,bearerToken);
+        logger.info("Getting ratings summary for the party with id: {}",partyId);
+        QualifyingPartyType qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyId,bearerToken);
         JSONObject jsonResponse = createJSONResponse(qualifyingParty.getCompletedTask());
-        logger.info("Retrieved ratings summary for the party with id: {}",partyID);
+        logger.info("Retrieved ratings summary for the party with id: {}",partyId);
         return ResponseEntity.ok(jsonResponse.toString());
     }
 
@@ -143,18 +143,18 @@ public class TrustServiceController {
     @RequestMapping(value = "/ratingsAndReviews",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity listAllIndividualRatingsAndReviews(@ApiParam(value = "Identifier of the party whose individual ratings and reviews will be received") @RequestParam(value = "partyID") String partyID,
+    public ResponseEntity listAllIndividualRatingsAndReviews(@ApiParam(value = "Identifier of the party whose individual ratings and reviews will be received") @RequestParam(value = "partyId") String partyId,
                                                              @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         try {
-            logger.info("Getting all individual ratings and review for the party with id: {}",partyID);
-            QualifyingPartyType qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID,bearerToken);
+            logger.info("Getting all individual ratings and review for the party with id: {}",partyId);
+            QualifyingPartyType qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyId,bearerToken);
             List<NegotiationRatings> negotiationRatings = TrustUtility.createNegotiationRatings(qualifyingParty.getCompletedTask());
             String ratingsAndReviews = new ObjectMapper().writeValueAsString(negotiationRatings);
-            logger.info("Retrieved all individual ratings and review for the party with id: {}",partyID);
+            logger.info("Retrieved all individual ratings and review for the party with id: {}",partyId);
             return ResponseEntity.ok(ratingsAndReviews);
         }
         catch (Exception e){
-            logger.error("Unexpected error while getting negotiation ratings and reviews for the party: {}",partyID,e);
+            logger.error("Unexpected error while getting negotiation ratings and reviews for the party: {}",partyId,e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }

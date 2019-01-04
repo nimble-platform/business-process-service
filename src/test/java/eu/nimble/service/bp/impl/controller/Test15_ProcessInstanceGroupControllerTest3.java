@@ -44,7 +44,7 @@ public class Test15_ProcessInstanceGroupControllerTest3 {
         MockHttpServletRequestBuilder request = get("/process-instance-groups/filters")
                 .header("Authorization", token)
                 .param("collaborationRole", "SELLER")
-                .param("partyID", "706");
+                .param("partyId", "706");
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         ProcessInstanceGroupFilter processInstanceGroupFilter = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ProcessInstanceGroupFilter.class);
