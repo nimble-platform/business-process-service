@@ -2,7 +2,7 @@ package eu.nimble.service.bp.processor.order;
 
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
-import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
+import eu.nimble.service.bp.impl.util.persistence.bp.ExecutionConfigurationDAOUtility;
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
@@ -39,7 +39,7 @@ public class DefaultOrderCreator  implements JavaDelegate {
         String content = variables.get("content").toString();
 
         // get application execution configuration
-        ExecutionConfiguration executionConfiguration = DocumentPersistenceUtility.getExecutionConfiguration(buyer,
+        ExecutionConfiguration executionConfiguration = ExecutionConfigurationDAOUtility.getExecutionConfiguration(buyer,
                 execution.getProcessInstance().getProcessDefinitionId(), ProcessConfiguration.RoleTypeEnum.BUYER, "ORDER", ExecutionConfiguration.ApplicationTypeEnum.DATAADAPTER);
         String applicationURI = executionConfiguration.getExecutionUri();
         ExecutionConfiguration.ExecutionTypeEnum executionType = executionConfiguration.getExecutionType();

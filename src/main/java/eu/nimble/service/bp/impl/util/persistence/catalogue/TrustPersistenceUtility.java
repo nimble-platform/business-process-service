@@ -59,14 +59,14 @@ public class TrustPersistenceUtility {
         completedTask.setDescription(Arrays.asList(status));
         PeriodType periodType = new PeriodType();
 
-        ProcessDocumentMetadata responseMetadata = DocumentPersistenceUtility.getResponseMetadata(processInstanceID);
+        ProcessDocumentMetadata responseMetadata = ProcessDocumentMetadataDAOUtility.getResponseMetadata(processInstanceID);
         // TODO: End time and date are NULL for cancelled process for now
         try {
             if (responseMetadata != null) {
                 periodType.setEndDate(DatatypeFactory.newInstance().newXMLGregorianCalendar(responseMetadata.getSubmissionDate()));
                 periodType.setEndTime(DatatypeFactory.newInstance().newXMLGregorianCalendar(responseMetadata.getSubmissionDate()));
             }
-            ProcessDocumentMetadata requestMetadata = DocumentPersistenceUtility.getRequestMetadata(ProcessInstanceDAOUtility.getAllProcessInstanceIdsInCollaborationHistory(processInstanceID).get(0));
+            ProcessDocumentMetadata requestMetadata = ProcessDocumentMetadataDAOUtility.getRequestMetadata(ProcessInstanceDAOUtility.getAllProcessInstanceIdsInCollaborationHistory(processInstanceID).get(0));
             periodType.setStartDate(DatatypeFactory.newInstance().newXMLGregorianCalendar(requestMetadata.getSubmissionDate()));
             periodType.setStartTime(DatatypeFactory.newInstance().newXMLGregorianCalendar(requestMetadata.getSubmissionDate()));
             completedTask.setPeriod(periodType);

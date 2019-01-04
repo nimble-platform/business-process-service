@@ -2,9 +2,9 @@ package eu.nimble.service.bp.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
+import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
-import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.api.DocumentApi;
@@ -116,7 +116,7 @@ public class DocumentController implements DocumentApi {
     public ResponseEntity<ModelApiResponse> updateDocumentMetadata(@RequestBody ProcessDocumentMetadata body) {
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
         try{
-            DocumentPersistenceUtility.updateDocumentMetadata(businessProcessContext.getId(),body);
+            ProcessDocumentMetadataDAOUtility.updateDocumentMetadata(businessProcessContext.getId(),body);
         }
         catch (Exception e){
             businessProcessContext.handleExceptions();

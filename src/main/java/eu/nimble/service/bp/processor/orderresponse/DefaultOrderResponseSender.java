@@ -4,6 +4,8 @@ import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
 import eu.nimble.service.bp.config.GenericConfig;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
+import eu.nimble.service.bp.impl.util.persistence.bp.ExecutionConfigurationDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
@@ -32,7 +34,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by yildiray on 5/26/2017.
@@ -62,7 +67,7 @@ public class DefaultOrderResponseSender  implements JavaDelegate {
         OrderType order = (OrderType) DocumentPersistenceUtility.getUBLDocument((String) variables.get("initialDocumentID"));
 
         // get application execution configuration
-        ExecutionConfiguration executionConfiguration = DocumentPersistenceUtility.getExecutionConfiguration(seller,
+        ExecutionConfiguration executionConfiguration = ExecutionConfigurationDAOUtility.getExecutionConfiguration(seller,
                 execution.getProcessInstance().getProcessDefinitionId(), ProcessConfiguration.RoleTypeEnum.SELLER, "ORDERRESPONSE",
                 ExecutionConfiguration.ApplicationTypeEnum.DATACHANNEL);
         String applicationURI = executionConfiguration.getExecutionUri();
@@ -134,7 +139,7 @@ public class DefaultOrderResponseSender  implements JavaDelegate {
 
         // adjust the start end data
         DateTimeFormatter bpFormatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
-        ProcessDocumentMetadata orderResponseMetadata = DocumentPersistenceUtility.getDocumentMetadata(orderResponse.getID());
+        ProcessDocumentMetadata orderResponseMetadata = ProcessDocumentMetadataDAOUtility.getDocumentMetadata(orderResponse.getID());
         LocalDateTime localTime = bpFormatter.parseLocalDateTime(orderResponseMetadata.getSubmissionDate());
         DateTime startTime = new DateTime(localTime.toDateTime(), DateTimeZone.UTC);
         DateTime endTime = startTime.plusWeeks(2);

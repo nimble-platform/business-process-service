@@ -5,9 +5,16 @@ import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentStatus;
 import eu.nimble.service.bp.hyperjaxb.model.RoleType;
 import eu.nimble.service.bp.impl.model.statistics.BusinessProcessCount;
+import eu.nimble.service.bp.impl.util.bp.BusinessProcessUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
+import eu.nimble.service.bp.processor.BusinessProcessContext;
+import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
+import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
+import eu.nimble.service.bp.swagger.model.Transaction;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.utility.DateUtility;
+import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -34,6 +41,7 @@ public class ProcessDocumentMetadataDAOUtility {
     private static final String QUERY_GET_DOCUMENT_IDS = "SELECT documentMetadata.documentID FROM ProcessDocumentMetadataDAO documentMetadata %s";
     private static final String QUERY_GET_GROUPED_TRANSACTIONS = "SELECT documentMetadata.initiatorID, documentMetadata.type, documentMetadata.status, count(*) FROM ProcessDocumentMetadataDAO documentMetadata %s";
     private static final String QUERY_GET = "SELECT document FROM ProcessDocumentMetadataDAO document WHERE (%s)";
+    private static final String QUERY_GET_METADATA = "SELECT documentMetadata FROM ProcessDocumentMetadataDAO documentMetadata WHERE documentMetadata.processInstanceID=:processInstanceId AND %s";
 
     private static final Logger logger = LoggerFactory.getLogger(ProcessDocumentMetadataDAOUtility.class);
 
@@ -227,6 +235,73 @@ public class ProcessDocumentMetadataDAOUtility {
             query.query = String.format(QUERY_GET_GROUPED_TRANSACTIONS, conditions);
         }
         return query;
+    }
+
+    public static ProcessDocumentMetadata getDocumentMetadata(String documentId) {
+        ProcessDocumentMetadataDAO processDocumentDAO = ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId);
+        ProcessDocumentMetadata processDocument = HibernateSwaggerObjectMapper.createProcessDocumentMetadata(processDocumentDAO);
+        return processDocument;
+    }
+
+    public static void updateDocumentMetadata(String processContextId, ProcessDocumentMetadata body) {
+        BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(processContextId);
+
+        ProcessDocumentMetadataDAO storedDocumentDAO = ProcessDocumentMetadataDAOUtility.findByDocumentID(body.getDocumentID());
+
+        businessProcessContext.setPreviousDocumentMetadataStatus(storedDocumentDAO.getStatus());
+
+        ProcessDocumentMetadataDAO newDocumentDAO = HibernateSwaggerObjectMapper.createProcessDocumentMetadata_DAO(body);
+
+        GenericJPARepository repo = new JPARepositoryFactory().forBpRepository();
+        repo.deleteEntityByHjid(ProcessDocumentMetadataDAO.class, storedDocumentDAO.getHjid());
+        repo.persistEntity(newDocumentDAO);
+
+        businessProcessContext.setUpdatedDocumentMetadata(newDocumentDAO);
+    }
+
+    public static ProcessDocumentMetadata getOrderResponseMetadataByOrderId(String documentID) {
+        String id = DocumentPersistenceUtility.getOrderResponseIdByOrderId(documentID);
+        return getDocumentMetadata(id);
+    }
+
+    public static ProcessDocumentMetadata getRequestMetadata(String processInstanceId) {
+        List<Transaction.DocumentTypeEnum> documentTypes = BusinessProcessUtility.getInitialDocumentsForAllProcesses();
+        List<String> parameterNames = new ArrayList<>();
+        List<Object> parameterValues = new ArrayList<>();
+        parameterNames.add("processInstanceId");
+        parameterValues.add(processInstanceId);
+        String query = String.format(QUERY_GET_METADATA, createConditionsForMetadataQuery(documentTypes, parameterNames, parameterValues));
+        ProcessDocumentMetadataDAO processDocumentDAO = new JPARepositoryFactory().forBpRepository().getSingleEntity(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
+        return HibernateSwaggerObjectMapper.createProcessDocumentMetadata(processDocumentDAO);
+    }
+
+    public static ProcessDocumentMetadata getResponseMetadata(String processInstanceId) {
+        List<Transaction.DocumentTypeEnum> documentTypes = BusinessProcessUtility.getResponseDocumentsForAllProcesses();
+        List<String> parameterNames = new ArrayList<>();
+        List<Object> parameterValues = new ArrayList<>();
+        parameterNames.add("processInstanceId");
+        parameterValues.add(processInstanceId);
+        String query = String.format(QUERY_GET_METADATA, createConditionsForMetadataQuery(documentTypes, parameterNames, parameterValues));
+        ProcessDocumentMetadataDAO processDocumentDAO = new JPARepositoryFactory().forBpRepository().getSingleEntity(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
+        if (processDocumentDAO == null) {
+            return null;
+        }
+        return HibernateSwaggerObjectMapper.createProcessDocumentMetadata(processDocumentDAO);
+    }
+
+    private static String createConditionsForMetadataQuery(List<Transaction.DocumentTypeEnum> documentTypes, List<String> parameterNames, List<Object> parameterValues) {
+        StringBuilder sb = new StringBuilder("(");
+        int i=0;
+        for(; i<documentTypes.size()-1; i++) {
+            sb.append("documentMetadata.type = :doc").append(i).append(" OR ");
+            parameterNames.add("doc" + i);
+            parameterValues.add(DocumentType.valueOf(documentTypes.get(i).toString()));
+        }
+        sb.append("documentMetadata.type = :doc").append(i);
+        parameterNames.add("doc" + i);
+        parameterValues.add(DocumentType.valueOf(documentTypes.get(i).toString()));
+        sb.append(")");
+        return sb.toString();
     }
 
 

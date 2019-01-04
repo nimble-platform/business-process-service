@@ -2,7 +2,6 @@ package eu.nimble.service.bp.impl.util.persistence.bp;
 
 import eu.nimble.common.rest.identity.IdentityClientTyped;
 import eu.nimble.service.bp.hyperjaxb.model.*;
-import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupFilter;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.utility.HibernateUtility;
@@ -460,7 +459,7 @@ public class ProcessInstanceGroupDAOUtility {
         String orderId;
         // if there is a preceding process instance, using that, get the order id
         if (precedingProcessInstanceID != null) {
-            orderId = DocumentPersistenceUtility.getRequestMetadata(precedingProcessInstanceID).getDocumentID();
+            orderId = ProcessDocumentMetadataDAOUtility.getRequestMetadata(precedingProcessInstanceID).getDocumentID();
         } else {
             orderId = new JPARepositoryFactory().forBpRepository().getSingleEntity(QUERY_GET_ORDER_ID_IN_GROUP, new String[]{"processInstanceId"}, new Object[]{processInstanceId});
         }

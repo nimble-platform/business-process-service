@@ -2,6 +2,7 @@ package eu.nimble.service.bp.impl.contract;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
+import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
@@ -878,7 +879,7 @@ public class ContractGenerator {
     }
 
     private XWPFDocument createOrderAdditionalDocuments(OrderType order,ZipOutputStream zos,XWPFDocument document){
-        OrderResponseSimpleType orderResponse = (OrderResponseSimpleType) DocumentPersistenceUtility.getResponseDocument(order.getID(),DocumentType.ORDER);
+        OrderResponseSimpleType orderResponse = DocumentPersistenceUtility.getOrderResponseDocumentByOrderId(order.getID());
         try {
             // request
             for(DocumentReferenceType documentReference : order.getAdditionalDocumentReference()){
@@ -1571,7 +1572,7 @@ public class ContractGenerator {
     private String getDate(String type,String orderId){
         String date = "";
         if(type.contentEquals("issue")){
-            ProcessDocumentMetadata processDocumentMetadata = DocumentPersistenceUtility.getDocumentMetadata(orderId);
+            ProcessDocumentMetadata processDocumentMetadata = ProcessDocumentMetadataDAOUtility.getDocumentMetadata(orderId);
             DateTimeFormatter bpFormatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
             LocalDateTime localTime = bpFormatter.parseLocalDateTime(processDocumentMetadata.getSubmissionDate());
             DateTime issueDate = new DateTime(localTime.toDateTime(), DateTimeZone.UTC);
@@ -1580,7 +1581,7 @@ public class ContractGenerator {
             date = issueDate.toString(format);
         }
         else {
-            ProcessDocumentMetadata responseMetadata = DocumentPersistenceUtility.getCorrespondingResponseMetadata(orderId,DocumentType.ORDER);
+            ProcessDocumentMetadata responseMetadata = ProcessDocumentMetadataDAOUtility.getOrderResponseMetadataByOrderId(orderId);
             DateTimeFormatter bpFormatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
             LocalDateTime localTime = bpFormatter.parseLocalDateTime(responseMetadata.getSubmissionDate());
             DateTime issueDate = new DateTime(localTime.toDateTime(), DateTimeZone.UTC);

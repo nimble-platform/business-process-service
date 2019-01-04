@@ -107,7 +107,7 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
                 initiatingDocumentMetadata.setStatus(ProcessDocumentMetadata.StatusEnum.DENIED);
             }
 
-            DocumentPersistenceUtility.updateDocumentMetadata(businessContextId,initiatingDocumentMetadata);
+            ProcessDocumentMetadataDAOUtility.updateDocumentMetadata(businessContextId,initiatingDocumentMetadata);
         }
     }
 }

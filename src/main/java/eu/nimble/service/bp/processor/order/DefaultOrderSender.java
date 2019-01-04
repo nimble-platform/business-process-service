@@ -2,8 +2,7 @@ package eu.nimble.service.bp.processor.order;
 
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
-import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
-
+import eu.nimble.service.bp.impl.util.persistence.bp.ExecutionConfigurationDAOUtility;
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import eu.nimble.service.model.ubl.order.OrderType;
@@ -42,7 +41,7 @@ public class DefaultOrderSender  implements JavaDelegate {
         OrderType order = (OrderType) variables.get("order");
 
         // get application execution configuration
-        ExecutionConfiguration executionConfiguration = DocumentPersistenceUtility.getExecutionConfiguration(buyer,
+        ExecutionConfiguration executionConfiguration = ExecutionConfigurationDAOUtility.getExecutionConfiguration(buyer,
                 execution.getProcessInstance().getProcessDefinitionId(), ProcessConfiguration.RoleTypeEnum.BUYER, "ORDER",
                 ExecutionConfiguration.ApplicationTypeEnum.DATACHANNEL);
         String applicationURI = executionConfiguration.getExecutionUri();

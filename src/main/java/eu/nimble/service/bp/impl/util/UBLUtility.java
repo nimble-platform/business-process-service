@@ -35,17 +35,6 @@ public class UBLUtility {
         }
     }
 
-
-    public boolean documentHasAlternativeResponseOptions(Object document) {
-        Class documentClass = document.getClass();
-        if(documentClass.equals(OrderResponseSimpleType.class) ||
-                documentClass.equals(QuotationType.class) ||
-                documentClass.equals(TransportExecutionPlanType.class)) {
-            return true;
-        }
-        return false;
-    }
-
     public static boolean documentIndicatesPositiveResponse(Object document) {
         boolean result = true;
         if(document instanceof OrderResponseSimpleType) {

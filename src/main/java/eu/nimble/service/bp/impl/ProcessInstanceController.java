@@ -3,10 +3,11 @@ package eu.nimble.service.bp.impl;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceStatus;
+import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
+import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.impl.util.persistence.catalogue.TrustPersistenceUtility;
-import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
@@ -93,7 +94,7 @@ public class ProcessInstanceController {
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
 
         try {
-            ProcessDocumentMetadata processDocumentMetadata = DocumentPersistenceUtility.getRequestMetadata(processInstanceID);
+            ProcessDocumentMetadata processDocumentMetadata = ProcessDocumentMetadataDAOUtility.getRequestMetadata(processInstanceID);
             Object document = DocumentPersistenceUtility.readDocument(documentType, content);
             // validate the entity ids
             boolean hjidsBelongToCompany = resourceValidationUtil.hjidsBelongsToParty(document, processDocumentMetadata.getInitiatorID(), Configuration.Standard.UBL.toString());
@@ -109,7 +110,7 @@ public class ProcessInstanceController {
             }
             // update creator user id of metadata
             processDocumentMetadata.setCreatorUserID(creatorUserID);
-            DocumentPersistenceUtility.updateDocumentMetadata(businessProcessContext.getId(),processDocumentMetadata);
+            ProcessDocumentMetadataDAOUtility.updateDocumentMetadata(businessProcessContext.getId(),processDocumentMetadata);
             // update the corresponding document
             DocumentPersistenceUtility.updateDocument(businessProcessContext.getId(), document, processDocumentMetadata.getDocumentID(), documentType, processDocumentMetadata.getInitiatorID());
         }
