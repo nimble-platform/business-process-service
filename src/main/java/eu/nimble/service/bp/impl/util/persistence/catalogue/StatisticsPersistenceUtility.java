@@ -111,14 +111,10 @@ public class StatisticsPersistenceUtility {
         return nonOrderedProducts;
     }
 
-    public static List<PartyType> getInactiveCompanies(String startdateStr, String endDateStr, String bearerToken) throws IOException {
+    public static List<PartyType> getInactiveCompanies(String bearerToken) throws IOException {
         // get active party ids
         // get parties for a process that have not completed yet. Therefore return only the initiatorID
         String query = "select docMetadata.initiatorID from ProcessDocumentMetadataDAO docMetadata where docMetadata.status = 'WAITINGRESPONSE'";
-
-        if(startdateStr != null && endDateStr != null) {
-            query = "select distinct new list(docMetadata.initiatorID, docMetadata.responderID) from ProcessDocumentMetadataDAO docMetadata where docMetadata.submissionDate ";
-        }
 
         Set<String> activePartyIds = new HashSet<>();
         List<String> results = new JPARepositoryFactory().forCatalogueRepository().getEntities(query);

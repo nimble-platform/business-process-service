@@ -15,7 +15,7 @@ import eu.nimble.service.model.ubl.commonaggregatecomponents.CompletedTaskType;
 import eu.nimble.utility.Configuration;
 import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
-import eu.nimble.utility.persistence.resource.ResourceValidationUtil;
+import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -40,7 +40,7 @@ public class ProcessInstanceController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    private ResourceValidationUtil resourceValidationUtil;
+    private ResourceValidationUtility resourceValidationUtil;
 
     @ApiOperation(value = "",notes = "Cancel the process instance with the given id")
     @ApiResponses(value = {
@@ -50,8 +50,8 @@ public class ProcessInstanceController {
     })
     @RequestMapping(value = "/processInstance/{processInstanceId}/cancel",
             method = RequestMethod.POST)
-    public ResponseEntity cancelProcessInstance(@PathVariable(value = "processInstanceId", required = true) String processInstanceId,
-                                                @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
+    public ResponseEntity cancelProcessInstance(@ApiParam(value = "The identifier of the process instance to be cancelled") @PathVariable(value = "processInstanceId", required = true) String processInstanceId,
+                                                @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         logger.debug("Cancelling process instance with id: {}",processInstanceId);
 
         try {
@@ -84,9 +84,9 @@ public class ProcessInstanceController {
     })
     @RequestMapping(value = "/processInstance",
             method = RequestMethod.PUT)
-    public ResponseEntity updateProcessInstance(@RequestBody String content,
+    public ResponseEntity updateProcessInstance(@ApiParam(value = "Serialized process instance document") @RequestBody String content,
                                                 @ApiParam(value = "Type of the process instance document to be updated") @RequestParam(value = "processID") DocumentType documentType,
-                                                @RequestParam(value = "processInstanceID") String processInstanceID,
+                                                @ApiParam(value = "Identifier of the process instance to be updated") @RequestParam(value = "processInstanceID") String processInstanceID,
                                                 @ApiParam(value = "Id of the user who updated the process instance") @RequestParam(value = "creatorUserID") String creatorUserID) {
 
         logger.debug("Updating process instance with id: {}",processInstanceID);
@@ -134,9 +134,9 @@ public class ProcessInstanceController {
     @RequestMapping(value = "/processInstance/{processInstanceId}/isRated",
             produces = {MediaType.TEXT_PLAIN_VALUE},
             method = RequestMethod.GET)
-    public ResponseEntity hasGroup(@ApiParam(value = "Identifier of the process instance") @PathVariable(value = "processInstanceId", required = true) String processInstanceId,
+    public ResponseEntity isRated(@ApiParam(value = "Identifier of the process instance") @PathVariable(value = "processInstanceId", required = true) String processInstanceId,
                                    @ApiParam(value = "Identifier of the party (the rated) for which the existence of a rating to be checked") @RequestParam(value = "partyId", required = true) String partyId,
-                                   @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
+                                   @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         try {
             logger.info("Getting rating status for process instance: {}, party: {}", processInstanceId, partyId);
             CompletedTaskType completedTask = TrustPersistenceUtility.getCompletedTaskByPartyIdAndProcessInstanceId(partyId, processInstanceId);

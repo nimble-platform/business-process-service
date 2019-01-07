@@ -6,7 +6,6 @@ import eu.nimble.utility.Configuration;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.persistence.resource.EntityIdAwareRepositoryWrapper;
-import eu.nimble.utility.persistence.resource.ResourceValidationUtil;
 
 public class BusinessProcessContext {
 

@@ -135,7 +135,7 @@ public class Test30_CollaborationGroupTest4 {
         String collaborationGroupId = collaborationGroupResponse.getCollaborationGroups().get(0).getID();
 
         // delete the collaboration group
-        MockHttpServletRequestBuilder request = delete("/group/collaboration/"+collaborationGroupId);
+        MockHttpServletRequestBuilder request = delete("/collaboration-groups/"+collaborationGroupId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         // check whether the deletion is successful or not
@@ -172,10 +172,10 @@ public class Test30_CollaborationGroupTest4 {
     }
 
     private CollaborationGroupResponse getCollaborationGroupResponse() throws Exception{
-        MockHttpServletRequestBuilder request = get("/group")
+        MockHttpServletRequestBuilder request = get("/collaboration-groups")
                 .param("collaborationRole", "BUYER")
                 .param("relatedProducts",relatedProduct)
-                .param("partyID", buyerPartyId);
+                .param("partyId", buyerPartyId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         CollaborationGroupResponse collaborationGroupResponse = mapper.readValue(mvcResult.getResponse().getContentAsString(), CollaborationGroupResponse.class);

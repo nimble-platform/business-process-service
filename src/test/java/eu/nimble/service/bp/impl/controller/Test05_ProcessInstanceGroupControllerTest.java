@@ -43,9 +43,9 @@ public class Test05_ProcessInstanceGroupControllerTest {
     private final int test2_expectedValue = 1;
 
     @Test
-    public void test1_getProcessInstanceGroups() throws Exception {
-        MockHttpServletRequestBuilder request = get("/group")
-                .param("partyID", partyId);
+    public void test1_getCollaborationGroups() throws Exception {
+        MockHttpServletRequestBuilder request = get("/collaboration-groups")
+                .param("partyId", partyId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
@@ -64,7 +64,7 @@ public class Test05_ProcessInstanceGroupControllerTest {
 
     @Test
     public void test2_getProcessInstanceGroup() throws Exception {
-        MockHttpServletRequestBuilder request = get("/group/" + Test05_ProcessInstanceGroupControllerTest.processInstanceGroupIIR1);
+        MockHttpServletRequestBuilder request = get("/process-instance-groups/" + Test05_ProcessInstanceGroupControllerTest.processInstanceGroupIIR1);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();

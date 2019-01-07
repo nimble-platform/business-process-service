@@ -2,11 +2,12 @@ package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.hyperjaxb.model.*;
 import eu.nimble.service.bp.impl.util.bp.BusinessProcessUtility;
+import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
+import eu.nimble.service.bp.impl.util.persistence.bp.CollaborationGroupDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceGroupDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
-import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.api.ContinueApi;
@@ -14,7 +15,7 @@ import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
 import eu.nimble.service.bp.swagger.model.Transaction;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
-import eu.nimble.utility.persistence.resource.ResourceValidationUtil;
+import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
@@ -35,7 +36,7 @@ public class ContinueController implements ContinueApi {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    private ResourceValidationUtil resourceValidationUtil;
+    private ResourceValidationUtility resourceValidationUtil;
     @Autowired
     private JPARepositoryFactory repoFactory;
 
@@ -43,7 +44,7 @@ public class ContinueController implements ContinueApi {
     @ApiOperation(value = "",notes = "Send input to a waiting process instance (because of a human task)")
     public ResponseEntity<ProcessInstance> continueProcessInstance(@ApiParam(value = "", required = true) @RequestBody ProcessInstanceInputMessage body,
                                                                    @ApiParam(value = "The id of the process instance group owned by the party continuing the process") @RequestParam(value = "gid", required = false) String gid,
-                                                                   @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
+                                                                   @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
                                                                    @ApiParam(value = "The id of the collaboration group which the process instance group belongs to") @RequestParam(value = "collaborationGID", required = false) String collaborationGID) {
         logger.debug(" $$$ Continue Process with ProcessInstanceInputMessage {}", body.toString());
         ProcessInstance processInstance = null;
@@ -110,11 +111,11 @@ public class ContinueController implements ContinueApi {
                     body.getVariables().getRelatedProducts(),
                     sourceGid);
 
-            CollaborationGroupDAO initiatorCollaborationGroup = ProcessInstanceGroupDAOUtility.getCollaborationGroupDAO(body.getVariables().getInitiatorID(),Long.parseLong(responderCollaborationGID));
+            CollaborationGroupDAO initiatorCollaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroupDAO(body.getVariables().getInitiatorID(),Long.parseLong(responderCollaborationGID));
             // create a new initiator collaboration group
             if(initiatorCollaborationGroup == null){
                 CollaborationGroupDAO responderCollaborationGroup = repoFactory.forBpRepository().getSingleEntityByHjid(CollaborationGroupDAO.class, Long.parseLong(responderCollaborationGID));
-                initiatorCollaborationGroup = ProcessInstanceGroupDAOUtility.createCollaborationGroupDAO();
+                initiatorCollaborationGroup = CollaborationGroupDAOUtility.createCollaborationGroupDAO();
 
                 // set association between collaboration groups
                 initiatorCollaborationGroup.getAssociatedCollaborationGroups().add(responderCollaborationGroup.getHjid());

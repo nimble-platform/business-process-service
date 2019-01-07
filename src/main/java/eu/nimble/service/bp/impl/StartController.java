@@ -2,11 +2,12 @@ package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.hyperjaxb.model.*;
 import eu.nimble.service.bp.impl.util.bp.BusinessProcessUtility;
+import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
+import eu.nimble.service.bp.impl.util.persistence.bp.CollaborationGroupDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceGroupDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
-import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.api.StartApi;
@@ -15,7 +16,7 @@ import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
 import eu.nimble.service.bp.swagger.model.Transaction;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
-import eu.nimble.utility.persistence.resource.ResourceValidationUtil;
+import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
@@ -38,17 +39,19 @@ public class StartController implements StartApi {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    private ResourceValidationUtil resourceValidationUtil;
+    private ResourceValidationUtility resourceValidationUtil;
     @Autowired
     private JPARepositoryFactory repoFactory;
 
     @Override
     @ApiOperation(value = "", notes = "Start an instance of a business process", response = ProcessInstance.class, tags={  })
     public ResponseEntity<ProcessInstance> startProcessInstance(@ApiParam(value = "", required = true) @RequestBody ProcessInstanceInputMessage body,
-                                                                @ApiParam(value = "The id of the process instance group owned by the party initiating the process") @RequestParam(value = "gid", required = false) String gid,
-                                                                @ApiParam(value = "The id of the preceding process instance") @RequestParam(value = "precedingPid", required = false) String precedingPid,
-                                                                @ApiParam(value = "The UUID of the previous process instance group") @RequestParam(value = "precedingGid", required = false) String precedingGid,
-                                                                @ApiParam(value = "The id of the collaboration group which the process instance group belongs to") @RequestParam(value = "collaborationGID", required = false) String collaborationGID) {
+                                                                @ApiParam(value = "Identifier of the process instance group owned by the party initiating the process") @RequestParam(value = "gid", required = false) String gid,
+                                                                @ApiParam(value = "Identifier of the preceding process instance.If we want to start a new process (for example,PPAP) after a completed process (for example, item information request)," +
+                                                                        "then this parameter should be the identifier of the completed process instance") @RequestParam(value = "precedingPid", required = false) String precedingPid,
+                                                                @ApiParam(value = "Identifier of the preceding process instance group.When we want to create a new process instance group" +
+                                                                        "inside the same collaboration group,we should set this parameter to identifier of the existing process instance group.") @RequestParam(value = "precedingGid", required = false) String precedingGid,
+                                                                @ApiParam(value = "Identifier of the collaboration group which the process instance group belongs to") @RequestParam(value = "collaborationGID", required = false) String collaborationGID) {
         logger.debug(" $$$ Start Process with ProcessInstanceInputMessage {}", body.toString());
         GenericJPARepository repo = repoFactory.forBpRepository();
         ProcessInstance processInstance = null;
@@ -100,8 +103,8 @@ public class StartController implements StartApi {
 
             // create collaboration group if this is the first process initializing the collaboration group
             if(collaborationGID == null){
-                initiatorCollaborationGroupDAO = ProcessInstanceGroupDAOUtility.createCollaborationGroupDAO();
-                responderCollaborationGroupDAO = ProcessInstanceGroupDAOUtility.createCollaborationGroupDAO();
+                initiatorCollaborationGroupDAO = CollaborationGroupDAOUtility.createCollaborationGroupDAO();
+                responderCollaborationGroupDAO = CollaborationGroupDAOUtility.createCollaborationGroupDAO();
 
                 // set association between collaboration groups
                 initiatorCollaborationGroupDAO.getAssociatedCollaborationGroups().add(responderCollaborationGroupDAO.getHjid());
@@ -113,10 +116,10 @@ public class StartController implements StartApi {
             else {
                 initiatorCollaborationGroupDAO = repo.getSingleEntityByHjid(CollaborationGroupDAO.class, Long.parseLong(collaborationGID));
                 // get responder collaboration group
-                responderCollaborationGroupDAO = ProcessInstanceGroupDAOUtility.getCollaborationGroupDAO(body.getVariables().getResponderID(),initiatorCollaborationGroupDAO.getHjid());
+                responderCollaborationGroupDAO = CollaborationGroupDAOUtility.getCollaborationGroupDAO(body.getVariables().getResponderID(),initiatorCollaborationGroupDAO.getHjid());
                 // check whether the responder collaboration group is null or not
                 if(responderCollaborationGroupDAO == null){
-                    responderCollaborationGroupDAO = ProcessInstanceGroupDAOUtility.createCollaborationGroupDAO();
+                    responderCollaborationGroupDAO = CollaborationGroupDAOUtility.createCollaborationGroupDAO();
                     // set association between collaboration groups
                     initiatorCollaborationGroupDAO.getAssociatedCollaborationGroups().add(responderCollaborationGroupDAO.getHjid());
                     responderCollaborationGroupDAO.getAssociatedCollaborationGroups().add(initiatorCollaborationGroupDAO.getHjid());

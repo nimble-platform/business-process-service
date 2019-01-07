@@ -498,12 +498,77 @@ paths:
             items:
               $ref: '#/definitions/ProcessDocumentMetadata'
 
-  /group:
+  /collaboration-groups/{id}:
+    patch:
+      operationId: updateCollaborationGroupName
+      parameters:
+      - in: path
+        name: id
+        type: string
+        required: true
+      - in: query
+        name: groupName
+        type: string
+        required: true
+      responses:
+        200:
+          description: Updated the collaboration group name successfully
+    delete:
+      operationId: deleteCollaborationGroup
+      parameters:
+      - in: path
+        name: id
+        type: string
+        required: true
+      responses:
+        200:
+          description: Deleted the collaboration group successfully
     get:
-      operationId: getProcessInstanceGroups
+      operationId: getCollaborationGroup
+      parameters:
+      - in: path
+        name: id
+        type: string
+        required: true
+      responses:
+        200:
+          description: Retrieved the collaboration group successfully
+          schema:
+            $ref: '#/definitions/CollaborationGroup'
+  /collaboration-groups/{id}/archive:
+      post:
+        operationId: archiveCollaborationGroup
+        parameters:
+        - in: path
+          name: id
+          type: string
+          description: Identifier of the collaboration group to be archived
+          required: true
+        responses:
+          200:
+            description: Archived the collaboration group successfully
+            schema:
+              $ref: '#/definitions/CollaborationGroup'
+  /collaboration-groups/{id}/restore:
+      post:
+        operationId: restoreCollaborationGroup
+        parameters:
+        - in: path
+          name: id
+          type: string
+          description: Identifier of the collaboration group to be restored
+          required: true
+        responses:
+          200:
+            description: Restored the collaboration group successfully
+            schema:
+              $ref: '#/definitions/CollaborationGroup'
+  /collaboration-groups:
+    get:
+      operationId: getCollaborationGroups
       parameters:
       - in: query
-        name: partyID
+        name: partyId
         type: string
         description: Identifier of the party
       - in: query
@@ -518,14 +583,6 @@ paths:
         name: tradingPartnerIDs
         type: array
         description: Identifier of the corresponsing trading partner ID
-      - in: query
-        name: initiationDateRange
-        type: string
-        description: Initiation date range for the first process instance in the group
-      - in: query
-        name: lastActivityDateRange
-        type: string
-        description: Last activity date range. It is the latest submission date of the document to last process instance in the group
       - in: query
         name: offset
         type: integer
@@ -563,7 +620,7 @@ paths:
           schema:
             $ref: '#/definitions/CollaborationGroupResponse'
 
-  /group/order-process:
+  /process-instance-groups/order-process:
     get:
       operationId: getOrderProcess
       parameters:
@@ -582,12 +639,12 @@ paths:
         200:
           description: Retrieved the order content successfuly
 
-  /group/filters:
+  /process-instance-groups/filters:
     get:
       operationId: getProcessInstanceGroupFilters
       parameters:
       - in: query
-        name: partyID
+        name: partyId
         type: string
         description: Identifier of the party
       - in: query
@@ -602,14 +659,6 @@ paths:
         name: tradingPartnerIDs
         type: array
         description: Identifier of the corresponsing trading partner ID
-      - in: query
-        name: initiationDateRange
-        type: string
-        description: Initiation date range for the first process instance in the group
-      - in: query
-        name: lastActivityDateRange
-        type: string
-        description: Last activity date range. It is the latest submission date of the document to last process instance in the group
       - in: query
         name: archived
         type: boolean
@@ -641,12 +690,12 @@ paths:
           schema:
             $ref: '#/definitions/ProcessInstanceGroupFilter'
 
-  /group/{ID}:
+  /process-instance-groups/{id}:
     get:
       operationId: getProcessInstanceGroup
       parameters:
       - in: path
-        name: ID
+        name: id
         type: string
         required: true
       responses:
@@ -658,80 +707,12 @@ paths:
       operationId: deleteProcessInstanceGroup
       parameters:
       - in: path
-        name: ID
+        name: id
         type: string
         required: true
       responses:
         200:
           description: Deleted the groups successfully
-
-  /group/collaboration/{ID}:
-    get:
-      operationId: getCollaborationGroup
-      parameters:
-      - in: path
-        name: ID
-        type: string
-        required: true
-      responses:
-        200:
-          description: Retrieved the collaboration group successfully
-          schema:
-            $ref: '#/definitions/CollaborationGroup'
-    delete:
-      operationId: deleteCollaborationGroup
-      parameters:
-      - in: path
-        name: ID
-        type: string
-        required: true
-      responses:
-        200:
-          description: Deleted the collaboration group successfully
-    patch:
-      operationId: updateCollaborationGroupName
-      parameters:
-      - in: path
-        name: ID
-        type: string
-        required: true
-      - in: query
-        name: groupName
-        type: string
-        required: true
-      responses:
-        200:
-          description: Updated the collaboration group name successfully
-
-  /group/collaboration/{ID}/archive:
-    post:
-      operationId: archiveCollaborationGroup
-      parameters:
-      - in: path
-        name: ID
-        type: string
-        description: Identifier of the collaboration group to be archived
-        required: true
-      responses:
-        200:
-          description: Archived the collaboration group successfully
-          schema:
-            $ref: '#/definitions/CollaborationGroup'
-
-  /group/collaboration/{ID}/restore:
-    post:
-      operationId: restoreCollaborationGroup
-      parameters:
-      - in: path
-        name: ID
-        type: string
-        description: Identifier of the collaboration group to be restored
-        required: true
-      responses:
-        200:
-          description: Restored the collaboration group successfully
-          schema:
-            $ref: '#/definitions/CollaborationGroup'
 
 definitions:
 

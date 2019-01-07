@@ -30,6 +30,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
+import javax.ws.rs.HEAD;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
@@ -129,12 +130,12 @@ public class Test04_BusinessProcessesTest {
         itemInformationProcessInstanceID = processInstance.getProcessInstanceID();
 
         // get collaboration group information for seller
-        request = get("/group")
-                .param("partyID", partyID)
-                .param("relatedProducts", productName)
-                .param("collaborationRole", "SELLER")
-                .param("offset", offset)
-                .param("limit", limit);
+        request = get("/collaboration-groups")
+                .param("partyID",partyID)
+                .param("relatedProducts",productName)
+                .param("collaborationRole","SELLER")
+                .param("offset",offset)
+                .param("limit",limit);
         mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
         CollaborationGroupResponse collaborationGroupResponse = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), CollaborationGroupResponse.class);
 
@@ -274,12 +275,12 @@ public class Test04_BusinessProcessesTest {
         tepItemInformationProcessInstanceID = processInstance.getProcessInstanceID();
 
         // get process instance group info
-        request = get("/group")
-                .param("partyID", partyID)
-                .param("relatedProducts", serviceName)
-                .param("collaborationRole", "BUYER")
-                .param("offset", offset)
-                .param("limit", limit);
+        request = get("/collaboration-groups")
+                .param("partyID",partyID)
+                .param("relatedProducts",serviceName)
+                .param("collaborationRole","BUYER")
+                .param("offset",offset)
+                .param("limit",limit);
         mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
         CollaborationGroupResponse collaborationGroupResponse = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), CollaborationGroupResponse.class);
 

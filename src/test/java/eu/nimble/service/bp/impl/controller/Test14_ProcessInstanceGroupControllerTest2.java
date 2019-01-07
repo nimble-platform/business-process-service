@@ -36,7 +36,7 @@ public class Test14_ProcessInstanceGroupControllerTest2 {
 
     @Test
     public void test1_deleteProcessInstanceGroup() throws Exception {
-        MockHttpServletRequestBuilder request = delete("/group/" + Test05_ProcessInstanceGroupControllerTest.processInstanceGroupId1);
+        MockHttpServletRequestBuilder request = delete("/process-instance-groups/" + Test05_ProcessInstanceGroupControllerTest.processInstanceGroupId1);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         String body = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), String.class);

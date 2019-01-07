@@ -45,7 +45,7 @@ public class Test25_TrustControllerTest {
     @Test
     public void test1_createRatingAndReview() throws Exception {
         // get Receipt advice process instance id
-        MockHttpServletRequestBuilder request = get("/group")
+        MockHttpServletRequestBuilder request = get("/collaboration-groups")
                 .param("collaborationRole", collaborationRole)
                 .param("relatedProducts",relatedProduct)
                 .param("partyID", buyerPartyID);
@@ -64,7 +64,7 @@ public class Test25_TrustControllerTest {
                 .param("processInstanceID",processInstanceId)
                 .param("reviews", reviews)
                 .param("ratings",ratings)
-                .param("partyID", partyID);
+                .param("partyId", partyID);
         mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
     }
