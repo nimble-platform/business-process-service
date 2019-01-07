@@ -13,6 +13,7 @@ import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -33,11 +34,17 @@ public class Test28_HjidCheckTest {
 
     @Autowired
     private MockMvc mockMvc;
+    @Autowired
+    private Environment environment;
 
     private final String itemInformationRequestJSON ="/controller/itemInformationRequestHjidCheck.txt";
 
     @Test
     public void test1_updateBusinessProcess() throws Exception{
+        boolean checkEntityIds = Boolean.valueOf(environment.getProperty("nimble.check-entity-ids"));
+        if(checkEntityIds == false) {
+            return;
+        }
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(itemInformationRequestJSON));
         // start the business process
         MockHttpServletRequestBuilder request = post("/start")

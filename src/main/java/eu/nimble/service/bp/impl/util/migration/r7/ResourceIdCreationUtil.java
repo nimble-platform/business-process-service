@@ -57,7 +57,7 @@ public class ResourceIdCreationUtil {
             Object document = DocumentPersistenceUtility.getUBLDocument(metadata.getDocumentID(), metadata.getType());
             try {
                 resourceValidationUtility.insertHjidsForObject(document, metadata.getInitiatorID(), Configuration.Standard.UBL.toString());
-                log.info("Created resources for document: {}, party: {}", metadata.getDocumentID(), metadata.getInitiatorID());
+                log.info("Created resources for document: {} type: {}, party: {}", metadata.getDocumentID(), metadata.getType().toString(), metadata.getInitiatorID());
             } catch (Exception e) {
                 log.error("Failed to create resources for document: id: {}, type: {}", metadata.getDocumentID(), metadata.getType(), e);
             }
