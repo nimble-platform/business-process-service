@@ -7,6 +7,7 @@ import eu.nimble.service.bp.impl.model.trust.NegotiationRatings;
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.catalogue.CataloguePersistenceUtility;
 import eu.nimble.service.bp.impl.util.persistence.catalogue.TrustPersistenceUtility;
+import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.messaging.KafkaSender;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.utility.HttpResponseUtil;
@@ -28,7 +29,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import javax.ws.rs.HEAD;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -61,6 +62,12 @@ public class TrustServiceController {
             /**
              * CHECKS
              */
+
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                return HttpResponseUtil.createResponseEntityAndLog(String.format("No user exists for the given token : %s",bearerToken),HttpStatus.NOT_FOUND);
+            }
 
             // check party
             QualifyingPartyType qualifyingParty = CataloguePersistenceUtility.getQualifyingPartyType(partyId, bearerToken);
@@ -130,6 +137,19 @@ public class TrustServiceController {
     public ResponseEntity getRatingsSummary(@ApiParam(value = "Identifier of the party whose ratings will be received") @RequestParam(value = "partyId") String partyId,
                                             @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         logger.info("Getting ratings summary for the party with id: {}",partyId);
+        try {
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            }
+        } catch (IOException e){
+            String msg = String.format("Failed to retrieve ratings summary for party id: %s",partyId);
+            logger.error(msg,e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+        }
         QualifyingPartyType qualifyingParty = CataloguePersistenceUtility.getQualifyingPartyType(partyId,bearerToken);
         JSONObject jsonResponse = createJSONResponse(qualifyingParty.getCompletedTask());
         logger.info("Retrieved ratings summary for the party with id: {}",partyId);
@@ -147,6 +167,13 @@ public class TrustServiceController {
                                                              @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         try {
             logger.info("Getting all individual ratings and review for the party with id: {}",partyId);
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            }
             QualifyingPartyType qualifyingParty = CataloguePersistenceUtility.getQualifyingPartyType(partyId,bearerToken);
             List<NegotiationRatings> negotiationRatings = TrustPersistenceUtility.createNegotiationRatings(qualifyingParty.getCompletedTask());
             String ratingsAndReviews = JsonSerializationUtility.getObjectMapper().writeValueAsString(negotiationRatings);

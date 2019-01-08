@@ -9,6 +9,7 @@ import eu.nimble.service.bp.impl.util.controller.InputValidatorUtil;
 import eu.nimble.service.bp.impl.util.controller.ValidationResponse;
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.catalogue.StatisticsPersistenceUtility;
+import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.swagger.model.Transaction;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.utility.HttpResponseUtil;
@@ -24,7 +25,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import javax.ws.rs.HEAD;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,10 +71,19 @@ public class StatisticsController {
                                           @ApiParam(value = "End date (DD-MM-YYYY) of the process", required = false) @RequestParam(value = "endDate", required = false) String endDateStr,
                                           @ApiParam(value = "Identifier of the party as specified by the identity service", required = false) @RequestParam(value = "partyId", required = false) Integer partyId,
                                           @ApiParam(value = "Role of the party in the business process.\nPossible values:seller,buyer", required = false) @RequestParam(value = "role", required = false, defaultValue = "seller") String role,
-                                          @ApiParam(value = "State of the transaction.\nPossible values:WaitingResponse,Approved,Denied", required = false) @RequestParam(value = "status", required = false) String status) {
+                                          @ApiParam(value = "State of the transaction.\nPossible values:WaitingResponse,Approved,Denied", required = false) @RequestParam(value = "status", required = false) String status,
+                                          @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
+    ) {
 
         try {
             logger.info("Getting total number of documents for start date: {}, end date: {}, type: {}, party id: {}, role: {}, state: {}", startDateStr, endDateStr, businessProcessType, partyId, role, status);
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            }
             ValidationResponse response;
 
             // check start date
@@ -144,6 +154,13 @@ public class StatisticsController {
 
         try {
             logger.info("Getting total number of documents for start date: {}, end date: {}, party id: {}, role: {}", startDateStr, endDateStr, partyId, role);
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            }
             ValidationResponse response;
 
             // check start date
@@ -174,13 +191,21 @@ public class StatisticsController {
     @RequestMapping(value = "/non-ordered",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity getNonOrderedProducts(@ApiParam(value = "Identifier of the party as specified by the identity service", required = false) @RequestParam(value = "partyId", required = false) Integer partyId) {
+    public ResponseEntity getNonOrderedProducts(@ApiParam(value = "Identifier of the party as specified by the identity service", required = false) @RequestParam(value = "partyId", required = false) Integer partyId,
+                                                @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
+    ) {
         try {
             logger.info("Getting non-ordered products for party id: {}", partyId);
-
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            }
             NonOrderedProducts nonOrderedProducts = StatisticsPersistenceUtility.getNonOrderedProducts(partyId);
             String serializedResponse = JsonSerializationUtility.getObjectMapperForFilledFields().writeValueAsString(nonOrderedProducts);
-            logger.info("Retrieved the products that are not ordered for company id: {}", partyId);
+            logger.info("Retrieved the products that are not ordered for party id: {}", partyId);
             return ResponseEntity.ok().body(serializedResponse);
 
         } catch (Exception e) {
@@ -199,9 +224,18 @@ public class StatisticsController {
                                           @ApiParam(value = "End date (DD-MM-YYYY) of the transaction", required = false) @RequestParam(value = "endDate", required = false) String endDateStr,
                                           @ApiParam(value = "Identifier of the party as specified by the identity service", required = false) @RequestParam(value = "partyId", required = false) Integer partyId,
                                           @ApiParam(value = "Role of the party in the business process.\nPossible values: SELLER,BUYER", required = false) @RequestParam(value = "role", required = false, defaultValue = "SELLER") String role,
-                                          @ApiParam(value = "State of the transaction.\nPossible values:WaitingResponse,Approved,Denied", required = false) @RequestParam(value = "status", required = false) String status) {
+                                          @ApiParam(value = "State of the transaction.\nPossible values:WaitingResponse,Approved,Denied", required = false) @RequestParam(value = "status", required = false) String status,
+                                           @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
+    ) {
         try {
             logger.info("Getting total number of documents for start date: {}, end date: {}, party id: {}, role: {}, state: {}", startDateStr, endDateStr, partyId, role, status);
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            }
             ValidationResponse response;
 
             // check start date
@@ -250,6 +284,13 @@ public class StatisticsController {
     public ResponseEntity getInactiveCompanies(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         try {
             logger.info("Getting inactive companies");
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            }
 
             List<PartyType> inactiveCompanies = StatisticsPersistenceUtility.getInactiveCompanies(bearerToken);
             String serializedResponse = JsonSerializationUtility.getObjectMapperForFilledFields().writeValueAsString(inactiveCompanies);
@@ -271,6 +312,19 @@ public class StatisticsController {
     public ResponseEntity getAverageResponseTime(@ApiParam(value = "Identifier of the party as specified by the identity service") @RequestParam(value = "partyId") String partyId,
                                                  @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         logger.info("Getting average response time for the party with id: {}",partyId);
+        try {
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            }
+        } catch (IOException e){
+            String msg = String.format("Failed to retrieve average response time for party id: %s",partyId);
+            logger.error(msg,e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+        }
         double averageResponseTime;
         try {
             averageResponseTime = StatisticsPersistenceUtility.calculateAverageResponseTime(partyId);
@@ -292,6 +346,19 @@ public class StatisticsController {
     public ResponseEntity getAverageNegotiationTime(@ApiParam(value = "Identifier of the party as specified by the identity service") @RequestParam(value = "partyID") String partyId,
                                                     @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         logger.info("Getting average negotiation time for the party with id: {}",partyId);
+        try {
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            }
+        } catch (IOException e){
+            String msg = String.format("Failed to retrieve average negotiation time for party id: %s",partyId);
+            logger.error(msg,e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+        }
         double averageNegotiationTime = StatisticsPersistenceUtility.calculateAverageNegotiationTime(partyId,bearerToken);
         logger.info("Retrieved average negotiation time for the party with id: {}",partyId);
         return ResponseEntity.ok(averageNegotiationTime);
@@ -310,10 +377,18 @@ public class StatisticsController {
         logger.info("Getting statistics for the party with id: {}",partyId);
         OverallStatistics statistics = new OverallStatistics();
         try {
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            }
+
             statistics.setAverageNegotiationTime((double)getAverageNegotiationTime(partyId,bearerToken).getBody());
             statistics.setAverageResponseTime((double)getAverageResponseTime(partyId,bearerToken).getBody());
-            statistics.setTradingVolume((double) getTradingVolume(null,null,Integer.valueOf(partyId), role,null).getBody());
-            statistics.setNumberOfTransactions((int)getProcessCount(null,null,null,Integer.valueOf(partyId),role,null).getBody());
+            statistics.setTradingVolume((double) getTradingVolume(null,null,Integer.valueOf(partyId), role,null,bearerToken).getBody());
+            statistics.setNumberOfTransactions((int)getProcessCount(null,null,null,Integer.valueOf(partyId),role,null,bearerToken).getBody());
         }
         catch (Exception e){
             return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting statistics for the party with id: %s", partyId), e, HttpStatus.INTERNAL_SERVER_ERROR);

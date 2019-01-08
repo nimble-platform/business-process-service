@@ -30,6 +30,11 @@ paths:
       operationId: getProcessDefinitions
       produces:
       - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       responses:
         # Response code
         200:
@@ -45,6 +50,10 @@ paths:
       produces:
       - application/json
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: body
         name: body
         required: true
@@ -63,6 +72,10 @@ paths:
       produces:
       - application/json
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: body
         name: body
         schema:
@@ -79,6 +92,10 @@ paths:
       produces:
       - application/json
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: path
         name: processID
         type: string
@@ -95,6 +112,10 @@ paths:
       produces:
       - application/json
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: path
         name: processID
         type: string
@@ -114,6 +135,10 @@ paths:
       produces:
       - application/json
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: body
         name: body
         required: true
@@ -132,6 +157,10 @@ paths:
       produces:
       - application/json
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: body
         name: body
         schema:
@@ -148,6 +177,10 @@ paths:
       produces:
       - application/json
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: path
         name: partnerID
         type: string
@@ -164,6 +197,10 @@ paths:
       produces:
       - application/json
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: path
         name: partnerID
         type: string
@@ -183,6 +220,10 @@ paths:
       produces:
       - application/json
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: body
         name: body
         required: true
@@ -201,6 +242,10 @@ paths:
       produces:
       - application/json
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: body
         name: body
         schema:
@@ -218,6 +263,10 @@ paths:
       produces:
       - application/json
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: path
         name: partnerID
         type: string
@@ -237,6 +286,10 @@ paths:
       produces:
       - application/json
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: path
         name: partnerID
         type: string
@@ -261,6 +314,10 @@ paths:
       produces:
       - application/json
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: path
         name: partnerID
         type: string
@@ -288,6 +345,10 @@ paths:
       produces:
       - application/json
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: body
         name: body
         required: true
@@ -362,6 +423,10 @@ paths:
       produces:
       - application/json
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: body
         name: body
         required: true
@@ -380,6 +445,10 @@ paths:
       produces:
       - application/json
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: body
         name: body
         schema:
@@ -397,6 +466,10 @@ paths:
       produces:
       - application/json
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: path
         name: documentID
         type: string
@@ -414,6 +487,10 @@ paths:
       produces:
       - application/json
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: path
         name: partnerID
         type: string
@@ -449,6 +526,10 @@ paths:
       produces:
       - application/json
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: path
         name: partnerID
         type: string
@@ -479,6 +560,10 @@ paths:
       produces:
       - application/json
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: path
         name: partnerID
         type: string
@@ -502,6 +587,10 @@ paths:
     patch:
       operationId: updateCollaborationGroupName
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: path
         name: id
         type: string
@@ -516,6 +605,10 @@ paths:
     delete:
       operationId: deleteCollaborationGroup
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: path
         name: id
         type: string
@@ -526,6 +619,10 @@ paths:
     get:
       operationId: getCollaborationGroup
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: path
         name: id
         type: string
@@ -539,6 +636,10 @@ paths:
       post:
         operationId: archiveCollaborationGroup
         parameters:
+        - name: Authorization
+          in: header
+          type: string
+          required: true
         - in: path
           name: id
           type: string
@@ -553,6 +654,10 @@ paths:
       post:
         operationId: restoreCollaborationGroup
         parameters:
+        - name: Authorization
+          in: header
+          type: string
+          required: true
         - in: path
           name: id
           type: string
@@ -694,6 +799,10 @@ paths:
     get:
       operationId: getProcessInstanceGroup
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: path
         name: id
         type: string
@@ -706,6 +815,10 @@ paths:
     delete:
       operationId: deleteProcessInstanceGroup
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: path
         name: id
         type: string

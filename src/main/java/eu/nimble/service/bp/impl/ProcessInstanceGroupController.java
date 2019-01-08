@@ -4,6 +4,7 @@ import eu.nimble.service.bp.hyperjaxb.model.*;
 import eu.nimble.service.bp.impl.util.email.EmailSenderUtil;
 import eu.nimble.service.bp.impl.util.persistence.bp.*;
 import eu.nimble.service.bp.impl.util.persistence.catalogue.TrustPersistenceUtility;
+import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.swagger.api.ProcessInstanceGroupsApi;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroup;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupFilter;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import javax.ws.rs.HEAD;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -45,9 +47,22 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
 
     @Override
     @ApiOperation(value = "", notes = "Delete the process instance group along with the included process instances")
-    public ResponseEntity<Void> deleteProcessInstanceGroup(@ApiParam(value = "Identifier of the process instance group to be deleted", required = true) @PathVariable("id") String id) {
+    public ResponseEntity<Void> deleteProcessInstanceGroup(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
+                                                           @ApiParam(value = "Identifier of the process instance group to be deleted", required = true) @PathVariable("id") String id) {
         logger.debug("Deleting ProcessInstanceGroup ID: {}", id);
-
+        try {
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            }
+        } catch (IOException e){
+            String msg = String.format("Failed to delete process instance group: %s",id);
+            logger.error(msg,e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
         ProcessInstanceGroupDAOUtility.deleteProcessInstanceGroupDAOByID(id);
 
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body("true");
@@ -57,8 +72,22 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
 
     @Override
     @ApiOperation(value = "", notes = "Retrieve the process instance group specified with the ID")
-    public ResponseEntity<ProcessInstanceGroup> getProcessInstanceGroup(@ApiParam(value = "Identifier of the process instance group to be received", required = true) @PathVariable("id") String id) {
+    public ResponseEntity<ProcessInstanceGroup> getProcessInstanceGroup(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
+                                                                        @ApiParam(value = "Identifier of the process instance group to be received", required = true) @PathVariable("id") String id) {
         logger.debug("Getting ProcessInstanceGroup: {}", id);
+        try {
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            }
+        } catch (IOException e){
+            String msg = String.format("Failed to retrieve process instance group: %s",id);
+            logger.error(msg,e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
 
         ProcessInstanceGroupDAO processInstanceGroupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(id);
 
@@ -98,6 +127,13 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
     public ResponseEntity<Void> getOrderProcess(@ApiParam(value = "Identifier of a process instance included in the group", required = true) @RequestParam(value = "processInstanceId", required = true) String processInstanceId,
                                                 @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String authorization) {
         try {
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(authorization);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",authorization);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            }
             // check whether the process instance id exists
             ProcessInstanceDAO pi = ProcessInstanceDAOUtility.getById(processInstanceId);
             if (pi == null) {
@@ -109,7 +145,7 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
             // get the order content
             ResponseEntity response;
             if (orderId != null) {
-                String orderJson = (String) documentController.getDocumentJsonContent(orderId).getBody();
+                String orderJson = (String) documentController.getDocumentJsonContent(orderId,authorization).getBody();
                 response = ResponseEntity.status(HttpStatus.OK).body(orderJson);
 
             } else {
@@ -134,6 +170,13 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
                                               @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
         try {
             logger.debug("Cancelling the collaboration for the group id: {}", id);
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            }
             ProcessInstanceGroupDAO groupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(id);
             if (groupDAO == null) {
                 String msg = String.format("There does not exist a process instance group with the id: %s", id);

@@ -76,6 +76,12 @@ public class EPCController {
         logger.info("Getting track & tracing details for epc: {}", epc);
 
         try {
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            }
             GenericConfig config = SpringBridge.getInstance().getGenericConfig();
             String dataChannelServiceUrlStr = config.getDataChannelServiceUrl()+"/epc/code/"+epc;
 
@@ -127,6 +133,13 @@ public class EPCController {
                                                       @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         logger.info("Getting epc codes for productId: {}", publishedProductID);
         try {
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            }
             CatalogueLineType catalogueLine = new JPARepositoryFactory().forCatalogueRepository().getSingleEntityByHjid(CatalogueLineType.class, publishedProductID);
 
             if(catalogueLine == null){

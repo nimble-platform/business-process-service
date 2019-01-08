@@ -71,6 +71,7 @@ public class Test23_CollaborationGroupTest {
 
         // update collaboration group name
         request = patch("/collaboration-groups/"+collaborationGroupID)
+                .header("Authorization", environment.getProperty("nimble.test-initiator-token"))
                 .param("groupName",groupName);
         mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
@@ -78,7 +79,8 @@ public class Test23_CollaborationGroupTest {
 
     @Test
     public void test2_archiveCollaborationGroup() throws Exception{
-        MockHttpServletRequestBuilder request = post("/collaboration-groups/"+collaborationGroupID+"/archive");
+        MockHttpServletRequestBuilder request = post("/collaboration-groups/"+collaborationGroupID+"/archive")
+                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
     }
 

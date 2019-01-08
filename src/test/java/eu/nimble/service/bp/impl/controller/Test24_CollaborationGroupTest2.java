@@ -45,7 +45,8 @@ public class Test24_CollaborationGroupTest2 {
 
     @Test
     public void test1_getCollaborationGroup() throws Exception {
-        MockHttpServletRequestBuilder request = get("/collaboration-groups/"+Test23_CollaborationGroupTest.collaborationGroupID);
+        MockHttpServletRequestBuilder request = get("/collaboration-groups/"+Test23_CollaborationGroupTest.collaborationGroupID)
+                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         CollaborationGroup collaborationGroup = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), CollaborationGroup.class);
@@ -54,13 +55,15 @@ public class Test24_CollaborationGroupTest2 {
 
     @Test
     public void test2_restoreCollaborationGroup() throws Exception{
-        MockHttpServletRequestBuilder request = post("/collaboration-groups/"+Test23_CollaborationGroupTest.collaborationGroupID+"/restore");
+        MockHttpServletRequestBuilder request = post("/collaboration-groups/"+Test23_CollaborationGroupTest.collaborationGroupID+"/restore")
+                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
     }
 
     @Test
     public void test3_deleteCollaborationGroup() throws Exception{
-        MockHttpServletRequestBuilder request = delete("/collaboration-groups/"+Test23_CollaborationGroupTest.collaborationGroupToBeDeletedId);
+        MockHttpServletRequestBuilder request = delete("/collaboration-groups/"+Test23_CollaborationGroupTest.collaborationGroupToBeDeletedId)
+                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         // check whether the deletion is successful or not

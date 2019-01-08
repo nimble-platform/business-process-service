@@ -5,11 +5,13 @@ import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.impl.util.jssequence.JSSequenceDiagramParser;
 import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDAOUtility;
+import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.swagger.api.ContentApi;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
 import eu.nimble.service.bp.swagger.model.Process;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +20,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,9 +38,25 @@ public class ContentController implements ContentApi {
 
     @Override
     @ApiOperation(value = "",notes = "Add a new business process")
-    public ResponseEntity<ModelApiResponse> addProcessDefinition(@RequestBody Process body) {
+    public ResponseEntity<ModelApiResponse> addProcessDefinition(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
+                                                                 @RequestBody Process body
+    ) {
         logger.info(" $$$ Adding business process definition: ");
         logger.debug(" $$$ {}", body.toString());
+
+        try {
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            }
+        } catch (IOException e){
+            String msg = String.format("Failed to add process definition: %s",body.toString());
+            logger.error(msg,e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
 
         String bpmnContent = body.getBpmnContent();
         if (bpmnContent == null || bpmnContent.trim().equals("")) {
@@ -57,9 +77,22 @@ public class ContentController implements ContentApi {
 
     @Override
     @ApiOperation(value = "",notes = "Delete a business process definition")
-    public ResponseEntity<ModelApiResponse> deleteProcessDefinition(@PathVariable("processID") String processID) {
+    public ResponseEntity<ModelApiResponse> deleteProcessDefinition(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
+                                                                    @PathVariable("processID") String processID) {
         logger.info(" $$$ Deleting business process definition for ... {}", processID);
-
+        try {
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            }
+        } catch (IOException e){
+            String msg = String.format("Failed to delete process definition for process id: %s",processID);
+            logger.error(msg,e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
         CamundaEngine.deleteProcessDefinition(processID);
 
         ProcessDAO processDAO = ProcessDAOUtility.findByProcessID(processID);
@@ -71,9 +104,22 @@ public class ContentController implements ContentApi {
 
     @Override
     @ApiOperation(value = "",notes = "Get the business process definitions")
-    public ResponseEntity<Process> getProcessDefinition(@PathVariable("processID") String processID) {
+    public ResponseEntity<Process> getProcessDefinition(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
+                                                        @PathVariable("processID") String processID) {
         logger.info(" $$$ Getting business process definition for ... {}", processID);
-
+        try {
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            }
+        } catch (IOException e){
+            String msg = String.format("Failed to retrieve process definition for process id: %s",processID);
+            logger.error(msg,e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
         ProcessDAO processDAO = ProcessDAOUtility.findByProcessID(processID);
         // The process definition is not in the database...
         Process process = null;
@@ -88,8 +134,22 @@ public class ContentController implements ContentApi {
 
     @Override
     @ApiOperation(value = "",notes = "Get the business process definitions")
-    public ResponseEntity<List<Process>> getProcessDefinitions() {
+    public ResponseEntity<List<Process>> getProcessDefinitions(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
+    ) {
         logger.info(" $$$ Getting business process definitions");
+        try {
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            }
+        } catch (IOException e){
+            String msg ="Failed to retrieve process definitions";
+            logger.error(msg,e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
 
         // first get the ones in the database
         List<ProcessDAO> processDAOs = ProcessDAOUtility.getProcessDAOs();
@@ -118,9 +178,24 @@ public class ContentController implements ContentApi {
 
     @Override
     @ApiOperation(value = "",notes = "Update a business process")
-    public ResponseEntity<ModelApiResponse> updateProcessDefinition(@RequestBody Process body) {
+    public ResponseEntity<ModelApiResponse> updateProcessDefinition(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
+                                                                    @RequestBody Process body) {
         logger.info(" $$$ Updating business process definition: ");
         logger.debug(" $$$ {}", body.toString());
+
+        try {
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            }
+        } catch (IOException e){
+            String msg = String.format("Failed to update process definition: %s",body.toString());
+            logger.error(msg,e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
 
         String bpmnContent = body.getBpmnContent();
         if (bpmnContent == null || bpmnContent.trim().equals("")) {
