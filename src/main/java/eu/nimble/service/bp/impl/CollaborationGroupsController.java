@@ -1,12 +1,13 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.hyperjaxb.model.CollaborationGroupDAO;
-import eu.nimble.service.bp.impl.persistence.bp.CollaborationGroupDAORepository;
-import eu.nimble.service.bp.impl.persistence.util.HibernateSwaggerObjectMapper;
-import eu.nimble.service.bp.impl.persistence.util.ProcessInstanceGroupDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.bp.CollaborationGroupDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.swagger.api.CollaborationGroupsApi;
 import eu.nimble.service.bp.swagger.model.CollaborationGroup;
 import eu.nimble.service.bp.swagger.model.CollaborationGroupResponse;
+import eu.nimble.utility.persistence.GenericJPARepository;
+import eu.nimble.utility.persistence.JPARepositoryFactory;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
@@ -25,13 +26,13 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    private CollaborationGroupDAORepository collaborationGroupDAORepository;
+    private JPARepositoryFactory repoFactory;
 
     @Override
     public ResponseEntity<CollaborationGroup> archiveCollaborationGroup(@ApiParam(value = "Identifier of the collaboration group to be archived", required = true) @PathVariable("id") String id) {
         logger.debug("Archiving CollaborationGroup: {}", id);
 
-        CollaborationGroupDAO collaborationGroupDAO = ProcessInstanceGroupDAOUtility.archiveCollaborationGroup(id);
+        CollaborationGroupDAO collaborationGroupDAO = CollaborationGroupDAOUtility.archiveCollaborationGroup(id);
 
         CollaborationGroup collaborationGroup = HibernateSwaggerObjectMapper.convertCollaborationGroupDAO(collaborationGroupDAO);
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(collaborationGroup);
@@ -43,7 +44,7 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
     public ResponseEntity<Void> deleteCollaborationGroup(@ApiParam(value = "Identifier of the collaboration group to be deleted", required = true) @PathVariable("id") String id) {
         logger.debug("Deleting CollaborationGroup ID: {}", id);
 
-        ProcessInstanceGroupDAOUtility.deleteCollaborationGroupDAOByID(Long.parseLong(id));
+        CollaborationGroupDAOUtility.deleteCollaborationGroupDAOByID(Long.parseLong(id));
 
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body("true");
         logger.debug("Deleted CollaborationGroup ID: {}", id);
@@ -54,7 +55,7 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
     public ResponseEntity<CollaborationGroup> getCollaborationGroup(@ApiParam(value = "Identifier of the collaboration group to be received", required = true) @PathVariable("id") String id) {
         logger.debug("Getting CollaborationGroup: {}", id);
 
-        CollaborationGroupDAO collaborationGroupDAO = collaborationGroupDAORepository.getOne(Long.parseLong(id));
+        CollaborationGroupDAO collaborationGroupDAO = repoFactory.forBpRepository().getSingleEntityByHjid(CollaborationGroupDAO.class, Long.parseLong(id));
         if (collaborationGroupDAO == null) {
             logger.error("There does not exist a collaboration group with id: {}", id);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
@@ -78,8 +79,8 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
                                                                              @ApiParam(value = "Role of the party in the collaboration.\nPossible values:SELLER,BUYER") @RequestParam(value = "collaborationRole", required = false) String collaborationRole) {
         logger.debug("Getting collaboration groups for party: {}", partyId);
 
-        List<CollaborationGroupDAO> results = ProcessInstanceGroupDAOUtility.getCollaborationGroupDAOs(partyId, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, status, null, null, limit, offset);
-        int totalSize = ProcessInstanceGroupDAOUtility.getCollaborationGroupSize(partyId, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, status, null, null);
+        List<CollaborationGroupDAO> results = CollaborationGroupDAOUtility.getCollaborationGroupDAOs(partyId, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, status, null, null, limit, offset);
+        int totalSize = CollaborationGroupDAOUtility.getCollaborationGroupSize(partyId, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, status, null, null);
         logger.debug(" There are {} collaboration groups in total", results.size());
         List<CollaborationGroup> collaborationGroups = new ArrayList<>();
         for (CollaborationGroupDAO result : results) {
@@ -99,7 +100,7 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
     public ResponseEntity<CollaborationGroup> restoreCollaborationGroup(@ApiParam(value = "Identifier of the collaboration group to be restored", required = true) @PathVariable("id") String id) {
         logger.debug("Restoring CollaborationGroup: {}", id);
 
-        CollaborationGroupDAO collaborationGroupDAO = ProcessInstanceGroupDAOUtility.restoreCollaborationGroup(id);
+        CollaborationGroupDAO collaborationGroupDAO = CollaborationGroupDAOUtility.restoreCollaborationGroup(id);
 
         CollaborationGroup collaborationGroup = HibernateSwaggerObjectMapper.convertCollaborationGroupDAO(collaborationGroupDAO);
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(collaborationGroup);
@@ -111,7 +112,8 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
     public ResponseEntity<Void> updateCollaborationGroupName(@ApiParam(value = "Identifier of the collaboration group", required = true) @PathVariable("id") String id,
                                                              @ApiParam(value = "Value to be set as name of the collaboration group", required = true) @RequestParam(value = "groupName", required = true) String groupName) {
         logger.debug("Updating name of the collaboration group :" + id);
-        CollaborationGroupDAO collaborationGroupDAO = collaborationGroupDAORepository.getOne(Long.parseLong(id));
+        GenericJPARepository repo = repoFactory.forBpRepository();
+        CollaborationGroupDAO collaborationGroupDAO = repo.getSingleEntityByHjid(CollaborationGroupDAO.class, Long.parseLong(id));
         if (collaborationGroupDAO == null) {
             String msg = String.format("There does not exist a collaboration group with id: %s", id);
             logger.error(msg);
@@ -119,7 +121,7 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
             return response;
         }
         collaborationGroupDAO.setName(groupName);
-        collaborationGroupDAORepository.save(collaborationGroupDAO);
+        repo.updateEntity(collaborationGroupDAO);
         logger.debug("Updated name of the collaboration group :" + id);
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body("true");
         return response;

@@ -54,7 +54,7 @@ public class DataSourceFactory {
         tds.setMinEvictableIdleTimeMillis(Integer.valueOf(environment.getProperty("spring.datasource.tomcat.min-evictable-idle-time-millis")));
         tds.setMaxActive(Integer.valueOf(environment.getProperty("spring.datasource.maxActive")));
         tds.setMaxIdle(Integer.valueOf(environment.getProperty("spring.datasource.maxIdle")));
-        tds.setMinEvictableIdleTimeMillis(Integer.valueOf(environment.getProperty("spring.datasource.minIdle")));
+        tds.setMinIdle(Integer.valueOf(environment.getProperty("spring.datasource.minIdle")));
         return tds;
     }
 }

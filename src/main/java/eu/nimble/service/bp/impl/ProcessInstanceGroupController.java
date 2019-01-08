@@ -1,17 +1,16 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.hyperjaxb.model.*;
-import eu.nimble.service.bp.impl.persistence.bp.ProcessInstanceGroupDAORepository;
-import eu.nimble.service.bp.impl.persistence.util.DAOUtility;
-import eu.nimble.service.bp.impl.persistence.util.HibernateSwaggerObjectMapper;
-import eu.nimble.service.bp.impl.persistence.util.ProcessInstanceGroupDAOUtility;
-import eu.nimble.service.bp.impl.persistence.util.TrustUtility;
-import eu.nimble.service.bp.impl.util.controller.HttpResponseUtil;
 import eu.nimble.service.bp.impl.util.email.EmailSenderUtil;
-import eu.nimble.service.bp.impl.util.spring.SpringBridge;
+import eu.nimble.service.bp.impl.util.persistence.bp.*;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.TrustPersistenceUtility;
 import eu.nimble.service.bp.swagger.api.ProcessInstanceGroupsApi;
-import eu.nimble.service.bp.swagger.model.*;
+import eu.nimble.service.bp.swagger.model.ProcessInstanceGroup;
+import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupFilter;
 import eu.nimble.service.model.ubl.order.OrderType;
+import eu.nimble.utility.HttpResponseUtil;
+import eu.nimble.utility.persistence.GenericJPARepository;
+import eu.nimble.utility.persistence.JPARepositoryFactory;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -25,6 +24,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import javax.ws.rs.HEAD;
 import java.util.List;
 
 /**
@@ -35,15 +35,13 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    private ProcessInstanceGroupDAOUtility groupDaoUtility;
-    @Autowired
     private ProcessInstanceController processInstanceController;
     @Autowired
     private DocumentController documentController;
     @Autowired
     private EmailSenderUtil emailSenderUtil;
     @Autowired
-    private ProcessInstanceGroupDAORepository processInstanceGroupDAORepository;
+    private JPARepositoryFactory repoFactory;
 
     @Override
     @ApiOperation(value = "", notes = "Delete the process instance group along with the included process instances")
@@ -82,7 +80,7 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
             @ApiParam(value = "Role of the party in the collaboration.\nPossible values:SELLER,BUYER") @RequestParam(value = "collaborationRole", required = false) String collaborationRole,
             @ApiParam(value = "Status of the process instance included in the group\nPossible values:STARTED,WAITING,CANCELLED,COMPLETED") @RequestParam(value = "status", required = false) List<String> status) {
 
-        ProcessInstanceGroupFilter filters = groupDaoUtility.getFilterDetails(partyId, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, status, null, null, bearerToken);
+        ProcessInstanceGroupFilter filters = CollaborationGroupDAOUtility.getFilterDetails(partyId, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, status, null, null, bearerToken);
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(filters);
         logger.debug("Filters retrieved for partyId: {}, archived: {}, products: {}, categories: {}, parties: {}", partyId, archived,
                 relatedProducts != null ? relatedProducts.toString() : "[]",
@@ -101,7 +99,7 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
                                                 @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String authorization) {
         try {
             // check whether the process instance id exists
-            ProcessInstanceDAO pi = DAOUtility.getProcessInstanceDAOByID(processInstanceId);
+            ProcessInstanceDAO pi = ProcessInstanceDAOUtility.getById(processInstanceId);
             if (pi == null) {
                 return HttpResponseUtil.createResponseEntityAndLog(String.format("No process ID exists for the process id: %s", processInstanceId), null, HttpStatus.NOT_FOUND, LogLevel.INFO);
             }
@@ -152,18 +150,17 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
             }
 
             // update the group of the party initiating the cancel request
+            GenericJPARepository repo = repoFactory.forBpRepository();
             groupDAO.setStatus(GroupStatus.CANCELLED);
-//            GenericJPARepositoryImpl.getInstance("bp-data-model").update(groupDAO);
-            groupDAO = SpringBridge.getInstance().getProcessInstanceGroupDAORepository().save(groupDAO);
+            groupDAO = repo.updateEntity(groupDAO);
 
             // cancel processes in the group
             for (String processID : groupDAO.getProcessInstanceIDs()) {
-                ProcessInstanceDAO instanceDAO = DAOUtility.getProcessInstanceDAOByID(processID);
+                ProcessInstanceDAO instanceDAO = ProcessInstanceDAOUtility.getById(processID);
                 // if process is completed or already cancelled, continue
                 if (instanceDAO.getStatus() == ProcessInstanceStatus.COMPLETED || instanceDAO.getStatus() == ProcessInstanceStatus.CANCELLED) {
                     instanceDAO.setStatus(ProcessInstanceStatus.CANCELLED);
-//                    GenericJPARepositoryImpl.getInstance("bp-data-model").update(instanceDAO);
-                    SpringBridge.getInstance().getProcessInstanceDAORepository().save(instanceDAO);
+                    repo.updateEntity(instanceDAO);
                     continue;
                 }
                 // otherwise, cancel the process
@@ -178,14 +175,13 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
                 // if it is ok, change status of the associated group
                 if (isCancellableGroup) {
                     group.setStatus(GroupStatus.CANCELLED);
-                    //GenericJPARepositoryImpl.getInstance("bp-data-model").update(group);
-                    group = SpringBridge.getInstance().getProcessInstanceGroupDAORepository().save(group);
+                    repo.updateEntity(group);
                 }
             }
 
             // create completed tasks for both parties
             String processInstanceID = groupDAO.getProcessInstanceIDs().get(groupDAO.getProcessInstanceIDs().size() - 1);
-            TrustUtility.createCompletedTasksForBothParties(processInstanceID, bearerToken, "Cancelled");
+            TrustPersistenceUtility.createCompletedTasksForBothParties(processInstanceID, bearerToken, "Cancelled");
 
             // send email to the trading partner
             emailSenderUtil.sendCancellationEmail(bearerToken, groupDAO);
@@ -200,7 +196,7 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
 
     private boolean cancellableGroup(List<String> processInstanceIDs) {
         for (String instanceID : processInstanceIDs) {
-            List<ProcessDocumentMetadataDAO> metadataDAOS = DAOUtility.getProcessDocumentMetadataByProcessInstanceID(instanceID);
+            List<ProcessDocumentMetadataDAO> metadataDAOS = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(instanceID);
             for (ProcessDocumentMetadataDAO metadataDAO : metadataDAOS) {
                 if (metadataDAO.getType() == DocumentType.ORDERRESPONSESIMPLE && metadataDAO.getStatus() == ProcessDocumentStatus.APPROVED || metadataDAO.getType() == DocumentType.TRANSPORTEXECUTIONPLAN && metadataDAO.getStatus() == ProcessDocumentStatus.APPROVED) {
                     return false;

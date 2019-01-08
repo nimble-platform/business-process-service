@@ -7,19 +7,19 @@ import com.mashape.unirest.http.Unirest;
 import eu.nimble.service.bp.config.GenericConfig;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
 import eu.nimble.service.bp.impl.model.tt.TTInfo;
-import eu.nimble.service.bp.impl.persistence.catalogue.CatalogueRepository;
-import eu.nimble.service.bp.impl.persistence.util.CatalogueDAOUtility;
-import eu.nimble.service.bp.impl.persistence.util.DocumentDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.CataloguePersistenceUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.CatalogueLineType;
 import eu.nimble.service.model.ubl.order.OrderType;
+import eu.nimble.utility.JsonSerializationUtility;
+import eu.nimble.utility.persistence.JPARepositoryFactory;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -28,7 +28,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Created by suat on 06-Jun-18.
@@ -37,9 +40,6 @@ import java.util.*;
 public class EPCController {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
-    @Autowired
-    private CatalogueRepository catalogueRepository;
 
     static class EpcCodes {
         private String orderId;
@@ -76,23 +76,13 @@ public class EPCController {
         logger.info("Getting track & tracing details for epc: {}", epc);
 
         try {
-            /*
-            TTInfo ttInfo = new TTInfo();
-            ttInfo.setMasterUrl("https://falcon-dev.ikap.biba.uni-bremen.de/masterData");
-            ttInfo.setEventUrl("https://falcon-dev.ikap.biba.uni-bremen.de/simpleTracking");
-            ttInfo.setProductionProcessTemplate("https://falcon-dev.ikap.biba.uni-bremen.de/productionProcessTemplate/lindbacks_test");
-            ttInfo.setRelatedProductId("temp-product-id");
-
-            ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(ttInfo);
-            logger.debug("Retrieved T6T details for epc: {}", epc);
-            return response;*/
             GenericConfig config = SpringBridge.getInstance().getGenericConfig();
             String dataChannelServiceUrlStr = config.getDataChannelServiceUrl()+"/epc/code/"+epc;
 
             HttpResponse<com.mashape.unirest.http.JsonNode> response = Unirest.get(dataChannelServiceUrlStr)
                     .header("Authorization", bearerToken).asJson();
 
-            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
             List<EpcCodes> epcCodesList = objectMapper.readValue(response.getBody().toString(),new TypeReference<List<EpcCodes>>(){});
 
             if(epcCodesList.size() <= 0){
@@ -103,9 +93,9 @@ public class EPCController {
 
             String orderId = epcCodesList.get(0).getOrderId();
 
-            OrderType order = (OrderType) DocumentDAOUtility.getUBLDocument(orderId, DocumentType.ORDER);
+            OrderType order = (OrderType) DocumentPersistenceUtility.getUBLDocument(orderId, DocumentType.ORDER);
 
-            CatalogueLineType catalogueLine = CatalogueDAOUtility.getCatalogueLine(order);
+            CatalogueLineType catalogueLine = CataloguePersistenceUtility.getCatalogueLine(order);
 
 
             TTInfo ttInfo = new TTInfo();
@@ -124,32 +114,6 @@ public class EPCController {
         }
     }
 
-//    @ApiOperation(value = "Gets EPC codes associated with the given product id", response = List.class)
-//    @ApiResponses(value = {
-//            @ApiResponse(code = 200, message = "Retrieved the T&T details successfully", response = List.class)})
-//    @RequestMapping(value = "/t-t/epc-codes",
-//            produces = {"application/json"},
-//            method = RequestMethod.GET)
-//    public ResponseEntity getEPCCodes(@ApiParam(value = "The product ID for which the related EPC codes will be retrieved") @RequestParam(value = "productId", required = true) String productId) {
-//        logger.info("Getting epc codes for productId: {}", productId);
-//
-//        try {
-//            List<String> epcCodes = new ArrayList<>();
-//            epcCodes.add("urn:epc:id:sgtin:0614141.lindback.2017");
-//            epcCodes.add("urn:epc:id:sgtin:0614141.lindback.201702");
-//            epcCodes.add("urn:epc:id:sgtin:0614141.lindback.201703");
-//
-//            ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(epcCodes);
-//            logger.debug("Retrieved epc codes for productId: {}", productId);
-//            return response;
-//
-//        } catch (Exception e) {
-//            String msg = "Unexpected error while getting the epc codes for the productId: %s";
-//            logger.error(String.format(msg, productId));
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
-//        }
-//    }
-
     @ApiOperation(value = "",notes = "Get EPC codes that belongs to the same published product ID")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Retrieved epc codes successfully", response = String.class,responseContainer = "List"),
@@ -163,7 +127,7 @@ public class EPCController {
                                                       @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         logger.info("Getting epc codes for productId: {}", publishedProductID);
         try {
-            CatalogueLineType catalogueLine = catalogueRepository.getSingleEntityByHjid(CatalogueLineType.class, publishedProductID);
+            CatalogueLineType catalogueLine = new JPARepositoryFactory().forCatalogueRepository().getSingleEntityByHjid(CatalogueLineType.class, publishedProductID);
 
             if(catalogueLine == null){
                 String msg = "There is no catalogue line for hjid : %d";
@@ -171,7 +135,7 @@ public class EPCController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(String.format(msg,publishedProductID));
             }
 
-            List<String> orderIds = CatalogueDAOUtility.getOrderIds(catalogueLine);
+            List<String> orderIds = DocumentPersistenceUtility.getOrderIds(catalogueLine.getGoodsItem().getItem().getManufacturerParty().getID(), catalogueLine.getGoodsItem().getItem().getManufacturersItemIdentification().getID());
 
             String params = "";
             int size = orderIds.size();
@@ -191,7 +155,7 @@ public class EPCController {
                     .header("Authorization", bearerToken).asString();
 
             List<String> epcCodes = new ArrayList<>();
-            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();;
             List<EpcCodes> epcCodesList = objectMapper.readValue(response.getBody().toString(),new TypeReference<List<EpcCodes>>(){});
 
             for(EpcCodes epcCodes1 : epcCodesList){

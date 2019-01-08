@@ -318,10 +318,6 @@ spring:
   profiles: local_dev
   # Local h2 database
   datasource:
-    url: jdbc:h2:mem:db;MVCC=TRUE;AUTO_RECONNECT=TRUE;DB_CLOSE_ON_EXIT=FALSE;INIT=create schema IF NOT EXISTS APPS
-    username: sa
-    password:
-    driverClassName: org.h2.Driver
     camunda:
       url: jdbc:h2:mem:db;MVCC=TRUE;AUTO_RECONNECT=TRUE;DB_CLOSE_ON_EXIT=FALSE;INIT=create schema IF NOT EXISTS APPS
       username: sa
@@ -387,5 +383,7 @@ nimble:
   kafka:
       topics:
         businessProcessUpdates: ${KAFKA_TOPIC_BUSINESS_PROCESS_UPDATES:business-process-updates-staging}
+  test-initiator-token: ${NIMBLE_TEST_INITIATOR_TOKEN}
+  test-responder-token: ${NIMBLE_TEST_RESPONDER_TOKEN}
 build:
   version: 5.0.0-Staging

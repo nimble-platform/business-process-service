@@ -3,6 +3,8 @@ package eu.nimble.service.bp.impl.util.controller;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
 import eu.nimble.service.bp.hyperjaxb.model.RoleType;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
+import eu.nimble.utility.DateUtility;
+import eu.nimble.utility.HttpResponseUtil;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.ProcessEngines;
 import org.camunda.bpm.engine.RepositoryService;
@@ -22,8 +24,6 @@ import java.util.List;
  * Created by suat on 07-Jun-18.
  */
 public class InputValidatorUtil {
-    private static final Logger logger = LoggerFactory.getLogger(InputValidatorUtil.class);
-
     public static ValidationResponse checkBusinessProcessType(String bpType, boolean nullable) {
         ValidationResponse validationResponse = new ValidationResponse();
         if(permitNull(bpType, nullable)) {
@@ -72,13 +72,10 @@ public class InputValidatorUtil {
             return validationResponse;
         }
 
-        DateTimeFormatter bpFormatter = DateTimeFormat.forPattern("dd-MM-yyyy");
-        try {
-            bpFormatter.parseDateTime(dateStr);
+        if(DateUtility.isValidDate(dateStr)) {
             return validationResponse;
-
-        } catch (IllegalArgumentException e) {
-            validationResponse.setInvalidResponse(HttpResponseUtil.createResponseEntityAndLog(String.format("Invalid date: %s", dateStr), e, HttpStatus.BAD_REQUEST));
+        } else {
+            validationResponse.setInvalidResponse(HttpResponseUtil.createResponseEntityAndLog(String.format("Invalid date: %s", dateStr), null, HttpStatus.BAD_REQUEST, LogLevel.INFO));
             return validationResponse;
         }
     }

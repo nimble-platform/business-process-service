@@ -2,21 +2,21 @@ package eu.nimble.service.bp.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
-import eu.nimble.service.bp.impl.persistence.util.DAOUtility;
-import eu.nimble.service.bp.impl.persistence.util.HibernateSwaggerObjectMapper;
-import eu.nimble.service.bp.impl.persistence.util.DocumentDAOUtility;
-import eu.nimble.service.bp.impl.util.serialization.Serializer;
+import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMapper;
+import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.api.DocumentApi;
-import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
+import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.order.ObjectFactory;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
 import eu.nimble.utility.JAXBUtility;
+import eu.nimble.utility.JsonSerializationUtility;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
@@ -32,7 +32,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import java.util.ArrayList;
 import java.util.List;
 
-import static eu.nimble.service.bp.impl.util.controller.HttpResponseUtil.*;
+import static eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog;
 
 /**
  * Created by yildiray on 5/25/2017.
@@ -48,12 +48,12 @@ public class DocumentController implements DocumentApi {
     public ResponseEntity<Object> getDocumentJsonContent(@ApiParam(value = "The identifier of the document to be received") @PathVariable("documentID") String documentID) {
         try {
             logger.info("Getting content of document: {}", documentID);
-            Object document = DocumentDAOUtility.getUBLDocument(documentID);
+            Object document = DocumentPersistenceUtility.getUBLDocument(documentID);
             if (document == null) {
                 return createResponseEntityAndLog(String.format("No document for id: %s", documentID), HttpStatus.NOT_FOUND);
             }
             try {
-                String serializedDocument = Serializer.getDefaultObjectMapper().writeValueAsString(document);
+                String serializedDocument = JsonSerializationUtility.getObjectMapper().writeValueAsString(document);
                 logger.info("Retrieved details of the document: {}", documentID);
                 return new ResponseEntity<>(serializedDocument, HttpStatus.OK);
 
@@ -71,7 +71,7 @@ public class DocumentController implements DocumentApi {
             produces = {"application/json"},
             method = RequestMethod.GET)
     ResponseEntity<String> getDocumentXMLContent(@ApiParam(value = "The identifier of the document to be received") @PathVariable("documentID") String documentID) {
-        Object document = DocumentDAOUtility.getUBLDocument(documentID);
+        Object document = DocumentPersistenceUtility.getUBLDocument(documentID);
 
         String documentContentXML = null;
         if(document instanceof OrderType) {
@@ -101,7 +101,7 @@ public class DocumentController implements DocumentApi {
     public ResponseEntity<ModelApiResponse> addDocumentMetadata(@RequestBody ProcessDocumentMetadata body) {
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
         try{
-            DocumentDAOUtility.addDocumentWithMetadata(businessProcessContext.getId(),body, null);
+            DocumentPersistenceUtility.addDocumentWithMetadata(businessProcessContext.getId(),body, null);
         }
         catch (Exception e){
             businessProcessContext.handleExceptions();
@@ -117,7 +117,7 @@ public class DocumentController implements DocumentApi {
     public ResponseEntity<ModelApiResponse> updateDocumentMetadata(@RequestBody ProcessDocumentMetadata body) {
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
         try{
-            DocumentDAOUtility.updateDocumentMetadata(businessProcessContext.getId(),body);
+            ProcessDocumentMetadataDAOUtility.updateDocumentMetadata(businessProcessContext.getId(),body);
         }
         catch (Exception e){
             businessProcessContext.handleExceptions();
@@ -132,28 +132,15 @@ public class DocumentController implements DocumentApi {
     @ApiOperation(value = "",notes = "Delete the business process document metadata together with content by id")
     public ResponseEntity<ModelApiResponse> deleteDocument(@PathVariable("documentID") String documentID) {
         logger.info(" $$$ Deleting Document for ... {}", documentID);
-        DocumentDAOUtility.deleteDocumentWithMetadata(documentID);
+        DocumentPersistenceUtility.deleteDocumentWithMetadata(documentID);
         return HibernateSwaggerObjectMapper.getApiResponse();
     }
-
-    /*@Override
-    public ResponseEntity<ProcessDocumentContent> getDocumentContent(@PathVariable("documentID") String documentID) {
-        logger.info(" $$$ Getting Document for ... {}", documentID);
-        ProcessDocumentContent processDocumentContent = new ProcessDocumentContent();
-        processDocumentContent.setDocumentID(documentID);
-
-        String documentJsonContent = DocumentDAOUtility.createJsonContent(documentID);
-
-        processDocumentContent.setContent(documentJsonContent);
-
-        return new ResponseEntity<>(processDocumentContent, HttpStatus.OK);
-    }*/
 
     @Override
     @ApiOperation(value = "",notes = "Get the business process document metadata")
     public ResponseEntity<List<ProcessDocumentMetadata>> getDocuments(@PathVariable("partnerID") String partnerID, @PathVariable("type") String type) {
         logger.info(" $$$ Getting Document for partner {}, type {}", partnerID, type);
-        List<ProcessDocumentMetadataDAO> processDocumentsDAO = DAOUtility.getProcessDocumentMetadata(partnerID, type);
+        List<ProcessDocumentMetadataDAO> processDocumentsDAO = ProcessDocumentMetadataDAOUtility.getProcessDocumentMetadata(partnerID, type);
         List<ProcessDocumentMetadata> processDocuments = new ArrayList<>();
         for(ProcessDocumentMetadataDAO processDocumentDAO: processDocumentsDAO) {
             ProcessDocumentMetadata processDocument = HibernateSwaggerObjectMapper.createProcessDocumentMetadata(processDocumentDAO);
@@ -167,7 +154,7 @@ public class DocumentController implements DocumentApi {
     @ApiOperation(value = "",notes = "Get the business process document metadata")
     public ResponseEntity<List<ProcessDocumentMetadata>> getDocuments(@PathVariable("partnerID") String partnerID, @PathVariable("type") String type, @PathVariable("source") String source) {
         logger.info(" $$$ Getting Document for partner {}, type {}, source {}", partnerID, type, source);
-        List<ProcessDocumentMetadataDAO> processDocumentsDAO = DAOUtility.getProcessDocumentMetadata(partnerID, type, source);
+        List<ProcessDocumentMetadataDAO> processDocumentsDAO = ProcessDocumentMetadataDAOUtility.getProcessDocumentMetadata(partnerID, type, source);
         List<ProcessDocumentMetadata> processDocuments = new ArrayList<>();
         for(ProcessDocumentMetadataDAO processDocumentDAO: processDocumentsDAO) {
             ProcessDocumentMetadata processDocument = HibernateSwaggerObjectMapper.createProcessDocumentMetadata(processDocumentDAO);
@@ -181,7 +168,7 @@ public class DocumentController implements DocumentApi {
     public ResponseEntity<List<ProcessDocumentMetadata>> getDocuments(@PathVariable("partnerID") String partnerID, @PathVariable("type") String type,
             @PathVariable("source") String source, @PathVariable("status") String status) {
         logger.info(" $$$ Getting Document for partner {}, type {}, status {}, source {}", partnerID, type, status, source);
-        List<ProcessDocumentMetadataDAO> processDocumentsDAO = DAOUtility.getProcessDocumentMetadata(partnerID, type, status, source);
+        List<ProcessDocumentMetadataDAO> processDocumentsDAO = ProcessDocumentMetadataDAOUtility.getProcessDocumentMetadata(partnerID, type, status, source);
         List<ProcessDocumentMetadata> processDocuments = new ArrayList<>();
         for(ProcessDocumentMetadataDAO processDocumentDAO: processDocumentsDAO) {
             ProcessDocumentMetadata processDocument = HibernateSwaggerObjectMapper.createProcessDocumentMetadata(processDocumentDAO);

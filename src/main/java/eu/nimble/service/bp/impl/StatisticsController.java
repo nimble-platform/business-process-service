@@ -3,15 +3,16 @@ package eu.nimble.service.bp.impl;
 import eu.nimble.service.bp.impl.model.statistics.BusinessProcessCount;
 import eu.nimble.service.bp.impl.model.statistics.NonOrderedProducts;
 import eu.nimble.service.bp.impl.model.statistics.OverallStatistics;
+import eu.nimble.service.bp.impl.util.bp.BusinessProcessUtility;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
-import eu.nimble.service.bp.impl.util.controller.HttpResponseUtil;
 import eu.nimble.service.bp.impl.util.controller.InputValidatorUtil;
 import eu.nimble.service.bp.impl.util.controller.ValidationResponse;
-import eu.nimble.service.bp.impl.persistence.util.DAOUtility;
-import eu.nimble.service.bp.impl.persistence.util.StatisticsDAOUtility;
-import eu.nimble.service.bp.impl.util.serialization.Serializer;
+import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.StatisticsPersistenceUtility;
 import eu.nimble.service.bp.swagger.model.Transaction;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
+import eu.nimble.utility.HttpResponseUtil;
+import eu.nimble.utility.JsonSerializationUtility;
 import io.swagger.annotations.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import javax.ws.rs.HEAD;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,8 +53,8 @@ public class StatisticsController {
             return response.getInvalidResponse();
         }
 
-        long count = StatisticsDAOUtility.getActionRequiredProcessCount(String.valueOf(partyId),role,archived);
-        logger.info("Retrieved total number of process instances which require an action for party id:{},archived: {}, role: {}",partyId,archived,role);
+        long count = StatisticsPersistenceUtility.getActionRequiredProcessCount(String.valueOf(partyId),role,archived);
+        logger.info("Retrieved total number of process instances which require an action for company id:{},archived: {}, role: {}",partyId,archived,role);
         return ResponseEntity.ok(count);
     }
 
@@ -102,11 +104,11 @@ public class StatisticsController {
             // get initiating document for the business process
             List<String> documentTypes = new ArrayList<>();
             if (businessProcessType != null) {
-                documentTypes.add(CamundaEngine.getInitialDocumentForProcess(businessProcessType).toString());
+                documentTypes.add(BusinessProcessUtility.getInitialDocumentForProcess(businessProcessType).toString());
 
                 // if there is no process specified, get the document list for all business processes
             } else {
-                List<Transaction.DocumentTypeEnum> initialDocuments = CamundaEngine.getInitialDocumentsForAllProcesses();
+                List<Transaction.DocumentTypeEnum> initialDocuments = BusinessProcessUtility.getInitialDocumentsForAllProcesses();
                 initialDocuments.stream().forEach(type -> documentTypes.add(type.toString()));
             }
 
@@ -117,7 +119,7 @@ public class StatisticsController {
             }
             status = response.getValidatedObject() != null ? (String) response.getValidatedObject() : null;
 
-            int count = DAOUtility.getTransactionCount(partyId, documentTypes, role, startDateStr, endDateStr, status);
+            int count = ProcessDocumentMetadataDAOUtility.getTransactionCount(partyId, documentTypes, role, startDateStr, endDateStr, status);
 
             logger.info("Number of business process for start date: {}, end date: {}, type: {}, party id: {}, role: {}, state: {}", startDateStr, endDateStr, businessProcessType, partyId, role, status);
             return ResponseEntity.ok().body(count);
@@ -156,8 +158,8 @@ public class StatisticsController {
                 return response.getInvalidResponse();
             }
 
-            BusinessProcessCount counts = DAOUtility.getGroupTransactionCounts(partyId, startDateStr, endDateStr,role,bearerToken);
-            logger.info("Number of business process for start date: {}, end date: {}, partyId id: {}, role: {}", startDateStr, endDateStr, partyId, role);
+            BusinessProcessCount counts = ProcessDocumentMetadataDAOUtility.getGroupTransactionCounts(partyId, startDateStr, endDateStr,role,bearerToken);
+            logger.info("Number of business process for start date: {}, end date: {}, company id: {}, role: {}", startDateStr, endDateStr, partyId, role);
             return ResponseEntity.ok().body(counts);
 
         } catch (Exception e) {
@@ -176,9 +178,9 @@ public class StatisticsController {
         try {
             logger.info("Getting non-ordered products for party id: {}", partyId);
 
-            NonOrderedProducts nonOrderedProducts = StatisticsDAOUtility.getNonOrderedProducts(partyId);
-            String serializedResponse = Serializer.getDefaultObjectMapperForFilledFields().writeValueAsString(nonOrderedProducts);
-            logger.info("Retrieved the products that are not ordered for party id: {}", partyId);
+            NonOrderedProducts nonOrderedProducts = StatisticsPersistenceUtility.getNonOrderedProducts(partyId);
+            String serializedResponse = JsonSerializationUtility.getObjectMapperForFilledFields().writeValueAsString(nonOrderedProducts);
+            logger.info("Retrieved the products that are not ordered for company id: {}", partyId);
             return ResponseEntity.ok().body(serializedResponse);
 
         } catch (Exception e) {
@@ -228,7 +230,7 @@ public class StatisticsController {
             }
             status = response.getValidatedObject() != null ? (String) response.getValidatedObject() : null;
 
-            double tradingVolume = StatisticsDAOUtility.getTradingVolume(partyId, role, startDateStr, endDateStr, status);
+            double tradingVolume = StatisticsPersistenceUtility.getTradingVolume(partyId, role, startDateStr, endDateStr, status);
 
             logger.info("Number of business process for start date: {}, end date: {}, party id: {}, role: {}, state: {}", startDateStr, endDateStr, partyId, role, status);
             return ResponseEntity.ok().body(tradingVolume);
@@ -249,8 +251,8 @@ public class StatisticsController {
         try {
             logger.info("Getting inactive companies");
 
-            List<PartyType> inactiveCompanies = StatisticsDAOUtility.getInactiveCompanies(bearerToken);
-            String serializedResponse = Serializer.getDefaultObjectMapperForFilledFields().writeValueAsString(inactiveCompanies);
+            List<PartyType> inactiveCompanies = StatisticsPersistenceUtility.getInactiveCompanies(bearerToken);
+            String serializedResponse = JsonSerializationUtility.getObjectMapperForFilledFields().writeValueAsString(inactiveCompanies);
             logger.info("Retrieved the inactive companies");
             return ResponseEntity.ok().body(serializedResponse);
 
@@ -271,7 +273,7 @@ public class StatisticsController {
         logger.info("Getting average response time for the party with id: {}",partyId);
         double averageResponseTime;
         try {
-            averageResponseTime = StatisticsDAOUtility.calculateAverageResponseTime(partyId);
+            averageResponseTime = StatisticsPersistenceUtility.calculateAverageResponseTime(partyId);
         }
         catch (Exception e){
             return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting average response time for the party with id: %s", partyId), e, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -290,7 +292,7 @@ public class StatisticsController {
     public ResponseEntity getAverageNegotiationTime(@ApiParam(value = "Identifier of the party as specified by the identity service") @RequestParam(value = "partyID") String partyId,
                                                     @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         logger.info("Getting average negotiation time for the party with id: {}",partyId);
-        double averageNegotiationTime = StatisticsDAOUtility.calculateAverageNegotiationTime(partyId,bearerToken);
+        double averageNegotiationTime = StatisticsPersistenceUtility.calculateAverageNegotiationTime(partyId,bearerToken);
         logger.info("Retrieved average negotiation time for the party with id: {}",partyId);
         return ResponseEntity.ok(averageNegotiationTime);
     }
