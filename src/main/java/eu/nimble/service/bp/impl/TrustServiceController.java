@@ -87,14 +87,14 @@ public class TrustServiceController {
             }
             // check whether the party is included in the process
             if(!(processDocumentMetadatas.get(0).getInitiatorID().contentEquals(partyId) || processDocumentMetadatas.get(0).getResponderID().contentEquals(partyId))) {
-                return HttpResponseUtil.createResponseEntityAndLog(String.format("Party: %s is not included in the process instance: {}", tradingPartnerId, processInstanceID), HttpStatus.BAD_REQUEST);
+                return HttpResponseUtil.createResponseEntityAndLog(String.format("Party: %s is not included in the process instance: %s", tradingPartnerId, processInstanceID), HttpStatus.BAD_REQUEST);
             }
             // check the values
             ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
             List<EvidenceSuppliedType> ratings = null;
             List<CommentType> reviews = null;
             if(ratingsString == null && reviewsString == null) {
-                return HttpResponseUtil.createResponseEntityAndLog(String.format("One of the ratings or reviews parameters must be {}", tradingPartnerId, processInstanceID), HttpStatus.BAD_REQUEST);
+                return HttpResponseUtil.createResponseEntityAndLog(String.format("One of the ratings or reviews parameters must be given for party: %s, process instance: %s", tradingPartnerId, processInstanceID), HttpStatus.BAD_REQUEST);
             }
             if(ratingsString != null) {
                 ratings = objectMapper.readValue(ratingsString, new TypeReference<List<EvidenceSuppliedType>>() {});
