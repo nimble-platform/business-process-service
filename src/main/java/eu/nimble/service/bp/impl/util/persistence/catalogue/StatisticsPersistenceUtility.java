@@ -156,7 +156,7 @@ public class StatisticsPersistenceUtility {
     public static double calculateAverageNegotiationTime(String partyID,String bearerToken){
         int numberOfNegotiations = 0;
         double totalTime = 0;
-        QualifyingPartyType qualifyingParty = CataloguePersistenceUtility.getQualifyingPartyType(partyID,bearerToken);
+        QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingPartyType(partyID,bearerToken);
         for (CompletedTaskType completedTask:qualifyingParty.getCompletedTask()){
             if(completedTask.getPeriod().getEndDate() == null || completedTask.getPeriod().getEndTime() == null){
                 continue;

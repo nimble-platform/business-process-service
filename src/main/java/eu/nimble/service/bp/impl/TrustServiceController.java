@@ -6,6 +6,7 @@ import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.impl.model.trust.NegotiationRatings;
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.catalogue.CataloguePersistenceUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.PartyPersistenceUtility;
 import eu.nimble.service.bp.impl.util.persistence.catalogue.TrustPersistenceUtility;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.messaging.KafkaSender;
@@ -70,7 +71,7 @@ public class TrustServiceController {
             }
 
             // check party
-            QualifyingPartyType qualifyingParty = CataloguePersistenceUtility.getQualifyingPartyType(partyId, bearerToken);
+            QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingParty(partyId);
             if (qualifyingParty == null) {
                 return HttpResponseUtil.createResponseEntityAndLog(String.format("No qualifying party exists for the given party id: %s", partyId), HttpStatus.BAD_REQUEST);
             }
@@ -81,7 +82,7 @@ public class TrustServiceController {
             }
             // check the trading partner existence
             String tradingPartnerId = ProcessDocumentMetadataDAOUtility.getTradingPartnerId(processDocumentMetadatas.get(0), partyId);
-            PartyType tradingParty = CataloguePersistenceUtility.getParty(tradingPartnerId);
+            PartyType tradingParty = PartyPersistenceUtility.getParty(tradingPartnerId);
             if(tradingParty == null) {
                 return HttpResponseUtil.createResponseEntityAndLog(String.format("No party exists for the given party id: %s", tradingPartnerId), HttpStatus.BAD_REQUEST);
             }
@@ -111,7 +112,7 @@ public class TrustServiceController {
             if (!completedTaskExist) {
                 TrustPersistenceUtility.createCompletedTasksForBothParties(processDocumentMetadatas.get(0), bearerToken, "Completed");
                 // get qualifyingParty (which contains the completed task) again
-                qualifyingParty = CataloguePersistenceUtility.getQualifyingPartyType(partyId, bearerToken);
+                qualifyingParty = PartyPersistenceUtility.getQualifyingPartyType(partyId, bearerToken);
             }
             CompletedTaskType completedTaskType = TrustPersistenceUtility.fillCompletedTask(qualifyingParty, ratings, reviews, processInstanceID);
             new JPARepositoryFactory().forCatalogueRepository().updateEntity(qualifyingParty);
@@ -150,7 +151,7 @@ public class TrustServiceController {
             logger.error(msg,e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
         }
-        QualifyingPartyType qualifyingParty = CataloguePersistenceUtility.getQualifyingPartyType(partyId,bearerToken);
+        QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingPartyType(partyId,bearerToken);
         JSONObject jsonResponse = createJSONResponse(qualifyingParty.getCompletedTask());
         logger.info("Retrieved ratings summary for the party with id: {}",partyId);
         return ResponseEntity.ok(jsonResponse.toString());
@@ -174,7 +175,7 @@ public class TrustServiceController {
                 logger.error(msg);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
             }
-            QualifyingPartyType qualifyingParty = CataloguePersistenceUtility.getQualifyingPartyType(partyId,bearerToken);
+            QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingPartyType(partyId,bearerToken);
             List<NegotiationRatings> negotiationRatings = TrustPersistenceUtility.createNegotiationRatings(qualifyingParty.getCompletedTask());
             String ratingsAndReviews = JsonSerializationUtility.getObjectMapper().writeValueAsString(negotiationRatings);
             logger.info("Retrieved all individual ratings and review for the party with id: {}",partyId);
