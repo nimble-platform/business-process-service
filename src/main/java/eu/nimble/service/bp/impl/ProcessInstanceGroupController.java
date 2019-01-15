@@ -131,8 +131,7 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
             boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(authorization);
             if(!isValid){
                 String msg = String.format("No user exists for the given token : %s",authorization);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+                return HttpResponseUtil.createResponseEntityAndLog(msg,null,HttpStatus.NOT_FOUND,LogLevel.ERROR);
             }
             // check whether the process instance id exists
             ProcessInstanceDAO pi = ProcessInstanceDAOUtility.getById(processInstanceId);
