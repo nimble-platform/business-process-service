@@ -710,7 +710,6 @@ paths:
           type: string
           enum:
           - STARTED
-          - WAITING
           - CANCELLED
           - COMPLETED
       - in: query
@@ -780,7 +779,6 @@ paths:
           type: string
           enum:
           - STARTED
-          - WAITING
           - CANCELLED
           - COMPLETED
       - name: Authorization
@@ -1046,7 +1044,6 @@ definitions:
         type: string
         enum:
         - STARTED
-        - WAITING
         - CANCELLED
         - COMPLETED
 
@@ -1151,7 +1148,6 @@ definitions:
           type: string
           enum:
           - STARTED
-          - WAITING
           - CANCELLED
           - COMPLETED
 

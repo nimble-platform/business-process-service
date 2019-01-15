@@ -107,7 +107,7 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
             @ApiParam(value = "Identifier (party id) of the corresponding trading partners") @RequestParam(value = "tradingPartnerIDs", required = false) List<String> tradingPartnerIDs,
             @ApiParam(value = "Whether the collaboration group is archived or not", defaultValue = "false") @RequestParam(value = "archived", required = false, defaultValue = "false") Boolean archived,
             @ApiParam(value = "Role of the party in the collaboration.\nPossible values:SELLER,BUYER") @RequestParam(value = "collaborationRole", required = false) String collaborationRole,
-            @ApiParam(value = "Status of the process instance included in the group\nPossible values:STARTED,WAITING,CANCELLED,COMPLETED") @RequestParam(value = "status", required = false) List<String> status) {
+            @ApiParam(value = "Status of the process instance included in the group\nPossible values:STARTED,CANCELLED,COMPLETED") @RequestParam(value = "status", required = false) List<String> status) {
 
         ProcessInstanceGroupFilter filters = CollaborationGroupDAOUtility.getFilterDetails(partyId, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, status, null, null, bearerToken);
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(filters);
