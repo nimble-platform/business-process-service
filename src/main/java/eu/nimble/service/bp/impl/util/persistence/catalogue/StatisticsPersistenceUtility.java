@@ -153,8 +153,8 @@ public class StatisticsPersistenceUtility {
         return inactiveParties;
     }
 
-    public static double calculateAverageNegotiationTime(String partyID,String bearerToken){
-        int numberOfNegotiations = 0;
+    public static double calculateAverageCollaborationTime(String partyID, String bearerToken){
+        int numberOfCollaborations = 0;
         double totalTime = 0;
         QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingPartyType(partyID,bearerToken);
         for (CompletedTaskType completedTask:qualifyingParty.getCompletedTask()){
@@ -166,13 +166,13 @@ public class StatisticsPersistenceUtility {
             Date startTime = completedTask.getPeriod().getStartTime().toGregorianCalendar().getTime();
             Date endTime = completedTask.getPeriod().getEndTime().toGregorianCalendar().getTime();
 
-            numberOfNegotiations++;
+            numberOfCollaborations++;
             totalTime += ((endDate.getTime()-startDate.getTime())+(endTime.getTime()-startTime.getTime()))/86400000.0;
         }
-        if(numberOfNegotiations == 0){
+        if(numberOfCollaborations == 0){
             return 0.0;
         }
-        return totalTime/numberOfNegotiations;
+        return totalTime/numberOfCollaborations;
     }
 
     public static double calculateAverageResponseTime(String partyID) throws Exception{

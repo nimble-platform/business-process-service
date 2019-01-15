@@ -157,7 +157,7 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
         }
     }
 
-    @ApiOperation(value = "", notes = "Cancel the collaboration (negotiation) which is represented by the given group id")
+    @ApiOperation(value = "", notes = "Cancel the collaboration which is represented by the given group id")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Cancelled the collaboration for the given group id successfully "),
             @ApiResponse(code = 400, message = "There does not exist a process instance group with the given id"),

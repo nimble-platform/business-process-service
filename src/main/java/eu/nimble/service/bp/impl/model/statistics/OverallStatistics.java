@@ -2,17 +2,17 @@ package eu.nimble.service.bp.impl.model.statistics;
 
 public class OverallStatistics {
 
-    private double averageNegotiationTime;
+    private double averageCollaborationTime;
     private double averageResponseTime;
     private double tradingVolume;
     private int numberOfTransactions;
 
-    public double getAverageNegotiationTime() {
-        return averageNegotiationTime;
+    public double getAverageCollaborationTime() {
+        return averageCollaborationTime;
     }
 
-    public void setAverageNegotiationTime(double averageNegotiationTime) {
-        this.averageNegotiationTime = averageNegotiationTime;
+    public void setAverageCollaborationTime(double averageCollaborationTime) {
+        this.averageCollaborationTime = averageCollaborationTime;
     }
 
     public double getAverageResponseTime() {
