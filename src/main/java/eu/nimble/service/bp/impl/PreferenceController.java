@@ -25,7 +25,6 @@ import java.io.IOException;
 /**
  * Created by yildiray on 5/25/2017.
  */
-@Controller
 public class PreferenceController implements PreferenceApi {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 

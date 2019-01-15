@@ -97,7 +97,7 @@ public class Test27_BinaryContentTest {
 
         itemInformationRequest.getItemInformationRequestLine().get(0).getSalesItem().get(0).getItem().getItemSpecificationDocumentReference().get(0).getAttachment().setEmbeddedDocumentBinaryObject(binaryObjectType);
 
-        request = put("/processInstance")
+        request = patch("/processInstance")
                 .header("Authorization",environment.getProperty("nimble.test-initiator-token"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(JsonSerializationUtility.getObjectMapper().writeValueAsString(itemInformationRequest))

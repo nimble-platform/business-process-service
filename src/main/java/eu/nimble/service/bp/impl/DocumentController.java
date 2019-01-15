@@ -8,7 +8,6 @@ import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceU
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
-import eu.nimble.service.bp.swagger.api.DocumentApi;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.order.ObjectFactory;
@@ -27,6 +26,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import javax.ws.rs.HEAD;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +37,7 @@ import static eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog;
  * Created by yildiray on 5/25/2017.
  */
 @Controller
-public class DocumentController implements DocumentApi {
+public class DocumentController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @ApiOperation(value = "",notes = "Retrieve Json content of the document with the given id")
@@ -118,10 +118,10 @@ public class DocumentController implements DocumentApi {
     }
     // The above two operations are to retrieve the document contents
 
-    @Override
-    @ApiOperation(value = "",notes = "Add a business process document metadata")
-    public ResponseEntity<ModelApiResponse> addDocumentMetadata(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
-                                                                @RequestBody ProcessDocumentMetadata body) {
+//    @Override
+//    @ApiOperation(value = "",notes = "Add a business process document metadata")
+    public ResponseEntity<ModelApiResponse> addDocumentMetadata(@RequestBody ProcessDocumentMetadata body,
+                                                                @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
         try{
             // check token
@@ -142,10 +142,10 @@ public class DocumentController implements DocumentApi {
         return HibernateSwaggerObjectMapper.getApiResponse();
     }
 
-    @Override
-    @ApiOperation(value = "",notes = "Update a business process document metadata")
-    public ResponseEntity<ModelApiResponse> updateDocumentMetadata(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
-                                                                   @RequestBody ProcessDocumentMetadata body) {
+//    @Override
+//    @ApiOperation(value = "",notes = "Update a business process document metadata")
+    public ResponseEntity<ModelApiResponse> updateDocumentMetadata(@RequestBody ProcessDocumentMetadata body,
+                                                                   @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
         try{
             // check token
@@ -166,10 +166,10 @@ public class DocumentController implements DocumentApi {
         return HibernateSwaggerObjectMapper.getApiResponse();
     }
 
-    @Override
-    @ApiOperation(value = "",notes = "Delete the business process document metadata together with content by id")
-    public ResponseEntity<ModelApiResponse> deleteDocument(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
-                                                           @PathVariable("documentID") String documentID) {
+//    @Override
+//    @ApiOperation(value = "",notes = "Delete the business process document metadata together with content by id")
+    public ResponseEntity<ModelApiResponse> deleteDocument(@PathVariable("documentID") String documentID,
+                                                           @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         logger.info(" $$$ Deleting Document for ... {}", documentID);
         try {
             // check token
@@ -188,10 +188,10 @@ public class DocumentController implements DocumentApi {
         return HibernateSwaggerObjectMapper.getApiResponse();
     }
 
-    @Override
-    @ApiOperation(value = "",notes = "Get the business process document metadata")
-    public ResponseEntity<List<ProcessDocumentMetadata>> getDocuments(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
-                                                                      @PathVariable("partnerID") String partnerID, @PathVariable("type") String type) {
+//    @Override
+//    @ApiOperation(value = "",notes = "Get the business process document metadata")
+    public ResponseEntity<List<ProcessDocumentMetadata>> getDocuments(@PathVariable("partnerID") String partnerID, @PathVariable("type") String type,
+                                                                      @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         logger.info(" $$$ Getting Document for partner {}, type {}", partnerID, type);
         try {
             // check token
@@ -216,10 +216,10 @@ public class DocumentController implements DocumentApi {
         return new ResponseEntity<>(processDocuments, HttpStatus.OK);
     }
 
-    @Override
-    @ApiOperation(value = "",notes = "Get the business process document metadata")
-    public ResponseEntity<List<ProcessDocumentMetadata>> getDocuments(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
-                                                                      @PathVariable("partnerID") String partnerID, @PathVariable("type") String type, @PathVariable("source") String source) {
+//    @Override
+//    @ApiOperation(value = "",notes = "Get the business process document metadata")
+    public ResponseEntity<List<ProcessDocumentMetadata>> getDocuments(@PathVariable("partnerID") String partnerID, @PathVariable("type") String type, @PathVariable("source") String source,
+                                                                      @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         logger.info(" $$$ Getting Document for partner {}, type {}, source {}", partnerID, type, source);
         try {
             // check token
@@ -243,11 +243,11 @@ public class DocumentController implements DocumentApi {
         return new ResponseEntity<>(processDocuments, HttpStatus.OK);
     }
 
-    @Override
-    @ApiOperation(value = "",notes = "Get the business process document metadata")
-    public ResponseEntity<List<ProcessDocumentMetadata>> getDocuments(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
-                                                                      @PathVariable("partnerID") String partnerID, @PathVariable("type") String type,
-            @PathVariable("source") String source, @PathVariable("status") String status) {
+//    @Override
+//    @ApiOperation(value = "",notes = "Get the business process document metadata")
+    public ResponseEntity<List<ProcessDocumentMetadata>> getDocuments(@PathVariable("partnerID") String partnerID, @PathVariable("type") String type,
+            @PathVariable("source") String source, @PathVariable("status") String status,
+                                                                      @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         logger.info(" $$$ Getting Document for partner {}, type {}, status {}, source {}", partnerID, type, status, source);
         try {
             // check token
