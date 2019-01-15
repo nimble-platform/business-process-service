@@ -23,7 +23,6 @@ import java.util.List;
 /**
  * Created by yildiray on 5/25/2017.
  */
-@Controller
 public class ApplicationController implements ApplicationApi {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 

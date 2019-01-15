@@ -83,7 +83,7 @@ public class ProcessInstanceController {
             @ApiResponse(code = 500, message = "Unexpected error while updating the process instance with the given id")
     })
     @RequestMapping(value = "/processInstance",
-            method = RequestMethod.PUT)
+            method = RequestMethod.PATCH)
     public ResponseEntity updateProcessInstance(@ApiParam(value = "Serialized process instance document") @RequestBody String content,
                                                 @ApiParam(value = "Type of the process instance document to be updated") @RequestParam(value = "processID") DocumentType documentType,
                                                 @ApiParam(value = "Identifier of the process instance to be updated") @RequestParam(value = "processInstanceID") String processInstanceID,

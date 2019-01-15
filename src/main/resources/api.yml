@@ -354,149 +354,149 @@ paths:
           schema:
             $ref: '#/definitions/ProcessInstance'
 
-  /document:
-    post:
-      operationId: addDocumentMetadata
-      consumes:
-      - application/json
-      produces:
-      - application/json
-      parameters:
-      - in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/ProcessDocumentMetadata'
-      responses:
-        # Response code
-        200:
-          description: Document added
-          schema:
-            $ref: '#/definitions/ApiResponse'
-    put:
-      operationId: updateDocumentMetadata
-      consumes:
-      - application/json
-      produces:
-      - application/json
-      parameters:
-      - in: body
-        name: body
-        schema:
-          $ref: '#/definitions/ProcessDocumentMetadata'
-      responses:
-        # Response code
-        200:
-          description: Document updated
-          schema:
-            $ref: '#/definitions/ApiResponse'
-
-  /document/{documentID}:
-    delete:
-      operationId: deleteDocument
-      produces:
-      - application/json
-      parameters:
-      - in: path
-        name: documentID
-        type: string
-        required: true
-      responses:
-        # Response code
-        200:
-          description: Document deleted
-          schema:
-            $ref: '#/definitions/ApiResponse'
-
-  /document/{partnerID}/{type}/{source}/{status}:
-    get:
-      operationId: getDocuments
-      produces:
-      - application/json
-      parameters:
-      - in: path
-        name: partnerID
-        type: string
-        description: The id of the partner.
-        required: true
-      - in: path
-        name: type
-        type: string
-        description: The type of the document such as PPAPRESPONSE,ORDERRESPONSESIMPLE,REQUESTFORQUOTATION etc.
-        required: true
-      - in: path
-        name: status
-        type: string
-        description: The status of the document. (APPROVED, WAITINGRESPONSE, DENIED or PASTDUE)
-        required: true
-      - in: path
-        name: source
-        type: string
-        description: The source of the document (whether it is sent or received by the partner - SENT, RECEIVED).
-        required: true
-      responses:
-        # Response code
-        200:
-          description: Document obtained
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/ProcessDocumentMetadata'
-
-  /document/{partnerID}/{type}/{source}:
-    get:
-      operationId: getDocuments
-      produces:
-      - application/json
-      parameters:
-      - in: path
-        name: partnerID
-        type: string
-        description: The id of the partner.
-        required: true
-      - in: path
-        name: type
-        type: string
-        description: The type of the document such as PPAPRESPONSE,ORDERRESPONSESIMPLE,REQUESTFORQUOTATION etc.
-        required: true
-      - in: path
-        name: source
-        type: string
-        description: The source of the document (whether it is sent or received by the partner - SENT, RECEIVED).
-        required: true
-      responses:
-        # Response code
-        200:
-          description: Document obtained
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/ProcessDocumentMetadata'
-
-  /document/{partnerID}/{type}:
-    get:
-      operationId: getDocuments
-      produces:
-      - application/json
-      parameters:
-      - in: path
-        name: partnerID
-        type: string
-        description: The id of the partner.
-        required: true
-      - in: path
-        name: type
-        type: string
-        description: The type of the document such as PPAPRESPONSE,ORDERRESPONSESIMPLE,REQUESTFORQUOTATION etc.
-        required: true
-      responses:
-        # Response code
-        200:
-          description: Document obtained
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/ProcessDocumentMetadata'
+#  /document:
+#    post:
+#      operationId: addDocumentMetadata
+#      consumes:
+#      - application/json
+#      produces:
+#      - application/json
+#      parameters:
+#      - in: body
+#        name: body
+#        required: true
+#        schema:
+#          $ref: '#/definitions/ProcessDocumentMetadata'
+#      responses:
+#        # Response code
+#        200:
+#          description: Document added
+#          schema:
+#            $ref: '#/definitions/ApiResponse'
+#    put:
+#      operationId: updateDocumentMetadata
+#      consumes:
+#      - application/json
+#      produces:
+#      - application/json
+#      parameters:
+#      - in: body
+#        name: body
+#        schema:
+#          $ref: '#/definitions/ProcessDocumentMetadata'
+#      responses:
+#        # Response code
+#        200:
+#          description: Document updated
+#          schema:
+#            $ref: '#/definitions/ApiResponse'
+#
+#  /document/{documentID}:
+#    delete:
+#      operationId: deleteDocument
+#      produces:
+#      - application/json
+#      parameters:
+#      - in: path
+#        name: documentID
+#        type: string
+#        required: true
+#      responses:
+#        # Response code
+#        200:
+#          description: Document deleted
+#          schema:
+#            $ref: '#/definitions/ApiResponse'
+#
+#  /document/{partnerID}/{type}/{source}/{status}:
+#    get:
+#      operationId: getDocuments
+#      produces:
+#      - application/json
+#      parameters:
+#      - in: path
+#        name: partnerID
+#        type: string
+#        description: The id of the partner.
+#        required: true
+#      - in: path
+#        name: type
+#        type: string
+#        description: The type of the document such as PPAPRESPONSE,ORDERRESPONSESIMPLE,REQUESTFORQUOTATION etc.
+#        required: true
+#      - in: path
+#        name: status
+#        type: string
+#        description: The status of the document. (APPROVED, WAITINGRESPONSE, DENIED or PASTDUE)
+#        required: true
+#      - in: path
+#        name: source
+#        type: string
+#        description: The source of the document (whether it is sent or received by the partner - SENT, RECEIVED).
+#        required: true
+#      responses:
+#        # Response code
+#        200:
+#          description: Document obtained
+#          schema:
+#            type: array
+#            items:
+#              $ref: '#/definitions/ProcessDocumentMetadata'
+#
+#  /document/{partnerID}/{type}/{source}:
+#    get:
+#      operationId: getDocuments
+#      produces:
+#      - application/json
+#      parameters:
+#      - in: path
+#        name: partnerID
+#        type: string
+#        description: The id of the partner.
+#        required: true
+#      - in: path
+#        name: type
+#        type: string
+#        description: The type of the document such as PPAPRESPONSE,ORDERRESPONSESIMPLE,REQUESTFORQUOTATION etc.
+#        required: true
+#      - in: path
+#        name: source
+#        type: string
+#        description: The source of the document (whether it is sent or received by the partner - SENT, RECEIVED).
+#        required: true
+#      responses:
+#        # Response code
+#        200:
+#          description: Document obtained
+#          schema:
+#            type: array
+#            items:
+#              $ref: '#/definitions/ProcessDocumentMetadata'
+#
+#  /document/{partnerID}/{type}:
+#    get:
+#      operationId: getDocuments
+#      produces:
+#      - application/json
+#      parameters:
+#      - in: path
+#        name: partnerID
+#        type: string
+#        description: The id of the partner.
+#        required: true
+#      - in: path
+#        name: type
+#        type: string
+#        description: The type of the document such as PPAPRESPONSE,ORDERRESPONSESIMPLE,REQUESTFORQUOTATION etc.
+#        required: true
+#      responses:
+#        # Response code
+#        200:
+#          description: Document obtained
+#          schema:
+#            type: array
+#            items:
+#              $ref: '#/definitions/ProcessDocumentMetadata'
 
   /collaboration-groups/{id}:
     patch:
