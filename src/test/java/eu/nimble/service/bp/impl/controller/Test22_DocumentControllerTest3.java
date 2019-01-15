@@ -16,6 +16,7 @@ import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.env.Environment;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
@@ -37,10 +38,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("local_dev")
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringJUnit4ClassRunner.class)
+@Ignore
 public class Test22_DocumentControllerTest3 {
     @Autowired
     private MockMvc mockMvc;
-
+    @Autowired
+    private Environment environment;
     private ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
     private final String partnerID = "706";
     private final String type = "ORDER";
@@ -51,7 +54,8 @@ public class Test22_DocumentControllerTest3 {
     @Test
     public void deleteDocument() throws Exception {
         // get the document
-        MockHttpServletRequestBuilder request = get("/document/" + partnerID + "/" + type);
+        MockHttpServletRequestBuilder request = get("/document/" + partnerID + "/" + type)
+                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
 
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
@@ -66,7 +70,8 @@ public class Test22_DocumentControllerTest3 {
         }
 
         // delete the document
-        request = delete("/document/" + response.get(0).getDocumentID());
+        request = delete("/document/" + response.get(0).getDocumentID())
+                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
         mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         ModelApiResponse response1 = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ModelApiResponse.class);

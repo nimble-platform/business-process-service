@@ -48,6 +48,7 @@ public class Test28_HjidCheckTest {
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(itemInformationRequestJSON));
         // start the business process
         MockHttpServletRequestBuilder request = post("/start")
+                .header("Authorization",environment.getProperty("nimble.test-initiator-token"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -56,14 +57,16 @@ public class Test28_HjidCheckTest {
         Assert.assertEquals(processInstance.getStatus(), ProcessInstance.StatusEnum.STARTED);
 
         // get document content
-        request = get("/document/json/2890ce89-b695-4c51-bae5-c8acd2a48cc6");
+        request = get("/document/json/2890ce89-b695-4c51-bae5-c8acd2a48cc6")
+                .header("Authorization",environment.getProperty("nimble.test-initiator-token"));
         mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         ItemInformationRequestType iir = JsonSerializationUtility.getObjectMapper().readValue(mvcResult.getResponse().getContentAsString(), ItemInformationRequestType.class);
 
 
         // get document content
-        request = get("/document/json/154d8ee1-f6f5-4bh5-9957-58068565eb41");
+        request = get("/document/json/154d8ee1-f6f5-4bh5-9957-58068565eb41")
+                .header("Authorization",environment.getProperty("nimble.test-initiator-token"));
         mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         ItemInformationRequestType itemInformationRequest = JsonSerializationUtility.getObjectMapper().readValue(mvcResult.getResponse().getContentAsString(), ItemInformationRequestType.class);
@@ -71,6 +74,7 @@ public class Test28_HjidCheckTest {
         itemInformationRequest.getItemInformationRequestLine().get(0).getSalesItem().get(0).getItem().getCommodityClassification().get(0).getItemClassificationCode().setHjid(iir.getHjid());
 
         request = put("/processInstance")
+                .header("Authorization",environment.getProperty("nimble.test-initiator-token"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(JsonSerializationUtility.getObjectMapper().writeValueAsString(itemInformationRequest))
                 .param("processID", "ITEMINFORMATIONREQUEST")

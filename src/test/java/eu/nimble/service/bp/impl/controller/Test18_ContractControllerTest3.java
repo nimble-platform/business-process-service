@@ -49,6 +49,7 @@ public class Test18_ContractControllerTest3 {
     public void deleteClauseFromContract() throws Exception {
         MockHttpServletRequestBuilder request = delete("/contracts/" + Test16_ContractControllerTest.contractId + "/clauses/" + Test16_ContractControllerTest.clauseId)
                 .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
+
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
         ContractType contract = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ContractType.class);
 

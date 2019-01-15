@@ -1,6 +1,7 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.impl.contract.ContractGenerator;
+import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -28,9 +29,23 @@ public class ContractGeneratorController {
     @RequestMapping(value = "/contracts/create-bundle",
             method = RequestMethod.GET,
             produces = {"application/zip"})
-    public void generateContract(@ApiParam(value = "Identifier of the order for which the contract will be generated") @RequestParam(value = "orderId", required = true) String orderId, HttpServletResponse response){
+    public void generateContract(@ApiParam(value = "Identifier of the order for which the contract will be generated") @RequestParam(value = "orderId", required = true) String orderId,
+                                 @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,HttpServletResponse response){
         try{
             logger.info("Generating contract for the order with id : {}",orderId);
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                response.setStatus(HttpStatus.NOT_FOUND.value());
+                try{
+                    response.getOutputStream().write(msg.getBytes());
+                }
+                catch (Exception e1){
+                    logger.error("Failed to write the error message to the output stream",e1);
+                }
+            }
 
             ZipOutputStream zos = new ZipOutputStream(response.getOutputStream());
 
@@ -74,6 +89,14 @@ public class ContractGeneratorController {
         logger.info("Generating Order Terms and Conditions as text for the order with id : {}",orderId);
 
         try {
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            }
+
             ContractGenerator contractGenerator = new ContractGenerator();
 
             String text = contractGenerator.generateOrderTermsAndConditionsAsText(orderId,sellerPartyId,buyerPartyId,incoterms,tradingTerms,bearerToken);

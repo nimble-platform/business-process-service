@@ -7,12 +7,14 @@ import eu.nimble.utility.JsonSerializationUtility;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -28,10 +30,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 @ActiveProfiles("local_dev")
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringJUnit4ClassRunner.class)
+@Ignore
 public class Test07_ContentControllerTest2 {
 
     @Autowired
     private MockMvc mockMvc;
+    @Autowired
+    private Environment environment;
 
     private ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
     private final String expectedResult = "SUCCESS";
@@ -39,7 +44,8 @@ public class Test07_ContentControllerTest2 {
 
     @Test
     public void deleteProcessDefinition() throws Exception {
-        MockHttpServletRequestBuilder request = delete("/content/" + Test06_ContentControllerTest.process.getProcessID());
+        MockHttpServletRequestBuilder request = delete("/content/" + Test06_ContentControllerTest.process.getProcessID())
+                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andReturn();
 
         ModelApiResponse apiResponse = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ModelApiResponse.class);
@@ -52,6 +58,7 @@ public class Test07_ContentControllerTest2 {
         String processDefJSON = IOUtils.toString(Process.class.getResourceAsStream(processDefinitionJSON));
 
         MockHttpServletRequestBuilder request = post("/content")
+                .header("Authorization", environment.getProperty("nimble.test-initiator-token"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(processDefJSON);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andReturn();

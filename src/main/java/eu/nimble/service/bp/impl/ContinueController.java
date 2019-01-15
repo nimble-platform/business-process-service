@@ -8,6 +8,7 @@ import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMappe
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceGroupDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
+import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.api.ContinueApi;
@@ -50,6 +51,13 @@ public class ContinueController implements ContinueApi {
         ProcessInstance processInstance = null;
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
         try {
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            }
             // check the entity ids in the passed document
             Transaction.DocumentTypeEnum documentType = BusinessProcessUtility.getResponseDocumentForProcess(body.getVariables().getProcessID());
             Object document = DocumentPersistenceUtility.readDocument(DocumentType.valueOf(documentType.toString()), body.getVariables().getContent());

@@ -20,6 +20,7 @@ import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.resource.EntityIdAwareRepositoryWrapper;
 import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
@@ -66,9 +67,17 @@ public class ContractController {
     @RequestMapping(value = "/clauses/{clauseId}",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity getClauseDetails(@PathVariable(value = "clauseId", required = true) String clauseId) {
+    public ResponseEntity getClauseDetails(@PathVariable(value = "clauseId", required = true) String clauseId,
+                                           @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         try {
             logger.info("Getting clause with id: {}", clauseId);
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            }
             ClauseType clause = ContractPersistenceUtility.getClause(clauseId);
             if (clause == null) {
                 return createResponseEntityAndLog(String.format("No clause for the given id: %s", clauseId), HttpStatus.NOT_FOUND);
@@ -86,11 +95,17 @@ public class ContractController {
             method = RequestMethod.PUT)
     public ResponseEntity updateClause(@PathVariable(value = "clauseId") String clauseId,
                                        @RequestBody String serializedClause,
-                                       @RequestHeader(value = "Authorization", required = true) String bearerToken) {
+                                       @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
 
         try {
             logger.info("Updating clause with id: {}", clauseId);
-
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            }
             // get person using the given bearer token
             PersonType person = SpringBridge.getInstance().getIdentityClientTyped().getPerson(bearerToken);
             // get party for the person
@@ -149,9 +164,17 @@ public class ContractController {
     @ApiOperation(value = "",notes = "Construct contract starting from the process instance with the given id")
     @RequestMapping(value = "/contracts",
             method = RequestMethod.GET)
-    public ResponseEntity constructContractForProcessInstances(@RequestParam(value = "processInstanceId") String processInstanceId) {
+    public ResponseEntity constructContractForProcessInstances(@RequestParam(value = "processInstanceId") String processInstanceId,
+                                                               @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         try {
             logger.info("Constructing contract starting from the process instance: {}", processInstanceId);
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            }
             // check existence and type of the process instance
             ProcessInstanceDAO processInstance = ProcessInstanceDAOUtility.getById(processInstanceId);
             if (processInstance == null) {
@@ -187,9 +210,18 @@ public class ContractController {
     @RequestMapping(value = "/contracts/{contractId}/clauses",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity getClausesOfContract(@PathVariable(value = "contractId") String contractId) {
+    public ResponseEntity getClausesOfContract(@PathVariable(value = "contractId") String contractId,
+                                               @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
+    ) {
         try {
             logger.info("Getting clauses for contract: {}", contractId);
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            }
             ContractType contract = ContractPersistenceUtility.getContract(contractId);
             if (contract == null) {
                 return createResponseEntityAndLog(String.format("No contract for the given id: %s", contractId), HttpStatus.BAD_REQUEST);
@@ -213,7 +245,8 @@ public class ContractController {
             method = RequestMethod.DELETE)
     public ResponseEntity deleteClauseFromContract(@PathVariable(value = "contractId") String contractId,
                                                    @PathVariable(value = "clauseId") String clauseId,
-                                                   @RequestHeader(value = "Authorization", required = true) String bearerToken) {
+                                                   @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
+    ) {
         try {
             logger.info("Deleting clause: {} from contract: {}", clauseId, contractId);
             // get person using the given bearer token
@@ -221,6 +254,13 @@ public class ContractController {
             // get party for the person
             PartyType party = SpringBridge.getInstance().getIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
 
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            }
             // check existence of contract
             ContractType contract = ContractPersistenceUtility.getContract(contractId);
             if (contract == null) {
@@ -266,9 +306,17 @@ public class ContractController {
             produces = {"application/json"},
             method = RequestMethod.GET)
     public ResponseEntity getClauseDetails(@PathVariable(value = "documentId", required = true) String documentId,
-                                                       @RequestParam(value = "clauseType", required = true) eu.nimble.service.model.ubl.extension.ClauseType clauseType) {
+                                           @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
+                                           @RequestParam(value = "clauseType", required = true) eu.nimble.service.model.ubl.extension.ClauseType clauseType) {
         try {
             logger.info("Getting clause for document: {}, type: {}", documentId, clauseType);
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            }
             // check existence and type of the document bound to the contract
             ProcessDocumentMetadataDAO documentMetadata = ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId);
             if (documentMetadata == null) {
@@ -297,10 +345,16 @@ public class ContractController {
             method = RequestMethod.PATCH)
     public ResponseEntity addDocumentClauseToContract(@PathVariable(value = "documentId") String documentId,
                                                       @RequestParam(value = "clauseDocumentId") String clauseDocumentId,
-                                                      @RequestHeader(value = "Authorization", required = true) String bearerToken) {
+                                                      @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         try {
             logger.info("Adding document clause to contract. Bounded-document id: {}, clause document id: {}", documentId, clauseDocumentId);
-
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            }
             // check the passed parameters
             // check existence and type of the document bound to the contract
             ResponseEntity response = validateDocumentExistence(documentId);
@@ -355,10 +409,17 @@ public class ContractController {
             method = RequestMethod.PATCH)
     public ResponseEntity addDataMonitoringClauseToContract(@PathVariable(value = "documentId") String documentId,
                                                             @RequestBody DataMonitoringClauseType dataMonitoringClause,
-                                                            @RequestHeader(value = "Authorization", required = true) String bearerToken) {
+                                                            @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
 
         try {
             logger.info("Adding data monitoring clause to contract. Bounded-document id: {}", documentId);
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            }
             // check existence and type of the document bound to the contract
             ResponseEntity response = validateDocumentExistence(documentId);
             if (response != null) {

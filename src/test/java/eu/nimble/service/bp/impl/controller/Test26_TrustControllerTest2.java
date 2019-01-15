@@ -58,7 +58,11 @@ public class Test26_TrustControllerTest2 {
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         List<NegotiationRatings> negotiationRatings = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),new TypeReference<List<NegotiationRatings>>(){});
-
-        Assert.assertEquals(6,negotiationRatings.get(0).getRatings().size());
+        // get ratings for the process instance id
+        for(NegotiationRatings ratings:negotiationRatings){
+            if(ratings.getProcessInstanceID().equals(Test25_TrustControllerTest.processInstanceId)){
+                Assert.assertEquals(6,ratings.getRatings().size());
+            }
+        }
     }
 }

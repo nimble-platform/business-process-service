@@ -3,6 +3,7 @@ package eu.nimble.service.bp.impl;
 import eu.nimble.service.bp.hyperjaxb.model.CollaborationGroupDAO;
 import eu.nimble.service.bp.impl.util.persistence.bp.CollaborationGroupDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMapper;
+import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.swagger.api.CollaborationGroupsApi;
 import eu.nimble.service.bp.swagger.model.CollaborationGroup;
 import eu.nimble.service.bp.swagger.model.CollaborationGroupResponse;
@@ -17,8 +18,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 @Controller
@@ -29,8 +32,24 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
     private JPARepositoryFactory repoFactory;
 
     @Override
-    public ResponseEntity<CollaborationGroup> archiveCollaborationGroup(@ApiParam(value = "Identifier of the collaboration group to be archived", required = true) @PathVariable("id") String id) {
+    public ResponseEntity<CollaborationGroup> archiveCollaborationGroup(@ApiParam(value = "Identifier of the collaboration group to be archived", required = true) @PathVariable("id") String id,
+                                                                        @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
+    ) {
         logger.debug("Archiving CollaborationGroup: {}", id);
+        try {
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            }
+        } catch (IOException e){
+            String msg = String.format("Failed to archive collaboration group for id: %s",id);
+            logger.error(msg,e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+
 
         CollaborationGroupDAO collaborationGroupDAO = CollaborationGroupDAOUtility.archiveCollaborationGroup(id);
 
@@ -41,8 +60,24 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
     }
 
     @Override
-    public ResponseEntity<Void> deleteCollaborationGroup(@ApiParam(value = "Identifier of the collaboration group to be deleted", required = true) @PathVariable("id") String id) {
+    public ResponseEntity<Void> deleteCollaborationGroup(@ApiParam(value = "Identifier of the collaboration group to be deleted", required = true) @PathVariable("id") String id,
+                                                         @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
+    ) {
         logger.debug("Deleting CollaborationGroup ID: {}", id);
+        try {
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            }
+        } catch (IOException e){
+            String msg = String.format("Failed to delete collaboration group for id: %s",id);
+            logger.error(msg,e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+
 
         CollaborationGroupDAOUtility.deleteCollaborationGroupDAOByID(Long.parseLong(id));
 
@@ -52,9 +87,23 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
     }
 
     @Override
-    public ResponseEntity<CollaborationGroup> getCollaborationGroup(@ApiParam(value = "Identifier of the collaboration group to be received", required = true) @PathVariable("id") String id) {
+    public ResponseEntity<CollaborationGroup> getCollaborationGroup(@ApiParam(value = "Identifier of the collaboration group to be received", required = true) @PathVariable("id") String id,
+                                                                    @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
+    ) {
         logger.debug("Getting CollaborationGroup: {}", id);
-
+        try {
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            }
+        } catch (IOException e){
+            String msg = String.format("Failed to retrieve collaboration group for id: %s",id);
+            logger.error(msg,e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
         CollaborationGroupDAO collaborationGroupDAO = repoFactory.forBpRepository().getSingleEntityByHjid(CollaborationGroupDAO.class, Long.parseLong(id));
         if (collaborationGroupDAO == null) {
             logger.error("There does not exist a collaboration group with id: {}", id);
@@ -97,8 +146,24 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
     }
 
     @Override
-    public ResponseEntity<CollaborationGroup> restoreCollaborationGroup(@ApiParam(value = "Identifier of the collaboration group to be restored", required = true) @PathVariable("id") String id) {
+    public ResponseEntity<CollaborationGroup> restoreCollaborationGroup(@ApiParam(value = "Identifier of the collaboration group to be restored", required = true) @PathVariable("id") String id,
+                                                                        @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
+    ) {
         logger.debug("Restoring CollaborationGroup: {}", id);
+        try {
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            }
+        } catch (IOException e){
+            String msg = String.format("Failed to restore collaboration group: %s",id);
+            logger.error(msg,e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+
 
         CollaborationGroupDAO collaborationGroupDAO = CollaborationGroupDAOUtility.restoreCollaborationGroup(id);
 
@@ -110,8 +175,23 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
 
     @Override
     public ResponseEntity<Void> updateCollaborationGroupName(@ApiParam(value = "Identifier of the collaboration group", required = true) @PathVariable("id") String id,
-                                                             @ApiParam(value = "Value to be set as name of the collaboration group", required = true) @RequestParam(value = "groupName", required = true) String groupName) {
+                                                             @ApiParam(value = "Value to be set as name of the collaboration group", required = true) @RequestParam(value = "groupName", required = true) String groupName,
+                                                             @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
+    ) {
         logger.debug("Updating name of the collaboration group :" + id);
+        try {
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            }
+        } catch (IOException e){
+            String msg = String.format("Failed to update collaboration group name for id: %s",id);
+            logger.error(msg,e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
         GenericJPARepository repo = repoFactory.forBpRepository();
         CollaborationGroupDAO collaborationGroupDAO = repo.getSingleEntityByHjid(CollaborationGroupDAO.class, Long.parseLong(id));
         if (collaborationGroupDAO == null) {

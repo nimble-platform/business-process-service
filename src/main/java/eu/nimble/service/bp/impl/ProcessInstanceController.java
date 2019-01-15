@@ -8,6 +8,7 @@ import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDocumentMetadataDAOU
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.impl.util.persistence.catalogue.TrustPersistenceUtility;
+import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
@@ -55,6 +56,13 @@ public class ProcessInstanceController {
         logger.debug("Cancelling process instance with id: {}",processInstanceId);
 
         try {
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            }
             ProcessInstanceDAO instanceDAO = ProcessInstanceDAOUtility.getById(processInstanceId);
             // check whether the process instance with the given id exists or not
             if(instanceDAO == null){
@@ -87,13 +95,22 @@ public class ProcessInstanceController {
     public ResponseEntity updateProcessInstance(@ApiParam(value = "Serialized process instance document") @RequestBody String content,
                                                 @ApiParam(value = "Type of the process instance document to be updated") @RequestParam(value = "processID") DocumentType documentType,
                                                 @ApiParam(value = "Identifier of the process instance to be updated") @RequestParam(value = "processInstanceID") String processInstanceID,
-                                                @ApiParam(value = "Id of the user who updated the process instance") @RequestParam(value = "creatorUserID") String creatorUserID) {
+                                                @ApiParam(value = "Identifier of the user who updated the process instance") @RequestParam(value = "creatorUserID") String creatorUserID,
+                                                @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
+
 
         logger.debug("Updating process instance with id: {}",processInstanceID);
 
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
 
         try {
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            }
             ProcessDocumentMetadata processDocumentMetadata = ProcessDocumentMetadataDAOUtility.getRequestMetadata(processInstanceID);
             Object document = DocumentPersistenceUtility.readDocument(documentType, content);
             // validate the entity ids
@@ -139,6 +156,13 @@ public class ProcessInstanceController {
                                    @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         try {
             logger.info("Getting rating status for process instance: {}, party: {}", processInstanceId, partyId);
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            }
             CompletedTaskType completedTask = TrustPersistenceUtility.getCompletedTaskByPartyIdAndProcessInstanceId(partyId, processInstanceId);
             Boolean rated = false;
             if (completedTask != null && (completedTask.getEvidenceSupplied().size() > 0 || completedTask.getComment().size() > 0)) {

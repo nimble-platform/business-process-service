@@ -53,7 +53,7 @@ public class TrustPersistenceUtility {
          * IMPORTANT:
          * {@link QualifyingPartyType}ies should be existing when a {@link CompletedTaskType} is about to be associated to it
          */
-        QualifyingPartyType qualifyingParty = CataloguePersistenceUtility.getQualifyingPartyType(partyID,bearerToken);
+        QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingPartyType(partyID,bearerToken);
         CompletedTaskType completedTask = new CompletedTaskType();
         completedTask.setAssociatedProcessInstanceID(processInstanceID);
         completedTask.setDescription(Arrays.asList(status));

@@ -8,6 +8,7 @@ import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMappe
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceGroupDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
+import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.api.StartApi;
@@ -26,6 +27,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.ArrayList;
@@ -45,7 +47,8 @@ public class StartController implements StartApi {
 
     @Override
     @ApiOperation(value = "", notes = "Start an instance of a business process", response = ProcessInstance.class, tags={  })
-    public ResponseEntity<ProcessInstance> startProcessInstance(@ApiParam(value = "", required = true) @RequestBody ProcessInstanceInputMessage body,
+    public ResponseEntity<ProcessInstance> startProcessInstance(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
+                                                                @ApiParam(value = "", required = true) @RequestBody ProcessInstanceInputMessage body,
                                                                 @ApiParam(value = "Identifier of the process instance group owned by the party initiating the process") @RequestParam(value = "gid", required = false) String gid,
                                                                 @ApiParam(value = "Identifier of the preceding process instance.If we want to start a new process (for example,PPAP) after a completed process (for example, item information request)," +
                                                                         "then this parameter should be the identifier of the completed process instance") @RequestParam(value = "precedingPid", required = false) String precedingPid,
@@ -58,6 +61,13 @@ public class StartController implements StartApi {
         // get BusinessProcessContext
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
         try {
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            }
             // check the entity ids in the passed document
             Transaction.DocumentTypeEnum documentType = BusinessProcessUtility.getInitialDocumentForProcess(body.getVariables().getProcessID());
             Object document = DocumentPersistenceUtility.readDocument(DocumentType.valueOf(documentType.toString()), body.getVariables().getContent());

@@ -6,7 +6,9 @@ import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.impl.model.trust.NegotiationRatings;
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.catalogue.CataloguePersistenceUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.PartyPersistenceUtility;
 import eu.nimble.service.bp.impl.util.persistence.catalogue.TrustPersistenceUtility;
+import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.messaging.KafkaSender;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.utility.HttpResponseUtil;
@@ -28,7 +30,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import javax.ws.rs.HEAD;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -62,8 +64,14 @@ public class TrustServiceController {
              * CHECKS
              */
 
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                return HttpResponseUtil.createResponseEntityAndLog(String.format("No user exists for the given token : %s",bearerToken),HttpStatus.NOT_FOUND);
+            }
+
             // check party
-            QualifyingPartyType qualifyingParty = CataloguePersistenceUtility.getQualifyingPartyType(partyId, bearerToken);
+            QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingParty(partyId);
             if (qualifyingParty == null) {
                 return HttpResponseUtil.createResponseEntityAndLog(String.format("No qualifying party exists for the given party id: %s", partyId), HttpStatus.BAD_REQUEST);
             }
@@ -74,20 +82,20 @@ public class TrustServiceController {
             }
             // check the trading partner existence
             String tradingPartnerId = ProcessDocumentMetadataDAOUtility.getTradingPartnerId(processDocumentMetadatas.get(0), partyId);
-            PartyType tradingParty = CataloguePersistenceUtility.getParty(tradingPartnerId);
+            PartyType tradingParty = PartyPersistenceUtility.getParty(tradingPartnerId);
             if(tradingParty == null) {
                 return HttpResponseUtil.createResponseEntityAndLog(String.format("No party exists for the given party id: %s", tradingPartnerId), HttpStatus.BAD_REQUEST);
             }
             // check whether the party is included in the process
             if(!(processDocumentMetadatas.get(0).getInitiatorID().contentEquals(partyId) || processDocumentMetadatas.get(0).getResponderID().contentEquals(partyId))) {
-                return HttpResponseUtil.createResponseEntityAndLog(String.format("Party: %s is not included in the process instance: {}", tradingPartnerId, processInstanceID), HttpStatus.BAD_REQUEST);
+                return HttpResponseUtil.createResponseEntityAndLog(String.format("Party: %s is not included in the process instance: %s", tradingPartnerId, processInstanceID), HttpStatus.BAD_REQUEST);
             }
             // check the values
             ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
             List<EvidenceSuppliedType> ratings = null;
             List<CommentType> reviews = null;
             if(ratingsString == null && reviewsString == null) {
-                return HttpResponseUtil.createResponseEntityAndLog(String.format("One of the ratings or reviews parameters must be {}", tradingPartnerId, processInstanceID), HttpStatus.BAD_REQUEST);
+                return HttpResponseUtil.createResponseEntityAndLog(String.format("One of the ratings or reviews parameters must be given for party: %s, process instance: %s", tradingPartnerId, processInstanceID), HttpStatus.BAD_REQUEST);
             }
             if(ratingsString != null) {
                 ratings = objectMapper.readValue(ratingsString, new TypeReference<List<EvidenceSuppliedType>>() {});
@@ -104,7 +112,7 @@ public class TrustServiceController {
             if (!completedTaskExist) {
                 TrustPersistenceUtility.createCompletedTasksForBothParties(processDocumentMetadatas.get(0), bearerToken, "Completed");
                 // get qualifyingParty (which contains the completed task) again
-                qualifyingParty = CataloguePersistenceUtility.getQualifyingPartyType(partyId, bearerToken);
+                qualifyingParty = PartyPersistenceUtility.getQualifyingPartyType(partyId, bearerToken);
             }
             CompletedTaskType completedTaskType = TrustPersistenceUtility.fillCompletedTask(qualifyingParty, ratings, reviews, processInstanceID);
             new JPARepositoryFactory().forCatalogueRepository().updateEntity(qualifyingParty);
@@ -130,7 +138,20 @@ public class TrustServiceController {
     public ResponseEntity getRatingsSummary(@ApiParam(value = "Identifier of the party whose ratings will be received") @RequestParam(value = "partyId") String partyId,
                                             @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         logger.info("Getting ratings summary for the party with id: {}",partyId);
-        QualifyingPartyType qualifyingParty = CataloguePersistenceUtility.getQualifyingPartyType(partyId,bearerToken);
+        try {
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            }
+        } catch (IOException e){
+            String msg = String.format("Failed to retrieve ratings summary for party id: %s",partyId);
+            logger.error(msg,e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+        }
+        QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingPartyType(partyId,bearerToken);
         JSONObject jsonResponse = createJSONResponse(qualifyingParty.getCompletedTask());
         logger.info("Retrieved ratings summary for the party with id: {}",partyId);
         return ResponseEntity.ok(jsonResponse.toString());
@@ -147,7 +168,14 @@ public class TrustServiceController {
                                                              @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         try {
             logger.info("Getting all individual ratings and review for the party with id: {}",partyId);
-            QualifyingPartyType qualifyingParty = CataloguePersistenceUtility.getQualifyingPartyType(partyId,bearerToken);
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            if(!isValid){
+                String msg = String.format("No user exists for the given token : %s",bearerToken);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            }
+            QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingPartyType(partyId,bearerToken);
             List<NegotiationRatings> negotiationRatings = TrustPersistenceUtility.createNegotiationRatings(qualifyingParty.getCompletedTask());
             String ratingsAndReviews = JsonSerializationUtility.getObjectMapper().writeValueAsString(negotiationRatings);
             logger.info("Retrieved all individual ratings and review for the party with id: {}",partyId);

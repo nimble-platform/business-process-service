@@ -41,7 +41,7 @@ public class Test25_TrustControllerTest {
     private final String collaborationRole = "BUYER";
     private final String relatedProduct = "QDeneme";
 
-    private static String processInstanceId;
+    public static String processInstanceId;
     @Test
     public void test1_createRatingAndReview() throws Exception {
         // get Receipt advice process instance id
