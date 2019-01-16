@@ -81,7 +81,7 @@ public class Test24_CollaborationGroupTest2 {
 
     @Test
     public void test4_getOrderProcess() throws Exception{
-        MockHttpServletRequestBuilder request = get("/process-instance-groups/order-process")
+        MockHttpServletRequestBuilder request = get("/process-instance-groups/order-document")
                 .header("Authorization", environment.getProperty("nimble.test-responder-token"))
                 .param("processInstanceId",Test23_CollaborationGroupTest.idOfTheLastProcessInstance);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
