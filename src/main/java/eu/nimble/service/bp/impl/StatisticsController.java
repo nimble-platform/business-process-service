@@ -339,15 +339,15 @@ public class StatisticsController {
         return ResponseEntity.ok(averageResponseTime);
     }
 
-    @ApiOperation(value = "Gets average negotiation time for the party in terms of days")
+    @ApiOperation(value = "Gets average collaboration time for the party in terms of days")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Retrieved average negotiation time for the party"),
+            @ApiResponse(code = 200, message = "Retrieved average collaboration time for the party"),
             @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token")
     })
-    @RequestMapping(value = "/negotiation-time",
+    @RequestMapping(value = "/collaboration-time",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity getAverageNegotiationTime(@ApiParam(value = "Identifier of the party as specified by the identity service", required = true) @RequestParam(value = "partyId") String partyId,
+    public ResponseEntity getAverageCollaborationTime(@ApiParam(value = "Identifier of the party as specified by the identity service", required = true) @RequestParam(value = "partyId") String partyId,
                                                     @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         logger.info("Getting average negotiation time for the party with id: {}",partyId);
         // check token
@@ -356,14 +356,14 @@ public class StatisticsController {
             return tokenCheck;
         }
 
-        double averageNegotiationTime = StatisticsPersistenceUtility.calculateAverageNegotiationTime(partyId,bearerToken);
+        double averageNegotiationTime = StatisticsPersistenceUtility.calculateAverageCollaborationTime(partyId,bearerToken);
         logger.info("Retrieved average negotiation time for the party with id: {}",partyId);
         return ResponseEntity.ok(averageNegotiationTime);
     }
 
-    @ApiOperation(value = "Gets statistics (average negotiation time,average response time,trading volume and number of transactions) for the party")
+    @ApiOperation(value = "Gets statistics (average collaboration time,average response time,trading volume and number of transactions) for the party")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Retrieved average negotiation time for the party",response = OverallStatistics.class),
+            @ApiResponse(code = 200, message = "Retrieved statistics for the party",response = OverallStatistics.class),
             @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
             @ApiResponse(code = 500, message = "Unexpected error while getting overall statistics")
     })
@@ -382,7 +382,7 @@ public class StatisticsController {
                 return tokenCheck;
             }
 
-            statistics.setAverageNegotiationTime((double)getAverageNegotiationTime(partyId,bearerToken).getBody());
+            statistics.setAverageCollaborationTime((double) getAverageCollaborationTime(partyId,bearerToken).getBody());
             statistics.setAverageResponseTime((double)getAverageResponseTime(partyId,bearerToken).getBody());
             statistics.setTradingVolume((double) getTradingVolume(null,null,Integer.valueOf(partyId), role,null,bearerToken).getBody());
             statistics.setNumberOfTransactions((int)getProcessCount(null,null,null,Integer.valueOf(partyId),role,null,bearerToken).getBody());
