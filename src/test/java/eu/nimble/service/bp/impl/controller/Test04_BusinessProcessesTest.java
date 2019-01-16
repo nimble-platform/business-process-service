@@ -132,6 +132,7 @@ public class Test04_BusinessProcessesTest {
 
         // get collaboration group information for seller
         request = get("/collaboration-groups")
+                .header("Authorization", environment.getProperty("nimble.test-initiator-token"))
                 .param("partyID",partyID)
                 .param("relatedProducts",productName)
                 .param("collaborationRole","SELLER")
@@ -281,6 +282,7 @@ public class Test04_BusinessProcessesTest {
 
         // get process instance group info
         request = get("/collaboration-groups")
+                .header("Authorization", environment.getProperty("nimble.test-initiator-token"))
                 .param("partyID",partyID)
                 .param("relatedProducts",serviceName)
                 .param("collaborationRole","BUYER")

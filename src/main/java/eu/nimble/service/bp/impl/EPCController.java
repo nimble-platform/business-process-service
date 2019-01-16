@@ -62,26 +62,29 @@ public class EPCController {
         }
     }
 
-    @ApiOperation(value = "",notes = "Get product-related and company-related details for the given epc code", response = TTInfo.class)
+    @ApiOperation(value = "",notes = "Gets track & trace-related details for the specified EPC code. First, the corresponding order" +
+            " is fetched for the specified code from the data channel service. Then, the CatalogueLine is retrieved for the product" +
+            " included in the order. The T&T details are extracted from the catalogueLine.trackAndTraceDetails field.", response = TTInfo.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Retrieved the T&T details successfully", response = TTInfo.class),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
             @ApiResponse(code = 404, message = "The given epc code is not used in any orders"),
             @ApiResponse(code = 500, message = "Unexpected error while getting the T&T details for the given epc")
     })
     @RequestMapping(value = "/t-t/epc-details",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity getTTDetails(@ApiParam(value = "The electronic product code for which the track & tracing details are requested") @RequestParam(value = "epc", required = true) String epc,
+    public ResponseEntity getTTDetails(@ApiParam(value = "The electronic product code for which the track & tracing details are requested", required = true) @RequestParam(value = "epc", required = true) String epc,
                                        @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         logger.info("Getting track & tracing details for epc: {}", epc);
 
         try {
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            // check token
+            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+            if (tokenCheck != null) {
+                return tokenCheck;
             }
+
             GenericConfig config = SpringBridge.getInstance().getGenericConfig();
             String dataChannelServiceUrlStr = config.getDataChannelServiceUrl()+"/epc/code/"+epc;
 
@@ -120,26 +123,26 @@ public class EPCController {
         }
     }
 
-    @ApiOperation(value = "",notes = "Get EPC codes that belongs to the same published product ID")
+    @ApiOperation(value = "",notes = "Gets EPC codes that belongs to the same published product ID")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Retrieved epc codes successfully", response = String.class,responseContainer = "List"),
-            @ApiResponse(code = 404, message = "There is no catalogue for the given id"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 404, message = "There is no catalogue line for the given id"),
             @ApiResponse(code = 500, message = "Unexpected error while getting the epc codes for the given id")
     })
     @RequestMapping(value = "/t-t/epc-codes",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity getEPCCodesBelongsToProduct(@ApiParam(value = "The identifier of the published product") @RequestParam(value = "productId", required = true) Long publishedProductID,
+    public ResponseEntity getEPCCodesBelongsToProduct(@ApiParam(value = "The identifier of the published product (catalogueLine.hjid)", required = true) @RequestParam(value = "productId", required = true) Long publishedProductID,
                                                       @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         logger.info("Getting epc codes for productId: {}", publishedProductID);
         try {
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+            if (tokenCheck != null) {
+                return tokenCheck;
             }
+
             CatalogueLineType catalogueLine = new JPARepositoryFactory().forCatalogueRepository().getSingleEntityByHjid(CatalogueLineType.class, publishedProductID);
 
             if(catalogueLine == null){

@@ -1,8 +1,11 @@
 package eu.nimble.service.bp.impl.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+import eu.nimble.service.bp.swagger.model.CollaborationGroupResponse;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
+import eu.nimble.utility.JsonSerializationUtility;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
@@ -20,6 +23,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -40,17 +44,32 @@ public class Test02_ContinueControllerTest {
 
     @Test
     public void continueProcessInstance() throws Exception {
-        Gson gson = new Gson();
+        ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(orderResponseJSON1));
         inputMessageAsString = inputMessageAsString.replace("pid", Test01_StartControllerTest.processInstanceIdOrder1);
 
-        MockHttpServletRequestBuilder request = post("/continue")
+        // get collaboration group and process instance group ids for seller
+        MockHttpServletRequestBuilder request = get("/collaboration-groups")
+                .header("Authorization", environment.getProperty("nimble.test-initiator-token"))
+                .param("partyID","706")
+                .param("collaborationRole","SELLER")
+                .param("offset", "0")
+                .param("limit", "10");
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+        CollaborationGroupResponse collaborationGroupResponse = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), CollaborationGroupResponse.class);
+        String sellerCollaborationGroupID = collaborationGroupResponse.getCollaborationGroups().get(0).getID();
+        String sellerProcessInstanceGroupID = collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().get(0).getID();
+
+        // continue the process
+        request = post("/continue")
                 .header("Authorization", environment.getProperty("nimble.test-responder-token"))
+                .param("gid", sellerProcessInstanceGroupID)
+                .param("collaborationGID", sellerCollaborationGroupID)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
-        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+        mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
-        ProcessInstance processInstance = gson.fromJson(mvcResult.getResponse().getContentAsString(), ProcessInstance.class);
+        ProcessInstance processInstance = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ProcessInstance.class);
         Assert.assertEquals(processInstance.getStatus(), ProcessInstance.StatusEnum.COMPLETED);
         Assert.assertEquals(processInstance.getProcessInstanceID(), Test01_StartControllerTest.processInstanceIdOrder1);
     }

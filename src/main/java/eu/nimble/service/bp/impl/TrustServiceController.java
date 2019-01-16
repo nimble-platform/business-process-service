@@ -44,19 +44,21 @@ public class TrustServiceController {
     @Autowired
     private KafkaSender kafkaSender;
 
-    @ApiOperation(value = "", notes = "Create rating and reviews for the company")
+    @ApiOperation(value = "", notes = "Create rating and reviews for the company. A CompletedTaskType is created as a result" +
+            "of this operation.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Created rating and reviews for the company successfully"),
-            @ApiResponse(code = 400, message = "Party specified with the partyID or the correspond trading party does not exists. OR process instance does not exist. OR specified party is not included in the process instance"),
+            @ApiResponse(code = 400, message = "Party specified with the partyId or the correspond trading party does not exists. OR process instance does not exist. OR specified party is not included in the process instance"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
             @ApiResponse(code = 500, message = "Failed to create rating and reviews for the company")
     })
     @RequestMapping(value = "/ratingsAndReviews",
             produces = {"application/json"},
             method = RequestMethod.POST)
-    public ResponseEntity createRatingAndReview(@ApiParam(value = "JSON string representing an array of EvidenceSupplied instances.\nExample:[{\"id\":\"QualityOfTheNegotiationProcess\",\"valueDecimal\":5},{\"id\":\"QualityOfTheOrderingProcess\",\"valueDecimal\":3},{\"id\":\"ResponseTime\",\"valueDecimal\":4},{\"id\":\"ProductListingAccuracy\",\"valueDecimal\":2},{\"id\":\"ConformanceToOtherAgreedTerms\",\"valueDecimal\":5},{\"id\":\"DeliveryAndPackaging\",\"valueDecimal\":3}]") @RequestParam(value = "ratings", required = false) String ratingsString,
-                                                @ApiParam(value = "JSON string representing an array of Comment instances.\nExample:[{\"comment\":\"Awesome trading partner\",\"typeCode\":{\"value\":\"\",\"name\":\"\",\"uri\":\"\",\"listID\":\"\",\"listURI\":\"\"}},{\"comment\":\"Perfect collaboration\",\"typeCode\":{\"value\":\"\",\"name\":\"\",\"uri\":\"\",\"listID\":\"\",\"listURI\":\"\"}}]") @RequestParam(value = "reviews", required = false) String reviewsString,
-                                                @ApiParam(value = "Identifier of the party for which a rating and reviews will be created") @RequestParam(value = "partyId") String partyId,
-                                                @ApiParam(value = "Identifier of the process instance associated with the ratings and reviews.Usually,it is the identifier of the last process instance which concludes the collaboration") @RequestParam(value = "processInstanceID") String processInstanceID,
+    public ResponseEntity createRatingAndReview(@ApiParam(value = "JSON string representing an array of EvidenceSupplied instances.<br>Example:[{\"id\":\"QualityOfTheNegotiationProcess\",\"valueDecimal\":5},{\"id\":\"QualityOfTheOrderingProcess\",\"valueDecimal\":3},{\"id\":\"ResponseTime\",\"valueDecimal\":4},{\"id\":\"ProductListingAccuracy\",\"valueDecimal\":2},{\"id\":\"ConformanceToOtherAgreedTerms\",\"valueDecimal\":5},{\"id\":\"DeliveryAndPackaging\",\"valueDecimal\":3}]", required = true) @RequestParam(value = "ratings", required = false) String ratingsString,
+                                                @ApiParam(value = "JSON string representing an array of Comment instances.<br>Example:[{\"comment\":\"Awesome trading partner\",\"typeCode\":{\"value\":\"\",\"name\":\"\",\"uri\":\"\",\"listID\":\"\",\"listURI\":\"\"}},{\"comment\":\"Perfect collaboration\",\"typeCode\":{\"value\":\"\",\"name\":\"\",\"uri\":\"\",\"listID\":\"\",\"listURI\":\"\"}}]") @RequestParam(value = "reviews", required = false) String reviewsString,
+                                                @ApiParam(value = "Identifier of the party for which a rating and reviews will be created", required = true) @RequestParam(value = "partyId") String partyId,
+                                                @ApiParam(value = "Identifier of the process instance associated with the ratings and reviews.Usually,it is the identifier of the last process instance which concludes the collaboration", required = true) @RequestParam(value = "processInstanceID") String processInstanceID,
                                                 @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
         try {
             logger.info("Creating rating and reviews for the party with id: {} and process instance with id: {}", partyId, processInstanceID);
@@ -65,9 +67,9 @@ public class TrustServiceController {
              */
 
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                return HttpResponseUtil.createResponseEntityAndLog(String.format("No user exists for the given token : %s",bearerToken),HttpStatus.NOT_FOUND);
+            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+            if (tokenCheck != null) {
+                return tokenCheck;
             }
 
             // check party
@@ -122,6 +124,7 @@ public class TrustServiceController {
 
             logger.info("Created rating and reviews for the party with id: {} and process instance with id: {}", partyId, processInstanceID);
             return ResponseEntity.ok(completedTaskType);
+
         } catch (Exception e) {
             logger.error("Failed to create rating and reviews for the party with id: {} and process instance with id: {}", partyId, processInstanceID, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
@@ -130,27 +133,21 @@ public class TrustServiceController {
 
     @ApiOperation(value = "",notes = "Gets rating summary for the given company")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Retrieved rating summary successfully")
+            @ApiResponse(code = 200, message = "Retrieved rating summary successfully"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token")
     })
     @RequestMapping(value = "/ratingsSummary",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity getRatingsSummary(@ApiParam(value = "Identifier of the party whose ratings will be received") @RequestParam(value = "partyId") String partyId,
+    public ResponseEntity getRatingsSummary(@ApiParam(value = "Identifier of the party whose ratings will be received", required = true) @RequestParam(value = "partyId") String partyId,
                                             @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         logger.info("Getting ratings summary for the party with id: {}",partyId);
-        try {
-            // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
-            }
-        } catch (IOException e){
-            String msg = String.format("Failed to retrieve ratings summary for party id: %s",partyId);
-            logger.error(msg,e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+        // check token
+        ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+        if (tokenCheck != null) {
+            return tokenCheck;
         }
+
         QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingPartyType(partyId,bearerToken);
         JSONObject jsonResponse = createJSONResponse(qualifyingParty.getCompletedTask());
         logger.info("Retrieved ratings summary for the party with id: {}",partyId);
@@ -159,22 +156,23 @@ public class TrustServiceController {
 
     @ApiOperation(value = "",notes = "Gets all individual ratings and review")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Retrieved all individual ratings and review successfully")
+            @ApiResponse(code = 200, message = "Retrieved all individual ratings and review successfully"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 500, message = "Unexpected error while getting ratings and reviews")
     })
     @RequestMapping(value = "/ratingsAndReviews",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity listAllIndividualRatingsAndReviews(@ApiParam(value = "Identifier of the party whose individual ratings and reviews will be received") @RequestParam(value = "partyId") String partyId,
+    public ResponseEntity listAllIndividualRatingsAndReviews(@ApiParam(value = "Identifier of the party whose individual ratings and reviews will be received", required = true) @RequestParam(value = "partyId") String partyId,
                                                              @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         try {
             logger.info("Getting all individual ratings and review for the party with id: {}",partyId);
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+            if (tokenCheck != null) {
+                return tokenCheck;
             }
+
             QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingPartyType(partyId,bearerToken);
             List<NegotiationRatings> negotiationRatings = TrustPersistenceUtility.createNegotiationRatings(qualifyingParty.getCompletedTask());
             String ratingsAndReviews = JsonSerializationUtility.getObjectMapper().writeValueAsString(negotiationRatings);

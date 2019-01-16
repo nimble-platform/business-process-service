@@ -43,31 +43,31 @@ public class ProcessInstanceController {
     @Autowired
     private ResourceValidationUtility resourceValidationUtil;
 
-    @ApiOperation(value = "",notes = "Cancel the process instance with the given id")
+    @ApiOperation(value = "",notes = "Cancels the process instance with the given id")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Cancelled the process instance successfully"),
-            @ApiResponse(code = 400, message = "There does not exist a process instance with the given id"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 404, message = "There does not exist a process instance with the given id"),
             @ApiResponse(code = 500, message = "Unexpected error while cancelling the process instance with the given id")
     })
     @RequestMapping(value = "/processInstance/{processInstanceId}/cancel",
             method = RequestMethod.POST)
-    public ResponseEntity cancelProcessInstance(@ApiParam(value = "The identifier of the process instance to be cancelled") @PathVariable(value = "processInstanceId", required = true) String processInstanceId,
+    public ResponseEntity cancelProcessInstance(@ApiParam(value = "The identifier of the process instance to be cancelled", required = true) @PathVariable(value = "processInstanceId", required = true) String processInstanceId,
                                                 @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         logger.debug("Cancelling process instance with id: {}",processInstanceId);
 
         try {
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+            if (tokenCheck != null) {
+                return tokenCheck;
             }
+
             ProcessInstanceDAO instanceDAO = ProcessInstanceDAOUtility.getById(processInstanceId);
             // check whether the process instance with the given id exists or not
             if(instanceDAO == null){
                 logger.error("There does not exist a process instance with id:{}",processInstanceId);
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("There does not exist a process instance with the given id");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("There does not exist a process instance with the given id");
             }
             // cancel the process
             CamundaEngine.cancelProcessInstance(processInstanceId);
@@ -84,18 +84,20 @@ public class ProcessInstanceController {
         return ResponseEntity.ok(null);
     }
 
-    @ApiOperation(value = "",notes = "Update the process instance with the given id")
+    @ApiOperation(value = "",notes = "Updates the process instance with the given id by replacing the exchanged document with" +
+            " given document")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Updated the process instance successfully"),
-            @ApiResponse(code = 400, message = "There does not exist a process instance with the given id"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 404, message = "There does not exist a process instance with the given id"),
             @ApiResponse(code = 500, message = "Unexpected error while updating the process instance with the given id")
     })
     @RequestMapping(value = "/processInstance",
             method = RequestMethod.PATCH)
-    public ResponseEntity updateProcessInstance(@ApiParam(value = "Serialized process instance document") @RequestBody String content,
-                                                @ApiParam(value = "Type of the process instance document to be updated") @RequestParam(value = "processID") DocumentType documentType,
-                                                @ApiParam(value = "Identifier of the process instance to be updated") @RequestParam(value = "processInstanceID") String processInstanceID,
-                                                @ApiParam(value = "Identifier of the user who updated the process instance") @RequestParam(value = "creatorUserID") String creatorUserID,
+    public ResponseEntity updateProcessInstance(@ApiParam(value = "Serialized form of the document exchanged in the updated step of the business process", required = true) @RequestBody String content,
+                                                @ApiParam(value = "Type of the process instance document to be updated", required = true) @RequestParam(value = "processID") DocumentType documentType,
+                                                @ApiParam(value = "Identifier of the process instance to be updated", required = true) @RequestParam(value = "processInstanceID") String processInstanceID,
+                                                @ApiParam(value = "Identifier of the user who updated the process instance", required = true) @RequestParam(value = "creatorUserID") String creatorUserID,
                                                 @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
 
 
@@ -105,12 +107,11 @@ public class ProcessInstanceController {
 
         try {
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+            if (tokenCheck != null) {
+                return tokenCheck;
             }
+
             ProcessDocumentMetadata processDocumentMetadata = ProcessDocumentMetadataDAOUtility.getRequestMetadata(processInstanceID);
             Object document = DocumentPersistenceUtility.readDocument(documentType, content);
             // validate the entity ids
@@ -123,7 +124,7 @@ public class ProcessInstanceController {
             // check whether the process instance with the given id exists or not
             if(instanceDAO == null){
                 logger.error("There does not exist a process instance with id:{}",processInstanceID);
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("There does not exist a process instance with the given id");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("There does not exist a process instance with the given id");
             }
             // update creator user id of metadata
             processDocumentMetadata.setCreatorUserID(creatorUserID);
@@ -146,23 +147,24 @@ public class ProcessInstanceController {
 
     @ApiOperation(value = "",notes = "Gets rating status for the specified process instance")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Retrieved rating status successfully")
+            @ApiResponse(code = 200, message = "Retrieved rating status successfully"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 500, message = "Unexpected error while getting the rating status")
     })
     @RequestMapping(value = "/processInstance/{processInstanceId}/isRated",
             produces = {MediaType.TEXT_PLAIN_VALUE},
             method = RequestMethod.GET)
-    public ResponseEntity isRated(@ApiParam(value = "Identifier of the process instance") @PathVariable(value = "processInstanceId", required = true) String processInstanceId,
-                                   @ApiParam(value = "Identifier of the party (the rated) for which the existence of a rating to be checked") @RequestParam(value = "partyId", required = true) String partyId,
-                                   @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
+    public ResponseEntity isRated(@ApiParam(value = "Identifier of the process instance", required = true) @PathVariable(value = "processInstanceId", required = true) String processInstanceId,
+                                  @ApiParam(value = "Identifier of the party (the rated) for which the existence of a rating to be checked", required = true) @RequestParam(value = "partyId", required = true) String partyId,
+                                  @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
         try {
             logger.info("Getting rating status for process instance: {}, party: {}", processInstanceId, partyId);
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+            if (tokenCheck != null) {
+                return tokenCheck;
             }
+
             CompletedTaskType completedTask = TrustPersistenceUtility.getCompletedTaskByPartyIdAndProcessInstanceId(partyId, processInstanceId);
             Boolean rated = false;
             if (completedTask != null && (completedTask.getEvidenceSupplied().size() > 0 || completedTask.getComment().size() > 0)) {

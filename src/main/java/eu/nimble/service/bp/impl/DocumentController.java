@@ -19,6 +19,8 @@ import eu.nimble.utility.JAXBUtility;
 import eu.nimble.utility.JsonSerializationUtility;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -41,21 +43,26 @@ public class DocumentController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @ApiOperation(value = "",notes = "Retrieve Json content of the document with the given id")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Retrieved the specified document"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 404, message = "No document found for the specified id"),
+            @ApiResponse(code = 500, message = "Unexpected error while retrieving the document")
+    })
     @RequestMapping(value = "/document/json/{documentID}",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity<Object> getDocumentJsonContent(@ApiParam(value = "The identifier of the document to be received") @PathVariable("documentID") String documentID,
+    public ResponseEntity<Object> getDocumentJsonContent(@ApiParam(value = "The identifier of the document to be received", required = true) @PathVariable("documentID") String documentID,
                                                          @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
     ) {
         try {
             logger.info("Getting content of document: {}", documentID);
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+            if (tokenCheck != null) {
+                return tokenCheck;
             }
+
             Object document = DocumentPersistenceUtility.getUBLDocument(documentID);
             if (document == null) {
                 return createResponseEntityAndLog(String.format("No document for id: %s", documentID), HttpStatus.NOT_FOUND);
@@ -74,25 +81,24 @@ public class DocumentController {
         }
     }
 
-    @ApiOperation(value = "",notes = "Retrieve XML content of the document with the given id")
+    @ApiOperation(value = "",notes = "Retrieves XML content of the document with the given id")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Retrieved the specified document"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 404, message = "No document found for the specified id"),
+            @ApiResponse(code = 500, message = "Unexpected error while retrieving the document")
+    })
     @RequestMapping(value = "/document/xml/{documentID}",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    ResponseEntity<String> getDocumentXMLContent(@ApiParam(value = "The identifier of the document to be received") @PathVariable("documentID") String documentID,
+    ResponseEntity<String> getDocumentXMLContent(@ApiParam(value = "The identifier of the document to be received", required = true) @PathVariable("documentID") String documentID,
                                                  @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
-        try {
-            // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
-            }
-        } catch (IOException e){
-            String msg = String.format("Failed to retrieve the content for document id: %s",documentID);
-            logger.error(msg,e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+        // check token
+        ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+        if (tokenCheck != null) {
+            return tokenCheck;
         }
+
         Object document = DocumentPersistenceUtility.getUBLDocument(documentID);
 
         String documentContentXML = null;

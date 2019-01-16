@@ -146,6 +146,7 @@ public class Test29_CollaborationGroupTest3 {
 
     private CollaborationGroupResponse getCollaborationGroupResponse() throws Exception{
         MockHttpServletRequestBuilder request = get("/collaboration-groups")
+                .header("Authorization", environment.getProperty("nimble.test-initiator-token"))
                 .param("partyId", sellerPartyId)
                 .param("relatedProducts", relatedProduct)
                 .param("collaborationRole", "SELLER")

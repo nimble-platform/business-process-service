@@ -35,7 +35,7 @@ import java.util.List;
 public class StatisticsController {
     private final Logger logger = LoggerFactory.getLogger(StatisticsController.class);
 
-    @ApiOperation(value = "",notes = "Get the total number of process instances which require an action")
+    @ApiOperation(value = "",notes = "Gets the total number of process instances which require an action")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Retrieved the total number of process instances which require an action successfully",response = int.class),
             @ApiResponse(code = 400, message = "Invalid role")
@@ -44,10 +44,10 @@ public class StatisticsController {
             produces = {"application/json"},
             method = RequestMethod.GET)
     public ResponseEntity getActionRequiredProcessCount(@ApiParam(value = "The identifier of the party whose action required process count will be received", required = true) @RequestParam(value = "partyId", required = true) Integer partyId,
-                                                        @ApiParam(value = "Whether the group which contains process instances is archived or not.", defaultValue = "false") @RequestParam(value = "archived", required = true, defaultValue="false") Boolean archived,
-                                                        @ApiParam(value = "Role of the party in the business process.\nPossible values: seller,buyer", required = true) @RequestParam(value = "role", required = true, defaultValue = "seller") String role){
+                                                        @ApiParam(value = "Whether the group which contains process instances is archived or not.", defaultValue = "false") @RequestParam(value = "archived", required = false, defaultValue="false") Boolean archived,
+                                                        @ApiParam(value = "Role of the party in the business process.<br>Possible values: <ul><li>seller</li><li>buyer</li></ul>", required = true) @RequestParam(value = "role", required = true, defaultValue = "seller") String role,
+                                                        @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
         logger.info("Getting total number of process instances which require an action for party id:{},archived: {}, role: {}",partyId,archived,role);
-
         // check role
         ValidationResponse response = InputValidatorUtil.checkRole(role, false);
         if (response.getInvalidResponse() != null) {
@@ -59,31 +59,33 @@ public class StatisticsController {
         return ResponseEntity.ok(count);
     }
 
-    @ApiOperation(value = "",notes = "Get the total number (active / completed) of specified business process")
+    @ApiOperation(value = "",notes = "Gets the total number (with both active and completed status) of specified business process")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Retrieved the number of processes successfully",response = int.class)
+            @ApiResponse(code = 200, message = "Retrieved the number of processes successfully",response = int.class),
+            @ApiResponse(code = 400, message = "Invalid parameter"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 500, message = "Unexpected error while getting the total number of business processes")
     })
     @RequestMapping(value = "/total-number/business-process",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity getProcessCount(@ApiParam(value = "Business process type.\nExamples:ORDER,NEGOTIATION,ITEM_INFORMATION_REQUEST", required = false) @RequestParam(value = "businessProcessType", required = false) String businessProcessType,
+    public ResponseEntity getProcessCount(@ApiParam(value = "Business process type.<br>Examples:ORDER,NEGOTIATION,ITEM_INFORMATION_REQUEST", required = false) @RequestParam(value = "businessProcessType", required = false) String businessProcessType,
                                           @ApiParam(value = "Start date (DD-MM-YYYY) of the process", required = false) @RequestParam(value = "startDate", required = false) String startDateStr,
                                           @ApiParam(value = "End date (DD-MM-YYYY) of the process", required = false) @RequestParam(value = "endDate", required = false) String endDateStr,
                                           @ApiParam(value = "Identifier of the party as specified by the identity service", required = false) @RequestParam(value = "partyId", required = false) Integer partyId,
-                                          @ApiParam(value = "Role of the party in the business process.\nPossible values:seller,buyer", required = false) @RequestParam(value = "role", required = false, defaultValue = "seller") String role,
-                                          @ApiParam(value = "State of the transaction.\nPossible values:WaitingResponse,Approved,Denied", required = false) @RequestParam(value = "status", required = false) String status,
+                                          @ApiParam(value = "Role of the party in the business process.<br>Possible values:<ul><li>seller</li><li>buyer</li></ul>", defaultValue = "seller", required = false) @RequestParam(value = "role", required = false, defaultValue = "seller") String role,
+                                          @ApiParam(value = "State of the transaction.<br>Possible values: <ul><li>WaitingResponse</li><li>Approved</li><li>Denied</li></ul>", required = false) @RequestParam(value = "status", required = false) String status,
                                           @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
     ) {
 
         try {
             logger.info("Getting total number of documents for start date: {}, end date: {}, type: {}, party id: {}, role: {}, state: {}", startDateStr, endDateStr, businessProcessType, partyId, role, status);
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+            if (tokenCheck != null) {
+                return tokenCheck;
             }
+
             ValidationResponse response;
 
             // check start date
@@ -139,9 +141,13 @@ public class StatisticsController {
         }
     }
 
-    @ApiOperation(value = "",notes = "Get the total number (active / completed) of specified business process")
+    @ApiOperation(value = "",notes = "Gets the total number (with both active and completed status) of specified business process." +
+            " The number of business processes are broken down per company, process type and status")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Retrieved the number of processes successfully",response = BusinessProcessCount.class)
+            @ApiResponse(code = 200, message = "Retrieved the number of processes successfully",response = BusinessProcessCount.class),
+            @ApiResponse(code = 400, message = "Invalid parameter"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 500, message = "Unexpected error while getting the total number of business processes")
     })
     @RequestMapping(value = "/total-number/business-process/break-down",
             produces = {"application/json"},
@@ -149,18 +155,17 @@ public class StatisticsController {
     public ResponseEntity getProcessCountBreakDown(@ApiParam(value = "Start date (DD-MM-YYYY) of the process", required = false) @RequestParam(value = "startDate", required = false) String startDateStr,
                                                    @ApiParam(value = "End date (DD-MM-YYYY) of the process", required = false) @RequestParam(value = "endDate", required = false) String endDateStr,
                                                    @ApiParam(value = "Identifier of the party as specified by the identity service", required = false) @RequestParam(value = "partyId", required = false) Integer partyId,
-                                                   @ApiParam(value = "Role of the party in the business process.\nPossible values:seller,buyer",required = true) @RequestParam(value = "role",required = true,defaultValue = "seller") String role,
+                                                   @ApiParam(value = "Role of the party in the business process.<br>Possible values:<ul><li>seller</li><li>buyer</li></ul>", defaultValue = "seller", required = false) @RequestParam(value = "role",required = false, defaultValue = "seller") String role,
                                                    @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
 
         try {
             logger.info("Getting total number of documents for start date: {}, end date: {}, party id: {}, role: {}", startDateStr, endDateStr, partyId, role);
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+            if (tokenCheck != null) {
+                return tokenCheck;
             }
+
             ValidationResponse response;
 
             // check start date
@@ -186,7 +191,10 @@ public class StatisticsController {
 
     @ApiOperation(value = "",notes = "Get the products that are not ordered")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Retrieved the products that are not ordered",response = String.class)
+            @ApiResponse(code = 200, message = "Retrieved the products that are not ordered",response = String.class),
+            @ApiResponse(code = 400, message = "Invalid parameter"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 500, message = "Unexpected error while getting non-ordered products")
     })
     @RequestMapping(value = "/non-ordered",
             produces = {"application/json"},
@@ -197,12 +205,11 @@ public class StatisticsController {
         try {
             logger.info("Getting non-ordered products for party id: {}", partyId);
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+            if (tokenCheck != null) {
+                return tokenCheck;
             }
+
             NonOrderedProducts nonOrderedProducts = StatisticsPersistenceUtility.getNonOrderedProducts(partyId);
             String serializedResponse = JsonSerializationUtility.getObjectMapperForFilledFields().writeValueAsString(nonOrderedProducts);
             logger.info("Retrieved the products that are not ordered for party id: {}", partyId);
@@ -215,7 +222,10 @@ public class StatisticsController {
 
     @ApiOperation(value = "",notes = "Get the trading volume")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Retrieved the trading volume successfully",response = double.class)
+            @ApiResponse(code = 200, message = "Retrieved the trading volume successfully",response = double.class),
+            @ApiResponse(code = 400, message = "Invalid parameter"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 500, message = "Unexpected error while getting trading volume")
     })
     @RequestMapping(value = "/trading-volume",
             produces = {"application/json"},
@@ -223,18 +233,16 @@ public class StatisticsController {
     public ResponseEntity getTradingVolume(@ApiParam(value = "Start date (DD-MM-YYYY) of the transaction", required = false) @RequestParam(value = "startDate", required = false) String startDateStr,
                                           @ApiParam(value = "End date (DD-MM-YYYY) of the transaction", required = false) @RequestParam(value = "endDate", required = false) String endDateStr,
                                           @ApiParam(value = "Identifier of the party as specified by the identity service", required = false) @RequestParam(value = "partyId", required = false) Integer partyId,
-                                          @ApiParam(value = "Role of the party in the business process.\nPossible values: SELLER,BUYER", required = false) @RequestParam(value = "role", required = false, defaultValue = "SELLER") String role,
-                                          @ApiParam(value = "State of the transaction.\nPossible values:WaitingResponse,Approved,Denied", required = false) @RequestParam(value = "status", required = false) String status,
-                                           @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
+                                          @ApiParam(value = "Role of the party in the business process.<br>Possible values:<ul><li>seller</li><li>buyer</li></ul>", required = false) @RequestParam(value = "role", required = false, defaultValue = "SELLER") String role,
+                                          @ApiParam(value = "State of the transaction.<br>Possible values: <ul><li>WaitingResponse</li><li>Approved</li><li>Denied</li></ul>", required = false) @RequestParam(value = "status", required = false) String status,
+                                          @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
     ) {
         try {
             logger.info("Getting total number of documents for start date: {}, end date: {}, party id: {}, role: {}, state: {}", startDateStr, endDateStr, partyId, role, status);
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+            if (tokenCheck != null) {
+                return tokenCheck;
             }
             ValidationResponse response;
 
@@ -276,7 +284,9 @@ public class StatisticsController {
 
     @ApiOperation(value = "Gets the inactive companies. (Companies that have not initiated a business process)")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Retrieved the inactive companies")
+            @ApiResponse(code = 200, message = "Retrieved the inactive companies successfully"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 500, message = "Unexpected error while getting inactive companies")
     })
     @RequestMapping(value = "/inactive-companies",
             produces = {"application/json"},
@@ -285,11 +295,9 @@ public class StatisticsController {
         try {
             logger.info("Getting inactive companies");
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+            if (tokenCheck != null) {
+                return tokenCheck;
             }
 
             List<PartyType> inactiveCompanies = StatisticsPersistenceUtility.getInactiveCompanies(bearerToken);
@@ -304,27 +312,22 @@ public class StatisticsController {
 
     @ApiOperation(value = "Gets average response time for the party in terms of days")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Retrieved average response time for the party")
+            @ApiResponse(code = 200, message = "Retrieved average response time for the party"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 500, message = "Unexpected error while getting average response time")
     })
     @RequestMapping(value = "/response-time",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity getAverageResponseTime(@ApiParam(value = "Identifier of the party as specified by the identity service") @RequestParam(value = "partyId") String partyId,
+    public ResponseEntity getAverageResponseTime(@ApiParam(value = "Identifier of the party as specified by the identity service", required = true) @RequestParam(value = "partyId") String partyId,
                                                  @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         logger.info("Getting average response time for the party with id: {}",partyId);
-        try {
-            // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
-            }
-        } catch (IOException e){
-            String msg = String.format("Failed to retrieve average response time for party id: %s",partyId);
-            logger.error(msg,e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+        // check token
+        ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+        if (tokenCheck != null) {
+            return tokenCheck;
         }
+
         double averageResponseTime;
         try {
             averageResponseTime = StatisticsPersistenceUtility.calculateAverageResponseTime(partyId);
@@ -338,27 +341,21 @@ public class StatisticsController {
 
     @ApiOperation(value = "Gets average negotiation time for the party in terms of days")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Retrieved average negotiation time for the party")
+            @ApiResponse(code = 200, message = "Retrieved average negotiation time for the party"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token")
     })
     @RequestMapping(value = "/negotiation-time",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity getAverageNegotiationTime(@ApiParam(value = "Identifier of the party as specified by the identity service") @RequestParam(value = "partyID") String partyId,
+    public ResponseEntity getAverageNegotiationTime(@ApiParam(value = "Identifier of the party as specified by the identity service", required = true) @RequestParam(value = "partyId") String partyId,
                                                     @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         logger.info("Getting average negotiation time for the party with id: {}",partyId);
-        try {
-            // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
-            }
-        } catch (IOException e){
-            String msg = String.format("Failed to retrieve average negotiation time for party id: %s",partyId);
-            logger.error(msg,e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+        // check token
+        ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+        if (tokenCheck != null) {
+            return tokenCheck;
         }
+
         double averageNegotiationTime = StatisticsPersistenceUtility.calculateAverageNegotiationTime(partyId,bearerToken);
         logger.info("Retrieved average negotiation time for the party with id: {}",partyId);
         return ResponseEntity.ok(averageNegotiationTime);
@@ -366,23 +363,23 @@ public class StatisticsController {
 
     @ApiOperation(value = "Gets statistics (average negotiation time,average response time,trading volume and number of transactions) for the party")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Retrieved average negotiation time for the party",response = OverallStatistics.class)
+            @ApiResponse(code = 200, message = "Retrieved average negotiation time for the party",response = OverallStatistics.class),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 500, message = "Unexpected error while getting overall statistics")
     })
     @RequestMapping(value = "/overall",
             produces = {"application/json"},
             method = RequestMethod.GET)
     public ResponseEntity getStatistics(@ApiParam(value = "Identifier of the party as specified by the identity service") @RequestParam(value = "partyId") String partyId,
-                                        @ApiParam(value = "Role of the party in the business process.\nPossible values:SELLER,BUYER", required = false) @RequestParam(value = "role", required = false, defaultValue = "SELLER") String role,
+                                        @ApiParam(value = "Role of the party in the business process.<br>Possible values:<ul><li>seller</li><li>buyer</li></ul>", defaultValue = "seller", required = false) @RequestParam(value = "role", required = false, defaultValue = "SELLER") String role,
                                         @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         logger.info("Getting statistics for the party with id: {}",partyId);
         OverallStatistics statistics = new OverallStatistics();
         try {
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+            if (tokenCheck != null) {
+                return tokenCheck;
             }
 
             statistics.setAverageNegotiationTime((double)getAverageNegotiationTime(partyId,bearerToken).getBody());

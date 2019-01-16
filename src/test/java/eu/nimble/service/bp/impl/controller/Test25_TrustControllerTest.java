@@ -46,6 +46,7 @@ public class Test25_TrustControllerTest {
     public void test1_createRatingAndReview() throws Exception {
         // get Receipt advice process instance id
         MockHttpServletRequestBuilder request = get("/collaboration-groups")
+                .header("Authorization", environment.getProperty("nimble.test-initiator-token"))
                 .param("collaborationRole", collaborationRole)
                 .param("relatedProducts",relatedProduct)
                 .param("partyID", buyerPartyID);

@@ -64,14 +64,15 @@ public class Test24_CollaborationGroupTest2 {
     public void test3_deleteCollaborationGroup() throws Exception{
         MockHttpServletRequestBuilder request = delete("/collaboration-groups/"+Test23_CollaborationGroupTest.collaborationGroupToBeDeletedId)
                 .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
-        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+        this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         // check whether the deletion is successful or not
         request = get("/collaboration-groups")
+                .header("Authorization", environment.getProperty("nimble.test-initiator-token"))
                 .param("collaborationRole", collaborationRole)
                 .param("relatedProducts",relatedProduct)
                 .param("partyID", partyID);
-        mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         CollaborationGroupResponse collaborationGroupResponse = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), CollaborationGroupResponse.class);
 

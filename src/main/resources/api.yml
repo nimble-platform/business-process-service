@@ -602,6 +602,10 @@ paths:
       responses:
         200:
           description: Updated the collaboration group name successfully
+        401:
+          description: Invalid token. No user was found for the provided token
+        404:
+          description: Specified CollaborationGroup does not exist
     delete:
       operationId: deleteCollaborationGroup
       parameters:
@@ -616,6 +620,8 @@ paths:
       responses:
         200:
           description: Deleted the collaboration group successfully
+        401:
+          description: Invalid token. No user was found for the provided token
     get:
       operationId: getCollaborationGroup
       parameters:
@@ -632,6 +638,10 @@ paths:
           description: Retrieved the collaboration group successfully
           schema:
             $ref: '#/definitions/CollaborationGroup'
+        401:
+          description: Invalid token. No user was found for the provided token
+        404:
+          description: The specified CollaborationGroup does not exist
   /collaboration-groups/{id}/archive:
       post:
         operationId: archiveCollaborationGroup
@@ -650,6 +660,8 @@ paths:
             description: Archived the collaboration group successfully
             schema:
               $ref: '#/definitions/CollaborationGroup'
+          401:
+            description: Invalid token. No user was found for the provided token
   /collaboration-groups/{id}/restore:
       post:
         operationId: restoreCollaborationGroup
@@ -668,6 +680,8 @@ paths:
             description: Restored the collaboration group successfully
             schema:
               $ref: '#/definitions/CollaborationGroup'
+          401:
+            description: Invalid token. No user was found for the provided token
   /collaboration-groups:
     get:
       operationId: getCollaborationGroups
@@ -717,6 +731,10 @@ paths:
         name: collaborationRole
         type: string
         required: false
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       produces:
       - application/json
       responses:
@@ -725,9 +743,9 @@ paths:
           schema:
             $ref: '#/definitions/CollaborationGroupResponse'
 
-  /process-instance-groups/order-process:
+  /process-instance-groups/order-document:
     get:
-      operationId: getOrderProcess
+      operationId: getOrderDocument
       parameters:
       - in: query
         name: processInstanceId
@@ -742,7 +760,13 @@ paths:
       - application/json
       responses:
         200:
-          description: Retrieved the order content successfuly
+          description: Retrieved the order document successfuly
+        401:
+          description: Invalid token. No user was found for the provided token
+        404:
+          description: No process instance or order exists
+        500:
+          description: Unexpected error while getting the order document
 
   /process-instance-groups/filters:
     get:
@@ -791,7 +815,7 @@ paths:
       - application/json
       responses:
         200:
-          description: Retrieved the filters successfully
+          description: Retrieved the ProcessInstanceGroupFilter successfully
           schema:
             $ref: '#/definitions/ProcessInstanceGroupFilter'
 
@@ -809,9 +833,11 @@ paths:
         required: true
       responses:
         200:
-          description: Retrieved the groups successfully
+          description: Retrieved the ProcessInstanceGroup successfully
           schema:
             $ref: '#/definitions/ProcessInstanceGroup'
+        401:
+          description: Invalid token. No user was found for the provided token
     delete:
       operationId: deleteProcessInstanceGroup
       parameters:
@@ -825,7 +851,9 @@ paths:
         required: true
       responses:
         200:
-          description: Deleted the groups successfully
+          description: Deleted the ProcessInstanceGroup successfully
+        401:
+          description: Invalid token. No user was found for the provided token
 
 definitions:
 

@@ -44,31 +44,27 @@ public class ContractPersistenceUtility {
         return clause;
     }
 
-    public static List<ClauseType> getClause(String documentId, DocumentType documentType, eu.nimble.service.model.ubl.extension.ClauseType clauseType) {
+    public static List<ClauseType> getClauses(String documentId, DocumentType documentType, eu.nimble.service.model.ubl.extension.ClauseType clauseType) {
+        ContractType contract = null;
         List<ClauseType> clauseTypes = new ArrayList<>();
         if(documentType.equals(DocumentType.ORDER)) {
             OrderType orderType = (OrderType) DocumentPersistenceUtility.getUBLDocument(documentId,DocumentType.ORDER);
-            for(ContractType contractType : orderType.getContract()){
-                for(ClauseType clause : contractType.getClause()){
-                    if(eu.nimble.service.model.ubl.extension.ClauseType.valueOf(clause.getType()) == clauseType){
-                        clauseTypes.add(clause);
-                    }
-                }
+            if(orderType.getContract().size() > 0) {
+                contract = orderType.getContract().get(0);
             }
 
         } else if(documentType.equals(DocumentType.TRANSPORTEXECUTIONPLANREQUEST)) {
             TransportExecutionPlanRequestType transportExecutionPlanRequestType = (TransportExecutionPlanRequestType) DocumentPersistenceUtility.getUBLDocument(documentId,DocumentType.TRANSPORTEXECUTIONPLANREQUEST);
-            ContractType contractType = transportExecutionPlanRequestType.getTransportContract();
-            if(contractType == null){
-                return null;
-            }
-            for(ClauseType clause : contractType.getClause()){
-                if(eu.nimble.service.model.ubl.extension.ClauseType.valueOf(clause.getType()) == clauseType){
+            contract = transportExecutionPlanRequestType.getTransportContract();
+
+        }
+
+        if(contract != null) {
+            for (ClauseType clause : contract.getClause()) {
+                if (clauseType == null || eu.nimble.service.model.ubl.extension.ClauseType.valueOf(clause.getType()) == clauseType) {
                     clauseTypes.add(clause);
                 }
             }
-        } else {
-            return null;
         }
 
         return clauseTypes;

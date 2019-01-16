@@ -46,23 +46,16 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
     private JPARepositoryFactory repoFactory;
 
     @Override
-    @ApiOperation(value = "", notes = "Delete the process instance group along with the included process instances")
-    public ResponseEntity<Void> deleteProcessInstanceGroup(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
-                                                           @ApiParam(value = "Identifier of the process instance group to be deleted", required = true) @PathVariable("id") String id) {
+    @ApiOperation(value = "", notes = "Deletes the process instance group")
+    public ResponseEntity<Void> deleteProcessInstanceGroup(@ApiParam(value = "Identifier of the ProcessInstanceGroup to be deleted (processInstanceGroup.id)", required = true) @PathVariable("id") String id,
+                                                           @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         logger.debug("Deleting ProcessInstanceGroup ID: {}", id);
-        try {
-            // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-            }
-        } catch (IOException e){
-            String msg = String.format("Failed to delete process instance group: %s",id);
-            logger.error(msg,e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        // check token
+        ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+        if (tokenCheck != null) {
+            return tokenCheck;
         }
+
         ProcessInstanceGroupDAOUtility.deleteProcessInstanceGroupDAOByID(id);
 
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body("true");
@@ -71,22 +64,14 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
     }
 
     @Override
-    @ApiOperation(value = "", notes = "Retrieve the process instance group specified with the ID")
-    public ResponseEntity<ProcessInstanceGroup> getProcessInstanceGroup(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
-                                                                        @ApiParam(value = "Identifier of the process instance group to be received", required = true) @PathVariable("id") String id) {
+    @ApiOperation(value = "", notes = "Retrieves the process instance group specified with the ID")
+    public ResponseEntity<ProcessInstanceGroup> getProcessInstanceGroup(@ApiParam(value = "Identifier of the ProcessInstanceGroup to be received (processInstanceGroup.id)", required = true) @PathVariable("id") String id,
+                                                                        @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         logger.debug("Getting ProcessInstanceGroup: {}", id);
-        try {
-            // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-            }
-        } catch (IOException e){
-            String msg = String.format("Failed to retrieve process instance group: %s",id);
-            logger.error(msg,e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        // check token
+        ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+        if (tokenCheck != null) {
+            return tokenCheck;
         }
 
         ProcessInstanceGroupDAO processInstanceGroupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(id);
@@ -98,16 +83,17 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
     }
 
     @Override
-    @ApiOperation(value = "", notes = "Generate detailed filtering criteria for the current query parameters in place")
+    @ApiOperation(value = "", notes = "Generates detailed filtering criteria for the current query parameters in place." +
+            " The filter can be used to restrict the set of groups for easy discovery.")
     public ResponseEntity<ProcessInstanceGroupFilter> getProcessInstanceGroupFilters(
             @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
             @ApiParam(value = "Identifier of the party as specified by the identity service") @RequestParam(value = "partyId", required = false) String partyId,
             @ApiParam(value = "Names of the products for which the collaboration activities are performed") @RequestParam(value = "relatedProducts", required = false) List<String> relatedProducts,
-            @ApiParam(value = "Categories of the products.\nFor example:MDF raw,Split air conditioner") @RequestParam(value = "relatedProductCategories", required = false) List<String> relatedProductCategories,
+            @ApiParam(value = "Categories of the products.<br>For example:MDF raw,Split air conditioner") @RequestParam(value = "relatedProductCategories", required = false) List<String> relatedProductCategories,
             @ApiParam(value = "Identifier (party id) of the corresponding trading partners") @RequestParam(value = "tradingPartnerIDs", required = false) List<String> tradingPartnerIDs,
             @ApiParam(value = "Whether the collaboration group is archived or not", defaultValue = "false") @RequestParam(value = "archived", required = false, defaultValue = "false") Boolean archived,
-            @ApiParam(value = "Role of the party in the collaboration.\nPossible values:SELLER,BUYER") @RequestParam(value = "collaborationRole", required = false) String collaborationRole,
-            @ApiParam(value = "Status of the process instance included in the group\nPossible values:STARTED,WAITING,CANCELLED,COMPLETED") @RequestParam(value = "status", required = false) List<String> status) {
+            @ApiParam(value = "Role of the party in the collaboration.<br>Possible values: <ul><li>SELLER</li><li>BUYER</li></ul>") @RequestParam(value = "collaborationRole", required = false) String collaborationRole,
+            @ApiParam(value = "Status of the process instance included in the group.<br>Possible values: <ul><li>STARTED</li><li>WAITING</li><li>CANCELLED</li><li>COMPLETED</li></ul>") @RequestParam(value = "status", required = false) List<String> status) {
 
         ProcessInstanceGroupFilter filters = CollaborationGroupDAOUtility.getFilterDetails(partyId, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, status, null, null, bearerToken);
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(filters);
@@ -119,20 +105,16 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
     }
 
     @Override
-    @ApiOperation(value = "", notes = "Get the order content in a business process group given a process id included in the group")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Retrieved the order content", response = OrderType.class),
-            @ApiResponse(code = 404, message = "No order exists")
-    })
-    public ResponseEntity<Void> getOrderProcess(@ApiParam(value = "Identifier of a process instance included in the group", required = true) @RequestParam(value = "processInstanceId", required = true) String processInstanceId,
-                                                @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String authorization) {
+    @ApiOperation(value = "", notes = "Gets the order document included in a business process group")
+    public ResponseEntity<Void> getOrderDocument(@ApiParam(value = "Identifier of a process instance included in the group", required = true) @RequestParam(value = "processInstanceId", required = true) String processInstanceId,
+                                                @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
         try {
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(authorization);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",authorization);
-                return HttpResponseUtil.createResponseEntityAndLog(msg,null,HttpStatus.NOT_FOUND,LogLevel.ERROR);
+            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+            if (tokenCheck != null) {
+                return tokenCheck;
             }
+
             // check whether the process instance id exists
             ProcessInstanceDAO pi = ProcessInstanceDAOUtility.getById(processInstanceId);
             if (pi == null) {
@@ -144,11 +126,11 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
             // get the order content
             ResponseEntity response;
             if (orderId != null) {
-                String orderJson = (String) documentController.getDocumentJsonContent(orderId,authorization).getBody();
+                String orderJson = (String) documentController.getDocumentJsonContent(orderId,bearerToken).getBody();
                 response = ResponseEntity.status(HttpStatus.OK).body(orderJson);
 
             } else {
-                response = ResponseEntity.status(HttpStatus.OK).body(null);
+                response = ResponseEntity.status(HttpStatus.NOT_FOUND).build();
             }
             return response;
 
@@ -157,37 +139,38 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
         }
     }
 
-    @ApiOperation(value = "", notes = "Cancel the collaboration (negotiation) which is represented by the given group id")
+    @ApiOperation(value = "", notes = "Cancels the collaboration (negotiation) which is represented by the specified ProcessInstanceGroup")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Cancelled the collaboration for the given group id successfully "),
-            @ApiResponse(code = 400, message = "There does not exist a process instance group with the given id"),
-            @ApiResponse(code = 500, message = "Failed to cancel collaboration")
+            @ApiResponse(code = 200, message = "Cancelled the collaboration for the given group id successfully."),
+            @ApiResponse(code = 400, message = "The specified group cannot be cancelled"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 404, message = "There does not exist a process instance group with the given id"),
+            @ApiResponse(code = 500, message = "Unexpected error while cancelling the collaboration")
     })
     @RequestMapping(value = "/process-instance-groups/{id}/cancel",
             method = RequestMethod.POST)
-    public ResponseEntity cancelCollaboration(@ApiParam(value = "Identifier of the process instance group to be cancelled") @PathVariable(value = "id", required = true) String id,
+    public ResponseEntity cancelCollaboration(@ApiParam(value = "Identifier of the process instance group to be cancelled", required = true) @PathVariable(value = "id", required = true) String id,
                                               @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
         try {
             logger.debug("Cancelling the collaboration for the group id: {}", id);
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+            if (tokenCheck != null) {
+                return tokenCheck;
             }
+
             ProcessInstanceGroupDAO groupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(id);
             if (groupDAO == null) {
                 String msg = String.format("There does not exist a process instance group with the id: %s", id);
                 logger.warn(msg);
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
             }
 
             // check whether the group consists of an approved order or an accepted transport execution plan
             List<String> processInstanceIDs = groupDAO.getProcessInstanceIDs();
             boolean isCancellableGroup = cancellableGroup(processInstanceIDs);
             if (!isCancellableGroup) {
-                logger.error("Process instance group with id:{} can not be cancelled", id);
+                logger.error("Process instance group with id:{} can not be cancelled since the contractually-binding step is approved already.", id);
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
             }
 
@@ -240,7 +223,8 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
         for (String instanceID : processInstanceIDs) {
             List<ProcessDocumentMetadataDAO> metadataDAOS = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(instanceID);
             for (ProcessDocumentMetadataDAO metadataDAO : metadataDAOS) {
-                if (metadataDAO.getType() == DocumentType.ORDERRESPONSESIMPLE && metadataDAO.getStatus() == ProcessDocumentStatus.APPROVED || metadataDAO.getType() == DocumentType.TRANSPORTEXECUTIONPLAN && metadataDAO.getStatus() == ProcessDocumentStatus.APPROVED) {
+                if (metadataDAO.getType() == DocumentType.ORDERRESPONSESIMPLE && metadataDAO.getStatus() == ProcessDocumentStatus.APPROVED ||
+                        metadataDAO.getType() == DocumentType.TRANSPORTEXECUTIONPLAN && metadataDAO.getStatus() == ProcessDocumentStatus.APPROVED) {
                     return false;
                 }
             }

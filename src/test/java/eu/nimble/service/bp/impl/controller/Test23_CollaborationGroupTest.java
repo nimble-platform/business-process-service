@@ -55,6 +55,7 @@ public class Test23_CollaborationGroupTest {
     public void test1_updateCollaborationGroupName() throws Exception {
         // get the collaboration group
         MockHttpServletRequestBuilder request = get("/collaboration-groups")
+                .header("Authorization", environment.getProperty("nimble.test-initiator-token"))
                 .param("collaborationRole", collaborationRoleBuyer)
                 .param("relatedProducts",serviceName)
                 .param("partyId", partyID);
@@ -88,6 +89,7 @@ public class Test23_CollaborationGroupTest {
     public void test3_cancelCollaboration() throws Exception{
         // get the collaboration group
         MockHttpServletRequestBuilder request = get("/collaboration-groups")
+                .header("Authorization", environment.getProperty("nimble.test-initiator-token"))
                 .param("collaborationRole", collaborationRoleSeller)
                 .param("relatedProducts",productName)
                 .param("partyId", partyID);

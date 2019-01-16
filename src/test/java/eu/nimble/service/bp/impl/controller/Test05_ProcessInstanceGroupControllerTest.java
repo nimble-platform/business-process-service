@@ -46,6 +46,7 @@ public class Test05_ProcessInstanceGroupControllerTest {
     @Test
     public void test1_getCollaborationGroups() throws Exception {
         MockHttpServletRequestBuilder request = get("/collaboration-groups")
+                .header("Authorization", environment.getProperty("nimble.test-initiator-token"))
                 .param("partyId", partyId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
