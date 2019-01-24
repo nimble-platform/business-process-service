@@ -20,13 +20,13 @@ import java.util.Properties;
 
 @Configuration
 @EnableTransactionManagement
-@EnableConfigurationProperties
+//@EnableConfigurationProperties
 @PropertySource("classpath:bootstrap.yml")
-@EnableJpaRepositories(
-        entityManagerFactoryRef = "ubldbEntityManagerFactory",
-        transactionManagerRef = "ubldbTransactionManager",
-        basePackages = {"eu.nimble.service.bp.impl.persistence.catalogue"}
-)
+//@EnableJpaRepositories(
+//        entityManagerFactoryRef = "ubldbEntityManagerFactory",
+//        transactionManagerRef = "ubldbTransactionManager",
+//        basePackages = {"eu.nimble.service.bp.impl.persistence.catalogue", "eu.nimble.utility.persistence.resource"}
+//)
 @ComponentScan(basePackages = {"eu.nimble.utility.config"})
 class UBLDBConfig {
 
@@ -63,9 +63,9 @@ class UBLDBConfig {
         return emfBean.getObject();
     }
 
-    @Bean(name = "ubldbTransactionManager")
-    PlatformTransactionManager ubldbTransactionManager(
-            @Qualifier("ubldbEntityManagerFactory") EntityManagerFactory entityManagerFactory) {
-        return new JpaTransactionManager(entityManagerFactory);
-    }
+//    @Bean(name = "ubldbTransactionManager")
+//    PlatformTransactionManager ubldbTransactionManager(
+//            @Qualifier("ubldbEntityManagerFactory") EntityManagerFactory entityManagerFactory) {
+//        return new JpaTransactionManager(entityManagerFactory);
+//    }
 }

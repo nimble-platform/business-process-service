@@ -2,8 +2,8 @@ package eu.nimble.service.bp.processor.fulfilment;
 
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
-import eu.nimble.service.bp.impl.persistence.util.DocumentDAOUtility;
-import eu.nimble.service.bp.impl.persistence.util.TrustUtility;
+import eu.nimble.service.bp.impl.util.persistence.bp.ExecutionConfigurationDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.TrustPersistenceUtility;
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import eu.nimble.service.model.ubl.receiptadvice.ReceiptAdviceType;
@@ -41,7 +41,7 @@ public class DefaultReceiptAdviceSender implements JavaDelegate {
         String bearerToken = variables.get("bearer_token").toString();
 
         // get application execution configuration
-        ExecutionConfiguration executionConfiguration = DocumentDAOUtility.getExecutionConfiguration(buyer,
+        ExecutionConfiguration executionConfiguration = ExecutionConfigurationDAOUtility.getExecutionConfiguration(buyer,
                 execution.getProcessInstance().getProcessDefinitionId(), ProcessConfiguration.RoleTypeEnum.BUYER, "RECEIPTADVICE",
                 ExecutionConfiguration.ApplicationTypeEnum.DATACHANNEL);
         String applicationURI = executionConfiguration.getExecutionUri();
@@ -66,6 +66,6 @@ public class DefaultReceiptAdviceSender implements JavaDelegate {
         execution.setVariable("initialDocumentID",initialDocumentID);
         execution.setVariable("responseDocumentID",receiptAdvice.getID());
 
-        TrustUtility.createCompletedTasksForBothParties(processInstanceId,bearerToken,"Completed");
+        TrustPersistenceUtility.createCompletedTasksForBothParties(processInstanceId,bearerToken,"Completed");
     }
 }

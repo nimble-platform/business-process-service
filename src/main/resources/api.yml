@@ -30,6 +30,11 @@ paths:
       operationId: getProcessDefinitions
       produces:
       - application/json
+      parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       responses:
         # Response code
         200:
@@ -45,6 +50,10 @@ paths:
       produces:
       - application/json
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: body
         name: body
         required: true
@@ -63,6 +72,10 @@ paths:
       produces:
       - application/json
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: body
         name: body
         schema:
@@ -79,6 +92,10 @@ paths:
       produces:
       - application/json
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: path
         name: processID
         type: string
@@ -95,6 +112,10 @@ paths:
       produces:
       - application/json
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: path
         name: processID
         type: string
@@ -114,6 +135,10 @@ paths:
       produces:
       - application/json
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: body
         name: body
         required: true
@@ -132,6 +157,10 @@ paths:
       produces:
       - application/json
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: body
         name: body
         schema:
@@ -148,6 +177,10 @@ paths:
       produces:
       - application/json
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: path
         name: partnerID
         type: string
@@ -164,6 +197,10 @@ paths:
       produces:
       - application/json
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: path
         name: partnerID
         type: string
@@ -183,6 +220,10 @@ paths:
       produces:
       - application/json
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: body
         name: body
         required: true
@@ -201,6 +242,10 @@ paths:
       produces:
       - application/json
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: body
         name: body
         schema:
@@ -218,6 +263,10 @@ paths:
       produces:
       - application/json
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: path
         name: partnerID
         type: string
@@ -237,6 +286,10 @@ paths:
       produces:
       - application/json
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: path
         name: partnerID
         type: string
@@ -261,6 +314,10 @@ paths:
       produces:
       - application/json
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: path
         name: partnerID
         type: string
@@ -288,6 +345,10 @@ paths:
       produces:
       - application/json
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: body
         name: body
         required: true
@@ -354,156 +415,279 @@ paths:
           schema:
             $ref: '#/definitions/ProcessInstance'
 
-  /document:
-    post:
-      operationId: addDocumentMetadata
-      consumes:
-      - application/json
-      produces:
-      - application/json
-      parameters:
-      - in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/ProcessDocumentMetadata'
-      responses:
-        # Response code
-        200:
-          description: Document added
-          schema:
-            $ref: '#/definitions/ApiResponse'
-    put:
-      operationId: updateDocumentMetadata
-      consumes:
-      - application/json
-      produces:
-      - application/json
-      parameters:
-      - in: body
-        name: body
-        schema:
-          $ref: '#/definitions/ProcessDocumentMetadata'
-      responses:
-        # Response code
-        200:
-          description: Document updated
-          schema:
-            $ref: '#/definitions/ApiResponse'
+#  /document:
+#    post:
+#      operationId: addDocumentMetadata
+#      consumes:
+#      - application/json
+#      produces:
+#      - application/json
+#      parameters:
+#      - name: Authorization
+#        in: header
+#        type: string
+#        required: true
+#      - in: body
+#        name: body
+#        required: true
+#        schema:
+#          $ref: '#/definitions/ProcessDocumentMetadata'
+#      responses:
+#        # Response code
+#        200:
+#          description: Document added
+#          schema:
+#            $ref: '#/definitions/ApiResponse'
+#    put:
+#      operationId: updateDocumentMetadata
+#      consumes:
+#      - application/json
+#      produces:
+#      - application/json
+#      parameters:
+#      - name: Authorization
+#        in: header
+#        type: string
+#        required: true
+#      - in: body
+#        name: body
+#        schema:
+#          $ref: '#/definitions/ProcessDocumentMetadata'
+#      responses:
+#        # Response code
+#        200:
+#          description: Document updated
+#          schema:
+#            $ref: '#/definitions/ApiResponse'
+#
+#  /document/{documentID}:
+#    delete:
+#      operationId: deleteDocument
+#      produces:
+#      - application/json
+#      parameters:
+#      - name: Authorization
+#        in: header
+#        type: string
+#        required: true
+#      - in: path
+#        name: documentID
+#        type: string
+#        required: true
+#      responses:
+#        # Response code
+#        200:
+#          description: Document deleted
+#          schema:
+#            $ref: '#/definitions/ApiResponse'
+#
+#  /document/{partnerID}/{type}/{source}/{status}:
+#    get:
+#      operationId: getDocuments
+#      produces:
+#      - application/json
+#      parameters:
+#      - name: Authorization
+#        in: header
+#        type: string
+#        required: true
+#      - in: path
+#        name: partnerID
+#        type: string
+#        description: The id of the partner.
+#        required: true
+#      - in: path
+#        name: type
+#        type: string
+#        description: The type of the document such as PPAPRESPONSE,ORDERRESPONSESIMPLE,REQUESTFORQUOTATION etc.
+#        required: true
+#      - in: path
+#        name: status
+#        type: string
+#        description: The status of the document. (APPROVED, WAITINGRESPONSE, DENIED or PASTDUE)
+#        required: true
+#      - in: path
+#        name: source
+#        type: string
+#        description: The source of the document (whether it is sent or received by the partner - SENT, RECEIVED).
+#        required: true
+#      responses:
+#        # Response code
+#        200:
+#          description: Document obtained
+#          schema:
+#            type: array
+#            items:
+#              $ref: '#/definitions/ProcessDocumentMetadata'
+#
+#  /document/{partnerID}/{type}/{source}:
+#    get:
+#      operationId: getDocuments
+#      produces:
+#      - application/json
+#      parameters:
+#      - name: Authorization
+#        in: header
+#        type: string
+#        required: true
+#      - in: path
+#        name: partnerID
+#        type: string
+#        description: The id of the partner.
+#        required: true
+#      - in: path
+#        name: type
+#        type: string
+#        description: The type of the document such as PPAPRESPONSE,ORDERRESPONSESIMPLE,REQUESTFORQUOTATION etc.
+#        required: true
+#      - in: path
+#        name: source
+#        type: string
+#        description: The source of the document (whether it is sent or received by the partner - SENT, RECEIVED).
+#        required: true
+#      responses:
+#        # Response code
+#        200:
+#          description: Document obtained
+#          schema:
+#            type: array
+#            items:
+#              $ref: '#/definitions/ProcessDocumentMetadata'
+#
+#  /document/{partnerID}/{type}:
+#    get:
+#      operationId: getDocuments
+#      produces:
+#      - application/json
+#      parameters:
+#      - name: Authorization
+#        in: header
+#        type: string
+#        required: true
+#      - in: path
+#        name: partnerID
+#        type: string
+#        description: The id of the partner.
+#        required: true
+#      - in: path
+#        name: type
+#        type: string
+#        description: The type of the document such as PPAPRESPONSE,ORDERRESPONSESIMPLE,REQUESTFORQUOTATION etc.
+#        required: true
+#      responses:
+#        # Response code
+#        200:
+#          description: Document obtained
+#          schema:
+#            type: array
+#            items:
+#              $ref: '#/definitions/ProcessDocumentMetadata'
 
-  /document/{documentID}:
+  /collaboration-groups/{id}:
+    patch:
+      operationId: updateCollaborationGroupName
+      parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
+      - in: path
+        name: id
+        type: string
+        required: true
+      - in: query
+        name: groupName
+        type: string
+        required: true
+      responses:
+        200:
+          description: Updated the collaboration group name successfully
+        401:
+          description: Invalid token. No user was found for the provided token
+        404:
+          description: Specified CollaborationGroup does not exist
     delete:
-      operationId: deleteDocument
-      produces:
-      - application/json
+      operationId: deleteCollaborationGroup
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: path
-        name: documentID
+        name: id
         type: string
         required: true
       responses:
-        # Response code
         200:
-          description: Document deleted
-          schema:
-            $ref: '#/definitions/ApiResponse'
-
-  /document/{partnerID}/{type}/{source}/{status}:
+          description: Deleted the collaboration group successfully
+        401:
+          description: Invalid token. No user was found for the provided token
     get:
-      operationId: getDocuments
-      produces:
-      - application/json
+      operationId: getCollaborationGroup
       parameters:
-      - in: path
-        name: partnerID
+      - name: Authorization
+        in: header
         type: string
-        description: The id of the partner.
         required: true
       - in: path
-        name: type
+        name: id
         type: string
-        description: The type of the document such as PPAPRESPONSE,ORDERRESPONSESIMPLE,REQUESTFORQUOTATION etc.
-        required: true
-      - in: path
-        name: status
-        type: string
-        description: The status of the document. (APPROVED, WAITINGRESPONSE, DENIED or PASTDUE)
-        required: true
-      - in: path
-        name: source
-        type: string
-        description: The source of the document (whether it is sent or received by the partner - SENT, RECEIVED).
         required: true
       responses:
-        # Response code
         200:
-          description: Document obtained
+          description: Retrieved the collaboration group successfully
           schema:
-            type: array
-            items:
-              $ref: '#/definitions/ProcessDocumentMetadata'
-
-  /document/{partnerID}/{type}/{source}:
+            $ref: '#/definitions/CollaborationGroup'
+        401:
+          description: Invalid token. No user was found for the provided token
+        404:
+          description: The specified CollaborationGroup does not exist
+  /collaboration-groups/{id}/archive:
+      post:
+        operationId: archiveCollaborationGroup
+        parameters:
+        - name: Authorization
+          in: header
+          type: string
+          required: true
+        - in: path
+          name: id
+          type: string
+          description: Identifier of the collaboration group to be archived
+          required: true
+        responses:
+          200:
+            description: Archived the collaboration group successfully
+            schema:
+              $ref: '#/definitions/CollaborationGroup'
+          401:
+            description: Invalid token. No user was found for the provided token
+  /collaboration-groups/{id}/restore:
+      post:
+        operationId: restoreCollaborationGroup
+        parameters:
+        - name: Authorization
+          in: header
+          type: string
+          required: true
+        - in: path
+          name: id
+          type: string
+          description: Identifier of the collaboration group to be restored
+          required: true
+        responses:
+          200:
+            description: Restored the collaboration group successfully
+            schema:
+              $ref: '#/definitions/CollaborationGroup'
+          401:
+            description: Invalid token. No user was found for the provided token
+  /collaboration-groups:
     get:
-      operationId: getDocuments
-      produces:
-      - application/json
-      parameters:
-      - in: path
-        name: partnerID
-        type: string
-        description: The id of the partner.
-        required: true
-      - in: path
-        name: type
-        type: string
-        description: The type of the document such as PPAPRESPONSE,ORDERRESPONSESIMPLE,REQUESTFORQUOTATION etc.
-        required: true
-      - in: path
-        name: source
-        type: string
-        description: The source of the document (whether it is sent or received by the partner - SENT, RECEIVED).
-        required: true
-      responses:
-        # Response code
-        200:
-          description: Document obtained
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/ProcessDocumentMetadata'
-
-  /document/{partnerID}/{type}:
-    get:
-      operationId: getDocuments
-      produces:
-      - application/json
-      parameters:
-      - in: path
-        name: partnerID
-        type: string
-        description: The id of the partner.
-        required: true
-      - in: path
-        name: type
-        type: string
-        description: The type of the document such as PPAPRESPONSE,ORDERRESPONSESIMPLE,REQUESTFORQUOTATION etc.
-        required: true
-      responses:
-        # Response code
-        200:
-          description: Document obtained
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/ProcessDocumentMetadata'
-
-  /group:
-    get:
-      operationId: getProcessInstanceGroups
+      operationId: getCollaborationGroups
       parameters:
       - in: query
-        name: partyID
+        name: partyId
         type: string
         description: Identifier of the party
       - in: query
@@ -518,14 +702,6 @@ paths:
         name: tradingPartnerIDs
         type: array
         description: Identifier of the corresponsing trading partner ID
-      - in: query
-        name: initiationDateRange
-        type: string
-        description: Initiation date range for the first process instance in the group
-      - in: query
-        name: lastActivityDateRange
-        type: string
-        description: Last activity date range. It is the latest submission date of the document to last process instance in the group
       - in: query
         name: offset
         type: integer
@@ -548,13 +724,16 @@ paths:
           type: string
           enum:
           - STARTED
-          - WAITING
           - CANCELLED
           - COMPLETED
       - in: query
         name: collaborationRole
         type: string
         required: false
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       produces:
       - application/json
       responses:
@@ -562,27 +741,10 @@ paths:
           description: Retrieved the groups successfully
           schema:
             $ref: '#/definitions/CollaborationGroupResponse'
-    post:
-      operationId: saveProcessInstanceGroup
-      consumes:
-      - application/json
-      produces:
-      - application/json
-      parameters:
-      - in: body
-        name: processInstanceGroup
-        description: The content of the process instance group to be saved
-        required: true
-        schema:
-          $ref: '#/definitions/ProcessInstanceGroup'
-      responses:
-        # Response code
-        201:
-          description: Saved the group successfully
 
-  /group/order-process:
+  /process-instance-groups/order-document:
     get:
-      operationId: getOrderProcess
+      operationId: getOrderDocument
       parameters:
       - in: query
         name: processInstanceId
@@ -597,14 +759,20 @@ paths:
       - application/json
       responses:
         200:
-          description: Retrieved the order content successfuly
+          description: Retrieved the order document successfuly
+        401:
+          description: Invalid token. No user was found for the provided token
+        404:
+          description: No process instance or order exists
+        500:
+          description: Unexpected error while getting the order document
 
-  /group/filters:
+  /process-instance-groups/filters:
     get:
       operationId: getProcessInstanceGroupFilters
       parameters:
       - in: query
-        name: partyID
+        name: partyId
         type: string
         description: Identifier of the party
       - in: query
@@ -619,14 +787,6 @@ paths:
         name: tradingPartnerIDs
         type: array
         description: Identifier of the corresponsing trading partner ID
-      - in: query
-        name: initiationDateRange
-        type: string
-        description: Initiation date range for the first process instance in the group
-      - in: query
-        name: lastActivityDateRange
-        type: string
-        description: Last activity date range. It is the latest submission date of the document to last process instance in the group
       - in: query
         name: archived
         type: boolean
@@ -643,7 +803,6 @@ paths:
           type: string
           enum:
           - STARTED
-          - WAITING
           - CANCELLED
           - COMPLETED
       - name: Authorization
@@ -654,211 +813,45 @@ paths:
       - application/json
       responses:
         200:
-          description: Retrieved the filters successfully
+          description: Retrieved the ProcessInstanceGroupFilter successfully
           schema:
             $ref: '#/definitions/ProcessInstanceGroupFilter'
 
-  /group/{ID}:
+  /process-instance-groups/{id}:
     get:
       operationId: getProcessInstanceGroup
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: path
-        name: ID
+        name: id
         type: string
         required: true
       responses:
         200:
-          description: Retrieved the groups successfully
+          description: Retrieved the ProcessInstanceGroup successfully
           schema:
             $ref: '#/definitions/ProcessInstanceGroup'
+        401:
+          description: Invalid token. No user was found for the provided token
     delete:
       operationId: deleteProcessInstanceGroup
       parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
       - in: path
-        name: ID
+        name: id
         type: string
         required: true
       responses:
         200:
-          description: Deleted the groups successfully
-
-  /group/collaboration/{ID}:
-    get:
-      operationId: getCollaborationGroup
-      parameters:
-      - in: path
-        name: ID
-        type: string
-        required: true
-      responses:
-        200:
-          description: Retrieved the collaboration group successfully
-          schema:
-            $ref: '#/definitions/CollaborationGroup'
-    delete:
-      operationId: deleteCollaborationGroup
-      parameters:
-      - in: path
-        name: ID
-        type: string
-        required: true
-      responses:
-        200:
-          description: Deleted the collaboration group successfully
-    patch:
-      operationId: updateCollaborationGroupName
-      parameters:
-      - in: path
-        name: ID
-        type: string
-        required: true
-      - in: query
-        name: groupName
-        type: string
-        required: true
-      responses:
-        200:
-          description: Updated the collaboration group name successfully
-
-  /group/{ID}/archive:
-    post:
-      operationId: archiveGroup
-      parameters:
-      - in: path
-        name: ID
-        type: string
-        description: Identifier of the process instance group to be archived
-        required: true
-      responses:
-        200:
-          description: Archived the group successfully
-          schema:
-            $ref: '#/definitions/ProcessInstanceGroup'
-
-  /group/collaboration/{ID}/archive:
-    post:
-      operationId: archiveCollaborationGroup
-      parameters:
-      - in: path
-        name: ID
-        type: string
-        description: Identifier of the collaboration group to be archived
-        required: true
-      responses:
-        200:
-          description: Archived the collaboration group successfully
-          schema:
-            $ref: '#/definitions/CollaborationGroup'
-
-  /group/collaboration/{ID}/restore:
-    post:
-      operationId: restoreCollaborationGroup
-      parameters:
-      - in: path
-        name: ID
-        type: string
-        description: Identifier of the collaboration group to be restored
-        required: true
-      responses:
-        200:
-          description: Restored the collaboration group successfully
-          schema:
-            $ref: '#/definitions/CollaborationGroup'
-
-  /group/{ID}/restore:
-    post:
-      operationId: restoreGroup
-      parameters:
-      - in: path
-        name: ID
-        type: string
-        description: Identifier of the process instance group to be restored
-        required: true
-      responses:
-        200:
-          description: Restored the group successfully
-          schema:
-            $ref: '#/definitions/ProcessInstanceGroup'
-
-  /group/archive-all:
-    post:
-      operationId: archiveAllGroups
-      parameters:
-      - in: query
-        name: partyID
-        type: string
-        description: Identifier of the party of which groups will be archived
-        required: true
-      responses:
-        200:
-          description: Archived the groups successfully
-  /group/delete-all:
-    post:
-      operationId: deleteAllArchivedGroups
-      parameters:
-      - in: query
-        name: partyID
-        type: string
-        description: Identifier of the party of which groups will be deleted
-        required: true
-      responses:
-        200:
-          description: Deleted the groups successfully
-
-  /group/{ID}/process-instance:
-    get:
-      operationId: getProcessInstancesOfGroup
-      produces:
-      - application/json
-      parameters:
-      - in: path
-        name: ID
-        type: string
-        description: Identifier of the process instance group for which the associated process instances will be retrieved
-        required: true
-      responses:
-        200:
-          description: Retrieved the process instances successfully
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/ProcessInstance'
-    post:
-      operationId: addProcessInstanceToGroup
-      parameters:
-      - in: path
-        name: ID
-        type: string
-        description: Identifier of the process instance group to which a new process instance id is added
-        required: true
-      - in: query
-        name: processInstanceID
-        type: string
-        description: Identifier of the process instance to be added
-        required: true
-      responses:
-        200:
-          description: Added the process instance to the group successfully
-          schema:
-            $ref: '#/definitions/ProcessInstanceGroup'
-    delete:
-      operationId: deleteProcessInstanceFromGroup
-      parameters:
-      - in: path
-        name: ID
-        type: string
-        description: Identifier of the process instance group from which the process instance id is deleted
-        required: true
-      - in: query
-        name: processInstanceID
-        type: string
-        description: Identifier of the process instance to be deleted
-        required: true
-      responses:
-        200:
-          description: Deleted the process instance from the group successfully
-          schema:
-            $ref: '#/definitions/ProcessInstanceGroup'
+          description: Deleted the ProcessInstanceGroup successfully
+        401:
+          description: Invalid token. No user was found for the provided token
 
 definitions:
 
@@ -1079,7 +1072,6 @@ definitions:
         type: string
         enum:
         - STARTED
-        - WAITING
         - CANCELLED
         - COMPLETED
 
@@ -1184,7 +1176,6 @@ definitions:
           type: string
           enum:
           - STARTED
-          - WAITING
           - CANCELLED
           - COMPLETED
 

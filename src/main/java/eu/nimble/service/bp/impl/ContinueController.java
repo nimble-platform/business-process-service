@@ -1,17 +1,22 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.hyperjaxb.model.*;
-import eu.nimble.service.bp.impl.persistence.bp.BusinessProcessRepository;
-import eu.nimble.service.bp.impl.persistence.bp.CollaborationGroupDAORepository;
+import eu.nimble.service.bp.impl.util.HttpResponseUtil;
+import eu.nimble.service.bp.impl.util.bp.BusinessProcessUtility;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
-import eu.nimble.service.bp.impl.persistence.util.DAOUtility;
-import eu.nimble.service.bp.impl.persistence.util.HibernateSwaggerObjectMapper;
-import eu.nimble.service.bp.impl.persistence.util.ProcessInstanceGroupDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.bp.CollaborationGroupDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMapper;
+import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceGroupDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.api.ContinueApi;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
+import eu.nimble.service.bp.swagger.model.Transaction;
+import eu.nimble.utility.persistence.JPARepositoryFactory;
+import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
@@ -32,61 +37,86 @@ public class ContinueController implements ContinueApi {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    private BusinessProcessRepository businessProcessRepository;
-
+    private ResourceValidationUtility resourceValidationUtil;
     @Autowired
-    private CollaborationGroupDAORepository collaborationGroupDAORepository;
+    private JPARepositoryFactory repoFactory;
 
     @Override
-    @ApiOperation(value = "",notes = "Send input to a waiting process instance (because of a human task)")
-    public ResponseEntity<ProcessInstance> continueProcessInstance(@ApiParam(value = "", required = true) @RequestBody ProcessInstanceInputMessage body,
-                                                                   @ApiParam(value = "The id of the process instance group owned by the party continuing the process") @RequestParam(value = "gid", required = false) String gid,
-                                                                   @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
-                                                                   @ApiParam(value = "The id of the collaboration group which the process instance group belongs to") @RequestParam(value = "collaborationGID", required = false) String collaborationGID) {
+    @ApiOperation(value = "", notes = "Sends input to a waiting process instance (because of a human task)")
+    public ResponseEntity<ProcessInstance> continueProcessInstance(
+            @ApiParam(value = "Serialized form of the ProcessInstanceInputMessage (piim). <br>" +
+                    "The piim.processInstanceID should be set to the identifier of the process instance to be continued. <br>" +
+                    "piim.variables should contain variables that are passed to the relevant tasks of the process instance execution.<br>" +
+                    "<ul><li>piim.variables.processID refers to identifier (i.e. type) of the business process that is executed (i.e. Order)</li>" +
+                    "<li>piim.variables.initiatorID refers to the company who has initiated this process</li>" +
+                    "<li>piim.variables.responderID refers to the company who is supposed to respond the initial message in the process</li>" +
+                    "<li>piim.variables.relatedProducts refers to the products related to this specific process instances</li>" +
+                    "<li>piim.variables.relatedProductCategories refers to the categories associated to the related products</li>" +
+                    "<li>piim.variables.content refers to the serialized content of the document exchanged in this (continuation) step of the business process</li>" +
+                    "<li>piim.variables.creatorUserID refers to the person id issuing this continuation response</li></ul>", required = true)
+            @RequestBody ProcessInstanceInputMessage body,
+            @ApiParam(value = "The id of the ProcessInstanceGroup (processInstanceGroup.id) owned by the party continuing the process.", required = true)
+            @RequestParam(value = "gid", required = true) String gid,
+            @ApiParam(value = "The id of the CollaborationGroup (collaborationGroup.id) which the process instance group belongs to", required = true)
+            @RequestParam(value = "collaborationGID", required = true) String collaborationGID,
+            @ApiParam(value = "The Bearer token provided by the identity service", required = true)
+            @RequestHeader(value = "Authorization", required = true) String bearerToken) {
         logger.debug(" $$$ Continue Process with ProcessInstanceInputMessage {}", body.toString());
         ProcessInstance processInstance = null;
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
         try {
+            // check token
+            ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
+            if (tokenCheck != null) {
+                return tokenCheck;
+            }
+
+            // check the entity ids in the passed document
+            Transaction.DocumentTypeEnum documentType = BusinessProcessUtility.getResponseDocumentForProcess(body.getVariables().getProcessID());
+            Object document = DocumentPersistenceUtility.readDocument(DocumentType.valueOf(documentType.toString()), body.getVariables().getContent());
+
+            boolean hjidsExists = resourceValidationUtil.hjidsExit(document);
+            if (hjidsExists) {
+                String msg = String.format("Entity IDs (hjid fields) found in the passed document. document type: %s, content: %s", documentType.toString(), body.getVariables().getContent());
+                logger.warn(msg);
+                throw new RuntimeException(msg);
+            }
+
             ProcessInstanceInputMessageDAO processInstanceInputMessageDAO = HibernateSwaggerObjectMapper.createProcessInstanceInputMessage_DAO(body);
-//            HibernateUtilityRef.getInstance("bp-data-model").persist(processInstanceInputMessageDAO);
-            businessProcessRepository.persistEntity(processInstanceInputMessageDAO);
+            new JPARepositoryFactory().forBpRepository().persistEntity(processInstanceInputMessageDAO);
 
             // save ProcessInstanceInputMessageDAO
             businessProcessContext.setMessageDAO(processInstanceInputMessageDAO);
 
-            processInstance = CamundaEngine.continueProcessInstance(businessProcessContext.getId(),body, bearerToken);
+            processInstance = CamundaEngine.continueProcessInstance(businessProcessContext.getId(), body, bearerToken);
 
-            ProcessInstanceDAO storedInstance = DAOUtility.getProcessInstanceDAOByID(processInstance.getProcessInstanceID());
+            ProcessInstanceDAO storedInstance = ProcessInstanceDAOUtility.getById(processInstance.getProcessInstanceID());
 
             // save previous status
             businessProcessContext.setPreviousStatus(storedInstance.getStatus());
 
             storedInstance.setStatus(ProcessInstanceStatus.fromValue(processInstance.getStatus().toString()));
 
-//            HibernateUtilityRef.getInstance("bp-data-model").update(storedInstance);
-            businessProcessRepository.updateEntity(storedInstance);
+            storedInstance = new JPARepositoryFactory().forBpRepository().updateEntity(storedInstance);
 
             // save ProcessInstanceDAO
             businessProcessContext.setProcessInstanceDAO(storedInstance);
 
             // create process instance groups if this is the first process initializing the process group
-            if (gid != null) {
-                checkExistingGroup(businessProcessContext.getId(),gid, processInstance.getProcessInstanceID(), body,collaborationGID);
-            }
-        }
-        catch (Exception e){
-            logger.error(" $$$ Failed to continue process with ProcessInstanceInputMessage {}", body.toString(),e);
+            checkExistingGroup(businessProcessContext.getId(), gid, processInstance.getProcessInstanceID(), body, collaborationGID);
+
+        } catch (Exception e) {
+            logger.error(" $$$ Failed to continue process with ProcessInstanceInputMessage {}", body.toString(), e);
             businessProcessContext.handleExceptions();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
-        finally {
+        } finally {
             BusinessProcessContextHandler.getBusinessProcessContextHandler().deleteBusinessProcessContext(businessProcessContext.getId());
         }
 
         return new ResponseEntity<>(processInstance, HttpStatus.OK);
     }
 
-    private void checkExistingGroup(String businessContextId,String sourceGid, String processInstanceId, ProcessInstanceInputMessage body,String responderCollaborationGID){
+    private void checkExistingGroup(String businessContextId, String sourceGid, String processInstanceId, ProcessInstanceInputMessage body, String responderCollaborationGID) {
         ProcessInstanceGroupDAO existingGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(sourceGid);
 
         // check whether the group for the trading partner is still there. If not, create a new one
@@ -99,26 +129,26 @@ public class ContinueController implements ContinueApi {
                     body.getVariables().getRelatedProducts(),
                     sourceGid);
 
-            CollaborationGroupDAO initiatorCollaborationGroup = ProcessInstanceGroupDAOUtility.getCollaborationGroupDAO(body.getVariables().getInitiatorID(),Long.parseLong(responderCollaborationGID));
+            CollaborationGroupDAO initiatorCollaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroupDAO(body.getVariables().getInitiatorID(), Long.parseLong(responderCollaborationGID));
             // create a new initiator collaboration group
-            if(initiatorCollaborationGroup == null){
-                CollaborationGroupDAO responderCollaborationGroup = collaborationGroupDAORepository.getOne(Long.parseLong(responderCollaborationGID));
-                initiatorCollaborationGroup = ProcessInstanceGroupDAOUtility.createCollaborationGroupDAO();
+            if (initiatorCollaborationGroup == null) {
+                CollaborationGroupDAO responderCollaborationGroup = repoFactory.forBpRepository().getSingleEntityByHjid(CollaborationGroupDAO.class, Long.parseLong(responderCollaborationGID));
+                initiatorCollaborationGroup = CollaborationGroupDAOUtility.createCollaborationGroupDAO();
 
                 // set association between collaboration groups
                 initiatorCollaborationGroup.getAssociatedCollaborationGroups().add(responderCollaborationGroup.getHjid());
                 responderCollaborationGroup.getAssociatedCollaborationGroups().add(initiatorCollaborationGroup.getHjid());
-                collaborationGroupDAORepository.save(responderCollaborationGroup);
+                repoFactory.forBpRepository().updateEntity(responderCollaborationGroup);
             }
 
             // add new group to the collaboration group
             initiatorCollaborationGroup.getAssociatedProcessInstanceGroups().add(associatedGroup);
-            collaborationGroupDAORepository.save(initiatorCollaborationGroup);
+            repoFactory.forBpRepository().updateEntity(initiatorCollaborationGroup);
             BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId).setUpdatedAssociatedGroup(associatedGroup);
 
             // associate groups
             existingGroup.getAssociatedGroups().add(associatedGroup.getID());
-            businessProcessRepository.updateEntity(existingGroup);
+            repoFactory.forBpRepository().updateEntity(existingGroup);
         }
     }
 }
