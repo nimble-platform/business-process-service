@@ -151,7 +151,7 @@ public class EPCController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(String.format(msg,publishedProductID));
             }
 
-            List<String> orderIds = DocumentPersistenceUtility.getOrderIds(catalogueLine.getGoodsItem().getItem().getManufacturerParty().getID(), catalogueLine.getGoodsItem().getItem().getManufacturersItemIdentification().getID());
+            List<String> orderIds = DocumentPersistenceUtility.getOrderIds(catalogueLine.getGoodsItem().getItem().getManufacturerParty().getPartyIdentification().get(0).getID(), catalogueLine.getGoodsItem().getItem().getManufacturersItemIdentification().getID());
 
             String params = "";
             int size = orderIds.size();

@@ -34,7 +34,7 @@ public class PartyPersistenceUtility {
         if (party == null) {
             return null;
         }
-        PartyType catalogueParty = PartyPersistenceUtility.getPartyByID(party.getID());
+        PartyType catalogueParty = PartyPersistenceUtility.getPartyByID(party.getPartyIdentification().get(0).getID());
         if (catalogueParty != null) {
             return catalogueParty;
         } else {
@@ -46,7 +46,7 @@ public class PartyPersistenceUtility {
                 JsonSerializationUtility.removeHjidFields(object);
                 party = objectMapper.readValue(object.toString(), PartyType.class);
             } catch (Exception e) {
-                String msg = String.format("Failed to remove hjid fields from the party: %s", party.getID());
+                String msg = String.format("Failed to remove hjid fields from the party: %s", party.getPartyIdentification().get(0).getID());
                 logger.error(msg, e);
                 throw new RuntimeException(msg, e);
             }
