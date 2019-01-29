@@ -21,8 +21,8 @@ public class TrustPersistenceUtility {
     private static final Logger logger = LoggerFactory.getLogger(TrustPersistenceUtility.class);
 
     private static final String QUERY_GET_COMPLETED_TASK_BY_PARTY_ID_AND_PROCESS_INSTANCE_ID =
-            "SELECT completedTask FROM QualifyingPartyType qParty JOIN qParty.completedTask completedTask " +
-                    "WHERE qParty.party.ID = :partyId AND completedTask.associatedProcessInstanceID = :processInstanceId";
+            "SELECT completedTask FROM QualifyingPartyType qParty JOIN qParty.party.partyIdentification partyIdentification JOIN qParty.completedTask completedTask " +
+                    "WHERE partyIdentification.ID = :partyId AND completedTask.associatedProcessInstanceID = :processInstanceId";
 
     public static CompletedTaskType getCompletedTaskByPartyIdAndProcessInstanceId(String partyId, String processInstanceId) {
         return new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(QUERY_GET_COMPLETED_TASK_BY_PARTY_ID_AND_PROCESS_INSTANCE_ID,
