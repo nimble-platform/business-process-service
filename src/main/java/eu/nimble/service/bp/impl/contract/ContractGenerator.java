@@ -8,6 +8,7 @@ import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ClauseType;
+import eu.nimble.service.model.ubl.commonbasiccomponents.TextType;
 import eu.nimble.service.model.ubl.iteminformationrequest.ItemInformationRequestType;
 import eu.nimble.service.model.ubl.iteminformationresponse.ItemInformationResponseType;
 import eu.nimble.service.model.ubl.order.OrderType;
@@ -1288,9 +1289,9 @@ public class ContractGenerator {
                                     r.setText(text,0);
                                 }
                                 if(text.contains("$nego_specTerms")){
-                                    String specialTerms = quotation.getQuotationLine().get(0).getLineItem().getDeliveryTerms().getSpecialTerms().get(0).getValue();
-                                    if(specialTerms != null){
-                                        text = text.replace("$nego_specTerms",specialTerms);
+                                    List<TextType> specialTerms = quotation.getQuotationLine().get(0).getLineItem().getDeliveryTerms().getSpecialTerms();
+                                    if(specialTerms != null && specialTerms.size() > 0){
+                                        text = text.replace("$nego_specTerms",specialTerms.get(0).getValue());
                                         r.setText(text,0);
                                     }
                                     else {
