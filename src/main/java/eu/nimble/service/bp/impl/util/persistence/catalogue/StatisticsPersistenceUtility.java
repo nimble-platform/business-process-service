@@ -88,20 +88,20 @@ public class StatisticsPersistenceUtility {
     }
 
     public static NonOrderedProducts getNonOrderedProducts(Integer partyId) {
-        String query = "select distinct new list(item.manufacturerParty.ID, item.manufacturerParty.name, item.manufacturersItemIdentification.ID, item.name) from ItemType item " +
+        String query = "select distinct new list(partyIdentification.ID, partyName.name.value, item.manufacturersItemIdentification.ID, itemName.value) from ItemType item join item.manufacturerParty.partyName partyName join item.manufacturerParty.partyIdentification partyIdentification JOIN item.name itemName" +
                 " where item.transportationServiceDetails is null ";
         List<String> parameterNames = new ArrayList<>();
         List<Object> parameterValues = new ArrayList<>();
 
         if (partyId != null) {
-            query += " and item.manufacturerParty.ID = :partyId";
+            query += " and partyIdentification.ID = :partyId";
             parameterNames.add("partyId");
             parameterValues.add(partyId.toString());
         }
 
         query += " and item.manufacturersItemIdentification.ID not in " +
-                "(select line.lineItem.item.manufacturersItemIdentification.ID from OrderType order_ join order_.orderLine line" +
-                " where line.lineItem.item.manufacturerParty.ID = item.manufacturerParty.ID) ";
+                "(select line.lineItem.item.manufacturersItemIdentification.ID from OrderType order_ join order_.orderLine line join line.lineItem.item.manufacturerParty.partyIdentification orderPartyIdentification " +
+                " where orderPartyIdentification.ID = partyIdentification.ID) ";
 
         NonOrderedProducts nonOrderedProducts = new NonOrderedProducts();
         List<Object> results = new JPARepositoryFactory().forCatalogueRepository().getEntities(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
