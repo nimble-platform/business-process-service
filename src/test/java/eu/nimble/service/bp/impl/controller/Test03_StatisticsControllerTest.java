@@ -37,7 +37,7 @@ public class Test03_StatisticsControllerTest {
 
     private Gson gson = new Gson();
 
-    private final String companyId = "706";
+    private final String partyId = "706";
     private final String role = "SELLER";
     private final String statusTradingVolume = "WaitingResponse";
     private final String statusProcessCount = "Denied";
@@ -52,7 +52,7 @@ public class Test03_StatisticsControllerTest {
     public void getTradingVolume() throws Exception {
         MockHttpServletRequestBuilder request = get("/statistics/trading-volume")
                 .header("Authorization", environment.getProperty("nimble.test-responder-token"))
-                .param("companyId", companyId)
+                .param("partyId", partyId)
                 .param("role", role)
                 .param("status", statusTradingVolume);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -77,7 +77,7 @@ public class Test03_StatisticsControllerTest {
     public void getNonOrderedProducts() throws Exception {
         MockHttpServletRequestBuilder request = get("/statistics/non-ordered")
                 .header("Authorization", environment.getProperty("nimble.test-responder-token"))
-                .param("companyId", companyId);
+                .param("partyId", partyId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         NonOrderedProducts nonOrderedProducts = gson.fromJson(mvcResult.getResponse().getContentAsString(), NonOrderedProducts.class);
@@ -88,7 +88,7 @@ public class Test03_StatisticsControllerTest {
     @Test
     public void getProcessCountBreakDown() throws Exception {
         MockHttpServletRequestBuilder request = get("/statistics/total-number/business-process/break-down")
-                .param("companyId", companyId)
+                .param("partyId", partyId)
                 .param("role", role)
                 .param("businessProcessType", businessProcessType)
                 .header("Authorization", environment.getProperty("nimble.test-responder-token"));

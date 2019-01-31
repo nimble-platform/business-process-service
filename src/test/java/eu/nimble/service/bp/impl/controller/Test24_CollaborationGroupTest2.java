@@ -88,6 +88,6 @@ public class Test24_CollaborationGroupTest2 {
 
        // OrderType order = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), OrderType.class);
         OrderType order = JsonSerializationUtility.getObjectMapper().readValue(mvcResult.getResponse().getContentAsString(),OrderType.class);
-        Assert.assertEquals(productName,order.getOrderLine().get(0).getLineItem().getItem().getName());
+        Assert.assertEquals(productName,order.getOrderLine().get(0).getLineItem().getItem().getName().get(0).getValue());
     }
 }
