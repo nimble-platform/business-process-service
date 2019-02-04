@@ -186,6 +186,7 @@ nimble:
   kafka:
       topics:
         businessProcessUpdates: ${KAFKA_TOPIC_BUSINESS_PROCESS_UPDATES:business-process-updates-staging}
+  check-entity-ids: ${CHECK_ENTITY_IDS:false}
 hystrix:
   command:
     default:
