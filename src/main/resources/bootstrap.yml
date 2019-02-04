@@ -21,22 +21,22 @@ spring:
       url: jdbc:postgresql://${CAMUNDA_DB_HOST:localhost}:${CAMUNDA_DB_PORT:5432}/${CAMUNDA_DB_NAME:camunda}?currentSchema=public&ApplicationName=business-process-service-camundadb${APPLICATION_NAME_SUFFIX:}
       username: ${CAMUNDA_DB_USERNAME:postgres}
       password: ${CAMUNDA_DB_PASSWORD:nimble}
-      driver-class-name: org.postgresql.Driver
+      driver-class: org.postgresql.Driver
     bpdb:
       url: jdbc:postgresql://${BUSINESS_PROCESS_DB_HOST:localhost}:${BUSINESS_PROCESS_DB_PORT:5432}/${BUSINESS_PROCESS_DB_NAME:businessprocessengine}?currentSchema=public&ApplicationName=business-process-service-businessprocessenginedb${APPLICATION_NAME_SUFFIX:}
       username: ${BUSINESS_PROCESS_DB_USERNAME:postgres}
       password: ${BUSINESS_PROCESS_DB_PASSWORD:nimble}
-      driver_class: org.postgresql.Driver
+      driver-class: org.postgresql.Driver
     ubldb:
       url: jdbc:postgresql://${UBL_DB_HOST:localhost}:${UBL_DB_HOST_PORT:5432}/${UBL_DB_NAME:ubldb}?currentSchema=public&ApplicationName=business-process-service-ubldb${APPLICATION_NAME_SUFFIX:}
       username: ${UBL_DB_USERNAME:postgres}
       password: ${UBL_DB_PASSWORD:nimble}
-      driver_class: org.postgresql.Driver
+      driver-class: org.postgresql.Driver
     binarycontentdb:
       url: jdbc:postgresql://${BINARY_CONTENT_DB_HOST:localhost}:${BINARY_CONTENT_DB_PORT:5432}/${BINARY_CONTENT_DB_NAME:binarycontentdb}?currentSchema=public&ApplicationName=business-process-service-binarycontentdb${APPLICATION_NAME_SUFFIX:}
       username: ${BINARY_CONTENT_DB_USERNAME:postgres}
       password: ${BINARY_CONTENT_DB_PASSWORD:nimble}
-      driver_class: org.postgresql.Driver
+      driver-class: org.postgresql.Driver
     test-on-borrow: true
     test-while-idle: true
     remove-abandoned: true
