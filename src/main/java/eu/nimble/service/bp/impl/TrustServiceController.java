@@ -4,16 +4,20 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.impl.model.trust.NegotiationRatings;
-import eu.nimble.service.bp.impl.persistence.catalogue.CatalogueRepository;
-import eu.nimble.service.bp.impl.persistence.util.CatalogueDAOUtility;
-import eu.nimble.service.bp.impl.persistence.util.DAOUtility;
-import eu.nimble.service.bp.impl.persistence.util.DocumentMetadataDAOUtility;
-import eu.nimble.service.bp.impl.persistence.util.TrustUtility;
-import eu.nimble.service.bp.impl.util.controller.HttpResponseUtil;
-import eu.nimble.service.bp.impl.util.serialization.Serializer;
+import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.CataloguePersistenceUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.PartyPersistenceUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.TrustPersistenceUtility;
+import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.messaging.KafkaSender;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
-import io.swagger.annotations.*;
+import eu.nimble.utility.HttpResponseUtil;
+import eu.nimble.utility.JsonSerializationUtility;
+import eu.nimble.utility.persistence.JPARepositoryFactory;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -38,55 +43,61 @@ public class TrustServiceController {
 
     @Autowired
     private KafkaSender kafkaSender;
-    @Autowired
-    private CatalogueRepository catalogueRepository;
 
-    @ApiOperation(value = "", notes = "Create rating and reviews for the company")
+    @ApiOperation(value = "", notes = "Create rating and reviews for the company. A CompletedTaskType is created as a result" +
+            "of this operation.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Created rating and reviews for the company successfully"),
-            @ApiResponse(code = 400, message = "Party specified with the partyID or the correspond trading party does not exists. OR process instance does not exist. OR specified party is not included in the process instance"),
+            @ApiResponse(code = 400, message = "Party specified with the partyId or the correspond trading party does not exists. OR process instance does not exist. OR specified party is not included in the process instance"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
             @ApiResponse(code = 500, message = "Failed to create rating and reviews for the company")
     })
     @RequestMapping(value = "/ratingsAndReviews",
             produces = {"application/json"},
             method = RequestMethod.POST)
-    public ResponseEntity createRatingAndReview(@ApiParam(value = "JSON string representing an array of EvidenceSupplied instances.") @RequestParam(value = "ratings", required = false) String ratingsString,
-                                                @ApiParam(value = "JSON string representing an array of Comment instances.") @RequestParam(value = "reviews", required = false) String reviewsString,
-                                                @ApiParam(value = "Identifier of the party for which a rating and reviews will be created") @RequestParam(value = "partyID") String partyID,
-                                                @ApiParam(value = "Identifier of the process instance associated with the ratings and reviews") @RequestParam(value = "processInstanceID") String processInstanceID,
-                                                @ApiParam(value = "", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
+    public ResponseEntity createRatingAndReview(@ApiParam(value = "JSON string representing an array of EvidenceSupplied instances.<br>Example:<br>[{\"id\":\"QualityOfTheNegotiationProcess\",\"valueDecimal\":5},{\"id\":\"QualityOfTheOrderingProcess\",\"valueDecimal\":3},{\"id\":\"ResponseTime\",\"valueDecimal\":4},{\"id\":\"ProductListingAccuracy\",\"valueDecimal\":2},{\"id\":\"ConformanceToOtherAgreedTerms\",\"valueDecimal\":5},{\"id\":\"DeliveryAndPackaging\",\"valueDecimal\":3}]", required = true) @RequestParam(value = "ratings", required = false) String ratingsString,
+                                                @ApiParam(value = "JSON string representing an array of Comment instances.<br>Example:<br>[{\"comment\":\"Awesome trading partner\",\"typeCode\":{\"value\":\"\",\"name\":\"\",\"uri\":\"\",\"listID\":\"\",\"listURI\":\"\"}},{\"comment\":\"Perfect collaboration\",\"typeCode\":{\"value\":\"\",\"name\":\"\",\"uri\":\"\",\"listID\":\"\",\"listURI\":\"\"}}]") @RequestParam(value = "reviews", required = false) String reviewsString,
+                                                @ApiParam(value = "Identifier of the party for which a rating and reviews will be created", required = true) @RequestParam(value = "partyId") String partyId,
+                                                @ApiParam(value = "Identifier of the process instance associated with the ratings and reviews.Usually,it is the identifier of the last process instance which concludes the collaboration", required = true) @RequestParam(value = "processInstanceID") String processInstanceID,
+                                                @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
         try {
-            logger.info("Creating rating and reviews for the party with id: {} and process instance with id: {}", partyID, processInstanceID);
+            logger.info("Creating rating and reviews for the party with id: {} and process instance with id: {}", partyId, processInstanceID);
             /**
              * CHECKS
              */
 
+            // check token
+            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+            if (tokenCheck != null) {
+                return tokenCheck;
+            }
+
             // check party
-            QualifyingPartyType qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID, bearerToken);
+            QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingParty(partyId);
             if (qualifyingParty == null) {
-                return HttpResponseUtil.createResponseEntityAndLog(String.format("No qualifying party exists for the given party id: %s", partyID), HttpStatus.BAD_REQUEST);
+                return HttpResponseUtil.createResponseEntityAndLog(String.format("No qualifying party exists for the given party id: %s", partyId), HttpStatus.BAD_REQUEST);
             }
             // check process instance id
-            List<ProcessDocumentMetadataDAO> processDocumentMetadatas = DAOUtility.getProcessDocumentMetadataByProcessInstanceID(processInstanceID);
+            List<ProcessDocumentMetadataDAO> processDocumentMetadatas = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(processInstanceID);
             if (processDocumentMetadatas.size() == 0) {
                 return HttpResponseUtil.createResponseEntityAndLog(String.format("No process document metadata for the given process instance id: %s", processInstanceID), HttpStatus.BAD_REQUEST);
             }
             // check the trading partner existence
-            String tradingPartnerId = DocumentMetadataDAOUtility.getTradingPartnerId(processDocumentMetadatas.get(0), partyID);
-            PartyType tradingParty = CatalogueDAOUtility.getParty(tradingPartnerId);
+            String tradingPartnerId = ProcessDocumentMetadataDAOUtility.getTradingPartnerId(processDocumentMetadatas.get(0), partyId);
+            PartyType tradingParty = PartyPersistenceUtility.getParty(tradingPartnerId);
             if(tradingParty == null) {
                 return HttpResponseUtil.createResponseEntityAndLog(String.format("No party exists for the given party id: %s", tradingPartnerId), HttpStatus.BAD_REQUEST);
             }
             // check whether the party is included in the process
-            if(!(processDocumentMetadatas.get(0).getInitiatorID().contentEquals(partyID) || processDocumentMetadatas.get(0).getResponderID().contentEquals(partyID))) {
-                return HttpResponseUtil.createResponseEntityAndLog(String.format("Party: %s is not included in the process instance: {}", tradingPartnerId, processInstanceID), HttpStatus.BAD_REQUEST);
+            if(!(processDocumentMetadatas.get(0).getInitiatorID().contentEquals(partyId) || processDocumentMetadatas.get(0).getResponderID().contentEquals(partyId))) {
+                return HttpResponseUtil.createResponseEntityAndLog(String.format("Party: %s is not included in the process instance: %s", tradingPartnerId, processInstanceID), HttpStatus.BAD_REQUEST);
             }
             // check the values
-            ObjectMapper objectMapper = Serializer.getDefaultObjectMapper();
+            ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
             List<EvidenceSuppliedType> ratings = null;
             List<CommentType> reviews = null;
             if(ratingsString == null && reviewsString == null) {
-                return HttpResponseUtil.createResponseEntityAndLog(String.format("One of the ratings or reviews parameters must be {}", tradingPartnerId, processInstanceID), HttpStatus.BAD_REQUEST);
+                return HttpResponseUtil.createResponseEntityAndLog(String.format("One of the ratings or reviews parameters must be given for party: %s, process instance: %s", tradingPartnerId, processInstanceID), HttpStatus.BAD_REQUEST);
             }
             if(ratingsString != null) {
                 ratings = objectMapper.readValue(ratingsString, new TypeReference<List<EvidenceSuppliedType>>() {});
@@ -99,62 +110,77 @@ public class TrustServiceController {
              * LOGIC
              */
 
-            boolean completedTaskExist = TrustUtility.completedTaskExist(qualifyingParty, processInstanceID);
+            boolean completedTaskExist = TrustPersistenceUtility.completedTaskExist(qualifyingParty, processInstanceID);
             if (!completedTaskExist) {
-                TrustUtility.createCompletedTasksForBothParties(processDocumentMetadatas.get(0), bearerToken, "Completed");
+                TrustPersistenceUtility.createCompletedTasksForBothParties(processDocumentMetadatas.get(0), bearerToken, "Completed");
                 // get qualifyingParty (which contains the completed task) again
-                qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID, bearerToken);
+                qualifyingParty = PartyPersistenceUtility.getQualifyingPartyType(partyId, bearerToken);
             }
-            CompletedTaskType completedTaskType = TrustUtility.fillCompletedTask(qualifyingParty, ratings, reviews, processInstanceID);
-//            HibernateUtilityRef.getInstance(Configuration.UBL_PERSISTENCE_UNIT_NAME).update(qualifyingParty);
-            catalogueRepository.updateEntity(qualifyingParty);
+            CompletedTaskType completedTaskType = TrustPersistenceUtility.fillCompletedTask(qualifyingParty, ratings, reviews, processInstanceID);
+            new JPARepositoryFactory().forCatalogueRepository().updateEntity(qualifyingParty);
 
             // broadcast changes
-            kafkaSender.broadcastRatingsUpdate(partyID, bearerToken);
+            kafkaSender.broadcastRatingsUpdate(partyId, bearerToken);
 
-            logger.info("Created rating and reviews for the party with id: {} and process instance with id: {}", partyID, processInstanceID);
+            logger.info("Created rating and reviews for the party with id: {} and process instance with id: {}", partyId, processInstanceID);
             return ResponseEntity.ok(completedTaskType);
+
         } catch (Exception e) {
-            logger.error("Failed to create rating and reviews for the party with id: {} and process instance with id: {}", partyID, processInstanceID, e);
+            logger.error("Failed to create rating and reviews for the party with id: {} and process instance with id: {}", partyId, processInstanceID, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 
     @ApiOperation(value = "",notes = "Gets rating summary for the given company")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Retrieved rating summary successfully")
+            @ApiResponse(code = 200, message = "Retrieved rating summary successfully"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token")
     })
     @RequestMapping(value = "/ratingsSummary",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity getRatingsSummary(@RequestParam(value = "partyID") String partyID,
-                                            @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
-        logger.info("Getting ratings summary for the party with id: {}",partyID);
-        QualifyingPartyType qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID,bearerToken);
+    public ResponseEntity getRatingsSummary(@ApiParam(value = "Identifier of the party whose ratings will be received", required = true) @RequestParam(value = "partyId") String partyId,
+                                            @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
+        logger.info("Getting ratings summary for the party with id: {}",partyId);
+        // check token
+        ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+        if (tokenCheck != null) {
+            return tokenCheck;
+        }
+
+        QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingPartyType(partyId,bearerToken);
         JSONObject jsonResponse = createJSONResponse(qualifyingParty.getCompletedTask());
-        logger.info("Retrieved ratings summary for the party with id: {}",partyID);
+        logger.info("Retrieved ratings summary for the party with id: {}",partyId);
         return ResponseEntity.ok(jsonResponse.toString());
     }
 
     @ApiOperation(value = "",notes = "Gets all individual ratings and review")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Retrieved all individual ratings and review successfully")
+            @ApiResponse(code = 200, message = "Retrieved all individual ratings and review successfully"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 500, message = "Unexpected error while getting ratings and reviews")
     })
     @RequestMapping(value = "/ratingsAndReviews",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity listAllIndividualRatingsAndReviews(@RequestParam(value = "partyID") String partyID,
-                                                             @ApiParam(value = "" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
+    public ResponseEntity listAllIndividualRatingsAndReviews(@ApiParam(value = "Identifier of the party whose individual ratings and reviews will be received", required = true) @RequestParam(value = "partyId") String partyId,
+                                                             @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         try {
-            logger.info("Getting all individual ratings and review for the party with id: {}",partyID);
-            QualifyingPartyType qualifyingParty = CatalogueDAOUtility.getQualifyingPartyType(partyID,bearerToken);
-            List<NegotiationRatings> negotiationRatings = TrustUtility.createNegotiationRatings(qualifyingParty.getCompletedTask());
-            String ratingsAndReviews = new ObjectMapper().writeValueAsString(negotiationRatings);
-            logger.info("Retrieved all individual ratings and review for the party with id: {}",partyID);
+            logger.info("Getting all individual ratings and review for the party with id: {}",partyId);
+            // check token
+            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+            if (tokenCheck != null) {
+                return tokenCheck;
+            }
+
+            QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingPartyType(partyId,bearerToken);
+            List<NegotiationRatings> negotiationRatings = TrustPersistenceUtility.createNegotiationRatings(qualifyingParty.getCompletedTask());
+            String ratingsAndReviews = JsonSerializationUtility.getObjectMapper().writeValueAsString(negotiationRatings);
+            logger.info("Retrieved all individual ratings and review for the party with id: {}",partyId);
             return ResponseEntity.ok(ratingsAndReviews);
         }
         catch (Exception e){
-            logger.error("Unexpected error while getting negotiation ratings and reviews for the party: {}",partyID,e);
+            logger.error("Unexpected error while getting negotiation ratings and reviews for the party: {}",partyId,e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }

@@ -43,18 +43,23 @@ public class DataSourceFactory {
                     .url(environment.getProperty("spring.datasource." + dataSourceName + ".url"))
                     .username(environment.getProperty("spring.datasource." + dataSourceName + ".username"))
                     .password(environment.getProperty("spring.datasource." + dataSourceName + ".password"))
-                    .driverClassName(environment.getProperty("spring.datasource." + dataSourceName + ".driverClassName"))
+                    .driverClassName(environment.getProperty("spring.datasource." + dataSourceName + ".driver-class"))
                     .build();
         }
         // Assume we make use of Apache Tomcat connection pooling (default in Spring Boot)
         org.apache.tomcat.jdbc.pool.DataSource tds = (org.apache.tomcat.jdbc.pool.DataSource) ds;
-        tds.setInitialSize(Integer.valueOf(environment.getProperty("spring.datasource.tomcat.initial-size")));
-        tds.setTestWhileIdle(Boolean.valueOf(environment.getProperty("spring.datasource.tomcat.test-while-idle").toUpperCase()));
-        tds.setTimeBetweenEvictionRunsMillis(Integer.valueOf(environment.getProperty("spring.datasource.tomcat.time-between-eviction-runs-millis")));
-        tds.setMinEvictableIdleTimeMillis(Integer.valueOf(environment.getProperty("spring.datasource.tomcat.min-evictable-idle-time-millis")));
-        tds.setMaxActive(Integer.valueOf(environment.getProperty("spring.datasource.maxActive")));
-        tds.setMaxIdle(Integer.valueOf(environment.getProperty("spring.datasource.maxIdle")));
-        tds.setMinEvictableIdleTimeMillis(Integer.valueOf(environment.getProperty("spring.datasource.minIdle")));
+        tds.setTestOnBorrow(Boolean.valueOf(environment.getProperty("spring.datasource.test-on-borrow")));
+        tds.setTestWhileIdle(Boolean.valueOf(environment.getProperty("spring.datasource.test-while-idle")));
+        tds.setRemoveAbandoned(Boolean.valueOf(environment.getProperty("spring.datasource.remove-abandoned")));
+        tds.setLogAbandoned(Boolean.valueOf(environment.getProperty("spring.datasource.log-abandoned")));
+        tds.setInitialSize(Integer.valueOf(environment.getProperty("spring.datasource.initial-size")));
+        tds.setMaxActive(Integer.valueOf(environment.getProperty("spring.datasource.max-active")));
+        tds.setMaxIdle(Integer.valueOf(environment.getProperty("spring.datasource.max-idle")));
+        tds.setMinIdle(Integer.valueOf(environment.getProperty("spring.datasource.min-idle")));
+        tds.setMaxWait(Integer.valueOf(environment.getProperty("spring.datasource.max-wait")));
+        tds.setTimeBetweenEvictionRunsMillis(Integer.valueOf(environment.getProperty("spring.datasource.time-between-eviction-runs-millis")));
+        tds.setMinEvictableIdleTimeMillis(Integer.valueOf(environment.getProperty("spring.datasource.min-evictable-idle-time-millis")));
+        tds.setValidationQuery(String.valueOf(environment.getProperty("spring.datasource.validation-query")));
         return tds;
     }
 }

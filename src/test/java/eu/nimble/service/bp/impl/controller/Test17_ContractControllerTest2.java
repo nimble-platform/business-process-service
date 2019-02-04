@@ -7,13 +7,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ClauseType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ContractType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.DocumentClauseType;
+import eu.nimble.utility.JsonSerializationUtility;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.env.Environment;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
@@ -30,27 +34,28 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("local_dev")
-@FixMethodOrder
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringJUnit4ClassRunner.class)
 public class Test17_ContractControllerTest2 {
 
     @Autowired
     private MockMvc mockMvc;
+    @Autowired
+    private Environment environment;
 
-    private ObjectMapper objectMapper = new ObjectMapper().
-            configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).
-            configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
+    private ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
 
     private final int test1_expectedSize = 1;
     private final int test2_expectedSize = 2;
     private final int test3_expectedSize = 2;
     private final int test4_expectedSize = 2;
-    private final String expectedType = "ITEM_DETAILS";
+    private final String expectedType = "DOCUMENT";
 
     @Test
     public void test1_getClauseDetails() throws Exception {
         MockHttpServletRequestBuilder request = get("/documents/" + Test01_StartControllerTest.orderId1 + "/clauses")
-                .param("clauseType", "ITEM_DETAILS");
+                .header("Authorization", environment.getProperty("nimble.test-initiator-token"))
+                .param("clauseType", "DOCUMENT");
 
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
@@ -62,7 +67,8 @@ public class Test17_ContractControllerTest2 {
 
     @Test
     public void test2_getClausesOfContract() throws Exception {
-        MockHttpServletRequestBuilder request = get("/contracts/" + Test16_ContractControllerTest.contractId + "/clauses");
+        MockHttpServletRequestBuilder request = get("/contracts/" + Test16_ContractControllerTest.contractId + "/clauses")
+                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
 
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
@@ -75,7 +81,8 @@ public class Test17_ContractControllerTest2 {
     @Test
     public void test3_constructContractForProcessInstances() throws Exception {
         MockHttpServletRequestBuilder request = get("/contracts")
-                .param("processInstanceId", Test01_StartControllerTest.processInstanceIdOrder1);
+                .param("processInstanceId", Test01_StartControllerTest.processInstanceIdOrder1)
+                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         ContractType contract = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ContractType.class);
@@ -86,7 +93,8 @@ public class Test17_ContractControllerTest2 {
     @Test
     public void test4_getClauseDetailsAndUpdate() throws Exception {
         // getClauseDetails
-        MockHttpServletRequestBuilder request = get("/clauses/" + Test16_ContractControllerTest.clauseId);
+        MockHttpServletRequestBuilder request = get("/clauses/" + Test16_ContractControllerTest.clauseId)
+                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         ClauseType clause = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ClauseType.class);
@@ -100,7 +108,8 @@ public class Test17_ContractControllerTest2 {
 
         //updateClause
         request = put("/clauses/" + Test16_ContractControllerTest.clauseId)
-                .content(new ObjectMapper().writeValueAsString(clause));
+                .header("Authorization", environment.getProperty("nimble.test-initiator-token"))
+                .content(objectMapper.writeValueAsString(clause));
         mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         clause = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ClauseType.class);

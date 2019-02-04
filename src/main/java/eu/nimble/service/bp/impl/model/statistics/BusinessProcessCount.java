@@ -11,7 +11,7 @@ public class BusinessProcessCount {
     // companies --> business processes --> status --> count
     @ApiModelProperty(value = "",example =
             "{" +
-                    "'750:' // company id {" +
+                    "'750': {" +
                     "'companyName': 'ABCCompany'," +
                     "'companyCounts':{" +
                     "'ORDER':{" +

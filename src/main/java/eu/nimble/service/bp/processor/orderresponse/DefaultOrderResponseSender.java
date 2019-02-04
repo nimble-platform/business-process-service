@@ -4,8 +4,9 @@ import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
 import eu.nimble.service.bp.config.GenericConfig;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
-import eu.nimble.service.bp.impl.persistence.util.DocumentDAOUtility;
-import eu.nimble.service.bp.impl.util.serialization.Serializer;
+import eu.nimble.service.bp.impl.util.persistence.bp.ExecutionConfigurationDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
@@ -15,6 +16,7 @@ import eu.nimble.service.model.ubl.commonaggregatecomponents.DocumentClauseType;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
+import eu.nimble.utility.JsonSerializationUtility;
 import org.apache.commons.io.IOUtils;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
@@ -32,7 +34,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by yildiray on 5/26/2017.
@@ -59,10 +64,10 @@ public class DefaultOrderResponseSender  implements JavaDelegate {
         String seller = variables.get("initiatorID").toString();
         String processContextId = variables.get("processContextId").toString();
         OrderResponseSimpleType orderResponse = (OrderResponseSimpleType) variables.get("orderResponse");
-        OrderType order = (OrderType) DocumentDAOUtility.getUBLDocument((String) variables.get("initialDocumentID"));
+        OrderType order = (OrderType) DocumentPersistenceUtility.getUBLDocument((String) variables.get("initialDocumentID"));
 
         // get application execution configuration
-        ExecutionConfiguration executionConfiguration = DocumentDAOUtility.getExecutionConfiguration(seller,
+        ExecutionConfiguration executionConfiguration = ExecutionConfigurationDAOUtility.getExecutionConfiguration(seller,
                 execution.getProcessInstance().getProcessDefinitionId(), ProcessConfiguration.RoleTypeEnum.SELLER, "ORDERRESPONSE",
                 ExecutionConfiguration.ApplicationTypeEnum.DATACHANNEL);
         String applicationURI = executionConfiguration.getExecutionUri();
@@ -98,11 +103,14 @@ public class DefaultOrderResponseSender  implements JavaDelegate {
         if(order.getContract().size() > 0){
             List<ClauseType> clauses = order.getContract().get(0).getClause();
             for(ClauseType clause : clauses) {
-                if(clause.getType().equals(eu.nimble.service.bp.impl.model.ClauseType.NEGOTIATION.toString())) {
-                    QuotationType quotation = (QuotationType) DocumentDAOUtility.getUBLDocument(((DocumentClauseType) clause).getClauseDocumentRef().getID(), DocumentType.QUOTATION);
-                    if(quotation.isDataMonitoringPromised()) {
-                        dataMonitoringDemanded = true;
-                        break;
+                if(clause.getType().contentEquals(eu.nimble.service.model.ubl.extension.ClauseType.DOCUMENT.toString())) {
+                    DocumentClauseType docClause = (DocumentClauseType) clause;
+                    if(docClause.getClauseDocumentRef().getDocumentType().contentEquals(DocumentType.QUOTATION.toString())) {
+                        QuotationType quotation = (QuotationType) DocumentPersistenceUtility.getUBLDocument(docClause.getClauseDocumentRef().getID(), DocumentType.QUOTATION);
+                        if (quotation.isDataMonitoringPromised()) {
+                            dataMonitoringDemanded = true;
+                            break;
+                        }
                     }
                 }
             }
@@ -131,7 +139,7 @@ public class DefaultOrderResponseSender  implements JavaDelegate {
 
         // adjust the start end data
         DateTimeFormatter bpFormatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
-        ProcessDocumentMetadata orderResponseMetadata = DocumentDAOUtility.getDocumentMetadata(orderResponse.getID());
+        ProcessDocumentMetadata orderResponseMetadata = ProcessDocumentMetadataDAOUtility.getDocumentMetadata(orderResponse.getID());
         LocalDateTime localTime = bpFormatter.parseLocalDateTime(orderResponseMetadata.getSubmissionDate());
         DateTime startTime = new DateTime(localTime.toDateTime(), DateTimeZone.UTC);
         DateTime endTime = startTime.plusWeeks(2);
@@ -150,7 +158,7 @@ public class DefaultOrderResponseSender  implements JavaDelegate {
             consumerIds.add(sellerId);
             CreateChannel.Request request = new CreateChannel.Request(buyerId, consumerIds, String.format("Data channel for product %s", order.getOrderLine().get(0).getLineItem().getItem().getName()), startTime.toDate(), endTime.toDate(), processInstanceId);
 
-            Serializer.getDefaultObjectMapper().writeValue(os, request);
+            JsonSerializationUtility.getObjectMapper().writeValue(os, request);
             os.flush();
 
             logger.info("Data channel request has been sent for processInstanceId: {}, buyerId: {}, sellerId: {}, received HTTP response: {}", processInstanceId, buyerId, sellerId, conn.getResponseCode());

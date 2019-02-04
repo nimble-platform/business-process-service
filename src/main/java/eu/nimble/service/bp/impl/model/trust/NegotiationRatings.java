@@ -11,6 +11,9 @@ public class NegotiationRatings {
     private List<EvidenceSuppliedType> ratings;
     private List<CommentType> reviews;
 
+    public NegotiationRatings() {
+    }
+
     public NegotiationRatings(String processInstanceID, List<EvidenceSuppliedType> ratings, List<CommentType> reviews) {
         this.processInstanceID = processInstanceID;
         this.ratings = ratings;

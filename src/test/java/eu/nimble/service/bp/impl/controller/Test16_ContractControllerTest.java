@@ -5,14 +5,18 @@ import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.DataMonitoringClauseType;
 import eu.nimble.service.model.ubl.order.OrderType;
+import eu.nimble.utility.JsonSerializationUtility;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -27,16 +31,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("local_dev")
-@FixMethodOrder
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringJUnit4ClassRunner.class)
 public class Test16_ContractControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+    @Autowired
+    private Environment environment;
 
-    private ObjectMapper objectMapper = new ObjectMapper().
-            configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).
-            configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
+    private ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
     private final String dataMonitoringJSON = "/controller/dataMonitoringJSON.txt";
     private final int test1_expectedResult = 1;
     private final int test2_expectedSize = 2;
@@ -48,12 +52,10 @@ public class Test16_ContractControllerTest {
     public void test1_addDocumentClauseToContract() throws Exception {
         MockHttpServletRequestBuilder request = patch("/documents/" + Test01_StartControllerTest.orderId1 + "/contract/clause/document")
                 .param("clauseType", "ITEM_DETAILS")
-                .param("clauseDocumentId", Test01_StartControllerTest.iirId1);
+                .param("clauseDocumentId", Test01_StartControllerTest.iirId1)
+                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
-        ObjectMapper objectMapper = new ObjectMapper().
-                configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).
-                configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
         OrderType order = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), OrderType.class);
 
         Assert.assertEquals(test1_expectedResult, order.getContract().get(0).getClause().size());
@@ -70,7 +72,8 @@ public class Test16_ContractControllerTest {
 
         MockHttpServletRequestBuilder request = patch("/documents/" + Test01_StartControllerTest.orderId1 + "/contract/clause/data-monitoring")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(dataMonitoring);
+                .content(dataMonitoring)
+                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         OrderType order = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), OrderType.class);
