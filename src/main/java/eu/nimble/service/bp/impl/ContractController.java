@@ -128,14 +128,14 @@ public class ContractController {
             }
 
             // validate the entity ids
-            boolean hjidsBelongToCompany = resourceValidationUtil.hjidsBelongsToParty(clauseObject, party.getID(), Configuration.Standard.UBL.toString());
+            boolean hjidsBelongToCompany = resourceValidationUtil.hjidsBelongsToParty(clauseObject, party.getPartyIdentification().get(0).getID(), Configuration.Standard.UBL.toString());
             if(!hjidsBelongToCompany) {
                 return HttpResponseUtil.createResponseEntityAndLog(String.format("Some of the identifiers (hjid fields) do not belong to the party in the passed clause: %s", serializedClause), null, HttpStatus.BAD_REQUEST, LogLevel.INFO);
             }
 
             // update clause
             try {
-                EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(party.getID());
+                EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(party.getPartyIdentification().get(0).getID());
                 clauseObject = repositoryWrapper.updateEntity(clauseObject);
             } catch (Exception e) {
                 return createResponseEntityAndLog("Failed to update the clause: " + clauseId, e, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -260,7 +260,7 @@ public class ContractController {
 
             // delete the clause
             try {
-                EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(party.getID());
+                EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(party.getPartyIdentification().get(0).getID());
                 repositoryWrapper.deleteEntity(clause);
             } catch (Exception e) {
                 return createResponseEntityAndLog("Failed to delete clause: " + clauseId + " from contract: " + contractId, e, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -376,7 +376,7 @@ public class ContractController {
 
             // persist the update
             try {
-                EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(party.getID());
+                EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(party.getPartyIdentification().get(0).getID());
                 document = repositoryWrapper.updateEntity(document);
             } catch (Exception e) {
                 return createResponseEntityAndLog(String.format("Failed to add document clause to contract. Bounded-document id: %s, clause document id: %s", documentId, clauseDocumentId), e, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -435,7 +435,7 @@ public class ContractController {
 
             // persist the update
             try {
-                EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(party.getID());
+                EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(party.getPartyIdentification().get(0).getID());
                 document = repositoryWrapper.updateEntity(document);
             } catch (Exception e) {
                 return createResponseEntityAndLog("Failed to add monitoring clause to contract. Bounded-document id: " + documentId, e, HttpStatus.INTERNAL_SERVER_ERROR);

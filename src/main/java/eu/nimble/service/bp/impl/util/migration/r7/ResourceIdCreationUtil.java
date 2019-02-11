@@ -43,8 +43,8 @@ public class ResourceIdCreationUtil {
                 } else if (catalogue.getProviderParty() == null) {
                     log.info("No provider party for catalogue: {}", catalogue.getUUID());
                 } else {
-                    resourceValidationUtility.insertHjidsForObject(catalogue, catalogue.getProviderParty().getID(), Configuration.Standard.UBL.toString());
-                    log.info("Created resources for catalogue: {}", catalogue.getUUID(), catalogue.getProviderParty().getID());
+                    resourceValidationUtility.insertHjidsForObject(catalogue, catalogue.getProviderParty().getPartyIdentification().get(0).getID(), Configuration.Standard.UBL.toString());
+                    log.info("Created resources for catalogue: {}", catalogue.getUUID(), catalogue.getProviderParty().getPartyIdentification().get(0).getID());
                 }
             } catch (Exception e) {
                 log.error("Failed to create resources for catalogue: uuid: {}", catalogue.getUUID(), e);

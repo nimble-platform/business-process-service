@@ -149,7 +149,7 @@ public class ProcessDocumentMetadataDAOUtility {
                 logger.error("msg");
                 throw new RuntimeException(msg, e);
             }
-            counts.addCount((String) resultItems[0], resultItems[1].toString(), resultItems[2].toString(), (Long) resultItems[3], partyType.getName());
+            counts.addCount((String) resultItems[0], resultItems[1].toString(), resultItems[2].toString(), (Long) resultItems[3], partyType.getPartyName().get(0).getName().getValue());
         }
         return counts;
     }
