@@ -39,7 +39,7 @@ spring:
       driver-class: org.postgresql.Driver
     test-on-borrow: true
     test-while-idle: true
-    remove-abandoned: true
+    remove-abandoned: false
     log-abandoned: true
     initial-size: 3
     max-active: 3

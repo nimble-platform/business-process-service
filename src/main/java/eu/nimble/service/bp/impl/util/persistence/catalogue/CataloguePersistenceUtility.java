@@ -6,7 +6,7 @@ import eu.nimble.utility.persistence.JPARepositoryFactory;
 
 public class CataloguePersistenceUtility {
 
-    private static final String QUERY_SELECT_BY_ID_AND_PARTY_ID = "SELECT cl FROM CatalogueLineType cl WHERE cl.ID = :lineId AND cl.goodsItem.item.manufacturerParty.ID = :partyId";
+    private static final String QUERY_SELECT_BY_ID_AND_PARTY_ID = "SELECT cl FROM CatalogueLineType cl JOIN cl.goodsItem.item.manufacturerParty.partyIdentification partyIdentification WHERE cl.ID = :lineId AND partyIdentification.ID = :partyId";
 
     public static CatalogueLineType getCatalogueLine(OrderType order) {
         return new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(QUERY_SELECT_BY_ID_AND_PARTY_ID,
