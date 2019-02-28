@@ -93,7 +93,7 @@ public class EmailSenderUtil {
             cancellingPersonName = new StringBuilder("").append(cancellingPerson.getFirstName()).append(" ").append(cancellingPerson.getFamilyName()).toString();
 
 
-            notifyPartyWithCancelledCollaboration(toEmail, cancellingPersonName, productNames.toString(), tradingPartner.getName());
+            notifyPartyWithCancelledCollaboration(toEmail, cancellingPersonName, productNames.toString(), tradingPartner.getPartyName().get(0).getName().getValue());
             logger.info("Collaboration cancellation mail sent to: {} for cancellation of group: {}", toEmail, groupDAO.getID());
         }).start();
     }

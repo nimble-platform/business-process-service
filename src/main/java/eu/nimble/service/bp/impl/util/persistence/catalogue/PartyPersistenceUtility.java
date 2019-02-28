@@ -19,8 +19,8 @@ import java.io.IOException;
 public class PartyPersistenceUtility {
     private static final Logger logger = LoggerFactory.getLogger(PartyPersistenceUtility.class);
 
-    private static final String QUERY_SELECT_BY_ID = "SELECT party FROM PartyType party WHERE party.ID = :partyId";
-    private static final String QUERY_GET_QUALIFIYING_PARTY = "SELECT qpt FROM QualifyingPartyType qpt WHERE qpt.party.ID = :partyId";
+    private static final String QUERY_SELECT_BY_ID = "SELECT party FROM PartyType party JOIN party.partyIdentification partyIdentification WHERE partyIdentification.ID = :partyId";
+    private static final String QUERY_GET_QUALIFIYING_PARTY = "SELECT qpt FROM QualifyingPartyType qpt JOIN qpt.party.partyIdentification partyIdentification WHERE partyIdentification.ID = :partyId";
 
     public static PartyType getPartyByID(String partyId) {
         return new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(QUERY_SELECT_BY_ID, new String[]{"partyId"}, new Object[]{partyId});
@@ -34,7 +34,15 @@ public class PartyPersistenceUtility {
         if (party == null) {
             return null;
         }
-        PartyType catalogueParty = PartyPersistenceUtility.getPartyByID(party.getID());
+        PartyType catalogueParty;
+        // For some cases (for example, carrier party in despatch advice), we have parties which do not have any identifiers
+        // In such cases, we simply save the given party.
+        if(party.getPartyIdentification() == null || party.getPartyIdentification().size() == 0){
+            catalogueParty = null;
+        }
+        else {
+            catalogueParty = PartyPersistenceUtility.getPartyByID(party.getPartyIdentification().get(0).getID());
+        }
         if (catalogueParty != null) {
             return catalogueParty;
         } else {
@@ -46,7 +54,7 @@ public class PartyPersistenceUtility {
                 JsonSerializationUtility.removeHjidFields(object);
                 party = objectMapper.readValue(object.toString(), PartyType.class);
             } catch (Exception e) {
-                String msg = String.format("Failed to remove hjid fields from the party: %s", party.getID());
+                String msg = String.format("Failed to remove hjid fields from the party: %s", party.getPartyIdentification().get(0).getID());
                 logger.error(msg, e);
                 throw new RuntimeException(msg, e);
             }

@@ -6,6 +6,7 @@ import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDocumentMetadataDAOU
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceDAOUtility;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
+import eu.nimble.service.model.ubl.commonbasiccomponents.TextType;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,8 +21,8 @@ public class TrustPersistenceUtility {
     private static final Logger logger = LoggerFactory.getLogger(TrustPersistenceUtility.class);
 
     private static final String QUERY_GET_COMPLETED_TASK_BY_PARTY_ID_AND_PROCESS_INSTANCE_ID =
-            "SELECT completedTask FROM QualifyingPartyType qParty JOIN qParty.completedTask completedTask " +
-                    "WHERE qParty.party.ID = :partyId AND completedTask.associatedProcessInstanceID = :processInstanceId";
+            "SELECT completedTask FROM QualifyingPartyType qParty JOIN qParty.party.partyIdentification partyIdentification JOIN qParty.completedTask completedTask " +
+                    "WHERE partyIdentification.ID = :partyId AND completedTask.associatedProcessInstanceID = :processInstanceId";
 
     public static CompletedTaskType getCompletedTaskByPartyIdAndProcessInstanceId(String partyId, String processInstanceId) {
         return new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(QUERY_GET_COMPLETED_TASK_BY_PARTY_ID_AND_PROCESS_INSTANCE_ID,
@@ -56,7 +57,10 @@ public class TrustPersistenceUtility {
         QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingPartyType(partyID,bearerToken);
         CompletedTaskType completedTask = new CompletedTaskType();
         completedTask.setAssociatedProcessInstanceID(processInstanceID);
-        completedTask.setDescription(Arrays.asList(status));
+        TextType textType = new TextType();
+        textType.setValue(status);
+        textType.setLanguageID("en");
+        completedTask.setDescription(Arrays.asList(textType));
         PeriodType periodType = new PeriodType();
 
         ProcessDocumentMetadata responseMetadata = ProcessDocumentMetadataDAOUtility.getResponseMetadata(processInstanceID);

@@ -28,7 +28,7 @@ import java.util.List;
 public class DocumentPersistenceUtility {
     private static Logger logger = LoggerFactory.getLogger(DocumentPersistenceUtility.class);
 
-    private static final String QUERY_GET_ORDER_IDS_FOR_PARTY = "SELECT order_.ID from OrderType order_ join order_.orderLine line where line.lineItem.item.manufacturerParty.ID = :partyId AND line.lineItem.item.manufacturersItemIdentification.ID = :itemId";
+    private static final String QUERY_GET_ORDER_IDS_FOR_PARTY = "SELECT order_.ID from OrderType order_ join order_.orderLine line JOIN line.lineItem.item.manufacturerParty.partyIdentification partyIdentification where partyIdentification.ID = :partyId AND line.lineItem.item.manufacturersItemIdentification.ID = :itemId";
     private static final String QUERY_GET_ORDER_RESPONSE_ID = "SELECT orderResponse.ID FROM OrderResponseSimpleType orderResponse WHERE orderResponse.orderReference.documentReference.ID = :documentId";
     private static final String QUERY_GET_ORDER_RESPONSE_BY_ORDER_ID = "SELECT orderResponse FROM OrderResponseSimpleType orderResponse WHERE orderResponse.orderReference.documentReference.ID = :documentId";
     private static final String QUERY_GET_DOCUMENT = "SELECT document FROM %s document WHERE document.ID = :documentId";

@@ -7,6 +7,7 @@ import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceStatus;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupFilter;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyNameType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
@@ -203,9 +204,18 @@ public class CollaborationGroupDAOUtility {
             if (parties != null) {
                 for (String tradingPartnerId : filter.getTradingPartnerIDs()) {
                     for (PartyType party : parties) {
-                        if (party.getID().equals(tradingPartnerId)) {
-                            if (!filter.getTradingPartnerNames().contains(party.getName())) {
-                                filter.getTradingPartnerNames().add(party.getName());
+                        if (party.getPartyIdentification().get(0).getID().equals(tradingPartnerId)) {
+                            // check whether trading partner names array of filter contains any names of the party
+                            boolean partyExists = false;
+                            for(PartyNameType partyName : party.getPartyName()){
+                                if(filter.getTradingPartnerNames().contains(partyName.getName().getValue())){
+                                    partyExists = true;
+                                    break;
+                                }
+                            }
+
+                            if(!partyExists){
+                                filter.getTradingPartnerNames().add(party.getPartyName().get(0).getName().getValue());
                             }
                             break;
                         }
