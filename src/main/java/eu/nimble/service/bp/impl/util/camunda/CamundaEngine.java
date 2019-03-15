@@ -5,11 +5,15 @@
  */
 package eu.nimble.service.bp.impl.util.camunda;
 
+import eu.nimble.service.bp.impl.model.dashboard.DashboardProcessInstanceDetails;
 import eu.nimble.service.bp.swagger.model.*;
 import eu.nimble.service.bp.swagger.model.Process;
 import eu.nimble.utility.DateUtility;
 import eu.nimble.utility.XMLUtility;
 import org.camunda.bpm.engine.*;
+import org.camunda.bpm.engine.history.HistoricActivityInstance;
+import org.camunda.bpm.engine.history.HistoricProcessInstance;
+import org.camunda.bpm.engine.history.HistoricVariableInstance;
 import org.camunda.bpm.engine.repository.ProcessDefinition;
 import org.camunda.bpm.engine.task.Task;
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
@@ -30,6 +34,7 @@ public class CamundaEngine {
     private static RepositoryService repositoryService = processEngine.getRepositoryService();
     private static RuntimeService runtimeService = processEngine.getRuntimeService();
     private static TaskService taskService = processEngine.getTaskService();
+    private static HistoryService historyService = processEngine.getHistoryService();
 
     private static Logger logger = LoggerFactory.getLogger(CamundaEngine.class);
 
@@ -269,5 +274,15 @@ public class CamundaEngine {
 
     public static void cancelProcessInstance(String processInstanceId){
         runtimeService.deleteProcessInstance(processInstanceId,"",true,true);
+    }
+
+    public static void getProcessDetails(DashboardProcessInstanceDetails dashboardProcessInstanceDetails, String processInstanceId){
+        List<HistoricVariableInstance> variableInstance = historyService.createHistoricVariableInstanceQuery().processInstanceId(processInstanceId).list();
+        HistoricActivityInstance lastActivityInstance = historyService.createHistoricActivityInstanceQuery().processInstanceId(processInstanceId).orderByHistoricActivityInstanceStartTime().desc().listPage(0,1).get(0);
+        HistoricProcessInstance processInstance = historyService.createHistoricProcessInstanceQuery().processInstanceId(processInstanceId).singleResult();
+
+        dashboardProcessInstanceDetails.setVariableInstance(variableInstance);
+        dashboardProcessInstanceDetails.setLastActivityInstance(lastActivityInstance);
+        dashboardProcessInstanceDetails.setProcessInstance(processInstance);
     }
 }
