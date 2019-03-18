@@ -1,5 +1,6 @@
 package eu.nimble.service.bp.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import eu.nimble.service.bp.hyperjaxb.model.*;
 import eu.nimble.service.bp.impl.util.bp.BusinessProcessUtility;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
@@ -11,10 +12,13 @@ import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceU
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
+import eu.nimble.service.bp.serialization.MixInIgnoreProperties;
 import eu.nimble.service.bp.swagger.api.StartApi;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
+import eu.nimble.service.bp.swagger.model.ProcessVariables;
 import eu.nimble.service.bp.swagger.model.Transaction;
+import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
@@ -77,7 +81,11 @@ public class StartController implements StartApi {
             @RequestParam(value = "precedingGid", required = false) String precedingGid,
             @ApiParam(value = "Identifier of the Collaboration (i.e. collaborationGroup.id) which the ProcessInstanceGroup belongs to")
             @RequestParam(value = "collaborationGID", required = false) String collaborationGID) {
-        logger.debug(" $$$ Start Process with ProcessInstanceInputMessage {}", body.toString());
+        try {
+            logger.debug(" $$$ Start Process with ProcessInstanceInputMessage {}", JsonSerializationUtility.getObjectMapperWithMixIn(ProcessVariables.class, MixInIgnoreProperties.class).writeValueAsString(body));
+        } catch (JsonProcessingException e) {
+            logger.warn("Failed to serialize process instance input message: ",e);
+        }
         GenericJPARepository repo = repoFactory.forBpRepository();
         ProcessInstance processInstance = null;
         // get BusinessProcessContext

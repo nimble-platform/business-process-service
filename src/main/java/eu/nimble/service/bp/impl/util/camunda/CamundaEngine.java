@@ -5,10 +5,13 @@
  */
 package eu.nimble.service.bp.impl.util.camunda;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import eu.nimble.service.bp.impl.model.dashboard.DashboardProcessInstanceDetails;
+import eu.nimble.service.bp.serialization.MixInIgnoreProperties;
 import eu.nimble.service.bp.swagger.model.*;
 import eu.nimble.service.bp.swagger.model.Process;
 import eu.nimble.utility.DateUtility;
+import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.XMLUtility;
 import org.camunda.bpm.engine.*;
 import org.camunda.bpm.engine.history.HistoricActivityInstance;
@@ -53,7 +56,11 @@ public class CamundaEngine {
         //processInstance.setProcessInstanceID("prc124");
         processInstance.setStatus(ProcessInstance.StatusEnum.COMPLETED);
 
-        logger.info(" Completing business process instance {}, with data {}", processInstanceID, data.toString());
+        try {
+            logger.info(" Completing business process instance {}, with data {}", processInstanceID, JsonSerializationUtility.getObjectMapperWithMixIn(Map.class, MixInIgnoreProperties.class).writeValueAsString(data));
+        } catch (JsonProcessingException e) {
+            logger.warn("Failed to serialize process instance variables: ",e);
+        }
         taskService.complete(task.getId(), data);
         logger.info(" Completed business process instance {}", processInstanceID);
 
@@ -66,7 +73,11 @@ public class CamundaEngine {
         data.put("processContextId",processContextId);
         String processID = body.getVariables().getProcessID();
 
-        logger.info(" Starting business process instance for {}, with data {}", processID, data.toString());
+        try {
+            logger.info(" Starting business process instance for {}, with data {}", processID, JsonSerializationUtility.getObjectMapperWithMixIn(Map.class, MixInIgnoreProperties.class).writeValueAsString(data));
+        } catch (JsonProcessingException e) {
+            logger.warn("Failed to serialize process instance variables: ",e);
+        }
         org.camunda.bpm.engine.runtime.ProcessInstance processInstance = runtimeService.startProcessInstanceByKey(processID, data);
         logger.info(" Started business process instance for {}, with instance id {}", processID, processInstance.getProcessInstanceId());
 

@@ -3,9 +3,11 @@ package eu.nimble.service.bp.processor.order;
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
 import eu.nimble.service.bp.impl.util.persistence.bp.ExecutionConfigurationDAOUtility;
+import eu.nimble.service.bp.serialization.MixInIgnoreProperties;
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import eu.nimble.service.model.ubl.order.OrderType;
+import eu.nimble.utility.JsonSerializationUtility;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
 import org.slf4j.Logger;
@@ -27,9 +29,7 @@ public class DefaultOrderSender  implements JavaDelegate {
         logger.info(" $$$ DefaultOrderSender: {}", execution);
         final Map<String, Object> variables = execution.getVariables();
         // for debug purposes
-        for (String key : variables.keySet()) {
-            logger.debug(" $$$ Variable name {}, value {}", key, variables.get(key));
-        }
+        logger.debug(JsonSerializationUtility.getObjectMapperWithMixIn(Map.class, MixInIgnoreProperties.class).writeValueAsString(variables));
 
         // get process instance id
         String processInstanceId = execution.getProcessInstance().getProcessInstanceId();

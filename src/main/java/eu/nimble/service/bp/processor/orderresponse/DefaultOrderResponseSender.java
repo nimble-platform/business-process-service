@@ -8,6 +8,7 @@ import eu.nimble.service.bp.impl.util.persistence.bp.ExecutionConfigurationDAOUt
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
+import eu.nimble.service.bp.serialization.MixInIgnoreProperties;
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
@@ -52,9 +53,7 @@ public class DefaultOrderResponseSender  implements JavaDelegate {
         logger.info(" $$$ DefaultOrderResponseSender: {}", execution);
         final Map<String, Object> variables = execution.getVariables();
         // for debug purposes
-        for (String key : variables.keySet()) {
-            logger.debug(" $$$ Variable name {}, value {}", key, variables.get(key));
-        }
+        logger.debug(JsonSerializationUtility.getObjectMapperWithMixIn(Map.class, MixInIgnoreProperties.class).writeValueAsString(variables));
 
         // get process instance id
         String processInstanceId = execution.getProcessInstance().getProcessInstanceId();
