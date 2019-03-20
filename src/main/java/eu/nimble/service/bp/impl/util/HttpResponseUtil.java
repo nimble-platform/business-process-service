@@ -1,6 +1,7 @@
 package eu.nimble.service.bp.impl.util;
 
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
+import eu.nimble.utility.exception.AuthenticationException;
 import org.springframework.boot.logging.LogLevel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,5 +33,18 @@ public class HttpResponseUtil {
             return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog(msg, e, HttpStatus.INTERNAL_SERVER_ERROR, LogLevel.ERROR);
         }
         return null;
+    }
+
+    public static void validateToken(String token) throws AuthenticationException {
+        try {
+            // check token
+            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(token);
+            if (!isValid) {
+                String msg = String.format("No user exists for the given token : %s", token);
+                throw new AuthenticationException(msg);
+            }
+        } catch (IOException e) {
+            throw new AuthenticationException(String.format("Failed to check user authorization for token: %s", token), e);
+        }
     }
 }

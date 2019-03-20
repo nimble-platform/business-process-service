@@ -30,10 +30,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
+import javax.ws.rs.BadRequestException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -81,33 +80,33 @@ public class StartController implements StartApi {
             @RequestParam(value = "precedingGid", required = false) String precedingGid,
             @ApiParam(value = "Identifier of the Collaboration (i.e. collaborationGroup.id) which the ProcessInstanceGroup belongs to")
             @RequestParam(value = "collaborationGID", required = false) String collaborationGID) {
-        try {
-            logger.debug(" $$$ Start Process with ProcessInstanceInputMessage {}", JsonSerializationUtility.getObjectMapperWithMixIn(ProcessVariables.class, MixInIgnoreProperties.class).writeValueAsString(body));
-        } catch (JsonProcessingException e) {
-            logger.warn("Failed to serialize process instance input message: ",e);
+
+        logger.debug(" $$$ Start Process with ProcessInstanceInputMessage {}", JsonSerializationUtility.serializeEntitySilentlyWithMixin(body, ProcessVariables.class, MixInIgnoreProperties.class));
+
+        // check the entity ids in the passed document
+        Transaction.DocumentTypeEnum documentType = BusinessProcessUtility.getInitialDocumentForProcess(body.getVariables().getProcessID());
+        Object document = DocumentPersistenceUtility.readDocument(DocumentType.valueOf(documentType.toString()), body.getVariables().getContent());
+
+        boolean hjidsExists = resourceValidationUtil.hjidsExit(document);
+        if(hjidsExists) {
+            String msg = String.format("Entity IDs (hjid fields) found in the passed document. document type: %s, content: %s", documentType.toString(), body.getVariables().getContent());
+            logger.warn(msg);
+            throw new BadRequestException(msg);
         }
+
+        // ensure that the the initiator and responder IDs are different
+        if(body.getVariables().getInitiatorID().equals(body.getVariables().getResponderID())) {
+            String msg = String.format("Initiator and responder party IDs are the same for the process.", JsonSerializationUtility.serializeEntitySilentlyWithMixin(body, ProcessInstanceInputMessage.class, MixInIgnoreProperties.class));
+            logger.info(msg);
+            throw new BadRequestException(msg);
+        }
+
+        // TODO move the business logic below, to a dedicated place
         GenericJPARepository repo = repoFactory.forBpRepository();
         ProcessInstance processInstance = null;
         // get BusinessProcessContext
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
         try {
-            // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
-            if (tokenCheck != null) {
-                return tokenCheck;
-            }
-
-            // check the entity ids in the passed document
-            Transaction.DocumentTypeEnum documentType = BusinessProcessUtility.getInitialDocumentForProcess(body.getVariables().getProcessID());
-            Object document = DocumentPersistenceUtility.readDocument(DocumentType.valueOf(documentType.toString()), body.getVariables().getContent());
-
-            boolean hjidsExists = resourceValidationUtil.hjidsExit(document);
-            if(hjidsExists) {
-                String msg = String.format("Entity IDs (hjid fields) found in the passed document. document type: %s, content: %s", documentType.toString(), body.getVariables().getContent());
-                logger.warn(msg);
-                throw new RuntimeException(msg);
-            }
-
             ProcessInstanceInputMessageDAO processInstanceInputMessageDAO = HibernateSwaggerObjectMapper.createProcessInstanceInputMessage_DAO(body);
             repo.persistEntity(processInstanceInputMessageDAO);
 
@@ -179,7 +178,7 @@ public class StartController implements StartApi {
         catch (Exception e){
             logger.error(" $$$ Failed to start process with ProcessInstanceInputMessage {}", body.toString(),e);
             businessProcessContext.handleExceptions();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+            throw e;
         }
         finally {
             BusinessProcessContextHandler.getBusinessProcessContextHandler().deleteBusinessProcessContext(businessProcessContext.getId());
