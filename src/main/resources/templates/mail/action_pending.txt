@@ -3,6 +3,7 @@ Dear NIMBLE user,
 Action required for the [(${product})], to [(${tradingPartnerPerson})] from [(${tradingPartner})].
 
 You can see the status of your collaboration via the NIMBLE dashboard.
+Link : [(${url})]
 
 Sincerely,
 NIMBLE Notification Service

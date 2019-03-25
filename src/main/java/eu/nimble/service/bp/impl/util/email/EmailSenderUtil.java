@@ -12,6 +12,7 @@ import eu.nimble.utility.email.EmailService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.thymeleaf.context.Context;
 
@@ -26,12 +27,18 @@ import java.util.List;
 public class EmailSenderUtil {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final static String COLLABORATION_ROLE_BUYER = "BUYER";
+    private final static String COLLABORATION_ROLE_SELLER = "SELLER";
+    private final static String EMPTY_TEXT = "";
 
     @Autowired
     private EmailService emailService;
 
     @Autowired
     private IdentityClientTyped identityClient;
+
+    @Value("${nimble.frontend.url}")
+    private String frontEndURL;
 
     // email sender thread
     public void sendCancellationEmail(String bearerToken, ProcessInstanceGroupDAO groupDAO) {
@@ -115,7 +122,7 @@ public class EmailSenderUtil {
 
     public void sendActionPendingEmail(String bearerToken, BusinessProcessContext businessProcessContext) {
         new Thread(() -> {
-            // if negotiation started
+            // if negotiation awaits response
             if (businessProcessContext.getMetadataDAO().getStatus().equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
 
                 List<String> emailList = new ArrayList<>();
@@ -134,22 +141,41 @@ public class EmailSenderUtil {
                     String tradingPersonName = new StringBuilder("").append(initiatingPerson.getFirstName()).append(" ").append(initiatingPerson.getFamilyName()).toString();
                     String productName = businessProcessContext.getMetadataDAO().getRelatedProducts().get(0);
 
-                    notifyPartyOnPendingCollaboration(emailList.toArray(new String[0]), tradingPersonName, productName, tradingPartnerName);
+                    String url = EMPTY_TEXT;
+                    if (businessProcessContext.getMetadataDAO().getResponderID().equals(businessProcessContext.getProcessInstanceGroupDAO1().getPartyID())) {
+                        url = getPendingActionURL(businessProcessContext.getProcessInstanceGroupDAO1().getCollaborationRole());
+                    } else if (businessProcessContext.getMetadataDAO().getResponderID().equals(businessProcessContext.getProcessInstanceGroupDAO2().getPartyID())) {
+                        url = getPendingActionURL(businessProcessContext.getProcessInstanceGroupDAO2().getCollaborationRole());
+                    }
+
+                    notifyPartyOnPendingCollaboration(emailList.toArray(new String[0]), tradingPersonName, productName, tradingPartnerName, url);
                 } catch (IOException e) {
                     logger.error("Failed to get person/party data from identity service", e);
                     return;
                 }
-
             }
         }).start();
     }
 
-    public void notifyPartyOnPendingCollaboration(String[] toEmail, String tradingPersonName, String productName, String tradingPartnerName) {
+    private String getPendingActionURL(String collaborationRole) {
+        if (COLLABORATION_ROLE_SELLER.equals(collaborationRole)) {
+            return frontEndURL + "#/dashboard?tab=SALES";
+        } else if (COLLABORATION_ROLE_BUYER.equals(collaborationRole)) {
+            return  frontEndURL + "#/dashboard?tab=PUCHASES";
+        }
+        return EMPTY_TEXT;
+    }
+
+    public void notifyPartyOnPendingCollaboration(String[] toEmail, String tradingPersonName, String productName, String tradingPartnerName, String url) {
         Context context = new Context();
 
         context.setVariable("tradingPartnerPerson", tradingPersonName);
         context.setVariable("tradingPartner", tradingPartnerName);
         context.setVariable("product", productName);
+
+        if (!url.isEmpty()) {
+            context.setVariable("url", url);
+        }
 
         String subject = "NIMBLE: Action Required for the Business Process";
 
