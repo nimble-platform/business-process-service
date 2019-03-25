@@ -5,6 +5,7 @@ import eu.nimble.service.bp.hyperjaxb.model.*;
 import eu.nimble.service.bp.impl.util.HttpResponseUtil;
 import eu.nimble.service.bp.impl.util.bp.BusinessProcessUtility;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
+import eu.nimble.service.bp.impl.util.email.EmailSenderUtil;
 import eu.nimble.service.bp.impl.util.persistence.bp.CollaborationGroupDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceDAOUtility;
@@ -44,6 +45,8 @@ public class ContinueController implements ContinueApi {
     private ResourceValidationUtility resourceValidationUtil;
     @Autowired
     private JPARepositoryFactory repoFactory;
+    @Autowired
+    private EmailSenderUtil emailSenderUtil;
 
     @Override
     @ApiOperation(value = "", notes = "Sends input to a waiting process instance (because of a human task)")
@@ -112,7 +115,7 @@ public class ContinueController implements ContinueApi {
 
             // create process instance groups if this is the first process initializing the process group
             checkExistingGroup(businessProcessContext.getId(), gid, processInstance.getProcessInstanceID(), body, collaborationGID);
-
+            emailSenderUtil.sendActionPendingEmail(bearerToken, businessProcessContext);
         } catch (Exception e) {
             logger.error(" $$$ Failed to continue process with ProcessInstanceInputMessage {}", body.toString(), e);
             businessProcessContext.handleExceptions();

@@ -2,8 +2,10 @@ package eu.nimble.service.bp.impl.util.email;
 
 import eu.nimble.common.rest.identity.IdentityClientTyped;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
+import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentStatus;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
+import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
 import eu.nimble.utility.email.EmailService;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.thymeleaf.context.Context;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -108,5 +111,48 @@ public class EmailSenderUtil {
         String subject = "NIMBLE: Business process cancelled";
 
         emailService.send(new String[]{toEmail}, subject, "cancelled_collaboration", context);
+    }
+
+    public void sendActionPendingEmail(String bearerToken, BusinessProcessContext businessProcessContext) {
+        new Thread(() -> {
+            // if negotiation started
+            if (businessProcessContext.getMetadataDAO().getStatus().equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
+
+                List<String> emailList = new ArrayList<>();
+
+                try {
+                    PartyType respondingParty = identityClient.getParty(bearerToken, businessProcessContext.getMetadataDAO().getResponderID(), true);
+                    PartyType initiatingParty = identityClient.getParty(bearerToken, businessProcessContext.getMetadataDAO().getInitiatorID());
+                    PersonType initiatingPerson = identityClient.getPerson(bearerToken);
+
+                    List<PersonType> personTypeList = respondingParty.getPerson();
+                    for (PersonType p : personTypeList) {
+                        emailList.add(p.getContact().getElectronicMail());
+                    }
+
+                    String tradingPartnerName = initiatingParty.getPartyName().get(0).getName().getValue();
+                    String tradingPersonName = new StringBuilder("").append(initiatingPerson.getFirstName()).append(" ").append(initiatingPerson.getFamilyName()).toString();
+                    String productName = businessProcessContext.getMetadataDAO().getRelatedProducts().get(0);
+
+                    notifyPartyOnPendingCollaboration(emailList.toArray(new String[0]), tradingPersonName, productName, tradingPartnerName);
+                } catch (IOException e) {
+                    logger.error("Failed to get person/party data from identity service", e);
+                    return;
+                }
+
+            }
+        }).start();
+    }
+
+    public void notifyPartyOnPendingCollaboration(String[] toEmail, String tradingPersonName, String productName, String tradingPartnerName) {
+        Context context = new Context();
+
+        context.setVariable("tradingPartnerPerson", tradingPersonName);
+        context.setVariable("tradingPartner", tradingPartnerName);
+        context.setVariable("product", productName);
+
+        String subject = "NIMBLE: Action Required for the Business Process";
+
+        emailService.send(toEmail, subject, "action_pending", context);
     }
 }

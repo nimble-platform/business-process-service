@@ -1,15 +1,14 @@
 package eu.nimble.service.bp.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import eu.nimble.service.bp.hyperjaxb.model.*;
 import eu.nimble.service.bp.impl.util.bp.BusinessProcessUtility;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
+import eu.nimble.service.bp.impl.util.email.EmailSenderUtil;
 import eu.nimble.service.bp.impl.util.persistence.bp.CollaborationGroupDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceGroupDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
-import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.serialization.MixInIgnoreProperties;
@@ -47,6 +46,8 @@ public class StartController implements StartApi {
     private ResourceValidationUtility resourceValidationUtil;
     @Autowired
     private JPARepositoryFactory repoFactory;
+    @Autowired
+    private EmailSenderUtil emailSenderUtil;
 
     @Override
     @ApiOperation(value = "", notes = "Starts a business process.", response = ProcessInstance.class, tags = {})
@@ -174,6 +175,7 @@ public class StartController implements StartApi {
             } else {
                 addNewProcessInstanceToGroup(businessProcessContext.getId(),gid, processInstance.getProcessInstanceID(), body,responderCollaborationGroupDAO);
             }
+            emailSenderUtil.sendActionPendingEmail(bearerToken, businessProcessContext);
         }
         catch (Exception e){
             logger.error(" $$$ Failed to start process with ProcessInstanceInputMessage {}", body.toString(),e);
