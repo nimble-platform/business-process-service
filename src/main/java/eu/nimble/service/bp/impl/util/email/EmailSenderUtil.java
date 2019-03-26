@@ -123,37 +123,40 @@ public class EmailSenderUtil {
     public void sendActionPendingEmail(String bearerToken, BusinessProcessContext businessProcessContext) {
         new Thread(() -> {
             // if negotiation awaits response
-            if (businessProcessContext.getMetadataDAO().getStatus().equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
+            ProcessDocumentStatus processDocumentStatus = businessProcessContext.getMetadataDAO().getStatus();
+            List<String> emailList = new ArrayList<>();
+            try {
 
-                List<String> emailList = new ArrayList<>();
+                PartyType respondingParty = identityClient.getParty(bearerToken, businessProcessContext.getMetadataDAO().getResponderID(), true);
+                PartyType initiatingParty = identityClient.getParty(bearerToken, businessProcessContext.getMetadataDAO().getInitiatorID());
+                PersonType initiatingPerson = identityClient.getPerson(bearerToken);
 
-                try {
-                    PartyType respondingParty = identityClient.getParty(bearerToken, businessProcessContext.getMetadataDAO().getResponderID(), true);
-                    PartyType initiatingParty = identityClient.getParty(bearerToken, businessProcessContext.getMetadataDAO().getInitiatorID());
-                    PersonType initiatingPerson = identityClient.getPerson(bearerToken);
-
-                    List<PersonType> personTypeList = respondingParty.getPerson();
-                    for (PersonType p : personTypeList) {
-                        emailList.add(p.getContact().getElectronicMail());
-                    }
-
-                    String tradingPartnerName = initiatingParty.getPartyName().get(0).getName().getValue();
-                    String tradingPersonName = new StringBuilder("").append(initiatingPerson.getFirstName()).append(" ").append(initiatingPerson.getFamilyName()).toString();
-                    String productName = businessProcessContext.getMetadataDAO().getRelatedProducts().get(0);
-
-                    String url = EMPTY_TEXT;
-                    if (businessProcessContext.getMetadataDAO().getResponderID().equals(businessProcessContext.getProcessInstanceGroupDAO1().getPartyID())) {
-                        url = getPendingActionURL(businessProcessContext.getProcessInstanceGroupDAO1().getCollaborationRole());
-                    } else if (businessProcessContext.getMetadataDAO().getResponderID().equals(businessProcessContext.getProcessInstanceGroupDAO2().getPartyID())) {
-                        url = getPendingActionURL(businessProcessContext.getProcessInstanceGroupDAO2().getCollaborationRole());
-                    }
-
-                    notifyPartyOnPendingCollaboration(emailList.toArray(new String[0]), tradingPersonName, productName, tradingPartnerName, url);
-                } catch (IOException e) {
-                    logger.error("Failed to get person/party data from identity service", e);
-                    return;
+                List<PersonType> personTypeList = respondingParty.getPerson();
+                for (PersonType p : personTypeList) {
+                    emailList.add(p.getContact().getElectronicMail());
                 }
+
+                String tradingPartnerName = initiatingParty.getPartyName().get(0).getName().getValue();
+                String tradingPersonName = new StringBuilder("").append(initiatingPerson.getFirstName()).append(" ").append(initiatingPerson.getFamilyName()).toString();
+                String productName = businessProcessContext.getMetadataDAO().getRelatedProducts().get(0);
+
+                String url = EMPTY_TEXT;
+                if (businessProcessContext.getMetadataDAO().getResponderID().equals(businessProcessContext.getProcessInstanceGroupDAO1().getPartyID())) {
+                    url = getPendingActionURL(businessProcessContext.getProcessInstanceGroupDAO1().getCollaborationRole());
+                } else if (businessProcessContext.getMetadataDAO().getResponderID().equals(businessProcessContext.getProcessInstanceGroupDAO2().getPartyID())) {
+                    url = getPendingActionURL(businessProcessContext.getProcessInstanceGroupDAO2().getCollaborationRole());
+                }
+
+                if (processDocumentStatus.equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
+                    notifyPartyOnPendingCollaboration(emailList.toArray(new String[0]), tradingPersonName, productName, tradingPartnerName, url);
+                } else {
+                    notifyPartyOnCollaboration(emailList.toArray(new String[0]), tradingPersonName, productName, tradingPartnerName, url);
+                }
+            } catch (IOException e) {
+                logger.error("Failed to get person/party data from identity service", e);
+                return;
             }
+
         }).start();
     }
 
@@ -180,5 +183,21 @@ public class EmailSenderUtil {
         String subject = "NIMBLE: Action Required for the Business Process";
 
         emailService.send(toEmail, subject, "action_pending", context);
+    }
+
+    public void notifyPartyOnCollaboration(String[] toEmail, String tradingPersonName, String productName, String tradingPartnerName, String url) {
+        Context context = new Context();
+
+        context.setVariable("tradingPartnerPerson", tradingPersonName);
+        context.setVariable("tradingPartner", tradingPartnerName);
+        context.setVariable("product", productName);
+
+        if (!url.isEmpty()) {
+            context.setVariable("url", url);
+        }
+
+        String subject = "NIMBLE: Transition of the Business Process";
+
+        emailService.send(toEmail, subject, "continue_colloboration", context);
     }
 }
