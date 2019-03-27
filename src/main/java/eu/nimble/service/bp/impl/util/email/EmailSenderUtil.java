@@ -1,6 +1,7 @@
 package eu.nimble.service.bp.impl.util.email;
 
 import eu.nimble.common.rest.identity.IdentityClientTyped;
+import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentStatus;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
@@ -30,6 +31,7 @@ public class EmailSenderUtil {
     private final static String COLLABORATION_ROLE_BUYER = "BUYER";
     private final static String COLLABORATION_ROLE_SELLER = "SELLER";
     private final static String EMPTY_TEXT = "";
+    private final static String URL_TEXT = "Link : ";
 
     @Autowired
     private EmailService emailService;
@@ -125,51 +127,101 @@ public class EmailSenderUtil {
             // if negotiation awaits response
             ProcessDocumentStatus processDocumentStatus = businessProcessContext.getMetadataDAO().getStatus();
             List<String> emailList = new ArrayList<>();
+            PartyType respondingParty;
+            PartyType initiatingParty;
+            PartyType sellerParty = null;
+            PartyType buyerParty = null;
+            PersonType initiatingPerson;
+            String tradingPartnerName = EMPTY_TEXT;
+            String subject = EMPTY_TEXT;
+            boolean showURL = true;
+            boolean initiatorIsBuyer = true;
+
             try {
-
-                PartyType respondingParty = identityClient.getParty(bearerToken, businessProcessContext.getMetadataDAO().getResponderID(), true);
-                PartyType initiatingParty = identityClient.getParty(bearerToken, businessProcessContext.getMetadataDAO().getInitiatorID());
-                PersonType initiatingPerson = identityClient.getPerson(bearerToken);
-
-                List<PersonType> personTypeList = respondingParty.getPerson();
-                for (PersonType p : personTypeList) {
-                    emailList.add(p.getContact().getElectronicMail());
-                }
-
-                String tradingPartnerName = initiatingParty.getPartyName().get(0).getName().getValue();
-                String tradingPersonName = new StringBuilder("").append(initiatingPerson.getFirstName()).append(" ").append(initiatingPerson.getFamilyName()).toString();
-                String productName = businessProcessContext.getMetadataDAO().getRelatedProducts().get(0);
-
-                String url = EMPTY_TEXT;
-                if (businessProcessContext.getMetadataDAO().getResponderID().equals(businessProcessContext.getProcessInstanceGroupDAO1().getPartyID())) {
-                    url = getPendingActionURL(businessProcessContext.getProcessInstanceGroupDAO1().getCollaborationRole());
-                } else if (businessProcessContext.getMetadataDAO().getResponderID().equals(businessProcessContext.getProcessInstanceGroupDAO2().getPartyID())) {
-                    url = getPendingActionURL(businessProcessContext.getProcessInstanceGroupDAO2().getCollaborationRole());
-                }
-
-                if (processDocumentStatus.equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
-                    notifyPartyOnPendingCollaboration(emailList.toArray(new String[0]), tradingPersonName, productName, tradingPartnerName, url);
-                } else {
-                    notifyPartyOnCollaboration(emailList.toArray(new String[0]), tradingPersonName, productName, tradingPartnerName, url);
-                }
+                respondingParty = identityClient.getParty(bearerToken, businessProcessContext.getMetadataDAO().getResponderID());
+                initiatingParty = identityClient.getParty(bearerToken, businessProcessContext.getMetadataDAO().getInitiatorID());
             } catch (IOException e) {
-                logger.error("Failed to get person/party data from identity service", e);
+                logger.error("Failed to get party with id: {} from identity service", businessProcessContext.getMetadataDAO().getResponderID(), e);
                 return;
             }
 
+            try {
+                initiatingPerson = identityClient.getPerson(bearerToken);
+            } catch (IOException e) {
+                logger.error("Failed to get person with token: {} from identity service", bearerToken, e);
+                return;
+            }
+
+            String tradingPersonName = new StringBuilder("").append(initiatingPerson.getFirstName()).append(" ").append(initiatingPerson.getFamilyName()).toString();
+            String productName = businessProcessContext.getMetadataDAO().getRelatedProducts().get(0);
+
+            List<PersonType> personTypeList = respondingParty.getPerson();
+            for (PersonType p : personTypeList) {
+                emailList.add(p.getContact().getElectronicMail());
+            }
+            tradingPartnerName = initiatingParty.getPartyName().get(0).getName().getValue();
+
+            DocumentType documentType = businessProcessContext.getMetadataDAO().getType();
+            if (documentType.equals(DocumentType.ITEMINFORMATIONREQUEST)) {
+                subject = "NIMBLE: Information Requested For " + productName + " from " + tradingPartnerName;
+            }else if(documentType.equals(DocumentType.REQUESTFORQUOTATION)) {
+                subject = "NIMBLE: Quotation Requested For " + productName + " from " + tradingPartnerName;
+            }else if(documentType.equals(DocumentType.ORDER)) {
+                subject = "NIMBLE: Order Received For " + productName + " from " + tradingPartnerName;
+            }else if(documentType.equals(DocumentType.RECEIPTADVICE)) {
+                subject = "NIMBLE: Receipt Advice Received For " + productName + " from " + tradingPartnerName;
+            }else if (businessProcessContext.getMetadataDAO().getType().equals(DocumentType.ITEMINFORMATIONRESPONSE)){
+                initiatorIsBuyer = false;
+                subject = "NIMBLE: Information Received For " + productName + " from " + tradingPartnerName;
+            }else if (businessProcessContext.getMetadataDAO().getType().equals(DocumentType.QUOTATION)){
+                initiatorIsBuyer = false;
+                subject = "NIMBLE: Quotation Received For " + productName + " from " + tradingPartnerName;
+            } else if (businessProcessContext.getMetadataDAO().getType().equals(DocumentType.ORDERRESPONSESIMPLE)){
+                initiatorIsBuyer = false;
+                subject = "NIMBLE: Order Response For " + productName + " from " + tradingPartnerName;
+            }else if (businessProcessContext.getMetadataDAO().getType().equals(DocumentType.DESPATCHADVICE)){
+                initiatorIsBuyer = false;
+                subject = "NIMBLE: Dispatch Advice Received For " + productName + " from " + tradingPartnerName;
+            }else {
+                showURL = false;
+            }
+
+            if (initiatorIsBuyer) {
+                buyerParty = initiatingParty;
+                sellerParty = respondingParty;
+            }else {
+                buyerParty = respondingParty;
+                sellerParty = initiatingParty;
+            }
+
+            String url = EMPTY_TEXT;
+
+            if (showURL) {
+                if (businessProcessContext.getMetadataDAO().getResponderID().equals(String.valueOf(sellerParty.getPartyIdentification().get(0).getID()))) {
+                    url = getPendingActionURL(COLLABORATION_ROLE_SELLER);
+                } else if (businessProcessContext.getMetadataDAO().getResponderID().equals(String.valueOf(buyerParty.getPartyIdentification().get(0).getID()))) {
+                    url = getPendingActionURL(COLLABORATION_ROLE_BUYER);
+                }
+            }
+
+            if (processDocumentStatus.equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
+                notifyPartyOnPendingCollaboration(emailList.toArray(new String[0]), tradingPersonName, productName, tradingPartnerName, url, subject);
+            } else {
+                notifyPartyOnCollaboration(emailList.toArray(new String[0]), tradingPersonName, productName, tradingPartnerName, url, subject);
+            }
         }).start();
     }
 
     private String getPendingActionURL(String collaborationRole) {
         if (COLLABORATION_ROLE_SELLER.equals(collaborationRole)) {
-            return frontEndURL + "#/dashboard?tab=SALES";
+            return URL_TEXT + frontEndURL + "#/dashboard?tab=SALES";
         } else if (COLLABORATION_ROLE_BUYER.equals(collaborationRole)) {
-            return  frontEndURL + "#/dashboard?tab=PUCHASES";
+            return URL_TEXT + frontEndURL + "#/dashboard?tab=PUCHASES";
         }
         return EMPTY_TEXT;
     }
 
-    public void notifyPartyOnPendingCollaboration(String[] toEmail, String tradingPersonName, String productName, String tradingPartnerName, String url) {
+    public void notifyPartyOnPendingCollaboration(String[] toEmail, String tradingPersonName, String productName, String tradingPartnerName, String url, String subject) {
         Context context = new Context();
 
         context.setVariable("tradingPartnerPerson", tradingPersonName);
@@ -180,12 +232,14 @@ public class EmailSenderUtil {
             context.setVariable("url", url);
         }
 
-        String subject = "NIMBLE: Action Required for the Business Process";
+        if (subject.equals(EMPTY_TEXT)) {
+            subject = "NIMBLE: Action Required for the Business Process";
+        }
 
         emailService.send(toEmail, subject, "action_pending", context);
     }
 
-    public void notifyPartyOnCollaboration(String[] toEmail, String tradingPersonName, String productName, String tradingPartnerName, String url) {
+    public void notifyPartyOnCollaboration(String[] toEmail, String tradingPersonName, String productName, String tradingPartnerName, String url, String subject) {
         Context context = new Context();
 
         context.setVariable("tradingPartnerPerson", tradingPersonName);
@@ -196,7 +250,9 @@ public class EmailSenderUtil {
             context.setVariable("url", url);
         }
 
-        String subject = "NIMBLE: Transition of the Business Process";
+        if (subject.equals(EMPTY_TEXT)) {
+            subject = "NIMBLE: Transition of the Business Process";
+        }
 
         emailService.send(toEmail, subject, "continue_colloboration", context);
     }
