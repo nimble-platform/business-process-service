@@ -214,9 +214,9 @@ public class EmailSenderUtil {
 
     private String getPendingActionURL(String collaborationRole) {
         if (COLLABORATION_ROLE_SELLER.equals(collaborationRole)) {
-            return URL_TEXT + frontEndURL + "#/dashboard?tab=SALES";
+            return URL_TEXT + frontEndURL + "/#/dashboard?tab=SALES";
         } else if (COLLABORATION_ROLE_BUYER.equals(collaborationRole)) {
-            return URL_TEXT + frontEndURL + "#/dashboard?tab=PUCHASES";
+            return URL_TEXT + frontEndURL + "/#/dashboard?tab=PUCHASES";
         }
         return EMPTY_TEXT;
     }
