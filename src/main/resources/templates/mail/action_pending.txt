@@ -1,6 +1,6 @@
-Dear NIMBLE user,
+Dear [(${respondingPartyName})],
 
-Action required for the [(${product})], to [(${tradingPartnerPerson})] from [(${tradingPartner})].
+Action required for the [(${product})], to [(${initiatingPersonName})] from [(${initiatingPartyName})].
 
 You can see the status of your collaboration via the NIMBLE dashboard.
 [(${url})]

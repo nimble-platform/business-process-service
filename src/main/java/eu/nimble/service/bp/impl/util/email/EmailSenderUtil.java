@@ -132,7 +132,8 @@ public class EmailSenderUtil {
             PartyType sellerParty = null;
             PartyType buyerParty = null;
             PersonType initiatingPerson;
-            String tradingPartnerName = EMPTY_TEXT;
+            String respondingPartyName;
+            String initiatingPartyName;
             String subject = EMPTY_TEXT;
             boolean showURL = true;
             boolean initiatorIsBuyer = true;
@@ -159,29 +160,30 @@ public class EmailSenderUtil {
             for (PersonType p : personTypeList) {
                 emailList.add(p.getContact().getElectronicMail());
             }
-            tradingPartnerName = initiatingParty.getPartyName().get(0).getName().getValue();
+            respondingPartyName = respondingParty.getPartyName().get(0).getName().getValue();
+            initiatingPartyName = initiatingParty.getPartyName().get(0).getName().getValue();
 
             DocumentType documentType = businessProcessContext.getMetadataDAO().getType();
             if (documentType.equals(DocumentType.ITEMINFORMATIONREQUEST)) {
-                subject = "NIMBLE: Information Requested For " + productName + " from " + tradingPartnerName;
+                subject = "NIMBLE: Information Requested for " + productName + " from " + initiatingPartyName;
             }else if(documentType.equals(DocumentType.REQUESTFORQUOTATION)) {
-                subject = "NIMBLE: Quotation Requested For " + productName + " from " + tradingPartnerName;
+                subject = "NIMBLE: Quotation Requested for " + productName + " from " + initiatingPartyName;
             }else if(documentType.equals(DocumentType.ORDER)) {
-                subject = "NIMBLE: Order Received For " + productName + " from " + tradingPartnerName;
+                subject = "NIMBLE: Order Received for " + productName + " from " + initiatingPartyName;
             }else if(documentType.equals(DocumentType.RECEIPTADVICE)) {
-                subject = "NIMBLE: Receipt Advice Received For " + productName + " from " + tradingPartnerName;
+                subject = "NIMBLE: Receipt Advice Received for " + productName + " from " + initiatingPartyName;
             }else if (businessProcessContext.getMetadataDAO().getType().equals(DocumentType.ITEMINFORMATIONRESPONSE)){
                 initiatorIsBuyer = false;
-                subject = "NIMBLE: Information Received For " + productName + " from " + tradingPartnerName;
+                subject = "NIMBLE: Information Received for " + productName + " from " + initiatingPartyName;
             }else if (businessProcessContext.getMetadataDAO().getType().equals(DocumentType.QUOTATION)){
                 initiatorIsBuyer = false;
-                subject = "NIMBLE: Quotation Received For " + productName + " from " + tradingPartnerName;
+                subject = "NIMBLE: Quotation Received for " + productName + " from " + initiatingPartyName;
             } else if (businessProcessContext.getMetadataDAO().getType().equals(DocumentType.ORDERRESPONSESIMPLE)){
                 initiatorIsBuyer = false;
-                subject = "NIMBLE: Order Response For " + productName + " from " + tradingPartnerName;
+                subject = "NIMBLE: Order Response for " + productName + " from " + initiatingPartyName;
             }else if (businessProcessContext.getMetadataDAO().getType().equals(DocumentType.DESPATCHADVICE)){
                 initiatorIsBuyer = false;
-                subject = "NIMBLE: Dispatch Advice Received For " + productName + " from " + tradingPartnerName;
+                subject = "NIMBLE: Dispatch Advice Received for " + productName + " from " + initiatingPartyName;
             }else {
                 showURL = false;
             }
@@ -205,9 +207,9 @@ public class EmailSenderUtil {
             }
 
             if (processDocumentStatus.equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
-                notifyPartyOnPendingCollaboration(emailList.toArray(new String[0]), tradingPersonName, productName, tradingPartnerName, url, subject);
+                notifyPartyOnPendingCollaboration(emailList.toArray(new String[0]), tradingPersonName, productName, initiatingPartyName, url, subject, respondingPartyName);
             } else {
-                notifyPartyOnCollaboration(emailList.toArray(new String[0]), tradingPersonName, productName, tradingPartnerName, url, subject);
+                notifyPartyOnCollaboration(emailList.toArray(new String[0]), tradingPersonName, productName, initiatingPartyName, url, subject, respondingPartyName);
             }
         }).start();
     }
@@ -221,11 +223,13 @@ public class EmailSenderUtil {
         return EMPTY_TEXT;
     }
 
-    public void notifyPartyOnPendingCollaboration(String[] toEmail, String tradingPersonName, String productName, String tradingPartnerName, String url, String subject) {
+    public void notifyPartyOnPendingCollaboration(String[] toEmail, String initiatingPersonName, String productName,
+                                                  String initiatingPartyName, String url, String subject, String respondingPartyName) {
         Context context = new Context();
 
-        context.setVariable("tradingPartnerPerson", tradingPersonName);
-        context.setVariable("tradingPartner", tradingPartnerName);
+        context.setVariable("initiatingPersonName", initiatingPersonName);
+        context.setVariable("initiatingPartyName", initiatingPartyName);
+        context.setVariable("respondingPartyName", respondingPartyName);
         context.setVariable("product", productName);
 
         if (!url.isEmpty()) {
@@ -239,11 +243,13 @@ public class EmailSenderUtil {
         emailService.send(toEmail, subject, "action_pending", context);
     }
 
-    public void notifyPartyOnCollaboration(String[] toEmail, String tradingPersonName, String productName, String tradingPartnerName, String url, String subject) {
+    public void notifyPartyOnCollaboration(String[] toEmail, String initiatingPersonName, String productName, String initiatingPartyName,
+                                           String url, String subject, String respondingPartyName) {
         Context context = new Context();
 
-        context.setVariable("tradingPartnerPerson", tradingPersonName);
-        context.setVariable("tradingPartner", tradingPartnerName);
+        context.setVariable("initiatingPersonName", initiatingPersonName);
+        context.setVariable("initiatingPartyName", initiatingPartyName);
+        context.setVariable("respondingPartyName", respondingPartyName);
         context.setVariable("product", productName);
 
         if (!url.isEmpty()) {
