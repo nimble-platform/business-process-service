@@ -139,8 +139,14 @@ public class EmailSenderUtil {
             boolean initiatorIsBuyer = true;
 
             try {
-                respondingParty = identityClient.getParty(bearerToken, businessProcessContext.getMetadataDAO().getResponderID());
-                initiatingParty = identityClient.getParty(bearerToken, businessProcessContext.getMetadataDAO().getInitiatorID());
+                if (processDocumentStatus.equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
+                    respondingParty = identityClient.getParty(bearerToken, businessProcessContext.getMetadataDAO().getResponderID());
+                    initiatingParty = identityClient.getParty(bearerToken, businessProcessContext.getMetadataDAO().getInitiatorID());
+                }else {
+                    respondingParty = identityClient.getParty(bearerToken, businessProcessContext.getMetadataDAO().getInitiatorID());
+                    initiatingParty = identityClient.getParty(bearerToken, businessProcessContext.getMetadataDAO().getResponderID());
+                }
+
             } catch (IOException e) {
                 logger.error("Failed to get party with id: {} from identity service", businessProcessContext.getMetadataDAO().getResponderID(), e);
                 return;
@@ -153,7 +159,7 @@ public class EmailSenderUtil {
                 return;
             }
 
-            String tradingPersonName = new StringBuilder("").append(initiatingPerson.getFirstName()).append(" ").append(initiatingPerson.getFamilyName()).toString();
+            String initiatingPersonName = new StringBuilder("").append(initiatingPerson.getFirstName()).append(" ").append(initiatingPerson.getFamilyName()).toString();
             String productName = businessProcessContext.getMetadataDAO().getRelatedProducts().get(0);
 
             List<PersonType> personTypeList = respondingParty.getPerson();
@@ -200,16 +206,24 @@ public class EmailSenderUtil {
 
             if (showURL) {
                 if (businessProcessContext.getMetadataDAO().getResponderID().equals(String.valueOf(sellerParty.getPartyIdentification().get(0).getID()))) {
-                    url = getPendingActionURL(COLLABORATION_ROLE_SELLER);
+                    if (processDocumentStatus.equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
+                        url = getPendingActionURL(COLLABORATION_ROLE_SELLER);
+                    }else {
+                        url = getPendingActionURL(COLLABORATION_ROLE_BUYER);
+                    }
                 } else if (businessProcessContext.getMetadataDAO().getResponderID().equals(String.valueOf(buyerParty.getPartyIdentification().get(0).getID()))) {
-                    url = getPendingActionURL(COLLABORATION_ROLE_BUYER);
+                    if (processDocumentStatus.equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
+                        url = getPendingActionURL(COLLABORATION_ROLE_BUYER);
+                    }else {
+                        url = getPendingActionURL(COLLABORATION_ROLE_SELLER);
+                    }
                 }
             }
 
             if (processDocumentStatus.equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
-                notifyPartyOnPendingCollaboration(emailList.toArray(new String[0]), tradingPersonName, productName, initiatingPartyName, url, subject, respondingPartyName);
+                notifyPartyOnPendingCollaboration(emailList.toArray(new String[0]), initiatingPersonName, productName, initiatingPartyName, url, subject, respondingPartyName);
             } else {
-                notifyPartyOnCollaboration(emailList.toArray(new String[0]), tradingPersonName, productName, initiatingPartyName, url, subject, respondingPartyName);
+                notifyPartyOnCollaboration(emailList.toArray(new String[0]), initiatingPersonName, productName, initiatingPartyName, url, subject, respondingPartyName);
             }
         }).start();
     }
