@@ -1,0 +1,9 @@
+Dear [(${respondingPartyName})],
+
+[(${initiatingPersonName})] from [(${initiatingPartyName})] has transitioned the process for [(${product})].
+
+You can see the status of your collaboration via the NIMBLE dashboard.
+[(${url})]
+
+Sincerely,
+NIMBLE Notification Service

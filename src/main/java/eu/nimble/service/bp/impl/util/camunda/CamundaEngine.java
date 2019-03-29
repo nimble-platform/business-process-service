@@ -5,11 +5,18 @@
  */
 package eu.nimble.service.bp.impl.util.camunda;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import eu.nimble.service.bp.impl.model.dashboard.DashboardProcessInstanceDetails;
+import eu.nimble.service.bp.serialization.MixInIgnoreProperties;
 import eu.nimble.service.bp.swagger.model.*;
 import eu.nimble.service.bp.swagger.model.Process;
 import eu.nimble.utility.DateUtility;
+import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.XMLUtility;
 import org.camunda.bpm.engine.*;
+import org.camunda.bpm.engine.history.HistoricActivityInstance;
+import org.camunda.bpm.engine.history.HistoricProcessInstance;
+import org.camunda.bpm.engine.history.HistoricVariableInstance;
 import org.camunda.bpm.engine.repository.ProcessDefinition;
 import org.camunda.bpm.engine.task.Task;
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
@@ -30,6 +37,7 @@ public class CamundaEngine {
     private static RepositoryService repositoryService = processEngine.getRepositoryService();
     private static RuntimeService runtimeService = processEngine.getRuntimeService();
     private static TaskService taskService = processEngine.getTaskService();
+    private static HistoryService historyService = processEngine.getHistoryService();
 
     private static Logger logger = LoggerFactory.getLogger(CamundaEngine.class);
 
@@ -48,7 +56,11 @@ public class CamundaEngine {
         //processInstance.setProcessInstanceID("prc124");
         processInstance.setStatus(ProcessInstance.StatusEnum.COMPLETED);
 
-        logger.info(" Completing business process instance {}, with data {}", processInstanceID, data.toString());
+        try {
+            logger.info(" Completing business process instance {}, with data {}", processInstanceID, JsonSerializationUtility.getObjectMapperWithMixIn(Map.class, MixInIgnoreProperties.class).writeValueAsString(data));
+        } catch (JsonProcessingException e) {
+            logger.warn("Failed to serialize process instance variables: ",e);
+        }
         taskService.complete(task.getId(), data);
         logger.info(" Completed business process instance {}", processInstanceID);
 
@@ -61,7 +73,11 @@ public class CamundaEngine {
         data.put("processContextId",processContextId);
         String processID = body.getVariables().getProcessID();
 
-        logger.info(" Starting business process instance for {}, with data {}", processID, data.toString());
+        try {
+            logger.info(" Starting business process instance for {}, with data {}", processID, JsonSerializationUtility.getObjectMapperWithMixIn(Map.class, MixInIgnoreProperties.class).writeValueAsString(data));
+        } catch (JsonProcessingException e) {
+            logger.warn("Failed to serialize process instance variables: ",e);
+        }
         org.camunda.bpm.engine.runtime.ProcessInstance processInstance = runtimeService.startProcessInstanceByKey(processID, data);
         logger.info(" Started business process instance for {}, with instance id {}", processID, processInstance.getProcessInstanceId());
 
@@ -269,5 +285,15 @@ public class CamundaEngine {
 
     public static void cancelProcessInstance(String processInstanceId){
         runtimeService.deleteProcessInstance(processInstanceId,"",true,true);
+    }
+
+    public static void getProcessDetails(DashboardProcessInstanceDetails dashboardProcessInstanceDetails, String processInstanceId){
+        List<HistoricVariableInstance> variableInstance = historyService.createHistoricVariableInstanceQuery().processInstanceId(processInstanceId).list();
+        HistoricActivityInstance lastActivityInstance = historyService.createHistoricActivityInstanceQuery().processInstanceId(processInstanceId).orderByHistoricActivityInstanceStartTime().desc().listPage(0,1).get(0);
+        HistoricProcessInstance processInstance = historyService.createHistoricProcessInstanceQuery().processInstanceId(processInstanceId).singleResult();
+
+        dashboardProcessInstanceDetails.setVariableInstance(variableInstance);
+        dashboardProcessInstanceDetails.setLastActivityInstance(lastActivityInstance);
+        dashboardProcessInstanceDetails.setProcessInstance(processInstance);
     }
 }
