@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [9.0.0] - 2019-03-29
+### Added
+- Added DashboardProcessInstanceDetails model to get everything related to the process instance such as request document, last activity instance etc.
+- Sending emails for pending actions and transitions in the business process
+
+### Changed
+- Removed binary contents from the logs
+
 ## [8.0.0] - 2019-02-28
 ### Added
 - Multilinguality-related updates
