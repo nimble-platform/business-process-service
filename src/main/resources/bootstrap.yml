@@ -320,7 +320,7 @@ persistence:
 ---
 
 spring:
-  profiles: local_dev
+  profiles: test
   # Local h2 database
   datasource:
     camunda:

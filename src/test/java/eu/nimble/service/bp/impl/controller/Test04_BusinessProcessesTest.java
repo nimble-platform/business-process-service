@@ -43,7 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-@ActiveProfiles("local_dev")
+@ActiveProfiles("test")
 @RunWith(SpringJUnit4ClassRunner.class)
 public class Test04_BusinessProcessesTest {
 
