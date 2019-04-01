@@ -16,7 +16,6 @@ import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -40,8 +39,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class Test19_ApplicationControllerTest {
     @Autowired
     private MockMvc mockMvc;
-    @Autowired
-    private Environment environment;
 
     private ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
 
@@ -54,7 +51,7 @@ public class Test19_ApplicationControllerTest {
     public void test1_addProcessConfiguration() throws Exception {
         String processConfig = IOUtils.toString(ProcessConfiguration.class.getResourceAsStream(processConfigJSON));
         MockHttpServletRequestBuilder request = post("/application")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"))
+                .header("Authorization", TestConfig.initiatorPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(processConfig);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -67,7 +64,7 @@ public class Test19_ApplicationControllerTest {
     public void test2_addProcessConfiguration() throws Exception {
         String processConfig = IOUtils.toString(ProcessConfiguration.class.getResourceAsStream(processConfigJSON2));
         MockHttpServletRequestBuilder request = post("/application")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"))
+                .header("Authorization", TestConfig.initiatorPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(processConfig);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();

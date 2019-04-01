@@ -14,7 +14,6 @@ import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -38,8 +37,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class Test12_DocumentControllerTest2 {
     @Autowired
     private MockMvc mockMvc;
-    @Autowired
-    private Environment environment;
 
     private ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
 
@@ -60,7 +57,7 @@ public class Test12_DocumentControllerTest2 {
     @Test
     public void test1_getDocuments() throws Exception {
         MockHttpServletRequestBuilder request = get("/document/" + partnerID + "/" + type)
-                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"));
+                .header("Authorization", TestConfig.initiatorPersonId);
 
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
@@ -73,7 +70,7 @@ public class Test12_DocumentControllerTest2 {
     @Test
     public void test2_getDocuments() throws Exception {
         MockHttpServletRequestBuilder request = get("/document/" + partnerID + "/" + type + "/" + source)
-                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"));
+                .header("Authorization", TestConfig.initiatorPersonId);
 
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
@@ -86,7 +83,7 @@ public class Test12_DocumentControllerTest2 {
     @Test
     public void test3_getDocuments() throws Exception {
         MockHttpServletRequestBuilder request = get("/document/" + partnerID2 + "/" + type + "/" + source + "/" + status)
-                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"));
+                .header("Authorization", TestConfig.initiatorPersonId);
 
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
@@ -100,7 +97,7 @@ public class Test12_DocumentControllerTest2 {
     public void test4_updateDocumentMetadata() throws Exception {
         // get document
         MockHttpServletRequestBuilder request = get("/document/" + partnerID + "/" + type)
-                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"));
+                .header("Authorization", TestConfig.initiatorPersonId);
 
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
@@ -114,7 +111,7 @@ public class Test12_DocumentControllerTest2 {
 
         // update the document
         request = put("/document")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"))
+                .header("Authorization", TestConfig.initiatorPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(processDocumentMetadata));
         mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();

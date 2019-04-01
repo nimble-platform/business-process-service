@@ -10,7 +10,6 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
-import org.springframework.core.env.Environment;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -43,8 +42,6 @@ public class Test29_CollaborationGroupTest3 {
     @Autowired
     private MockMvc mockMvc;
     @Autowired
-    private Environment environment;
-    @Autowired
     private ObjectMapper mapper;
 
     private final String itemInformationRequestJSON = "/controller/itemInformationRequestJSON3.txt";
@@ -64,7 +61,7 @@ public class Test29_CollaborationGroupTest3 {
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(itemInformationRequestJSON));
 
         MockHttpServletRequestBuilder request = post("/start")
-                .header("Authorization",environment.getProperty("nimble.test-initiator-person-id"))
+                .header("Authorization",TestConfig.initiatorPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -92,7 +89,7 @@ public class Test29_CollaborationGroupTest3 {
         inputMessageAsString = inputMessageAsString.replace("pid",processInstanceIdIIR);
 
         MockHttpServletRequestBuilder request = post("/continue")
-                .header("Authorization", environment.getProperty("nimble.test-responder-person-id"))
+                .header("Authorization", TestConfig.responderPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString)
                 .param("gid", sellerProcessInstanceGroupID)
@@ -111,7 +108,7 @@ public class Test29_CollaborationGroupTest3 {
     public void test3_deleteCollaborationGroup() throws Exception{
         // delete the collaboration group
         MockHttpServletRequestBuilder request = delete("/collaboration-groups/"+sellerCollaborationGroupID)
-                .header("Authorization",environment.getProperty("nimble.test-responder-person-id"));
+                .header("Authorization",TestConfig.responderPersonId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         CollaborationGroupResponse collaborationGroupResponse = getCollaborationGroupResponse();
@@ -123,7 +120,7 @@ public class Test29_CollaborationGroupTest3 {
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(PPAPRequestJSON));
 
         MockHttpServletRequestBuilder request = post("/start")
-                .header("Authorization",environment.getProperty("nimble.test-initiator-person-id"))
+                .header("Authorization",TestConfig.initiatorPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString)
                 .param("gid", buyerProcessInstanceGroupID)
@@ -146,7 +143,7 @@ public class Test29_CollaborationGroupTest3 {
 
     private CollaborationGroupResponse getCollaborationGroupResponse() throws Exception{
         MockHttpServletRequestBuilder request = get("/collaboration-groups")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"))
+                .header("Authorization", TestConfig.initiatorPersonId)
                 .param("partyId", sellerPartyId)
                 .param("relatedProducts", relatedProduct)
                 .param("collaborationRole", "SELLER")

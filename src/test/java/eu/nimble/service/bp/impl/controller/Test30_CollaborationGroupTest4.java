@@ -13,7 +13,6 @@ import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -45,8 +44,6 @@ public class Test30_CollaborationGroupTest4 {
     @Autowired
     private MockMvc mockMvc;
     @Autowired
-    private Environment environment;
-    @Autowired
     private ObjectMapper mapper;
 
     private final String itemInformationRequestJSON = "/controller/itemInformationRequestJSON4.txt";
@@ -68,7 +65,7 @@ public class Test30_CollaborationGroupTest4 {
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(itemInformationRequestJSON));
 
         MockHttpServletRequestBuilder request = post("/start")
-                .header("Authorization",environment.getProperty("nimble.test-initiator-person-id"))
+                .header("Authorization",TestConfig.initiatorPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -92,7 +89,7 @@ public class Test30_CollaborationGroupTest4 {
         inputMessageAsString = inputMessageAsString.replace("pid",processInstanceIdIIR);
 
         MockHttpServletRequestBuilder request = post("/continue")
-                .header("Authorization", environment.getProperty("nimble.test-responder-person-id"))
+                .header("Authorization", TestConfig.responderPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString)
                 .param("gid", sellerProcessInstanceGroupID)
@@ -110,7 +107,7 @@ public class Test30_CollaborationGroupTest4 {
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(PPAPRequestJSON));
 
         MockHttpServletRequestBuilder request = post("/start")
-                .header("Authorization",environment.getProperty("nimble.test-initiator-person-id"))
+                .header("Authorization",TestConfig.initiatorPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString)
                 .param("gid", buyerProcessInstanceGroupID)
@@ -138,7 +135,7 @@ public class Test30_CollaborationGroupTest4 {
 
         // delete the collaboration group
         MockHttpServletRequestBuilder request = delete("/collaboration-groups/"+collaborationGroupId)
-                .header("Authorization",environment.getProperty("nimble.test-initiator-person-id"));
+                .header("Authorization",TestConfig.initiatorPersonId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         // check whether the deletion is successful or not
@@ -153,7 +150,7 @@ public class Test30_CollaborationGroupTest4 {
         inputMessageAsString = inputMessageAsString.replace("pid",processInstanceIdPPAP);
 
         MockHttpServletRequestBuilder request = post("/continue")
-                .header("Authorization", environment.getProperty("nimble.test-responder-person-id"))
+                .header("Authorization", TestConfig.responderPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString)
                 .param("gid", sellerProcessInstanceGroupID)
@@ -176,7 +173,7 @@ public class Test30_CollaborationGroupTest4 {
 
     private CollaborationGroupResponse getCollaborationGroupResponse() throws Exception{
         MockHttpServletRequestBuilder request = get("/collaboration-groups")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"))
+                .header("Authorization", TestConfig.initiatorPersonId)
                 .param("collaborationRole", "BUYER")
                 .param("relatedProducts",relatedProduct)
                 .param("partyId", buyerPartyId);

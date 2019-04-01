@@ -11,7 +11,6 @@ import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.core.env.Environment;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
@@ -37,15 +36,12 @@ public class Test26_TrustControllerTest2 {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Autowired
-    private Environment environment;
-
     private final String partyID = "706";
 
     @Test
     public void test1_getRatingsSummary() throws Exception {
         MockHttpServletRequestBuilder request = get("/ratingsSummary")
-                .header("Authorization", environment.getProperty("nimble.test-responder-person-id"))
+                .header("Authorization", TestConfig.responderPersonId)
                 .param("partyId",partyID);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
     }
@@ -53,7 +49,7 @@ public class Test26_TrustControllerTest2 {
     @Test
     public void test2_listAllIndividualRatingsAndReviews() throws Exception {
         MockHttpServletRequestBuilder request = get("/ratingsAndReviews")
-                .header("Authorization", environment.getProperty("nimble.test-responder-person-id"))
+                .header("Authorization", TestConfig.responderPersonId)
                 .param("partyId",partyID);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 

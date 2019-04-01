@@ -12,7 +12,6 @@ import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -33,8 +32,6 @@ public class Test01_StartControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
-    @Autowired
-    private Environment environment;
 
     private final String orderJSON1 = "/controller/orderJSON1.txt";
     private final String orderJSON2 = "/controller/orderJSON2.txt";
@@ -55,7 +52,7 @@ public class Test01_StartControllerTest {
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(orderJSON1));
 
         MockHttpServletRequestBuilder request = post("/start")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"))
+                .header("Authorization", TestConfig.initiatorPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -72,7 +69,7 @@ public class Test01_StartControllerTest {
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(orderJSON2));
 
         MockHttpServletRequestBuilder request = post("/start")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"))
+                .header("Authorization", TestConfig.initiatorPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -89,7 +86,7 @@ public class Test01_StartControllerTest {
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(orderJSON3));
 
         MockHttpServletRequestBuilder request = post("/start")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"))
+                .header("Authorization", TestConfig.initiatorPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -106,7 +103,7 @@ public class Test01_StartControllerTest {
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(iirJSON1));
 
         MockHttpServletRequestBuilder request = post("/start")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"))
+                .header("Authorization", TestConfig.initiatorPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();

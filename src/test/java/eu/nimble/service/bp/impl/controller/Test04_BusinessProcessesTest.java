@@ -22,7 +22,6 @@ import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -47,8 +46,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(SpringJUnit4ClassRunner.class)
 public class Test04_BusinessProcessesTest {
 
-    @Autowired
-    private Environment environment;
 
     private final String itemInformationRequestJSON = "/controller/itemInformationRequestJSON2.txt";
     private final String itemInformationResponseJSON = "/controller/itemInformationResponseJSON2.txt";
@@ -121,7 +118,7 @@ public class Test04_BusinessProcessesTest {
 
         // start business process
         MockHttpServletRequestBuilder request = post("/start")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"))
+                .header("Authorization", TestConfig.initiatorPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -132,7 +129,7 @@ public class Test04_BusinessProcessesTest {
 
         // get collaboration group information for seller
         request = get("/collaboration-groups")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"))
+                .header("Authorization", TestConfig.initiatorPersonId)
                 .param("partyID",partyID)
                 .param("relatedProducts",productName)
                 .param("collaborationRole","SELLER")
@@ -157,7 +154,7 @@ public class Test04_BusinessProcessesTest {
         inputMessageAsString = inputMessageAsString.replace("pid", itemInformationProcessInstanceID);
 
         MockHttpServletRequestBuilder request = post("/continue")
-                .header("Authorization", environment.getProperty("nimble.test-responder-person-id"))
+                .header("Authorization", TestConfig.responderPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString)
                 .param("gid", sellerProcessInstanceGroupID)
@@ -170,7 +167,7 @@ public class Test04_BusinessProcessesTest {
 
         // start business process
         MockHttpServletRequestBuilder request = post("/start")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"))
+                .header("Authorization", TestConfig.initiatorPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString)
                 .param("gid", buyerProcessInstanceGroupID)
@@ -190,7 +187,7 @@ public class Test04_BusinessProcessesTest {
         inputMessageAsString = inputMessageAsString.replace("pid", PPAPProcessInstanceID);
 
         MockHttpServletRequestBuilder request = post("/continue")
-                .header("Authorization", environment.getProperty("nimble.test-responder-person-id"))
+                .header("Authorization", TestConfig.responderPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString)
                 .param("gid", sellerProcessInstanceGroupID)
@@ -203,7 +200,7 @@ public class Test04_BusinessProcessesTest {
 
         // start business process
         MockHttpServletRequestBuilder request = post("/start")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"))
+                .header("Authorization", TestConfig.initiatorPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString)
                 .param("gid", buyerProcessInstanceGroupID)
@@ -222,7 +219,7 @@ public class Test04_BusinessProcessesTest {
         inputMessageAsString = inputMessageAsString.replace("pid", negotiationProcessInstanceID);
 
         MockHttpServletRequestBuilder request = post("/continue")
-                .header("Authorization", environment.getProperty("nimble.test-responder-person-id"))
+                .header("Authorization", TestConfig.responderPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString)
                 .param("gid", sellerProcessInstanceGroupID)
@@ -236,7 +233,7 @@ public class Test04_BusinessProcessesTest {
 
         // start business process
         MockHttpServletRequestBuilder request = post("/start")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"))
+                .header("Authorization", TestConfig.initiatorPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString)
                 .param("gid", buyerProcessInstanceGroupID)
@@ -255,7 +252,7 @@ public class Test04_BusinessProcessesTest {
         inputMessageAsString = inputMessageAsString.replace("pid", orderProcessInstanceID);
 
         MockHttpServletRequestBuilder request = post("/continue")
-                .header("Authorization", environment.getProperty("nimble.test-responder-person-id"))
+                .header("Authorization", TestConfig.responderPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString)
                 .param("gid", sellerProcessInstanceGroupID)
@@ -268,7 +265,7 @@ public class Test04_BusinessProcessesTest {
 
         // start business process
         MockHttpServletRequestBuilder request = post("/start")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"))
+                .header("Authorization", TestConfig.initiatorPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString)
                 .param("collaborationGID", sellerCollaborationGroupID)
@@ -282,7 +279,7 @@ public class Test04_BusinessProcessesTest {
 
         // get process instance group info
         request = get("/collaboration-groups")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"))
+                .header("Authorization", TestConfig.initiatorPersonId)
                 .param("partyID",partyID)
                 .param("relatedProducts",serviceName)
                 .param("collaborationRole","BUYER")
@@ -305,7 +302,7 @@ public class Test04_BusinessProcessesTest {
         inputMessageAsString = inputMessageAsString.replace("pid", tepItemInformationProcessInstanceID);
 
         MockHttpServletRequestBuilder request = post("/continue")
-                .header("Authorization", environment.getProperty("nimble.test-responder-person-id"))
+                .header("Authorization", TestConfig.responderPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString)
                 .param("gid", transportProviderProcessInstanceGroupID)
@@ -318,7 +315,7 @@ public class Test04_BusinessProcessesTest {
 
         // start business process
         MockHttpServletRequestBuilder request = post("/start")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"))
+                .header("Authorization", TestConfig.initiatorPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString)
                 .param("gid", sellerTransportProcessInstanceGroupID)
@@ -337,7 +334,7 @@ public class Test04_BusinessProcessesTest {
         inputMessageAsString = inputMessageAsString.replace("pid", tepNegotiationProcessInstanceID);
 
         MockHttpServletRequestBuilder request = post("/continue")
-                .header("Authorization", environment.getProperty("nimble.test-responder-person-id"))
+                .header("Authorization", TestConfig.responderPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString)
                 .param("gid", transportProviderProcessInstanceGroupID)
@@ -350,7 +347,7 @@ public class Test04_BusinessProcessesTest {
 
         // start business process
         MockHttpServletRequestBuilder request = post("/start")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"))
+                .header("Authorization", TestConfig.initiatorPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString)
                 .param("gid", sellerTransportProcessInstanceGroupID)
@@ -369,7 +366,7 @@ public class Test04_BusinessProcessesTest {
         inputMessageAsString = inputMessageAsString.replace("pid", tepProcessInstanceID);
 
         MockHttpServletRequestBuilder request = post("/continue")
-                .header("Authorization", environment.getProperty("nimble.test-responder-person-id"))
+                .header("Authorization", TestConfig.responderPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString)
                 .param("gid", transportProviderProcessInstanceGroupID)
@@ -382,7 +379,7 @@ public class Test04_BusinessProcessesTest {
 
         // start business process
         MockHttpServletRequestBuilder request = post("/start")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"))
+                .header("Authorization", TestConfig.initiatorPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString)
                 .param("gid", sellerTransportProcessInstanceGroupID)
@@ -401,7 +398,7 @@ public class Test04_BusinessProcessesTest {
         inputMessageAsString = inputMessageAsString.replace("pid", dispatchProcessInstanceID);
 
         MockHttpServletRequestBuilder request = post("/continue")
-                .header("Authorization", environment.getProperty("nimble.test-responder-person-id"))
+                .header("Authorization", TestConfig.responderPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString)
                 .param("gid", buyerProcessInstanceGroupID)

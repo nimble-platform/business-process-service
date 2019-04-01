@@ -10,7 +10,6 @@ import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.core.env.Environment;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
@@ -32,8 +31,6 @@ public class Test25_TrustControllerTest {
     @Autowired
     private MockMvc mockMvc;
     @Autowired
-    private Environment environment;
-    @Autowired
     private ObjectMapper objectMapper;
 
     private final String partyID = "706";
@@ -46,7 +43,7 @@ public class Test25_TrustControllerTest {
     public void test1_createRatingAndReview() throws Exception {
         // get Receipt advice process instance id
         MockHttpServletRequestBuilder request = get("/collaboration-groups")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"))
+                .header("Authorization", TestConfig.initiatorPersonId)
                 .param("collaborationRole", collaborationRole)
                 .param("relatedProducts",relatedProduct)
                 .param("partyID", buyerPartyID);
@@ -61,7 +58,7 @@ public class Test25_TrustControllerTest {
         String reviews = "[{\"comment\":\"It's working\",\"typeCode\":{\"value\":\"that's ok\",\"name\":\"\",\"uri\":\"\",\"listID\":\"\",\"listURI\":\"\"}},{\"comment\":\"not bad\",\"typeCode\":{\"value\":\"cool\",\"name\":\"\",\"uri\":\"\",\"listID\":\"\",\"listURI\":\"\"}}]";
         // create ratings and reviews
         request = post("/ratingsAndReviews")
-                .header("Authorization",environment.getProperty("nimble.test-responder-person-id"))
+                .header("Authorization",TestConfig.responderPersonId)
                 .param("processInstanceID",processInstanceId)
                 .param("reviews", reviews)
                 .param("ratings",ratings)
@@ -73,7 +70,7 @@ public class Test25_TrustControllerTest {
     @Test
     public void test2_isRated() throws Exception{
         MockHttpServletRequestBuilder request = get("/processInstance/"+processInstanceId+"/isRated")
-                .header("Authorization", environment.getProperty("nimble.test-responder-person-id"))
+                .header("Authorization", TestConfig.responderPersonId)
                 .param("partyId","706");
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
         Assert.assertEquals("true",mvcResult.getResponse().getContentAsString());

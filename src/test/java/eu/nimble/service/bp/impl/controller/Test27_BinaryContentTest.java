@@ -15,7 +15,6 @@ import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -37,8 +36,6 @@ public class Test27_BinaryContentTest {
     @Autowired
     private MockMvc mockMvc;
     @Autowired
-    private Environment environment;
-    @Autowired
     private BinaryContentService binaryContentService;
 
     private final String itemInformationRequest = "/controller/itemInformationRequestBinaryContentJSON.txt";
@@ -50,7 +47,7 @@ public class Test27_BinaryContentTest {
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(itemInformationRequest));
 
         MockHttpServletRequestBuilder request = post("/start")
-                .header("Authorization",environment.getProperty("nimble.test-initiator-person-id"))
+                .header("Authorization",TestConfig.initiatorPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -65,7 +62,7 @@ public class Test27_BinaryContentTest {
     public void test2_retrieveBinaryContents() throws Exception {
         // get document content
         MockHttpServletRequestBuilder request = get("/document/json/983a7b0b-ea82-40ce-9e4e-76195f799487")
-                .header("Authorization",environment.getProperty("nimble.test-initiator-person-id"));
+                .header("Authorization",TestConfig.initiatorPersonId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         ItemInformationRequestType itemInformationRequest = JsonSerializationUtility.getObjectMapper().readValue(mvcResult.getResponse().getContentAsString(), ItemInformationRequestType.class);
@@ -85,7 +82,7 @@ public class Test27_BinaryContentTest {
     public void test3_updateProcessInstance() throws Exception {
         // get document content
         MockHttpServletRequestBuilder request = get("/document/json/983a7b0b-ea82-40ce-9e4e-76195f799487")
-                .header("Authorization",environment.getProperty("nimble.test-initiator-person-id"));
+                .header("Authorization",TestConfig.initiatorPersonId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         ItemInformationRequestType itemInformationRequest = JsonSerializationUtility.getObjectMapper().readValue(mvcResult.getResponse().getContentAsString(), ItemInformationRequestType.class);
@@ -98,7 +95,7 @@ public class Test27_BinaryContentTest {
         itemInformationRequest.getItemInformationRequestLine().get(0).getSalesItem().get(0).getItem().getItemSpecificationDocumentReference().get(0).getAttachment().setEmbeddedDocumentBinaryObject(binaryObjectType);
 
         request = patch("/processInstance")
-                .header("Authorization",environment.getProperty("nimble.test-initiator-person-id"))
+                .header("Authorization",TestConfig.initiatorPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(JsonSerializationUtility.getObjectMapper().writeValueAsString(itemInformationRequest))
                 .param("processID", "ITEMINFORMATIONREQUEST")
@@ -108,7 +105,7 @@ public class Test27_BinaryContentTest {
 
         // get document content
         request = get("/document/json/983a7b0b-ea82-40ce-9e4e-76195f799487")
-                .header("Authorization",environment.getProperty("nimble.test-initiator-person-id"));
+                .header("Authorization",TestConfig.initiatorPersonId);
         mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         itemInformationRequest = JsonSerializationUtility.getObjectMapper().readValue(mvcResult.getResponse().getContentAsString(), ItemInformationRequestType.class);
