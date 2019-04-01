@@ -1,6 +1,5 @@
 package eu.nimble.service.bp.impl.util.spring;
 
-import eu.nimble.common.rest.identity.IdentityClient;
 import eu.nimble.common.rest.identity.IdentityClientTyped;
 import eu.nimble.service.bp.config.BusinessProcessPersistenceConfig;
 import eu.nimble.service.bp.config.GenericConfig;
@@ -22,9 +21,6 @@ public class SpringBridge implements ApplicationContextAware {
     private static ApplicationContext applicationContext;
     @Autowired
     private GenericConfig genericConfig;
-
-    @Autowired
-    private IdentityClient identityClient;
 
     @Autowired
     private IdentityClientTyped identityClientTyped;
@@ -54,10 +50,6 @@ public class SpringBridge implements ApplicationContextAware {
 
     public IdentityClientTyped getIdentityClientTyped() {
         return this.identityClientTyped;
-    }
-
-    public IdentityClient getIdentityClient() {
-        return this.identityClient;
     }
 
     public BusinessProcessPersistenceConfig getBpConfig() {

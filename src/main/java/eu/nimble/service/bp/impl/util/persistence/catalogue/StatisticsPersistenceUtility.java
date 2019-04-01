@@ -133,7 +133,7 @@ public class StatisticsPersistenceUtility {
 
         // get inactive companies
         List<PartyType> inactiveParties = new ArrayList<>();
-        InputStream parties = SpringBridge.getInstance().getIdentityClient().getAllPartyIds(bearerToken, new ArrayList<>()).body().asInputStream();
+        InputStream parties = SpringBridge.getInstance().getIdentityClientTyped().getAllPartyIds(bearerToken, new ArrayList<>()).body().asInputStream();
         ObjectMapper mapper = JsonSerializationUtility.getObjectMapper();
         JsonFactory factory = mapper.getFactory();
         JsonParser parser = factory.createParser(parties);
