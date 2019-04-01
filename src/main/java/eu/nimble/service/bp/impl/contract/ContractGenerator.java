@@ -168,8 +168,8 @@ public class ContractGenerator {
                 ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
                 List<TradingTermType> tradingTermTypeList = objectMapper.readValue(tradingTerms,objectMapper.getTypeFactory().constructCollectionType(List.class,TradingTermType.class));
 
-                PartyType supplierParty = SpringBridge.getInstance().getIdentityClientTyped().getParty(bearerToken,sellerPartyId);
-                PartyType customerParty = SpringBridge.getInstance().getIdentityClientTyped().getParty(bearerToken,buyerPartyId);
+                PartyType supplierParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,sellerPartyId);
+                PartyType customerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,buyerPartyId);
 
                 InputStream file = ContractGenerator.class.getResourceAsStream("/contract-bundle/Standard Purchase Order Terms and Conditions_Text.docx");
 

@@ -76,7 +76,7 @@ public class PartyPersistenceUtility {
             // get party using identity service
             PartyType partyType = null;
             try {
-                partyType = SpringBridge.getInstance().getIdentityClientTyped().getParty(bearerToken, partyID);
+                partyType = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken, partyID);
             } catch (IOException e) {
                 String msg = String.format("Failed to get qualifying party: %s", partyID);
                 logger.error(msg);

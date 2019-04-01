@@ -143,7 +143,7 @@ public class ProcessDocumentMetadataDAOUtility {
             Object[] resultItems = (Object[]) result;
             PartyType partyType = null;
             try {
-                partyType = SpringBridge.getInstance().getIdentityClientTyped().getParty(bearerToken, (String) resultItems[0]);
+                partyType = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken, (String) resultItems[0]);
             } catch (IOException e) {
                 String msg = String.format("Failed to get transaction counts for party: %s, role: %s", partyId, role);
                 logger.error("msg");

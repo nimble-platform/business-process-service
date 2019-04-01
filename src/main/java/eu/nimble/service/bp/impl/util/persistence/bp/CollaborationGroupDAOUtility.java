@@ -1,6 +1,5 @@
 package eu.nimble.service.bp.impl.util.persistence.bp;
 
-import eu.nimble.common.rest.identity.IdentityClientTyped;
 import eu.nimble.service.bp.hyperjaxb.model.CollaborationGroupDAO;
 import eu.nimble.service.bp.hyperjaxb.model.CollaborationStatus;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
@@ -193,7 +192,7 @@ public class CollaborationGroupDAOUtility {
 
             List<PartyType> parties = null;
             try {
-                parties = SpringBridge.getInstance().getIdentityClientTyped().getParties(bearerToken, filter.getTradingPartnerIDs());
+                parties = SpringBridge.getInstance().getiIdentityClientTyped().getParties(bearerToken, filter.getTradingPartnerIDs());
             } catch (IOException e) {
                 String msg = String.format("Failed to get parties while getting categories for party: %s, collaboration role: %s, archived: %B", partyId, collaborationRole, archived);
                 logger.error(msg);

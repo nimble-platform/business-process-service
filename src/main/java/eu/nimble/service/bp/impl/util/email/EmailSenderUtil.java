@@ -1,6 +1,6 @@
 package eu.nimble.service.bp.impl.util.email;
 
-import eu.nimble.common.rest.identity.IdentityClientTyped;
+import eu.nimble.common.rest.identity.IIdentityClientTyped;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentStatus;
@@ -37,7 +37,7 @@ public class EmailSenderUtil {
     private EmailService emailService;
 
     @Autowired
-    private IdentityClientTyped identityClient;
+    private IIdentityClientTyped iIdentityClientTyped;
 
     @Value("${nimble.frontend.url}")
     private String frontEndURL;
@@ -50,7 +50,7 @@ public class EmailSenderUtil {
             PartyType tradingPartner;
             String tradingPartnerId = ProcessDocumentMetadataDAOUtility.getTradingPartnerId(groupDAO.getProcessInstanceIDs().get(0), cancellingPartyId);
             try {
-                tradingPartner = identityClient.getParty(bearerToken, tradingPartnerId);
+                tradingPartner = iIdentityClientTyped.getParty(bearerToken, tradingPartnerId);
 
             } catch (IOException e) {
                 logger.error("Failed to send email for cancellation of group: {}", groupDAO.getID());
@@ -79,7 +79,7 @@ public class EmailSenderUtil {
                 String personId = documentMetadataDAO.getCreatorUserID();
                 PersonType person;
                 try {
-                    person = identityClient.getPerson(bearerToken, personId);
+                    person = iIdentityClientTyped.getPerson(bearerToken, personId);
                     toEmail = person.getContact().getElectronicMail();
                 } catch (IOException e) {
                     logger.error("Failed to send email for cancellation of group: {}", groupDAO.getID());
@@ -95,7 +95,7 @@ public class EmailSenderUtil {
             PersonType cancellingPerson;
             String cancellingPersonName;
             try {
-                cancellingPerson = identityClient.getPerson(bearerToken);
+                cancellingPerson = iIdentityClientTyped.getPerson(bearerToken);
 
             } catch (IOException e) {
                 logger.error("Failed to send email for cancellation of group: {}", groupDAO.getID());
@@ -140,11 +140,11 @@ public class EmailSenderUtil {
 
             try {
                 if (processDocumentStatus.equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
-                    respondingParty = identityClient.getParty(bearerToken, businessProcessContext.getMetadataDAO().getResponderID());
-                    initiatingParty = identityClient.getParty(bearerToken, businessProcessContext.getMetadataDAO().getInitiatorID());
+                    respondingParty = iIdentityClientTyped.getParty(bearerToken, businessProcessContext.getMetadataDAO().getResponderID());
+                    initiatingParty = iIdentityClientTyped.getParty(bearerToken, businessProcessContext.getMetadataDAO().getInitiatorID());
                 }else {
-                    respondingParty = identityClient.getParty(bearerToken, businessProcessContext.getMetadataDAO().getInitiatorID());
-                    initiatingParty = identityClient.getParty(bearerToken, businessProcessContext.getMetadataDAO().getResponderID());
+                    respondingParty = iIdentityClientTyped.getParty(bearerToken, businessProcessContext.getMetadataDAO().getInitiatorID());
+                    initiatingParty = iIdentityClientTyped.getParty(bearerToken, businessProcessContext.getMetadataDAO().getResponderID());
                 }
 
             } catch (IOException e) {
@@ -153,7 +153,7 @@ public class EmailSenderUtil {
             }
 
             try {
-                initiatingPerson = identityClient.getPerson(bearerToken);
+                initiatingPerson = iIdentityClientTyped.getPerson(bearerToken);
             } catch (IOException e) {
                 logger.error("Failed to get person with token: {} from identity service", bearerToken, e);
                 return;

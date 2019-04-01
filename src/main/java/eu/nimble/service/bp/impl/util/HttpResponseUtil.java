@@ -23,7 +23,7 @@ public class HttpResponseUtil {
     public static ResponseEntity checkToken(String token) {
         try {
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(token);
+            boolean isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(token);
             if (!isValid) {
                 String msg = String.format("No user exists for the given token : %s", token);
                 return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog(msg, null, HttpStatus.UNAUTHORIZED, LogLevel.INFO);
@@ -38,7 +38,7 @@ public class HttpResponseUtil {
     public static void validateToken(String token) throws AuthenticationException {
         try {
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(token);
+            boolean isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(token);
             if (!isValid) {
                 String msg = String.format("No user exists for the given token : %s", token);
                 throw new AuthenticationException(msg);

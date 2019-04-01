@@ -240,10 +240,10 @@ public class ProcessInstanceController {
             PersonType requestCreatorUser = null;
             PersonType responseCreatorUser = null;
             if(requestMetadata != null){
-                requestCreatorUser = SpringBridge.getInstance().getIdentityClientTyped().getPerson(bearerToken,requestMetadata.getCreatorUserID());
+                requestCreatorUser = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken,requestMetadata.getCreatorUserID());
             }
             if(responseMetadata != null){
-                responseCreatorUser = SpringBridge.getInstance().getIdentityClientTyped().getPerson(bearerToken,responseMetadata.getCreatorUserID());
+                responseCreatorUser = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken,responseMetadata.getCreatorUserID());
             }
             dashboardProcessInstanceDetails.setRequestCreatorUser(requestCreatorUser);
             dashboardProcessInstanceDetails.setResponseCreatorUser(responseCreatorUser);

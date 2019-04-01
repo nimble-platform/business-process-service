@@ -36,7 +36,7 @@ public class ContractGeneratorController {
         try{
             logger.info("Generating contract for the order with id : {}",orderId);
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            boolean isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(bearerToken);
             if(!isValid){
                 String msg = String.format("No user exists for the given token : %s",bearerToken);
                 logger.error(msg);

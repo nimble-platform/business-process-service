@@ -39,7 +39,7 @@ public class PreferenceController implements PreferenceApi {
         logger.debug(" $$$ {}", body.toString());
         try {
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            boolean isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(bearerToken);
             if(!isValid){
                 String msg = String.format("No user exists for the given token : %s",bearerToken);
                 logger.error(msg);
@@ -62,7 +62,7 @@ public class PreferenceController implements PreferenceApi {
         logger.info(" $$$ Deleting ProcessPreferences for ... {}", partnerID);
         try {
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            boolean isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(bearerToken);
             if(!isValid){
                 String msg = String.format("No user exists for the given token : %s",bearerToken);
                 logger.error(msg);
@@ -85,7 +85,7 @@ public class PreferenceController implements PreferenceApi {
         logger.info(" $$$ Getting ProcessPreferences for ... {}", partnerID);
         try {
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            boolean isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(bearerToken);
             if(!isValid){
                 String msg = String.format("No user exists for the given token : %s",bearerToken);
                 logger.error(msg);
@@ -115,7 +115,7 @@ public class PreferenceController implements PreferenceApi {
         logger.debug(" $$$ {}", body.toString());
         try {
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            boolean isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(bearerToken);
             if(!isValid){
                 String msg = String.format("No user exists for the given token : %s",bearerToken);
                 logger.error(msg);
