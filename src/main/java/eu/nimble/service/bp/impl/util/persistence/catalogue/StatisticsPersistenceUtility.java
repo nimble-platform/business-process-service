@@ -119,13 +119,13 @@ public class StatisticsPersistenceUtility {
         String query = "select docMetadata.initiatorID from ProcessDocumentMetadataDAO docMetadata where docMetadata.status = 'WAITINGRESPONSE'";
 
         Set<String> activePartyIds = new HashSet<>();
-        List<String> results = new JPARepositoryFactory().forCatalogueRepository().getEntities(query);
+        List<String> results = new JPARepositoryFactory().forBpRepository().getEntities(query);
 
         activePartyIds.addAll(results);
 
         // get parties for a process that have completed already. Therefore return both the initiatorID and responderID
         query = "select distinct new list(docMetadata.initiatorID, docMetadata.responderID) from ProcessDocumentMetadataDAO docMetadata where docMetadata.status <> 'WAITINGRESPONSE'";
-        List<List<String>> secondResults = new JPARepositoryFactory().forCatalogueRepository().getEntities(query);
+        List<List<String>> secondResults = new JPARepositoryFactory().forBpRepository().getEntities(query);
         for (List<String> processPartyIds : secondResults) {
             activePartyIds.add(processPartyIds.get(0));
             activePartyIds.add(processPartyIds.get(1));
