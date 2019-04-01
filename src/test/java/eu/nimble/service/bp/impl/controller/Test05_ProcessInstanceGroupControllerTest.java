@@ -46,7 +46,7 @@ public class Test05_ProcessInstanceGroupControllerTest {
     @Test
     public void test1_getCollaborationGroups() throws Exception {
         MockHttpServletRequestBuilder request = get("/collaboration-groups")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"))
+                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"))
                 .param("partyId", partyId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
@@ -67,7 +67,7 @@ public class Test05_ProcessInstanceGroupControllerTest {
     @Test
     public void test2_getProcessInstanceGroup() throws Exception {
         MockHttpServletRequestBuilder request = get("/process-instance-groups/" + Test05_ProcessInstanceGroupControllerTest.processInstanceGroupIIR1)
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
+                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"));
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();

@@ -49,7 +49,7 @@ public class Test06_ContentControllerTest {
     @Test
     public void test1_getProcessDefinitions() throws Exception {
         MockHttpServletRequestBuilder request = get("/content")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
+                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"));
 
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
@@ -61,7 +61,7 @@ public class Test06_ContentControllerTest {
     @Test
     public void test2_getProcessDefinition() throws Exception {
         MockHttpServletRequestBuilder request = get("/content/" + processId)
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
+                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"));
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         Process process = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), Process.class);

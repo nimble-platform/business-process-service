@@ -46,7 +46,7 @@ public class Test25_TrustControllerTest {
     public void test1_createRatingAndReview() throws Exception {
         // get Receipt advice process instance id
         MockHttpServletRequestBuilder request = get("/collaboration-groups")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"))
+                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"))
                 .param("collaborationRole", collaborationRole)
                 .param("relatedProducts",relatedProduct)
                 .param("partyID", buyerPartyID);
@@ -61,7 +61,7 @@ public class Test25_TrustControllerTest {
         String reviews = "[{\"comment\":\"It's working\",\"typeCode\":{\"value\":\"that's ok\",\"name\":\"\",\"uri\":\"\",\"listID\":\"\",\"listURI\":\"\"}},{\"comment\":\"not bad\",\"typeCode\":{\"value\":\"cool\",\"name\":\"\",\"uri\":\"\",\"listID\":\"\",\"listURI\":\"\"}}]";
         // create ratings and reviews
         request = post("/ratingsAndReviews")
-                .header("Authorization",environment.getProperty("nimble.test-responder-token"))
+                .header("Authorization",environment.getProperty("nimble.test-responder-person-id"))
                 .param("processInstanceID",processInstanceId)
                 .param("reviews", reviews)
                 .param("ratings",ratings)
@@ -73,7 +73,7 @@ public class Test25_TrustControllerTest {
     @Test
     public void test2_isRated() throws Exception{
         MockHttpServletRequestBuilder request = get("/processInstance/"+processInstanceId+"/isRated")
-                .header("Authorization", environment.getProperty("nimble.test-responder-token"))
+                .header("Authorization", environment.getProperty("nimble.test-responder-person-id"))
                 .param("partyId","706");
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
         Assert.assertEquals("true",mvcResult.getResponse().getContentAsString());

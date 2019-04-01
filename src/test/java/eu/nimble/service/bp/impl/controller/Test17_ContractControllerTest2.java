@@ -54,7 +54,7 @@ public class Test17_ContractControllerTest2 {
     @Test
     public void test1_getClauseDetails() throws Exception {
         MockHttpServletRequestBuilder request = get("/documents/" + Test01_StartControllerTest.orderId1 + "/clauses")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"))
+                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"))
                 .param("clauseType", "DOCUMENT");
 
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -68,7 +68,7 @@ public class Test17_ContractControllerTest2 {
     @Test
     public void test2_getClausesOfContract() throws Exception {
         MockHttpServletRequestBuilder request = get("/contracts/" + Test16_ContractControllerTest.contractId + "/clauses")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
+                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"));
 
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
@@ -82,7 +82,7 @@ public class Test17_ContractControllerTest2 {
     public void test3_constructContractForProcessInstances() throws Exception {
         MockHttpServletRequestBuilder request = get("/contracts")
                 .param("processInstanceId", Test01_StartControllerTest.processInstanceIdOrder1)
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
+                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"));
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         ContractType contract = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ContractType.class);
@@ -94,7 +94,7 @@ public class Test17_ContractControllerTest2 {
     public void test4_getClauseDetailsAndUpdate() throws Exception {
         // getClauseDetails
         MockHttpServletRequestBuilder request = get("/clauses/" + Test16_ContractControllerTest.clauseId)
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
+                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"));
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         ClauseType clause = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ClauseType.class);
@@ -108,7 +108,7 @@ public class Test17_ContractControllerTest2 {
 
         //updateClause
         request = put("/clauses/" + Test16_ContractControllerTest.clauseId)
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"))
+                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"))
                 .content(objectMapper.writeValueAsString(clause));
         mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 

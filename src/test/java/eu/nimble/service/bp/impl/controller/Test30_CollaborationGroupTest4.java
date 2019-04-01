@@ -68,7 +68,7 @@ public class Test30_CollaborationGroupTest4 {
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(itemInformationRequestJSON));
 
         MockHttpServletRequestBuilder request = post("/start")
-                .header("Authorization",environment.getProperty("nimble.test-initiator-token"))
+                .header("Authorization",environment.getProperty("nimble.test-initiator-person-id"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -92,7 +92,7 @@ public class Test30_CollaborationGroupTest4 {
         inputMessageAsString = inputMessageAsString.replace("pid",processInstanceIdIIR);
 
         MockHttpServletRequestBuilder request = post("/continue")
-                .header("Authorization", environment.getProperty("nimble.test-responder-token"))
+                .header("Authorization", environment.getProperty("nimble.test-responder-person-id"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString)
                 .param("gid", sellerProcessInstanceGroupID)
@@ -110,7 +110,7 @@ public class Test30_CollaborationGroupTest4 {
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(PPAPRequestJSON));
 
         MockHttpServletRequestBuilder request = post("/start")
-                .header("Authorization",environment.getProperty("nimble.test-initiator-token"))
+                .header("Authorization",environment.getProperty("nimble.test-initiator-person-id"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString)
                 .param("gid", buyerProcessInstanceGroupID)
@@ -138,7 +138,7 @@ public class Test30_CollaborationGroupTest4 {
 
         // delete the collaboration group
         MockHttpServletRequestBuilder request = delete("/collaboration-groups/"+collaborationGroupId)
-                .header("Authorization",environment.getProperty("nimble.test-initiator-token"));
+                .header("Authorization",environment.getProperty("nimble.test-initiator-person-id"));
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         // check whether the deletion is successful or not
@@ -153,7 +153,7 @@ public class Test30_CollaborationGroupTest4 {
         inputMessageAsString = inputMessageAsString.replace("pid",processInstanceIdPPAP);
 
         MockHttpServletRequestBuilder request = post("/continue")
-                .header("Authorization", environment.getProperty("nimble.test-responder-token"))
+                .header("Authorization", environment.getProperty("nimble.test-responder-person-id"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString)
                 .param("gid", sellerProcessInstanceGroupID)
@@ -176,7 +176,7 @@ public class Test30_CollaborationGroupTest4 {
 
     private CollaborationGroupResponse getCollaborationGroupResponse() throws Exception{
         MockHttpServletRequestBuilder request = get("/collaboration-groups")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"))
+                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"))
                 .param("collaborationRole", "BUYER")
                 .param("relatedProducts",relatedProduct)
                 .param("partyId", buyerPartyId);

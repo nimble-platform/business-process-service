@@ -45,7 +45,7 @@ public class Test10_PreferenceControllerTest3 {
     @Test
     public void getAndDeleteProcessPartnerPreference() throws Exception {
         MockHttpServletRequestBuilder request = get("/preference/" + partnerId)
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
+                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"));
 
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
@@ -55,7 +55,7 @@ public class Test10_PreferenceControllerTest3 {
 
 
         request = delete("/preference/" + partnerId)
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
+                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"));
         mvcResult = this.mockMvc.perform(request).andDo(print()).andReturn();
 
         ModelApiResponse apiResponse = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ModelApiResponse.class);

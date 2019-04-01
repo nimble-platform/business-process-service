@@ -45,7 +45,7 @@ public class Test07_ContentControllerTest2 {
     @Test
     public void deleteProcessDefinition() throws Exception {
         MockHttpServletRequestBuilder request = delete("/content/" + Test06_ContentControllerTest.process.getProcessID())
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
+                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"));
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andReturn();
 
         ModelApiResponse apiResponse = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ModelApiResponse.class);
@@ -58,7 +58,7 @@ public class Test07_ContentControllerTest2 {
         String processDefJSON = IOUtils.toString(Process.class.getResourceAsStream(processDefinitionJSON));
 
         MockHttpServletRequestBuilder request = post("/content")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"))
+                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(processDefJSON);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andReturn();

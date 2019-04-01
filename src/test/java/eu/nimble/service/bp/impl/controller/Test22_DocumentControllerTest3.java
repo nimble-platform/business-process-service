@@ -55,7 +55,7 @@ public class Test22_DocumentControllerTest3 {
     public void deleteDocument() throws Exception {
         // get the document
         MockHttpServletRequestBuilder request = get("/document/" + partnerID + "/" + type)
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
+                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"));
 
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
@@ -71,7 +71,7 @@ public class Test22_DocumentControllerTest3 {
 
         // delete the document
         request = delete("/document/" + response.get(0).getDocumentID())
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
+                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"));
         mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         ModelApiResponse response1 = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ModelApiResponse.class);

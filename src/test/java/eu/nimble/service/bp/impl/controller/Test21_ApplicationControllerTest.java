@@ -51,7 +51,7 @@ public class Test21_ApplicationControllerTest {
     @Test
     public void deleteProcessConfiguration() throws Exception {
         MockHttpServletRequestBuilder request = delete("/application/" + partnerId + "/" + processId + "/" + roleType)
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
+                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"));
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
         ModelApiResponse response = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ModelApiResponse.class);
 

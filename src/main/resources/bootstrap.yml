@@ -388,7 +388,7 @@ nimble:
   kafka:
       topics:
         businessProcessUpdates: ${KAFKA_TOPIC_BUSINESS_PROCESS_UPDATES:business-process-updates-staging}
-  test-initiator-token: ${NIMBLE_TEST_INITIATOR_TOKEN}
-  test-responder-token: ${NIMBLE_TEST_RESPONDER_TOKEN}
+  test-initiator-person-id: ${NIMBLE_TEST_INITIATOR_PERSON_ID}
+  test-responder-person-id: ${NIMBLE_TEST_RESPONDER_PERSON_ID}
 build:
   version: 5.0.0-Staging

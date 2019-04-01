@@ -49,7 +49,7 @@ public class Test11_DocumentControllerTest {
     public void test1_addDocumentMetadata() throws Exception {
         String documentMetadata = IOUtils.toString(ProcessDocumentMetadata.class.getResourceAsStream(documentMetadataJSON));
         MockHttpServletRequestBuilder request = post("/document")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"))
+                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(documentMetadata);
 
@@ -64,7 +64,7 @@ public class Test11_DocumentControllerTest {
     public void test2_addDocumentMetadata() throws Exception {
         String documentMetadata = IOUtils.toString(ProcessDocumentMetadata.class.getResourceAsStream(documentMetadataJSON2));
         MockHttpServletRequestBuilder request = post("/document")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"))
+                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(documentMetadata);
 
@@ -79,7 +79,7 @@ public class Test11_DocumentControllerTest {
     public void test3_addDocumentMetadata() throws Exception {
         String documentMetadata = IOUtils.toString(ProcessDocumentMetadata.class.getResourceAsStream(documentMetadataJSON3));
         MockHttpServletRequestBuilder request = post("/document")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"))
+                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(documentMetadata);
 

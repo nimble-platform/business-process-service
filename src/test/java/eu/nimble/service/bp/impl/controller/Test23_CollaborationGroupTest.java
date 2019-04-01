@@ -55,7 +55,7 @@ public class Test23_CollaborationGroupTest {
     public void test1_updateCollaborationGroupName() throws Exception {
         // get the collaboration group
         MockHttpServletRequestBuilder request = get("/collaboration-groups")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"))
+                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"))
                 .param("collaborationRole", collaborationRoleBuyer)
                 .param("relatedProducts",serviceName)
                 .param("partyId", partyID);
@@ -72,7 +72,7 @@ public class Test23_CollaborationGroupTest {
 
         // update collaboration group name
         request = patch("/collaboration-groups/"+collaborationGroupID)
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"))
+                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"))
                 .param("groupName",groupName);
         mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
@@ -81,7 +81,7 @@ public class Test23_CollaborationGroupTest {
     @Test
     public void test2_archiveCollaborationGroup() throws Exception{
         MockHttpServletRequestBuilder request = post("/collaboration-groups/"+collaborationGroupID+"/archive")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
+                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"));
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
     }
 
@@ -89,7 +89,7 @@ public class Test23_CollaborationGroupTest {
     public void test3_cancelCollaboration() throws Exception{
         // get the collaboration group
         MockHttpServletRequestBuilder request = get("/collaboration-groups")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"))
+                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"))
                 .param("collaborationRole", collaborationRoleSeller)
                 .param("relatedProducts",productName)
                 .param("partyId", partyID);
@@ -103,7 +103,7 @@ public class Test23_CollaborationGroupTest {
         String groupID = collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().get(0).getID();
         // cancel collaboration group
         request = post("/process-instance-groups/"+ groupID +"/cancel")
-                .header("Authorization", environment.getProperty("nimble.test-responder-token"));
+                .header("Authorization", environment.getProperty("nimble.test-responder-person-id"));
         mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
     }
 }

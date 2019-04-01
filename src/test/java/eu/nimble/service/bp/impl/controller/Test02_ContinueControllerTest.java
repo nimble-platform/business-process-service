@@ -50,7 +50,7 @@ public class Test02_ContinueControllerTest {
 
         // get collaboration group and process instance group ids for seller
         MockHttpServletRequestBuilder request = get("/collaboration-groups")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"))
+                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"))
                 .param("partyID","706")
                 .param("collaborationRole","SELLER")
                 .param("offset", "0")
@@ -62,7 +62,7 @@ public class Test02_ContinueControllerTest {
 
         // continue the process
         request = post("/continue")
-                .header("Authorization", environment.getProperty("nimble.test-responder-token"))
+                .header("Authorization", environment.getProperty("nimble.test-responder-person-id"))
                 .param("gid", sellerProcessInstanceGroupID)
                 .param("collaborationGID", sellerCollaborationGroupID)
                 .contentType(MediaType.APPLICATION_JSON)

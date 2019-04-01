@@ -47,7 +47,7 @@ public class Test08_PreferenceControllerTest {
     public void addProcessPartnerPreference() throws Exception {
         String preference = IOUtils.toString(ProcessPreferences.class.getResourceAsStream(preferenceJSON));
         MockHttpServletRequestBuilder request = post("/preference")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"))
+                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(preference);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();

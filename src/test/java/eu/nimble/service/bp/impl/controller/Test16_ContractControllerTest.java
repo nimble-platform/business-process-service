@@ -53,7 +53,7 @@ public class Test16_ContractControllerTest {
         MockHttpServletRequestBuilder request = patch("/documents/" + Test01_StartControllerTest.orderId1 + "/contract/clause/document")
                 .param("clauseType", "ITEM_DETAILS")
                 .param("clauseDocumentId", Test01_StartControllerTest.iirId1)
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
+                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"));
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         OrderType order = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), OrderType.class);
@@ -73,7 +73,7 @@ public class Test16_ContractControllerTest {
         MockHttpServletRequestBuilder request = patch("/documents/" + Test01_StartControllerTest.orderId1 + "/contract/clause/data-monitoring")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(dataMonitoring)
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
+                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"));
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         OrderType order = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), OrderType.class);

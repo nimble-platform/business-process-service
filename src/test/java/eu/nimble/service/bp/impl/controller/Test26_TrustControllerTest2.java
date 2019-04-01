@@ -45,7 +45,7 @@ public class Test26_TrustControllerTest2 {
     @Test
     public void test1_getRatingsSummary() throws Exception {
         MockHttpServletRequestBuilder request = get("/ratingsSummary")
-                .header("Authorization", environment.getProperty("nimble.test-responder-token"))
+                .header("Authorization", environment.getProperty("nimble.test-responder-person-id"))
                 .param("partyId",partyID);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
     }
@@ -53,7 +53,7 @@ public class Test26_TrustControllerTest2 {
     @Test
     public void test2_listAllIndividualRatingsAndReviews() throws Exception {
         MockHttpServletRequestBuilder request = get("/ratingsAndReviews")
-                .header("Authorization", environment.getProperty("nimble.test-responder-token"))
+                .header("Authorization", environment.getProperty("nimble.test-responder-person-id"))
                 .param("partyId",partyID);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 

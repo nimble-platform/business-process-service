@@ -51,7 +51,7 @@ public class Test03_StatisticsControllerTest {
     @Test
     public void getTradingVolume() throws Exception {
         MockHttpServletRequestBuilder request = get("/statistics/trading-volume")
-                .header("Authorization", environment.getProperty("nimble.test-responder-token"))
+                .header("Authorization", environment.getProperty("nimble.test-responder-person-id"))
                 .param("partyId", partyId)
                 .param("role", role)
                 .param("status", statusTradingVolume);
@@ -64,7 +64,7 @@ public class Test03_StatisticsControllerTest {
     @Test
     public void getProcessCount() throws Exception {
         MockHttpServletRequestBuilder request = get("/statistics/total-number/business-process")
-                .header("Authorization", environment.getProperty("nimble.test-responder-token"))
+                .header("Authorization", environment.getProperty("nimble.test-responder-person-id"))
                 .param("status", statusProcessCount);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
@@ -76,7 +76,7 @@ public class Test03_StatisticsControllerTest {
     @Test
     public void getNonOrderedProducts() throws Exception {
         MockHttpServletRequestBuilder request = get("/statistics/non-ordered")
-                .header("Authorization", environment.getProperty("nimble.test-responder-token"))
+                .header("Authorization", environment.getProperty("nimble.test-responder-person-id"))
                 .param("partyId", partyId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
@@ -91,7 +91,7 @@ public class Test03_StatisticsControllerTest {
                 .param("partyId", partyId)
                 .param("role", role)
                 .param("businessProcessType", businessProcessType)
-                .header("Authorization", environment.getProperty("nimble.test-responder-token"));
+                .header("Authorization", environment.getProperty("nimble.test-responder-person-id"));
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         BusinessProcessCount count = gson.fromJson(mvcResult.getResponse().getContentAsString(), BusinessProcessCount.class);

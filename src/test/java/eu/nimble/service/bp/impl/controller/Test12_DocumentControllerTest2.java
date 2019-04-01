@@ -60,7 +60,7 @@ public class Test12_DocumentControllerTest2 {
     @Test
     public void test1_getDocuments() throws Exception {
         MockHttpServletRequestBuilder request = get("/document/" + partnerID + "/" + type)
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
+                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"));
 
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
@@ -73,7 +73,7 @@ public class Test12_DocumentControllerTest2 {
     @Test
     public void test2_getDocuments() throws Exception {
         MockHttpServletRequestBuilder request = get("/document/" + partnerID + "/" + type + "/" + source)
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
+                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"));
 
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
@@ -86,7 +86,7 @@ public class Test12_DocumentControllerTest2 {
     @Test
     public void test3_getDocuments() throws Exception {
         MockHttpServletRequestBuilder request = get("/document/" + partnerID2 + "/" + type + "/" + source + "/" + status)
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
+                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"));
 
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
@@ -100,7 +100,7 @@ public class Test12_DocumentControllerTest2 {
     public void test4_updateDocumentMetadata() throws Exception {
         // get document
         MockHttpServletRequestBuilder request = get("/document/" + partnerID + "/" + type)
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
+                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"));
 
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
@@ -114,7 +114,7 @@ public class Test12_DocumentControllerTest2 {
 
         // update the document
         request = put("/document")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"))
+                .header("Authorization", environment.getProperty("nimble.test-initiator-person-id"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(processDocumentMetadata));
         mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
