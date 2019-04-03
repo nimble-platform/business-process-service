@@ -87,8 +87,8 @@ public class StatisticsPersistenceUtility {
         return tradingVolume;
     }
 
-    public static NonOrderedProducts getNonOrderedProducts(Integer partyId) {
-        String query = "select distinct new list(partyIdentification.ID, partyName.name.value, item.manufacturersItemIdentification.ID, itemName.value) from ItemType item join item.manufacturerParty.partyName partyName join item.manufacturerParty.partyIdentification partyIdentification JOIN item.name itemName" +
+    public static NonOrderedProducts getNonOrderedProducts(String bearerToken,Integer partyId) throws IOException {
+        String query = "select distinct new list(partyIdentification.ID, item.manufacturersItemIdentification.ID, itemName.value) from ItemType item join item.manufacturerParty.partyIdentification partyIdentification JOIN item.name itemName" +
                 " where item.transportationServiceDetails is null ";
         List<String> parameterNames = new ArrayList<>();
         List<Object> parameterValues = new ArrayList<>();
@@ -107,7 +107,9 @@ public class StatisticsPersistenceUtility {
         List<Object> results = new JPARepositoryFactory().forCatalogueRepository().getEntities(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
         for (Object result : results) {
             List<String> dataArray = (List<String>) result;
-            nonOrderedProducts.addProduct(dataArray.get(0), dataArray.get(1), dataArray.get(2), dataArray.get(3));
+            // get party information from identity service
+            PartyType party = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,dataArray.get(0));
+            nonOrderedProducts.addProduct(dataArray.get(0), party.getPartyName().get(0).getName().getValue(), dataArray.get(1), dataArray.get(2));
         }
 
         return nonOrderedProducts;

@@ -210,7 +210,7 @@ public class StatisticsController {
                 return tokenCheck;
             }
 
-            NonOrderedProducts nonOrderedProducts = StatisticsPersistenceUtility.getNonOrderedProducts(partyId);
+            NonOrderedProducts nonOrderedProducts = StatisticsPersistenceUtility.getNonOrderedProducts(bearerToken,partyId);
             String serializedResponse = JsonSerializationUtility.getObjectMapperForFilledFields().writeValueAsString(nonOrderedProducts);
             logger.info("Retrieved the products that are not ordered for party id: {}", partyId);
             return ResponseEntity.ok().body(serializedResponse);
