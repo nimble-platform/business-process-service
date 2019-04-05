@@ -20,13 +20,13 @@ import java.util.List;
 public class TrustPersistenceUtility {
     private static final Logger logger = LoggerFactory.getLogger(TrustPersistenceUtility.class);
 
-    private static final String QUERY_GET_COMPLETED_TASK_BY_PARTY_ID_AND_PROCESS_INSTANCE_ID =
-            "SELECT completedTask FROM QualifyingPartyType qParty JOIN qParty.party.partyIdentification partyIdentification JOIN qParty.completedTask completedTask " +
-                    "WHERE partyIdentification.ID = :partyId AND completedTask.associatedProcessInstanceID = :processInstanceId";
+    private static final String QUERY_PROCESS_INSTANCE_IS_RATED = "SELECT count(completedTask) FROM QualifyingPartyType qParty JOIN qParty.party.partyIdentification partyIdentification JOIN qParty.completedTask completedTask " +
+            "WHERE partyIdentification.ID = :partyId AND completedTask.associatedProcessInstanceID = :processInstanceId and (size(completedTask.evidenceSupplied) > 0 or size(completedTask.comment) > 0) ";
 
-    public static CompletedTaskType getCompletedTaskByPartyIdAndProcessInstanceId(String partyId, String processInstanceId) {
-        return new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(QUERY_GET_COMPLETED_TASK_BY_PARTY_ID_AND_PROCESS_INSTANCE_ID,
-                new String[]{"partyId", "processInstanceId"}, new Object[]{partyId, processInstanceId});
+    public static boolean processInstanceIsRated(String partyId, String processInstanceId) {
+        int sizeOfCompletedTasks =  ((Long)new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(QUERY_PROCESS_INSTANCE_IS_RATED,
+                new String[]{"partyId", "processInstanceId"}, new Object[]{partyId, processInstanceId})).intValue();
+        return sizeOfCompletedTasks > 0;
     }
 
     public static boolean completedTaskExist(QualifyingPartyType qualifyingParty,String processInstanceID){

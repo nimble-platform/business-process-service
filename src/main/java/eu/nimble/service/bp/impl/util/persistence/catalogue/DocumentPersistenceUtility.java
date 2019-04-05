@@ -42,7 +42,7 @@ public class DocumentPersistenceUtility {
     }
 
     public static OrderResponseSimpleType getOrderResponseDocumentByOrderId(String documentId) {
-        return new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(QUERY_GET_ORDER_RESPONSE_BY_ORDER_ID, new String[]{"documentId"}, new Object[]{documentId});
+        return new JPARepositoryFactory().forCatalogueRepository(true).getSingleEntity(QUERY_GET_ORDER_RESPONSE_BY_ORDER_ID, new String[]{"documentId"}, new Object[]{documentId});
     }
 
     public static <T> T readDocument(DocumentType documentType, String content) {
@@ -103,7 +103,7 @@ public class DocumentPersistenceUtility {
         Class documentClass = DocumentEnumClassMapper.getDocumentClass(documentType);
         String hibernateEntityName = documentClass.getSimpleName();
         String query = String.format(QUERY_GET_DOCUMENT, hibernateEntityName);
-        Object document = new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(query, new String[]{"documentId"}, new Object[]{documentID});
+        Object document = new JPARepositoryFactory().forCatalogueRepository(true).getSingleEntity(query, new String[]{"documentId"}, new Object[]{documentID});
         return document;
     }
 

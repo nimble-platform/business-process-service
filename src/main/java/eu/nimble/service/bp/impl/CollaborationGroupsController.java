@@ -89,7 +89,7 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
             return tokenCheck;
         }
 
-        CollaborationGroupDAO collaborationGroupDAO = repoFactory.forBpRepository().getSingleEntityByHjid(CollaborationGroupDAO.class, Long.parseLong(id));
+        CollaborationGroupDAO collaborationGroupDAO = repoFactory.forBpRepository(true).getSingleEntityByHjid(CollaborationGroupDAO.class, Long.parseLong(id));
         if (collaborationGroupDAO == null) {
             logger.error("There does not exist a collaboration group with id: {}", id);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);

@@ -170,11 +170,7 @@ public class ProcessInstanceController {
                 return tokenCheck;
             }
 
-            CompletedTaskType completedTask = TrustPersistenceUtility.getCompletedTaskByPartyIdAndProcessInstanceId(partyId, processInstanceId);
-            Boolean rated = false;
-            if (completedTask != null && (completedTask.getEvidenceSupplied().size() > 0 || completedTask.getComment().size() > 0)) {
-                rated = true;
-            }
+            Boolean rated = TrustPersistenceUtility.processInstanceIsRated(partyId,processInstanceId);
 
             logger.info("Retrieved rating status for process instance: {}, party: {}", processInstanceId, partyId);
             return ResponseEntity.ok(rated.toString());

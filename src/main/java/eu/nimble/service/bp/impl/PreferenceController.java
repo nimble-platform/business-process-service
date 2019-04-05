@@ -73,7 +73,7 @@ public class PreferenceController implements PreferenceApi {
             logger.error(msg,e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
-        ProcessPreferencesDAO processPreferencesDAO = ProcessPreferencesDAOUtility.getProcessPreferences(partnerID);
+        ProcessPreferencesDAO processPreferencesDAO = ProcessPreferencesDAOUtility.getProcessPreferences(partnerID,false);
         repositoryFactory.forBpRepository().deleteEntityByHjid(ProcessPreferencesDAO.class, processPreferencesDAO.getHjid());
         return HibernateSwaggerObjectMapper.getApiResponse();
     }
@@ -126,7 +126,7 @@ public class PreferenceController implements PreferenceApi {
             logger.error(msg,e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
-        ProcessPreferencesDAO processPreferencesDAO = ProcessPreferencesDAOUtility.getProcessPreferences(body.getPartnerID());
+        ProcessPreferencesDAO processPreferencesDAO = ProcessPreferencesDAOUtility.getProcessPreferences(body.getPartnerID(),false);
         ProcessPreferencesDAO processPreferencesDAONew = HibernateSwaggerObjectMapper.createProcessPreferences_DAO(body);
         processPreferencesDAONew.setHjid(processPreferencesDAO.getHjid());
         repositoryFactory.forBpRepository().updateEntity(processPreferencesDAONew);

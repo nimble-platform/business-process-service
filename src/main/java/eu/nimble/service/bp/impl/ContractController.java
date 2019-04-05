@@ -247,8 +247,7 @@ public class ContractController {
             }
 
             // check existence of contract
-            ContractType contract = ContractPersistenceUtility.getContract(contractId);
-            if (contract == null) {
+            if (!ContractPersistenceUtility.contractExists(contractId)) {
                 return createResponseEntityAndLog("Invalid contract id: " + contractId, HttpStatus.NOT_FOUND);
             }
 
@@ -267,7 +266,7 @@ public class ContractController {
             }
 
             // return updated version
-            contract = ContractPersistenceUtility.getContract(contractId);
+            ContractType contract = ContractPersistenceUtility.getContract(contractId);
             logger.info("Deleted clause: {} from contract: {}", clauseId, contractId);
             return ResponseEntity.ok().body(contract);
 

@@ -22,12 +22,16 @@ public class PartyPersistenceUtility {
     private static final String QUERY_SELECT_BY_ID = "SELECT party FROM PartyType party JOIN party.partyIdentification partyIdentification WHERE partyIdentification.ID = :partyId";
     private static final String QUERY_GET_QUALIFIYING_PARTY = "SELECT qpt FROM QualifyingPartyType qpt JOIN qpt.party.partyIdentification partyIdentification WHERE partyIdentification.ID = :partyId";
 
+    public static PartyType getPartyByID(String partyId,boolean lazyDisabled) {
+        return new JPARepositoryFactory().forCatalogueRepository(lazyDisabled).getSingleEntity(QUERY_SELECT_BY_ID, new String[]{"partyId"}, new Object[]{partyId});
+    }
+
     public static PartyType getPartyByID(String partyId) {
-        return new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(QUERY_SELECT_BY_ID, new String[]{"partyId"}, new Object[]{partyId});
+        return getPartyByID(partyId,true);
     }
 
     public static QualifyingPartyType getQualifyingParty(String partyId) {
-        return new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(QUERY_GET_QUALIFIYING_PARTY, new String[]{"partyId"}, new Object[]{partyId});
+        return new JPARepositoryFactory().forCatalogueRepository(true).getSingleEntity(QUERY_GET_QUALIFIYING_PARTY, new String[]{"partyId"}, new Object[]{partyId});
     }
 
     public static PartyType getParty(PartyType party) {
@@ -65,7 +69,7 @@ public class PartyPersistenceUtility {
     }
 
     public static PartyType getParty(String partyId) {
-        PartyType party = PartyPersistenceUtility.getPartyByID(partyId);
+        PartyType party = PartyPersistenceUtility.getPartyByID(partyId,false);
         return party;
     }
 
