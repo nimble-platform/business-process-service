@@ -1,5 +1,6 @@
 package eu.nimble.service.bp.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceStatus;
@@ -14,13 +15,13 @@ import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
-import eu.nimble.service.model.ubl.commonaggregatecomponents.CompletedTaskType;
-import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
+import eu.nimble.service.model.ubl.document.IDocument;
 import eu.nimble.utility.Configuration;
 import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
+import eu.nimble.utility.serialization.JsonSerializer;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -36,6 +37,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 /**
  * Created by dogukan on 09.08.2018.
  */
@@ -182,7 +186,7 @@ public class ProcessInstanceController {
 
     @ApiOperation(value = "",notes = "Gets details of the specified process instance")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Retrieved process instance details successfully",response = DashboardProcessInstanceDetails.class),
+            @ApiResponse(code = 200, message = "Retrieved process instance details successfully"),
             @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
             @ApiResponse(code = 500, message = "Unexpected error while getting the details of process instance")
     })
@@ -204,10 +208,14 @@ public class ProcessInstanceController {
             // set variableInstance,lastActivityInstance and processInstance
             CamundaEngine.getProcessDetails(dashboardProcessInstanceDetails,processInstanceId);
 
+            Future<String> variableInstances = serializeObject(dashboardProcessInstanceDetails.getVariableInstance());
+            Future<String> processInstance = serializeObject(dashboardProcessInstanceDetails.getProcessInstance());
+            Future<String> lastActivityInstance = serializeObject(dashboardProcessInstanceDetails.getLastActivityInstance());
+
             // get request and response document
             // get request and response metadata as well
-            Object requestDocument = null;
-            Object responseDocument = null;
+            Future<String> requestDocument = null;
+            Future<String> responseDocument = null;
             ProcessDocumentMetadata requestMetadata = null;
             ProcessDocumentMetadata responseMetadata = null;
             for(HistoricVariableInstance variableInstance:dashboardProcessInstanceDetails.getVariableInstance()){
@@ -215,7 +223,7 @@ public class ProcessInstanceController {
                 if(variableInstance.getName().contentEquals("initialDocumentID")){
                     String documentId =  variableInstance.getValue().toString();
                     // request document
-                    requestDocument = DocumentPersistenceUtility.getUBLDocument(documentId);
+                    requestDocument = getRequestDocument(documentId);
                     // request metadata
                     requestMetadata = HibernateSwaggerObjectMapper.createProcessDocumentMetadata(ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId));
                 }
@@ -223,32 +231,82 @@ public class ProcessInstanceController {
                 else if(variableInstance.getName().contentEquals("responseDocumentID")){
                     String documentId =  variableInstance.getValue().toString();
                     // response document
-                    responseDocument = DocumentPersistenceUtility.getUBLDocument(documentId);
+                    responseDocument = getResponseDocument(documentId);
                     // response metadata
                     responseMetadata = HibernateSwaggerObjectMapper.createProcessDocumentMetadata(ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId));
                 }
             }
-            dashboardProcessInstanceDetails.setRequestDocument(requestDocument);
-            dashboardProcessInstanceDetails.setResponseDocument(responseDocument);
-            dashboardProcessInstanceDetails.setRequestMetadata(requestMetadata);
-            dashboardProcessInstanceDetails.setResponseMetadata(responseMetadata);
             // get request creator and response creator user info
-            PersonType requestCreatorUser = null;
-            PersonType responseCreatorUser = null;
+            Future<String> requestCreatorUser = null;
+            Future<String> responseCreatorUser = null;
             if(requestMetadata != null){
-                requestCreatorUser = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken,requestMetadata.getCreatorUserID());
+                requestCreatorUser = getCreatorUser(bearerToken,requestMetadata.getCreatorUserID());
             }
             if(responseMetadata != null){
-                responseCreatorUser = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken,responseMetadata.getCreatorUserID());
+                responseCreatorUser = getCreatorUser(bearerToken,responseMetadata.getCreatorUserID());
             }
-            dashboardProcessInstanceDetails.setRequestCreatorUser(requestCreatorUser);
-            dashboardProcessInstanceDetails.setResponseCreatorUser(responseCreatorUser);
+
+            ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
+
+            JsonSerializer jsonSerializer = new JsonSerializer();
+            jsonSerializer.put("requestDocument",requestDocument == null ? null: requestDocument.get());
+            jsonSerializer.put("responseDocument",responseDocument == null ? null : responseDocument.get());
+            jsonSerializer.put("requestMetadata",objectMapper.writeValueAsString(requestMetadata));
+            jsonSerializer.put("responseMetadata",objectMapper.writeValueAsString(responseMetadata));
+            jsonSerializer.put("variableInstance",variableInstances.get());
+            jsonSerializer.put("lastActivityInstance",lastActivityInstance.get());
+            jsonSerializer.put("processInstance",processInstance.get());
+            jsonSerializer.put("requestCreatorUser",requestCreatorUser == null ? null : requestCreatorUser.get());
+            jsonSerializer.put("responseCreatorUser",responseCreatorUser == null ? null : responseCreatorUser.get());
 
             logger.info("Retrieved the details for process instance: {}", processInstanceId);
-            return ResponseEntity.ok(JsonSerializationUtility.getObjectMapper().writeValueAsString(dashboardProcessInstanceDetails));
+            return ResponseEntity.ok(jsonSerializer.toString());
         } catch (Exception e) {
             return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting the details for process instance id: %s", processInstanceId), e, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
+    private ExecutorService executorService = Executors.newCachedThreadPool();
+
+    private Future<String> getRequestDocument(String documentId){
+        return executorService.submit(() -> {
+            ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
+            IDocument iDocument = (IDocument) DocumentPersistenceUtility.getUBLDocument(documentId);
+            if(iDocument == null){
+                return null;
+            }
+            return  "{\"item\":"+objectMapper.writeValueAsString(iDocument.getItemType()) +
+                    ",\"buyerPartyId\":\""+ iDocument.getBuyerPartyId() +
+                    "\",\"buyerPartyName\":"+objectMapper.writeValueAsString(iDocument.getBuyerPartyName())+
+                    ",\"sellerPartyId\":\""+ iDocument.getSellerPartyId()+
+                    "\",\"sellerPartyName\":"+objectMapper.writeValueAsString(iDocument.getSellerPartyName())+"}";
+        });
+    }
+
+    private Future<String> getResponseDocument(String documentId){
+        return executorService.submit(() -> {
+            IDocument iDocument = (IDocument) DocumentPersistenceUtility.getUBLDocument(documentId);
+            if(iDocument == null){
+                return null;
+            }
+
+            String isAccepted = iDocument.isAccepted();
+
+            String string = "{";
+            if(isAccepted != null){
+                string += "\"acceptedIndicator\":\""+isAccepted+"\"";
+            }
+            string += "}";
+            return string;
+        });
+    }
+
+    private Future<String> getCreatorUser(String bearerToken,String userId){
+        return executorService.submit(() -> JsonSerializationUtility.getObjectMapper().writeValueAsString(
+                SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken,userId)));
+    }
+
+    private Future<String> serializeObject(Object object){
+        return executorService.submit(() -> JsonSerializationUtility.getObjectMapper().writeValueAsString(object));
+    }
 }
