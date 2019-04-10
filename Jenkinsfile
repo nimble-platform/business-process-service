@@ -19,7 +19,7 @@ node('nimble-jenkins-slave') {
         }
 
         stage('Run Tests') {
-            sh 'mvn clean test'
+            sh '#!/bin/bash \n source /var/jenkins_home/test_staging.sh && mvn clean test'
         }
 
         stage('Build Java') {
