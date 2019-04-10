@@ -185,7 +185,7 @@ nimble:
       topics:
         businessProcessUpdates: ${KAFKA_TOPIC_BUSINESS_PROCESS_UPDATES:business-process-updates-staging}
   check-entity-ids: ${CHECK_ENTITY_IDS:false}
-  platformHost: ${BUSINESS_PROCESS_SERVICE_URL:httlp://localhost:8081}
+  platformHost: ${BUSINESS_PROCESS_SERVICE_URL:http://localhost:8081}
 hystrix:
   command:
     default:
