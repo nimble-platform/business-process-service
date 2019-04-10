@@ -18,6 +18,10 @@ node('nimble-jenkins-slave') {
             }
         }
 
+        stage('Run Tests') {
+            sh 'mvn clean test'
+        }
+
         stage('Build Java') {
             sh 'mvn clean package -DskipTests'
         }
@@ -53,6 +57,10 @@ node('nimble-jenkins-slave') {
             }
         }
 
+        stage('Run Tests') {
+            sh 'mvn clean test'
+        }
+
         stage('Build Java') {
             sh 'mvn clean package -DskipTests'
         }
@@ -78,6 +86,10 @@ node('nimble-jenkins-slave') {
 
         stage('Set version') {
             sh 'mvn versions:set -DnewVersion=' + env.TAG_NAME
+        }
+
+        stage('Run Tests') {
+            sh 'mvn clean test'
         }
 
         stage('Build Java') {
