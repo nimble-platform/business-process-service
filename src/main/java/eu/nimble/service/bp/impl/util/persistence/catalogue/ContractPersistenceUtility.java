@@ -6,6 +6,7 @@ import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.swagger.model.Process;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
+import eu.nimble.service.model.ubl.digitalagreement.DigitalAgreementType;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
@@ -24,6 +25,7 @@ public class ContractPersistenceUtility {
     private static final String QUERY_GET_DOCUMENT_CLAUSE = "SELECT clause FROM DocumentClauseType clause WHERE clause.ID = :clauseId";
     private static final String QUERY_CONTRACT_EXISTS = "SELECT count(*) FROM ContractType contract WHERE contract.ID = :contractId";
     private static final String QUERY_GET_CONTRACT = "SELECT contract FROM ContractType contract WHERE contract.ID = :contractId";
+    private static final String QUERY_GET_DIGITAL_AGREEMENT = "SELECT digitalAgreement FROM DigitalAgreementType digitalAgreement WHERE digitalAgreement.ID = :digitalAgreementId";
 
     public static ClauseType getBaseClause(String clauseId) {
         ClauseType clauseType = new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(QUERY_GET_BASE_CLAUSE, new String[]{"clauseId"}, new Object[]{clauseId});
@@ -197,5 +199,9 @@ public class ContractPersistenceUtility {
             return contract;
         }
         return realContract;
+    }
+
+    public static DigitalAgreementType getDigitalAgreementById(String digitalAgreementId) {
+        return new JPARepositoryFactory().forCatalogueRepository(true).getSingleEntity(QUERY_GET_DIGITAL_AGREEMENT, new String[]{"digitalAgreementId"}, new Object[]{digitalAgreementId});
     }
 }
