@@ -25,7 +25,14 @@ public class ContractPersistenceUtility {
     private static final String QUERY_GET_DOCUMENT_CLAUSE = "SELECT clause FROM DocumentClauseType clause WHERE clause.ID = :clauseId";
     private static final String QUERY_CONTRACT_EXISTS = "SELECT count(*) FROM ContractType contract WHERE contract.ID = :contractId";
     private static final String QUERY_GET_CONTRACT = "SELECT contract FROM ContractType contract WHERE contract.ID = :contractId";
-    private static final String QUERY_GET_DIGITAL_AGREEMENT = "SELECT digitalAgreement FROM DigitalAgreementType digitalAgreement WHERE digitalAgreement.ID = :digitalAgreementId";
+    private static final String QUERY_GET_DIGITAL_AGREEMENT_BY_ID = "SELECT digitalAgreement FROM DigitalAgreementType digitalAgreement WHERE digitalAgreement.ID = :digitalAgreementId";
+    private static final String QUERY_GET_DIGITAL_AGREEMENT_BY_SELLER_BUYER_PRODUCT_IDS =
+            "SELECT da FROM DigitalAgreementType da join da.participantParty pp join pp.partyIdentification pid join da.item item" +
+                    " WHERE" +
+                    " pid.ID in (:sellerId, :buyerId) AND" +
+                    " item.manufacturersItemIdentification.ID = :itemId" +
+                    " GROUP BY da" +
+                    " HAVING COUNT(da) = 2 ";
 
     public static ClauseType getBaseClause(String clauseId) {
         ClauseType clauseType = new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(QUERY_GET_BASE_CLAUSE, new String[]{"clauseId"}, new Object[]{clauseId});
@@ -202,6 +209,11 @@ public class ContractPersistenceUtility {
     }
 
     public static DigitalAgreementType getDigitalAgreementById(String digitalAgreementId) {
-        return new JPARepositoryFactory().forCatalogueRepository(true).getSingleEntity(QUERY_GET_DIGITAL_AGREEMENT, new String[]{"digitalAgreementId"}, new Object[]{digitalAgreementId});
+        return new JPARepositoryFactory().forCatalogueRepository(true).getSingleEntity(QUERY_GET_DIGITAL_AGREEMENT_BY_ID, new String[]{"digitalAgreementId"}, new Object[]{digitalAgreementId});
+    }
+
+    public static DigitalAgreementType getDigitalAgreementById(String sellerId, String buyerId, String productId) {
+        return new JPARepositoryFactory().forCatalogueRepository(true).getSingleEntity(QUERY_GET_DIGITAL_AGREEMENT_BY_SELLER_BUYER_PRODUCT_IDS,
+                new String[]{"sellerId", "buyerId", "itemId"}, new Object[]{sellerId, buyerId, productId});
     }
 }
