@@ -221,7 +221,7 @@ public class ContractGenerator {
                 values.put("$decision_id",decision_id_default);
             }
 
-            InputStream file = ContractGenerator.class.getResourceAsStream("/contract-bundle/Standard Purchase Order Terms and Conditions_Text.docx");
+            InputStream file = ContractGenerator.class.getResourceAsStream("/contract-bundle/Standard_Purchase_Order_Terms_and_Conditions_Text.docx");
             XWPFDocument document = new XWPFDocument(file);
             List<XWPFParagraph> paragraphs = document.getParagraphs();
 
@@ -280,7 +280,7 @@ public class ContractGenerator {
 
         }
         catch (Exception e){
-            logger.error("Failed to fill in 'Standard Purchase Order Terms and Conditions_Text.docx' for the order with id : {}", order.getID() != null ? order.getID() : "", e);
+            logger.error("Failed to fill in 'Standard_Purchase_Order_Terms_and_Conditions_Text.docx' for the order with id : {}", order.getID() != null ? order.getID() : "", e);
         }
 
         return termsAndConditions;
