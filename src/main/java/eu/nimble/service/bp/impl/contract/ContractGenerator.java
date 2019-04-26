@@ -1493,11 +1493,11 @@ public class ContractGenerator {
             TradingTermType tradingTerm = tradingTerms.get(i);
             String result = "";
             if(tradingTerm.getID().contains("Values")){
-                result = String.format(tradingTerm.getTradingTermFormat(),tradingTerm.getValue().toArray());
+                result = String.format(tradingTerm.getTradingTermFormat(),tradingTerm.getValue().getValue().toArray());
                 selectedTradingTerms.add(result);
             }
             else {
-                if(tradingTerm.getValue().get(0).getValue().toLowerCase().contentEquals("true")){
+                if(tradingTerm.getValue().getValue().get(0).getValue().toLowerCase().contentEquals("true")){
                     result = tradingTerm.getDescription().get(0).getValue();
                     selectedTradingTerms.add(result);
                 }

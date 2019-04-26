@@ -6,7 +6,6 @@
 package eu.nimble.service.bp.impl.util.camunda;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import eu.nimble.service.bp.impl.model.dashboard.DashboardProcessInstanceDetails;
 import eu.nimble.service.bp.serialization.MixInIgnoreProperties;
 import eu.nimble.service.bp.swagger.model.*;
 import eu.nimble.service.bp.swagger.model.Process;
@@ -287,13 +286,15 @@ public class CamundaEngine {
         runtimeService.deleteProcessInstance(processInstanceId,"",true,true);
     }
 
-    public static void getProcessDetails(DashboardProcessInstanceDetails dashboardProcessInstanceDetails, String processInstanceId){
-        List<HistoricVariableInstance> variableInstance = historyService.createHistoricVariableInstanceQuery().processInstanceId(processInstanceId).list();
-        HistoricActivityInstance lastActivityInstance = historyService.createHistoricActivityInstanceQuery().processInstanceId(processInstanceId).orderByHistoricActivityInstanceStartTime().desc().listPage(0,1).get(0);
-        HistoricProcessInstance processInstance = historyService.createHistoricProcessInstanceQuery().processInstanceId(processInstanceId).singleResult();
+    public static List<HistoricVariableInstance> getVariableInstances(String processInstanceId){
+        return historyService.createHistoricVariableInstanceQuery().processInstanceId(processInstanceId).list();
+    }
 
-        dashboardProcessInstanceDetails.setVariableInstance(variableInstance);
-        dashboardProcessInstanceDetails.setLastActivityInstance(lastActivityInstance);
-        dashboardProcessInstanceDetails.setProcessInstance(processInstance);
+    public static HistoricActivityInstance getLastActivityInstance(String processInstanceId){
+        return historyService.createHistoricActivityInstanceQuery().processInstanceId(processInstanceId).orderByHistoricActivityInstanceStartTime().desc().listPage(0,1).get(0);
+    }
+
+    public static HistoricProcessInstance getProcessInstance(String processInstanceId){
+        return historyService.createHistoricProcessInstanceQuery().processInstanceId(processInstanceId).singleResult();
     }
 }

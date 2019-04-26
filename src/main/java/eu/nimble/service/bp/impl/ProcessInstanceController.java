@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceStatus;
-import eu.nimble.service.bp.impl.model.dashboard.DashboardProcessInstanceDetails;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
@@ -37,6 +36,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -203,14 +203,11 @@ public class ProcessInstanceController {
                 return tokenCheck;
             }
 
-            DashboardProcessInstanceDetails dashboardProcessInstanceDetails = new DashboardProcessInstanceDetails();
+            List<HistoricVariableInstance> variableInstanceList = CamundaEngine.getVariableInstances(processInstanceId);
 
-            // set variableInstance,lastActivityInstance and processInstance
-            CamundaEngine.getProcessDetails(dashboardProcessInstanceDetails,processInstanceId);
-
-            Future<String> variableInstances = serializeObject(dashboardProcessInstanceDetails.getVariableInstance());
-            Future<String> processInstance = serializeObject(dashboardProcessInstanceDetails.getProcessInstance());
-            Future<String> lastActivityInstance = serializeObject(dashboardProcessInstanceDetails.getLastActivityInstance());
+            Future<String> variableInstances = serializeObject(variableInstanceList);
+            Future<String> processInstance = serializeObject(CamundaEngine.getProcessInstance(processInstanceId));
+            Future<String> lastActivityInstance = serializeObject(CamundaEngine.getLastActivityInstance(processInstanceId));
 
             // get request and response document
             // get request and response metadata as well
@@ -218,7 +215,7 @@ public class ProcessInstanceController {
             Future<String> responseDocument = null;
             ProcessDocumentMetadata requestMetadata = null;
             ProcessDocumentMetadata responseMetadata = null;
-            for(HistoricVariableInstance variableInstance:dashboardProcessInstanceDetails.getVariableInstance()){
+            for(HistoricVariableInstance variableInstance:variableInstanceList){
                 // request document
                 if(variableInstance.getName().contentEquals("initialDocumentID")){
                     String documentId =  variableInstance.getValue().toString();
