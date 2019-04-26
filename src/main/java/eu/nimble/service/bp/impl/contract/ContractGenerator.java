@@ -242,7 +242,7 @@ public class ContractGenerator {
                                 defaultValues.add(values.get(match));
                             }
 
-                            termsAndConditions.addParagraph(paragraphName != null ? paragraphName: "Purchase Order Terms and Conditions",text,parameters,defaultValues);
+                            termsAndConditions.addParagraph(paragraphName != null ? paragraphName: "PURCHASE ORDER TERMS AND CONDITIONS",text,parameters,defaultValues);
                             String string = run.toString();
                             // get name of the paragraph
                             int startIndex = string.indexOf(" ");
