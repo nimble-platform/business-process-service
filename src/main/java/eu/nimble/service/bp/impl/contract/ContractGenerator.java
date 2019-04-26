@@ -51,23 +51,23 @@ import java.util.zip.ZipOutputStream;
 public class ContractGenerator {
     private final Logger logger = LoggerFactory.getLogger(ContractGenerator.class);
 
-    private final String payment_id_default = "2% 10 days, net 60 days";
-    private final String incoterms_id_default = "Freight Prepaid";
+    private final String payment_id_default = "PIA - Payment in advance";
+    private final String incoterms_id_default = "CIF (Cost, Insurance and Freight)";
     private final String buyer_country_default = "Spain";
     private final String seller_tel_default = "855-729-0137";
     private final String seller_website_default = "www.abc.com";
     private final String action_day_default = "10";
-    private final String inspection_id_default = "7 years";
-    private final String warranty_seller_id_default = "10 days";
-    private final String warranty_buyer_id_default = "10 days";
-    private final String change_id_default ="5 days";
-    private final String insurance_id_default ="15 days";
-    private final String termination_id_default = "20 days";
+    private final String inspection_id_default = "7 year(s)";
+    private final String warranty_seller_id_default = "10 day(s)";
+    private final String warranty_buyer_id_default = "10 day(s)";
+    private final String change_id_default ="5 day(s)";
+    private final String insurance_id_default ="15 day(s)";
+    private final String termination_id_default = "20 day(s)";
     private final String shipment_id_default ="United Parcel Service, Rail Express, Air Express, Air Freight or Parcel Post";
     private final String arbitrator_id_default = "under the JAMS Streamlined Arbitration Rules and Procedures in the District of Columbia or";
-    private final String agreement_id_default = "21 days";
+    private final String agreement_id_default = "21 day(s)";
     private final String failed_agreement_default ="by JAMS";
-    private final String decision_id_default = "90 days";
+    private final String decision_id_default = "90";
 
     private final String red_hex = "DC143C";
     private final String cyan_hex = "00FFFF";
