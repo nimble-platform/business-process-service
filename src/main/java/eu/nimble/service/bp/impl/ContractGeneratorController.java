@@ -1,8 +1,8 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.impl.contract.ContractGenerator;
-import eu.nimble.service.bp.impl.model.contract.TermsAndConditions;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.ClauseType;
 import eu.nimble.utility.JsonSerializationUtility;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -17,6 +17,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 import java.util.zip.ZipOutputStream;
 
 @Controller
@@ -87,7 +88,7 @@ public class ContractGeneratorController {
                                                 @ApiParam(value = "The selected incoterms while negotiating.<br>Example:DDP (Delivery Duty Paid)") @RequestParam(value = "incoterms", required = false) String incoterms,
                                                 @ApiParam(value = "The list of selected trading terms while negotiating.<br>Example:[{\"id\":\"Cash_on_delivery\",\"description\":\"Cash on delivery\",\"tradingTermFormat\":\"COD\",\"value\":[\"true\"]}]") @RequestParam(value = "tradingTerms", required = false) String tradingTerms,
                                                 @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken){
-        logger.info("Generating Order Terms and Conditions as map for the order with id : {}",orderId);
+        logger.info("Generating Order Terms and Conditions clauses for the order with id : {}",orderId);
 
         try {
             // check token
@@ -98,14 +99,14 @@ public class ContractGeneratorController {
 
             ContractGenerator contractGenerator = new ContractGenerator();
 
-            TermsAndConditions text = contractGenerator.getTermsAndConditions(orderId,sellerPartyId,buyerPartyId,incoterms,tradingTerms,bearerToken);
+            List<ClauseType> clauses = contractGenerator.getTermsAndConditions(orderId,sellerPartyId,buyerPartyId,incoterms,tradingTerms,bearerToken);
 
-            logger.info("Generated Order Terms and Conditions as map for the order with id : {}",orderId);
-            return ResponseEntity.ok(JsonSerializationUtility.getObjectMapper().writeValueAsString(text));
+            logger.info("Generated Order Terms and Conditions clauses for the order with id : {}",orderId);
+            return ResponseEntity.ok(JsonSerializationUtility.getObjectMapper().writeValueAsString(clauses));
         }
         catch (Exception e){
-            logger.error("Failed to generate Order Terms and Conditions",e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to generate Order Terms and Conditions");
+            logger.error("Failed to generate Order Terms and Conditions clauses",e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to generate Order Terms and Conditions clauses");
         }
     }
 
