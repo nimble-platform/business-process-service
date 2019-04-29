@@ -371,14 +371,16 @@ public class ContractGenerator {
             }
 
             // get clauses map
-            Map<String,String> clausesMap = getClausesMap(getTermsAndConditionsContract(order).getClause());
+            Map<String,ClauseType> clausesMap = getClausesMap(getTermsAndConditionsContract(order).getClause());
 
             int rowIndex = 0;
             for (XWPFTable tbl : document.getTables() ) {
                 for (XWPFTableRow row : tbl.getRows()) {
                     for (XWPFTableCell cell : row.getTableCells()) {
+                        // get the clause
+                        ClauseType clause = clausesMap.get("$section_"+rowIndex);
                         // text of the section
-                        String text = clausesMap.get("$section_"+rowIndex);
+                        String text = clause.getContent().get(0).getValue();
                         // get the paragraph
                         XWPFParagraph paragraph = cell.getParagraphs().get(0);
                         // section text which does not contain the name of section
@@ -398,7 +400,7 @@ public class ContractGenerator {
                             // get the section text
                             sectionText = text.substring(semicolonIndex+1);
                         }
-                        fillTheRow(sectionText,paragraph);
+                        fillTheRow(sectionText,paragraph,clause.getTradingTerms());
                     }
                     rowIndex++;
                 }
@@ -410,26 +412,42 @@ public class ContractGenerator {
         return document;
     }
 
-    private void fillTheRow(String sectionText,XWPFParagraph paragraph){
-        int indexOfParameter = sectionText.indexOf("<b>");
+    private void fillTheRow(String sectionText,XWPFParagraph paragraph,List<TradingTermType> tradingTerms){
+        int indexOfParameter = sectionText.indexOf("$");
         while (indexOfParameter != -1){
             paragraph.createRun().setText(sectionText.substring(0,indexOfParameter),0);
             sectionText = sectionText.substring(indexOfParameter);
 
-            // find the parameter value
-            sectionText = sectionText.substring(3);
-            int indexStart = sectionText.indexOf(">")+1;
-            int indexEnd = sectionText.indexOf("</span>");
+            // find the parameter
+            int spaceIndex = sectionText.indexOf(" ");
+            String parameter = sectionText.substring(0,spaceIndex);
 
             XWPFRun run = paragraph.createRun();
-            run.setText(sectionText.substring(indexStart,indexEnd),0);
-            run.setUnderline(UnderlinePatterns.SINGLE);
-            setColor(run,red_hex);
+            for(TradingTermType tradingTerm : tradingTerms){
+                if(tradingTerm.getTradingTermFormat().contentEquals(parameter)){
+                    // find the value of parameter
+                    String value = "";
+                    if(tradingTerm.getValue().getValueQualifier().contentEquals("STRING")){
+                        value = tradingTerm.getValue().getValue().get(0).getValue();
+                    } else if(tradingTerm.getValue().getValueQualifier().contentEquals("NUMBER")){
+                        value = new DecimalFormat("##").format(tradingTerm.getValue().getValueDecimal().get(0));
+                    } else if(tradingTerm.getValue().getValueQualifier().contentEquals("QUANTITY")){
+                        value = new DecimalFormat("##").format(tradingTerm.getValue().getValueQuantity().get(0).getValue()) + " " + tradingTerm.getValue().getValueQuantity().get(0).getUnitCode();
+                    } else if(tradingTerm.getValue().getValueQualifier().contentEquals("CODE")){
+                        value = tradingTerm.getValue().getValueCode().get(0).getValue();
+                    }
 
-            int indexCloseTag = sectionText.indexOf("</b>");
-            sectionText = sectionText.substring(indexCloseTag+4);
+                    run.setText(value,0);
+                    run.setUnderline(UnderlinePatterns.SINGLE);
+                    setColor(run,red_hex);
 
-            indexOfParameter = sectionText.indexOf("<b>");
+                    break;
+                }
+            }
+
+            sectionText = sectionText.substring(spaceIndex);
+
+            indexOfParameter = sectionText.indexOf("$");
         }
 
         paragraph.createRun().setText(sectionText,0);
@@ -449,25 +467,25 @@ public class ContractGenerator {
         return termsAndConditionsContract;
     }
 
-    // returns clause id - text map
-    private Map<String,String> getClausesMap(List<ClauseType> clauses){
-        Map<String,String> clauseTexts = new HashMap<>();
+    // returns clause id - Clause map
+    private Map<String,ClauseType> getClausesMap(List<ClauseType> clauses){
+        Map<String,ClauseType> idClauseMap = new HashMap<>();
         for(ClauseType clause:clauses){
             String text = clause.getContent().get(0).getValue();
             // check whether the clause belongs to the first section or not
             int semicolonIndex = text.indexOf(":");
             // first section
             if(semicolonIndex == -1){
-                clauseTexts.put("$section_0",text);
+                idClauseMap.put("$section_0",clause);
                 continue;
             }
             // get the section number
             int dotIndex = text.indexOf(".");
             String sectionNumber = text.substring(0,dotIndex);
             // add the text to the map
-            clauseTexts.put("$section_"+sectionNumber,text);
+            idClauseMap.put("$section_"+sectionNumber,clause);
         }
-        return clauseTexts;
+        return idClauseMap;
     }
 
     private XWPFDocument fillPurchaseDetails(OrderType order){
