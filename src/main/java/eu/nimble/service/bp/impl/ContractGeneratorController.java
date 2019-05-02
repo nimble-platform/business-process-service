@@ -82,7 +82,8 @@ public class ContractGeneratorController {
     @RequestMapping(value = "/contracts/terms-and-conditions",
             produces = {MediaType.APPLICATION_JSON_VALUE},
             method = RequestMethod.GET)
-    public ResponseEntity getTermsAndConditions(@ApiParam(value = "Identifier of the order for which terms and conditions are generated", required = true) @RequestParam(value = "orderId", required = true) String orderId,
+    public ResponseEntity getTermsAndConditions(@ApiParam(value = "Identifier of the order for which terms and conditions are generated", required = false) @RequestParam(value = "orderId", required = false) String orderId,
+                                                @ApiParam(value = "Identifier of the request for quotation for which terms and conditions are generated", required = false) @RequestParam(value = "rfqId", required = false) String rfqId,
                                                 @ApiParam(value = "Identifier of the seller party") @RequestParam(value = "sellerPartyId", required = false) String sellerPartyId,
                                                 @ApiParam(value = "Identifier of the buyer party") @RequestParam(value = "buyerPartyId", required = false) String buyerPartyId,
                                                 @ApiParam(value = "The selected incoterms while negotiating.<br>Example:DDP (Delivery Duty Paid)") @RequestParam(value = "incoterms", required = false) String incoterms,
@@ -99,7 +100,7 @@ public class ContractGeneratorController {
 
             ContractGenerator contractGenerator = new ContractGenerator();
 
-            List<ClauseType> clauses = contractGenerator.getTermsAndConditions(orderId,sellerPartyId,buyerPartyId,incoterms,tradingTerms,bearerToken);
+            List<ClauseType> clauses = contractGenerator.getTermsAndConditions(orderId,rfqId,sellerPartyId,buyerPartyId,incoterms,tradingTerms,bearerToken);
 
             logger.info("Generated Order Terms and Conditions clauses for the order with id : {}",orderId);
             return ResponseEntity.ok(JsonSerializationUtility.getObjectMapper().writeValueAsString(clauses));

@@ -96,12 +96,19 @@ public class ContractGenerator {
 
     }
 
-    public List<ClauseType> getTermsAndConditions(String orderId, String sellerPartyId, String buyerPartyId, String incoterms, String tradingTerms, String bearerToken){
+    public List<ClauseType> getTermsAndConditions(String orderId,String rfqId, String sellerPartyId, String buyerPartyId, String incoterms, String tradingTerms, String bearerToken){
         List<ClauseType> clauses = new ArrayList<>();
 
         Map<String,TradingTermType> values = new HashMap<>();
 
-        OrderType order = (OrderType) DocumentPersistenceUtility.getUBLDocument(orderId,DocumentType.ORDER);
+        OrderType order = null;
+        RequestForQuotationType requestForQuotation = null;
+
+        if(orderId != null){
+            order = (OrderType) DocumentPersistenceUtility.getUBLDocument(orderId,DocumentType.ORDER);
+        } else if(rfqId != null){
+            requestForQuotation = (RequestForQuotationType) DocumentPersistenceUtility.getUBLDocument(rfqId,DocumentType.REQUESTFORQUOTATION);
+        }
 
         try {
             // get values
@@ -158,6 +165,13 @@ public class ContractGenerator {
                 values.put("$agreement_id",createTradingTerm("$agreement_id","QUANTITY",agreement_id_default,null));
                 values.put("$failed_agreement",createTradingTerm("$failed_agreement","STRING",failed_agreement_default,null));
                 values.put("$decision_id",createTradingTerm("$decision_id","NUMBER",decision_id_default,null));
+            }
+            else if(requestForQuotation != null){
+                for(ClauseType clauseType : requestForQuotation.getTermOrCondition()){
+                    for(TradingTermType tradingTermType: clauseType.getTradingTerms()){
+                        values.put(tradingTermType.getTradingTermFormat(),tradingTermType);
+                    }
+                }
             }
             else {
                 ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
