@@ -617,27 +617,27 @@ public class ContractController {
             method = RequestMethod.GET)
     public ResponseEntity getDigitalAgreementForPartiesAndProduct(@ApiParam(value = "Identifier of the buyer company participating in the DigitalAgreement", required = true) @RequestParam(value = "buyerId") String buyerId,
                                                                   @ApiParam(value = "Identifier of the seller company participating in the DigitalAgreement", required = true) @RequestParam(value = "sellerId") String sellerId,
-                                                                  @ApiParam(value = "Identifier (hjid) of the product being the subject of the DigitalAgreement", required = true) @RequestParam(value = "productId") String productHjid,
+                                                                  @ApiParam(value = "Manufacturer item identification of the product being the subject of the DigitalAgreement", required = true) @RequestParam(value = "productId") String manufacturersItemId,
                                                                   @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
 
         try {
-            logger.info("Incoming request to retrieve a DigitalAgreement. seller id: {}, buyer id: {}, product hjid: {}", sellerId, buyerId, productHjid);
+            logger.info("Incoming request to retrieve a DigitalAgreement. seller id: {}, buyer id: {}, product hjid: {}", sellerId, buyerId, manufacturersItemId);
             // check token
             ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
             if (tokenCheck != null) {
                 return tokenCheck;
             }
 
-            DigitalAgreementType digitalAgreement = ContractPersistenceUtility.getDigitalAgreementById(sellerId, buyerId, productHjid);
+            DigitalAgreementType digitalAgreement = ContractPersistenceUtility.getDigitalAgreementById(sellerId, buyerId, manufacturersItemId);
             if(digitalAgreement == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(String.format("No DigitalAgreement found. seller id: %s, buyer id: %s, product hjid: %s", sellerId, buyerId, productHjid));
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(String.format("No DigitalAgreement found. seller id: %s, buyer id: %s, product hjid: %s", sellerId, buyerId, manufacturersItemId));
             }
 
-            logger.info("Retrieved DigitalAgreement. seller id: {}, buyer id: {}, product hjid: {}", sellerId, buyerId, productHjid);
+            logger.info("Retrieved DigitalAgreement. seller id: {}, buyer id: {}, product hjid: {}", sellerId, buyerId, manufacturersItemId);
             return ResponseEntity.ok(JsonSerializationUtility.getObjectMapper().writeValueAsString(digitalAgreement));
 
         } catch (Exception e) {
-            return createResponseEntityAndLog(String.format("Unexpected error while getting DigitalAgreement. seller id: %s, buyer id: %s, product hjid: %s", sellerId, buyerId, productHjid), e, HttpStatus.INTERNAL_SERVER_ERROR);
+            return createResponseEntityAndLog(String.format("Unexpected error while getting DigitalAgreement. seller id: %s, buyer id: %s, product hjid: %s", sellerId, buyerId, manufacturersItemId), e, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
