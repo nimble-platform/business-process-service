@@ -13,6 +13,7 @@ import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ClauseType;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.ContractType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.DocumentClauseType;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
@@ -100,7 +101,7 @@ public class DefaultOrderResponseSender  implements JavaDelegate {
     private boolean needToCreateDataChannel(OrderType order, OrderResponseSimpleType orderResponse) {
         boolean dataMonitoringDemanded = false;
         if(order.getContract().size() > 0){
-            List<ClauseType> clauses = order.getContract().get(0).getClause();
+            List<ClauseType> clauses = getNonTermOrConditionContract(order).getClause();
             for(ClauseType clause : clauses) {
                 if(clause.getType().contentEquals(eu.nimble.service.model.ubl.extension.ClauseType.DOCUMENT.toString())) {
                     DocumentClauseType docClause = (DocumentClauseType) clause;
@@ -116,6 +117,17 @@ public class DefaultOrderResponseSender  implements JavaDelegate {
         }
 
         return dataMonitoringDemanded && orderResponse.isAcceptedIndicator();
+    }
+
+    private ContractType getNonTermOrConditionContract(OrderType order){
+        for(ContractType contract : order.getContract()){
+            for(ClauseType clause:contract.getClause()){
+                if(clause.getType() != null){
+                    return contract;
+                }
+            }
+        }
+        return null;
     }
 
     private void createDataChannel(OrderType order, OrderResponseSimpleType orderResponse, String buyerId, String sellerId, String processInstanceId, String bearerToken) {
