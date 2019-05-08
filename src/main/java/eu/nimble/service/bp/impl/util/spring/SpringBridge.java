@@ -3,6 +3,7 @@ package eu.nimble.service.bp.impl.util.spring;
 import eu.nimble.common.rest.identity.IIdentityClientTyped;
 import eu.nimble.service.bp.config.BusinessProcessPersistenceConfig;
 import eu.nimble.service.bp.config.GenericConfig;
+import eu.nimble.service.bp.impl.contract.FrameContractService;
 import eu.nimble.utility.persistence.binary.BinaryContentService;
 import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
 import org.springframework.beans.BeansException;
@@ -21,18 +22,16 @@ public class SpringBridge implements ApplicationContextAware {
     private static ApplicationContext applicationContext;
     @Autowired
     private GenericConfig genericConfig;
-
     @Autowired
     private IIdentityClientTyped iIdentityClientTyped;
-
     @Autowired
     private BusinessProcessPersistenceConfig bpConfig;
-
     @Autowired
     private ResourceValidationUtility resourceValidationUtil;
-
     @Autowired
     private BinaryContentService binaryContentService;
+    @Autowired
+    private FrameContractService frameContractService;
 
     public static SpringBridge getInstance() {
         return applicationContext.getBean(SpringBridge.class);
@@ -62,5 +61,9 @@ public class SpringBridge implements ApplicationContextAware {
 
     public BinaryContentService getBinaryContentService() {
         return binaryContentService;
+    }
+
+    public FrameContractService getFrameContractService() {
+        return frameContractService;
     }
 }

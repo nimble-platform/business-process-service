@@ -17,7 +17,6 @@ import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecut
 import eu.nimble.utility.Configuration;
 import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.JsonSerializationUtility;
-import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.persistence.resource.EntityIdAwareRepositoryWrapper;
 import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
 import io.swagger.annotations.*;
@@ -577,35 +576,6 @@ public class ContractController {
         }
     }
 
-    @ApiOperation(value = "",notes = "Gets the DigitalAgreement specified by the id")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200,message = "Retrieved the specified DigitalAgreement successfully", response = DigitalAgreementType.class),
-            @ApiResponse(code = 401,message = "Invalid token. No user was found for the provided token"),
-            @ApiResponse(code = 500,message = "Unexpected error while retriving the passed DigitalAgreement")
-    })
-    @RequestMapping(value = "/contract/digital-agreement/{id}",
-            produces = {"application/json"},
-            method = RequestMethod.GET)
-    public ResponseEntity getDigitalAgreement(@ApiParam(value = "Identifier of the DigitalAgreement to be retrieved", required = true) @PathVariable String id,
-                                                 @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
-
-        try {
-            logger.info("Incoming request to retrieve a DigitalAgreement. id: {}", id);
-            // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
-            if (tokenCheck != null) {
-                return tokenCheck;
-            }
-
-            DigitalAgreementType digitalAgreement = ContractPersistenceUtility.getDigitalAgreementById(id);
-            logger.info("Retrieved DigitalAgreement successfully. id: {}", id);
-            return ResponseEntity.ok(JsonSerializationUtility.getObjectMapper().writeValueAsString(digitalAgreement));
-
-        } catch (Exception e) {
-            return createResponseEntityAndLog(String.format("Unexpected error while getting DigitalAgreement. id: %s", id), e, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
     @ApiOperation(value = "", notes = "Gets the DigitalAgreement specified by the buyer, seller and product ids")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Retrieved the specified DigitalAgreement successfully", response = DigitalAgreementType.class),
@@ -628,7 +598,7 @@ public class ContractController {
                 return tokenCheck;
             }
 
-            DigitalAgreementType digitalAgreement = ContractPersistenceUtility.getDigitalAgreementById(sellerId, buyerId, manufacturersItemId);
+            DigitalAgreementType digitalAgreement = ContractPersistenceUtility.getFrameContractAgreementById(sellerId, buyerId, manufacturersItemId);
             if(digitalAgreement == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(String.format("No DigitalAgreement found. seller id: %s, buyer id: %s, product hjid: %s", sellerId, buyerId, manufacturersItemId));
             }
