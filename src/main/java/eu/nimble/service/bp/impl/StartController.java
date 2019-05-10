@@ -103,7 +103,7 @@ public class StartController implements StartApi {
         }
 
         // TODO move the business logic below, to a dedicated place
-        GenericJPARepository repo = repoFactory.forBpRepository();
+        GenericJPARepository repo = repoFactory.forBpRepository(true);
         ProcessInstance processInstance = null;
         // get BusinessProcessContext
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);

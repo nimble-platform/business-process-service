@@ -1,6 +1,5 @@
 package eu.nimble.service.bp.impl.util.persistence.bp;
 
-import eu.nimble.common.rest.identity.IdentityClientTyped;
 import eu.nimble.service.bp.hyperjaxb.model.CollaborationGroupDAO;
 import eu.nimble.service.bp.hyperjaxb.model.CollaborationStatus;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
@@ -37,11 +36,11 @@ public class CollaborationGroupDAOUtility {
     }
     
     public static CollaborationGroupDAO getAssociatedCollaborationGroup(String partyId, Long associatedGroupId) {
-        return new JPARepositoryFactory().forBpRepository().getSingleEntity(QUERY_GET_ASSOCIATED_GROUP, new String[]{"partyId", "associatedGroupId"}, new Object[]{partyId, associatedGroupId});
+        return new JPARepositoryFactory().forBpRepository(true).getSingleEntity(QUERY_GET_ASSOCIATED_GROUP, new String[]{"partyId", "associatedGroupId"}, new Object[]{partyId, associatedGroupId});
     }
 
     public static CollaborationGroupDAO getCollaborationGroupOfProcessInstanceGroup(String groupId) {
-        return new JPARepositoryFactory().forBpRepository().getSingleEntity(QUERY_GET_GROUP_OF_PROCESS_INSTANCE_GROUP, new String[]{"groupId"}, new Object[]{groupId});
+        return new JPARepositoryFactory().forBpRepository(true).getSingleEntity(QUERY_GET_GROUP_OF_PROCESS_INSTANCE_GROUP, new String[]{"groupId"}, new Object[]{groupId});
     }
 
     public static CollaborationGroupDAO createCollaborationGroupDAO() {
@@ -53,7 +52,7 @@ public class CollaborationGroupDAOUtility {
     }
 
     public static void deleteCollaborationGroupDAOByID(Long groupID) {
-        GenericJPARepository repo = new JPARepositoryFactory().forBpRepository();
+        GenericJPARepository repo = new JPARepositoryFactory().forBpRepository(true);
         CollaborationGroupDAO group = repo.getSingleEntityByHjid(CollaborationGroupDAO.class, groupID);
         // delete references to this group
         for (Long id : group.getAssociatedCollaborationGroups()) {
@@ -65,7 +64,7 @@ public class CollaborationGroupDAOUtility {
     }
 
     public static CollaborationGroupDAO archiveCollaborationGroup(String id) {
-        GenericJPARepository repo = new JPARepositoryFactory().forBpRepository();
+        GenericJPARepository repo = new JPARepositoryFactory().forBpRepository(true);
         CollaborationGroupDAO collaborationGroupDAO = repo.getSingleEntityByHjid(CollaborationGroupDAO.class, Long.parseLong(id));
         // archive the collaboration group
         collaborationGroupDAO.setArchived(true);
@@ -78,7 +77,7 @@ public class CollaborationGroupDAOUtility {
     }
 
     public static CollaborationGroupDAO restoreCollaborationGroup(String id) {
-        GenericJPARepository repo = new JPARepositoryFactory().forBpRepository();
+        GenericJPARepository repo = new JPARepositoryFactory().forBpRepository(true);
         CollaborationGroupDAO collaborationGroupDAO = repo.getSingleEntityByHjid(CollaborationGroupDAO.class, Long.parseLong(id));
         // archive the collaboration group
         collaborationGroupDAO.setArchived(false);
@@ -104,7 +103,7 @@ public class CollaborationGroupDAOUtility {
             int offset) {
 
         QueryData query = getGroupRetrievalQuery(GroupQueryType.GROUP, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories, status, startTime, endTime);
-        List<Object> collaborationGroups = new JPARepositoryFactory().forBpRepository().getEntities(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray(),limit,offset);
+        List<Object> collaborationGroups = new JPARepositoryFactory().forBpRepository(true).getEntities(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray(),limit,offset);
         List<CollaborationGroupDAO> results = new ArrayList<>();
         for (Object groupResult : collaborationGroups) {
             Object[] resultItems = (Object[]) groupResult;
@@ -193,7 +192,7 @@ public class CollaborationGroupDAOUtility {
 
             List<PartyType> parties = null;
             try {
-                parties = SpringBridge.getInstance().getIdentityClientTyped().getParties(bearerToken, filter.getTradingPartnerIDs());
+                parties = SpringBridge.getInstance().getiIdentityClientTyped().getParties(bearerToken, filter.getTradingPartnerIDs());
             } catch (IOException e) {
                 String msg = String.format("Failed to get parties while getting categories for party: %s, collaboration role: %s, archived: %B", partyId, collaborationRole, archived);
                 logger.error(msg);

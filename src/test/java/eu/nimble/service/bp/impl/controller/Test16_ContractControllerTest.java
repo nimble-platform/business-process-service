@@ -16,7 +16,6 @@ import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -30,15 +29,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("local_dev")
+@ActiveProfiles("test")
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringJUnit4ClassRunner.class)
 public class Test16_ContractControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
-    @Autowired
-    private Environment environment;
 
     private ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
     private final String dataMonitoringJSON = "/controller/dataMonitoringJSON.txt";
@@ -53,7 +50,7 @@ public class Test16_ContractControllerTest {
         MockHttpServletRequestBuilder request = patch("/documents/" + Test01_StartControllerTest.orderId1 + "/contract/clause/document")
                 .param("clauseType", "ITEM_DETAILS")
                 .param("clauseDocumentId", Test01_StartControllerTest.iirId1)
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
+                .header("Authorization", TestConfig.initiatorPersonId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         OrderType order = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), OrderType.class);
@@ -73,7 +70,7 @@ public class Test16_ContractControllerTest {
         MockHttpServletRequestBuilder request = patch("/documents/" + Test01_StartControllerTest.orderId1 + "/contract/clause/data-monitoring")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(dataMonitoring)
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
+                .header("Authorization", TestConfig.initiatorPersonId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         OrderType order = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), OrderType.class);

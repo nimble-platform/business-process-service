@@ -97,9 +97,9 @@ public class ContractController {
             }
 
             // get person using the given bearer token
-            PersonType person = SpringBridge.getInstance().getIdentityClientTyped().getPerson(bearerToken);
+            PersonType person = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken);
             // get party for the person
-            PartyType party = SpringBridge.getInstance().getIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
+            PartyType party = SpringBridge.getInstance().getiIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
 
             // parse the base clause object to get the type
             ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
@@ -236,9 +236,9 @@ public class ContractController {
         try {
             logger.info("Deleting clause: {} from contract: {}", clauseId, contractId);
             // get person using the given bearer token
-            PersonType person = SpringBridge.getInstance().getIdentityClientTyped().getPerson(bearerToken);
+            PersonType person = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken);
             // get party for the person
-            PartyType party = SpringBridge.getInstance().getIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
+            PartyType party = SpringBridge.getInstance().getiIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
 
             // check token
             ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
@@ -247,8 +247,7 @@ public class ContractController {
             }
 
             // check existence of contract
-            ContractType contract = ContractPersistenceUtility.getContract(contractId);
-            if (contract == null) {
+            if (!ContractPersistenceUtility.contractExists(contractId)) {
                 return createResponseEntityAndLog("Invalid contract id: " + contractId, HttpStatus.NOT_FOUND);
             }
 
@@ -267,7 +266,7 @@ public class ContractController {
             }
 
             // return updated version
-            contract = ContractPersistenceUtility.getContract(contractId);
+            ContractType contract = ContractPersistenceUtility.getContract(contractId);
             logger.info("Deleted clause: {} from contract: {}", clauseId, contractId);
             return ResponseEntity.ok().body(contract);
 
@@ -356,9 +355,9 @@ public class ContractController {
             }
 
             // get person using the given bearer token
-            PersonType person = SpringBridge.getInstance().getIdentityClientTyped().getPerson(bearerToken);
+            PersonType person = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken);
             // get party for the person
-            PartyType party = SpringBridge.getInstance().getIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
+            PartyType party = SpringBridge.getInstance().getiIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
 
             // get contract of the specified document
             Object document = DocumentPersistenceUtility.getUBLDocument(documentId, clauseDocumentMetadata.getType());
@@ -420,9 +419,9 @@ public class ContractController {
             }
 
             // get person using the given bearer token
-            PersonType person = SpringBridge.getInstance().getIdentityClientTyped().getPerson(bearerToken);
+            PersonType person = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken);
             // get party for the person
-            PartyType party = SpringBridge.getInstance().getIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
+            PartyType party = SpringBridge.getInstance().getiIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
 
             // check contract of the document
             ProcessDocumentMetadataDAO documentMetadata = ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId);

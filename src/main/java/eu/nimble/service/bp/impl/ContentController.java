@@ -45,7 +45,7 @@ public class ContentController implements ContentApi {
 
         try {
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            boolean isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(bearerToken);
             if(!isValid){
                 String msg = String.format("No user exists for the given token : %s",bearerToken);
                 logger.error(msg);
@@ -81,7 +81,7 @@ public class ContentController implements ContentApi {
         logger.info(" $$$ Deleting business process definition for ... {}", processID);
         try {
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            boolean isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(bearerToken);
             if(!isValid){
                 String msg = String.format("No user exists for the given token : %s",bearerToken);
                 logger.error(msg);
@@ -108,7 +108,7 @@ public class ContentController implements ContentApi {
         logger.info(" $$$ Getting business process definition for ... {}", processID);
         try {
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            boolean isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(bearerToken);
             if(!isValid){
                 String msg = String.format("No user exists for the given token : %s",bearerToken);
                 logger.error(msg);
@@ -138,7 +138,7 @@ public class ContentController implements ContentApi {
         logger.info(" $$$ Getting business process definitions");
         try {
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            boolean isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(bearerToken);
             if(!isValid){
                 String msg = String.format("No user exists for the given token : %s",bearerToken);
                 logger.error(msg);
@@ -184,7 +184,7 @@ public class ContentController implements ContentApi {
 
         try {
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            boolean isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(bearerToken);
             if(!isValid){
                 String msg = String.format("No user exists for the given token : %s",bearerToken);
                 logger.error(msg);

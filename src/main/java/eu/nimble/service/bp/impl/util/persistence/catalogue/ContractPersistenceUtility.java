@@ -22,7 +22,7 @@ public class ContractPersistenceUtility {
     private static final String QUERY_GET_CONTRACT_CLAUSE = "SELECT clause FROM ContractType contract join contract.clause clause WHERE contract.ID = :contractId AND clause.ID = :clauseId";
     private static final String QUERY_GET_DATA_MONITORING_CLAUSE = "SELECT clause FROM DataMonitoringClauseType clause WHERE clause.ID = :clauseId";
     private static final String QUERY_GET_DOCUMENT_CLAUSE = "SELECT clause FROM DocumentClauseType clause WHERE clause.ID = :clauseId";
-    private static final String QUERY_CONTRACT_EXISTS = "SELECT count(*) FROM ContractType contract WHERE contract.ID = :contractId'";
+    private static final String QUERY_CONTRACT_EXISTS = "SELECT count(*) FROM ContractType contract WHERE contract.ID = :contractId";
     private static final String QUERY_GET_CONTRACT = "SELECT contract FROM ContractType contract WHERE contract.ID = :contractId";
 
     public static ClauseType getBaseClause(String clauseId) {
@@ -71,17 +71,17 @@ public class ContractPersistenceUtility {
     }
 
     public static ClauseType getContractClause(String contractId, String clauseId) {
-        ClauseType clause = new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(QUERY_GET_CONTRACT_CLAUSE, new String[]{"contractId", "clauseId"}, new Object[]{contractId, clauseId});
+        ClauseType clause = new JPARepositoryFactory().forCatalogueRepository(true).getSingleEntity(QUERY_GET_CONTRACT_CLAUSE, new String[]{"contractId", "clauseId"}, new Object[]{contractId, clauseId});
         return clause;
     }
 
     public static DataMonitoringClauseType getDataMonitoringClause(String clauseId) {
-        DataMonitoringClauseType clause = new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(QUERY_GET_DATA_MONITORING_CLAUSE, new String[]{"clauseId"}, new Object[]{clauseId});
+        DataMonitoringClauseType clause = new JPARepositoryFactory().forCatalogueRepository(true).getSingleEntity(QUERY_GET_DATA_MONITORING_CLAUSE, new String[]{"clauseId"}, new Object[]{clauseId});
         return clause;
     }
 
     public static DocumentClauseType getDocumentClause(String clauseId) {
-        DocumentClauseType clause = new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(QUERY_GET_DOCUMENT_CLAUSE, new String[]{"clauseId"}, new Object[]{clauseId});
+        DocumentClauseType clause = new JPARepositoryFactory().forCatalogueRepository(true).getSingleEntity(QUERY_GET_DOCUMENT_CLAUSE, new String[]{"clauseId"}, new Object[]{clauseId});
         return clause;
     }
 
@@ -95,7 +95,7 @@ public class ContractPersistenceUtility {
     }
 
     public static ContractType getContract(String contractId) {
-        ContractType contract = new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(QUERY_GET_CONTRACT, new String[]{"contractId"}, new Object[]{contractId});
+        ContractType contract = new JPARepositoryFactory().forCatalogueRepository(true).getSingleEntity(QUERY_GET_CONTRACT, new String[]{"contractId"}, new Object[]{contractId});
         return contract;
     }
 

@@ -42,7 +42,7 @@ public class ApplicationController implements ApplicationApi {
         logger.debug(" $$$ {}", body.toString());
         try {
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            boolean isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(bearerToken);
             if(!isValid){
                 String msg = String.format("No user exists for the given token : %s",bearerToken);
                 logger.error(msg);
@@ -66,7 +66,7 @@ public class ApplicationController implements ApplicationApi {
         logger.info(" $$$ Deleting ProcessApplicationConfigurations for ... {}", partnerID);
         try {
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            boolean isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(bearerToken);
             if(!isValid){
                 String msg = String.format("No user exists for the given token : %s",bearerToken);
                 logger.error(msg);
@@ -90,7 +90,7 @@ public class ApplicationController implements ApplicationApi {
         logger.info(" $$$ Getting ProcessApplicationConfigurations for ... {}", partnerID);
         try {
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            boolean isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(bearerToken);
             if(!isValid){
                 String msg = String.format("No user exists for the given token : %s",bearerToken);
                 logger.error(msg);
@@ -121,7 +121,7 @@ public class ApplicationController implements ApplicationApi {
         logger.info(" $$$ Deleting ProcessApplicationConfigurations for ... {}", partnerID);
         try {
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            boolean isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(bearerToken);
             if(!isValid){
                 String msg = String.format("No user exists for the given token : %s",bearerToken);
                 logger.error(msg);
@@ -148,7 +148,7 @@ public class ApplicationController implements ApplicationApi {
         logger.debug(" $$$ {}", body.toString());
         try {
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            boolean isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(bearerToken);
             if(!isValid){
                 String msg = String.format("No user exists for the given token : %s",bearerToken);
                 logger.error(msg);

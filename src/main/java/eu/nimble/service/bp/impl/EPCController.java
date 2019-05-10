@@ -104,14 +104,13 @@ public class EPCController {
 
             OrderType order = (OrderType) DocumentPersistenceUtility.getUBLDocument(orderId, DocumentType.ORDER);
 
-            CatalogueLineType catalogueLine = CataloguePersistenceUtility.getCatalogueLine(order);
-
+            Object[] ttDetails = CataloguePersistenceUtility.getCatalogueLineTTDetails(order);
 
             TTInfo ttInfo = new TTInfo();
-            ttInfo.setEventUrl(catalogueLine.getGoodsItem().getItem().getTrackAndTraceDetails().getEventURL());
-            ttInfo.setMasterUrl(catalogueLine.getGoodsItem().getItem().getTrackAndTraceDetails().getMasterURL());
-            ttInfo.setProductionProcessTemplate(catalogueLine.getGoodsItem().getItem().getTrackAndTraceDetails().getProductionProcessTemplate());
-            ttInfo.setRelatedProductId(catalogueLine.getHjid().toString());
+            ttInfo.setRelatedProductId(ttDetails[0].toString());
+            ttInfo.setEventUrl(ttDetails[1].toString());
+            ttInfo.setMasterUrl(ttDetails[2].toString());
+            ttInfo.setProductionProcessTemplate(ttDetails[3].toString());
 
             logger.info("Received track & tracing details for epc: {}", epc);
             return ResponseEntity.ok(ttInfo);
@@ -143,15 +142,14 @@ public class EPCController {
                 return tokenCheck;
             }
 
-            CatalogueLineType catalogueLine = new JPARepositoryFactory().forCatalogueRepository().getSingleEntityByHjid(CatalogueLineType.class, publishedProductID);
-
-            if(catalogueLine == null){
+            Object[] partyIdAndManufacturerItemId = CataloguePersistenceUtility.getCatalogueLinePartyIdAndManufacturersItemIdentification(publishedProductID);
+            if(partyIdAndManufacturerItemId == null){
                 String msg = "There is no catalogue line for hjid : %d";
                 logger.error(String.format(msg,publishedProductID));
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(String.format(msg,publishedProductID));
             }
 
-            List<String> orderIds = DocumentPersistenceUtility.getOrderIds(catalogueLine.getGoodsItem().getItem().getManufacturerParty().getPartyIdentification().get(0).getID(), catalogueLine.getGoodsItem().getItem().getManufacturersItemIdentification().getID());
+            List<String> orderIds = DocumentPersistenceUtility.getOrderIds(partyIdAndManufacturerItemId[0].toString(), partyIdAndManufacturerItemId[1].toString());
 
             String params = "";
             int size = orderIds.size();

@@ -14,7 +14,6 @@ import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -28,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("local_dev")
+@ActiveProfiles("test")
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringJUnit4ClassRunner.class)
 @Ignore
@@ -36,8 +35,6 @@ public class Test09_PreferenceControllerTest2 {
 
     @Autowired
     private MockMvc mockMvc;
-    @Autowired
-    private Environment environment;
 
     private final String preferenceJSON = "/controller/processPreferenceJSON2.txt";
     private final String partnerId = "706";
@@ -48,7 +45,7 @@ public class Test09_PreferenceControllerTest2 {
     @Test
     public void getProcessPartnerPreference() throws Exception {
         MockHttpServletRequestBuilder request = get("/preference/" + partnerId)
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
+                .header("Authorization", TestConfig.initiatorPersonId);
 
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
@@ -61,7 +58,7 @@ public class Test09_PreferenceControllerTest2 {
     public void updateProcessPartnerPreference() throws Exception {
         String preference = IOUtils.toString(ProcessPreferences.class.getResourceAsStream(preferenceJSON));
         MockHttpServletRequestBuilder request = put("/preference")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"))
+                .header("Authorization", TestConfig.initiatorPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(preference);
 

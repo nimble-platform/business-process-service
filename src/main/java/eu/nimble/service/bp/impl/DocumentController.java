@@ -131,7 +131,7 @@ public class DocumentController {
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
         try{
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            boolean isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(bearerToken);
             if(!isValid){
                 String msg = String.format("No user exists for the given token : %s",bearerToken);
                 logger.error(msg);
@@ -155,7 +155,7 @@ public class DocumentController {
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
         try{
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            boolean isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(bearerToken);
             if(!isValid){
                 String msg = String.format("No user exists for the given token : %s",bearerToken);
                 logger.error(msg);
@@ -179,7 +179,7 @@ public class DocumentController {
         logger.info(" $$$ Deleting Document for ... {}", documentID);
         try {
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            boolean isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(bearerToken);
             if(!isValid){
                 String msg = String.format("No user exists for the given token : %s",bearerToken);
                 logger.error(msg);
@@ -201,7 +201,7 @@ public class DocumentController {
         logger.info(" $$$ Getting Document for partner {}, type {}", partnerID, type);
         try {
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            boolean isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(bearerToken);
             if(!isValid){
                 String msg = String.format("No user exists for the given token : %s",bearerToken);
                 logger.error(msg);
@@ -229,7 +229,7 @@ public class DocumentController {
         logger.info(" $$$ Getting Document for partner {}, type {}, source {}", partnerID, type, source);
         try {
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            boolean isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(bearerToken);
             if(!isValid){
                 String msg = String.format("No user exists for the given token : %s",bearerToken);
                 logger.error(msg);
@@ -257,7 +257,7 @@ public class DocumentController {
         logger.info(" $$$ Getting Document for partner {}, type {}, status {}, source {}", partnerID, type, status, source);
         try {
             // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
+            boolean isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(bearerToken);
             if(!isValid){
                 String msg = String.format("No user exists for the given token : %s",bearerToken);
                 logger.error(msg);

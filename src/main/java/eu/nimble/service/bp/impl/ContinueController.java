@@ -131,7 +131,7 @@ public class ContinueController implements ContinueApi {
         ProcessInstanceGroupDAO existingGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(sourceGid);
 
         // check whether the group for the trading partner is still there. If not, create a new one
-        ProcessInstanceGroupDAO associatedGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(body.getVariables().getInitiatorID(), sourceGid);
+        ProcessInstanceGroupDAO associatedGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(body.getVariables().getInitiatorID(), sourceGid,false);
         if (associatedGroup == null) {
             associatedGroup = ProcessInstanceGroupDAOUtility.createProcessInstanceGroupDAO(
                     body.getVariables().getInitiatorID(),
@@ -143,7 +143,7 @@ public class ContinueController implements ContinueApi {
             CollaborationGroupDAO initiatorCollaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroupDAO(body.getVariables().getInitiatorID(), Long.parseLong(responderCollaborationGID));
             // create a new initiator collaboration group
             if (initiatorCollaborationGroup == null) {
-                CollaborationGroupDAO responderCollaborationGroup = repoFactory.forBpRepository().getSingleEntityByHjid(CollaborationGroupDAO.class, Long.parseLong(responderCollaborationGID));
+                CollaborationGroupDAO responderCollaborationGroup = repoFactory.forBpRepository(true).getSingleEntityByHjid(CollaborationGroupDAO.class, Long.parseLong(responderCollaborationGID));
                 initiatorCollaborationGroup = CollaborationGroupDAOUtility.createCollaborationGroupDAO();
 
                 // set association between collaboration groups

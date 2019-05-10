@@ -12,7 +12,6 @@ import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.core.env.Environment;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
@@ -25,15 +24,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("local_dev")
+@ActiveProfiles("test")
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringJUnit4ClassRunner.class)
 public class Test03_StatisticsControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
-    @Autowired
-    private Environment environment;
 
     private Gson gson = new Gson();
 
@@ -51,7 +48,7 @@ public class Test03_StatisticsControllerTest {
     @Test
     public void getTradingVolume() throws Exception {
         MockHttpServletRequestBuilder request = get("/statistics/trading-volume")
-                .header("Authorization", environment.getProperty("nimble.test-responder-token"))
+                .header("Authorization", TestConfig.responderPersonId)
                 .param("partyId", partyId)
                 .param("role", role)
                 .param("status", statusTradingVolume);
@@ -64,7 +61,7 @@ public class Test03_StatisticsControllerTest {
     @Test
     public void getProcessCount() throws Exception {
         MockHttpServletRequestBuilder request = get("/statistics/total-number/business-process")
-                .header("Authorization", environment.getProperty("nimble.test-responder-token"))
+                .header("Authorization", TestConfig.responderPersonId)
                 .param("status", statusProcessCount);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
@@ -76,7 +73,7 @@ public class Test03_StatisticsControllerTest {
     @Test
     public void getNonOrderedProducts() throws Exception {
         MockHttpServletRequestBuilder request = get("/statistics/non-ordered")
-                .header("Authorization", environment.getProperty("nimble.test-responder-token"))
+                .header("Authorization", TestConfig.responderPersonId)
                 .param("partyId", partyId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
@@ -91,7 +88,7 @@ public class Test03_StatisticsControllerTest {
                 .param("partyId", partyId)
                 .param("role", role)
                 .param("businessProcessType", businessProcessType)
-                .header("Authorization", environment.getProperty("nimble.test-responder-token"));
+                .header("Authorization", TestConfig.responderPersonId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         BusinessProcessCount count = gson.fromJson(mvcResult.getResponse().getContentAsString(), BusinessProcessCount.class);

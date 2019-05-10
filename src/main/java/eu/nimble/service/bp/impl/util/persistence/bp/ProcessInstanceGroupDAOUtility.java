@@ -1,6 +1,5 @@
 package eu.nimble.service.bp.impl.util.persistence.bp;
 
-import eu.nimble.common.rest.identity.IdentityClientTyped;
 import eu.nimble.service.bp.hyperjaxb.model.*;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupFilter;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
@@ -63,15 +62,19 @@ public class ProcessInstanceGroupDAOUtility {
 
     private static final String QUERY_GET_BY_HJID = "SELECT c FROM ProcessInstanceGroupDAO c WHERE c.hjid = :hjid";
     public static List<ProcessInstanceGroupDAO> getProcessInstanceGroupDAO(Long hjid) {
-        return new JPARepositoryFactory().forBpRepository().getSingleEntity(QUERY_GET_BY_HJID, new String[]{"hjid"}, new Object[]{hjid});
+        return new JPARepositoryFactory().forBpRepository(true).getSingleEntity(QUERY_GET_BY_HJID, new String[]{"hjid"}, new Object[]{hjid});
     }
 
     public static Object getProcessInstanceGroups(String groupId) {
-        return new JPARepositoryFactory().forBpRepository().getSingleEntity(QUERY_GET_PROCESS_INSTANCE_GROUPS, new String[]{"groupId"}, new Object[]{groupId});
+        return new JPARepositoryFactory().forBpRepository(true).getSingleEntity(QUERY_GET_PROCESS_INSTANCE_GROUPS, new String[]{"groupId"}, new Object[]{groupId});
     }
 
-    public static ProcessInstanceGroupDAO getProcessInstanceGroup(String partyId, String associatedGroupId) {
-        return new JPARepositoryFactory().forBpRepository().getSingleEntity(QUERY_GET_BY_ASSOCIATED_GROUP_ID, new String[]{"partyId", "associatedGroupId"}, new Object[]{partyId, associatedGroupId});
+    public static ProcessInstanceGroupDAO getProcessInstanceGroupDAO(String partyId, String associatedGroupId,boolean lazyDisabled) {
+        return new JPARepositoryFactory().forBpRepository(lazyDisabled).getSingleEntity(QUERY_GET_BY_ASSOCIATED_GROUP_ID, new String[]{"partyId", "associatedGroupId"}, new Object[]{partyId, associatedGroupId});
+    }
+
+    public static ProcessInstanceGroupDAO getProcessInstanceGroupDAO(String partyId, String associatedGroupId) {
+        return getProcessInstanceGroupDAO(partyId,associatedGroupId,true);
     }
 
     public static String getPrecedingProcessInstanceId(String processInstanceId) {
@@ -117,11 +120,6 @@ public class ProcessInstanceGroupDAOUtility {
         pig.setLastActivityTime((String) resultItems[1]);
         pig.setFirstActivityTime((String) resultItems[2]);
         return pig;
-    }
-
-    public static ProcessInstanceGroupDAO getProcessInstanceGroupDAO(String partyId, String associatedGroupId) {
-        ProcessInstanceGroupDAO group = ProcessInstanceGroupDAOUtility.getProcessInstanceGroup(partyId, associatedGroupId);
-        return group;
     }
 
     public static ProcessInstanceDAO getProcessInstance(String processInstanceId) {

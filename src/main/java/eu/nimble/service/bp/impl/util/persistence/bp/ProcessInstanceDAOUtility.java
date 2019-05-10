@@ -13,7 +13,7 @@ public class ProcessInstanceDAOUtility {
     private static final String QUERY_GET_BY_ID = "SELECT pi FROM ProcessInstanceDAO pi WHERE pi.processInstanceID = :processInstanceId";
 
     public static ProcessInstanceDAO getById(String processInstanceId) {
-        return new JPARepositoryFactory().forBpRepository().getSingleEntity(QUERY_GET_BY_ID, new String[]{"processInstanceId"}, new Object[]{processInstanceId});
+        return new JPARepositoryFactory().forBpRepository(true).getSingleEntity(QUERY_GET_BY_ID, new String[]{"processInstanceId"}, new Object[]{processInstanceId});
     }
 
     public static List<String> getAllProcessInstanceIdsInCollaborationHistory(String processInstanceID) {

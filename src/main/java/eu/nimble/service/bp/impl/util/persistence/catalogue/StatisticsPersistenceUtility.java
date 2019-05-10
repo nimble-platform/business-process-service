@@ -87,8 +87,8 @@ public class StatisticsPersistenceUtility {
         return tradingVolume;
     }
 
-    public static NonOrderedProducts getNonOrderedProducts(Integer partyId) {
-        String query = "select distinct new list(partyIdentification.ID, partyName.name.value, item.manufacturersItemIdentification.ID, itemName.value) from ItemType item join item.manufacturerParty.partyName partyName join item.manufacturerParty.partyIdentification partyIdentification JOIN item.name itemName" +
+    public static NonOrderedProducts getNonOrderedProducts(String bearerToken,Integer partyId) throws IOException {
+        String query = "select distinct new list(partyIdentification.ID, item.manufacturersItemIdentification.ID, itemName.value) from ItemType item join item.manufacturerParty.partyIdentification partyIdentification JOIN item.name itemName" +
                 " where item.transportationServiceDetails is null ";
         List<String> parameterNames = new ArrayList<>();
         List<Object> parameterValues = new ArrayList<>();
@@ -107,7 +107,9 @@ public class StatisticsPersistenceUtility {
         List<Object> results = new JPARepositoryFactory().forCatalogueRepository().getEntities(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
         for (Object result : results) {
             List<String> dataArray = (List<String>) result;
-            nonOrderedProducts.addProduct(dataArray.get(0), dataArray.get(1), dataArray.get(2), dataArray.get(3));
+            // get party information from identity service
+            PartyType party = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,dataArray.get(0));
+            nonOrderedProducts.addProduct(dataArray.get(0), party.getPartyName().get(0).getName().getValue(), dataArray.get(1), dataArray.get(2));
         }
 
         return nonOrderedProducts;
@@ -119,13 +121,13 @@ public class StatisticsPersistenceUtility {
         String query = "select docMetadata.initiatorID from ProcessDocumentMetadataDAO docMetadata where docMetadata.status = 'WAITINGRESPONSE'";
 
         Set<String> activePartyIds = new HashSet<>();
-        List<String> results = new JPARepositoryFactory().forCatalogueRepository().getEntities(query);
+        List<String> results = new JPARepositoryFactory().forBpRepository().getEntities(query);
 
         activePartyIds.addAll(results);
 
         // get parties for a process that have completed already. Therefore return both the initiatorID and responderID
         query = "select distinct new list(docMetadata.initiatorID, docMetadata.responderID) from ProcessDocumentMetadataDAO docMetadata where docMetadata.status <> 'WAITINGRESPONSE'";
-        List<List<String>> secondResults = new JPARepositoryFactory().forCatalogueRepository().getEntities(query);
+        List<List<String>> secondResults = new JPARepositoryFactory().forBpRepository(true).getEntities(query);
         for (List<String> processPartyIds : secondResults) {
             activePartyIds.add(processPartyIds.get(0));
             activePartyIds.add(processPartyIds.get(1));
@@ -133,7 +135,7 @@ public class StatisticsPersistenceUtility {
 
         // get inactive companies
         List<PartyType> inactiveParties = new ArrayList<>();
-        InputStream parties = SpringBridge.getInstance().getIdentityClient().getAllPartyIds(bearerToken, new ArrayList<>()).body().asInputStream();
+        InputStream parties = SpringBridge.getInstance().getiIdentityClientTyped().getAllPartyIds(bearerToken, new ArrayList<>()).body().asInputStream();
         ObjectMapper mapper = JsonSerializationUtility.getObjectMapper();
         JsonFactory factory = mapper.getFactory();
         JsonParser parser = factory.createParser(parties);

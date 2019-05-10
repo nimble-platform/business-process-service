@@ -15,7 +15,6 @@ import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -30,15 +29,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("local_dev")
+@ActiveProfiles("test")
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringJUnit4ClassRunner.class)
 public class Test02_ContinueControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
-    @Autowired
-    private Environment environment;
 
     private final String orderResponseJSON1 = "/controller/orderResponseJSON1.txt";
 
@@ -50,7 +47,7 @@ public class Test02_ContinueControllerTest {
 
         // get collaboration group and process instance group ids for seller
         MockHttpServletRequestBuilder request = get("/collaboration-groups")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"))
+                .header("Authorization", TestConfig.initiatorPersonId)
                 .param("partyID","706")
                 .param("collaborationRole","SELLER")
                 .param("offset", "0")
@@ -62,7 +59,7 @@ public class Test02_ContinueControllerTest {
 
         // continue the process
         request = post("/continue")
-                .header("Authorization", environment.getProperty("nimble.test-responder-token"))
+                .header("Authorization", TestConfig.responderPersonId)
                 .param("gid", sellerProcessInstanceGroupID)
                 .param("collaborationGID", sellerCollaborationGroupID)
                 .contentType(MediaType.APPLICATION_JSON)

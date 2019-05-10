@@ -14,7 +14,6 @@ import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -28,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("local_dev")
+@ActiveProfiles("test")
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringJUnit4ClassRunner.class)
 @Ignore
@@ -36,8 +35,6 @@ public class Test08_PreferenceControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
-    @Autowired
-    private Environment environment;
 
     private final String preferenceJSON = "/controller/processPreferenceJSON.txt";
     private ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
@@ -47,7 +44,7 @@ public class Test08_PreferenceControllerTest {
     public void addProcessPartnerPreference() throws Exception {
         String preference = IOUtils.toString(ProcessPreferences.class.getResourceAsStream(preferenceJSON));
         MockHttpServletRequestBuilder request = post("/preference")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"))
+                .header("Authorization", TestConfig.initiatorPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(preference);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();

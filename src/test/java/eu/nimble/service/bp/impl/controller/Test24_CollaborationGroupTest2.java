@@ -13,7 +13,6 @@ import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.core.env.Environment;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
@@ -26,7 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("local_dev")
+@ActiveProfiles("test")
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringJUnit4ClassRunner.class)
 public class Test24_CollaborationGroupTest2 {
@@ -35,8 +34,6 @@ public class Test24_CollaborationGroupTest2 {
     private MockMvc mockMvc;
     @Autowired
     private ObjectMapper objectMapper;
-    @Autowired
-    private Environment environment;
 
     private final String productName = "QDeneme";
     private final String collaborationRole = "SELLER";
@@ -46,7 +43,7 @@ public class Test24_CollaborationGroupTest2 {
     @Test
     public void test1_getCollaborationGroup() throws Exception {
         MockHttpServletRequestBuilder request = get("/collaboration-groups/"+Test23_CollaborationGroupTest.collaborationGroupID)
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
+                .header("Authorization", TestConfig.initiatorPersonId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         CollaborationGroup collaborationGroup = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), CollaborationGroup.class);
@@ -56,19 +53,19 @@ public class Test24_CollaborationGroupTest2 {
     @Test
     public void test2_restoreCollaborationGroup() throws Exception{
         MockHttpServletRequestBuilder request = post("/collaboration-groups/"+Test23_CollaborationGroupTest.collaborationGroupID+"/restore")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
+                .header("Authorization", TestConfig.initiatorPersonId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
     }
 
     @Test
     public void test3_deleteCollaborationGroup() throws Exception{
         MockHttpServletRequestBuilder request = delete("/collaboration-groups/"+Test23_CollaborationGroupTest.collaborationGroupToBeDeletedId)
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"));
+                .header("Authorization", TestConfig.initiatorPersonId);
         this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         // check whether the deletion is successful or not
         request = get("/collaboration-groups")
-                .header("Authorization", environment.getProperty("nimble.test-initiator-token"))
+                .header("Authorization", TestConfig.initiatorPersonId)
                 .param("collaborationRole", collaborationRole)
                 .param("relatedProducts",relatedProduct)
                 .param("partyID", partyID);
@@ -82,7 +79,7 @@ public class Test24_CollaborationGroupTest2 {
     @Test
     public void test4_getOrderProcess() throws Exception{
         MockHttpServletRequestBuilder request = get("/process-instance-groups/order-document")
-                .header("Authorization", environment.getProperty("nimble.test-responder-token"))
+                .header("Authorization", TestConfig.responderPersonId)
                 .param("processInstanceId",Test23_CollaborationGroupTest.idOfTheLastProcessInstance);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 

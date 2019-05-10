@@ -32,7 +32,7 @@ public class ResourceIdCreationUtil {
 
     public void createResources() {
         // create resources for catalogus
-        List<CatalogueType> existingCatalogues = repoFactory.forCatalogueRepository().getEntities(CatalogueType.class);
+        List<CatalogueType> existingCatalogues = repoFactory.forCatalogueRepository(true).getEntities(CatalogueType.class);
 
         for (CatalogueType catalogue : existingCatalogues) {
             try {
@@ -52,7 +52,7 @@ public class ResourceIdCreationUtil {
         }
 
         // create resources for documents
-        List<ProcessDocumentMetadataDAO> documentMetadata = repoFactory.forBpRepository().getEntities(ProcessDocumentMetadataDAO.class);
+        List<ProcessDocumentMetadataDAO> documentMetadata = repoFactory.forBpRepository(true).getEntities(ProcessDocumentMetadataDAO.class);
         for(ProcessDocumentMetadataDAO metadata : documentMetadata) {
             Object document = DocumentPersistenceUtility.getUBLDocument(metadata.getDocumentID(), metadata.getType());
             try {
