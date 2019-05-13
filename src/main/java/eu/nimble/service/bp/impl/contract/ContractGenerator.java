@@ -111,61 +111,15 @@ public class ContractGenerator {
         }
 
         try {
-            // get values
+            // fill the map using Order's terms and conditions
             if(order != null){
-
-                values.put("$seller_id",createTradingTerm("$seller_id","STRING",order.getSellerSupplierParty().getParty().getPartyName().get(0).getName().getValue(),null));
-                values.put("$buyer_id",createTradingTerm("$buyer_id","STRING",order.getBuyerCustomerParty().getParty().getPartyName().get(0).getName().getValue(),null));
-
-                if(order.getPaymentTerms().getTradingTerms().size() > 0)
-                    values.put("$payment_id",createTradingTerm("$payment_id","CODE",getTradingTerms(order.getPaymentTerms().getTradingTerms()),"PAYMENT_MEANS_LIST"));
-                else
-                    values.put("$payment_id",createTradingTerm("$payment_id","CODE",payment_id_default,"PAYMENT_MEANS_LIST"));
-
-                if(order.getBuyerCustomerParty().getParty().getPostalAddress().getCountry().getName() != null){
-                    values.put("$buyer_country",createTradingTerm("$buyer_country","CODE",order.getBuyerCustomerParty().getParty().getPostalAddress().getCountry().getName().getValue(),"COUNTRY_LIST"));
+                for(ClauseType clauseType : getTermsAndConditionsContract(order).getClause()){
+                    for(TradingTermType tradingTermType: clauseType.getTradingTerms()){
+                        values.put(tradingTermType.getTradingTermFormat(),tradingTermType);
+                    }
                 }
-                else {
-                    values.put("$buyer_country",createTradingTerm("$buyer_country","CODE",buyer_country_default,"COUNTRY_LIST"));
-                }
-
-                if(!order.getSellerSupplierParty().getParty().getPerson().get(0).getContact().getTelephone().contentEquals("")){
-                    values.put("$seller_tel",createTradingTerm("$seller_tel","STRING",order.getSellerSupplierParty().getParty().getPerson().get(0).getContact().getTelephone(),null));
-                }
-                else {
-                    values.put("$seller_tel",createTradingTerm("$seller_tel","STRING",seller_tel_default,null));
-                }
-
-                if(!order.getSellerSupplierParty().getParty().getWebsiteURI().contentEquals("")){
-                    values.put("$seller_website",createTradingTerm("$seller_website","STRING",order.getSellerSupplierParty().getParty().getWebsiteURI(),null));
-                }
-                else {
-                    values.put("$seller_website",createTradingTerm("$seller_website","STRING",seller_website_default,null));
-                }
-
-                if(order.getOrderLine().get(0).getLineItem().getDeliveryTerms().getIncoterms() != null){
-                    values.put("$incoterms_id",createTradingTerm("$incoterms_id","CODE",order.getOrderLine().get(0).getLineItem().getDeliveryTerms().getIncoterms(),"INCOTERMS_LIST"));
-                }
-                else {
-                    values.put("$incoterms_id",createTradingTerm("$incoterms_id","CODE",incoterms_id_default,"INCOTERMS_LIST"));
-                }
-
-                values.put("$notices_id",createTradingTerm("$notices_id","STRING",constructAddress(order.getBuyerCustomerParty().getParty().getPartyName().get(0).getName().getValue(),order.getBuyerCustomerParty().getParty().getPostalAddress()),null));
-
-                // Use default values for the rest
-                values.put("$action_day",createTradingTerm("$action_day","NUMBER",action_day_default,null));
-                values.put("$inspection_id",createTradingTerm("$inspection_id","QUANTITY",inspection_id_default,null));
-                values.put("$warranty_seller_id",createTradingTerm("$warranty_seller_id","QUANTITY",warranty_seller_id_default,null));
-                values.put("$warranty_buyer_id",createTradingTerm("$warranty_buyer_id","QUANTITY",warranty_buyer_id_default,null));
-                values.put("$change_id",createTradingTerm("$change_id","QUANTITY",change_id_default,null));
-                values.put("$insurance_id",createTradingTerm("$insurance_id","QUANTITY",insurance_id_default,null));
-                values.put("$termination_id",createTradingTerm("$termination_id","QUANTITY",termination_id_default,null));
-                values.put("$shipment_id",createTradingTerm("$shipment_id","STRING",shipment_id_default,null));
-                values.put("$arbitrator_id",createTradingTerm("$arbitrator_id","STRING",arbitrator_id_default,null));
-                values.put("$agreement_id",createTradingTerm("$agreement_id","QUANTITY",agreement_id_default,null));
-                values.put("$failed_agreement",createTradingTerm("$failed_agreement","STRING",failed_agreement_default,null));
-                values.put("$decision_id",createTradingTerm("$decision_id","NUMBER",decision_id_default,null));
             }
+            // fill the map using Request for quotation's terms and conditions
             else if(requestForQuotation != null){
                 for(ClauseType clauseType : requestForQuotation.getTermOrCondition()){
                     for(TradingTermType tradingTermType: clauseType.getTradingTerms()){
