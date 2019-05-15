@@ -100,8 +100,9 @@ public class DefaultOrderResponseSender  implements JavaDelegate {
 
     private boolean needToCreateDataChannel(OrderType order, OrderResponseSimpleType orderResponse) {
         boolean dataMonitoringDemanded = false;
-        if(order.getContract().size() > 0){
-            List<ClauseType> clauses = getNonTermOrConditionContract(order).getClause();
+        ContractType contract = getNonTermOrConditionContract(order);
+        if(contract != null){
+            List<ClauseType> clauses = contract.getClause();
             for(ClauseType clause : clauses) {
                 if(clause.getType().contentEquals(eu.nimble.service.model.ubl.extension.ClauseType.DOCUMENT.toString())) {
                     DocumentClauseType docClause = (DocumentClauseType) clause;
@@ -120,10 +121,12 @@ public class DefaultOrderResponseSender  implements JavaDelegate {
     }
 
     private ContractType getNonTermOrConditionContract(OrderType order){
-        for(ContractType contract : order.getContract()){
-            for(ClauseType clause:contract.getClause()){
-                if(clause.getType() != null){
-                    return contract;
+        if(order.getContract().size() > 0){
+            for(ContractType contract : order.getContract()){
+                for(ClauseType clause:contract.getClause()){
+                    if(clause.getType() != null){
+                        return contract;
+                    }
                 }
             }
         }
