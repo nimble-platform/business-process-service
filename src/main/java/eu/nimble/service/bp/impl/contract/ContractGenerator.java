@@ -115,7 +115,7 @@ public class ContractGenerator {
             if(order != null){
                 for(ClauseType clauseType : getTermsAndConditionsContract(order).getClause()){
                     for(TradingTermType tradingTermType: clauseType.getTradingTerms()){
-                        values.put(tradingTermType.getTradingTermFormat(),tradingTermType);
+                        values.put(tradingTermType.getID(),tradingTermType);
                     }
                 }
             }
@@ -123,7 +123,7 @@ public class ContractGenerator {
             else if(requestForQuotation != null){
                 for(ClauseType clauseType : requestForQuotation.getTermOrCondition()){
                     for(TradingTermType tradingTermType: clauseType.getTradingTerms()){
-                        values.put(tradingTermType.getTradingTermFormat(),tradingTermType);
+                        values.put(tradingTermType.getID(),tradingTermType);
                     }
                 }
             }
@@ -263,12 +263,12 @@ public class ContractGenerator {
         return clauses;
     }
 
-    private TradingTermType createTradingTerm(String parameter, String valueQualifier, String value, String codeListId){
+    private TradingTermType createTradingTerm(String id, String valueQualifier, String value, String codeListId){
         TradingTermType tradingTerm = new TradingTermType();
 
         MultiTypeValueType multiTypeValue = new MultiTypeValueType();
 
-        tradingTerm.setTradingTermFormat(parameter);
+        tradingTerm.setID(id);
         tradingTerm.setValue(multiTypeValue);
 
         multiTypeValue.setValueQualifier(valueQualifier);
@@ -392,7 +392,7 @@ public class ContractGenerator {
 
             XWPFRun run = paragraph.createRun();
             for(TradingTermType tradingTerm : tradingTerms){
-                if(tradingTerm.getTradingTermFormat().contentEquals(parameter)){
+                if(tradingTerm.getID().contentEquals(parameter)){
                     // find the value of parameter
                     String value = "";
                     if(tradingTerm.getValue().getValueQualifier().contentEquals("STRING")){
