@@ -87,32 +87,32 @@ public class Test17_ContractControllerTest2 {
         Assert.assertSame(test3_expectedSize, contract.getClause().size());
     }
 
-    @Test
-    public void test4_getClauseDetailsAndUpdate() throws Exception {
-        // getClauseDetails
-        MockHttpServletRequestBuilder request = get("/clauses/" + Test16_ContractControllerTest.clauseId)
-                .header("Authorization", TestConfig.initiatorPersonId);
-        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
-
-        ClauseType clause = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ClauseType.class);
-
-        Assert.assertEquals(expectedType, clause.getType());
-
-        List<String> notes = new ArrayList<>();
-        notes.add("This is the note");
-        notes.add("This is the second note");
-        clause.setNote(notes);
-
-        //updateClause
-        request = put("/clauses/" + Test16_ContractControllerTest.clauseId)
-                .header("Authorization", TestConfig.initiatorPersonId)
-                .content(objectMapper.writeValueAsString(clause));
-        mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
-
-        clause = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ClauseType.class);
-
-        Assert.assertSame(test4_expectedSize, clause.getNote().size());
-    }
+//    @Test
+//    public void test4_getClauseDetailsAndUpdate() throws Exception {
+//        // getClauseDetails
+//        MockHttpServletRequestBuilder request = get("/clauses/" + Test16_ContractControllerTest.clauseId)
+//                .header("Authorization", TestConfig.initiatorPersonId);
+//        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+//
+//        ClauseType clause = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ClauseType.class);
+//
+//        Assert.assertEquals(expectedType, clause.getType());
+//
+//        List<String> notes = new ArrayList<>();
+//        notes.add("This is the note");
+//        notes.add("This is the second note");
+//        clause.setNote(notes);
+//
+//        //updateClause
+//        request = put("/clauses/" + Test16_ContractControllerTest.clauseId)
+//                .header("Authorization", TestConfig.initiatorPersonId)
+//                .content(objectMapper.writeValueAsString(clause));
+//        mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+//
+//        clause = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ClauseType.class);
+//
+//        Assert.assertSame(test4_expectedSize, clause.getNote().size());
+//    }
 
 
 }
