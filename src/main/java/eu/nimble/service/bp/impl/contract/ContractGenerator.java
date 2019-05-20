@@ -108,7 +108,7 @@ public class ContractGenerator {
                 InputStream inputStream = null;
                 try {
                     // read clauses from the json file
-                    inputStream = ClassLoader.getSystemClassLoader().getResourceAsStream("contract-bundle/order_terms_and_conditions.json");
+                    inputStream = ClassLoader.getSystemClassLoader().getResourceAsStream("/contract-bundle/order_terms_and_conditions.json");
                     String fileContent = IOUtils.toString(inputStream);
 
                     ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
