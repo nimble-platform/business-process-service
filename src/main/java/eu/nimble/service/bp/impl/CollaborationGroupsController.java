@@ -1,6 +1,7 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.hyperjaxb.model.CollaborationGroupDAO;
+import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
 import eu.nimble.service.bp.impl.util.HttpResponseUtil;
 import eu.nimble.service.bp.impl.util.persistence.bp.CollaborationGroupDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMapper;
@@ -176,6 +177,66 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
         repo.updateEntity(collaborationGroupDAO);
         logger.debug("Updated name of the collaboration group :" + id);
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body("true");
+        return response;
+    }
+
+
+
+	@Override
+    @ApiOperation(value = "", notes = "Merge list of CollaborationGroups")
+    public ResponseEntity<CollaborationGroup> mergeCollaborationGroups(
+            @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
+            @ApiParam(value = "Identifier of the base collaboration group ", required = true) @RequestParam("bcid") String bcid,
+            @ApiParam(value = "List of collaboration group id's to be merged.", required = true) @RequestParam(value = "cgids", required = true) List<String> cgids
+
+    ) {
+        logger.debug("Merging the collaboration groups");
+        // check token
+        ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
+        if (tokenCheck != null) {
+            return tokenCheck;
+        }
+
+        List<ProcessInstanceGroupDAO> allProcessInstanceGroups = new ArrayList<>();
+        List<Long> allColabrationGroupList  = new ArrayList<>();
+
+        GenericJPARepository repo = repoFactory.forBpRepository(true);
+        CollaborationGroupDAO collaborationGroupDAO = repo.getSingleEntityByHjid(CollaborationGroupDAO.class, Long.parseLong(bcid));
+        if (collaborationGroupDAO == null) {
+            String msg = String.format("There does not exist a collaboration group with id: %s", bcid);
+            logger.error(msg);
+            ResponseEntity response = ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            return response;
+        }
+
+        allProcessInstanceGroups = collaborationGroupDAO.getAssociatedProcessInstanceGroups();
+        allColabrationGroupList = collaborationGroupDAO.getAssociatedCollaborationGroups();
+
+        for(String cgid : cgids){
+            CollaborationGroupDAO mergeCollaborationGroupDAO = repo.getSingleEntityByHjid(CollaborationGroupDAO.class, Long.parseLong(cgid));
+            if(mergeCollaborationGroupDAO != null) {
+                allProcessInstanceGroups.addAll(mergeCollaborationGroupDAO.getAssociatedProcessInstanceGroups());
+                allColabrationGroupList.addAll(mergeCollaborationGroupDAO.getAssociatedCollaborationGroups());
+            }
+        }
+
+
+        collaborationGroupDAO.setAssociatedCollaborationGroups(allColabrationGroupList);
+        collaborationGroupDAO.setAssociatedProcessInstanceGroups(allProcessInstanceGroups);
+
+        repo.updateEntity(collaborationGroupDAO);
+
+        for(String cgid : cgids){
+            CollaborationGroupDAOUtility.deleteCollaborationGroupDAOByID(Long.parseLong(cgid));
+        }
+        collaborationGroupDAO.getAssociatedCollaborationGroups();
+
+
+        logger.debug("Updated name of the collaboration group :" + cgids);
+
+        CollaborationGroup collaborationGroup = HibernateSwaggerObjectMapper.convertCollaborationGroupDAO(collaborationGroupDAO);
+        ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(collaborationGroup);
+        logger.debug("Retrieved CollaborationGroup: {}", bcid);
         return response;
     }
 }
