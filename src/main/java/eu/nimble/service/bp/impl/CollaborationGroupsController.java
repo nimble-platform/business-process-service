@@ -217,9 +217,16 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
             if(mergeCollaborationGroupDAO != null) {
                 allProcessInstanceGroups.addAll(mergeCollaborationGroupDAO.getAssociatedProcessInstanceGroups());
                 allColabrationGroupList.addAll(mergeCollaborationGroupDAO.getAssociatedCollaborationGroups());
+                for (Long mergeId:mergeCollaborationGroupDAO.getAssociatedCollaborationGroups()) {
+                    CollaborationGroupDAO mergeCollaborationGroupDAOInstance = repo.getSingleEntityByHjid(CollaborationGroupDAO.class, mergeId);
+                    List<Long> finalAssociatedInstanceIdList = mergeCollaborationGroupDAOInstance.getAssociatedCollaborationGroups();
+                    finalAssociatedInstanceIdList.remove(Long.parseLong(cgid));
+                    finalAssociatedInstanceIdList.add(Long.parseLong(bcid));
+                    mergeCollaborationGroupDAOInstance.setAssociatedCollaborationGroups(finalAssociatedInstanceIdList);
+                    repo.updateEntity(mergeCollaborationGroupDAOInstance);
+                }
             }
         }
-
 
         collaborationGroupDAO.setAssociatedCollaborationGroups(allColabrationGroupList);
         collaborationGroupDAO.setAssociatedProcessInstanceGroups(allProcessInstanceGroups);
@@ -230,7 +237,6 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
             CollaborationGroupDAOUtility.deleteCollaborationGroupDAOByID(Long.parseLong(cgid));
         }
         collaborationGroupDAO.getAssociatedCollaborationGroups();
-
 
         logger.debug("Updated name of the collaboration group :" + cgids);
 
