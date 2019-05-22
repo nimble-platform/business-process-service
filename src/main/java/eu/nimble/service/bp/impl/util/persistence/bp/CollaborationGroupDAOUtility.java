@@ -108,8 +108,9 @@ public class CollaborationGroupDAOUtility {
         for (Object groupResult : collaborationGroups) {
             Object[] resultItems = (Object[]) groupResult;
             CollaborationGroupDAO collaborationGroupDAO = (CollaborationGroupDAO) resultItems[0];
-            results.add(collaborationGroupDAO);
 
+            // since in the result set, there may be multiple process instance groups belonging to the same collaboration group
+            // we need to be sure that there will be only one collaboration group in the final result
             CollaborationGroupDAO collaborationGroupInResults = null;
 
             // check whether the collaborationGroup is the results or not
