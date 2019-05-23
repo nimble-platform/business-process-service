@@ -100,9 +100,16 @@ public class CollaborationGroupDAOUtility {
             String startTime,
             String endTime,
             int limit,
-            int offset) {
+            int offset,
+            Boolean isProject) {
 
-        QueryData query = getGroupRetrievalQuery(GroupQueryType.GROUP, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories, status, startTime, endTime);
+        QueryData query = null;
+
+        if(isProject){
+            query = getGroupRetrievalQuery(GroupQueryType.PROJECT, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories, status, startTime, endTime);
+        }else{
+            query = getGroupRetrievalQuery(GroupQueryType.GROUP, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories, status, startTime, endTime);
+        }
         List<Object> collaborationGroups = new JPARepositoryFactory().forBpRepository(true).getEntities(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray(),limit,offset);
         List<CollaborationGroupDAO> results = new ArrayList<>();
         for (Object groupResult : collaborationGroups) {
@@ -144,9 +151,17 @@ public class CollaborationGroupDAOUtility {
                                                 List<String> relatedProductCategories,
                                                 List<String> status,
                                                 String startTime,
-                                                String endTime) {
-        QueryData query = getGroupRetrievalQuery(GroupQueryType.SIZE, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories, status, startTime, endTime);
-        int count = ((Long) new JPARepositoryFactory().forBpRepository().getSingleEntity(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray())).intValue();
+                                                String endTime,
+                                                Boolean isProject) {
+
+        QueryData query = null;
+        if(isProject){
+            query = getGroupRetrievalQuery(GroupQueryType.PROJECTSIZE, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories, status, startTime, endTime);
+        }else {
+             query = getGroupRetrievalQuery(GroupQueryType.SIZE, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories, status, startTime, endTime);
+        }
+        int count = ((Long) new JPARepositoryFactory().forBpRepository(true).getSingleEntity(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray())).intValue();
+
         return count;
     }
 
@@ -251,9 +266,9 @@ public class CollaborationGroupDAOUtility {
         String query = "";
         if (queryType == GroupQueryType.FILTER) {
             query += "select distinct new list(relProd.item, relCat.item, doc.initiatorID, doc.responderID, pi.status)";
-        } else if (queryType == GroupQueryType.SIZE) {
+        } else if (queryType == GroupQueryType.SIZE || queryType == GroupQueryType.PROJECTSIZE) {
             query += "select count(distinct cg)";
-        } else if (queryType == GroupQueryType.GROUP) {
+        } else if (queryType == GroupQueryType.GROUP || queryType == GroupQueryType.PROJECT) {
             query += "select cg,pig, max(doc.submissionDate) as lastActivityTime, min(doc.submissionDate) as firstActivityTime";
         }
 
@@ -337,13 +352,24 @@ public class CollaborationGroupDAOUtility {
             query += " order by firstActivityTime desc";
         }
 
+        if (queryType == GroupQueryType.PROJECTSIZE) {
+            query += " group by cg.hjid";
+            query += " having size(pig) > 1 ";
+        }
+
+        if (queryType == GroupQueryType.PROJECT) {
+            query += " group by pig.hjid,cg.hjid";
+            query += " having size(pig) > 1 ";
+            query += " order by firstActivityTime desc";
+        }
+
         query += ") > 0";
         queryData.query = query;
         return queryData;
     }
     
     private enum GroupQueryType {
-        GROUP, FILTER, SIZE
+        GROUP, FILTER, SIZE,PROJECTSIZE,PROJECT
     }
 
     private static class QueryData {
