@@ -757,6 +757,10 @@ paths:
         name: collaborationRole
         type: string
         required: false
+      - in: query
+        name: isProject
+        type: boolean
+        default: false
       - name: Authorization
         in: header
         type: string
