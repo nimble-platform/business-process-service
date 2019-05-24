@@ -231,6 +231,7 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
 
         collaborationGroupDAO.setAssociatedCollaborationGroups(allColabrationGroupList);
         collaborationGroupDAO.setAssociatedProcessInstanceGroups(allProcessInstanceGroups);
+        collaborationGroupDAO.setIsProject(true);
 
         repo.updateEntity(collaborationGroupDAO);
 

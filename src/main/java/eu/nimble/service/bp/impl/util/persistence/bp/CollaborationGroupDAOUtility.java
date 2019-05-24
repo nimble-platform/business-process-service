@@ -279,6 +279,10 @@ public class CollaborationGroupDAOUtility {
                 " where " +
                 "pid.item = pi.processInstanceID and doc.processInstanceID = pi.processInstanceID";
 
+        if (queryType == GroupQueryType.PROJECTSIZE || queryType == GroupQueryType.PROJECT) {
+            query += " and cg.isProject = true";
+        }
+
         if (relatedProductCategories != null && relatedProductCategories.size() > 0) {
             query += " and (";
             int i = 0;
@@ -347,19 +351,8 @@ public class CollaborationGroupDAOUtility {
             parameterValues.add(collaborationRole);
         }
 
-        if (queryType == GroupQueryType.GROUP) {
+        if (queryType == GroupQueryType.GROUP || queryType == GroupQueryType.PROJECT) {
             query += " group by pig.hjid,cg.hjid";
-            query += " order by firstActivityTime desc";
-        }
-
-        if (queryType == GroupQueryType.PROJECTSIZE) {
-            query += " group by cg.hjid";
-            query += " having size(pig) > 1 ";
-        }
-
-        if (queryType == GroupQueryType.PROJECT) {
-            query += " group by pig.hjid,cg.hjid";
-            query += " having size(pig) > 1 ";
             query += " order by firstActivityTime desc";
         }
 
