@@ -1156,6 +1156,8 @@ definitions:
         type: string
         enum:
         - INPROGRESS
+      isProject:
+        type: boolean
       associatedCollaborationGroups:
         type: array
         items:
