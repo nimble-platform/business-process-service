@@ -121,7 +121,10 @@ public class ContractGenerator {
 
                     // update some trading terms using the party info
                     PartyType supplierParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,sellerPartyId);
-                    PartyType customerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,buyerPartyId);
+                    PartyType customerParty = null;
+                    if(buyerPartyId != null){
+                        customerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,buyerPartyId);
+                    }
 
                     for(ClauseType clause : clauses){
                         if(clause.getID().contentEquals("PURCHASE ORDER TERMS AND CONDITIONS")){
@@ -132,7 +135,7 @@ public class ContractGenerator {
                                     text.setValue(supplierParty.getPartyName().get(0).getName().getValue());
                                     tradingTermType.getValue().setValue(Collections.singletonList(text));
                                 }
-                                else if(tradingTermType.getID().contentEquals("$buyer_id")){
+                                else if(tradingTermType.getID().contentEquals("$buyer_id") && customerParty != null){
                                     TextType text = new TextType();
                                     text.setLanguageID("en");
                                     text.setValue(customerParty.getPartyName().get(0).getName().getValue());
@@ -152,7 +155,7 @@ public class ContractGenerator {
                         }
                         else if(clause.getID().contentEquals("MISCELLANEOUS")){
                             for(TradingTermType tradingTermType : clause.getTradingTerms()){
-                                if(tradingTermType.getID().contentEquals("$notices_id")){
+                                if(tradingTermType.getID().contentEquals("$notices_id") && customerParty != null){
                                     TextType text = new TextType();
                                     text.setLanguageID("en");
                                     text.setValue(constructAddress(customerParty.getPartyName().get(0).getName().getValue(),customerParty.getPostalAddress()));
@@ -176,7 +179,7 @@ public class ContractGenerator {
                                     text.setValue(supplierParty.getPerson().get(0).getContact().getTelephone());
                                     tradingTermType.getValue().setValue(Collections.singletonList(text));
                                 }
-                                else if(tradingTermType.getID().contentEquals("$buyer_country") && customerParty.getPostalAddress().getCountry().getName() != null){
+                                else if(tradingTermType.getID().contentEquals("$buyer_country") &&  customerParty != null && customerParty.getPostalAddress().getCountry().getName() != null){
                                     CodeType code = new CodeType();
                                     code.setValue(customerParty.getPostalAddress().getCountry().getName().getValue());
                                     code.setListID(country_list_id);
