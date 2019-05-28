@@ -267,7 +267,7 @@ public class CollaborationGroupDAOUtility {
         if (queryType == GroupQueryType.FILTER) {
             query += "select distinct new list(relProd.item, relCat.item, doc.initiatorID, doc.responderID, pi.status)";
         } else if (queryType == GroupQueryType.SIZE || queryType == GroupQueryType.PROJECTSIZE) {
-            query += "select count(distinct cg)";
+            query += "select count(distinct pig)";
         } else if (queryType == GroupQueryType.GROUP || queryType == GroupQueryType.PROJECT) {
             query += "select cg,pig, max(doc.submissionDate) as lastActivityTime, min(doc.submissionDate) as firstActivityTime";
         }
