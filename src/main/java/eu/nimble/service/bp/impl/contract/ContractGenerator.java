@@ -325,16 +325,30 @@ public class ContractGenerator {
 
     // returns the contract storing Terms and Conditions details
     private ContractType getTermsAndConditionsContract(OrderType order){
-        ContractType termsAndConditionsContract = null;
-        for(ContractType contract : order.getContract()){
-            for(ClauseType clause : contract.getClause()){
-                if(clause.getType() == null){
-                    termsAndConditionsContract =  contract;
-                    break;
+        if(order.getContract().size() > 0){
+            for(ContractType contract : order.getContract()){
+                for(ClauseType clause : contract.getClause()){
+                    if(clause.getType() == null){
+                        return contract;
+                    }
                 }
             }
         }
-        return termsAndConditionsContract;
+
+        return null;
+    }
+
+    public static ContractType getNonTermOrConditionContract(OrderType order){
+        if(order.getContract().size() > 0){
+            for(ContractType contract : order.getContract()){
+                for(ClauseType clause:contract.getClause()){
+                    if(clause.getType() != null){
+                        return contract;
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     // returns clause id - Clause map
@@ -767,15 +781,18 @@ public class ContractGenerator {
         List<ClauseType> quotation = new ArrayList<>();
         List<ClauseType> itemInformationResponse = new ArrayList<>();
         // check clauses
-        for(ClauseType clause : order.getContract().get(0).getClause()){
-            if (clause.getType().contentEquals(eu.nimble.service.model.ubl.extension.ClauseType.DOCUMENT.toString())){
-                String documentType = ((DocumentClauseType) clause).getClauseDocumentRef().getDocumentType();
-                if (documentType.contentEquals(DocumentType.PPAPRESPONSE.toString())) {
-                    PPAPResponse.add(clause);
-                } else if (documentType.contentEquals(DocumentType.ITEMINFORMATIONRESPONSE.toString())) {
-                    itemInformationResponse.add(clause);
-                } else if (documentType.contentEquals(DocumentType.QUOTATION.toString())) {
-                    quotation.add(clause);
+        ContractType contract = getNonTermOrConditionContract(order);
+        if(contract != null){
+            for(ClauseType clause : contract.getClause()){
+                if (clause.getType().contentEquals(eu.nimble.service.model.ubl.extension.ClauseType.DOCUMENT.toString())){
+                    String documentType = ((DocumentClauseType) clause).getClauseDocumentRef().getDocumentType();
+                    if (documentType.contentEquals(DocumentType.PPAPRESPONSE.toString())) {
+                        PPAPResponse.add(clause);
+                    } else if (documentType.contentEquals(DocumentType.ITEMINFORMATIONRESPONSE.toString())) {
+                        itemInformationResponse.add(clause);
+                    } else if (documentType.contentEquals(DocumentType.QUOTATION.toString())) {
+                        quotation.add(clause);
+                    }
                 }
             }
         }
