@@ -1121,6 +1121,8 @@ definitions:
         type: string
       archived:
         type: boolean
+      isArchiveable:
+        type: boolean
       status:
         type: string
         enum:
@@ -1137,13 +1139,6 @@ definitions:
   CollaborationGroupResponse:
     title: Process Instance Group Response
     type: object
-    properties:
-      collaborationGroups:
-        type: array
-        items:
-          $ref: '#/definitions/CollaborationGroup'
-      size:
-        type: integer
 
   ProcessInstanceGroupFilter:
     title: Process Instance Group Filters
