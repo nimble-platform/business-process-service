@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -27,6 +28,11 @@ public class CollaborationGroupDAOUtility {
             "(select acg.item from CollaborationGroupDAO cg2 join cg2.associatedCollaborationGroupsItems acg where cg2.hjid = :associatedGroupId)";
     private static final String QUERY_GET_GROUP_OF_PROCESS_INSTANCE_GROUP =
             "select cg from CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups apig where apig.ID = :groupId";
+    private static final String QUERY_GET_PROCESS_INSTANCES_OF_COLLABORATION_GROUP =
+            "SELECT DISTINCT pi.status FROM " +
+                    "ProcessInstanceDAO pi, " +
+                    "CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups pig join pig.processInstanceIDsItems pids" +
+                    " WHERE pids.item = pi.processInstanceID AND cg.hjid = :collaborationGroupId";
 
     private static final Logger logger = LoggerFactory.getLogger(CollaborationGroupDAOUtility.class);
 
@@ -61,6 +67,23 @@ public class CollaborationGroupDAOUtility {
             repo.updateEntity(groupDAO);
         }
         repo.deleteEntityByHjid(CollaborationGroupDAO.class, groupID);
+    }
+
+
+    public static List<ProcessInstanceStatus> getCollaborationStatusProcessInstanceStatuses(Long collaborationGroupHjid) {
+        GenericJPARepository repo = new JPARepositoryFactory().forBpRepository(true);
+        List<ProcessInstanceStatus> statuses = repo.getEntities(QUERY_GET_PROCESS_INSTANCES_OF_COLLABORATION_GROUP, new String[]{"collaborationGroupId"}, new Object[]{collaborationGroupHjid});
+        return statuses;
+    }
+
+    public static boolean isCollaborationGroupArchivable(Long collaborationGroupHjid) {
+        // get the status of process instances
+        List<ProcessInstanceStatus> statuses = getCollaborationStatusProcessInstanceStatuses(collaborationGroupHjid);
+        // if the status is not COMPLETED or CANCELLED, it's accepted as active and the process is regarded as non-archivable
+        return !statuses.stream().filter(status ->
+                !(status.equals(ProcessInstanceStatus.COMPLETED) || status.equals(ProcessInstanceStatus.CANCELLED)))
+                .findFirst()
+                .isPresent();
     }
 
     public static CollaborationGroupDAO archiveCollaborationGroup(String id) {

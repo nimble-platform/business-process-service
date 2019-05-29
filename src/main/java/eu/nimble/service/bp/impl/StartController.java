@@ -79,7 +79,7 @@ public class StartController implements StartApi {
                     "continuation relation between two ProcessInstanceGroups. For example, a transport related ProcessInstanceGroup " +
                     "needs to know the preceding ProcessInstanceGroup in order to find the corresponding Order inside the previous group.")
             @RequestParam(value = "precedingGid", required = false) String precedingGid,
-            @ApiParam(value = "Identifier of the Collaboration (i.e. collaborationGroup.id) which the ProcessInstanceGroup belongs to")
+            @ApiParam(value = "Identifier of the Collaboration (i.e. collaborationGroup.hjid) which the ProcessInstanceGroup belongs to")
             @RequestParam(value = "collaborationGID", required = false) String collaborationGID) {
 
         logger.debug(" $$$ Start Process with ProcessInstanceInputMessage {}", JsonSerializationUtility.serializeEntitySilentlyWithMixin(body, ProcessVariables.class, MixInIgnoreProperties.class));

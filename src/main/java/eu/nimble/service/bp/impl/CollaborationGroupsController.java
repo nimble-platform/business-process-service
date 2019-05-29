@@ -39,27 +39,41 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
 
     @Override
     @ApiOperation(value = "", notes = "Archives the collaboration group by setting the archive field of the specified CollaborationGroup and the included ProcessInstanceGroups.")
-    public ResponseEntity<CollaborationGroup> archiveCollaborationGroup(@ApiParam(value = "Identifier of the collaboration group to be archived (collaborationGroup.id)", required = true) @PathVariable("id") String id,
+    public ResponseEntity archiveCollaborationGroup(@ApiParam(value = "Identifier of the collaboration group to be archived (collaborationGroup.hjid)", required = true) @PathVariable("id") String id,
                                                                         @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
     ) {
         logger.debug("Archiving CollaborationGroup: {}", id);
-        // check token
-        ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
-        if (tokenCheck != null) {
-            return tokenCheck;
-        }
+        try {
+            // check token
+            ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
+            if (tokenCheck != null) {
+                return tokenCheck;
+            }
 
-        CollaborationGroupDAO collaborationGroupDAO = CollaborationGroupDAOUtility.archiveCollaborationGroup(id);
+            // check whether the group is archiable or not
+            boolean isArchivable = CollaborationGroupDAOUtility.isCollaborationGroupArchivable(Long.parseLong(id));
+            if (!isArchivable) {
+                String msg = String.format("CollaborationGroup with id %s is not archivable", id);
+                logger.info(msg);
+                return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(msg);
+            }
 
-        CollaborationGroup collaborationGroup = HibernateSwaggerObjectMapper.convertCollaborationGroupDAO(collaborationGroupDAO);
-        ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(collaborationGroup);
-        logger.debug("Archived CollaborationGroup: {}", id);
-        return response;
+            CollaborationGroupDAO collaborationGroupDAO = CollaborationGroupDAOUtility.archiveCollaborationGroup(id);
+
+            CollaborationGroup collaborationGroup = HibernateSwaggerObjectMapper.convertCollaborationGroupDAO(collaborationGroupDAO);
+            ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(collaborationGroup);
+            logger.debug("Archived CollaborationGroup: {}", id);
+            return response;
+
+        } catch (Exception e) {
+            String msg = String.format("Unexpected error while archiving CollaborationGroup with id: %s", id);
+            logger.error(msg, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);        }
     }
 
     @Override
     @ApiOperation(value = "", notes = "Deletes the specified CollaborationGroup permanently.")
-    public ResponseEntity<Void> deleteCollaborationGroup(@ApiParam(value = "Identifier of the collaboration group to be deleted (collaborationGroup.id)", required = true) @PathVariable("id") String id,
+    public ResponseEntity<Void> deleteCollaborationGroup(@ApiParam(value = "Identifier of the collaboration group to be deleted (collaborationGroup.hjid)", required = true) @PathVariable("id") String id,
                                                          @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
     ) {
         logger.debug("Deleting CollaborationGroup ID: {}", id);
@@ -79,7 +93,7 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
 
     @Override
     @ApiOperation(value = "", notes = "Retrieves the specified CollaborationGroup.")
-    public ResponseEntity<CollaborationGroup> getCollaborationGroup(@ApiParam(value = "Identifier of the collaboration group to be received (collaborationGroup.id)", required = true) @PathVariable("id") String id,
+    public ResponseEntity<CollaborationGroup> getCollaborationGroup(@ApiParam(value = "Identifier of the collaboration group to be received (collaborationGroup.hjid)", required = true) @PathVariable("id") String id,
                                                                     @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
     ) {
         logger.debug("Getting CollaborationGroup: {}", id);
@@ -133,7 +147,7 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
 
     @Override
     @ApiOperation(value = "", notes = "Restores the specified, archived CollaborationGroup.")
-    public ResponseEntity<CollaborationGroup> restoreCollaborationGroup(@ApiParam(value = "Identifier of the collaboration group to be restored (collaborationGroup.id)", required = true) @PathVariable("id") String id,
+    public ResponseEntity<CollaborationGroup> restoreCollaborationGroup(@ApiParam(value = "Identifier of the collaboration group to be restored (collaborationGroup.hjid)", required = true) @PathVariable("id") String id,
                                                                         @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
     ) {
         logger.debug("Restoring CollaborationGroup: {}", id);

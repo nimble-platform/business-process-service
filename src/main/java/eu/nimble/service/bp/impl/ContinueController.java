@@ -64,7 +64,7 @@ public class ContinueController implements ContinueApi {
             @RequestBody ProcessInstanceInputMessage body,
             @ApiParam(value = "The id of the ProcessInstanceGroup (processInstanceGroup.id) owned by the party continuing the process.", required = true)
             @RequestParam(value = "gid", required = true) String gid,
-            @ApiParam(value = "The id of the CollaborationGroup (collaborationGroup.id) which the process instance group belongs to", required = true)
+            @ApiParam(value = "The id of the CollaborationGroup (collaborationGroup.hjid) which the process instance group belongs to", required = true)
             @RequestParam(value = "collaborationGID", required = true) String collaborationGID,
             @ApiParam(value = "The Bearer token provided by the identity service", required = true)
             @RequestHeader(value = "Authorization", required = true) String bearerToken) {
