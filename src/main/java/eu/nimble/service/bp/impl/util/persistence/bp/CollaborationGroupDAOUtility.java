@@ -175,10 +175,17 @@ public class CollaborationGroupDAOUtility {
             List<String> status,
             String startTime,
             String endTime,
-            String bearerToken) {
+            String bearerToken,
+            Boolean isProject) {
 
-        QueryData query = getGroupRetrievalQuery(GroupQueryType.FILTER, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories, status, startTime, endTime);
+        QueryData query = null;
+        if(isProject){
+            query = getGroupRetrievalQuery(GroupQueryType.PROJECTFILTER, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories, status, startTime, endTime);
 
+        }else{
+            query = getGroupRetrievalQuery(GroupQueryType.FILTER, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories, status, startTime, endTime);
+
+        }
         ProcessInstanceGroupFilter filter = new ProcessInstanceGroupFilter();
         List<Object> resultSet = new JPARepositoryFactory().forBpRepository().getEntities(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray());
         for (Object result : resultSet) {
@@ -264,7 +271,7 @@ public class CollaborationGroupDAOUtility {
         List<Object> parameterValues = queryData.parameterValues;
 
         String query = "";
-        if (queryType == GroupQueryType.FILTER) {
+        if (queryType == GroupQueryType.FILTER || queryType == GroupQueryType.PROJECTFILTER) {
             query += "select distinct new list(relProd.item, relCat.item, doc.initiatorID, doc.responderID, pi.status)";
         } else if (queryType == GroupQueryType.SIZE || queryType == GroupQueryType.PROJECTSIZE) {
             query += "select count(distinct pig)";
@@ -279,7 +286,7 @@ public class CollaborationGroupDAOUtility {
                 " where " +
                 "pid.item = pi.processInstanceID and doc.processInstanceID = pi.processInstanceID";
 
-        if (queryType == GroupQueryType.PROJECTSIZE || queryType == GroupQueryType.PROJECT) {
+        if (queryType == GroupQueryType.PROJECTSIZE || queryType == GroupQueryType.PROJECT || queryType == GroupQueryType.PROJECTFILTER) {
             query += " and cg.isProject = true";
         }
 
@@ -357,12 +364,13 @@ public class CollaborationGroupDAOUtility {
         }
 
         query += ") > 0";
+
         queryData.query = query;
         return queryData;
     }
     
     private enum GroupQueryType {
-        GROUP, FILTER, SIZE,PROJECTSIZE,PROJECT
+        GROUP, FILTER, SIZE,PROJECTSIZE,PROJECT,PROJECTFILTER
     }
 
     private static class QueryData {
