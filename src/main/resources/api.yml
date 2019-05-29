@@ -840,6 +840,10 @@ paths:
         in: header
         type: string
         required: true
+      - in: query
+        name: isProject
+        type: boolean
+        default: false
       produces:
       - application/json
       responses:
