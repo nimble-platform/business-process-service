@@ -212,7 +212,7 @@ public class ProcessInstanceController {
             // get request and response document
             // get request and response metadata as well
             Future<String> requestDocument = null;
-            Future<String> responseDocument = null;
+            Future<String> responseDocumentStatus = null;
             ProcessDocumentMetadata requestMetadata = null;
             ProcessDocumentMetadata responseMetadata = null;
             for(HistoricVariableInstance variableInstance:variableInstanceList){
@@ -228,7 +228,7 @@ public class ProcessInstanceController {
                 else if(variableInstance.getName().contentEquals("responseDocumentID")){
                     String documentId =  variableInstance.getValue().toString();
                     // response document
-                    responseDocument = getResponseDocument(documentId);
+                    responseDocumentStatus = getResponseDocumentStatus(documentId);
                     // response metadata
                     responseMetadata = HibernateSwaggerObjectMapper.createProcessDocumentMetadata(ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId));
                 }
@@ -247,7 +247,7 @@ public class ProcessInstanceController {
 
             JsonSerializer jsonSerializer = new JsonSerializer();
             jsonSerializer.put("requestDocument",requestDocument == null ? null: requestDocument.get());
-            jsonSerializer.put("responseDocument",responseDocument == null ? null : responseDocument.get());
+            jsonSerializer.put("responseDocumentStatus",responseDocumentStatus == null ? null : responseDocumentStatus.get());
             jsonSerializer.put("requestMetadata",objectMapper.writeValueAsString(requestMetadata));
             jsonSerializer.put("responseMetadata",objectMapper.writeValueAsString(responseMetadata));
             jsonSerializer.put("variableInstance",variableInstances.get());
@@ -280,21 +280,15 @@ public class ProcessInstanceController {
         });
     }
 
-    private Future<String> getResponseDocument(String documentId){
+    private Future<String> getResponseDocumentStatus(String documentId){
         return executorService.submit(() -> {
             IDocument iDocument = (IDocument) DocumentPersistenceUtility.getUBLDocument(documentId);
             if(iDocument == null){
                 return null;
             }
 
-            String isAccepted = iDocument.isAccepted();
-
-            String string = "{";
-            if(isAccepted != null){
-                string += "\"acceptedIndicator\":\""+isAccepted+"\"";
-            }
-            string += "}";
-            return string;
+            String documentStatus = iDocument.getDocumentStatus();
+            return "{\"documentStatus\":\""+documentStatus+"\"}";
         });
     }
 
