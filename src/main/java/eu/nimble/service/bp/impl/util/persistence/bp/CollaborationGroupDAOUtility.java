@@ -131,14 +131,19 @@ public class CollaborationGroupDAOUtility {
                 results.add(collaborationGroupInResults);
             }
 
-            ProcessInstanceGroupDAO group = (ProcessInstanceGroupDAO) resultItems[1];
-            // find the group in the collaborationGroup
-            for (ProcessInstanceGroupDAO groupDAO : collaborationGroupInResults.getAssociatedProcessInstanceGroups()) {
-                if (groupDAO.getID().equals(group.getID())) {
-                    groupDAO.setLastActivityTime((String) resultItems[2]);
-                    groupDAO.setFirstActivityTime((String) resultItems[3]);
+            for (ProcessInstanceGroupDAO oneWay:collaborationGroupDAO.getAssociatedProcessInstanceGroups()) {
+                ProcessInstanceGroupDAO processInstanceGroupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(oneWay.getID());
+                // find the group in the collaborationGroup
+                for (ProcessInstanceGroupDAO groupDAO : collaborationGroupInResults.getAssociatedProcessInstanceGroups()) {
+                    if (groupDAO.getID().equals(processInstanceGroupDAO.getID())) {
+                        groupDAO.setLastActivityTime((String) processInstanceGroupDAO.getLastActivityTime());
+                        groupDAO.setFirstActivityTime((String) processInstanceGroupDAO.getFirstActivityTime());
+                    }
                 }
             }
+
+//            ProcessInstanceGroupDAO group = (ProcessInstanceGroupDAO) resultItems[1];
+
         }
         return results;
     }
@@ -274,9 +279,9 @@ public class CollaborationGroupDAOUtility {
         if (queryType == GroupQueryType.FILTER || queryType == GroupQueryType.PROJECTFILTER) {
             query += "select distinct new list(relProd.item, relCat.item, doc.initiatorID, doc.responderID, pi.status)";
         } else if (queryType == GroupQueryType.SIZE || queryType == GroupQueryType.PROJECTSIZE) {
-            query += "select count(distinct pig)";
+            query += "select count(distinct cg)";
         } else if (queryType == GroupQueryType.GROUP || queryType == GroupQueryType.PROJECT) {
-            query += "select cg,pig, max(doc.submissionDate) as lastActivityTime, min(doc.submissionDate) as firstActivityTime";
+            query += "select cg, max(doc.submissionDate) as lastActivityTime, min(doc.submissionDate) as firstActivityTime";
         }
 
         query += " from " +
@@ -359,7 +364,7 @@ public class CollaborationGroupDAOUtility {
         }
 
         if (queryType == GroupQueryType.GROUP || queryType == GroupQueryType.PROJECT) {
-            query += " group by pig.hjid,cg.hjid";
+            query += " group by cg.hjid";
             query += " order by firstActivityTime desc";
         }
 
