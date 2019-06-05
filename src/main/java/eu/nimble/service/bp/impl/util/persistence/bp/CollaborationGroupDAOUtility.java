@@ -12,11 +12,9 @@ import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by suat on 01-Jan-19.
@@ -27,6 +25,16 @@ public class CollaborationGroupDAOUtility {
             "(select acg.item from CollaborationGroupDAO cg2 join cg2.associatedCollaborationGroupsItems acg where cg2.hjid = :associatedGroupId)";
     private static final String QUERY_GET_GROUP_OF_PROCESS_INSTANCE_GROUP =
             "select cg from CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups apig where apig.ID = :groupId";
+    private static final String QUERY_GET_PROCESS_INSTANCES_OF_COLLABORATION_GROUP =
+            "SELECT DISTINCT pi.status FROM " +
+                    "ProcessInstanceDAO pi, " +
+                    "CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups pig join pig.processInstanceIDsItems pids" +
+                    " WHERE pids.item = pi.processInstanceID AND cg.hjid = :collaborationGroupId";
+    private static final String QUERY_GET_PROCESS_INSTANCES_OF_COLLABORATION_GROUPS =
+            "SELECT cg.hjid, pi.status FROM " +
+                    "ProcessInstanceDAO pi, " +
+                    "CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups pig join pig.processInstanceIDsItems pids" +
+                    " WHERE pids.item = pi.processInstanceID AND cg.hjid IN (%s)"; // to be completed in the query
 
     private static final Logger logger = LoggerFactory.getLogger(CollaborationGroupDAOUtility.class);
 
@@ -61,6 +69,51 @@ public class CollaborationGroupDAOUtility {
             repo.updateEntity(groupDAO);
         }
         repo.deleteEntityByHjid(CollaborationGroupDAO.class, groupID);
+    }
+
+
+    public static List<ProcessInstanceStatus> getCollaborationProcessInstanceStatusesForCollaborationGroup(Long collaborationGroupHjid) {
+        GenericJPARepository repo = new JPARepositoryFactory().forBpRepository(true);
+        List<ProcessInstanceStatus> statuses = repo.getEntities(QUERY_GET_PROCESS_INSTANCES_OF_COLLABORATION_GROUP, new String[]{"collaborationGroupId"}, new Object[]{collaborationGroupHjid});
+        return statuses;
+    }
+
+    public static Map<Long, Set<ProcessInstanceStatus>> getCollaborationProcessInstanceStatusesForCollaborationGroups(List<Long> collaborationGroupHjids) {
+        if(collaborationGroupHjids.size() == 0) {
+            return new HashMap<>();
+        }
+
+        StringBuilder idConstraintBuilder = new StringBuilder("");
+        collaborationGroupHjids.stream().forEach(id -> idConstraintBuilder.append(id).append(","));
+        String idConstraint = idConstraintBuilder.substring(0, idConstraintBuilder.length()-1);
+        String query = String.format(QUERY_GET_PROCESS_INSTANCES_OF_COLLABORATION_GROUPS, idConstraint);
+
+        GenericJPARepository repo = new JPARepositoryFactory().forBpRepository(true);
+        List<Object[]> statuses = repo.getEntities(query);
+        Map<Long, Set<ProcessInstanceStatus>> result = new HashMap<>();
+        for(Object[] status : statuses) {
+            Set<ProcessInstanceStatus> statusList = result.get(status[0]);
+            if(statusList == null) {
+                statusList = new HashSet<>();
+                result.put((Long) status[0], statusList);
+            }
+            statusList.add((ProcessInstanceStatus) status[1]);
+        }
+        return result;
+    }
+
+    public static boolean isCollaborationGroupArchivable(Long collaborationGroupHjid) {
+        // get the status of process instances
+        List<ProcessInstanceStatus> statuses = getCollaborationProcessInstanceStatusesForCollaborationGroup(collaborationGroupHjid);
+        return doesProcessInstanceStatusesMeetArchivingConditions(statuses);
+    }
+
+    public static boolean doesProcessInstanceStatusesMeetArchivingConditions(List<ProcessInstanceStatus> processInstanceStatuses) {
+        // if the status is not COMPLETED or CANCELLED, it's accepted as active and the process is regarded as non-archivable
+        return !processInstanceStatuses.stream().filter(status ->
+                !(status.equals(ProcessInstanceStatus.COMPLETED) || status.equals(ProcessInstanceStatus.CANCELLED)))
+                .findFirst()
+                .isPresent();
     }
 
     public static CollaborationGroupDAO archiveCollaborationGroup(String id) {

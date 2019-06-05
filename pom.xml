@@ -356,6 +356,7 @@
                             <invokerPackage>${default.package}.swagger.invoker</invokerPackage>
                             <configOptions>
                                 <interfaceOnly>true</interfaceOnly>
+                                <import-mappings>CollaborationGroupResponse=eu.nimble.service.bp.impl.model.dashboard.CollaborationGroupResponse</import-mappings>
                             </configOptions>
                         </configuration>
                     </execution>
