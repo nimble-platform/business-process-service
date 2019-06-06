@@ -279,14 +279,18 @@ public class ContractGenerator {
                 if(tradingTerm.getID().contentEquals(parameter)){
                     // find the value of parameter
                     String value = "";
-                    if(tradingTerm.getValue().getValueQualifier().contentEquals("STRING")){
+                    if(tradingTerm.getValue().getValueQualifier().contentEquals("STRING") && tradingTerm.getValue().getValue().get(0).getValue() != null && !tradingTerm.getValue().getValue().get(0).getValue().contentEquals("")){
                         value = tradingTerm.getValue().getValue().get(0).getValue();
-                    } else if(tradingTerm.getValue().getValueQualifier().contentEquals("NUMBER")){
+                    } else if(tradingTerm.getValue().getValueQualifier().contentEquals("NUMBER") && tradingTerm.getValue().getValueDecimal().get(0) != null){
                         value = new DecimalFormat("##").format(tradingTerm.getValue().getValueDecimal().get(0));
-                    } else if(tradingTerm.getValue().getValueQualifier().contentEquals("QUANTITY")){
+                    } else if(tradingTerm.getValue().getValueQualifier().contentEquals("QUANTITY") && tradingTerm.getValue().getValueQuantity().get(0).getValue() != null && tradingTerm.getValue().getValueQuantity().get(0).getUnitCode() != null){
                         value = new DecimalFormat("##").format(tradingTerm.getValue().getValueQuantity().get(0).getValue()) + " " + tradingTerm.getValue().getValueQuantity().get(0).getUnitCode();
-                    } else if(tradingTerm.getValue().getValueQualifier().contentEquals("CODE")){
+                    } else if(tradingTerm.getValue().getValueQualifier().contentEquals("CODE") && !tradingTerm.getValue().getValueCode().get(0).getValue().contentEquals("")){
                         value = tradingTerm.getValue().getValueCode().get(0).getValue();
+                    }
+                    // if no value is provided for the trading term, use its id
+                    else {
+                        value = tradingTerm.getID();
                     }
 
                     run.setText(value,0);
