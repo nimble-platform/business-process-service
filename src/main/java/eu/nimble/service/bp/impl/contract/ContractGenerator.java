@@ -127,7 +127,7 @@ public class ContractGenerator {
                     }
 
                     for(ClauseType clause : clauses){
-                        if(clause.getID().contentEquals("PURCHASE ORDER TERMS AND CONDITIONS")){
+                        if(clause.getID().contentEquals("1_PURCHASE ORDER TERMS AND CONDITIONS")){
                             for(TradingTermType tradingTermType : clause.getTradingTerms()){
                                 if(tradingTermType.getID().contentEquals("$seller_id")){
                                     TextType text = new TextType();
@@ -143,7 +143,7 @@ public class ContractGenerator {
                                 }
                             }
                         }
-                        else if(clause.getID().contentEquals("INVOICES, PAYMENT, AND TAXES")){
+                        else if(clause.getID().contentEquals("5_INVOICES, PAYMENT, AND TAXES")){
                             for(TradingTermType tradingTermType : clause.getTradingTerms()){
                                 if(tradingTermType.getID().contentEquals("$payment_id") && tradingTerm != null){
                                     CodeType code = new CodeType();
@@ -153,7 +153,7 @@ public class ContractGenerator {
                                 }
                             }
                         }
-                        else if(clause.getID().contentEquals("MISCELLANEOUS")){
+                        else if(clause.getID().contentEquals("19_MISCELLANEOUS")){
                             for(TradingTermType tradingTermType : clause.getTradingTerms()){
                                 if(tradingTermType.getID().contentEquals("$notices_id") && customerParty != null){
                                     TextType text = new TextType();
