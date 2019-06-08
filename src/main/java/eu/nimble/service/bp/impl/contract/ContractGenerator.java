@@ -121,7 +121,10 @@ public class ContractGenerator {
 
                     // update some trading terms using the party info
                     PartyType supplierParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,sellerPartyId);
-                    PartyType customerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,buyerPartyId);
+                    PartyType customerParty = null;
+                    if(buyerPartyId != null){
+                        customerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,buyerPartyId);
+                    }
 
                     for(ClauseType clause : clauses){
                         if(clause.getID().contentEquals("1_PURCHASE ORDER TERMS AND CONDITIONS")){
@@ -132,7 +135,7 @@ public class ContractGenerator {
                                     text.setValue(supplierParty.getPartyName().get(0).getName().getValue());
                                     tradingTermType.getValue().setValue(Collections.singletonList(text));
                                 }
-                                else if(tradingTermType.getID().contentEquals("$buyer_id")){
+                                else if(tradingTermType.getID().contentEquals("$buyer_id") && customerParty != null){
                                     TextType text = new TextType();
                                     text.setLanguageID("en");
                                     text.setValue(customerParty.getPartyName().get(0).getName().getValue());
@@ -152,7 +155,7 @@ public class ContractGenerator {
                         }
                         else if(clause.getID().contentEquals("19_MISCELLANEOUS")){
                             for(TradingTermType tradingTermType : clause.getTradingTerms()){
-                                if(tradingTermType.getID().contentEquals("$notices_id")){
+                                if(tradingTermType.getID().contentEquals("$notices_id") && customerParty != null){
                                     TextType text = new TextType();
                                     text.setLanguageID("en");
                                     text.setValue(constructAddress(customerParty.getPartyName().get(0).getName().getValue(),customerParty.getPostalAddress()));
@@ -176,7 +179,7 @@ public class ContractGenerator {
                                     text.setValue(supplierParty.getPerson().get(0).getContact().getTelephone());
                                     tradingTermType.getValue().setValue(Collections.singletonList(text));
                                 }
-                                else if(tradingTermType.getID().contentEquals("$buyer_country") && customerParty.getPostalAddress().getCountry().getName() != null){
+                                else if(tradingTermType.getID().contentEquals("$buyer_country") &&  customerParty != null && customerParty.getPostalAddress().getCountry().getName() != null){
                                     CodeType code = new CodeType();
                                     code.setValue(customerParty.getPostalAddress().getCountry().getName().getValue());
                                     code.setListID(country_list_id);
@@ -240,40 +243,19 @@ public class ContractGenerator {
                 }
             }
 
-            // get clauses map
-            Map<String,ClauseType> clausesMap = getClausesMap(getTermsAndConditionsContract(order).getClause());
+            // get T&Cs clauses
+            List<ClauseType> clauses = getTermsAndConditionsContract(order).getClause();
 
             int rowIndex = 0;
-            for (XWPFTable tbl : document.getTables() ) {
-                for (XWPFTableRow row : tbl.getRows()) {
-                    for (XWPFTableCell cell : row.getTableCells()) {
-                        // get the clause
-                        ClauseType clause = clausesMap.get("$section_"+rowIndex);
-                        // text of the section
-                        String text = clause.getContent().get(0).getValue();
-                        // get the paragraph
-                        XWPFParagraph paragraph = cell.getParagraphs().get(0);
-                        // section text which does not contain the name of section
-                        String sectionText;
-                        if(rowIndex == 0){
-                            // get the section text
-                            int newLineIndex = text.indexOf("\n\n")+2;
-                            sectionText = text.substring(newLineIndex);
-                        }
-                        else{
-                            // get the section name
-                            int semicolonIndex = text.indexOf(":");
-                            String sectionName = text.substring(0,semicolonIndex+1);
-                            // use first run to represent the name of section
-                            paragraph.getRuns().get(0).setText(sectionName,0);
-                            paragraph.getRuns().get(0).setBold(true);
-                            // get the section text
-                            sectionText = text.substring(semicolonIndex+1);
-                        }
-                        fillTheRow(sectionText,paragraph,clause.getTradingTerms());
-                    }
-                    rowIndex++;
-                }
+            for(ClauseType clause: clauses){
+                XWPFParagraph paragraph = document.createParagraph();
+                // set the clause title
+                paragraph.createRun();
+                paragraph.getRuns().get(0).setText(rowIndex+1+"."+clause.getID()+":\n");
+                paragraph.getRuns().get(0).setBold(true);
+                // set the content of clause
+                setClauseContent(clause.getContent().get(0).getValue(),paragraph,clause.getTradingTerms());
+                rowIndex++;
             }
         }
         catch (Exception e){
@@ -282,7 +264,7 @@ public class ContractGenerator {
         return document;
     }
 
-    private void fillTheRow(String sectionText,XWPFParagraph paragraph,List<TradingTermType> tradingTerms){
+    private void setClauseContent(String sectionText, XWPFParagraph paragraph, List<TradingTermType> tradingTerms){
         int indexOfParameter = sectionText.indexOf("$");
         while (indexOfParameter != -1){
             paragraph.createRun().setText(sectionText.substring(0,indexOfParameter),0);
@@ -297,14 +279,18 @@ public class ContractGenerator {
                 if(tradingTerm.getID().contentEquals(parameter)){
                     // find the value of parameter
                     String value = "";
-                    if(tradingTerm.getValue().getValueQualifier().contentEquals("STRING")){
+                    if(tradingTerm.getValue().getValueQualifier().contentEquals("STRING") && tradingTerm.getValue().getValue().get(0).getValue() != null && !tradingTerm.getValue().getValue().get(0).getValue().contentEquals("")){
                         value = tradingTerm.getValue().getValue().get(0).getValue();
-                    } else if(tradingTerm.getValue().getValueQualifier().contentEquals("NUMBER")){
+                    } else if(tradingTerm.getValue().getValueQualifier().contentEquals("NUMBER") && tradingTerm.getValue().getValueDecimal().get(0) != null){
                         value = new DecimalFormat("##").format(tradingTerm.getValue().getValueDecimal().get(0));
-                    } else if(tradingTerm.getValue().getValueQualifier().contentEquals("QUANTITY")){
+                    } else if(tradingTerm.getValue().getValueQualifier().contentEquals("QUANTITY") && tradingTerm.getValue().getValueQuantity().get(0).getValue() != null && tradingTerm.getValue().getValueQuantity().get(0).getUnitCode() != null){
                         value = new DecimalFormat("##").format(tradingTerm.getValue().getValueQuantity().get(0).getValue()) + " " + tradingTerm.getValue().getValueQuantity().get(0).getUnitCode();
-                    } else if(tradingTerm.getValue().getValueQualifier().contentEquals("CODE")){
+                    } else if(tradingTerm.getValue().getValueQualifier().contentEquals("CODE") && !tradingTerm.getValue().getValueCode().get(0).getValue().contentEquals("")){
                         value = tradingTerm.getValue().getValueCode().get(0).getValue();
+                    }
+                    // if no value is provided for the trading term, use its id
+                    else {
+                        value = tradingTerm.getID();
                     }
 
                     run.setText(value,0);
@@ -349,27 +335,6 @@ public class ContractGenerator {
             }
         }
         return null;
-    }
-
-    // returns clause id - Clause map
-    private Map<String,ClauseType> getClausesMap(List<ClauseType> clauses){
-        Map<String,ClauseType> idClauseMap = new HashMap<>();
-        for(ClauseType clause:clauses){
-            String text = clause.getContent().get(0).getValue();
-            // check whether the clause belongs to the first section or not
-            int semicolonIndex = text.indexOf(":");
-            // first section
-            if(semicolonIndex == -1){
-                idClauseMap.put("$section_0",clause);
-                continue;
-            }
-            // get the section number
-            int dotIndex = text.indexOf(".");
-            String sectionNumber = text.substring(0,dotIndex);
-            // add the text to the map
-            idClauseMap.put("$section_"+sectionNumber,clause);
-        }
-        return idClauseMap;
     }
 
     private XWPFDocument fillPurchaseDetails(OrderType order){
