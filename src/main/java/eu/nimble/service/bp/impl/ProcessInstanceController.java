@@ -332,10 +332,11 @@ public class ProcessInstanceController {
                                                    @ApiParam(value = "Archived status of the CollaborationGroup including the transaction.", required = false) @RequestParam(value = "archived", required = false) Boolean archived,
                                                    @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
                                                    HttpServletResponse response) {
-        try {
+
         ZipOutputStream zos = null;
         ByteArrayOutputStream tempOutputStream;
-
+        
+        try {
             logger.info("Incoming request to export transactions. party id: {}, user id: {}, direction: {}", partyId, userId, direction);
             List<TransactionSummary> transactions = ProcessDocumentMetadataDAOUtility.getTransactionSummaries(partyId, userId, direction, archived, bearerToken);
             ZipEntry zipEntry;
