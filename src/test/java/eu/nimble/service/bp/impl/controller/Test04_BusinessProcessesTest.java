@@ -2,13 +2,10 @@ package eu.nimble.service.bp.impl.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
-import eu.nimble.service.bp.impl.util.bp.DocumentEnumClassMapper;
 import eu.nimble.service.bp.impl.contract.ContractGenerator;
-import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
-import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
+import eu.nimble.service.bp.impl.model.dashboard.CollaborationGroupResponse;
 import eu.nimble.service.bp.processor.orderresponse.DefaultOrderResponseSender;
 import eu.nimble.service.bp.swagger.model.*;
-import eu.nimble.service.bp.swagger.model.Process;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ClauseType;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
@@ -29,7 +26,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
-import javax.ws.rs.HEAD;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;

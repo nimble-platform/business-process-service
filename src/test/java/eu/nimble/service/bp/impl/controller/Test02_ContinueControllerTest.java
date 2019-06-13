@@ -2,7 +2,7 @@ package eu.nimble.service.bp.impl.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
-import eu.nimble.service.bp.swagger.model.CollaborationGroupResponse;
+import eu.nimble.service.bp.impl.model.dashboard.CollaborationGroupResponse;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
 import eu.nimble.utility.JsonSerializationUtility;

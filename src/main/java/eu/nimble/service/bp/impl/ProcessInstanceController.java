@@ -1,9 +1,13 @@
 package eu.nimble.service.bp.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceStatus;
+import eu.nimble.service.bp.impl.model.export.TransactionSummary;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
@@ -13,7 +17,11 @@ import eu.nimble.service.bp.impl.util.persistence.catalogue.TrustPersistenceUtil
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
+import eu.nimble.service.bp.serialization.MixInIgnoreProperties;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
+import eu.nimble.service.bp.swagger.model.ProcessVariables;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.DocumentReferenceType;
+import eu.nimble.service.model.ubl.commonbasiccomponents.BinaryObjectType;
 import eu.nimble.service.model.ubl.document.IDocument;
 import eu.nimble.utility.Configuration;
 import eu.nimble.utility.HttpResponseUtil;
@@ -21,10 +29,12 @@ import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
 import eu.nimble.utility.serialization.JsonSerializer;
+import eu.nimble.utility.serialization.MixInIgnoreType;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import org.apache.commons.io.IOUtils;
 import org.camunda.bpm.engine.history.HistoricVariableInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,10 +46,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
 /**
  * Created by dogukan on 09.08.2018.
  */
@@ -212,7 +228,7 @@ public class ProcessInstanceController {
             // get request and response document
             // get request and response metadata as well
             Future<String> requestDocument = null;
-            Future<String> responseDocument = null;
+            Future<String> responseDocumentStatus = null;
             ProcessDocumentMetadata requestMetadata = null;
             ProcessDocumentMetadata responseMetadata = null;
             for(HistoricVariableInstance variableInstance:variableInstanceList){
@@ -228,7 +244,7 @@ public class ProcessInstanceController {
                 else if(variableInstance.getName().contentEquals("responseDocumentID")){
                     String documentId =  variableInstance.getValue().toString();
                     // response document
-                    responseDocument = getResponseDocument(documentId);
+                    responseDocumentStatus = getResponseDocumentStatus(documentId);
                     // response metadata
                     responseMetadata = HibernateSwaggerObjectMapper.createProcessDocumentMetadata(ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId));
                 }
@@ -247,7 +263,7 @@ public class ProcessInstanceController {
 
             JsonSerializer jsonSerializer = new JsonSerializer();
             jsonSerializer.put("requestDocument",requestDocument == null ? null: requestDocument.get());
-            jsonSerializer.put("responseDocument",responseDocument == null ? null : responseDocument.get());
+            jsonSerializer.put("responseDocumentStatus",responseDocumentStatus == null ? null : responseDocumentStatus.get());
             jsonSerializer.put("requestMetadata",objectMapper.writeValueAsString(requestMetadata));
             jsonSerializer.put("responseMetadata",objectMapper.writeValueAsString(responseMetadata));
             jsonSerializer.put("variableInstance",variableInstances.get());
@@ -280,21 +296,15 @@ public class ProcessInstanceController {
         });
     }
 
-    private Future<String> getResponseDocument(String documentId){
+    private Future<String> getResponseDocumentStatus(String documentId){
         return executorService.submit(() -> {
             IDocument iDocument = (IDocument) DocumentPersistenceUtility.getUBLDocument(documentId);
             if(iDocument == null){
                 return null;
             }
 
-            String isAccepted = iDocument.isAccepted();
-
-            String string = "{";
-            if(isAccepted != null){
-                string += "\"acceptedIndicator\":\""+isAccepted+"\"";
-            }
-            string += "}";
-            return string;
+            String documentStatus = iDocument.getDocumentStatus();
+            return "{\"documentStatus\":\""+documentStatus+"\"}";
         });
     }
 
@@ -305,5 +315,146 @@ public class ProcessInstanceController {
 
     private Future<String> serializeObject(Object object){
         return executorService.submit(() -> JsonSerializationUtility.getObjectMapper().writeValueAsString(object));
+    }
+
+    @ApiOperation(value = "", notes = "Exports transaction data according to the specified parameters.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Exported transactions successfully"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 500, message = "Unexpected error while exporting transactions")
+    })
+    @RequestMapping(value = "/processInstance/export",
+            produces = {"application/zip"},
+            method = RequestMethod.GET)
+    public void getDashboardProcessInstanceDetails(@ApiParam(value = "Identifier the party as the subject of incoming or outgoing transactions.", required = true) @RequestParam(value = "partyId", required = true) String partyId,
+                                                   @ApiParam(value = "Identifier of the user who initiated the transactions. This parameter is considered only for the outgoing transactions.", required = false) @RequestParam(value = "userId", required = false) String userId,
+                                                   @ApiParam(value = "Direction of the transaction. It can be incoming/outgoing. If not provided, all transactions are considered.", required = false) @RequestParam(value = "direction", required = false) String direction,
+                                                   @ApiParam(value = "Archived status of the CollaborationGroup including the transaction.", required = false) @RequestParam(value = "archived", required = false) Boolean archived,
+                                                   @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
+                                                   HttpServletResponse response) {
+
+        ZipOutputStream zos = null;
+        ByteArrayOutputStream tempOutputStream;
+        
+        try {
+            logger.info("Incoming request to export transactions. party id: {}, user id: {}, direction: {}", partyId, userId, direction);
+            List<TransactionSummary> transactions = ProcessDocumentMetadataDAOUtility.getTransactionSummaries(partyId, userId, direction, archived, bearerToken);
+            ZipEntry zipEntry;
+            tempOutputStream = null;
+            try {
+                zos = new ZipOutputStream(response.getOutputStream());
+                // write transaction summary file to the zip
+                zipEntry = new ZipEntry("transactions.json");
+                zos.putNextEntry(zipEntry);
+                tempOutputStream = new ByteArrayOutputStream();
+                JsonSerializationUtility.getObjectMapper().enable(SerializationFeature.INDENT_OUTPUT).writeValue(tempOutputStream, transactions);
+                tempOutputStream.writeTo(zos);
+                zos.closeEntry();
+
+            } catch (IOException e) {
+                HttpResponseUtil.writeMessageServletResponseAndLog(
+                        response,
+                        String.format("Failed to write the transaction summary to the zip file for party id: %s, user id: %s, direction: %s", partyId, userId, direction),
+                        e,
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        LogLevel.ERROR);
+                return;
+
+            } finally {
+                 if(tempOutputStream != null) {
+                     try {
+                         tempOutputStream.close();
+                     } catch (IOException e) {
+                         logger.warn("Failed to close temp output stream", e);
+                     }
+                 }
+            }
+
+
+            // write the exchanged document itself and associated auxiliary files to the zip
+            for (TransactionSummary transaction : transactions) {
+                // write the document
+                try {
+                    zipEntry = new ZipEntry(transaction.getExchangedDocumentId() + ".json");
+                    zos.putNextEntry(zipEntry);
+                    tempOutputStream = new ByteArrayOutputStream();
+                    JsonSerializationUtility.getObjectMapperWithMixIn(BinaryObjectType.class, MixInIgnoreType.class).writeValue(tempOutputStream, transaction.getExchangedDocument());
+                    tempOutputStream.writeTo(zos);
+                    tempOutputStream.close();
+                    zos.closeEntry();
+                } catch (IOException e) {
+                    HttpResponseUtil.writeMessageServletResponseAndLog(
+                            response,
+                            String.format("Failed to write document: {} to the zip file for party id: %s, user id: %s, direction: %s", transaction.getExchangedDocumentId(), partyId, userId, direction),
+                            e,
+                            HttpStatus.INTERNAL_SERVER_ERROR,
+                            LogLevel.ERROR);
+                    return;
+                } finally {
+                    if(tempOutputStream != null) {
+                        try {
+                            tempOutputStream.close();
+                        } catch (IOException e) {
+                            logger.warn("Failed to close temp output stream", e);
+                        }
+                    }
+                }
+
+                List<DocumentReferenceType> additionalDocuments = transaction.getAuxiliaryFiles();
+                for (DocumentReferenceType docRef : additionalDocuments) {
+                    String fileName = "";
+                    try {
+                        fileName = transaction.getExchangedDocumentId() + "-" + docRef.getAttachment().getEmbeddedDocumentBinaryObject().getFileName();
+                        fileName = fileName.substring(0, fileName.length() < 256 ? fileName.length() : 256);
+                        zipEntry = new ZipEntry(fileName);
+                        zos.putNextEntry(zipEntry);
+                        tempOutputStream = new ByteArrayOutputStream();
+                        IOUtils.write(docRef.getAttachment().getEmbeddedDocumentBinaryObject().getValue(), tempOutputStream);
+                        tempOutputStream.writeTo(zos);
+                        tempOutputStream.close();
+                        zos.closeEntry();
+
+                    } catch (IOException e) {
+                        HttpResponseUtil.writeMessageServletResponseAndLog(
+                                response,
+                                String.format("Failed to write auxiliary file: {} to the zip file for party id: %s, user id: %s, direction: %s", fileName, partyId, userId, direction),
+                                e,
+                                HttpStatus.INTERNAL_SERVER_ERROR,
+                                LogLevel.ERROR);
+                        return;
+
+                    } finally {
+                        if(tempOutputStream != null ) {
+                            try {
+                                tempOutputStream.close();
+                            } catch (IOException e) {
+                                logger.warn("Failed to close temp output stream", e);
+                            }
+                        }
+                    }
+                }
+            }
+
+            response.flushBuffer();
+            logger.info("Completed request to export transactions. party id: {}, user id: {}, direction: {}", partyId, userId, direction);
+
+        } catch (Exception e) {
+            HttpResponseUtil.writeMessageServletResponseAndLog(
+                    response,
+                    String.format("Unexpected error while exporting transactions for party id: %s, user id: %s, direction: %s", partyId, userId, direction),
+                    e,
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    LogLevel.ERROR);
+            return;
+
+        } finally {
+            if(zos != null) {
+                try {
+                    zos.close();
+                } catch (IOException e) {
+                    logger.warn("Failed to close zip output stream", e);
+                }
+            }
+        }
     }
 }

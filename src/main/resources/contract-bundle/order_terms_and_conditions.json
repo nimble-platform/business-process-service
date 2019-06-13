@@ -28,7 +28,12 @@
         "value": {
           "name": null,
           "valueQualifier": "STRING",
-          "value": [],
+          "value": [
+            {
+              "value": "",
+              "languageID": "en"
+            }
+          ],
           "valueQuantity": [],
           "valueDecimal": [],
           "valueCode": []
@@ -506,7 +511,12 @@
         "value": {
           "name": null,
           "valueQualifier": "STRING",
-          "value": [],
+          "value": [
+            {
+              "value": "",
+              "languageID": "en"
+            }
+          ],
           "valueQuantity": [],
           "valueDecimal": [],
           "valueCode": []

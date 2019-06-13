@@ -91,8 +91,6 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
 
     @Override
     public void sendDocument(String businessContextId,String processInstanceId, String initiatorID, String responderID, Object document) {
-        // TODO: Send email notification to the responder...
-
         List<ProcessDocumentMetadataDAO> documentMetadata = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(processInstanceId);
 
         if(documentMetadata.size() > 1) {

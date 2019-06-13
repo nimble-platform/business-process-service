@@ -1,8 +1,8 @@
 package eu.nimble.service.bp.impl.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.nimble.service.bp.impl.model.dashboard.CollaborationGroupResponse;
 import eu.nimble.service.bp.swagger.model.CollaborationGroup;
-import eu.nimble.service.bp.swagger.model.CollaborationGroupResponse;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroup;
 import eu.nimble.utility.JsonSerializationUtility;
 import org.junit.Assert;
