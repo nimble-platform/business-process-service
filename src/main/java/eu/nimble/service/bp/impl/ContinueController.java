@@ -2,6 +2,7 @@ package eu.nimble.service.bp.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import eu.nimble.service.bp.hyperjaxb.model.*;
+import eu.nimble.service.bp.impl.util.BusinessProcessEvent;
 import eu.nimble.service.bp.impl.util.HttpResponseUtil;
 import eu.nimble.service.bp.impl.util.bp.BusinessProcessUtility;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
@@ -20,6 +21,7 @@ import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
 import eu.nimble.service.bp.swagger.model.ProcessVariables;
 import eu.nimble.service.bp.swagger.model.Transaction;
 import eu.nimble.utility.JsonSerializationUtility;
+import eu.nimble.utility.LoggerUtils;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
 import io.swagger.annotations.ApiOperation;
@@ -33,6 +35,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by yildiray on 5/25/2017.
@@ -116,6 +121,15 @@ public class ContinueController implements ContinueApi {
             // create process instance groups if this is the first process initializing the process group
             checkExistingGroup(businessProcessContext.getId(), gid, processInstance.getProcessInstanceID(), body, collaborationGID);
             emailSenderUtil.sendActionPendingEmail(bearerToken, businessProcessContext);
+
+            //mdc logging
+            Map<String,String> logParamMap = new HashMap<String, String>();
+            logParamMap.put("bpId", storedInstance.getProcessInstanceID());
+            logParamMap.put("bpType", storedInstance.getProcessID());
+            logParamMap.put("bpStatus", storedInstance.getStatus().toString());
+            logParamMap.put("activity", BusinessProcessEvent.BUSINESS_PROCESS_COMPLETE.getActivity());
+            LoggerUtils.logWithMDC(logger, logParamMap, LoggerUtils.LogLevel.INFO, "Completed a business process instance with id: {}, process type: {}",
+                    storedInstance.getProcessInstanceID(), storedInstance.getProcessID());
         } catch (Exception e) {
             logger.error(" $$$ Failed to continue process with ProcessInstanceInputMessage {}", body.toString(), e);
             businessProcessContext.handleExceptions();
