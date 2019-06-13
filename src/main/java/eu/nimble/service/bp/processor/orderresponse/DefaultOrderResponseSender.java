@@ -6,13 +6,11 @@ import eu.nimble.service.bp.config.GenericConfig;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
 import eu.nimble.service.bp.impl.contract.ContractGenerator;
 import eu.nimble.service.bp.impl.util.persistence.bp.ExecutionConfigurationDAOUtility;
-import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.serialization.MixInIgnoreProperties;
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
-import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ClauseType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ContractType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.DocumentClauseType;
@@ -23,11 +21,6 @@ import eu.nimble.utility.JsonSerializationUtility;
 import org.apache.commons.io.IOUtils;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.LocalDateTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import request.CreateChannel;
@@ -37,10 +30,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Created by yildiray on 5/26/2017.
@@ -139,13 +130,6 @@ public class DefaultOrderResponseSender  implements JavaDelegate {
             return;
         }
 
-        // adjust the start end data
-        DateTimeFormatter bpFormatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
-        ProcessDocumentMetadata orderResponseMetadata = ProcessDocumentMetadataDAOUtility.getDocumentMetadata(orderResponse.getID());
-        LocalDateTime localTime = bpFormatter.parseLocalDateTime(orderResponseMetadata.getSubmissionDate());
-        DateTime startTime = new DateTime(localTime.toDateTime(), DateTimeZone.UTC);
-        DateTime endTime = startTime.plusWeeks(2);
-
         HttpURLConnection conn;
         try {
             conn = (HttpURLConnection) dataChannelServiceUrl.openConnection();
@@ -156,9 +140,7 @@ public class DefaultOrderResponseSender  implements JavaDelegate {
             conn.setDoOutput(true);
 
             OutputStream os = conn.getOutputStream();
-            Set<String> consumerIds = new HashSet<>();
-            consumerIds.add(sellerId);
-            CreateChannel.Request request = new CreateChannel.Request(buyerId, consumerIds, String.format("Data channel for product %s", order.getOrderLine().get(0).getLineItem().getItem().getName()), startTime.toDate(), endTime.toDate(), processInstanceId);
+            CreateChannel.Request request = new CreateChannel.Request(buyerId, sellerId, String.format("Data channel for product %s", order.getOrderLine().get(0).getLineItem().getItem().getName().get(0).getValue()), processInstanceId);
 
             JsonSerializationUtility.getObjectMapper().writeValue(os, request);
             os.flush();
