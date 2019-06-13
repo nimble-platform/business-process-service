@@ -11,6 +11,7 @@ import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
+import eu.nimble.service.model.ubl.document.IDocument;
 import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
@@ -99,15 +100,15 @@ public class DocumentPersistenceUtility {
         new JPARepositoryFactory().forBpRepository().deleteEntityByHjid(ProcessDocumentMetadataDAO.class, processDocumentMetadataDAO.getHjid());
     }
 
-    public static Object getUBLDocument(String documentID, DocumentType documentType) {
+    public static IDocument getUBLDocument(String documentID, DocumentType documentType) {
         Class documentClass = DocumentEnumClassMapper.getDocumentClass(documentType);
         String hibernateEntityName = documentClass.getSimpleName();
         String query = String.format(QUERY_GET_DOCUMENT, hibernateEntityName);
-        Object document = new JPARepositoryFactory().forCatalogueRepository(true).getSingleEntity(query, new String[]{"documentId"}, new Object[]{documentID});
+        IDocument document = new JPARepositoryFactory().forCatalogueRepository(true).getSingleEntity(query, new String[]{"documentId"}, new Object[]{documentID});
         return document;
     }
 
-    public static Object getUBLDocument(String documentId) {
+    public static IDocument getUBLDocument(String documentId) {
         ProcessDocumentMetadataDAO processDocumentMetadataDAO = ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId);
         logger.debug(" $$$ Document metadata for {} is {}...", documentId, processDocumentMetadataDAO);
         return getUBLDocument(documentId, processDocumentMetadataDAO.getType());
