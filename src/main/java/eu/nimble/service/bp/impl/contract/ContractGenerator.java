@@ -435,6 +435,19 @@ public class ContractGenerator {
         return termsAndConditionsContract;
     }
 
+    public static ContractType getNonTermOrConditionContract(OrderType order){
+        if(order.getContract().size() > 0){
+            for(ContractType contract : order.getContract()){
+                for(ClauseType clause:contract.getClause()){
+                    if(clause.getType() != null){
+                        return contract;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     // returns clause id - Clause map
     private Map<String,ClauseType> getClausesMap(List<ClauseType> clauses){
         Map<String,ClauseType> idClauseMap = new HashMap<>();

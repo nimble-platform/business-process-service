@@ -4,6 +4,7 @@ import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
 import eu.nimble.service.bp.config.GenericConfig;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
+import eu.nimble.service.bp.impl.contract.ContractGenerator;
 import eu.nimble.service.bp.impl.util.persistence.bp.ExecutionConfigurationDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
@@ -100,8 +101,9 @@ public class DefaultOrderResponseSender  implements JavaDelegate {
 
     private boolean needToCreateDataChannel(OrderType order, OrderResponseSimpleType orderResponse) {
         boolean dataMonitoringDemanded = false;
-        if(order.getContract().size() > 0){
-            List<ClauseType> clauses = getNonTermOrConditionContract(order).getClause();
+        ContractType contract = ContractGenerator.getNonTermOrConditionContract(order);
+        if(contract != null){
+            List<ClauseType> clauses = contract.getClause();
             for(ClauseType clause : clauses) {
                 if(clause.getType().contentEquals(eu.nimble.service.model.ubl.extension.ClauseType.DOCUMENT.toString())) {
                     DocumentClauseType docClause = (DocumentClauseType) clause;
@@ -117,17 +119,6 @@ public class DefaultOrderResponseSender  implements JavaDelegate {
         }
 
         return dataMonitoringDemanded && orderResponse.isAcceptedIndicator();
-    }
-
-    private ContractType getNonTermOrConditionContract(OrderType order){
-        for(ContractType contract : order.getContract()){
-            for(ClauseType clause:contract.getClause()){
-                if(clause.getType() != null){
-                    return contract;
-                }
-            }
-        }
-        return null;
     }
 
     private void createDataChannel(OrderType order, OrderResponseSimpleType orderResponse, String buyerId, String sellerId, String processInstanceId, String bearerToken) {
