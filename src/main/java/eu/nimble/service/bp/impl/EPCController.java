@@ -7,13 +7,12 @@ import com.mashape.unirest.http.Unirest;
 import eu.nimble.service.bp.config.GenericConfig;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
 import eu.nimble.service.bp.impl.model.tt.TTInfo;
+import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.catalogue.CataloguePersistenceUtility;
 import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
-import eu.nimble.service.model.ubl.commonaggregatecomponents.CatalogueLineType;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.utility.JsonSerializationUtility;
-import eu.nimble.utility.persistence.JPARepositoryFactory;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -64,7 +63,8 @@ public class EPCController {
 
     @ApiOperation(value = "",notes = "Gets track & trace-related details for the specified EPC code. First, the corresponding order" +
             " is fetched for the specified code from the data channel service. Then, the CatalogueLine is retrieved for the product" +
-            " included in the order. The T&T details are extracted from the catalogueLine.trackAndTraceDetails field.", response = TTInfo.class)
+            " included in the order and the identifier of corresponding process instance is retrieved from the document metadata"+
+            " of the process.", response = TTInfo.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Retrieved the T&T details successfully", response = TTInfo.class),
             @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
@@ -100,17 +100,18 @@ public class EPCController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(String.format(msg, epc));
             }
 
+            // get order id
             String orderId = epcCodesList.get(0).getOrderId();
-
+            // get corresponding process instance id
+            String processInstanceId = ProcessDocumentMetadataDAOUtility.findByDocumentID(orderId).getProcessInstanceID();
+            // get order to retrieve catalogue uuid and catalogue line id
             OrderType order = (OrderType) DocumentPersistenceUtility.getUBLDocument(orderId, DocumentType.ORDER);
-
-            Object[] ttDetails = CataloguePersistenceUtility.getCatalogueLineTTDetails(order);
+            Object[] lineHjidAndCatalogUuid = CataloguePersistenceUtility.getCatalogueIdAndLineId(order);
 
             TTInfo ttInfo = new TTInfo();
-            ttInfo.setRelatedProductId(ttDetails[0].toString());
-            ttInfo.setEventUrl(ttDetails[1].toString());
-            ttInfo.setMasterUrl(ttDetails[2].toString());
-            ttInfo.setProductionProcessTemplate(ttDetails[3].toString());
+            ttInfo.setProcessInstanceId(processInstanceId);
+            ttInfo.setCatalogueLineHjid(lineHjidAndCatalogUuid[0].toString());
+            ttInfo.setCatalogueUuid(lineHjidAndCatalogUuid[1].toString());
 
             logger.info("Received track & tracing details for epc: {}", epc);
             return ResponseEntity.ok(ttInfo);

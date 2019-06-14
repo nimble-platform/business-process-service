@@ -402,23 +402,23 @@ public class Test04_BusinessProcessesTest {
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
     }
 
-    @Test
-    public void test17_dataChannelCreationConditions() throws Exception {
-        DefaultOrderResponseSender defaultOrderResponseSender = new DefaultOrderResponseSender();
-        String orderProcessInstanceInputMessageString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(orderRequestJSON));
-        String orderResponseProcessInstanceInputMessageString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(orderResponseJSON));
-        ProcessInstanceInputMessage orderProcessInstanceInputMessage = JsonSerializationUtility.getObjectMapper().readValue(orderProcessInstanceInputMessageString, ProcessInstanceInputMessage.class);
-        ProcessInstanceInputMessage orderResponseProcessInstanceInputMessage = JsonSerializationUtility.getObjectMapper().readValue(orderResponseProcessInstanceInputMessageString, ProcessInstanceInputMessage.class);
-
-        OrderType order = JsonSerializationUtility.getObjectMapper().readValue(orderProcessInstanceInputMessage.getVariables().getContent(), OrderType.class);
-        OrderResponseSimpleType orderResponse = JsonSerializationUtility.getObjectMapper().readValue(orderResponseProcessInstanceInputMessage.getVariables().getContent(), OrderResponseSimpleType.class);
-
-        Method method = DefaultOrderResponseSender.class.getDeclaredMethod("needToCreateDataChannel", OrderType.class, OrderResponseSimpleType.class);
-        method.setAccessible(true);
-        Boolean needToCreateDataChannel = (Boolean) method.invoke(defaultOrderResponseSender, order, orderResponse);
-        method.setAccessible(false);
-        Assert.assertTrue(needToCreateDataChannel);
-    }
+//    @Test
+//    public void test17_dataChannelCreationConditions() throws Exception {
+//        DefaultOrderResponseSender defaultOrderResponseSender = new DefaultOrderResponseSender();
+//        String orderProcessInstanceInputMessageString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(orderRequestJSON));
+//        String orderResponseProcessInstanceInputMessageString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(orderResponseJSON));
+//        ProcessInstanceInputMessage orderProcessInstanceInputMessage = JsonSerializationUtility.getObjectMapper().readValue(orderProcessInstanceInputMessageString, ProcessInstanceInputMessage.class);
+//        ProcessInstanceInputMessage orderResponseProcessInstanceInputMessage = JsonSerializationUtility.getObjectMapper().readValue(orderResponseProcessInstanceInputMessageString, ProcessInstanceInputMessage.class);
+//
+//        OrderType order = JsonSerializationUtility.getObjectMapper().readValue(orderProcessInstanceInputMessage.getVariables().getContent(), OrderType.class);
+//        OrderResponseSimpleType orderResponse = JsonSerializationUtility.getObjectMapper().readValue(orderResponseProcessInstanceInputMessage.getVariables().getContent(), OrderResponseSimpleType.class);
+//
+//        Method method = DefaultOrderResponseSender.class.getDeclaredMethod("needToCreateDataChannel", OrderType.class, OrderResponseSimpleType.class);
+//        method.setAccessible(true);
+//        Boolean needToCreateDataChannel = (Boolean) method.invoke(defaultOrderResponseSender, order, orderResponse);
+//        method.setAccessible(false);
+//        Assert.assertTrue(needToCreateDataChannel);
+//    }
 
     @Test
     public void test18_getClauses() throws Exception{
