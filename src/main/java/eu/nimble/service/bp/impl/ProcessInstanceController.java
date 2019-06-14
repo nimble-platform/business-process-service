@@ -1,12 +1,11 @@
 package eu.nimble.service.bp.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceStatus;
+import eu.nimble.service.bp.impl.util.BusinessProcessEvent;
 import eu.nimble.service.bp.impl.model.export.TransactionSummary;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMapper;
@@ -17,15 +16,14 @@ import eu.nimble.service.bp.impl.util.persistence.catalogue.TrustPersistenceUtil
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
-import eu.nimble.service.bp.serialization.MixInIgnoreProperties;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
-import eu.nimble.service.bp.swagger.model.ProcessVariables;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.DocumentReferenceType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.BinaryObjectType;
 import eu.nimble.service.model.ubl.document.IDocument;
 import eu.nimble.utility.Configuration;
 import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.JsonSerializationUtility;
+import eu.nimble.utility.LoggerUtils;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
 import eu.nimble.utility.serialization.JsonSerializer;
@@ -46,10 +44,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -99,6 +99,15 @@ public class ProcessInstanceController {
             // change status of the process
             instanceDAO.setStatus(ProcessInstanceStatus.CANCELLED);
             new JPARepositoryFactory().forBpRepository().updateEntity(instanceDAO);
+
+            //mdc logging
+            Map<String,String> logParamMap = new HashMap<String, String>();
+            logParamMap.put("bpId", instanceDAO.getProcessInstanceID());
+            logParamMap.put("bpType", instanceDAO.getProcessID());
+            logParamMap.put("bpStatus", instanceDAO.getStatus().toString());
+            logParamMap.put("activity", BusinessProcessEvent.BUSINESS_PROCESS_CANCEL.getActivity());
+            LoggerUtils.logWithMDC(logger, logParamMap, LoggerUtils.LogLevel.INFO, "Cancelled a business process instance with id: {}, process type: {}",
+                    instanceDAO.getProcessInstanceID(), instanceDAO.getProcessID());
         }
         catch (Exception e) {
             logger.error("Failed to cancel the process instance with id:{}",processInstanceId,e);
@@ -156,6 +165,19 @@ public class ProcessInstanceController {
             ProcessDocumentMetadataDAOUtility.updateDocumentMetadata(businessProcessContext.getId(),processDocumentMetadata);
             // update the corresponding document
             DocumentPersistenceUtility.updateDocument(businessProcessContext.getId(), document, processDocumentMetadata.getDocumentID(), documentType, processDocumentMetadata.getInitiatorID());
+
+            //mdc logging
+            Map<String,String> logParamMap = new HashMap<String, String>();
+            logParamMap.put("bpInitUserId", processDocumentMetadata.getCreatorUserID());
+            logParamMap.put("bpInitCompanyId", processDocumentMetadata.getInitiatorID());
+            logParamMap.put("bpRespondCompanyId", processDocumentMetadata.getResponderID());
+
+            logParamMap.put("bpId", instanceDAO.getProcessInstanceID());
+            logParamMap.put("bpType", instanceDAO.getProcessID());
+            logParamMap.put("bpStatus", instanceDAO.getStatus().toString());
+            logParamMap.put("activity", BusinessProcessEvent.BUSINESS_PROCESS_UPDATE.getActivity());
+            LoggerUtils.logWithMDC(logger, logParamMap, LoggerUtils.LogLevel.INFO, "Updated a business process instance with id: {}, process type: {}",
+                    instanceDAO.getProcessInstanceID(), instanceDAO.getProcessID());
         }
         catch (Exception e) {
             logger.error("Failed to update the process instance with id:{}",processInstanceID,e);

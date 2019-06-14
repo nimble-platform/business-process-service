@@ -1,6 +1,7 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.hyperjaxb.model.*;
+import eu.nimble.service.bp.impl.util.BusinessProcessEvent;
 import eu.nimble.service.bp.impl.util.bp.BusinessProcessUtility;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.impl.util.email.EmailSenderUtil;
@@ -18,6 +19,7 @@ import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
 import eu.nimble.service.bp.swagger.model.ProcessVariables;
 import eu.nimble.service.bp.swagger.model.Transaction;
 import eu.nimble.utility.JsonSerializationUtility;
+import eu.nimble.utility.LoggerUtils;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
@@ -33,7 +35,9 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.ws.rs.BadRequestException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by yildiray on 5/25/2017.
@@ -110,7 +114,6 @@ public class StartController implements StartApi {
         try {
             ProcessInstanceInputMessageDAO processInstanceInputMessageDAO = HibernateSwaggerObjectMapper.createProcessInstanceInputMessage_DAO(body);
             repo.persistEntity(processInstanceInputMessageDAO);
-
             // save ProcessInstanceInputMessageDAO
             businessProcessContext.setMessageDAO(processInstanceInputMessageDAO);
 
@@ -176,6 +179,20 @@ public class StartController implements StartApi {
                 addNewProcessInstanceToGroup(businessProcessContext.getId(),gid, processInstance.getProcessInstanceID(), body,responderCollaborationGroupDAO);
             }
             emailSenderUtil.sendActionPendingEmail(bearerToken, businessProcessContext);
+            //mdc logging
+            Map<String,String> logParamMap = new HashMap<String, String>();
+            ProcessVariablesDAO processVariables = processInstanceInputMessageDAO.getVariables();
+            if(processVariables != null) {
+                logParamMap.put("bpInitCompanyId", processVariables.getInitiatorID());
+                logParamMap.put("bpRespondCompanyId", processVariables.getResponderID());
+                logParamMap.put("bpInitUserId", processVariables.getCreatorUserID());
+            }
+            logParamMap.put("bpId", processInstance.getProcessInstanceID());
+            logParamMap.put("bpType", processInstance.getProcessID());
+            logParamMap.put("bpStatus", processInstance.getStatus().toString());
+            logParamMap.put("activity", BusinessProcessEvent.BUSINESS_PROCESS_START.getActivity());
+            LoggerUtils.logWithMDC(logger, logParamMap, LoggerUtils.LogLevel.INFO, "Started a business process instance with id: {}, process type: {}",
+                    processInstance.getProcessInstanceID(), processInstance.getProcessID());
         }
         catch (Exception e){
             logger.error(" $$$ Failed to start process with ProcessInstanceInputMessage {}", body.toString(),e);
