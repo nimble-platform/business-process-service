@@ -682,6 +682,33 @@ paths:
               $ref: '#/definitions/CollaborationGroup'
           401:
             description: Invalid token. No user was found for the provided token
+  /collaboration-groups/merge:
+    get:
+      operationId: mergeCollaborationGroups
+      parameters:
+        - name: Authorization
+          in: header
+          type: string
+          required: true
+        - in: query
+          name: bcid
+          type: string
+          description: Identifier of the base collaboration group
+          required: true
+        - in: query
+          name: cgids
+          type: array
+          description: List of collaboration group id's to be merged.
+          required: true
+      responses:
+        200:
+          description: Merged the collaboration group successfully
+          schema:
+            $ref: '#/definitions/CollaborationGroup'
+        401:
+          description: Invalid token. No user was found for the provided token
+        400:
+          description: Invalid Clause content
   /collaboration-groups:
     get:
       operationId: getCollaborationGroups
@@ -730,6 +757,10 @@ paths:
         name: collaborationRole
         type: string
         required: false
+      - in: query
+        name: isProject
+        type: boolean
+        default: false
       - name: Authorization
         in: header
         type: string
@@ -809,6 +840,10 @@ paths:
         in: header
         type: string
         required: true
+      - in: query
+        name: isProject
+        type: boolean
+        default: false
       produces:
       - application/json
       responses:
@@ -1127,6 +1162,8 @@ definitions:
         type: string
         enum:
         - INPROGRESS
+      isProject:
+        type: boolean
       associatedCollaborationGroups:
         type: array
         items:

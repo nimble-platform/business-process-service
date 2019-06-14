@@ -153,16 +153,24 @@ public class CollaborationGroupDAOUtility {
             String startTime,
             String endTime,
             int limit,
-            int offset) {
+            int offset,
+            Boolean isProject) {
 
-        QueryData query = getGroupRetrievalQuery(GroupQueryType.GROUP, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories, status, startTime, endTime);
+        QueryData query = null;
+
+        if(isProject){
+            query = getGroupRetrievalQuery(GroupQueryType.PROJECT, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories, status, startTime, endTime);
+        }else{
+            query = getGroupRetrievalQuery(GroupQueryType.GROUP, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories, status, startTime, endTime);
+        }
         List<Object> collaborationGroups = new JPARepositoryFactory().forBpRepository(true).getEntities(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray(),limit,offset);
         List<CollaborationGroupDAO> results = new ArrayList<>();
         for (Object groupResult : collaborationGroups) {
             Object[] resultItems = (Object[]) groupResult;
             CollaborationGroupDAO collaborationGroupDAO = (CollaborationGroupDAO) resultItems[0];
-            results.add(collaborationGroupDAO);
 
+            // since in the result set, there may be multiple process instance groups belonging to the same collaboration group
+            // we need to be sure that there will be only one collaboration group in the final result
             CollaborationGroupDAO collaborationGroupInResults = null;
 
             // check whether the collaborationGroup is the results or not
@@ -176,14 +184,19 @@ public class CollaborationGroupDAOUtility {
                 results.add(collaborationGroupInResults);
             }
 
-            ProcessInstanceGroupDAO group = (ProcessInstanceGroupDAO) resultItems[1];
-            // find the group in the collaborationGroup
-            for (ProcessInstanceGroupDAO groupDAO : collaborationGroupInResults.getAssociatedProcessInstanceGroups()) {
-                if (groupDAO.getID().equals(group.getID())) {
-                    groupDAO.setLastActivityTime((String) resultItems[2]);
-                    groupDAO.setFirstActivityTime((String) resultItems[3]);
+            for (ProcessInstanceGroupDAO oneWay:collaborationGroupDAO.getAssociatedProcessInstanceGroups()) {
+                ProcessInstanceGroupDAO processInstanceGroupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(oneWay.getID());
+                // find the group in the collaborationGroup
+                for (ProcessInstanceGroupDAO groupDAO : collaborationGroupInResults.getAssociatedProcessInstanceGroups()) {
+                    if (groupDAO.getID().equals(processInstanceGroupDAO.getID())) {
+                        groupDAO.setLastActivityTime((String) processInstanceGroupDAO.getLastActivityTime());
+                        groupDAO.setFirstActivityTime((String) processInstanceGroupDAO.getFirstActivityTime());
+                    }
                 }
             }
+
+//            ProcessInstanceGroupDAO group = (ProcessInstanceGroupDAO) resultItems[1];
+
         }
         return results;
     }
@@ -196,9 +209,17 @@ public class CollaborationGroupDAOUtility {
                                                 List<String> relatedProductCategories,
                                                 List<String> status,
                                                 String startTime,
-                                                String endTime) {
-        QueryData query = getGroupRetrievalQuery(GroupQueryType.SIZE, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories, status, startTime, endTime);
-        int count = ((Long) new JPARepositoryFactory().forBpRepository().getSingleEntity(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray())).intValue();
+                                                String endTime,
+                                                Boolean isProject) {
+
+        QueryData query = null;
+        if(isProject){
+            query = getGroupRetrievalQuery(GroupQueryType.PROJECTSIZE, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories, status, startTime, endTime);
+        }else {
+             query = getGroupRetrievalQuery(GroupQueryType.SIZE, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories, status, startTime, endTime);
+        }
+        int count = ((Long) new JPARepositoryFactory().forBpRepository(true).getSingleEntity(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray())).intValue();
+
         return count;
     }
 
@@ -212,10 +233,17 @@ public class CollaborationGroupDAOUtility {
             List<String> status,
             String startTime,
             String endTime,
-            String bearerToken) {
+            String bearerToken,
+            Boolean isProject) {
 
-        QueryData query = getGroupRetrievalQuery(GroupQueryType.FILTER, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories, status, startTime, endTime);
+        QueryData query = null;
+        if(isProject){
+            query = getGroupRetrievalQuery(GroupQueryType.PROJECTFILTER, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories, status, startTime, endTime);
 
+        }else{
+            query = getGroupRetrievalQuery(GroupQueryType.FILTER, partyId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories, status, startTime, endTime);
+
+        }
         ProcessInstanceGroupFilter filter = new ProcessInstanceGroupFilter();
         List<Object> resultSet = new JPARepositoryFactory().forBpRepository().getEntities(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray());
         for (Object result : resultSet) {
@@ -301,12 +329,12 @@ public class CollaborationGroupDAOUtility {
         List<Object> parameterValues = queryData.parameterValues;
 
         String query = "";
-        if (queryType == GroupQueryType.FILTER) {
+        if (queryType == GroupQueryType.FILTER || queryType == GroupQueryType.PROJECTFILTER) {
             query += "select distinct new list(relProd.item, relCat.item, doc.initiatorID, doc.responderID, pi.status)";
-        } else if (queryType == GroupQueryType.SIZE) {
+        } else if (queryType == GroupQueryType.SIZE || queryType == GroupQueryType.PROJECTSIZE) {
             query += "select count(distinct cg)";
-        } else if (queryType == GroupQueryType.GROUP) {
-            query += "select cg,pig, max(doc.submissionDate) as lastActivityTime, min(doc.submissionDate) as firstActivityTime";
+        } else if (queryType == GroupQueryType.GROUP || queryType == GroupQueryType.PROJECT) {
+            query += "select cg, max(doc.submissionDate) as lastActivityTime, min(doc.submissionDate) as firstActivityTime";
         }
 
         query += " from " +
@@ -315,6 +343,13 @@ public class CollaborationGroupDAOUtility {
                 "ProcessDocumentMetadataDAO doc left join doc.relatedProductCategoriesItems relCat left join doc.relatedProductsItems relProd" +
                 " where " +
                 "pid.item = pi.processInstanceID and doc.processInstanceID = pi.processInstanceID";
+
+        if (queryType == GroupQueryType.PROJECTSIZE || queryType == GroupQueryType.PROJECT || queryType == GroupQueryType.PROJECTFILTER) {
+            query += " and cg.isProject = :isProject";
+
+            parameterNames.add("isProject");
+            parameterValues.add(Boolean.TRUE);
+        }
 
         if (relatedProductCategories != null && relatedProductCategories.size() > 0) {
             query += " and (";
@@ -384,18 +419,19 @@ public class CollaborationGroupDAOUtility {
             parameterValues.add(collaborationRole);
         }
 
-        if (queryType == GroupQueryType.GROUP) {
-            query += " group by pig.hjid,cg.hjid";
+        if (queryType == GroupQueryType.GROUP || queryType == GroupQueryType.PROJECT) {
+            query += " group by cg.hjid";
             query += " order by firstActivityTime desc";
         }
 
         query += ") > 0";
+
         queryData.query = query;
         return queryData;
     }
     
     private enum GroupQueryType {
-        GROUP, FILTER, SIZE
+        GROUP, FILTER, SIZE,PROJECTSIZE,PROJECT,PROJECTFILTER
     }
 
     private static class QueryData {

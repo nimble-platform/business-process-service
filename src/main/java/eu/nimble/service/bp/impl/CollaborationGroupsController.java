@@ -1,6 +1,7 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.hyperjaxb.model.CollaborationGroupDAO;
+import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
 import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceStatus;
 import eu.nimble.service.bp.impl.model.dashboard.CollaborationGroupResponse;
 import eu.nimble.service.bp.impl.util.HttpResponseUtil;
@@ -128,11 +129,12 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
                                                                              @ApiParam(value = "Number of results to be included in the result set", defaultValue = "10") @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit,
                                                                              @ApiParam(value = "Whether the collaboration group is archived or not", defaultValue = "false") @RequestParam(value = "archived", required = false, defaultValue = "false") Boolean archived,
                                                                              @ApiParam(value = "Status of the process instance included in the group.<br>Possible values:<ul><li>STARTED</li><li>WAITING</li><li>CANCELLED</li><li>COMPLETED</li></ul>") @RequestParam(value = "status", required = false) List<String> status,
-                                                                             @ApiParam(value = "Role of the party in the collaboration.<br>Possible values:<ul><li>SELLER</li><li>BUYER</li></ul>") @RequestParam(value = "collaborationRole", required = false) String collaborationRole) {
+                                                                             @ApiParam(value = "Role of the party in the collaboration.<br>Possible values:<ul><li>SELLER</li><li>BUYER</li></ul>") @RequestParam(value = "collaborationRole", required = false) String collaborationRole,
+                                                                             @ApiParam(value = "Identify Project Or Not", defaultValue = "false") @RequestParam(value = "isProject", required = false, defaultValue = "false") Boolean isProject) {
         logger.debug("Getting collaboration groups for party: {}", partyId);
         try {
-            List<CollaborationGroupDAO> results = CollaborationGroupDAOUtility.getCollaborationGroupDAOs(partyId, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, status, null, null, limit, offset);
-            int totalSize = CollaborationGroupDAOUtility.getCollaborationGroupSize(partyId, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, status, null, null);
+            List<CollaborationGroupDAO> results = CollaborationGroupDAOUtility.getCollaborationGroupDAOs(partyId, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, status, null, null, limit, offset,isProject);
+            int totalSize = CollaborationGroupDAOUtility.getCollaborationGroupSize(partyId, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, status, null, null,isProject);
             logger.debug(" There are {} collaboration groups in total", results.size());
             List<CollaborationGroup> collaborationGroups = new ArrayList<>();
             List<Long> groupHjids = new ArrayList<>();
@@ -144,6 +146,7 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
             CollaborationGroupResponse groupResponse = new CollaborationGroupResponse();
             groupResponse.setCollaborationGroups(collaborationGroups);
             groupResponse.setSize(totalSize);
+
             // get archiveable statuses
             Map<Long, Set<ProcessInstanceStatus>> archiveableStatuses = CollaborationGroupDAOUtility.getCollaborationProcessInstanceStatusesForCollaborationGroups(groupHjids);
             for(Map.Entry<Long, Set<ProcessInstanceStatus>> e : archiveableStatuses.entrySet()) {
@@ -210,6 +213,73 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
         repo.updateEntity(collaborationGroupDAO);
         logger.debug("Updated name of the collaboration group :" + id);
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body("true");
+        return response;
+    }
+
+
+
+	@Override
+    @ApiOperation(value = "", notes = "Merge list of CollaborationGroups")
+    public ResponseEntity<CollaborationGroup> mergeCollaborationGroups(
+            @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
+            @ApiParam(value = "Identifier of the base collaboration group ", required = true) @RequestParam("bcid") String bcid,
+            @ApiParam(value = "List of collaboration group id's to be merged.", required = true) @RequestParam(value = "cgids", required = true) List<String> cgids
+
+    ) {
+        logger.debug("Merging the collaboration groups");
+        // check token
+        ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
+        if (tokenCheck != null) {
+            return tokenCheck;
+        }
+
+        List<ProcessInstanceGroupDAO> allProcessInstanceGroups = new ArrayList<>();
+        List<Long> allColabrationGroupList  = new ArrayList<>();
+
+        GenericJPARepository repo = repoFactory.forBpRepository(true);
+        CollaborationGroupDAO collaborationGroupDAO = repo.getSingleEntityByHjid(CollaborationGroupDAO.class, Long.parseLong(bcid));
+        if (collaborationGroupDAO == null) {
+            String msg = String.format("There does not exist a collaboration group with id: %s", bcid);
+            logger.error(msg);
+            ResponseEntity response = ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            return response;
+        }
+
+        allProcessInstanceGroups = collaborationGroupDAO.getAssociatedProcessInstanceGroups();
+        allColabrationGroupList = collaborationGroupDAO.getAssociatedCollaborationGroups();
+
+        for(String cgid : cgids){
+            CollaborationGroupDAO mergeCollaborationGroupDAO = repo.getSingleEntityByHjid(CollaborationGroupDAO.class, Long.parseLong(cgid));
+            if(mergeCollaborationGroupDAO != null) {
+                allProcessInstanceGroups.addAll(mergeCollaborationGroupDAO.getAssociatedProcessInstanceGroups());
+                allColabrationGroupList.addAll(mergeCollaborationGroupDAO.getAssociatedCollaborationGroups());
+                for (Long mergeId:mergeCollaborationGroupDAO.getAssociatedCollaborationGroups()) {
+                    CollaborationGroupDAO mergeCollaborationGroupDAOInstance = repo.getSingleEntityByHjid(CollaborationGroupDAO.class, mergeId);
+                    List<Long> finalAssociatedInstanceIdList = mergeCollaborationGroupDAOInstance.getAssociatedCollaborationGroups();
+                    finalAssociatedInstanceIdList.remove(Long.parseLong(cgid));
+                    finalAssociatedInstanceIdList.add(Long.parseLong(bcid));
+                    mergeCollaborationGroupDAOInstance.setAssociatedCollaborationGroups(finalAssociatedInstanceIdList);
+                    repo.updateEntity(mergeCollaborationGroupDAOInstance);
+                }
+            }
+        }
+
+        collaborationGroupDAO.setAssociatedCollaborationGroups(allColabrationGroupList);
+        collaborationGroupDAO.setAssociatedProcessInstanceGroups(allProcessInstanceGroups);
+        collaborationGroupDAO.setIsProject(true);
+
+        repo.updateEntity(collaborationGroupDAO);
+
+        for(String cgid : cgids){
+            CollaborationGroupDAOUtility.deleteCollaborationGroupDAOByID(Long.parseLong(cgid));
+        }
+        collaborationGroupDAO.getAssociatedCollaborationGroups();
+
+        logger.debug("Updated name of the collaboration group :" + cgids);
+
+        CollaborationGroup collaborationGroup = HibernateSwaggerObjectMapper.convertCollaborationGroupDAO(collaborationGroupDAO);
+        ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(collaborationGroup);
+        logger.debug("Retrieved CollaborationGroup: {}", bcid);
         return response;
     }
 }
