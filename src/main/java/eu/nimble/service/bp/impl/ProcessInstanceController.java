@@ -234,9 +234,7 @@ public class ProcessInstanceController {
         ExecutorService executorService = null;
         try {
             logger.info("Getting the details for process instance: {}", processInstanceId);
-            executorService = new ThreadPoolExecutor(100, Integer.MAX_VALUE,
-                    60L, TimeUnit.SECONDS,
-                    new SynchronousQueue<Runnable>());
+            executorService = Executors.newCachedThreadPool();
 
             // check token
             ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
