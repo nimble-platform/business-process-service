@@ -50,9 +50,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -233,8 +231,13 @@ public class ProcessInstanceController {
             method = RequestMethod.GET)
     public ResponseEntity getDashboardProcessInstanceDetails(@ApiParam(value = "Identifier of the process instance", required = true) @PathVariable(value = "processInstanceId", required = true) String processInstanceId,
                                                              @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
+        ExecutorService executorService = null;
         try {
             logger.info("Getting the details for process instance: {}", processInstanceId);
+            executorService = new ThreadPoolExecutor(100, Integer.MAX_VALUE,
+                    60L, TimeUnit.SECONDS,
+                    new SynchronousQueue<Runnable>());
+
             // check token
             ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
             if (tokenCheck != null) {
@@ -243,9 +246,10 @@ public class ProcessInstanceController {
 
             List<HistoricVariableInstance> variableInstanceList = CamundaEngine.getVariableInstances(processInstanceId);
 
-            Future<String> variableInstances = serializeObject(variableInstanceList);
-            Future<String> processInstance = serializeObject(CamundaEngine.getProcessInstance(processInstanceId));
-            Future<String> lastActivityInstance = serializeObject(CamundaEngine.getLastActivityInstance(processInstanceId));
+            Future<String> variableInstances = serializeObject(variableInstanceList, executorService);
+            Future<String> processInstance = serializeObject(CamundaEngine.getProcessInstance(processInstanceId), executorService);
+            Future<String> lastActivityInstance = serializeObject(CamundaEngine.getLastActivityInstance(processInstanceId), executorService);
+
 
             // get request and response document
             // get request and response metadata as well
@@ -258,7 +262,7 @@ public class ProcessInstanceController {
                 if(variableInstance.getName().contentEquals("initialDocumentID")){
                     String documentId =  variableInstance.getValue().toString();
                     // request document
-                    requestDocument = getRequestDocument(documentId);
+                    requestDocument = getRequestDocument(documentId, executorService);
                     // request metadata
                     requestMetadata = HibernateSwaggerObjectMapper.createProcessDocumentMetadata(ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId));
                 }
@@ -266,7 +270,7 @@ public class ProcessInstanceController {
                 else if(variableInstance.getName().contentEquals("responseDocumentID")){
                     String documentId =  variableInstance.getValue().toString();
                     // response document
-                    responseDocumentStatus = getResponseDocumentStatus(documentId);
+                    responseDocumentStatus = getResponseDocumentStatus(documentId, executorService);
                     // response metadata
                     responseMetadata = HibernateSwaggerObjectMapper.createProcessDocumentMetadata(ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId));
                 }
@@ -275,10 +279,10 @@ public class ProcessInstanceController {
             Future<String> requestCreatorUser = null;
             Future<String> responseCreatorUser = null;
             if(requestMetadata != null){
-                requestCreatorUser = getCreatorUser(bearerToken,requestMetadata.getCreatorUserID());
+                requestCreatorUser = getCreatorUser(bearerToken,requestMetadata.getCreatorUserID(), executorService);
             }
             if(responseMetadata != null){
-                responseCreatorUser = getCreatorUser(bearerToken,responseMetadata.getCreatorUserID());
+                responseCreatorUser = getCreatorUser(bearerToken,responseMetadata.getCreatorUserID(), executorService);
             }
 
             ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
@@ -298,13 +302,15 @@ public class ProcessInstanceController {
             return ResponseEntity.ok(jsonSerializer.toString());
         } catch (Exception e) {
             return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting the details for process instance id: %s", processInstanceId), e, HttpStatus.INTERNAL_SERVER_ERROR);
+        } finally {
+            if(executorService != null && !executorService.isShutdown()) {
+                executorService.shutdown();
+            }
         }
     }
 
-    private ExecutorService executorService = Executors.newCachedThreadPool();
-
-    private Future<String> getRequestDocument(String documentId){
-        return executorService.submit(() -> {
+    private Future<String> getRequestDocument(String documentId, ExecutorService threadPool){
+        return threadPool.submit(() -> {
             ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
             IDocument iDocument = (IDocument) DocumentPersistenceUtility.getUBLDocument(documentId);
             if(iDocument == null){
@@ -318,8 +324,8 @@ public class ProcessInstanceController {
         });
     }
 
-    private Future<String> getResponseDocumentStatus(String documentId){
-        return executorService.submit(() -> {
+    private Future<String> getResponseDocumentStatus(String documentId, ExecutorService threadPool){
+        return threadPool.submit(() -> {
             IDocument iDocument = (IDocument) DocumentPersistenceUtility.getUBLDocument(documentId);
             if(iDocument == null){
                 return null;
@@ -330,13 +336,13 @@ public class ProcessInstanceController {
         });
     }
 
-    private Future<String> getCreatorUser(String bearerToken,String userId){
-        return executorService.submit(() -> JsonSerializationUtility.getObjectMapper().writeValueAsString(
+    private Future<String> getCreatorUser(String bearerToken,String userId, ExecutorService threadPool){
+        return threadPool.submit(() -> JsonSerializationUtility.getObjectMapper().writeValueAsString(
                 SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken,userId)));
     }
 
-    private Future<String> serializeObject(Object object){
-        return executorService.submit(() -> JsonSerializationUtility.getObjectMapper().writeValueAsString(object));
+    private Future<String> serializeObject(Object object, ExecutorService threadPool){
+        return threadPool.submit(() -> JsonSerializationUtility.getObjectMapper().writeValueAsString(object));
     }
 
     @ApiOperation(value = "", notes = "Exports transaction data according to the specified parameters.")
