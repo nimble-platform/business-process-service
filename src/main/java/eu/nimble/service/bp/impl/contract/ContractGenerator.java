@@ -145,7 +145,7 @@ public class ContractGenerator {
                         }
                         else if(clause.getID().contentEquals("5_INVOICES, PAYMENT, AND TAXES")){
                             for(TradingTermType tradingTermType : clause.getTradingTerms()){
-                                if(tradingTermType.getID().contentEquals("$payment_id") && tradingTerm != null){
+                                if(tradingTermType.getID().contentEquals("$payment_id") && !StringUtils.isEmpty(tradingTerm)){
                                     CodeType code = new CodeType();
                                     code.setValue(tradingTerm);
                                     code.setListID(payment_means_list_id);
@@ -161,25 +161,25 @@ public class ContractGenerator {
                                     text.setValue(constructAddress(customerParty.getPartyName().get(0).getName().getValue(),customerParty.getPostalAddress()));
                                     tradingTermType.getValue().setValue(Collections.singletonList(text));
                                 }
-                                else if(tradingTermType.getID().contentEquals("$incoterms_id") && !incoterms.contentEquals("")){
+                                else if(tradingTermType.getID().contentEquals("$incoterms_id") && !StringUtils.isEmpty(incoterms)){
                                     CodeType code = new CodeType();
                                     code.setValue(incoterms);
                                     code.setListID(incoterms_list_id);
                                     tradingTermType.getValue().setValueCode(Collections.singletonList(code));
                                 }
-                                else if(tradingTermType.getID().contentEquals("$seller_website") && supplierParty.getWebsiteURI() != null && !supplierParty.getWebsiteURI().contentEquals("")){
+                                else if(tradingTermType.getID().contentEquals("$seller_website") && !StringUtils.isEmpty(supplierParty.getWebsiteURI())){
                                     TextType text = new TextType();
                                     text.setLanguageID("en");
                                     text.setValue(supplierParty.getWebsiteURI());
                                     tradingTermType.getValue().setValue(Collections.singletonList(text));
                                 }
-                                else if(tradingTermType.getID().contentEquals("$seller_tel") && !supplierParty.getPerson().get(0).getContact().getTelephone().contentEquals("")){
+                                else if(tradingTermType.getID().contentEquals("$seller_tel") && !StringUtils.isEmpty(supplierParty.getPerson().get(0).getContact().getTelephone())){
                                     TextType text = new TextType();
                                     text.setLanguageID("en");
                                     text.setValue(supplierParty.getPerson().get(0).getContact().getTelephone());
                                     tradingTermType.getValue().setValue(Collections.singletonList(text));
                                 }
-                                else if(tradingTermType.getID().contentEquals("$buyer_country") &&  customerParty != null && customerParty.getPostalAddress().getCountry().getName() != null){
+                                else if(tradingTermType.getID().contentEquals("$buyer_country") &&  customerParty != null && customerParty.getPostalAddress() != null && customerParty.getPostalAddress().getCountry() != null && customerParty.getPostalAddress().getCountry().getName() != null){
                                     CodeType code = new CodeType();
                                     code.setValue(customerParty.getPostalAddress().getCountry().getName().getValue());
                                     code.setListID(country_list_id);
