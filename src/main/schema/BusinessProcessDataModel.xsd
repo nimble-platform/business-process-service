@@ -235,6 +235,7 @@
 			<xsd:element name="associatedProcessInstanceGroups" type="ProcessInstanceGroupDAO" maxOccurs="unbounded"/>
 			<xsd:element name="archived" type="xsd:boolean"/>
 			<xsd:element name="status" type="CollaborationStatus"/>
+			<xsd:element name="isProject" type="xsd:boolean"/>
 			<xsd:element name="associatedCollaborationGroups" type="xsd:long" maxOccurs="unbounded"/>
 		</xsd:sequence>
 	</xsd:complexType>

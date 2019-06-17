@@ -69,7 +69,11 @@ public class PartyPersistenceUtility {
     }
 
     public static PartyType getParty(String partyId) {
-        PartyType party = PartyPersistenceUtility.getPartyByID(partyId,false);
+        return getParty(partyId, false);
+    }
+
+    public static PartyType getParty(String partyId, boolean lazyDisabled) {
+        PartyType party = PartyPersistenceUtility.getPartyByID(partyId,lazyDisabled);
         return party;
     }
 

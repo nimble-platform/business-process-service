@@ -193,6 +193,10 @@ hystrix:
         isolation:
           thread:
             timeoutInMilliseconds: 10000
+  threadpool:
+    default:
+      coreSize: 20
+      maxQueueSize: -1
 
 build:
   version: 5.0.0-Staging

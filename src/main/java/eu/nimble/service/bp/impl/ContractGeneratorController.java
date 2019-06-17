@@ -87,7 +87,7 @@ public class ContractGeneratorController {
                                                 @ApiParam(value = "Identifier of the seller party") @RequestParam(value = "sellerPartyId", required = false) String sellerPartyId,
                                                 @ApiParam(value = "Identifier of the buyer party") @RequestParam(value = "buyerPartyId", required = false) String buyerPartyId,
                                                 @ApiParam(value = "The selected incoterms while negotiating.<br>Example:DDP (Delivery Duty Paid)") @RequestParam(value = "incoterms", required = false) String incoterms,
-                                                @ApiParam(value = "The list of selected trading terms while negotiating.<br>Example:[{\"id\":\"Cash_on_delivery\",\"description\":\"Cash on delivery\",\"tradingTermFormat\":\"COD\",\"value\":[\"true\"]}]") @RequestParam(value = "tradingTerms", required = false) String tradingTerms,
+                                                @ApiParam(value = "The selected trading term while negotiating.<br>Example:Cash_on_delivery") @RequestParam(value = "tradingTerm", required = false) String tradingTerm,
                                                 @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken){
         logger.info("Generating Order Terms and Conditions clauses for the order with id : {}",orderId);
 
@@ -100,7 +100,7 @@ public class ContractGeneratorController {
 
             ContractGenerator contractGenerator = new ContractGenerator();
 
-            List<ClauseType> clauses = contractGenerator.getTermsAndConditions(orderId,rfqId,sellerPartyId,buyerPartyId,incoterms,tradingTerms,bearerToken);
+            List<ClauseType> clauses = contractGenerator.getTermsAndConditions(orderId,rfqId,sellerPartyId,buyerPartyId,incoterms,tradingTerm,bearerToken);
 
             logger.info("Generated Order Terms and Conditions clauses for the order with id : {}",orderId);
             return ResponseEntity.ok(JsonSerializationUtility.getObjectMapper().writeValueAsString(clauses));

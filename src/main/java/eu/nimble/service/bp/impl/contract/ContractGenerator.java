@@ -1,5 +1,6 @@
 package eu.nimble.service.bp.impl.contract;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
@@ -9,7 +10,6 @@ import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ClauseType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.CodeType;
-import eu.nimble.service.model.ubl.commonbasiccomponents.QuantityType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.TextType;
 import eu.nimble.service.model.ubl.iteminformationrequest.ItemInformationRequestType;
 import eu.nimble.service.model.ubl.iteminformationresponse.ItemInformationResponseType;
@@ -21,6 +21,7 @@ import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
 import eu.nimble.utility.JsonSerializationUtility;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.util.Units;
 import org.apache.poi.xwpf.converter.pdf.PdfConverter;
@@ -44,31 +45,16 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.DecimalFormat;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 public class ContractGenerator {
     private final Logger logger = LoggerFactory.getLogger(ContractGenerator.class);
 
-    private final String payment_id_default = "PIA - Payment in advance";
-    private final String incoterms_id_default = "CIF (Cost, Insurance and Freight)";
-    private final String buyer_country_default = "Spain";
-    private final String seller_tel_default = "855-729-0137";
-    private final String seller_website_default = "www.abc.com";
-    private final String action_day_default = "10";
-    private final String inspection_id_default = "7 year(s)";
-    private final String warranty_seller_id_default = "10 day(s)";
-    private final String warranty_buyer_id_default = "10 day(s)";
-    private final String change_id_default ="5 day(s)";
-    private final String insurance_id_default ="15 day(s)";
-    private final String termination_id_default = "20 day(s)";
-    private final String shipment_id_default ="United Parcel Service, Rail Express, Air Express, Air Freight or Parcel Post";
-    private final String arbitrator_id_default = "under the JAMS Streamlined Arbitration Rules and Procedures in the District of Columbia or";
-    private final String agreement_id_default = "21 day(s)";
-    private final String failed_agreement_default ="by JAMS";
-    private final String decision_id_default = "90";
+    // list ids
+    private final String incoterms_list_id = "INCOTERMS_LIST";
+    private final String country_list_id = "COUNTRY_LIST";
+    private final String payment_means_list_id = "PAYMENT_MEANS_LIST";
 
     private final String red_hex = "DC143C";
     private final String cyan_hex = "00FFFF";
@@ -96,10 +82,8 @@ public class ContractGenerator {
 
     }
 
-    public List<ClauseType> getTermsAndConditions(String orderId,String rfqId, String sellerPartyId, String buyerPartyId, String incoterms, String tradingTerms, String bearerToken){
+    public List<ClauseType> getTermsAndConditions(String orderId,String rfqId, String sellerPartyId, String buyerPartyId, String incoterms, String tradingTerm, String bearerToken){
         List<ClauseType> clauses = new ArrayList<>();
-
-        Map<String,TradingTermType> values = new HashMap<>();
 
         OrderType order = null;
         RequestForQuotationType requestForQuotation = null;
@@ -111,194 +95,115 @@ public class ContractGenerator {
         }
 
         try {
-            // fill the map using Order's terms and conditions
+            // use Order's terms and conditions
             if(order != null){
-                for(ClauseType clauseType : getTermsAndConditionsContract(order).getClause()){
-                    for(TradingTermType tradingTermType: clauseType.getTradingTerms()){
-                        values.put(tradingTermType.getTradingTermFormat(),tradingTermType);
-                    }
-                }
+                clauses = getTermsAndConditionsContract(order).getClause();
             }
-            // fill the map using Request for quotation's terms and conditions
+            // use Request for quotation's terms and conditions
             else if(requestForQuotation != null){
-                for(ClauseType clauseType : requestForQuotation.getTermOrCondition()){
-                    for(TradingTermType tradingTermType: clauseType.getTradingTerms()){
-                        values.put(tradingTermType.getTradingTermFormat(),tradingTermType);
-                    }
-                }
+                clauses = requestForQuotation.getTermOrCondition();
             }
+            // create clauses
             else {
-                ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
-                List<TradingTermType> tradingTermTypeList = objectMapper.readValue(tradingTerms,objectMapper.getTypeFactory().constructCollectionType(List.class,TradingTermType.class));
+                InputStream inputStream = null;
+                try {
+                    // read clauses from the json file
+                    inputStream = ContractGenerator.class.getResourceAsStream("/contract-bundle/order_terms_and_conditions.json");
 
-                PartyType supplierParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,sellerPartyId);
-                PartyType customerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,buyerPartyId);
+                    logger.info("Input stream is null: {}",inputStream == null);
 
-                // Fill placeholders
-                values.put("$seller_id",createTradingTerm("$seller_id","STRING",supplierParty.getPartyName().get(0).getName().getValue(),null));
-                values.put("$buyer_id",createTradingTerm("$buyer_id","STRING",customerParty.getPartyName().get(0).getName().getValue(),null));
+                    String fileContent = IOUtils.toString(inputStream);
 
-                if(tradingTermTypeList.size() > 0){
-                    values.put("$payment_id",createTradingTerm("$payment_id","CODE",getTradingTerms(tradingTermTypeList),"PAYMENT_MEANS_LIST"));
-                }
-                else {
-                    values.put("$payment_id",createTradingTerm("$payment_id","CODE",payment_id_default,"PAYMENT_MEANS_LIST"));
-                }
+                    ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
 
-                if(customerParty.getPostalAddress().getCountry().getName() != null){
-                    values.put("$buyer_country",createTradingTerm("$buyer_country","CODE",customerParty.getPostalAddress().getCountry().getName().getValue(),"COUNTRY_LIST"));
-                }
-                else {
-                    values.put("$buyer_country",createTradingTerm("$buyer_country","CODE",buyer_country_default,"COUNTRY_LIST"));
-                }
+                    // Clauses
+                    clauses = objectMapper.readValue(fileContent, new TypeReference<List<ClauseType>>() {});
 
-                if(!supplierParty.getPerson().get(0).getContact().getTelephone().contentEquals("")){
-                    values.put("$seller_tel",createTradingTerm("$seller_tel","STRING",supplierParty.getPerson().get(0).getContact().getTelephone(),null));
-                }
-                else {
-                    values.put("$seller_tel",createTradingTerm("$seller_tel","STRING",seller_tel_default,null));
-                }
+                    // update some trading terms using the party info
+                    PartyType supplierParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,sellerPartyId);
+                    PartyType customerParty = null;
+                    if(buyerPartyId != null){
+                        customerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,buyerPartyId);
+                    }
 
-                if(supplierParty.getWebsiteURI() != null && !supplierParty.getWebsiteURI().contentEquals("")){
-                    values.put("$seller_website",createTradingTerm("$seller_website","STRING",supplierParty.getWebsiteURI(),null));
-                }
-                else {
-                    values.put("$seller_website",createTradingTerm("$seller_website","STRING",seller_website_default,null));
-                }
-
-                if(!incoterms.contentEquals("")){
-                    values.put("$incoterms_id",createTradingTerm("$incoterms_id","CODE",incoterms,"INCOTERMS_LIST"));
-                }
-                else {
-                    values.put("$incoterms_id",createTradingTerm("$incoterms_id","CODE",incoterms_id_default,"INCOTERMS_LIST"));
-                }
-
-                values.put("$notices_id",createTradingTerm("$notices_id","STRING",constructAddress(customerParty.getPartyName().get(0).getName().getValue(),customerParty.getPostalAddress()),null));
-
-
-                // Use default values for the rest
-                values.put("$action_day",createTradingTerm("$action_day","NUMBER",action_day_default,null));
-                values.put("$inspection_id",createTradingTerm("$inspection_id","QUANTITY",inspection_id_default,null));
-                values.put("$warranty_seller_id",createTradingTerm("$warranty_seller_id","QUANTITY",warranty_seller_id_default,null));
-                values.put("$warranty_buyer_id",createTradingTerm("$warranty_buyer_id","QUANTITY",warranty_buyer_id_default,null));
-                values.put("$change_id",createTradingTerm("$change_id","QUANTITY",change_id_default,null));
-                values.put("$insurance_id",createTradingTerm("$insurance_id","QUANTITY",insurance_id_default,null));
-                values.put("$termination_id",createTradingTerm("$termination_id","QUANTITY",termination_id_default,null));
-                values.put("$shipment_id",createTradingTerm("$shipment_id","STRING",shipment_id_default,null));
-                values.put("$arbitrator_id",createTradingTerm("$arbitrator_id","STRING",arbitrator_id_default,null));
-                values.put("$agreement_id",createTradingTerm("$agreement_id","QUANTITY",agreement_id_default,null));
-                values.put("$failed_agreement",createTradingTerm("$failed_agreement","STRING",failed_agreement_default,null));
-                values.put("$decision_id",createTradingTerm("$decision_id","NUMBER",decision_id_default,null));
-            }
-
-            InputStream file = ContractGenerator.class.getResourceAsStream("/contract-bundle/Standard_Purchase_Order_Terms_and_Conditions_Text.docx");
-            XWPFDocument document = new XWPFDocument(file);
-            List<XWPFParagraph> paragraphs = document.getParagraphs();
-
-            String text = "";
-            for (XWPFParagraph para : paragraphs) {
-                String text2 = para.getText();
-                if(text2 != null){
-                    for(XWPFRun run: para.getRuns()){
-                        if(run.isBold() && !text.contentEquals("")){
-                            List<TradingTermType> tradingTermTypes = new ArrayList<>();
-
-                            Matcher matcher = Pattern.compile("\\$\\w+").matcher(text);
-                            while (matcher.find()){
-                                String parameter = matcher.group();
-                                TradingTermType tradingTermType = values.get(parameter);
-
-                                tradingTermTypes.add(tradingTermType);
+                    for(ClauseType clause : clauses){
+                        if(clause.getID().contentEquals("1_PURCHASE ORDER TERMS AND CONDITIONS")){
+                            for(TradingTermType tradingTermType : clause.getTradingTerms()){
+                                if(tradingTermType.getID().contentEquals("$seller_id")){
+                                    TextType text = new TextType();
+                                    text.setLanguageID("en");
+                                    text.setValue(supplierParty.getPartyName().get(0).getName().getValue());
+                                    tradingTermType.getValue().setValue(Collections.singletonList(text));
+                                }
+                                else if(tradingTermType.getID().contentEquals("$buyer_id") && customerParty != null){
+                                    TextType text = new TextType();
+                                    text.setLanguageID("en");
+                                    text.setValue(customerParty.getPartyName().get(0).getName().getValue());
+                                    tradingTermType.getValue().setValue(Collections.singletonList(text));
+                                }
                             }
-
-                            TextType textType = new TextType();
-                            textType.setValue(text);
-                            textType.setLanguageID("en");
-
-
-                            ClauseType clause = new ClauseType();
-
-                            clause.setContent(Collections.singletonList(textType));
-                            clause.setTradingTerms(tradingTermTypes);
-
-                            clauses.add(clause);
-
-                            text = run.toString();
-                        }else {
-                            text += run;
+                        }
+                        else if(clause.getID().contentEquals("5_INVOICES, PAYMENT, AND TAXES")){
+                            for(TradingTermType tradingTermType : clause.getTradingTerms()){
+                                if(tradingTermType.getID().contentEquals("$payment_id") && tradingTerm != null){
+                                    CodeType code = new CodeType();
+                                    code.setValue(tradingTerm);
+                                    code.setListID(payment_means_list_id);
+                                    tradingTermType.getValue().setValueCode(Collections.singletonList(code));
+                                }
+                            }
+                        }
+                        else if(clause.getID().contentEquals("19_MISCELLANEOUS")){
+                            for(TradingTermType tradingTermType : clause.getTradingTerms()){
+                                if(tradingTermType.getID().contentEquals("$notices_id") && customerParty != null){
+                                    TextType text = new TextType();
+                                    text.setLanguageID("en");
+                                    text.setValue(constructAddress(customerParty.getPartyName().get(0).getName().getValue(),customerParty.getPostalAddress()));
+                                    tradingTermType.getValue().setValue(Collections.singletonList(text));
+                                }
+                                else if(tradingTermType.getID().contentEquals("$incoterms_id") && !incoterms.contentEquals("")){
+                                    CodeType code = new CodeType();
+                                    code.setValue(incoterms);
+                                    code.setListID(incoterms_list_id);
+                                    tradingTermType.getValue().setValueCode(Collections.singletonList(code));
+                                }
+                                else if(tradingTermType.getID().contentEquals("$seller_website") && supplierParty.getWebsiteURI() != null && !supplierParty.getWebsiteURI().contentEquals("")){
+                                    TextType text = new TextType();
+                                    text.setLanguageID("en");
+                                    text.setValue(supplierParty.getWebsiteURI());
+                                    tradingTermType.getValue().setValue(Collections.singletonList(text));
+                                }
+                                else if(tradingTermType.getID().contentEquals("$seller_tel") && !supplierParty.getPerson().get(0).getContact().getTelephone().contentEquals("")){
+                                    TextType text = new TextType();
+                                    text.setLanguageID("en");
+                                    text.setValue(supplierParty.getPerson().get(0).getContact().getTelephone());
+                                    tradingTermType.getValue().setValue(Collections.singletonList(text));
+                                }
+                                else if(tradingTermType.getID().contentEquals("$buyer_country") &&  customerParty != null && customerParty.getPostalAddress().getCountry().getName() != null){
+                                    CodeType code = new CodeType();
+                                    code.setValue(customerParty.getPostalAddress().getCountry().getName().getValue());
+                                    code.setListID(country_list_id);
+                                    tradingTermType.getValue().setValueCode(Collections.singletonList(code));
+                                }
+                            }
                         }
                     }
                 }
-                text += "\n";
+                catch (Exception e){
+                    logger.error("Failed to create order terms and conditions for the order with id : {}", order.getID() != null ? order.getID() : "", e);
+                }
+                finally {
+                    if(inputStream != null){
+                        inputStream.close();
+                    }
+                }
             }
-
-            List<TradingTermType> tradingTermTypes = new ArrayList<>();
-
-            Matcher matcher = Pattern.compile("\\$\\w+").matcher(text);
-            while (matcher.find()){
-                String parameter = matcher.group();
-                TradingTermType tradingTermType = values.get(parameter);
-
-                tradingTermTypes.add(tradingTermType);
-            }
-
-            TextType textType = new TextType();
-            textType.setValue(text);
-            textType.setLanguageID("en");
-
-            ClauseType clause = new ClauseType();
-
-            clause.setContent(Collections.singletonList(textType));
-            clause.setTradingTerms(tradingTermTypes);
-
-            clauses.add(clause);
-
-            file.close();
-
         }
         catch (Exception e){
-            logger.error("Failed to fill in 'Standard_Purchase_Order_Terms_and_Conditions_Text.docx' for the order with id : {}", order.getID() != null ? order.getID() : "", e);
+            logger.error("Failed to create order terms and conditions for the order with id : {}", order.getID() != null ? order.getID() : "", e);
         }
 
         return clauses;
-    }
-
-    private TradingTermType createTradingTerm(String parameter, String valueQualifier, String value, String codeListId){
-        TradingTermType tradingTerm = new TradingTermType();
-
-        MultiTypeValueType multiTypeValue = new MultiTypeValueType();
-
-        tradingTerm.setTradingTermFormat(parameter);
-        tradingTerm.setValue(multiTypeValue);
-
-        multiTypeValue.setValueQualifier(valueQualifier);
-
-        if(valueQualifier.contentEquals("STRING")){
-            TextType text = new TextType();
-            text.setLanguageID("en");
-            text.setValue(value);
-
-            multiTypeValue.setValue(Collections.singletonList(text));
-        } else if(valueQualifier.contentEquals("NUMBER")){
-            multiTypeValue.setValueDecimal(Collections.singletonList(new BigDecimal(value)));
-        } else if(valueQualifier.contentEquals("QUANTITY")){
-            int spaceIndex = value.indexOf(" ");
-
-            QuantityType quantity = new QuantityType();
-            quantity.setValue(new BigDecimal(value.substring(0,spaceIndex)));
-            quantity.setUnitCode(value.substring(spaceIndex+1));
-
-            multiTypeValue.setValueQuantity(Collections.singletonList(quantity));
-        } else if(valueQualifier.contentEquals("CODE")){
-
-            CodeType code = new CodeType();
-            code.setListID(codeListId);
-            code.setValue(value);
-
-            multiTypeValue.setValueCode(Collections.singletonList(code));
-        }
-
-        return tradingTerm;
     }
 
     private XWPFDocument fillOrderTermsAndConditions(OrderType order){
@@ -338,40 +243,19 @@ public class ContractGenerator {
                 }
             }
 
-            // get clauses map
-            Map<String,ClauseType> clausesMap = getClausesMap(getTermsAndConditionsContract(order).getClause());
+            // get T&Cs clauses
+            List<ClauseType> clauses = getTermsAndConditionsContract(order).getClause();
 
             int rowIndex = 0;
-            for (XWPFTable tbl : document.getTables() ) {
-                for (XWPFTableRow row : tbl.getRows()) {
-                    for (XWPFTableCell cell : row.getTableCells()) {
-                        // get the clause
-                        ClauseType clause = clausesMap.get("$section_"+rowIndex);
-                        // text of the section
-                        String text = clause.getContent().get(0).getValue();
-                        // get the paragraph
-                        XWPFParagraph paragraph = cell.getParagraphs().get(0);
-                        // section text which does not contain the name of section
-                        String sectionText;
-                        if(rowIndex == 0){
-                            // get the section text
-                            int newLineIndex = text.indexOf("\n\n")+2;
-                            sectionText = text.substring(newLineIndex);
-                        }
-                        else{
-                            // get the section name
-                            int semicolonIndex = text.indexOf(":");
-                            String sectionName = text.substring(0,semicolonIndex+1);
-                            // use first run to represent the name of section
-                            paragraph.getRuns().get(0).setText(sectionName,0);
-                            paragraph.getRuns().get(0).setBold(true);
-                            // get the section text
-                            sectionText = text.substring(semicolonIndex+1);
-                        }
-                        fillTheRow(sectionText,paragraph,clause.getTradingTerms());
-                    }
-                    rowIndex++;
-                }
+            for(ClauseType clause: clauses){
+                XWPFParagraph paragraph = document.createParagraph();
+                // set the clause title
+                paragraph.createRun();
+                paragraph.getRuns().get(0).setText(rowIndex+1+"."+clause.getID()+":\n");
+                paragraph.getRuns().get(0).setBold(true);
+                // set the content of clause
+                setClauseContent(clause.getContent().get(0).getValue(),paragraph,clause.getTradingTerms());
+                rowIndex++;
             }
         }
         catch (Exception e){
@@ -380,7 +264,7 @@ public class ContractGenerator {
         return document;
     }
 
-    private void fillTheRow(String sectionText,XWPFParagraph paragraph,List<TradingTermType> tradingTerms){
+    private void setClauseContent(String sectionText, XWPFParagraph paragraph, List<TradingTermType> tradingTerms){
         int indexOfParameter = sectionText.indexOf("$");
         while (indexOfParameter != -1){
             paragraph.createRun().setText(sectionText.substring(0,indexOfParameter),0);
@@ -392,17 +276,21 @@ public class ContractGenerator {
 
             XWPFRun run = paragraph.createRun();
             for(TradingTermType tradingTerm : tradingTerms){
-                if(tradingTerm.getTradingTermFormat().contentEquals(parameter)){
+                if(tradingTerm.getID().contentEquals(parameter)){
                     // find the value of parameter
                     String value = "";
-                    if(tradingTerm.getValue().getValueQualifier().contentEquals("STRING")){
+                    if(tradingTerm.getValue().getValueQualifier().contentEquals("STRING") && tradingTerm.getValue().getValue().get(0).getValue() != null && !tradingTerm.getValue().getValue().get(0).getValue().contentEquals("")){
                         value = tradingTerm.getValue().getValue().get(0).getValue();
-                    } else if(tradingTerm.getValue().getValueQualifier().contentEquals("NUMBER")){
+                    } else if(tradingTerm.getValue().getValueQualifier().contentEquals("NUMBER") && tradingTerm.getValue().getValueDecimal().get(0) != null){
                         value = new DecimalFormat("##").format(tradingTerm.getValue().getValueDecimal().get(0));
-                    } else if(tradingTerm.getValue().getValueQualifier().contentEquals("QUANTITY")){
+                    } else if(tradingTerm.getValue().getValueQualifier().contentEquals("QUANTITY") && tradingTerm.getValue().getValueQuantity().get(0).getValue() != null && tradingTerm.getValue().getValueQuantity().get(0).getUnitCode() != null){
                         value = new DecimalFormat("##").format(tradingTerm.getValue().getValueQuantity().get(0).getValue()) + " " + tradingTerm.getValue().getValueQuantity().get(0).getUnitCode();
-                    } else if(tradingTerm.getValue().getValueQualifier().contentEquals("CODE")){
+                    } else if(tradingTerm.getValue().getValueQualifier().contentEquals("CODE") && !tradingTerm.getValue().getValueCode().get(0).getValue().contentEquals("")){
                         value = tradingTerm.getValue().getValueCode().get(0).getValue();
+                    }
+                    // if no value is provided for the trading term, use its id
+                    else {
+                        value = tradingTerm.getID();
                     }
 
                     run.setText(value,0);
@@ -423,16 +311,17 @@ public class ContractGenerator {
 
     // returns the contract storing Terms and Conditions details
     private ContractType getTermsAndConditionsContract(OrderType order){
-        ContractType termsAndConditionsContract = null;
-        for(ContractType contract : order.getContract()){
-            for(ClauseType clause : contract.getClause()){
-                if(clause.getType() == null){
-                    termsAndConditionsContract =  contract;
-                    break;
+        if(order.getContract().size() > 0){
+            for(ContractType contract : order.getContract()){
+                for(ClauseType clause : contract.getClause()){
+                    if(clause.getType() == null){
+                        return contract;
+                    }
                 }
             }
         }
-        return termsAndConditionsContract;
+
+        return null;
     }
 
     public static ContractType getNonTermOrConditionContract(OrderType order){
@@ -446,27 +335,6 @@ public class ContractGenerator {
             }
         }
         return null;
-    }
-
-    // returns clause id - Clause map
-    private Map<String,ClauseType> getClausesMap(List<ClauseType> clauses){
-        Map<String,ClauseType> idClauseMap = new HashMap<>();
-        for(ClauseType clause:clauses){
-            String text = clause.getContent().get(0).getValue();
-            // check whether the clause belongs to the first section or not
-            int semicolonIndex = text.indexOf(":");
-            // first section
-            if(semicolonIndex == -1){
-                idClauseMap.put("$section_0",clause);
-                continue;
-            }
-            // get the section number
-            int dotIndex = text.indexOf(".");
-            String sectionNumber = text.substring(0,dotIndex);
-            // add the text to the map
-            idClauseMap.put("$section_"+sectionNumber,clause);
-        }
-        return idClauseMap;
     }
 
     private XWPFDocument fillPurchaseDetails(OrderType order){
@@ -878,15 +746,18 @@ public class ContractGenerator {
         List<ClauseType> quotation = new ArrayList<>();
         List<ClauseType> itemInformationResponse = new ArrayList<>();
         // check clauses
-        for(ClauseType clause : order.getContract().get(0).getClause()){
-            if (clause.getType().contentEquals(eu.nimble.service.model.ubl.extension.ClauseType.DOCUMENT.toString())){
-                String documentType = ((DocumentClauseType) clause).getClauseDocumentRef().getDocumentType();
-                if (documentType.contentEquals(DocumentType.PPAPRESPONSE.toString())) {
-                    PPAPResponse.add(clause);
-                } else if (documentType.contentEquals(DocumentType.ITEMINFORMATIONRESPONSE.toString())) {
-                    itemInformationResponse.add(clause);
-                } else if (documentType.contentEquals(DocumentType.QUOTATION.toString())) {
-                    quotation.add(clause);
+        ContractType contract = getNonTermOrConditionContract(order);
+        if(contract != null){
+            for(ClauseType clause : contract.getClause()){
+                if (clause.getType().contentEquals(eu.nimble.service.model.ubl.extension.ClauseType.DOCUMENT.toString())){
+                    String documentType = ((DocumentClauseType) clause).getClauseDocumentRef().getDocumentType();
+                    if (documentType.contentEquals(DocumentType.PPAPRESPONSE.toString())) {
+                        PPAPResponse.add(clause);
+                    } else if (documentType.contentEquals(DocumentType.ITEMINFORMATIONRESPONSE.toString())) {
+                        itemInformationResponse.add(clause);
+                    } else if (documentType.contentEquals(DocumentType.QUOTATION.toString())) {
+                        quotation.add(clause);
+                    }
                 }
             }
         }
