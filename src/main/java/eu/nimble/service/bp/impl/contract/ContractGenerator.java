@@ -190,7 +190,7 @@ public class ContractGenerator {
                     }
                 }
                 catch (Exception e){
-                    logger.error("Failed to create order terms and conditions for the order with id : {}", order.getID() != null ? order.getID() : "", e);
+                    logger.error("Failed to create terms and conditions for orderId: {}, rfqId: {}, sellerPartyId: {}, buyerPartyId: {}, incoterms: {}, tradingTerm : {}", orderId, rfqId, sellerPartyId, buyerPartyId, incoterms, tradingTerm, e);
                 }
                 finally {
                     if(inputStream != null){
@@ -200,7 +200,7 @@ public class ContractGenerator {
             }
         }
         catch (Exception e){
-            logger.error("Failed to create order terms and conditions for the order with id : {}", order.getID() != null ? order.getID() : "", e);
+            logger.error("Failed to create terms and conditions for orderId: {}, rfqId: {}, sellerPartyId: {}, buyerPartyId: {}, incoterms: {}, tradingTerm : {}", orderId, rfqId, sellerPartyId, buyerPartyId, incoterms, tradingTerm, e);
         }
 
         return clauses;
