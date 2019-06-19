@@ -1372,6 +1372,8 @@ public class ContractGenerator {
         return order.getOrderLine().get(0).getLineItem().getPrice().getPriceAmount().getValue() != null &&
                 order.getOrderLine().get(0).getLineItem().getPrice().getBaseQuantity().getValue() !=null &&
                 order.getOrderLine().get(0).getLineItem().getQuantity().getValue() != null &&
+                order.getOrderLine().get(0).getLineItem().getPrice().getBaseQuantity().getUnitCode() != null &&
+                order.getOrderLine().get(0).getLineItem().getQuantity().getUnitCode() != null &&
                 order.getOrderLine().get(0).getLineItem().getPrice().getBaseQuantity().getUnitCode().contentEquals(order.getOrderLine().get(0).getLineItem().getQuantity().getUnitCode());
     }
 
