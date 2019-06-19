@@ -173,7 +173,7 @@ public class ContractGenerator {
                                     text.setValue(supplierParty.getWebsiteURI());
                                     tradingTermType.getValue().setValue(Collections.singletonList(text));
                                 }
-                                else if(tradingTermType.getID().contentEquals("$seller_tel") && !StringUtils.isEmpty(supplierParty.getPerson().get(0).getContact().getTelephone())){
+                                else if(tradingTermType.getID().contentEquals("$seller_tel") && supplierParty.getPerson().size() > 0 && !StringUtils.isEmpty(supplierParty.getPerson().get(0).getContact().getTelephone())){
                                     TextType text = new TextType();
                                     text.setLanguageID("en");
                                     text.setValue(supplierParty.getPerson().get(0).getContact().getTelephone());
