@@ -173,11 +173,15 @@ public class ContractGenerator {
                                     text.setValue(supplierParty.getWebsiteURI());
                                     tradingTermType.getValue().setValue(Collections.singletonList(text));
                                 }
-                                else if(tradingTermType.getID().contentEquals("$seller_tel") && supplierParty.getPerson().size() > 0 && !StringUtils.isEmpty(supplierParty.getPerson().get(0).getContact().getTelephone())){
-                                    TextType text = new TextType();
-                                    text.setLanguageID("en");
-                                    text.setValue(supplierParty.getPerson().get(0).getContact().getTelephone());
-                                    tradingTermType.getValue().setValue(Collections.singletonList(text));
+                                else if(tradingTermType.getID().contentEquals("$seller_tel")){
+                                    if(supplierParty.getPerson() == null || supplierParty.getPerson().size() == 0){
+                                        logger.info("There is no person info in the party:{}",supplierParty);
+                                    }else if(!StringUtils.isEmpty(supplierParty.getPerson().get(0).getContact().getTelephone())){
+                                        TextType text = new TextType();
+                                        text.setLanguageID("en");
+                                        text.setValue(supplierParty.getPerson().get(0).getContact().getTelephone());
+                                        tradingTermType.getValue().setValue(Collections.singletonList(text));
+                                    }
                                 }
                                 else if(tradingTermType.getID().contentEquals("$buyer_country") &&  customerParty != null && customerParty.getPostalAddress() != null && customerParty.getPostalAddress().getCountry() != null && customerParty.getPostalAddress().getCountry().getName() != null){
                                     CodeType code = new CodeType();
