@@ -23,10 +23,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * {@link CollaborationGroupDAO}s are entities that keep track collaboration activities with several companies related to
@@ -88,7 +85,7 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
         }
 
 
-        CollaborationGroupDAOUtility.deleteCollaborationGroupDAOByID(Long.parseLong(id));
+        CollaborationGroupDAOUtility.deleteCollaborationGroupDAOsByID(Collections.singletonList(Long.parseLong(id)));
 
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body("true");
         logger.debug("Deleted CollaborationGroup ID: {}", id);
@@ -271,7 +268,7 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
         repo.updateEntity(collaborationGroupDAO);
 
         for(String cgid : cgids){
-            CollaborationGroupDAOUtility.deleteCollaborationGroupDAOByID(Long.parseLong(cgid));
+            CollaborationGroupDAOUtility.deleteCollaborationGroupDAOsByID(Collections.singletonList(Long.parseLong(cgid)));
         }
         collaborationGroupDAO.getAssociatedCollaborationGroups();
 
