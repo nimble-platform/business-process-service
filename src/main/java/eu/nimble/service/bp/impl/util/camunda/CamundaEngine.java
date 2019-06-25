@@ -23,10 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.xml.transform.dom.DOMSource;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author yildiray
@@ -296,5 +293,32 @@ public class CamundaEngine {
 
     public static HistoricProcessInstance getProcessInstance(String processInstanceId){
         return historyService.createHistoricProcessInstanceQuery().processInstanceId(processInstanceId).singleResult();
+    }
+
+    public static void deleteProcessInstances(Set<String> processInstanceIds){
+        // get HistoricProcessInstances
+        List<HistoricProcessInstance> historicProcessInstances = historyService.createHistoricProcessInstanceQuery().processInstanceIds(processInstanceIds).list();
+
+        List<String> historicProcessInstanceIds = new ArrayList<>();
+        List<String> runTimeProcessInstanceIds = new ArrayList<>();
+        // check whether the process instance is still running or completed
+        for(HistoricProcessInstance historicProcessInstance:historicProcessInstances){
+            if(historicProcessInstance.getEndTime() != null){
+                historicProcessInstanceIds.add(historicProcessInstance.getId());
+            }
+            else{
+                runTimeProcessInstanceIds.add(historicProcessInstance.getId());
+            }
+        }
+        // delete completed process instance via historyService
+        if(historicProcessInstanceIds.size() > 0){
+            historyService.deleteHistoricProcessInstances(historicProcessInstanceIds);
+        }
+        // complete the process instances still running and delete them via historyService
+        if(runTimeProcessInstanceIds.size() > 0){
+            runtimeService.deleteProcessInstances(runTimeProcessInstanceIds,"",true,true);
+            historyService.deleteHistoricProcessInstances(runTimeProcessInstanceIds);
+        }
+
     }
 }

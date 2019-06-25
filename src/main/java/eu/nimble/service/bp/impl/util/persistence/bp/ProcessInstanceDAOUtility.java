@@ -11,9 +11,14 @@ import java.util.List;
  */
 public class ProcessInstanceDAOUtility {
     private static final String QUERY_GET_BY_ID = "SELECT pi FROM ProcessInstanceDAO pi WHERE pi.processInstanceID = :processInstanceId";
+    private static final String QUERY_DELETE_BY_IDS = "DELETE FROM ProcessInstanceDAO pi WHERE pi.processInstanceID in :processInstanceIds";
 
     public static ProcessInstanceDAO getById(String processInstanceId) {
         return new JPARepositoryFactory().forBpRepository(true).getSingleEntity(QUERY_GET_BY_ID, new String[]{"processInstanceId"}, new Object[]{processInstanceId});
+    }
+
+    public static void deleteByIds(List<String> processInstanceIds){
+        new JPARepositoryFactory().forBpRepository().executeUpdate(QUERY_DELETE_BY_IDS, new String[]{"processInstanceIds"}, new Object[]{processInstanceIds});
     }
 
     public static List<String> getAllProcessInstanceIdsInCollaborationHistory(String processInstanceID) {

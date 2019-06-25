@@ -28,9 +28,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import javax.ws.rs.HEAD;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog;
@@ -190,7 +190,7 @@ public class DocumentController {
             logger.error(msg,e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
-        DocumentPersistenceUtility.deleteDocumentWithMetadata(documentID);
+        DocumentPersistenceUtility.deleteDocumentsWithMetadatas(Collections.singletonList(documentID));
         return HibernateSwaggerObjectMapper.getApiResponse();
     }
 

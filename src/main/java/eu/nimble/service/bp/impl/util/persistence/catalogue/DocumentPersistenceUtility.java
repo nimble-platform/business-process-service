@@ -87,17 +87,19 @@ public class DocumentPersistenceUtility {
 
     }
 
-    public static void deleteDocumentWithMetadata(String documentId) {
-        ProcessDocumentMetadataDAO processDocumentMetadataDAO = ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId);
+    public static void deleteDocumentsWithMetadatas(List<String> documentIds) {
+        for(String documentId: documentIds){
+            ProcessDocumentMetadataDAO processDocumentMetadataDAO = ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId);
 
-        Object document = getUBLDocument(documentId, processDocumentMetadataDAO.getType());
+            Object document = getUBLDocument(documentId, processDocumentMetadataDAO.getType());
 
-        if (document != null) {
-            EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(processDocumentMetadataDAO.getInitiatorID());
-            repositoryWrapper.deleteEntity(document);
+            if (document != null) {
+                EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(processDocumentMetadataDAO.getInitiatorID());
+                repositoryWrapper.deleteEntity(document);
+            }
+
+            new JPARepositoryFactory().forBpRepository().deleteEntityByHjid(ProcessDocumentMetadataDAO.class, processDocumentMetadataDAO.getHjid());
         }
-
-        new JPARepositoryFactory().forBpRepository().deleteEntityByHjid(ProcessDocumentMetadataDAO.class, processDocumentMetadataDAO.getHjid());
     }
 
     public static IDocument getUBLDocument(String documentID, DocumentType documentType) {

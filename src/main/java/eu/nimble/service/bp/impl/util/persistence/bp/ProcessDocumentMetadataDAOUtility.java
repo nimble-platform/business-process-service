@@ -38,6 +38,7 @@ public class ProcessDocumentMetadataDAOUtility {
     private static final String QUERY_GET_BY_DOCUMENT_ID = "SELECT pdm FROM ProcessDocumentMetadataDAO pdm WHERE pdm.documentID = :documentId";
     private static final String QUERY_GET_BY_PROCESS_INSTANCE_ID = "SELECT pdm FROM ProcessDocumentMetadataDAO pdm WHERE pdm.processInstanceID = :processInstanceId ORDER BY pdm.submissionDate ASC";
     private static final String QUERY_GET_BY_RESPONDER_ID = "SELECT DISTINCT metadataDAO.processInstanceID FROM ProcessDocumentMetadataDAO metadataDAO WHERE metadataDAO.responderID = :responderId";
+    private static final String QUERY_GET_BY_PARTY_ID = "SELECT pdm FROM ProcessDocumentMetadataDAO pdm WHERE pdm.initiatorID = :partyId OR pdm.responderID = :partyId";
 
     /**
      * The conditions for the queries below are initialized during the query instantiation
@@ -62,6 +63,10 @@ public class ProcessDocumentMetadataDAOUtility {
 
     public static List<ProcessDocumentMetadataDAO> findByProcessInstanceID(String processInstanceId) {
         return new JPARepositoryFactory().forBpRepository(true).getEntities(QUERY_GET_BY_PROCESS_INSTANCE_ID, new String[]{"processInstanceId"}, new Object[]{processInstanceId});
+    }
+
+    public static List<ProcessDocumentMetadataDAO> findByPartyID(String partyId) {
+        return new JPARepositoryFactory().forBpRepository(true).getEntities(QUERY_GET_BY_PARTY_ID, new String[]{"partyId"}, new Object[]{partyId});
     }
 
     public static List<String> getProcessInstanceIds(String responderId) {

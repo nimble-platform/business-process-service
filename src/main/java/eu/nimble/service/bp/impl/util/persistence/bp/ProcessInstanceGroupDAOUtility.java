@@ -1,18 +1,11 @@
 package eu.nimble.service.bp.impl.util.persistence.bp;
 
 import eu.nimble.service.bp.hyperjaxb.model.*;
-import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupFilter;
-import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.utility.HibernateUtility;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -60,9 +53,15 @@ public class ProcessInstanceGroupDAOUtility {
                     "pid.item = pi.processInstanceID AND " +
                     "pi.processInstanceID = :processInstanceId AND pig.precedingProcess IS NOT NULL";
 
+    private static final String QUERY_GET_BY_PARTY_ID = "SELECT pig.ID FROM ProcessInstanceGroupDAO pig WHERE pig.partyID in :partyIds";
+
     private static final String QUERY_GET_BY_HJID = "SELECT c FROM ProcessInstanceGroupDAO c WHERE c.hjid = :hjid";
     public static List<ProcessInstanceGroupDAO> getProcessInstanceGroupDAO(Long hjid) {
         return new JPARepositoryFactory().forBpRepository(true).getSingleEntity(QUERY_GET_BY_HJID, new String[]{"hjid"}, new Object[]{hjid});
+    }
+
+    public static List<String> getProcessInstanceGroupIdsForParty(List<String> partyIds){
+        return new JPARepositoryFactory().forBpRepository().getEntities(QUERY_GET_BY_PARTY_ID, new String[]{"partyIds"}, new Object[]{partyIds});
     }
 
     public static Object getProcessInstanceGroups(String groupId) {
@@ -132,7 +131,7 @@ public class ProcessInstanceGroupDAOUtility {
         CollaborationGroupDAO collaborationGroupDAO = CollaborationGroupDAOUtility.getCollaborationGroupOfProcessInstanceGroup(groupID);
         // if the collaboration group only contains the given group,then delete the collaboration group so that there will not be any garbage on the database
         if (collaborationGroupDAO.getAssociatedProcessInstanceGroups().size() == 1) {
-            CollaborationGroupDAOUtility.deleteCollaborationGroupDAOByID(collaborationGroupDAO.getHjid());
+            CollaborationGroupDAOUtility.deleteCollaborationGroupDAOsByID(Collections.singletonList(collaborationGroupDAO.getHjid()));
         } else {
             ProcessInstanceGroupDAO group = null;
             for (ProcessInstanceGroupDAO groupDAO : collaborationGroupDAO.getAssociatedProcessInstanceGroups()) {

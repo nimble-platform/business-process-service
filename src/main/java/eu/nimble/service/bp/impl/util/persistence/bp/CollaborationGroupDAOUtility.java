@@ -25,6 +25,8 @@ public class CollaborationGroupDAOUtility {
             "(select acg.item from CollaborationGroupDAO cg2 join cg2.associatedCollaborationGroupsItems acg where cg2.hjid = :associatedGroupId)";
     private static final String QUERY_GET_GROUP_OF_PROCESS_INSTANCE_GROUP =
             "select cg from CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups apig where apig.ID = :groupId";
+    private static final String QUERY_GET_GROUP_OF_PROCESS_INSTANCE_GROUPS =
+            "select cg.hjid from CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups apig where apig.ID in :groupIds";
     private static final String QUERY_GET_PROCESS_INSTANCES_OF_COLLABORATION_GROUP =
             "SELECT DISTINCT pi.status FROM " +
                     "ProcessInstanceDAO pi, " +
@@ -47,6 +49,10 @@ public class CollaborationGroupDAOUtility {
         return new JPARepositoryFactory().forBpRepository(true).getSingleEntity(QUERY_GET_ASSOCIATED_GROUP, new String[]{"partyId", "associatedGroupId"}, new Object[]{partyId, associatedGroupId});
     }
 
+    public static List<Long> getCollaborationGroupHjidOfProcessInstanceGroups(List<String> groupIds) {
+        return new JPARepositoryFactory().forBpRepository().getEntities(QUERY_GET_GROUP_OF_PROCESS_INSTANCE_GROUPS, new String[]{"groupIds"}, new Object[]{groupIds});
+    }
+
     public static CollaborationGroupDAO getCollaborationGroupOfProcessInstanceGroup(String groupId) {
         return new JPARepositoryFactory().forBpRepository(true).getSingleEntity(QUERY_GET_GROUP_OF_PROCESS_INSTANCE_GROUP, new String[]{"groupId"}, new Object[]{groupId});
     }
@@ -59,18 +65,21 @@ public class CollaborationGroupDAOUtility {
         return collaborationGroupDAO;
     }
 
-    public static void deleteCollaborationGroupDAOByID(Long groupID) {
-        GenericJPARepository repo = new JPARepositoryFactory().forBpRepository(true);
-        CollaborationGroupDAO group = repo.getSingleEntityByHjid(CollaborationGroupDAO.class, groupID);
-        // delete references to this group
-        for (Long id : group.getAssociatedCollaborationGroups()) {
-            CollaborationGroupDAO groupDAO = repo.getSingleEntityByHjid(CollaborationGroupDAO.class, id);
-            groupDAO.getAssociatedCollaborationGroups().remove(groupID);
-            repo.updateEntity(groupDAO);
+    public static void deleteCollaborationGroupDAOsByID(List<Long> hjids) {
+        for (Long groupID: hjids){
+            GenericJPARepository repo = new JPARepositoryFactory().forBpRepository(true);
+            CollaborationGroupDAO group = repo.getSingleEntityByHjid(CollaborationGroupDAO.class, groupID);
+            if(group != null){
+                // delete references to this group
+                for (Long id : group.getAssociatedCollaborationGroups()) {
+                    CollaborationGroupDAO groupDAO = repo.getSingleEntityByHjid(CollaborationGroupDAO.class, id);
+                    groupDAO.getAssociatedCollaborationGroups().remove(groupID);
+                    repo.updateEntity(groupDAO);
+                }
+                repo.deleteEntityByHjid(CollaborationGroupDAO.class, groupID);
+            }
         }
-        repo.deleteEntityByHjid(CollaborationGroupDAO.class, groupID);
     }
-
 
     public static List<ProcessInstanceStatus> getCollaborationProcessInstanceStatusesForCollaborationGroup(Long collaborationGroupHjid) {
         GenericJPARepository repo = new JPARepositoryFactory().forBpRepository(true);
