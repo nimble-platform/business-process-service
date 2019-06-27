@@ -32,6 +32,9 @@ public class CollaborationGroupDAOUtility {
                     "ProcessInstanceDAO pi, " +
                     "CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups pig join pig.processInstanceIDsItems pids" +
                     " WHERE pids.item = pi.processInstanceID AND cg.hjid = :collaborationGroupId";
+    private static final String QUERY_GET_BY_PROCESS_INSTANCE_ID_AND_PARTY_ID =
+            "SELECT cg.hjid FROM CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups apig join apig.processInstanceIDsItems pids " +
+                    "WHERE apig.partyID = :partyID AND pids.item = :processInstanceId";
     private static final String QUERY_GET_PROCESS_INSTANCES_OF_COLLABORATION_GROUPS =
             "SELECT cg.hjid, pi.status FROM " +
                     "ProcessInstanceDAO pi, " +
@@ -39,6 +42,10 @@ public class CollaborationGroupDAOUtility {
                     " WHERE pids.item = pi.processInstanceID AND cg.hjid IN (%s)"; // to be completed in the query
 
     private static final Logger logger = LoggerFactory.getLogger(CollaborationGroupDAOUtility.class);
+
+    public static Long getCollaborationGroupHjidByProcessInstanceIdAndPartyId(String processInstanceId, String partyId){
+        return new JPARepositoryFactory().forBpRepository().getSingleEntity(QUERY_GET_BY_PROCESS_INSTANCE_ID_AND_PARTY_ID, new String[]{"partyID", "processInstanceId"}, new Object[]{partyId, processInstanceId});
+    }
 
     public static CollaborationGroupDAO getCollaborationGroupDAO(String partyId, Long associatedGroupId) {
         CollaborationGroupDAO group = CollaborationGroupDAOUtility.getAssociatedCollaborationGroup(partyId, associatedGroupId);

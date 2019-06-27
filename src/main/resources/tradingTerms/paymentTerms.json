@@ -1,0 +1,163 @@
+[
+  {
+    "id": "Payment_In_Advance",
+    "description": [
+      {
+        "value": "Payment in advance",
+        "languageID": "en"
+      }
+    ],
+    "tradingTermFormat": "PIA",
+    "value": {
+      "name": null,
+      "valueQualifier": "STRING",
+      "value": [
+        {
+          "value": "false",
+          "languageID": "en"
+        }
+      ],
+      "valueQuantity": null,
+      "valueDecimal": null,
+      "valueCode": []
+    }
+  },
+  {
+    "id": "End_of_month",
+    "description": [
+      {
+        "value": "End of month",
+        "languageID": "en"
+      }
+    ],
+    "tradingTermFormat": "EOM",
+    "value": {
+      "name": null,
+      "valueQualifier": "STRING",
+      "value": [
+        {
+          "value": "false",
+          "languageID": "en"
+        }
+      ],
+      "valueQuantity": null,
+      "valueDecimal": null,
+      "valueCode": []
+    }
+  },
+  {
+    "id": "Cash_next_delivery",
+    "description": [
+      {
+        "value": "Cash next delivery",
+        "languageID": "en"
+      }
+    ],
+    "tradingTermFormat": "CND",
+    "value": {
+      "name": null,
+      "valueQualifier": "STRING",
+      "value": [
+        {
+          "value": "false",
+          "languageID": "en"
+        }
+      ],
+      "valueQuantity": null,
+      "valueDecimal": null,
+      "valueCode": []
+    }
+  },
+  {
+    "id": "Cash_before_shipment",
+    "description": [
+      {
+        "value": "Cash before shipment",
+        "languageID": "en"
+      }
+    ],
+    "tradingTermFormat": "CBS",
+    "value": {
+      "name": null,
+      "valueQualifier": "STRING",
+      "value": [
+        {
+          "value": "false",
+          "languageID": "en"
+        }
+      ],
+      "valueQuantity": null,
+      "valueDecimal": null,
+      "valueCode": []
+    }
+  },
+  {
+    "id": "Cash_on_delivery",
+    "description": [
+      {
+        "value": "Cash on delivery",
+        "languageID": "en"
+      }
+    ],
+    "tradingTermFormat": "COD",
+    "value": {
+      "name": null,
+      "valueQualifier": "STRING",
+      "value": [
+        {
+          "value": "false",
+          "languageID": "en"
+        }
+      ],
+      "valueQuantity": null,
+      "valueDecimal": null,
+      "valueCode": []
+    }
+  },
+  {
+    "id": "Cash_with_order",
+    "description": [
+      {
+        "value": "Cash with order",
+        "languageID": "en"
+      }
+    ],
+    "tradingTermFormat": "CWO",
+    "value": {
+      "name": null,
+      "valueQualifier": "STRING",
+      "value": [
+        {
+          "value": "false",
+          "languageID": "en"
+        }
+      ],
+      "valueQuantity": null,
+      "valueDecimal": null,
+      "valueCode": []
+    }
+  },
+  {
+    "id": "Cash_in_advance",
+    "description": [
+      {
+        "value": "Cash in advance",
+        "languageID": "en"
+      }
+    ],
+    "tradingTermFormat": "CIA",
+    "value": {
+      "name": null,
+      "valueQualifier": "STRING",
+      "value": [
+        {
+          "value": "false",
+          "languageID": "en"
+        }
+      ],
+      "valueQuantity": null,
+      "valueDecimal": null,
+      "valueCode": []
+    }
+  }
+]
