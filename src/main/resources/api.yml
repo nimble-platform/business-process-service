@@ -380,7 +380,47 @@ paths:
           description: Business Process Instance Started
           schema:
             $ref: '#/definitions/ProcessInstance'
-
+  /start/billofmaterials:
+    post:
+      operationId: createNegotiationsForLineItems
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - name: bearerToken
+        in: header
+        type: string
+        required: true
+      - in: body
+        name: lineItemsJson
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: partyId
+        description: Identifier of the party which creates negotiations for line items
+        required: true
+        type: string
+      - in: query
+        name: useFrameContract
+        description: If this parameter is true and a valid frame contract exists between parties, then an order is started for the product using the details of frame contract
+        required: false
+        default: false
+        type: boolean
+      responses:
+        200:
+          description: Created negotiations for line items for the given party
+          schema:
+            type: string
+        401:
+          description: Invalid token. No user was found for the provided token
+          schema:
+            type: string
+        500:
+          description: Unexpected error while creating negotiations for line items for the given party
+          schema:
+            type: string
   /continue:
     post:
       operationId: continueProcessInstance
