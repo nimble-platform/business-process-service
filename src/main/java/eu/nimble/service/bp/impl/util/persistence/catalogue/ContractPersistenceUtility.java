@@ -32,6 +32,7 @@ public class ContractPersistenceUtility {
                     " item.manufacturersItemIdentification.ID = :itemId" +
                     " GROUP BY da" +
                     " HAVING COUNT(da) = 2 ";
+    private static final String QUERY_GET_FRAME_CONTRACTS_BY_PARTY_ID = "SELECT da FROM DigitalAgreementType da join da.participantParty pp join pp.partyIdentification pid WHERE pid.ID = :partyId";
 
     public static ClauseType getBaseClause(String clauseId) {
         ClauseType clauseType = new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(QUERY_GET_BASE_CLAUSE, new String[]{"clauseId"}, new Object[]{clauseId});
@@ -210,5 +211,10 @@ public class ContractPersistenceUtility {
     public static DigitalAgreementType getFrameContractAgreementById(String sellerId, String buyerId, String productId) {
         return new JPARepositoryFactory().forCatalogueRepository(true).getSingleEntity(QUERY_GET_FRAME_CONTRACT_BY_SELLER_BUYER_PRODUCT_IDS,
                 new String[]{"sellerId", "buyerId", "itemId"}, new Object[]{sellerId, buyerId, productId});
+    }
+
+    public static List<DigitalAgreementType> getFrameContractsByPartyId(String partyId) {
+        return new JPARepositoryFactory().forCatalogueRepository(true).getEntities(QUERY_GET_FRAME_CONTRACTS_BY_PARTY_ID,
+                new String[]{"partyId"}, new Object[]{partyId});
     }
 }
