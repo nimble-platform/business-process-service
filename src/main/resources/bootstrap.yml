@@ -173,7 +173,7 @@ camunda:
 
 nimble:
   binary-content:
-      url: ${BINARY_CONTENT_URL}
+      url: BusinessProcessBinaryContentUri
   cors_enabled: false
   identity:
     url: ${IDENTITY_SERVICE_URL:http://nimble-staging.salzburgresearch.at/identity}
