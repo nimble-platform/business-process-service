@@ -32,7 +32,9 @@ public class ContractPersistenceUtility {
                     " item.manufacturersItemIdentification.ID = :itemId" +
                     " GROUP BY da" +
                     " HAVING COUNT(da) = 2 ";
-    private static final String QUERY_GET_FRAME_CONTRACTS_BY_PARTY_ID = "SELECT da FROM DigitalAgreementType da join da.participantParty pp join pp.partyIdentification pid WHERE pid.ID = :partyId";
+    private static final String QUERY_GET_FRAME_CONTRACTS_BY_PARTY_ID =
+            "SELECT da FROM DigitalAgreementType da join da.participantParty pp join pp.partyIdentification pid " +
+                    "WHERE pid.ID = :partyId ORDER BY da.digitalAgreementTerms.validityPeriod.startDateItem DESC";
 
     public static ClauseType getBaseClause(String clauseId) {
         ClauseType clauseType = new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(QUERY_GET_BASE_CLAUSE, new String[]{"clauseId"}, new Object[]{clauseId});
