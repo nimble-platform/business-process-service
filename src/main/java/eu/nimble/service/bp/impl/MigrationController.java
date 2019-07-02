@@ -22,6 +22,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import springfox.documentation.annotations.ApiIgnore;
 
 import java.util.List;
@@ -35,9 +36,9 @@ public class MigrationController {
     private final String CATALOG_BINARY_CONTENT_URI = "CatalogBinaryContentUri:";
     private final String BUSINESS_PROCESS_BINARY_CONTENT_URI = "BusinessProcessBinaryContentUri:";
 
-    @ApiOperation(value = "",notes = "Updates the uri of binary objects. Firstly, it retrieves binary objects belonging to the catalogues and updates their uris to CatalogBinaryContentUri:UUID." +
-            " For the rest of binary objects, it updates their uris to BusinessProcessBinaryContentUri:UUID.After running this migration script, it is important to change BINARY_CONTENT_URL" +
-            " environment variable of business-process service to 'BusinessProcessBinaryContentUri:' and that of catalogue service to 'CatalogBinaryContentUri:'.")
+    @ApiOperation(value = "",notes = "Updates the uri of binary objects whose uris start with the given uri.The given uri should be the value of BINARY_CONTENT_URL environment variable." +
+            " Firstly, it retrieves such binary objects belonging to the catalogues and updates their uris to CatalogBinaryContentUri:UUID. For the rest of them, it updates their uris" +
+            " to BusinessProcessBinaryContentUri:UUID.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Updated binary content uris successfully"),
             @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
@@ -46,7 +47,8 @@ public class MigrationController {
     @RequestMapping(value = "/migration/binarycontents",
             produces = {"application/json"},
             method = RequestMethod.PATCH)
-    public ResponseEntity updateBinaryContents(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
+    public ResponseEntity updateBinaryContents(@ApiParam(value = "Value of BINARY_CONTENT_URL environment variable.",required = true) @RequestParam(value = "previousUri",required = true) String previousUri,
+                                               @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
     ) {
         logger.info("Incoming request to update binary content uris");
 
@@ -66,16 +68,16 @@ public class MigrationController {
             List<BinaryObjectType> catalogBinaryObjects = getCatalogBinaryObjects(catalogues);
             logger.info("Retrieved catalogue binary objects");
             // update catalog binary contents
-            SpringBridge.getInstance().getBinaryContentService().updateBinaryContentUris(catalogBinaryObjects, CATALOG_BINARY_CONTENT_URI);
+            SpringBridge.getInstance().getBinaryContentService().updateBinaryContentUris(catalogBinaryObjects, CATALOG_BINARY_CONTENT_URI,previousUri);
             logger.info("Updated uris of catalogue binary objects");
             // get binary objects
-            List<BinaryObjectType> bpBinaryObjects = SpringBridge.getInstance().getBinaryContentService().getBinaryObjects();
+            List<BinaryObjectType> bpBinaryObjects = SpringBridge.getInstance().getBinaryContentService().getBinaryObjects(previousUri);
             logger.info("Retrieved business process binary objects");
             // update bp binary contents
-            SpringBridge.getInstance().getBinaryContentService().updateBinaryContentUris(bpBinaryObjects, BUSINESS_PROCESS_BINARY_CONTENT_URI);
+            SpringBridge.getInstance().getBinaryContentService().updateBinaryContentUris(bpBinaryObjects, BUSINESS_PROCESS_BINARY_CONTENT_URI,previousUri);
             logger.info("Updated uris of business process binary objects");
             // delete old binary contents
-            SpringBridge.getInstance().getBinaryContentService().deleteBinaryContents();
+            SpringBridge.getInstance().getBinaryContentService().deleteBinaryContents(previousUri);
             logger.info("Deleted binary contents with old uris");
         }
         catch (Exception e){
