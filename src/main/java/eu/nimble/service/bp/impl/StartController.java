@@ -1,7 +1,11 @@
 package eu.nimble.service.bp.impl;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import eu.nimble.common.rest.identity.model.NegotiationSettings;
 import eu.nimble.service.bp.hyperjaxb.model.*;
+import eu.nimble.service.bp.impl.bom.BPMessageGenerator;
 import eu.nimble.service.bp.impl.util.BusinessProcessEvent;
+import eu.nimble.service.bp.impl.util.HttpResponseUtil;
 import eu.nimble.service.bp.impl.util.bp.BusinessProcessUtility;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.impl.util.email.EmailSenderUtil;
@@ -10,6 +14,7 @@ import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMappe
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceGroupDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
+import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.serialization.MixInIgnoreProperties;
@@ -18,6 +23,8 @@ import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
 import eu.nimble.service.bp.swagger.model.ProcessVariables;
 import eu.nimble.service.bp.swagger.model.Transaction;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.LineItemType;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.LoggerUtils;
 import eu.nimble.utility.persistence.GenericJPARepository;
@@ -52,6 +59,65 @@ public class StartController implements StartApi {
     private JPARepositoryFactory repoFactory;
     @Autowired
     private EmailSenderUtil emailSenderUtil;
+    @Autowired
+    private CollaborationGroupsController collaborationGroupsController;
+
+    @Override
+    @ApiOperation(value = "", notes = "Creates negotiations for the given line items for the given party. If there is a frame contract between parties and useFrameContract parameter is set to true, " +
+            "then the service creates an order for the product using the details of frame contract.The person who starts the process is saved as the creator of process. This information is derived " +
+            "from the given bearer token.")
+    public ResponseEntity<String> createNegotiationsForLineItems(@ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
+                                                                 @ApiParam(value = "Serialized form of line items which are used to create request for quotations.An example line items serialization can be found in:" +
+                                                                 "https://github.com/nimble-platform/catalog-service/tree/staging/catalogue-service-micro/src/main/resources/example_content/line_items.json", required = true) @RequestBody String lineItemsJson,
+                                                                 @ApiParam(value = "Identifier of the party which creates negotiations for Bill of Materials", required = true) @RequestParam(value = "partyId") String partyId,
+                                                                 @ApiParam(value = "If this parameter is true and a valid frame contract exists between parties, then an order is started for the product using the details of frame contract") @RequestParam(value = "useFrameContract", defaultValue = "false") Boolean useFrameContract) {
+        logger.info("Creating negotiations for line items for party: {}, useFrameContract: {}", partyId, useFrameContract);
+        // check token
+        ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
+        if (tokenCheck != null) {
+            return tokenCheck;
+        }
+
+        try {
+            // deserialize LineItems
+            List<LineItemType> lineItems = JsonSerializationUtility.getObjectMapper().readValue(lineItemsJson, new TypeReference<List<LineItemType>>() {
+            });
+
+            // get buyer party and its negotiation settings
+            NegotiationSettings negotiationSettings = SpringBridge.getInstance().getiIdentityClientTyped().getNegotiationSettings(partyId);
+            // get person using the given bearer token
+            PersonType person = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken);
+
+            String hjidOfBaseGroup = null;
+            List<String> hjidOfGroupsToBeMerged = new ArrayList<>();
+
+            // for each line item, create a RFQ
+            for (LineItemType lineItem : lineItems) {
+                // create ProcessInstanceInputMessage for line item
+                ProcessInstanceInputMessage processInstanceInputMessage = BPMessageGenerator.createBPMessageForLineItem(lineItem, useFrameContract, partyId, negotiationSettings, person.getID(), bearerToken);
+                // start the process and get process instance id since we need this info to find collaboration group of process
+                String processInstanceId = startProcessInstance(bearerToken, processInstanceInputMessage, null, null, null, null).getBody().getProcessInstanceID();
+
+                if (hjidOfBaseGroup == null) {
+                    hjidOfBaseGroup = CollaborationGroupDAOUtility.getCollaborationGroupHjidByProcessInstanceIdAndPartyId(processInstanceId, partyId).toString();
+                } else {
+                    hjidOfGroupsToBeMerged.add(CollaborationGroupDAOUtility.getCollaborationGroupHjidByProcessInstanceIdAndPartyId(processInstanceId, partyId).toString());
+                }
+            }
+
+            // merge groups to create a project
+            if (hjidOfGroupsToBeMerged.size() > 0) {
+                collaborationGroupsController.mergeCollaborationGroups(bearerToken, hjidOfBaseGroup, hjidOfGroupsToBeMerged);
+            }
+        } catch (Exception e) {
+            String msg = String.format("Unexpected error while creating negotiations for line items for party : %s", partyId);
+            logger.error(msg);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+        }
+
+        logger.info("Created negotiations for line items for party: {}, useFrameContract: {}", partyId, useFrameContract);
+        return ResponseEntity.ok(null);
+    }
 
     @Override
     @ApiOperation(value = "", notes = "Starts a business process.", response = ProcessInstance.class, tags = {})
