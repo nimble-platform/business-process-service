@@ -22,7 +22,7 @@ import java.util.GregorianCalendar;
 @Component
 public class FrameContractService {
 
-    private final Logger logger = LoggerFactory.getLogger(FrameContractService.class);
+    private static final Logger logger = LoggerFactory.getLogger(FrameContractService.class);
 
     /**
      * Tries to create a {@link DigitalAgreementType} with the given information.
@@ -52,7 +52,7 @@ public class FrameContractService {
         frameContract.getParticipantParty().add(buyerParty);
 
         EntityIdAwareRepositoryWrapper repository = new EntityIdAwareRepositoryWrapper(sellerId);
-        repository.updateEntityForPersistCases(frameContract);
+        frameContract = repository.updateEntityForPersistCases(frameContract);
         return frameContract;
     }
 
@@ -88,12 +88,16 @@ public class FrameContractService {
             throw new BusinessProcessException(msg);
         }
 
+        return transformJodaDatesToXMLGregorian(now, endDate);
+    }
+
+    public static XMLGregorianCalendar[] transformJodaDatesToXMLGregorian(DateTime start, DateTime end) {
         GregorianCalendar c = new GregorianCalendar();
         XMLGregorianCalendar[] gregorianDates = new XMLGregorianCalendar[2];
         try {
-            c.setTimeInMillis(now.getMillis());
+            c.setTimeInMillis(start.getMillis());
             gregorianDates[0] = DatatypeFactory.newInstance().newXMLGregorianCalendar(c);
-            c.setTimeInMillis(endDate.getMillis());
+            c.setTimeInMillis(end.getMillis());
             gregorianDates[1] = DatatypeFactory.newInstance().newXMLGregorianCalendar(c);
             return gregorianDates;
 

@@ -22,6 +22,7 @@ import org.junit.runners.Suite;
         Test16_ContractControllerTest.class,
         Test17_ContractControllerTest2.class,
         Test18_ContractControllerTest3.class,
+        FrameContractControllerTest.class,
         Test19_ApplicationControllerTest.class,
         Test20_ApplicationControllerTest.class,
         Test21_ApplicationControllerTest.class,
