@@ -1,15 +1,15 @@
-package eu.nimble.service.bp.impl;
+package eu.nimble.service.bp.impl.util.migration.r11;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import eu.nimble.service.bp.impl.util.migration.r11.serialization.BinaryObjectSerializerGetBinaryObjects;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.catalogue.CatalogueType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.BinaryObjectType;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
-import eu.nimble.utility.serialization.BinaryObjectSerializerGetBinaryObjects;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import springfox.documentation.annotations.ApiIgnore;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @ApiIgnore
@@ -32,6 +33,8 @@ import java.util.List;
 public class MigrationController {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    private static final String QUERY_GET_BINARY_OBJECTS = "FROM BinaryObjectType binaryObject WHERE binaryObject.uri LIKE :uri";
 
     private final String CATALOG_BINARY_CONTENT_URI = "CatalogBinaryContentUri:";
     private final String BUSINESS_PROCESS_BINARY_CONTENT_URI = "BusinessProcessBinaryContentUri:";
@@ -62,22 +65,27 @@ public class MigrationController {
         // get catalogues
         String GET_CATALOGUES = "FROM CatalogueType";
         try{
+            List<String> urisToBeDeleted = new ArrayList<>();
             List<CatalogueType> catalogues = repo.getEntities(GET_CATALOGUES);
             logger.info("Retrieved catalogues");
             // get catalogue binary content uris
             List<BinaryObjectType> catalogBinaryObjects = getCatalogBinaryObjects(catalogues);
             logger.info("Retrieved catalogue binary objects");
+            // get uris to be deleted
+            urisToBeDeleted.addAll(getBinaryObjectUris(catalogBinaryObjects,previousUri));
             // update catalog binary contents
-            SpringBridge.getInstance().getBinaryContentService().updateBinaryContentUris(catalogBinaryObjects, CATALOG_BINARY_CONTENT_URI,previousUri);
+            updateBinaryContentUris(catalogBinaryObjects, CATALOG_BINARY_CONTENT_URI,previousUri);
             logger.info("Updated uris of catalogue binary objects");
             // get binary objects
-            List<BinaryObjectType> bpBinaryObjects = SpringBridge.getInstance().getBinaryContentService().getBinaryObjects(previousUri);
+            List<BinaryObjectType> bpBinaryObjects = getBinaryObjects(previousUri);
             logger.info("Retrieved business process binary objects");
+            // get uris to be deleted
+            urisToBeDeleted.addAll(getBinaryObjectUris(bpBinaryObjects,previousUri));
             // update bp binary contents
-            SpringBridge.getInstance().getBinaryContentService().updateBinaryContentUris(bpBinaryObjects, BUSINESS_PROCESS_BINARY_CONTENT_URI,previousUri);
+            updateBinaryContentUris(bpBinaryObjects, BUSINESS_PROCESS_BINARY_CONTENT_URI,previousUri);
             logger.info("Updated uris of business process binary objects");
             // delete old binary contents
-            SpringBridge.getInstance().getBinaryContentService().deleteBinaryContents(previousUri);
+            SpringBridge.getInstance().getBinaryContentService().deleteContents(urisToBeDeleted);
             logger.info("Deleted binary contents with old uris");
         }
         catch (Exception e){
@@ -86,6 +94,16 @@ public class MigrationController {
         }
         logger.info("Completed request to update binary content uris");
         return ResponseEntity.ok(null);
+    }
+
+    private List<String> getBinaryObjectUris(List<BinaryObjectType> binaryObjects,String uriPart){
+        List<String> uris = new ArrayList<>();
+        for(BinaryObjectType binaryObject:binaryObjects){
+            if(binaryObject.getUri().contains(uriPart)){
+                uris.add(binaryObject.getUri());
+            }
+        }
+        return uris;
     }
 
     private List<BinaryObjectType> getCatalogBinaryObjects(List<CatalogueType> catalogues){
@@ -105,4 +123,38 @@ public class MigrationController {
         }
         return serializer.getObjects();
     }
+
+    public List<BinaryObjectType> getBinaryObjects(String uriPart){
+        return new JPARepositoryFactory().forCatalogueRepository().getEntities(QUERY_GET_BINARY_OBJECTS,new String[]{"uri"}, new Object[]{"%"+uriPart+"%"});
+    }
+
+    public void updateBinaryContentUris(List<BinaryObjectType> binaryObjects, String newUrl, String oldUrl){
+        GenericJPARepository repo = new JPARepositoryFactory().forCatalogueRepository();
+        for(BinaryObjectType binaryObject: binaryObjects){
+
+            if(binaryObject.getUri().contains(oldUrl)){
+                // get binary content
+                BinaryObjectType binaryContent = SpringBridge.getInstance().getBinaryContentService().retrieveContent(binaryObject.getUri());
+                if(binaryContent != null){
+                    // create a new content
+                    BinaryObjectType newBinaryContent = new BinaryObjectType();
+                    newBinaryContent.setValue(binaryContent.getValue());
+                    newBinaryContent.setMimeCode(binaryContent.getMimeCode());
+                    newBinaryContent.setFileName(binaryContent.getFileName());
+                    newBinaryContent.setUri(binaryContent.getUri().replace(oldUrl,newUrl));
+
+                    if(SpringBridge.getInstance().getBinaryContentService().retrieveContent(newBinaryContent.getUri()) == null){
+                        SpringBridge.getInstance().getBinaryContentService().createContent(newBinaryContent,false);
+                    }
+                }
+
+                // update uri of binary object
+                binaryObject.setUri(binaryObject.getUri().replace(oldUrl,newUrl));
+                repo.updateEntity(binaryObject);
+            }
+
+        }
+        logger.info("Uris of binary contents are updated to the new url: {}",newUrl);
+    }
+
 }
