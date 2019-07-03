@@ -1,7 +1,9 @@
 package eu.nimble.service.bp.impl.contract;
 
 import eu.nimble.service.bp.impl.exception.BusinessProcessException;
+import eu.nimble.service.bp.impl.util.persistence.catalogue.ContractPersistenceUtility;
 import eu.nimble.service.bp.impl.util.persistence.catalogue.PartyPersistenceUtility;
+import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.commonbasiccomponents.QuantityType;
 import eu.nimble.service.model.ubl.digitalagreement.DigitalAgreementType;
@@ -23,6 +25,20 @@ import java.util.GregorianCalendar;
 public class FrameContractService {
 
     private static final Logger logger = LoggerFactory.getLogger(FrameContractService.class);
+
+    public DigitalAgreementType createOrUpdateFrameContract(String sellerId, String buyerId, ItemType item, QuantityType duration, String quotationId) {
+        DigitalAgreementType frameContract = ContractPersistenceUtility.getFrameContractAgreementById(sellerId, buyerId, item.getManufacturersItemIdentification().getID());
+        // create new frame contract
+        if(frameContract == null) {
+            frameContract = createDigitalAgreement(
+                    sellerId, buyerId, item, duration, quotationId);
+
+        } else {
+            frameContract = updateFrameContractDuration(
+                    sellerId, frameContract, duration, quotationId);
+        }
+        return frameContract;
+    }
 
     /**
      * Tries to create a {@link DigitalAgreementType} with the given information.

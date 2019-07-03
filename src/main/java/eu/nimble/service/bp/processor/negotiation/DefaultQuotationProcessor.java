@@ -3,12 +3,13 @@ package eu.nimble.service.bp.processor.negotiation;
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
 import eu.nimble.service.bp.impl.util.persistence.bp.ExecutionConfigurationDAOUtility;
-import eu.nimble.service.bp.impl.util.persistence.catalogue.ContractPersistenceUtility;
 import eu.nimble.service.bp.impl.util.spring.SpringBridge;
 import eu.nimble.service.bp.serialization.MixInIgnoreProperties;
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.ItemType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.TradingTermType;
+import eu.nimble.service.model.ubl.commonbasiccomponents.QuantityType;
 import eu.nimble.service.model.ubl.digitalagreement.DigitalAgreementType;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.utility.JsonSerializationUtility;
@@ -86,18 +87,10 @@ public class DefaultQuotationProcessor  implements JavaDelegate {
 
         String sellerId = quotation.getSellerSupplierParty().getParty().getPartyIdentification().get(0).getID();
         String buyerId = quotation.getBuyerCustomerParty().getParty().getPartyIdentification().get(0).getID();
-        String manufacturersItemId = quotation.getQuotationLine().get(0).getLineItem().getItem().getManufacturersItemIdentification().getID();
+        ItemType item = quotation.getQuotationLine().get(0).getLineItem().getItem();
+        QuantityType duration = frameContractDurationTerm.getValue().getValueQuantity().get(0);
 
-        DigitalAgreementType frameContract = ContractPersistenceUtility.getFrameContractAgreementById(sellerId, buyerId, manufacturersItemId);
-        // create new frame contract
-        if(frameContract == null) {
-            frameContract = SpringBridge.getInstance().getFrameContractService().createDigitalAgreement(
-                    sellerId, buyerId, quotation.getItemType(), frameContractDurationTerm.getValue().getValueQuantity().get(0), quotation.getID());
-
-        } else {
-            frameContract = SpringBridge.getInstance().getFrameContractService().updateFrameContractDuration(
-                    sellerId, frameContract, frameContractDurationTerm.getValue().getValueQuantity().get(0), quotation.getID());
-        }
+        DigitalAgreementType frameContract = SpringBridge.getInstance().getFrameContractService().createOrUpdateFrameContract(sellerId, buyerId, item, duration, quotation.getID());
         return frameContract;
     }
 
