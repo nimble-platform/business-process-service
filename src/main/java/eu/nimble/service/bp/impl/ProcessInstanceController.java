@@ -2,12 +2,12 @@ package eu.nimble.service.bp.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
-import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
-import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceStatus;
+import eu.nimble.common.rest.identity.IIdentityClientTyped;
+import eu.nimble.service.bp.hyperjaxb.model.*;
 import eu.nimble.service.bp.impl.util.BusinessProcessEvent;
 import eu.nimble.service.bp.impl.model.export.TransactionSummary;
 import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
+import eu.nimble.service.bp.impl.util.persistence.bp.CollaborationGroupDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceDAOUtility;
@@ -18,6 +18,8 @@ import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.DocumentReferenceType;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.BinaryObjectType;
 import eu.nimble.service.model.ubl.document.IDocument;
 import eu.nimble.utility.Configuration;
@@ -65,6 +67,8 @@ public class ProcessInstanceController {
 
     @Autowired
     private ResourceValidationUtility resourceValidationUtil;
+    @Autowired
+    private IIdentityClientTyped iIdentityClientTyped;
 
     @ApiOperation(value = "",notes = "Cancels the process instance with the given id")
     @ApiResponses(value = {
@@ -343,6 +347,43 @@ public class ProcessInstanceController {
         return threadPool.submit(() -> JsonSerializationUtility.getObjectMapper().writeValueAsString(object));
     }
 
+    @ApiOperation(value = "",notes = "Gets CollaborationGroup containing the specified process instance")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Retrieved the CollaborationGroup successfully"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 404, message = "No CollaborationGroup found for the given identifier"),
+            @ApiResponse(code = 500, message = "Unexpected error while getting the CollaborationGroup")
+    })
+    @RequestMapping(value = "/processInstance/{processInstanceId}/collaboration-group",
+            produces = {MediaType.APPLICATION_JSON_VALUE},
+            method = RequestMethod.GET)
+    public ResponseEntity getAssociatedCollaborationGroup(@ApiParam(value = "Identifier of the process instance", required = true) @PathVariable(value = "processInstanceId", required = true) String processInstanceId,
+                                                          @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
+
+        try {
+            // get person using the given bearer token
+            PartyType party;
+            try {
+                PersonType person = iIdentityClientTyped.getPerson(bearerToken);
+                // get party for the person
+                party = iIdentityClientTyped.getPartyByPersonID(person.getID()).get(0);
+
+            } catch (IOException e) {
+                return HttpResponseUtil.createResponseEntityAndLog(String.format("Failed to retrieve party for the token: %s", bearerToken), e, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            CollaborationGroupDAO collaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroupByProcessInstanceIdAndPartyId(processInstanceId, party.getPartyIdentification().get(0).getID());
+            if(collaborationGroup == null) {
+                return HttpResponseUtil.createResponseEntityAndLog(String.format("No CollaborationGroup for the process instance id: %s", processInstanceId), null, HttpStatus.NOT_FOUND, LogLevel.INFO);
+            }
+
+            return ResponseEntity.status(HttpStatus.OK).body(HibernateSwaggerObjectMapper.convertCollaborationGroupDAO(collaborationGroup));
+
+        } catch (Exception e) {
+            return HttpResponseUtil.createResponseEntityAndLog(String.format("Failed to retrieve party for the token: %s", bearerToken), e, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @ApiOperation(value = "", notes = "Exports transaction data according to the specified parameters.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Exported transactions successfully"),
@@ -352,12 +393,12 @@ public class ProcessInstanceController {
     @RequestMapping(value = "/processInstance/export",
             produces = {"application/zip"},
             method = RequestMethod.GET)
-    public void getDashboardProcessInstanceDetails(@ApiParam(value = "Identifier the party as the subject of incoming or outgoing transactions.", required = true) @RequestParam(value = "partyId", required = true) String partyId,
-                                                   @ApiParam(value = "Identifier of the user who initiated the transactions. This parameter is considered only for the outgoing transactions.", required = false) @RequestParam(value = "userId", required = false) String userId,
-                                                   @ApiParam(value = "Direction of the transaction. It can be incoming/outgoing. If not provided, all transactions are considered.", required = false) @RequestParam(value = "direction", required = false) String direction,
-                                                   @ApiParam(value = "Archived status of the CollaborationGroup including the transaction.", required = false) @RequestParam(value = "archived", required = false) Boolean archived,
-                                                   @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
-                                                   HttpServletResponse response) {
+    public void exportProcessInstanceData(@ApiParam(value = "Identifier the party as the subject of incoming or outgoing transactions.", required = true) @RequestParam(value = "partyId", required = true) String partyId,
+                                          @ApiParam(value = "Identifier of the user who initiated the transactions. This parameter is considered only for the outgoing transactions.", required = false) @RequestParam(value = "userId", required = false) String userId,
+                                          @ApiParam(value = "Direction of the transaction. It can be incoming/outgoing. If not provided, all transactions are considered.", required = false) @RequestParam(value = "direction", required = false) String direction,
+                                          @ApiParam(value = "Archived status of the CollaborationGroup including the transaction.", required = false) @RequestParam(value = "archived", required = false) Boolean archived,
+                                          @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
+                                          HttpServletResponse response) {
 
         ZipOutputStream zos = null;
         ByteArrayOutputStream tempOutputStream;
