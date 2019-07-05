@@ -1,14 +1,12 @@
 package eu.nimble.service.bp.impl;
 
-import eu.nimble.service.bp.hyperjaxb.model.*;
-import eu.nimble.service.bp.impl.util.email.EmailSenderUtil;
-import eu.nimble.service.bp.impl.util.persistence.bp.*;
-import eu.nimble.service.bp.impl.util.persistence.catalogue.TrustPersistenceUtility;
-import eu.nimble.service.bp.impl.util.spring.SpringBridge;
+import eu.nimble.service.bp.model.hyperjaxb.*;
+import eu.nimble.service.bp.util.email.EmailSenderUtil;
+import eu.nimble.service.bp.util.persistence.bp.*;
+import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
 import eu.nimble.service.bp.swagger.api.ProcessInstanceGroupsApi;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroup;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupFilter;
-import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
@@ -25,8 +23,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import javax.ws.rs.HEAD;
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -51,7 +47,7 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
                                                            @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         logger.debug("Deleting ProcessInstanceGroup ID: {}", id);
         // check token
-        ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+        ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
         if (tokenCheck != null) {
             return tokenCheck;
         }
@@ -69,7 +65,7 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
                                                                         @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         logger.debug("Getting ProcessInstanceGroup: {}", id);
         // check token
-        ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+        ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
         if (tokenCheck != null) {
             return tokenCheck;
         }
@@ -111,7 +107,7 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
                                                 @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
         try {
             // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
             if (tokenCheck != null) {
                 return tokenCheck;
             }
@@ -155,7 +151,7 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
         try {
             logger.debug("Cancelling the collaboration for the group id: {}", id);
             // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
             if (tokenCheck != null) {
                 return tokenCheck;
             }

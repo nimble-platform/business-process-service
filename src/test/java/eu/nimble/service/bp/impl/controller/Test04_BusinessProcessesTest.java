@@ -1,14 +1,12 @@
 package eu.nimble.service.bp.impl.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
-import eu.nimble.service.bp.impl.contract.ContractGenerator;
-import eu.nimble.service.bp.impl.model.dashboard.CollaborationGroupResponse;
-import eu.nimble.service.bp.processor.orderresponse.DefaultOrderResponseSender;
+import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
+import eu.nimble.service.bp.contract.ContractGenerator;
+import eu.nimble.service.bp.model.dashboard.CollaborationGroupResponse;
 import eu.nimble.service.bp.swagger.model.*;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ClauseType;
 import eu.nimble.service.model.ubl.order.OrderType;
-import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
 import eu.nimble.utility.JsonSerializationUtility;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;

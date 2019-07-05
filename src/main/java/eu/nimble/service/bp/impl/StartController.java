@@ -2,19 +2,19 @@ package eu.nimble.service.bp.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import eu.nimble.common.rest.identity.model.NegotiationSettings;
-import eu.nimble.service.bp.hyperjaxb.model.*;
-import eu.nimble.service.bp.impl.bom.BPMessageGenerator;
-import eu.nimble.service.bp.impl.util.BusinessProcessEvent;
-import eu.nimble.service.bp.impl.util.HttpResponseUtil;
-import eu.nimble.service.bp.impl.util.bp.BusinessProcessUtility;
-import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
-import eu.nimble.service.bp.impl.util.email.EmailSenderUtil;
-import eu.nimble.service.bp.impl.util.persistence.bp.CollaborationGroupDAOUtility;
-import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMapper;
-import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceDAOUtility;
-import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceGroupDAOUtility;
-import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
-import eu.nimble.service.bp.impl.util.spring.SpringBridge;
+import eu.nimble.service.bp.bom.BPMessageGenerator;
+import eu.nimble.service.bp.model.hyperjaxb.*;
+import eu.nimble.service.bp.util.BusinessProcessEvent;
+import eu.nimble.service.bp.util.HttpResponseUtil;
+import eu.nimble.service.bp.util.bp.BusinessProcessUtility;
+import eu.nimble.service.bp.util.camunda.CamundaEngine;
+import eu.nimble.service.bp.util.email.EmailSenderUtil;
+import eu.nimble.service.bp.util.persistence.bp.CollaborationGroupDAOUtility;
+import eu.nimble.service.bp.util.persistence.bp.HibernateSwaggerObjectMapper;
+import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceDAOUtility;
+import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceGroupDAOUtility;
+import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
+import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.serialization.MixInIgnoreProperties;
@@ -271,7 +271,7 @@ public class StartController implements StartApi {
         return new ResponseEntity<>(processInstance, HttpStatus.OK);
     }
 
-    private void createProcessInstanceGroups(String businessContextId,ProcessInstanceInputMessage body, ProcessInstance processInstance,CollaborationGroupDAO initiatorCollaborationGroupDAO,CollaborationGroupDAO responderCollaborationGroupDAO, String precedingGid,String precedingPid) {
+    private void createProcessInstanceGroups(String businessContextId, ProcessInstanceInputMessage body, ProcessInstance processInstance, CollaborationGroupDAO initiatorCollaborationGroupDAO, CollaborationGroupDAO responderCollaborationGroupDAO, String precedingGid, String precedingPid) {
         GenericJPARepository repo = repoFactory.forBpRepository();
         // create group for initiating party
         ProcessInstanceGroupDAO processInstanceGroupDAO1 = ProcessInstanceGroupDAOUtility.createProcessInstanceGroupDAO(

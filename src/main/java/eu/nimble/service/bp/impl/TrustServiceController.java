@@ -2,13 +2,11 @@ package eu.nimble.service.bp.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
-import eu.nimble.service.bp.impl.model.trust.NegotiationRatings;
-import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
-import eu.nimble.service.bp.impl.util.persistence.catalogue.CataloguePersistenceUtility;
-import eu.nimble.service.bp.impl.util.persistence.catalogue.PartyPersistenceUtility;
-import eu.nimble.service.bp.impl.util.persistence.catalogue.TrustPersistenceUtility;
-import eu.nimble.service.bp.impl.util.spring.SpringBridge;
+import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO;
+import eu.nimble.service.bp.model.trust.NegotiationRatings;
+import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
+import eu.nimble.service.bp.util.persistence.catalogue.PartyPersistenceUtility;
+import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
 import eu.nimble.service.bp.messaging.KafkaSender;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.utility.HttpResponseUtil;
@@ -30,7 +28,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -67,7 +64,7 @@ public class TrustServiceController {
              */
 
             // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
             if (tokenCheck != null) {
                 return tokenCheck;
             }
@@ -143,7 +140,7 @@ public class TrustServiceController {
                                             @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         logger.info("Getting ratings summary for the party with id: {}",partyId);
         // check token
-        ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+        ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
         if (tokenCheck != null) {
             return tokenCheck;
         }
@@ -168,7 +165,7 @@ public class TrustServiceController {
         try {
             logger.info("Getting all individual ratings and review for the party with id: {}",partyId);
             // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
             if (tokenCheck != null) {
                 return tokenCheck;
             }

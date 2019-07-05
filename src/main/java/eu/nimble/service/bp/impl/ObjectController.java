@@ -35,7 +35,7 @@ public class ObjectController {
         logger.info("Deleting the object with hjid: {}, className: {}",hjid,className);
 
         // check token
-        ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+        ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
         if (tokenCheck != null) {
             return tokenCheck;
         }

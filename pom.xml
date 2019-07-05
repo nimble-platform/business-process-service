@@ -338,7 +338,7 @@
                             <invokerPackage>${default.package}.swagger.invoker</invokerPackage>
                             <configOptions>
                                 <interfaceOnly>true</interfaceOnly>
-                                <import-mappings>CollaborationGroupResponse=eu.nimble.service.bp.impl.model.dashboard.CollaborationGroupResponse</import-mappings>
+                                <import-mappings>CollaborationGroupResponse=eu.nimble.service.bp.model.dashboard.CollaborationGroupResponse</import-mappings>
                             </configOptions>
                         </configuration>
                     </execution>
@@ -391,7 +391,7 @@
                                     <schemaDirectory>src/main/schema</schemaDirectory>
                                     <generateDirectory>${project.basedir}/src/main/java
                                     </generateDirectory>
-                                    <generatePackage>${default.package}.hyperjaxb.model</generatePackage>
+                                    <generatePackage>${default.package}.model.hyperjaxb</generatePackage>
                                     <extension>true</extension>
                                     <plugins>
                                         <plugin>

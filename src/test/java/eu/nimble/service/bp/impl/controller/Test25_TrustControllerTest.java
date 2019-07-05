@@ -1,7 +1,7 @@
 package eu.nimble.service.bp.impl.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.nimble.service.bp.impl.model.dashboard.CollaborationGroupResponse;
+import eu.nimble.service.bp.model.dashboard.CollaborationGroupResponse;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Test;

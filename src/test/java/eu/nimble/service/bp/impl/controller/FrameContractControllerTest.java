@@ -5,7 +5,7 @@ package eu.nimble.service.bp.impl.controller;
  */
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.nimble.service.bp.impl.contract.FrameContractService;
+import eu.nimble.service.bp.contract.FrameContractService;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ItemIdentificationType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ItemType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.QuantityType;

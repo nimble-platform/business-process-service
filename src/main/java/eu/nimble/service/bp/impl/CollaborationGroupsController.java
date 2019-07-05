@@ -1,12 +1,12 @@
 package eu.nimble.service.bp.impl;
 
-import eu.nimble.service.bp.hyperjaxb.model.CollaborationGroupDAO;
-import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
-import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceStatus;
-import eu.nimble.service.bp.impl.model.dashboard.CollaborationGroupResponse;
-import eu.nimble.service.bp.impl.util.HttpResponseUtil;
-import eu.nimble.service.bp.impl.util.persistence.bp.CollaborationGroupDAOUtility;
-import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMapper;
+import eu.nimble.service.bp.model.hyperjaxb.CollaborationGroupDAO;
+import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceGroupDAO;
+import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceStatus;
+import eu.nimble.service.bp.model.dashboard.CollaborationGroupResponse;
+import eu.nimble.service.bp.util.HttpResponseUtil;
+import eu.nimble.service.bp.util.persistence.bp.CollaborationGroupDAOUtility;
+import eu.nimble.service.bp.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.swagger.api.CollaborationGroupsApi;
 import eu.nimble.service.bp.swagger.model.CollaborationGroup;
 import eu.nimble.utility.persistence.GenericJPARepository;
@@ -27,8 +27,8 @@ import java.util.*;
 
 /**
  * {@link CollaborationGroupDAO}s are entities that keep track collaboration activities with several companies related to
- * an individual product. Collaborations with distinct companies are kept in {@link eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO}s.
- * In this sense, considering a simple example, {@link CollaborationGroupDAO} of a seller might contain two {@link eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO}s
+ * an individual product. Collaborations with distinct companies are kept in {@link ProcessInstanceGroupDAO}s.
+ * In this sense, considering a simple example, {@link CollaborationGroupDAO} of a seller might contain two {@link ProcessInstanceGroupDAO}s
  * such that the first one contains seller-buyer activities and the second one seller-transport service provider activities.
  */
 @Controller

@@ -1,9 +1,8 @@
 package eu.nimble.service.bp.impl.controller;
 
 import com.google.gson.Gson;
-import com.netflix.discovery.converters.Auto;
-import eu.nimble.service.bp.impl.model.statistics.BusinessProcessCount;
-import eu.nimble.service.bp.impl.model.statistics.NonOrderedProducts;
+import eu.nimble.service.bp.model.statistics.BusinessProcessCount;
+import eu.nimble.service.bp.model.statistics.NonOrderedProducts;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Test;

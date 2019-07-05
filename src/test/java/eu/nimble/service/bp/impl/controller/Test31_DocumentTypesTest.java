@@ -1,8 +1,8 @@
 package eu.nimble.service.bp.impl.controller;
 
-import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
-import eu.nimble.service.bp.impl.util.bp.DocumentEnumClassMapper;
-import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
+import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
+import eu.nimble.service.bp.util.bp.DocumentEnumClassMapper;
+import eu.nimble.service.bp.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.swagger.model.Process;
 import eu.nimble.service.bp.swagger.model.Transaction;
 import org.junit.Assert;

@@ -2,27 +2,27 @@
 <persistence version="1.0" xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_1_0.xsd
 http://java.sun.com/xml/ns/persistence/orm http://java.sun.com/xml/ns/persistence/orm_1_0.xsd" xmlns="http://java.sun.com/xml/ns/persistence" xmlns:orm="http://java.sun.com/xml/ns/persistence/orm" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <persistence-unit name="bp-data-model">
-        <class>eu.nimble.service.bp.hyperjaxb.model.AssociatedProcessInstanceGroup</class>
-        <class>eu.nimble.service.bp.hyperjaxb.model.CollaborationGroupDAO</class>
-        <class>eu.nimble.service.bp.hyperjaxb.model.CollaborationGroupDAO$CollaborationGroupDAOAssociatedCollaborationGroupsItem</class>
-        <class>eu.nimble.service.bp.hyperjaxb.model.ExecutionConfigurationDAO</class>
-        <class>eu.nimble.service.bp.hyperjaxb.model.ProcessConfigurationDAO</class>
-        <class>eu.nimble.service.bp.hyperjaxb.model.ProcessDAO</class>
-        <class>eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO</class>
-        <class>eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO$ProcessDocumentMetadataDAORelatedProductCategoriesItem</class>
-        <class>eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO$ProcessDocumentMetadataDAORelatedProductsItem</class>
-        <class>eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO</class>
-        <class>eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO</class>
-        <class>eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO$ProcessInstanceGroupDAOAssociatedGroupsItem</class>
-        <class>eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO$ProcessInstanceGroupDAOProcessInstanceIDsItem</class>
-        <class>eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceInputMessageDAO</class>
-        <class>eu.nimble.service.bp.hyperjaxb.model.ProcessPreferenceDAO</class>
-        <class>eu.nimble.service.bp.hyperjaxb.model.ProcessPreferenceDAO$ProcessPreferenceDAOProcessOrderItem</class>
-        <class>eu.nimble.service.bp.hyperjaxb.model.ProcessPreferencesDAO</class>
-        <class>eu.nimble.service.bp.hyperjaxb.model.ProcessVariablesDAO</class>
-        <class>eu.nimble.service.bp.hyperjaxb.model.ProcessVariablesDAO$ProcessVariablesDAORelatedProductCategoriesItem</class>
-        <class>eu.nimble.service.bp.hyperjaxb.model.ProcessVariablesDAO$ProcessVariablesDAORelatedProductsItem</class>
-        <class>eu.nimble.service.bp.hyperjaxb.model.TransactionConfigurationDAO</class>
-        <class>eu.nimble.service.bp.hyperjaxb.model.TransactionDAO</class>
+        <class>eu.nimble.service.bp.model.hyperjaxb.AssociatedProcessInstanceGroup</class>
+        <class>eu.nimble.service.bp.model.hyperjaxb.CollaborationGroupDAO</class>
+        <class>eu.nimble.service.bp.model.hyperjaxb.CollaborationGroupDAO$CollaborationGroupDAOAssociatedCollaborationGroupsItem</class>
+        <class>eu.nimble.service.bp.model.hyperjaxb.ExecutionConfigurationDAO</class>
+        <class>eu.nimble.service.bp.model.hyperjaxb.ProcessConfigurationDAO</class>
+        <class>eu.nimble.service.bp.model.hyperjaxb.ProcessDAO</class>
+        <class>eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO</class>
+        <class>eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO$ProcessDocumentMetadataDAORelatedProductCategoriesItem</class>
+        <class>eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO$ProcessDocumentMetadataDAORelatedProductsItem</class>
+        <class>eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceDAO</class>
+        <class>eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceGroupDAO</class>
+        <class>eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceGroupDAO$ProcessInstanceGroupDAOAssociatedGroupsItem</class>
+        <class>eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceGroupDAO$ProcessInstanceGroupDAOProcessInstanceIDsItem</class>
+        <class>eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceInputMessageDAO</class>
+        <class>eu.nimble.service.bp.model.hyperjaxb.ProcessPreferenceDAO</class>
+        <class>eu.nimble.service.bp.model.hyperjaxb.ProcessPreferenceDAO$ProcessPreferenceDAOProcessOrderItem</class>
+        <class>eu.nimble.service.bp.model.hyperjaxb.ProcessPreferencesDAO</class>
+        <class>eu.nimble.service.bp.model.hyperjaxb.ProcessVariablesDAO</class>
+        <class>eu.nimble.service.bp.model.hyperjaxb.ProcessVariablesDAO$ProcessVariablesDAORelatedProductCategoriesItem</class>
+        <class>eu.nimble.service.bp.model.hyperjaxb.ProcessVariablesDAO$ProcessVariablesDAORelatedProductsItem</class>
+        <class>eu.nimble.service.bp.model.hyperjaxb.TransactionConfigurationDAO</class>
+        <class>eu.nimble.service.bp.model.hyperjaxb.TransactionDAO</class>
     </persistence-unit>
 </persistence>
