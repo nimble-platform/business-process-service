@@ -10,7 +10,7 @@ Generated on: 2019.05.29 at 02:01:18 PM MSK
   -->
   <jaxb:bindings if-exists="true" scd="x-schema::">
     <jaxb:schemaBindings map="false">
-      <jaxb:package name="eu.nimble.service.bp.hyperjaxb.model"/>
+      <jaxb:package name="eu.nimble.service.bp.model.hyperjaxb"/>
     </jaxb:schemaBindings>
     <jaxb:bindings if-exists="true" scd="~ProcessPreferencesDAO">
       <jaxb:class ref="eu.nimble.service.bp.model.hyperjaxb.ProcessPreferencesDAO"/>
