@@ -6,7 +6,7 @@
 package eu.nimble.service.bp.util.camunda;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import eu.nimble.service.bp.serialization.MixInIgnoreProperties;
+import eu.nimble.service.bp.util.serialization.MixInIgnoreProperties;
 import eu.nimble.service.bp.swagger.model.*;
 import eu.nimble.service.bp.swagger.model.Process;
 import eu.nimble.utility.DateUtility;

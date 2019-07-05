@@ -1,4 +1,4 @@
-package eu.nimble.service.bp.serialization;
+package eu.nimble.service.bp.util.serialization;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
