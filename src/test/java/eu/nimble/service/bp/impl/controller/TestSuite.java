@@ -5,6 +5,7 @@ import org.junit.runners.Suite;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
+        Test32_BusinessWorkflowTests.class,
         Test01_StartControllerTest.class,
         Test02_ContinueControllerTest.class,
         Test03_StatisticsControllerTest.class,

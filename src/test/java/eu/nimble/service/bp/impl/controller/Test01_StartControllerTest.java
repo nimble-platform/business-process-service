@@ -37,7 +37,6 @@ public class Test01_StartControllerTest {
     private final String orderJSON2 = "/controller/orderJSON2.txt";
     private final String orderJSON3 = "/controller/orderJSON3.txt";
     private final String iirJSON1 = "/controller/itemInformationRequestJSON1.txt";
-    private final String ppapRequestJSON = "/controller/PPAPRequestJSON3.txt";
 
     public final static String orderId1 = "5b15c501-b90a-4f9c-ab0c-ca695e255237";
     public final static String iirId1 = "07ed85d2-3319-4dec-87f0-792d46a7c9a5";
@@ -47,22 +46,8 @@ public class Test01_StartControllerTest {
     public static String processInstanceIdOrder3;
     public static String processInstanceIdIIR1;
 
-    /* In this test case, we try to start a PPAP process.
-       However, since PPAP is not included in the workflow of seller company, we expect to get a BadRequestException.*/
     @Test
     public void test1_startProcessInstance() throws Exception {
-        Gson gson = new Gson();
-        String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(ppapRequestJSON));
-
-        MockHttpServletRequestBuilder request = post("/start")
-                .header("Authorization", "745")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(inputMessageAsString);
-        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isBadRequest()).andReturn();
-    }
-
-    @Test
-    public void test2_startProcessInstance() throws Exception {
         Gson gson = new Gson();
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(orderJSON1));
 
@@ -79,7 +64,7 @@ public class Test01_StartControllerTest {
     }
 
     @Test
-    public void test3_startProcessInstance() throws Exception {
+    public void test2_startProcessInstance() throws Exception {
         Gson gson = new Gson();
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(orderJSON2));
 
@@ -96,7 +81,7 @@ public class Test01_StartControllerTest {
     }
 
     @Test
-    public void test4_startProcessInstance() throws Exception {
+    public void test3_startProcessInstance() throws Exception {
         Gson gson = new Gson();
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(orderJSON3));
 
@@ -113,7 +98,7 @@ public class Test01_StartControllerTest {
     }
 
     @Test
-    public void test5_startProcessInstance() throws Exception {
+    public void test4_startProcessInstance() throws Exception {
         Gson gson = new Gson();
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(iirJSON1));
 
