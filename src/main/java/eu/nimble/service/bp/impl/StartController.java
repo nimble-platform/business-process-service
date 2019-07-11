@@ -158,11 +158,13 @@ public class StartController implements StartApi {
 
         // check whether the process is included in the workflow of seller company
         String processId = body.getVariables().getProcessID();
+        // get the identifier of party whose workflow will be checked
+        String partyId = processId.contentEquals("Fulfilment") ? body.getVariables().getInitiatorID(): body.getVariables().getResponderID();
         PartyType sellerParty;
         try {
-            sellerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,body.getVariables().getResponderID());
+            sellerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,partyId);
         } catch (IOException e) {
-            String msg = String.format("Failed to retrieve party information for : %s", body.getVariables().getResponderID());
+            String msg = String.format("Failed to retrieve party information for : %s", partyId);
             logger.warn(msg);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
