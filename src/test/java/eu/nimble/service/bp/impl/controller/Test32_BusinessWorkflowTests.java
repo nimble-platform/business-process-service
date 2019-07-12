@@ -47,7 +47,7 @@ public class Test32_BusinessWorkflowTests {
     private final String ppapRequestJSON = "/controller/PPAPRequestJSON3.txt";
 
     private static String processInstanceID;
-    private static String sellerCollaborationGroupID;
+    public static String sellerCollaborationGroupID;
     private static String sellerProcessInstanceGroupID;
 
     @Test
