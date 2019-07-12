@@ -125,8 +125,11 @@ public class ContinueController implements ContinueApi {
             // create process instance groups if this is the first process initializing the process group
             checkExistingGroup(businessProcessContext.getId(), gid, processInstance.getProcessInstanceID(), body, collaborationGID);
 
+            // get the identifier of party whose workflow will be checked
+            String partyId = processId.contentEquals("Fulfilment") ? body.getVariables().getInitiatorID(): body.getVariables().getResponderID();
+
             // get the seller party to check its workflow
-            PartyType sellerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,body.getVariables().getResponderID());
+            PartyType sellerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,partyId);
 
             // check whether the process is the last step in seller's workflow
             boolean isLastProcessInWorkflow;
