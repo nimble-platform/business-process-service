@@ -749,6 +749,52 @@ paths:
           description: Invalid token. No user was found for the provided token
         400:
           description: Invalid Clause content
+  /collaboration-groups/all-finished:
+      get:
+        operationId: checkAllCollaborationsFinished
+        parameters:
+          - name: Authorization
+            in: header
+            type: string
+            required: true
+          - in: query
+            name: partyId
+            type: string
+            description: Identifier of the party whose collaborations are checked
+            required: true
+          - in: query
+            name: collaborationRole
+            type: string
+            description: Role of the party in the collaboration. Possible values are SELLER and BUYER
+            default: SELLER
+            required: true
+        responses:
+          200:
+            schema:
+              type: string
+          401:
+            description: Invalid token. No user was found for the provided token
+  /collaboration-groups/{hjid}/finished:
+      get:
+        operationId: checkCollaborationFinished
+        parameters:
+          - name: Authorization
+            in: header
+            type: string
+            required: true
+          - in: path
+            name: hjid
+            type: string
+            description: Identifier of the collaboration group to be checked
+            required: true
+        responses:
+          200:
+            schema:
+              type: string
+          401:
+            description: Invalid token. No user was found for the provided token
+          404:
+            description: There does not exist a collaboration group with the given hjid
   /collaboration-groups:
     get:
       operationId: getCollaborationGroups

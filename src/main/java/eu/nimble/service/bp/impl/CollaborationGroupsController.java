@@ -9,19 +9,20 @@ import eu.nimble.service.bp.util.persistence.bp.CollaborationGroupDAOUtility;
 import eu.nimble.service.bp.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.swagger.api.CollaborationGroupsApi;
 import eu.nimble.service.bp.swagger.model.CollaborationGroup;
+import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 
@@ -278,5 +279,76 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(collaborationGroup);
         logger.debug("Retrieved CollaborationGroup: {}", bcid);
         return response;
+    }
+
+    @Override
+    @ApiOperation(value = "",notes = "Checks whether the collaborations of the given party are finished/completed or not. The service considers only the collaborations " +
+            "where the party has the given role.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token")
+    })
+    public ResponseEntity checkAllCollaborationsFinished(@ApiParam(value = "The identifier of party", required = true) @RequestParam(value = "partyId",required = true) String partyId,
+                                                         @ApiParam(value = "Role of the party in the collaboration.<br>Possible values: <ul><li>SELLER</li><li>BUYER</li></ul>") @RequestParam(value = "collaborationRole", required = true,defaultValue = "SELLER") String collaborationRole,
+                                                         @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
+        logger.info("Checking whether all collaborations are finished for party {} and role {}",partyId,collaborationRole);
+        // check token
+        ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
+        if (tokenCheck != null) {
+            return tokenCheck;
+        }
+
+        // whether all collaborations are finished or not
+        Boolean allCollaborationsFinished = true;
+
+        // get collaboration groups
+        List<CollaborationGroupDAO> collaborationGroups = CollaborationGroupDAOUtility.getCollaborationGroupDAOs(partyId,collaborationRole);
+        // check whether there is a CompletedTaskType for each process instance group,that is, collaboration is finished
+        for(CollaborationGroupDAO collaborationGroup:collaborationGroups){
+            Boolean isCollaborationFinished = isCollaborationFinished(collaborationGroup);
+            if(!isCollaborationFinished){
+                allCollaborationsFinished = false;
+                break;
+            }
+        }
+
+        logger.info("All collaborations are finished {} for party {} and role {}",allCollaborationsFinished,partyId,collaborationRole);
+        return ResponseEntity.ok(allCollaborationsFinished.toString());
+    }
+
+    @Override
+    @ApiOperation(value = "",notes = "Checks whether collaboration with the given hjid is finished/completed or not.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 404, message = "There does not exist a collaboration group with the given hjid")
+    })
+    public ResponseEntity<String> checkCollaborationFinished(@ApiParam(value = "The identifier of the collaboration group to be checked",required = true) @PathVariable("hjid") String hjid,
+                                                             @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
+        logger.info("Checking whether the collaboration {} is finished ",hjid);
+
+        // get the collaboration group
+        CollaborationGroupDAO collaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroupDAO(Long.valueOf(hjid));
+        if(collaborationGroup == null){
+            String msg = String.format("There does not exist a collaboration group with hjid: %s",hjid);
+            logger.error(msg);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+        }
+
+        // whether the collaboration is finished or not
+        Boolean collaborationFinished = isCollaborationFinished(collaborationGroup);
+
+        logger.info("The collaboration {} finished {}",hjid,collaborationFinished);
+        return ResponseEntity.ok(collaborationFinished.toString());
+    }
+
+    private boolean isCollaborationFinished(CollaborationGroupDAO collaborationGroup){
+        boolean collaborationFinished = true;
+        // check whether there is a CompletedTaskType for each process instance group,that is, collaboration is finished
+        for(ProcessInstanceGroupDAO processInstanceGroup: collaborationGroup.getAssociatedProcessInstanceGroups()){
+            if(!TrustPersistenceUtility.completedTaskExist(processInstanceGroup.getProcessInstanceIDs())){
+                collaborationFinished = false;
+                break;
+            }
+        }
+        return collaborationFinished;
     }
 }
