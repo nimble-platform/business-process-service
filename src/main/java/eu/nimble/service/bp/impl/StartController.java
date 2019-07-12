@@ -170,7 +170,7 @@ public class StartController implements StartApi {
         }
 
         if(sellerParty.getProcessID() != null && sellerParty.getProcessID().size() > 0 && !sellerParty.getProcessID().contains(processId)){
-            String msg = String.format("%s is not included in the workflow of company %s", processId,sellerParty.getPartyIdentification().get(0).getID());
+            String msg = String.format("%s is not included in the workflow of %s", processId,sellerParty.getPartyName().get(0).getName().getValue());
             logger.error(msg);
             throw new BadRequestException(msg);
         }
