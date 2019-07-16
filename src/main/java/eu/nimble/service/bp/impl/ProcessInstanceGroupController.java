@@ -217,6 +217,10 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
     }
 
     private boolean cancellableGroup(List<String> processInstanceIDs) {
+        // if there's a completed task for these processes, we could not cancel that group
+        if(TrustPersistenceUtility.completedTaskExist(processInstanceIDs)){
+            return false;
+        }
         for (String instanceID : processInstanceIDs) {
             List<ProcessDocumentMetadataDAO> metadataDAOS = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(instanceID);
             for (ProcessDocumentMetadataDAO metadataDAO : metadataDAOS) {
