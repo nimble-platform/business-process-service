@@ -48,7 +48,7 @@ public class Test32_BusinessWorkflowTests {
 
     private static String processInstanceID;
     public static String sellerCollaborationGroupID;
-    private static String sellerProcessInstanceGroupID;
+    public static String sellerProcessInstanceGroupID;
 
     @Test
     public void test1_startProcessInstance() throws Exception {

@@ -51,4 +51,13 @@ public class Test15_ProcessInstanceGroupControllerTest3 {
         Assert.assertSame(test1_expectedSize, processInstanceGroupFilter.getTradingPartnerIDs().size());
 
     }
+
+    @Test
+    public void test2_checkCollaborationFinished() throws Exception{
+        MockHttpServletRequestBuilder request = get("/process-instance-groups/"+Test32_BusinessWorkflowTests.sellerProcessInstanceGroupID+"/finished")
+                .header("Authorization", TestConfig.responderPersonId);
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+
+        Assert.assertEquals("true",mvcResult.getResponse().getContentAsString());
+    }
 }

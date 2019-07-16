@@ -88,12 +88,4 @@ public class Test24_CollaborationGroupTest2 {
         Assert.assertEquals(productName,order.getOrderLine().get(0).getLineItem().getItem().getName().get(0).getValue());
     }
 
-    @Test
-    public void test5_checkCollaborationFinished() throws Exception{
-        MockHttpServletRequestBuilder request = get("/collaboration-groups/"+Test32_BusinessWorkflowTests.sellerCollaborationGroupID+"/finished")
-                .header("Authorization", TestConfig.responderPersonId);
-        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
-
-        Assert.assertEquals("true",mvcResult.getResponse().getContentAsString());
-    }
 }
