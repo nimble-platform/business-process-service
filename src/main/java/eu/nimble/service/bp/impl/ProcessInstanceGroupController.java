@@ -216,6 +216,32 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
         }
     }
 
+    @ApiOperation(value = "",notes = "Checks whether collaboration which is represented by the specified ProcessInstanceGroup is finished/completed or not.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 404, message = "There does not exist a process instance group with the given id")
+    })
+    @RequestMapping(value = "/process-instance-groups/{id}/finished",
+            method = RequestMethod.GET)
+    public ResponseEntity<String> checkCollaborationFinished(@ApiParam(value = "The identifier of the process instance group to be checked",required = true) @PathVariable("id") String id,
+                                                             @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
+        logger.info("Checking whether the collaboration represented by process instance group {} is finished",id);
+
+        // get the collaboration group
+        ProcessInstanceGroupDAO groupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(id);
+        if (groupDAO == null) {
+            String msg = String.format("There does not exist a process instance group with the id: %s", id);
+            logger.warn(msg);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+        }
+
+        // whether the collaboration is finished or not
+        Boolean collaborationFinished = TrustPersistenceUtility.completedTaskExist(groupDAO.getProcessInstanceIDs());
+
+        logger.info("The collaboration represented by process instance group {} finished {}",id,collaborationFinished);
+        return ResponseEntity.ok(collaborationFinished.toString());
+    }
+
     private boolean cancellableGroup(List<String> processInstanceIDs) {
         // if there's a completed task for these processes, we could not cancel that group
         if(TrustPersistenceUtility.completedTaskExist(processInstanceIDs)){

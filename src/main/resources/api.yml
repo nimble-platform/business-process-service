@@ -774,27 +774,6 @@ paths:
               type: string
           401:
             description: Invalid token. No user was found for the provided token
-  /collaboration-groups/{hjid}/finished:
-      get:
-        operationId: checkCollaborationFinished
-        parameters:
-          - name: Authorization
-            in: header
-            type: string
-            required: true
-          - in: path
-            name: hjid
-            type: string
-            description: Identifier of the collaboration group to be checked
-            required: true
-        responses:
-          200:
-            schema:
-              type: string
-          401:
-            description: Invalid token. No user was found for the provided token
-          404:
-            description: There does not exist a collaboration group with the given hjid
   /collaboration-groups:
     get:
       operationId: getCollaborationGroups

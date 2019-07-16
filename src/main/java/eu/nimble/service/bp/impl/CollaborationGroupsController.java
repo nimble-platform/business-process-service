@@ -315,31 +315,6 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
         return ResponseEntity.ok(allCollaborationsFinished.toString());
     }
 
-    @Override
-    @ApiOperation(value = "",notes = "Checks whether collaboration with the given hjid is finished/completed or not.")
-    @ApiResponses(value = {
-            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
-            @ApiResponse(code = 404, message = "There does not exist a collaboration group with the given hjid")
-    })
-    public ResponseEntity<String> checkCollaborationFinished(@ApiParam(value = "The identifier of the collaboration group to be checked",required = true) @PathVariable("hjid") String hjid,
-                                                             @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
-        logger.info("Checking whether the collaboration {} is finished ",hjid);
-
-        // get the collaboration group
-        CollaborationGroupDAO collaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroupDAO(Long.valueOf(hjid));
-        if(collaborationGroup == null){
-            String msg = String.format("There does not exist a collaboration group with hjid: %s",hjid);
-            logger.error(msg);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
-        }
-
-        // whether the collaboration is finished or not
-        Boolean collaborationFinished = isCollaborationFinished(collaborationGroup);
-
-        logger.info("The collaboration {} finished {}",hjid,collaborationFinished);
-        return ResponseEntity.ok(collaborationFinished.toString());
-    }
-
     private boolean isCollaborationFinished(CollaborationGroupDAO collaborationGroup){
         boolean collaborationFinished = true;
         // check whether there is a CompletedTaskType for each process instance group,that is, collaboration is finished
