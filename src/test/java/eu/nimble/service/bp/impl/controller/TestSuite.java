@@ -9,6 +9,7 @@ import org.junit.runners.Suite;
         Test02_ContinueControllerTest.class,
         Test03_StatisticsControllerTest.class,
         Test04_BusinessProcessesTest.class,
+        TransactionSummaryTest.class,
         Test05_ProcessInstanceGroupControllerTest.class,
         Test06_ContentControllerTest.class,
         Test07_ContentControllerTest2.class,
