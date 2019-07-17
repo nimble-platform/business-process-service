@@ -2,6 +2,7 @@ package eu.nimble.service.bp.impl.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.model.dashboard.CollaborationGroupResponse;
+import eu.nimble.service.bp.swagger.model.CollaborationGroup;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -102,5 +103,18 @@ public class Test23_CollaborationGroupTest {
         request = post("/process-instance-groups/"+ groupID +"/cancel")
                 .header("Authorization", TestConfig.responderPersonId);
         mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+    }
+
+    // retrieve the collaboration group for the last process instance, then compare its id with the identifier
+    // of the collaboration group owning this process
+    @Test
+    public void test4_getAssociatedCollaborationGroup() throws Exception{
+        // get the collaboration group
+        MockHttpServletRequestBuilder request = get("/processInstance/"+idOfTheLastProcessInstance+"/collaboration-group")
+                .header("Authorization", TestConfig.responderPersonId);
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+
+        CollaborationGroup collaborationGroup = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), CollaborationGroup.class);
+        Assert.assertEquals(collaborationGroupID,collaborationGroup.getID());
     }
 }
