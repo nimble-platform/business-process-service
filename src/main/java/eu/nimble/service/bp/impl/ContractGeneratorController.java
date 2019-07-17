@@ -84,12 +84,12 @@ public class ContractGeneratorController {
             method = RequestMethod.GET)
     public ResponseEntity getTermsAndConditions(@ApiParam(value = "Identifier of the order for which terms and conditions are generated", required = false) @RequestParam(value = "orderId", required = false) String orderId,
                                                 @ApiParam(value = "Identifier of the request for quotation for which terms and conditions are generated", required = false) @RequestParam(value = "rfqId", required = false) String rfqId,
-                                                @ApiParam(value = "Identifier of the seller party") @RequestParam(value = "sellerPartyId", required = false) String sellerPartyId,
+                                                @ApiParam(value = "Identifier of the seller party",required = true) @RequestParam(value = "sellerPartyId", required = true) String sellerPartyId,
                                                 @ApiParam(value = "Identifier of the buyer party") @RequestParam(value = "buyerPartyId", required = false) String buyerPartyId,
                                                 @ApiParam(value = "The selected incoterms while negotiating.<br>Example:DDP (Delivery Duty Paid)") @RequestParam(value = "incoterms", required = false) String incoterms,
                                                 @ApiParam(value = "The selected trading term while negotiating.<br>Example:Cash_on_delivery") @RequestParam(value = "tradingTerm", required = false) String tradingTerm,
                                                 @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken){
-        logger.info("Generating Order Terms and Conditions clauses for the order with id : {}",orderId);
+        logger.info("Generating Order Terms and Conditions clauses for the order : {}, rfq: {}, seller party: {}, buyer party: {}",orderId,rfqId,sellerPartyId, buyerPartyId);
 
         try {
             // check token
@@ -102,7 +102,7 @@ public class ContractGeneratorController {
 
             List<ClauseType> clauses = contractGenerator.getTermsAndConditions(orderId,rfqId,sellerPartyId,buyerPartyId,incoterms,tradingTerm,bearerToken);
 
-            logger.info("Generated Order Terms and Conditions clauses for the order with id : {}",orderId);
+            logger.info("Generated Order Terms and Conditions clauses for the order : {}, rfq: {}, seller party: {}, buyer party: {}",orderId,rfqId,sellerPartyId, buyerPartyId);
             return ResponseEntity.ok(JsonSerializationUtility.getObjectMapper().writeValueAsString(clauses));
         }
         catch (Exception e){
