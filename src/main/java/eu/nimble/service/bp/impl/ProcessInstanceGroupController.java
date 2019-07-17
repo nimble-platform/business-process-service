@@ -83,7 +83,7 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
             " The filter can be used to restrict the set of groups for easy discovery.")
     public ResponseEntity<ProcessInstanceGroupFilter> getProcessInstanceGroupFilters(
             @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
-            @ApiParam(value = "Identifier of the party as specified by the identity service") @RequestParam(value = "partyId", required = false) String partyId,
+            @ApiParam(value = "Identifier of the party as specified by the identity service", required = true) @RequestParam(value = "partyId", required = true) String partyId,
             @ApiParam(value = "Names of the products for which the collaboration activities are performed") @RequestParam(value = "relatedProducts", required = false) List<String> relatedProducts,
             @ApiParam(value = "Categories of the products.<br>For example:MDF raw,Split air conditioner") @RequestParam(value = "relatedProductCategories", required = false) List<String> relatedProductCategories,
             @ApiParam(value = "Identifier (party id) of the corresponding trading partners") @RequestParam(value = "tradingPartnerIDs", required = false) List<String> tradingPartnerIDs,
@@ -92,6 +92,10 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
             @ApiParam(value = "Status of the process instance included in the group.<br>Possible values: <ul><li>STARTED</li><li>WAITING</li><li>CANCELLED</li><li>COMPLETED</li></ul>") @RequestParam(value = "status", required = false) List<String> status,
             @ApiParam(value = "Identify Project Or Not", defaultValue = "false") @RequestParam(value = "isProject", required = false, defaultValue = "false") Boolean isProject) {
 
+        logger.debug("Retrieving filters for partyId: {}, archived: {}, products: {}, categories: {}, parties: {}", partyId, archived,
+                relatedProducts != null ? relatedProducts.toString() : "[]",
+                relatedProductCategories != null ? relatedProductCategories.toString() : "[]",
+                tradingPartnerIDs != null ? tradingPartnerIDs.toString() : "[]");
         ProcessInstanceGroupFilter filters = CollaborationGroupDAOUtility.getFilterDetails(partyId, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, status, null, null, bearerToken,isProject);
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(filters);
         logger.debug("Filters retrieved for partyId: {}, archived: {}, products: {}, categories: {}, parties: {}", partyId, archived,
