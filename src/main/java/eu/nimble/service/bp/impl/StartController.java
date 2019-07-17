@@ -17,7 +17,7 @@ import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtilit
 import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
-import eu.nimble.service.bp.serialization.MixInIgnoreProperties;
+import eu.nimble.service.bp.util.serialization.MixInIgnoreProperties;
 import eu.nimble.service.bp.swagger.api.StartApi;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;

@@ -224,7 +224,7 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
             @ApiParam(value = "List of collaboration group id's to be merged.", required = true) @RequestParam(value = "cgids", required = true) List<String> cgids
 
     ) {
-        logger.debug("Merging the collaboration groups");
+        logger.debug("Merging the collaboration groups {} to the base collaboration group {}",cgids,bcid);
         // check token
         ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
         if (tokenCheck != null) {
@@ -273,11 +273,9 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
         }
         collaborationGroupDAO.getAssociatedCollaborationGroups();
 
-        logger.debug("Updated name of the collaboration group :" + cgids);
-
         CollaborationGroup collaborationGroup = HibernateSwaggerObjectMapper.convertCollaborationGroupDAO(collaborationGroupDAO);
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(collaborationGroup);
-        logger.debug("Retrieved CollaborationGroup: {}", bcid);
+        logger.debug("Merged the collaboration groups {} to the base collaboration group {}",cgids,bcid);
         return response;
     }
 

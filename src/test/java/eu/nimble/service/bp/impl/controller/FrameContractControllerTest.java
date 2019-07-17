@@ -4,6 +4,7 @@ package eu.nimble.service.bp.impl.controller;
  * Created by dogukan on 16.07.2018.
  */
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.contract.FrameContractService;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ItemIdentificationType;
@@ -29,6 +30,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.math.BigDecimal;
+import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -75,7 +77,30 @@ public class FrameContractControllerTest {
     }
 
     @Test
-    public void test2_expiredFrameContractTest() throws Exception {
+    public void test2_getDigitalAgreementForPartiesAndProduct() throws Exception {
+        MockHttpServletRequestBuilder request = get("/contract/digital-agreement")
+                .header("Authorization", TestConfig.initiatorPersonId)
+                .param("buyerId",TestConfig.buyerPartyID)
+                .param("sellerId",TestConfig.sellerPartyID)
+                .param("productId",itemId);
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+        DigitalAgreementType fc =  objectMapper.readValue(mvcResult.getResponse().getContentAsString(), DigitalAgreementType.class);
+        Assert.assertEquals(frameContract.getHjid(),fc.getHjid());
+    }
+
+    @Test
+    public void test3_getDigitalAgreementForPartiesAndProduct() throws Exception {
+        MockHttpServletRequestBuilder request = get("/contract/digital-agreement/all")
+                .header("Authorization", TestConfig.initiatorPersonId)
+                .param("partyId",TestConfig.sellerPartyID);
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+        List<DigitalAgreementType> frameContracts = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),new TypeReference<List<DigitalAgreementType>>(){});
+        Assert.assertEquals(1,frameContracts.size());
+        Assert.assertEquals(frameContract.getHjid(),frameContracts.get(0).getHjid());
+    }
+
+    @Test
+    public void test4_expiredFrameContractTest() throws Exception {
         // pull the start and end dates of the contract earlier than the current date
         DateTime start = DateTime.now().minusMonths(5);
         DateTime end = start.minusMonths(2);
@@ -91,7 +116,7 @@ public class FrameContractControllerTest {
     }
 
     @Test
-    public void test3_updateExpiredContractNotFoundTest() throws Exception {
+    public void test5_updateExpiredContractNotFoundTest() throws Exception {
         // retrieve contract
         MockHttpServletRequestBuilder request = get("/contract/digital-agreement/" + frameContract.getHjid())
                 .header("Authorization", TestConfig.initiatorPersonId);

@@ -288,7 +288,7 @@ public class ContractController {
             produces = {"application/json"},
             method = RequestMethod.GET)
     public ResponseEntity getClauseDetails(@ApiParam(value = "Identifier of the document for which the inner clauses to be retrieved", required = true) @PathVariable(value = "documentId", required = true) String documentId,
-                                           @ApiParam(value = "Type of the clauses to be retrieved. If no type specified all the clauses are retrieved.") @RequestParam(value = "clauseType") eu.nimble.service.model.ubl.extension.ClauseType clauseType,
+                                           @ApiParam(value = "Type of the clauses to be retrieved. If no type specified all the clauses are retrieved.", required = false) @RequestParam(value = "clauseType", required = false) eu.nimble.service.model.ubl.extension.ClauseType clauseType,
                                            @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         try {
             logger.info("Getting clause for document: {}, type: {}", documentId, clauseType);
@@ -301,7 +301,7 @@ public class ContractController {
             // check existence and type of the document bound to the contract
             ProcessDocumentMetadataDAO documentMetadata = ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId);
             if (documentMetadata == null) {
-                return createResponseEntityAndLog(String.format("No document for the specified id: %s", documentMetadata.getDocumentID()), HttpStatus.NOT_FOUND);
+                return createResponseEntityAndLog(String.format("No document for the specified id: %s", documentId), HttpStatus.NOT_FOUND);
             }
             DocumentType documentType = documentMetadata.getType();
             if (!(documentType == DocumentType.ORDER || documentType == DocumentType.TRANSPORTEXECUTIONPLANREQUEST)) {

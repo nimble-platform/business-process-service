@@ -53,7 +53,7 @@ public class Test29_CollaborationGroupTest3 {
     public static String processInstanceIdIIR;
     private static String sellerCollaborationGroupID;
     private static String sellerProcessInstanceGroupID;
-    private static String buyerCollaborationGroupID;
+    public static String buyerCollaborationGroupID;
     private static String buyerProcessInstanceGroupID;
 
     @Test
