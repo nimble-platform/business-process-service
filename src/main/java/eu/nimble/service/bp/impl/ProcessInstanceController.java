@@ -350,7 +350,8 @@ public class ProcessInstanceController {
         return threadPool.submit(() -> JsonSerializationUtility.getObjectMapper().writeValueAsString(object));
     }
 
-    @ApiOperation(value = "",notes = "Gets CollaborationGroup containing the specified process instance")
+    @ApiOperation(value = "",notes = "Gets CollaborationGroup containing the specified process instance. The party information is derived from the given bearer token and " +
+            "the service returns CollaborationGroup belonging to this party.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Retrieved the CollaborationGroup successfully"),
             @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
