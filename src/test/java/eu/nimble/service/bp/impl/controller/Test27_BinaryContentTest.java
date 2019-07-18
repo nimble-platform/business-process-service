@@ -120,4 +120,18 @@ public class Test27_BinaryContentTest {
         binaryObject = binaryContentService.retrieveContent(itemInformationRequest.getItemInformationRequestLine().get(0).getSalesItem().get(0).getItem().getItemSpecificationDocumentReference().get(0).getAttachment().getEmbeddedDocumentBinaryObject().getUri());
         Assert.assertEquals("updated_file.jpg", binaryObject.getFileName());
     }
+
+    // try to update a non-existing process instance
+    @Test
+    public void test4_updateProcessInstance() throws Exception {
+
+        MockHttpServletRequestBuilder request = patch("/processInstance")
+                .header("Authorization",TestConfig.initiatorPersonId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("dummy content here")
+                .param("processID", "ITEMINFORMATIONREQUEST")
+                .param("processInstanceID", "99999999")
+                .param("creatorUserID", "1337");
+        this.mockMvc.perform(request).andDo(print()).andExpect(status().isNotFound()).andReturn();
+    }
 }

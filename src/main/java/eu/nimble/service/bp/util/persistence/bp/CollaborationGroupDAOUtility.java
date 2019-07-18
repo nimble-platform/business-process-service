@@ -149,9 +149,8 @@ public class CollaborationGroupDAOUtility {
                 .isPresent();
     }
 
-    public static CollaborationGroupDAO archiveCollaborationGroup(String id) {
+    public static CollaborationGroupDAO archiveCollaborationGroup(CollaborationGroupDAO collaborationGroupDAO) {
         GenericJPARepository repo = new JPARepositoryFactory().forBpRepository(true);
-        CollaborationGroupDAO collaborationGroupDAO = repo.getSingleEntityByHjid(CollaborationGroupDAO.class, Long.parseLong(id));
         // archive the collaboration group
         collaborationGroupDAO.setArchived(true);
         // archive the groups inside the given collaboration group
@@ -162,9 +161,8 @@ public class CollaborationGroupDAOUtility {
         return collaborationGroupDAO;
     }
 
-    public static CollaborationGroupDAO restoreCollaborationGroup(String id) {
+    public static CollaborationGroupDAO restoreCollaborationGroup(CollaborationGroupDAO collaborationGroupDAO) {
         GenericJPARepository repo = new JPARepositoryFactory().forBpRepository(true);
-        CollaborationGroupDAO collaborationGroupDAO = repo.getSingleEntityByHjid(CollaborationGroupDAO.class, Long.parseLong(id));
         // archive the collaboration group
         collaborationGroupDAO.setArchived(false);
         // archive the groups inside the given collaboration group

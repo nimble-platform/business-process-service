@@ -45,4 +45,12 @@ public class Test14_ProcessInstanceGroupControllerTest2 {
         Assert.assertEquals(test1_expectedValue, body);
     }
 
+    // try to delete a non-existence process instance group
+    @Test
+    public void test2_deleteProcessInstanceGroup() throws Exception {
+        MockHttpServletRequestBuilder request = delete("/process-instance-groups/999999")
+                .header("Authorization", TestConfig.initiatorPersonId);
+        this.mockMvc.perform(request).andDo(print()).andExpect(status().isNotFound()).andReturn();
+    }
+
 }

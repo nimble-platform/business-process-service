@@ -702,6 +702,8 @@ paths:
               $ref: '#/definitions/CollaborationGroup'
           401:
             description: Invalid token. No user was found for the provided token
+          404:
+            description: The collaboration group does not exist for the given id
   /collaboration-groups/{id}/restore:
       post:
         operationId: restoreCollaborationGroup
@@ -722,6 +724,8 @@ paths:
               $ref: '#/definitions/CollaborationGroup'
           401:
             description: Invalid token. No user was found for the provided token
+          404:
+            description: The collaboration group does not exist for the given id
   /collaboration-groups/merge:
     get:
       operationId: mergeCollaborationGroups
@@ -952,7 +956,8 @@ paths:
           description: Deleted the ProcessInstanceGroup successfully
         401:
           description: Invalid token. No user was found for the provided token
-
+        404:
+          description: There does not exist a process instance group with the given id
 definitions:
 
   Version:

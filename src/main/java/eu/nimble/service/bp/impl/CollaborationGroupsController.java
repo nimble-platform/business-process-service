@@ -52,15 +52,23 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
                 return tokenCheck;
             }
 
+            // check whether the collaboration group exists or not
+            CollaborationGroupDAO collaborationGroupDAO = CollaborationGroupDAOUtility.getCollaborationGroupDAO(Long.parseLong(id));
+            if(collaborationGroupDAO == null){
+                String msg = String.format("CollaborationGroup with id %s does not exist", id);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            }
+
             // check whether the group is archiable or not
-            boolean isArchivable = CollaborationGroupDAOUtility.isCollaborationGroupArchivable(Long.parseLong(id));
+            boolean isArchivable = CollaborationGroupDAOUtility.isCollaborationGroupArchivable(collaborationGroupDAO.getHjid());
             if (!isArchivable) {
                 String msg = String.format("CollaborationGroup with id %s is not archivable", id);
-                logger.info(msg);
+                logger.error(msg);
                 return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(msg);
             }
 
-            CollaborationGroupDAO collaborationGroupDAO = CollaborationGroupDAOUtility.archiveCollaborationGroup(id);
+            collaborationGroupDAO = CollaborationGroupDAOUtility.archiveCollaborationGroup(collaborationGroupDAO);
 
             CollaborationGroup collaborationGroup = HibernateSwaggerObjectMapper.convertCollaborationGroupDAO(collaborationGroupDAO);
             ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(collaborationGroup);
@@ -178,7 +186,14 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
             return tokenCheck;
         }
 
-        CollaborationGroupDAO collaborationGroupDAO = CollaborationGroupDAOUtility.restoreCollaborationGroup(id);
+        // check the existence of collaboration group
+        CollaborationGroupDAO collaborationGroupDAO = CollaborationGroupDAOUtility.getCollaborationGroupDAO(Long.parseLong(id));
+        if(collaborationGroupDAO == null){
+            String msg = String.format("CollaborationGroup with id %s does not exist", id);
+            logger.error(msg);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+        collaborationGroupDAO = CollaborationGroupDAOUtility.restoreCollaborationGroup(collaborationGroupDAO);
 
         CollaborationGroup collaborationGroup = HibernateSwaggerObjectMapper.convertCollaborationGroupDAO(collaborationGroupDAO);
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(collaborationGroup);

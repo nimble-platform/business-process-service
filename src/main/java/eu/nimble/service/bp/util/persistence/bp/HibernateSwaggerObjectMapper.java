@@ -84,6 +84,9 @@ public class HibernateSwaggerObjectMapper {
     }
 
     public static ProcessDocumentMetadata createProcessDocumentMetadata(ProcessDocumentMetadataDAO processDocumentDAO) {
+        if(processDocumentDAO == null){
+            return null;
+        }
         ProcessDocumentMetadata processDocument = new ProcessDocumentMetadata();
         processDocument.setProcessInstanceID(processDocumentDAO.getProcessInstanceID());
         processDocument.setDocumentID(processDocumentDAO.getDocumentID());
@@ -302,6 +305,9 @@ public class HibernateSwaggerObjectMapper {
     }
 
     public static ProcessInstanceGroup convertProcessInstanceGroupDAO(ProcessInstanceGroupDAO processInstanceGroupDAO) {
+        if(processInstanceGroupDAO == null){
+            return null;
+        }
         ProcessInstanceGroup processInstanceGroup = new ProcessInstanceGroup();
         processInstanceGroup.setStatus(ProcessInstanceGroup.StatusEnum.valueOf(processInstanceGroupDAO.getStatus().value()));
         processInstanceGroup.setID(processInstanceGroupDAO.getID());

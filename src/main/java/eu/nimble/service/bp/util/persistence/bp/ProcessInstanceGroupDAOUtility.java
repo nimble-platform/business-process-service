@@ -118,6 +118,10 @@ public class ProcessInstanceGroupDAOUtility {
 
     public static ProcessInstanceGroupDAO getProcessInstanceGroupDAO(String groupID) {
         Object[] resultItems = (Object[]) getProcessInstanceGroups(groupID);
+        // return null if there is no process instance group with the given id
+        if(resultItems == null){
+            return null;
+        }
         ProcessInstanceGroupDAO pig = (ProcessInstanceGroupDAO) resultItems[0];
         pig.setLastActivityTime((String) resultItems[1]);
         pig.setFirstActivityTime((String) resultItems[2]);

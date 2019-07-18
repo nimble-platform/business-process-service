@@ -100,6 +100,9 @@ public class DocumentController {
         }
 
         Object document = DocumentPersistenceUtility.getUBLDocument(documentID);
+        if (document == null) {
+            return createResponseEntityAndLog(String.format("No document for id: %s", documentID), HttpStatus.NOT_FOUND);
+        }
 
         String documentContentXML = null;
         if(document instanceof OrderType) {

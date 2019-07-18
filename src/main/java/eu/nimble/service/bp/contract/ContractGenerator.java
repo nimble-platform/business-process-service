@@ -67,9 +67,7 @@ public class ContractGenerator {
 
     private boolean firstIIR = true;
 
-    public void generateContract(String orderId,ZipOutputStream zos){
-        OrderType order = (OrderType) DocumentPersistenceUtility.getUBLDocument(orderId,DocumentType.ORDER);
-
+    public void generateContract(OrderType order,ZipOutputStream zos){
         XWPFDocument orderTermsAndConditions = fillOrderTermsAndConditions(order);
         XWPFDocument purchaseDetails = fillPurchaseDetails(order);
 

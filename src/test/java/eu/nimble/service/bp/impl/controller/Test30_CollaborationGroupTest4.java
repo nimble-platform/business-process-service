@@ -40,7 +40,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         * Then, buyer initiates a PPAP request and deletes his collaboration group
         * Seller accepts the PPAP request
         * We expect that a new collaboration group will be created for the buyer
-        * Finally, the buyer merges two collaboration groups: the group created in Test29_CollaborationGroupTest3 and the group created in Test30_CollaborationGroupTest4
+        * Then, the buyer merges two collaboration groups: the group created in Test29_CollaborationGroupTest3 and the group created in Test30_CollaborationGroupTest4
+        * Finally, we retrieve collaboration groups which are projects for the buyer.
  */
 public class Test30_CollaborationGroupTest4 {
 
@@ -197,6 +198,22 @@ public class Test30_CollaborationGroupTest4 {
         mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
         CollaborationGroup collaborationGroup = mapper.readValue(mvcResult.getResponse().getContentAsString(), CollaborationGroup.class);
         Assert.assertEquals(true,collaborationGroup.getIsProject());
+    }
+
+    /*
+        For the buyer, retrieve collaboration groups which are projects.
+     */
+    @Test
+    public void test8_getCollaborationGroups() throws Exception{
+        MockHttpServletRequestBuilder request = get("/collaboration-groups")
+                .header("Authorization", TestConfig.initiatorPersonId)
+                .param("partyId", TestConfig.buyerPartyID)
+                .param("isProject","true");
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+
+        CollaborationGroupResponse collaborationGroupResponse = mapper.readValue(mvcResult.getResponse().getContentAsString(), CollaborationGroupResponse.class);
+        Assert.assertSame(1,collaborationGroupResponse.getSize());
+        Assert.assertEquals(buyerCollaborationGroupID,collaborationGroupResponse.getCollaborationGroups().get(0).getID());
     }
 
     private CollaborationGroupResponse getCollaborationGroupResponse() throws Exception{
