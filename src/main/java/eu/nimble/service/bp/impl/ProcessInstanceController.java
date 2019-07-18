@@ -128,7 +128,7 @@ public class ProcessInstanceController {
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Updated the process instance successfully"),
             @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
-            @ApiResponse(code = 404, message = "There does not exist a process instance with the given id"),
+            @ApiResponse(code = 404, message = "There does not exist a document metadata for the process instance with the given id"),
             @ApiResponse(code = 500, message = "Unexpected error while updating the process instance with the given id")
     })
     @RequestMapping(value = "/processInstance",
@@ -152,6 +152,10 @@ public class ProcessInstanceController {
             }
 
             ProcessDocumentMetadata processDocumentMetadata = ProcessDocumentMetadataDAOUtility.getRequestMetadata(processInstanceID);
+            if(processDocumentMetadata == null){
+                logger.error("There does not exist a document metadata for the process instance with id:{}",processInstanceID);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("There does not exist a document metadata for the process instance with the given id");
+            }
             Object document = DocumentPersistenceUtility.readDocument(documentType, content);
             // validate the entity ids
             boolean hjidsBelongToCompany = resourceValidationUtil.hjidsBelongsToParty(document, processDocumentMetadata.getInitiatorID(), Configuration.Standard.UBL.toString());
@@ -160,11 +164,6 @@ public class ProcessInstanceController {
             }
 
             ProcessInstanceDAO instanceDAO = ProcessInstanceDAOUtility.getById(processInstanceID);
-            // check whether the process instance with the given id exists or not
-            if(instanceDAO == null){
-                logger.error("There does not exist a process instance with id:{}",processInstanceID);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("There does not exist a process instance with the given id");
-            }
             // update creator user id of metadata
             processDocumentMetadata.setCreatorUserID(creatorUserID);
             ProcessDocumentMetadataDAOUtility.updateDocumentMetadata(businessProcessContext.getId(),processDocumentMetadata);

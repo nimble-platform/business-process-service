@@ -84,6 +84,9 @@ public class HibernateSwaggerObjectMapper {
     }
 
     public static ProcessDocumentMetadata createProcessDocumentMetadata(ProcessDocumentMetadataDAO processDocumentDAO) {
+        if(processDocumentDAO == null){
+            return null;
+        }
         ProcessDocumentMetadata processDocument = new ProcessDocumentMetadata();
         processDocument.setProcessInstanceID(processDocumentDAO.getProcessInstanceID());
         processDocument.setDocumentID(processDocumentDAO.getDocumentID());
