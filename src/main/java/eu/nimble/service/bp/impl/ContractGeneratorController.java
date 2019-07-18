@@ -1,8 +1,11 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.contract.ContractGenerator;
+import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
+import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ClauseType;
+import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.utility.JsonSerializationUtility;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -29,6 +32,7 @@ public class ContractGeneratorController {
     @ApiResponses(value = {
             @ApiResponse(code = 200,message = "Generated the contract bundle successfully"),
             @ApiResponse(code = 401,message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 404,message = "No order exists for the given id"),
             @ApiResponse(code = 500, message = "Unexpected error contract for the order with the given id")
     })
     @RequestMapping(value = "/contracts/create-bundle",
@@ -52,17 +56,31 @@ public class ContractGeneratorController {
                 }
             }
 
-            ZipOutputStream zos = new ZipOutputStream(response.getOutputStream());
+            // check existence of Order
+            OrderType order = (OrderType) DocumentPersistenceUtility.getUBLDocument(orderId, DocumentType.ORDER);
+            if(order == null){
+                String msg = String.format("No order exists for the given id : %s",orderId);
+                logger.error(msg);
+                response.setStatus(HttpStatus.NOT_FOUND.value());
+                try{
+                    response.getOutputStream().write(msg.getBytes());
+                }
+                catch (Exception e1){
+                    logger.error("Failed to write the error message to the output stream",e1);
+                }
+            }
+            else{
+                ZipOutputStream zos = new ZipOutputStream(response.getOutputStream());
 
-            ContractGenerator contractGenerator = new ContractGenerator();
-            contractGenerator.generateContract(orderId,zos);
+                ContractGenerator contractGenerator = new ContractGenerator();
+                contractGenerator.generateContract(order,zos);
 
-            response.flushBuffer();
+                response.flushBuffer();
 
-            zos.close();
+                zos.close();
 
-            logger.info("Generated contract for the order with id : {}",orderId);
-
+                logger.info("Generated contract for the order with id : {}",orderId);
+            }
         }
         catch (Exception e){
             logger.error("Failed to generate contract for the order with id : {}",orderId,e);
