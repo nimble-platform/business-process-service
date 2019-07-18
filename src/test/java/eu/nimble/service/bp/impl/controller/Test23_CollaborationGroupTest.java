@@ -117,4 +117,12 @@ public class Test23_CollaborationGroupTest {
         CollaborationGroup collaborationGroup = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), CollaborationGroup.class);
         Assert.assertEquals(collaborationGroupID,collaborationGroup.getID());
     }
+
+    // try to archive a non-existing collaboration group
+    @Test
+    public void test5_archiveCollaborationGroup() throws Exception{
+        MockHttpServletRequestBuilder request = post("/collaboration-groups/99999999999/archive")
+                .header("Authorization", TestConfig.initiatorPersonId);
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isNotFound()).andReturn();
+    }
 }

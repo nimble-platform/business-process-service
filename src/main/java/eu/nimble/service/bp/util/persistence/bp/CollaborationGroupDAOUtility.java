@@ -46,6 +46,10 @@ public class CollaborationGroupDAOUtility {
 
     private static final Logger logger = LoggerFactory.getLogger(CollaborationGroupDAOUtility.class);
 
+    public static CollaborationGroupDAO getCollaborationGroupDAO(Long hjid){
+        return new JPARepositoryFactory().forBpRepository(true).getSingleEntityByHjid(CollaborationGroupDAO.class,hjid);
+    }
+
     public static CollaborationGroupDAO getCollaborationGroupByProcessInstanceIdAndPartyId(String processInstanceId, String partyId){
         return new JPARepositoryFactory().forBpRepository(true).getSingleEntity(QUERY_GET_BY_PROCESS_INSTANCE_ID_AND_PARTY_ID, new String[]{"partyID", "processInstanceId"}, new Object[]{partyId, processInstanceId});
     }
@@ -139,9 +143,8 @@ public class CollaborationGroupDAOUtility {
                 .isPresent();
     }
 
-    public static CollaborationGroupDAO archiveCollaborationGroup(String id) {
+    public static CollaborationGroupDAO archiveCollaborationGroup(CollaborationGroupDAO collaborationGroupDAO) {
         GenericJPARepository repo = new JPARepositoryFactory().forBpRepository(true);
-        CollaborationGroupDAO collaborationGroupDAO = repo.getSingleEntityByHjid(CollaborationGroupDAO.class, Long.parseLong(id));
         // archive the collaboration group
         collaborationGroupDAO.setArchived(true);
         // archive the groups inside the given collaboration group
