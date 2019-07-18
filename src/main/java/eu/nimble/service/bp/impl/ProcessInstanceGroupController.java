@@ -52,6 +52,13 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
             return tokenCheck;
         }
 
+        ProcessInstanceGroupDAO processInstanceGroupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(id);
+        if(processInstanceGroupDAO == null){
+            String msg = String.format("There does not exist a process instance group with id %s",id);
+            logger.error(msg);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+
         ProcessInstanceGroupDAOUtility.deleteProcessInstanceGroupDAOByID(id);
 
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body("true");

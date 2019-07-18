@@ -931,7 +931,8 @@ paths:
           description: Deleted the ProcessInstanceGroup successfully
         401:
           description: Invalid token. No user was found for the provided token
-
+        404:
+          description: There does not exist a process instance group with the given id
 definitions:
 
   Version:
