@@ -34,6 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /*
     Here is the scenario:
         * Buyer initiates an item information request
+        * The seller tries to archive the collaboration group, but it fails since the collaboration is not completed or cancelled, it is still active.
         * Seller accepts the request and deletes his collaboration group
         * Then, buyer initiates a PPAP request
         * We expect that a new collaboration group will be created for the seller
@@ -83,8 +84,19 @@ public class Test29_CollaborationGroupTest3 {
         buyerProcessInstanceGroupID = collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().get(0).getAssociatedGroups().get(0);
     }
 
+    /*
+        The seller wants to archive the collaboration group, however, since the collaboration is not completed or
+        cancelled, this request should be failed.
+     */
     @Test
-    public void test2_continueProcess() throws Exception{
+    public void test2_archiveCollaborationGroupNotAcceptable() throws Exception{
+        MockHttpServletRequestBuilder request = post("/collaboration-groups/"+sellerCollaborationGroupID+"/archive")
+                .header("Authorization", TestConfig.responderPersonId);
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isNotAcceptable()).andReturn();
+    }
+
+    @Test
+    public void test3_continueProcess() throws Exception{
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(itemInformationResponseJSON));
         inputMessageAsString = inputMessageAsString.replace("pid",processInstanceIdIIR);
 
@@ -105,7 +117,7 @@ public class Test29_CollaborationGroupTest3 {
         After accepting item information request, seller deletes his collaboration group
      */
     @Test
-    public void test3_deleteCollaborationGroup() throws Exception{
+    public void test4_deleteCollaborationGroup() throws Exception{
         // delete the collaboration group
         MockHttpServletRequestBuilder request = delete("/collaboration-groups/"+sellerCollaborationGroupID)
                 .header("Authorization",TestConfig.responderPersonId);
@@ -116,7 +128,7 @@ public class Test29_CollaborationGroupTest3 {
     }
 
     @Test
-    public void test4_startPPAP() throws Exception{
+    public void test5_startPPAP() throws Exception{
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(PPAPRequestJSON));
 
         MockHttpServletRequestBuilder request = post("/start")
@@ -136,7 +148,7 @@ public class Test29_CollaborationGroupTest3 {
         After buyer starts the PPAP request, check whether the new collaboration group is created for the seller or not
      */
     @Test
-    public void test5_checkCollaborationGroup() throws Exception{
+    public void test6_checkCollaborationGroup() throws Exception{
         CollaborationGroupResponse collaborationGroupResponse = getCollaborationGroupResponse();
         Assert.assertSame(1,collaborationGroupResponse.getSize());
     }
