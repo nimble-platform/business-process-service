@@ -88,8 +88,7 @@ node('nimble-jenkins-slave') {
         }
 
         stage('Build Docker') {
-            sh 'mvn -f business-process-service/pom.xml docker:build -DdockerImageTag=newk8snimble'
-
+            sh '/bin/bash -xe util.sh docker-build-efack8s'
         }
 
         stage('Push Docker') {
