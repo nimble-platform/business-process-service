@@ -230,6 +230,7 @@ public class ProcessInstanceController {
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Retrieved process instance details successfully"),
             @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 404, message = "There does not exist a process instance with the given id"),
             @ApiResponse(code = 500, message = "Unexpected error while getting the details of process instance")
     })
     @RequestMapping(value = "/processInstance/{processInstanceId}/details",
@@ -246,6 +247,14 @@ public class ProcessInstanceController {
             ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
             if (tokenCheck != null) {
                 return tokenCheck;
+            }
+
+            // check the existence of process instance
+            ProcessInstanceDAO instanceDAO = ProcessInstanceDAOUtility.getById(processInstanceId);
+            if(instanceDAO == null){
+                String msg = String.format("There does not exist a process instance with id: %s",processInstanceId);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
             }
 
             List<HistoricVariableInstance> variableInstanceList = CamundaEngine.getVariableInstances(processInstanceId);
