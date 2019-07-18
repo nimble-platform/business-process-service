@@ -724,6 +724,8 @@ paths:
               $ref: '#/definitions/CollaborationGroup'
           401:
             description: Invalid token. No user was found for the provided token
+          404:
+            description: The collaboration group does not exist for the given id
   /collaboration-groups/merge:
     get:
       operationId: mergeCollaborationGroups

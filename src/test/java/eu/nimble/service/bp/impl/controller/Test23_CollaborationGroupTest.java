@@ -125,4 +125,12 @@ public class Test23_CollaborationGroupTest {
                 .header("Authorization", TestConfig.initiatorPersonId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isNotFound()).andReturn();
     }
+
+    // try to restore a non-existing collaboration group
+    @Test
+    public void test6_restoreCollaborationGroup() throws Exception{
+        MockHttpServletRequestBuilder request = post("/collaboration-groups/99999999999/restore")
+                .header("Authorization", TestConfig.initiatorPersonId);
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isNotFound()).andReturn();
+    }
 }

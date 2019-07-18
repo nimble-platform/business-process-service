@@ -185,7 +185,14 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
             return tokenCheck;
         }
 
-        CollaborationGroupDAO collaborationGroupDAO = CollaborationGroupDAOUtility.restoreCollaborationGroup(id);
+        // check the existence of collaboration group
+        CollaborationGroupDAO collaborationGroupDAO = CollaborationGroupDAOUtility.getCollaborationGroupDAO(Long.parseLong(id));
+        if(collaborationGroupDAO == null){
+            String msg = String.format("CollaborationGroup with id %s does not exist", id);
+            logger.error(msg);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+        collaborationGroupDAO = CollaborationGroupDAOUtility.restoreCollaborationGroup(collaborationGroupDAO);
 
         CollaborationGroup collaborationGroup = HibernateSwaggerObjectMapper.convertCollaborationGroupDAO(collaborationGroupDAO);
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(collaborationGroup);
