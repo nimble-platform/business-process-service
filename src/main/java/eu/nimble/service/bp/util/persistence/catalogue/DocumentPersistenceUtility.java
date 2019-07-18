@@ -111,6 +111,10 @@ public class DocumentPersistenceUtility {
     public static IDocument getUBLDocument(String documentId) {
         ProcessDocumentMetadataDAO processDocumentMetadataDAO = ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId);
         logger.debug(" $$$ Document metadata for {} is {}...", documentId, processDocumentMetadataDAO);
+        // there is no UBL document when metadata is null
+        if(processDocumentMetadataDAO == null){
+            return null;
+        }
         return getUBLDocument(documentId, processDocumentMetadataDAO.getType());
     }
 }
