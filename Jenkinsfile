@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 node('nimble-jenkins-slave') {
 
     // -----------------------------------------------
@@ -59,6 +60,44 @@ node('nimble-jenkins-slave') {
 
         stage('Build Java') {
             sh 'mvn clean package -DskipTests'
+        }
+    }
+
+
+     // -----------------------------------------------
+    // --------------- K8s Branch ----------------
+    // -----------------------------------------------
+    if (env.BRANCH_NAME == 'newk8snimble') {
+
+        stage('Clone and Update') {
+            git(url: 'https://github.com/nimble-platform/business-process-service.git', branch: env.BRANCH_NAME)
+        }
+
+        stage('Build Dependencies') {
+            sh 'rm -rf common'
+            sh 'git clone https://github.com/nimble-platform/common'
+            dir('common') {
+                sh 'git checkout master'
+                sh 'mvn clean install'
+            }
+        }
+
+
+        stage('Build Java') {
+            sh 'mvn clean package -DskipTests'
+        }
+
+        stage('Build Docker') {
+            sh 'mvn -f identity-service/pom.xml docker:build -DdockerImageTag=newk8snimble'
+
+        }
+
+        stage('Push Docker') {
+            sh 'docker push nimbleplatform/business-process-service:newk8snimble'
+        }
+
+        stage('Deploy') {
+            sh 'ssh efac-prod "kubectl delete pod -l  io.kompose.service=business-process-service"'
         }
     }
 
