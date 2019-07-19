@@ -131,6 +131,7 @@ public class TrustServiceController {
     @ApiOperation(value = "",notes = "Gets rating summary for the given company")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Retrieved rating summary successfully"),
+            @ApiResponse(code = 400, message = "No qualifying party exists for the given party id"),
             @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token")
     })
     @RequestMapping(value = "/ratingsSummary",
@@ -145,7 +146,11 @@ public class TrustServiceController {
             return tokenCheck;
         }
 
-        QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingPartyType(partyId,bearerToken);
+        // check party
+        QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingParty(partyId);
+        if (qualifyingParty == null) {
+            return HttpResponseUtil.createResponseEntityAndLog(String.format("No qualifying party exists for the given party id: %s", partyId), HttpStatus.BAD_REQUEST);
+        }
         JSONObject jsonResponse = createJSONResponse(qualifyingParty.getCompletedTask());
         logger.info("Retrieved ratings summary for the party with id: {}",partyId);
         return ResponseEntity.ok(jsonResponse.toString());
@@ -154,6 +159,7 @@ public class TrustServiceController {
     @ApiOperation(value = "",notes = "Gets all individual ratings and review")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Retrieved all individual ratings and review successfully"),
+            @ApiResponse(code = 400, message = "No qualifying party exists for the given party id"),
             @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
             @ApiResponse(code = 500, message = "Unexpected error while getting ratings and reviews")
     })
@@ -170,7 +176,11 @@ public class TrustServiceController {
                 return tokenCheck;
             }
 
-            QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingPartyType(partyId,bearerToken);
+            // check party
+            QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingParty(partyId);
+            if (qualifyingParty == null) {
+                return HttpResponseUtil.createResponseEntityAndLog(String.format("No qualifying party exists for the given party id: %s", partyId), HttpStatus.BAD_REQUEST);
+            }
             List<NegotiationRatings> negotiationRatings = TrustPersistenceUtility.createNegotiationRatings(qualifyingParty.getCompletedTask());
             String ratingsAndReviews = JsonSerializationUtility.getObjectMapper().writeValueAsString(negotiationRatings);
             logger.info("Retrieved all individual ratings and review for the party with id: {}",partyId);

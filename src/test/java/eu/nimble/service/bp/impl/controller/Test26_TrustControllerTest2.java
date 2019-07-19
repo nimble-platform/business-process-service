@@ -60,4 +60,22 @@ public class Test26_TrustControllerTest2 {
             }
         }
     }
+
+    // try to get Ratings Summary of a company which does not have a QualifyingParty
+    @Test
+    public void test3_getRatingsSummary() throws Exception {
+        MockHttpServletRequestBuilder request = get("/ratingsSummary")
+                .header("Authorization", TestConfig.responderPersonId)
+                .param("partyId","9999");
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isBadRequest()).andReturn();
+    }
+
+    // try to get Individual Ratings and Reviews of a company which does not have a QualifyingParty
+    @Test
+    public void test4_listAllIndividualRatingsAndReviews() throws Exception {
+        MockHttpServletRequestBuilder request = get("/ratingsAndReviews")
+                .header("Authorization", TestConfig.responderPersonId)
+                .param("partyId","9999");
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isBadRequest()).andReturn();
+    }
 }
