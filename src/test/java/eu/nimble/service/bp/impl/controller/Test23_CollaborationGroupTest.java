@@ -103,6 +103,11 @@ public class Test23_CollaborationGroupTest {
         request = post("/process-instance-groups/"+ groupID +"/cancel")
                 .header("Authorization", TestConfig.responderPersonId);
         mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+
+        // try to cancel collaboration group again
+        request = post("/process-instance-groups/"+ groupID +"/cancel")
+                .header("Authorization", TestConfig.responderPersonId);
+        mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isBadRequest()).andReturn();
     }
 
     // retrieve the collaboration group for the last process instance, then compare its id with the identifier

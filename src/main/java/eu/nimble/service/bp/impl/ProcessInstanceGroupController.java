@@ -174,6 +174,13 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
             }
 
+            // check whether the group is already cancelled or not
+            if(groupDAO.getStatus().equals(GroupStatus.CANCELLED)){
+                String msg = String.format("The process instance group with the id: %s is already cancelled", id);
+                logger.warn(msg);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(msg);
+            }
+
             // check whether the group consists of an approved order or an accepted transport execution plan
             List<String> processInstanceIDs = groupDAO.getProcessInstanceIDs();
             boolean isCancellableGroup = cancellableGroup(processInstanceIDs);
