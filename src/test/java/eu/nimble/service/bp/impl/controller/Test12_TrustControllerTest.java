@@ -1,7 +1,9 @@
 package eu.nimble.service.bp.impl.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.model.dashboard.CollaborationGroupResponse;
+import eu.nimble.service.bp.model.trust.NegotiationRatings;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -16,6 +18,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
+import java.util.List;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -26,7 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringJUnit4ClassRunner.class)
-public class Test25_TrustControllerTest {
+public class Test12_TrustControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -74,5 +78,47 @@ public class Test25_TrustControllerTest {
                 .param("partyId","706");
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
         Assert.assertEquals("true",mvcResult.getResponse().getContentAsString());
+    }
+
+    @Test
+    public void test3_getRatingsSummary() throws Exception {
+        MockHttpServletRequestBuilder request = get("/ratingsSummary")
+                .header("Authorization", TestConfig.responderPersonId)
+                .param("partyId",partyID);
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+    }
+
+    @Test
+    public void test4_listAllIndividualRatingsAndReviews() throws Exception {
+        MockHttpServletRequestBuilder request = get("/ratingsAndReviews")
+                .header("Authorization", TestConfig.responderPersonId)
+                .param("partyId",partyID);
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+
+        List<NegotiationRatings> negotiationRatings = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),new TypeReference<List<NegotiationRatings>>(){});
+        // get ratings for the process instance id
+        for(NegotiationRatings ratings:negotiationRatings){
+            if(ratings.getProcessInstanceID().equals(Test12_TrustControllerTest.processInstanceId)){
+                Assert.assertEquals(6,ratings.getRatings().size());
+            }
+        }
+    }
+
+    // try to get Ratings Summary of a company which does not have a QualifyingParty
+    @Test
+    public void test5_getRatingsSummary() throws Exception {
+        MockHttpServletRequestBuilder request = get("/ratingsSummary")
+                .header("Authorization", TestConfig.responderPersonId)
+                .param("partyId","9999");
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isBadRequest()).andReturn();
+    }
+
+    // try to get Individual Ratings and Reviews of a company which does not have a QualifyingParty
+    @Test
+    public void test6_listAllIndividualRatingsAndReviews() throws Exception {
+        MockHttpServletRequestBuilder request = get("/ratingsAndReviews")
+                .header("Authorization", TestConfig.responderPersonId)
+                .param("partyId","9999");
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isBadRequest()).andReturn();
     }
 }

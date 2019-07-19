@@ -2,7 +2,6 @@ package eu.nimble.service.bp.impl.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.model.dashboard.CollaborationGroupResponse;
-import eu.nimble.service.bp.model.hyperjaxb.CollaborationGroupDAO;
 import eu.nimble.service.bp.swagger.model.CollaborationGroup;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
@@ -40,10 +39,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         * Then, buyer initiates a PPAP request and deletes his collaboration group
         * Seller accepts the PPAP request
         * We expect that a new collaboration group will be created for the buyer
-        * Then, the buyer merges two collaboration groups: the group created in Test29_CollaborationGroupTest3 and the group created in Test30_CollaborationGroupTest4
+        * Then, the buyer merges two collaboration groups: the group created in Test15_CollaborationGroupTestSuite and the group created in Test16_CollaborationGroupTestSuite
         * Finally, we retrieve collaboration groups which are projects for the buyer.
  */
-public class Test30_CollaborationGroupTest4 {
+public class Test16_CollaborationGroupTestSuite {
 
     @Autowired
     private MockMvc mockMvc;
@@ -178,18 +177,18 @@ public class Test30_CollaborationGroupTest4 {
     }
 
     /*
-        The buyer merges two collaboration groups: the group created in Test29_CollaborationGroupTest3 and the group created in Test30_CollaborationGroupTest4
+        The buyer merges two collaboration groups: the group created in Test15_CollaborationGroupTestSuite and the group created in Test16_CollaborationGroupTestSuite
      */
     @Test
     public void test7_mergeCollaborationGroups() throws Exception{
         MockHttpServletRequestBuilder request = get("/collaboration-groups/merge")
                 .header("Authorization", TestConfig.responderPersonId)
                 .param("bcid", buyerCollaborationGroupID)
-                .param("cgids", Test29_CollaborationGroupTest3.buyerCollaborationGroupID);
+                .param("cgids", Test15_CollaborationGroupTestSuite.buyerCollaborationGroupID);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         // try to get the old group which is merged to the new one
-        request = get("/collaboration-groups/"+Test29_CollaborationGroupTest3.buyerCollaborationGroupID)
+        request = get("/collaboration-groups/"+ Test15_CollaborationGroupTestSuite.buyerCollaborationGroupID)
                 .header("Authorization", TestConfig.responderPersonId);
         mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isNotFound()).andReturn();
         // get the new one

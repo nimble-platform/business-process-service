@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.utility.JsonSerializationUtility;
+import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Ignore;
@@ -34,12 +35,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringJUnit4ClassRunner.class)
 @Ignore
-public class Test12_DocumentControllerTest2 {
+public class Test08_DocumentControllerTest {
+
     @Autowired
     private MockMvc mockMvc;
 
     private ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
-
+    private final String documentMetadataJSON = "/controller/documentMetaDataJSON1.txt";
+    private final String documentMetadataJSON2 = "/controller/documentMetaDataJSON2.txt";
+    private final String documentMetadataJSON3 = "/controller/documentMetaDataJSON3.txt";
+    private final String expectedType = "SUCCESS";
+    private final int expectedSize = 3;
     private final String partnerID = "706";
     private final String partnerID2 = "1339";
     private final String type = "ORDER";
@@ -50,12 +56,56 @@ public class Test12_DocumentControllerTest2 {
     private final List<String> listOfProducts = Arrays.asList("Product1", "Product2", "Product3");
     private final String source = "SENT";
     private final String status = "WAITINGRESPONSE";
-    private final String expectedType = "SUCCESS";
 
-    public static String documentId;
+    private static String documentId;
 
     @Test
-    public void test1_getDocuments() throws Exception {
+    public void test1_addDocumentMetadata() throws Exception {
+        String documentMetadata = IOUtils.toString(ProcessDocumentMetadata.class.getResourceAsStream(documentMetadataJSON));
+        MockHttpServletRequestBuilder request = post("/document")
+                .header("Authorization", TestConfig.initiatorPersonId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(documentMetadata);
+
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andReturn();
+
+        ModelApiResponse response = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ModelApiResponse.class);
+
+        Assert.assertEquals(expectedType, response.getType());
+    }
+
+    @Test
+    public void test2_addDocumentMetadata() throws Exception {
+        String documentMetadata = IOUtils.toString(ProcessDocumentMetadata.class.getResourceAsStream(documentMetadataJSON2));
+        MockHttpServletRequestBuilder request = post("/document")
+                .header("Authorization", TestConfig.initiatorPersonId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(documentMetadata);
+
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andReturn();
+
+        ModelApiResponse response = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ModelApiResponse.class);
+
+        Assert.assertEquals(expectedType, response.getType());
+    }
+
+    @Test
+    public void test3_addDocumentMetadata() throws Exception {
+        String documentMetadata = IOUtils.toString(ProcessDocumentMetadata.class.getResourceAsStream(documentMetadataJSON3));
+        MockHttpServletRequestBuilder request = post("/document")
+                .header("Authorization", TestConfig.initiatorPersonId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(documentMetadata);
+
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andReturn();
+
+        ModelApiResponse response = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ModelApiResponse.class);
+
+        Assert.assertEquals(expectedType, response.getType());
+    }
+
+    @Test
+    public void test4_getDocuments() throws Exception {
         MockHttpServletRequestBuilder request = get("/document/" + partnerID + "/" + type)
                 .header("Authorization", TestConfig.initiatorPersonId);
 
@@ -68,7 +118,7 @@ public class Test12_DocumentControllerTest2 {
     }
 
     @Test
-    public void test2_getDocuments() throws Exception {
+    public void test5_getDocuments() throws Exception {
         MockHttpServletRequestBuilder request = get("/document/" + partnerID + "/" + type + "/" + source)
                 .header("Authorization", TestConfig.initiatorPersonId);
 
@@ -81,7 +131,7 @@ public class Test12_DocumentControllerTest2 {
     }
 
     @Test
-    public void test3_getDocuments() throws Exception {
+    public void test6_getDocuments() throws Exception {
         MockHttpServletRequestBuilder request = get("/document/" + partnerID2 + "/" + type + "/" + source + "/" + status)
                 .header("Authorization", TestConfig.initiatorPersonId);
 
@@ -94,7 +144,7 @@ public class Test12_DocumentControllerTest2 {
     }
 
     @Test
-    public void test4_updateDocumentMetadata() throws Exception {
+    public void test7_updateDocumentMetadata() throws Exception {
         // get document
         MockHttpServletRequestBuilder request = get("/document/" + partnerID + "/" + type)
                 .header("Authorization", TestConfig.initiatorPersonId);
@@ -119,5 +169,33 @@ public class Test12_DocumentControllerTest2 {
 
         Assert.assertEquals(expectedType, response1.getType());
 
+    }
+
+    @Test
+    public void test8_deleteDocument() throws Exception {
+        // get the document
+        MockHttpServletRequestBuilder request = get("/document/" + partnerID + "/" + type)
+                .header("Authorization", TestConfig.initiatorPersonId);
+
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+
+        List<ProcessDocumentMetadata> response = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), new TypeReference<List<ProcessDocumentMetadata>>() {
+        });
+
+        // find the correct ProcessDocumentMetadata
+        for(ProcessDocumentMetadata pdm : response){
+            if(pdm.getDocumentID().equals(documentId)){
+                Assert.assertSame(expectedSize, pdm.getRelatedProducts().size());
+            }
+        }
+
+        // delete the document
+        request = delete("/document/" + response.get(0).getDocumentID())
+                .header("Authorization", TestConfig.initiatorPersonId);
+        mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+
+        ModelApiResponse response1 = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ModelApiResponse.class);
+
+        Assert.assertEquals(expectedType, response1.getType());
     }
 }
