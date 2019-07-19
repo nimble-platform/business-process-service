@@ -26,7 +26,7 @@ import java.util.List;
 @ActiveProfiles("test")
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringJUnit4ClassRunner.class)
-public class Test31_DocumentTypesTest {
+public class Test17_DocumentTypesTest {
 
     /**
      * Checks whether all the documents types included in the business processes are resolvable i.e. a Class can be inferred

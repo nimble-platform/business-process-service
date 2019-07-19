@@ -34,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @ActiveProfiles("test")
 @RunWith(SpringJUnit4ClassRunner.class)
-public class Test32_BusinessWorkflowTests {
+public class Test18_BusinessWorkflowTests {
 
     @Autowired
     private MockMvc mockMvc;

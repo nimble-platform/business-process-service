@@ -5,7 +5,7 @@ import org.junit.runners.Suite;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-        Test32_BusinessWorkflowTests.class,
+        Test18_BusinessWorkflowTests.class,
         Test01_StartControllerTest.class,
         Test02_ContinueControllerTest.class,
         Test03_StatisticsControllerTest.class,
@@ -13,31 +13,18 @@ import org.junit.runners.Suite;
         TransactionSummaryTest.class,
         Test05_ProcessInstanceGroupControllerTest.class,
         Test06_ContentControllerTest.class,
-        Test07_ContentControllerTest2.class,
-        Test08_PreferenceControllerTest.class,
-        Test09_PreferenceControllerTest2.class,
-        Test10_PreferenceControllerTest3.class,
-        Test11_DocumentControllerTest.class,
-        Test12_DocumentControllerTest2.class,
-        Test14_ProcessInstanceGroupControllerTest2.class,
-        Test15_ProcessInstanceGroupControllerTest3.class,
-        Test16_ContractControllerTest.class,
-        Test17_ContractControllerTest2.class,
-        Test18_ContractControllerTest3.class,
+        Test07_PreferenceControllerTest.class,
+        Test08_DocumentControllerTest.class,
+        Test09_ContractControllerTest.class,
         FrameContractControllerTest.class,
-        Test19_ApplicationControllerTest.class,
-        Test20_ApplicationControllerTest.class,
-        Test21_ApplicationControllerTest.class,
-        Test22_DocumentControllerTest3.class,
-        Test23_CollaborationGroupTest.class,
-        Test24_CollaborationGroupTest2.class,
-        Test25_TrustControllerTest.class,
-        Test26_TrustControllerTest2.class,
-        Test27_BinaryContentTest.class,
-        Test28_HjidCheckTest.class,
-        Test29_CollaborationGroupTest3.class,
-        Test30_CollaborationGroupTest4.class,
-        Test31_DocumentTypesTest.class
+        Test10_ApplicationControllerTest.class,
+        Test11_CollaborationGroupTest.class,
+        Test12_TrustControllerTest.class,
+        Test13_BinaryContentTest.class,
+        Test14_HjidCheckTest.class,
+        Test15_CollaborationGroupTestSuite.class,
+        Test16_CollaborationGroupTestSuite.class,
+        Test17_DocumentTypesTest.class
 })
 public class TestSuite {
 }

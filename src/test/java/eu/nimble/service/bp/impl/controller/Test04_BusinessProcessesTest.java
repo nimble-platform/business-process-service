@@ -79,7 +79,7 @@ public class Test04_BusinessProcessesTest {
     private String buyerCollaborationGroupID;
     private String buyerProcessInstanceGroupID;
     private String transportProviderCollaborationGroupID;
-    private String transportProviderProcessInstanceGroupID;
+    public static String transportProviderProcessInstanceGroupID;
 
     @Autowired
     private MockMvc mockMvc;

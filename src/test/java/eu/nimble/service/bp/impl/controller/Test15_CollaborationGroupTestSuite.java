@@ -39,7 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         * Then, buyer initiates a PPAP request
         * We expect that a new collaboration group will be created for the seller
  */
-public class Test29_CollaborationGroupTest3 {
+public class Test15_CollaborationGroupTestSuite {
     @Autowired
     private MockMvc mockMvc;
     @Autowired
