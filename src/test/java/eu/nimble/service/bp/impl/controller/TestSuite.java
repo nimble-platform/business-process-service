@@ -36,7 +36,8 @@ import org.junit.runners.Suite;
         Test28_HjidCheckTest.class,
         Test29_CollaborationGroupTest3.class,
         Test30_CollaborationGroupTest4.class,
-        Test31_DocumentTypesTest.class
+        Test31_DocumentTypesTest.class,
+        Test32_CollaborationGroupTest5.class
 })
 public class TestSuite {
 }

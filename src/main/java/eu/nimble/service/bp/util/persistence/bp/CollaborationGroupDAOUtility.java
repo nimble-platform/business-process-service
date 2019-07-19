@@ -86,13 +86,21 @@ public class CollaborationGroupDAOUtility {
     public static void deleteCollaborationGroupDAOsByID(List<Long> hjids) {
         for (Long groupID: hjids){
             GenericJPARepository repo = new JPARepositoryFactory().forBpRepository(true);
-            CollaborationGroupDAO group = repo.getSingleEntityByHjid(CollaborationGroupDAO.class, groupID);
-            if(group != null){
-                // delete references to this group
-                for (Long id : group.getAssociatedCollaborationGroups()) {
+            CollaborationGroupDAO collaborationGroup = repo.getSingleEntityByHjid(CollaborationGroupDAO.class, groupID);
+            if(collaborationGroup != null){
+                // delete references to the collaboration group
+                for (Long id : collaborationGroup.getAssociatedCollaborationGroups()) {
                     CollaborationGroupDAO groupDAO = repo.getSingleEntityByHjid(CollaborationGroupDAO.class, id);
                     groupDAO.getAssociatedCollaborationGroups().remove(groupID);
                     repo.updateEntity(groupDAO);
+                }
+                // delete references to the process instance groups inside this collaboration group
+                for(ProcessInstanceGroupDAO processInstanceGroup:collaborationGroup.getAssociatedProcessInstanceGroups()){
+                    for(String associatedProcessInstanceGroupId:processInstanceGroup.getAssociatedGroups()){
+                        ProcessInstanceGroupDAO groupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(associatedProcessInstanceGroupId);
+                        groupDAO.getAssociatedGroups().remove(processInstanceGroup.getID());
+                        repo.updateEntity(groupDAO);
+                    }
                 }
                 repo.deleteEntityByHjid(CollaborationGroupDAO.class, groupID);
             }
