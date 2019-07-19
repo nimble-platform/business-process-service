@@ -76,6 +76,7 @@ public class ProcessInstanceController {
     @ApiOperation(value = "",notes = "Cancels the process instance with the given id")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Cancelled the process instance successfully"),
+            @ApiResponse(code = 400, message = "The process instance with the given id is already cancelled."),
             @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
             @ApiResponse(code = 404, message = "There does not exist a process instance with the given id"),
             @ApiResponse(code = 500, message = "Unexpected error while cancelling the process instance with the given id")
@@ -99,8 +100,20 @@ public class ProcessInstanceController {
                 logger.error("There does not exist a process instance with id:{}",processInstanceId);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("There does not exist a process instance with the given id");
             }
-            // cancel the process
-            CamundaEngine.cancelProcessInstance(processInstanceId);
+            // check the status of process instance
+            if(instanceDAO.getStatus().equals(ProcessInstanceStatus.CANCELLED)){
+                String msg = String.format("The process instance with id: %s is already cancelled",processInstanceId);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(msg);
+            }
+
+            // if the process is completed or cancelled, we should not call CamundaEngine.cancelProcessInstance method
+            // since there will be no such process instance
+            if(instanceDAO.getStatus().equals(ProcessInstanceStatus.STARTED)){
+                // cancel the process
+                CamundaEngine.cancelProcessInstance(processInstanceId);
+            }
+
             // change status of the process
             instanceDAO.setStatus(ProcessInstanceStatus.CANCELLED);
             new JPARepositoryFactory().forBpRepository().updateEntity(instanceDAO);

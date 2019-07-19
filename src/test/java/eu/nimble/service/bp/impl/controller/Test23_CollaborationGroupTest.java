@@ -48,6 +48,7 @@ public class Test23_CollaborationGroupTest {
     public static String idOfTheLastProcessInstance;
     public static String collaborationGroupID;
     public static String collaborationGroupToBeDeletedId;
+    public static String cancelledProcessInstanceId;
 
     @Test
     public void test1_updateCollaborationGroupName() throws Exception {
@@ -97,6 +98,9 @@ public class Test23_CollaborationGroupTest {
 
         Assert.assertSame(1, collaborationGroupResponse.getSize());
         collaborationGroupToBeDeletedId = collaborationGroupResponse.getCollaborationGroups().get(0).getID();
+
+        // get the id of process instance to be cancelled
+        cancelledProcessInstanceId = collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().get(0).getProcessInstanceIDs().get(0);
 
         String groupID = collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().get(0).getID();
         // cancel collaboration group

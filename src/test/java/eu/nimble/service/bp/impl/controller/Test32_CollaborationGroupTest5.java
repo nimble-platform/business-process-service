@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -30,6 +31,8 @@ public class Test32_CollaborationGroupTest5 {
 
     @Autowired
     private MockMvc mockMvc;
+
+    private static String processInstanceId;
 
     /*
         Firstly, we delete the process instance group and then, delete the associated process instance group.
@@ -44,6 +47,9 @@ public class Test32_CollaborationGroupTest5 {
 
         ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
         ProcessInstanceGroup processInstanceGroup = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ProcessInstanceGroup.class);
+
+        // get process instance id
+        processInstanceId = processInstanceGroup.getProcessInstanceIDs().get(0);
         // get id of associated process instance group
         String associatedProcessInstanceGroupId = processInstanceGroup.getAssociatedGroups().get(0);
         // delete the group
@@ -56,4 +62,25 @@ public class Test32_CollaborationGroupTest5 {
         mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
     }
 
+    /*
+        Try to cancel a completed process instance
+     */
+    @Test
+    public void test2_cancelProcessInstance() throws Exception {
+        // cancel the process instance
+        MockHttpServletRequestBuilder request = post("/processInstance/"+processInstanceId+"/cancel")
+                .header("Authorization", TestConfig.initiatorPersonId);
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+    }
+
+    /*
+        Try to cancel a process instance which is already cancelled
+     */
+    @Test
+    public void test3_cancelProcessInstance() throws Exception {
+        // cancel the process instance
+        MockHttpServletRequestBuilder request = post("/processInstance/"+Test23_CollaborationGroupTest.cancelledProcessInstanceId+"/cancel")
+                .header("Authorization", TestConfig.initiatorPersonId);
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isBadRequest()).andReturn();
+    }
 }
