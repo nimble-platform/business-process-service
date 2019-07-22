@@ -211,7 +211,7 @@ public class Test16_CollaborationGroupTestSuite {
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         CollaborationGroupResponse collaborationGroupResponse = mapper.readValue(mvcResult.getResponse().getContentAsString(), CollaborationGroupResponse.class);
-        Assert.assertSame(1,collaborationGroupResponse.getSize());
+        Assert.assertSame(2,collaborationGroupResponse.getSize());
         Assert.assertEquals(buyerCollaborationGroupID,collaborationGroupResponse.getCollaborationGroups().get(0).getID());
     }
 
