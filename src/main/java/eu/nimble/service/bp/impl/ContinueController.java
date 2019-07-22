@@ -20,6 +20,9 @@ import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
 import eu.nimble.service.bp.swagger.model.ProcessVariables;
 import eu.nimble.service.bp.swagger.model.Transaction;
+import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
+import eu.nimble.service.bp.util.spring.SpringBridge;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.LoggerUtils;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
@@ -87,8 +90,9 @@ public class ContinueController implements ContinueApi {
                 return tokenCheck;
             }
 
+            String processId = body.getVariables().getProcessID();
             // check the entity ids in the passed document
-            Transaction.DocumentTypeEnum documentType = BusinessProcessUtility.getResponseDocumentForProcess(body.getVariables().getProcessID());
+            Transaction.DocumentTypeEnum documentType = BusinessProcessUtility.getResponseDocumentForProcess(processId);
             Object document = DocumentPersistenceUtility.readDocument(DocumentType.valueOf(documentType.toString()), body.getVariables().getContent());
 
             boolean hjidsExists = resourceValidationUtil.hjidsExit(document);
@@ -120,6 +124,29 @@ public class ContinueController implements ContinueApi {
 
             // create process instance groups if this is the first process initializing the process group
             checkExistingGroup(businessProcessContext.getId(), gid, processInstance.getProcessInstanceID(), body, collaborationGID);
+
+            // get the identifier of party whose workflow will be checked
+            String partyId = processId.contentEquals("Fulfilment") ? body.getVariables().getInitiatorID(): body.getVariables().getResponderID();
+
+            // get the seller party to check its workflow
+            PartyType sellerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,partyId);
+
+            // check whether the process is the last step in seller's workflow
+            boolean isLastProcessInWorkflow;
+
+            // no workflow for the seller company, use the default workflow
+            if(sellerParty.getProcessID() == null || sellerParty.getProcessID().size() == 0){
+                isLastProcessInWorkflow = processId.contentEquals("Fulfilment") || processId.contentEquals("Transport_Execution_Plan");
+            }
+            else{
+                isLastProcessInWorkflow = sellerParty.getProcessID().get(sellerParty.getProcessID().size()-1).contentEquals(processId);
+            }
+
+            // if it's the last process in the seller's workflow, create completed tasks for both parties
+            if(isLastProcessInWorkflow){
+                TrustPersistenceUtility.createCompletedTasksForBothParties(processInstance.getProcessInstanceID(),bearerToken,"Completed");
+            }
+
             emailSenderUtil.sendActionPendingEmail(bearerToken, businessProcessContext);
 
             //mdc logging

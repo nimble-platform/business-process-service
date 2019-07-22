@@ -25,6 +25,8 @@ public class CollaborationGroupDAOUtility {
             "(select acg.item from CollaborationGroupDAO cg2 join cg2.associatedCollaborationGroupsItems acg where cg2.hjid = :associatedGroupId)";
     private static final String QUERY_GET_GROUP_OF_PROCESS_INSTANCE_GROUP =
             "select cg from CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups apig where apig.ID = :groupId";
+    private static final String QUERY_GET_BY_PARTY_ID_AND_COLLABORATION_ROLE =
+            "select cg from CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups apig where apig.partyID = :partyID AND apig.collaborationRole = :role";
     private static final String QUERY_GET_GROUP_OF_PROCESS_INSTANCE_GROUPS =
             "select cg.hjid from CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups apig where apig.ID in :groupIds";
     private static final String QUERY_GET_PROCESS_INSTANCES_OF_COLLABORATION_GROUP =
@@ -48,6 +50,10 @@ public class CollaborationGroupDAOUtility {
 
     public static CollaborationGroupDAO getCollaborationGroupDAO(Long hjid){
         return new JPARepositoryFactory().forBpRepository(true).getSingleEntityByHjid(CollaborationGroupDAO.class,hjid);
+    }
+
+    public static List<CollaborationGroupDAO> getCollaborationGroupDAOs(String partyId, String collaborationRole){
+        return new JPARepositoryFactory().forBpRepository(true).getEntities(QUERY_GET_BY_PARTY_ID_AND_COLLABORATION_ROLE, new String[]{"partyID", "role"}, new Object[]{partyId, collaborationRole});
     }
 
     public static CollaborationGroupDAO getCollaborationGroupByProcessInstanceIdAndPartyId(String processInstanceId, String partyId){

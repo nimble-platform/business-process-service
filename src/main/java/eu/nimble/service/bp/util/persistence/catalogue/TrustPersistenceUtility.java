@@ -31,6 +31,14 @@ public class TrustPersistenceUtility {
         return sizeOfCompletedTasks > 0;
     }
 
+    public static boolean completedTaskExist(List<String> processInstanceIDs){
+        List<Long> hjids = new JPARepositoryFactory().forCatalogueRepository().getEntities(QUERY_GET_COMPLETED_TASK_BY_PROCESS_IDS, new String[]{"processInstanceIds"}, new Object[]{processInstanceIDs});
+        if(hjids.size() > 0){
+            return true;
+        }
+        return false;
+    }
+
     public static boolean completedTaskExist(QualifyingPartyType qualifyingParty,String processInstanceID){
         for (CompletedTaskType completedTask:qualifyingParty.getCompletedTask()){
             if(completedTask.getAssociatedProcessInstanceID().equals(processInstanceID)){

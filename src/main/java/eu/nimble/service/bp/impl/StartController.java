@@ -24,6 +24,7 @@ import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
 import eu.nimble.service.bp.swagger.model.ProcessVariables;
 import eu.nimble.service.bp.swagger.model.Transaction;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.LineItemType;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.LoggerUtils;
@@ -41,6 +42,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import javax.ws.rs.BadRequestException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -154,8 +156,27 @@ public class StartController implements StartApi {
 
         logger.debug(" $$$ Start Process with ProcessInstanceInputMessage {}", JsonSerializationUtility.serializeEntitySilentlyWithMixin(body, ProcessVariables.class, MixInIgnoreProperties.class));
 
+        // check whether the process is included in the workflow of seller company
+        String processId = body.getVariables().getProcessID();
+        // get the identifier of party whose workflow will be checked
+        String partyId = processId.contentEquals("Fulfilment") ? body.getVariables().getInitiatorID(): body.getVariables().getResponderID();
+        PartyType sellerParty;
+        try {
+            sellerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,partyId);
+        } catch (IOException e) {
+            String msg = String.format("Failed to retrieve party information for : %s", partyId);
+            logger.warn(msg);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+
+        if(sellerParty.getProcessID() != null && sellerParty.getProcessID().size() > 0 && !sellerParty.getProcessID().contains(processId)){
+            String msg = String.format("%s is not included in the workflow of %s", processId,sellerParty.getPartyName().get(0).getName().getValue());
+            logger.error(msg);
+            throw new BadRequestException(msg);
+        }
+
         // check the entity ids in the passed document
-        Transaction.DocumentTypeEnum documentType = BusinessProcessUtility.getInitialDocumentForProcess(body.getVariables().getProcessID());
+        Transaction.DocumentTypeEnum documentType = BusinessProcessUtility.getInitialDocumentForProcess(processId);
         Object document = DocumentPersistenceUtility.readDocument(DocumentType.valueOf(documentType.toString()), body.getVariables().getContent());
 
         boolean hjidsExists = resourceValidationUtil.hjidsExit(document);

@@ -110,4 +110,12 @@ public class Test05_ProcessInstanceGroupControllerTest {
 
     }
 
+    @Test
+    public void test6_checkCollaborationFinished() throws Exception{
+        MockHttpServletRequestBuilder request = get("/process-instance-groups/"+ Test18_BusinessWorkflowTests.sellerProcessInstanceGroupID+"/finished")
+                .header("Authorization", TestConfig.responderPersonId);
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+
+        Assert.assertEquals("true",mvcResult.getResponse().getContentAsString());
+    }
 }
