@@ -171,7 +171,7 @@ public class BPMessageGenerator {
         requestForQuotation.setRequestForQuotationLine(Collections.singletonList(requestForQuotationLine));
 
         // if seller has some T&Cs, use them, otherwise use the default T&Cs
-        if (sellerParty.getPurchaseTerms().getTermOrCondition().size() > 0) {
+        if (sellerParty.getPurchaseTerms() != null && sellerParty.getPurchaseTerms().getTermOrCondition().size() > 0) {
             requestForQuotation.setTermOrCondition(sellerParty.getPurchaseTerms().getTermOrCondition());
         } else {
             ContractGenerator contractGenerator = new ContractGenerator();

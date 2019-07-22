@@ -42,7 +42,7 @@ public class Test05_ProcessInstanceGroupControllerTest {
     public static String processInstanceGroupId1;
     public static String processInstanceGroupId2;
     public static String processInstanceGroupIIR1;
-    private final int test1_expectedValue = 5;
+    private final int test1_expectedValue = 7;
     private final int test2_expectedValue = 1;
 
     @Test
@@ -88,7 +88,7 @@ public class Test05_ProcessInstanceGroupControllerTest {
         Assert.assertEquals(test3_expectedValue, body);
     }
 
-    // try to delete a non-existence process instance group
+    // try to delete a non-existing process instance group
     @Test
     public void test4_deleteProcessInstanceGroup() throws Exception {
         MockHttpServletRequestBuilder request = delete("/process-instance-groups/999999")

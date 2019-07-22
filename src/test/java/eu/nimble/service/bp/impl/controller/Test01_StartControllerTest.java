@@ -37,6 +37,7 @@ public class Test01_StartControllerTest {
     private final String orderJSON2 = "/controller/orderJSON2.txt";
     private final String orderJSON3 = "/controller/orderJSON3.txt";
     private final String iirJSON1 = "/controller/itemInformationRequestJSON1.txt";
+    private final String lineItems = "/controller/lineItems.txt";
 
     public final static String orderId1 = "5b15c501-b90a-4f9c-ab0c-ca695e255237";
     public final static String iirId1 = "07ed85d2-3319-4dec-87f0-792d46a7c9a5";
@@ -112,5 +113,17 @@ public class Test01_StartControllerTest {
         Assert.assertEquals(processInstance.getStatus(), ProcessInstance.StatusEnum.STARTED);
 
         processInstanceIdIIR1 = processInstance.getProcessInstanceID();
+    }
+
+    @Test
+    public void test5_createNegotiationsForLineItems() throws Exception {
+        String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(lineItems));
+
+        MockHttpServletRequestBuilder request = post("/start/billofmaterials")
+                .header("Authorization", TestConfig.initiatorPersonId)
+                .param("partyId",TestConfig.buyerPartyID)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(inputMessageAsString);
+        this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
     }
 }

@@ -1,0 +1,1258 @@
+[
+  {
+    "quantity": {
+      "value": 1,
+      "unitCode": "item(s)"
+    },
+    "warrantyInformation": [],
+    "delivery": [
+      {
+        "requestedDeliveryPeriod": {
+          "startDate": null,
+          "startTime": null,
+          "endDate": null,
+          "endTime": null,
+          "durationMeasure": {
+            "value": null,
+            "unitCode": "day(s)",
+            "unitCodeListID": null
+          }
+        },
+        "deliveryAddress": {
+          "cityName": "",
+          "region": "",
+          "postalZone": "",
+          "buildingNumber": "",
+          "streetName": "",
+          "country": {
+            "name": {
+              "value": null,
+              "languageID": "en"
+            }
+          }
+        },
+        "deliveryTerms": {
+          "id": null,
+          "estimatedDeliveryPeriod": {
+            "startDate": null,
+            "startTime": null,
+            "endDate": null,
+            "endTime": null,
+            "durationMeasure": {
+              "value": null,
+              "unitCode": null
+            }
+          },
+          "specialTerms": [],
+          "incoterms": null,
+          "amount": {
+            "value": null,
+            "currencyID": null
+          },
+          "deliveryLocation": {
+            "address": {
+              "cityName": "",
+              "region": "",
+              "postalZone": "",
+              "buildingNumber": "",
+              "streetName": "",
+              "country": {
+                "name": {
+                  "value": null,
+                  "languageID": "en"
+                }
+              }
+            }
+          }
+        },
+        "shipment": {
+          "handlingInstructions": [],
+          "totalTransportHandlingUnitQuantity": {
+            "value": null,
+            "unitCode": null
+          },
+          "consignment": [
+            {
+              "grossWeightMeasure": {
+                "value": null,
+                "unitCode": null
+              },
+              "grossVolumeMeasure": {
+                "value": null,
+                "unitCode": null
+              },
+              "consolidatedShipment": []
+            }
+          ],
+          "goodsItem": [
+            {
+              "id": null,
+              "item": {
+                "name": [],
+                "description": [],
+                "itemSpecificationDocumentReference": [],
+                "productImage": [],
+                "additionalItemProperty": [],
+                "manufacturerParty": null,
+                "manufacturersItemIdentification": {
+                  "id": "60dea168-d6a8-4a14-8be4-1f2fe7eb258e"
+                },
+                "catalogueDocumentReference": null,
+                "commodityClassification": [],
+                "certificate": [],
+                "dimension": [],
+                "transportationServiceDetails": null,
+                "trackAndTraceDetails": {
+                  "eventURL": null,
+                  "masterURL": null,
+                  "productionProcessTemplate": null
+                },
+                "lifeCyclePerformanceAssessmentDetails": {
+                  "lcpainput": {
+                    "lifeCycleLength": {
+                      "value": null,
+                      "unitCode": null
+                    },
+                    "purchasingPrice": {
+                      "value": null,
+                      "currencyID": null
+                    },
+                    "assemblyCost": {
+                      "value": null,
+                      "currencyID": null
+                    },
+                    "transportCost": {
+                      "value": null,
+                      "currencyID": null
+                    },
+                    "consumableCost": {
+                      "value": null,
+                      "currencyID": null
+                    },
+                    "energyConsumptionCost": {
+                      "value": null,
+                      "currencyID": null
+                    },
+                    "maintenanceCost": {
+                      "value": null,
+                      "currencyID": null
+                    },
+                    "sparePartCost": {
+                      "value": null,
+                      "currencyID": null
+                    },
+                    "endOfLifeCost": {
+                      "value": null,
+                      "currencyID": null
+                    },
+                    "additionalLCPAInputDetail": []
+                  },
+                  "lcpaoutput": {}
+                }
+              },
+              "containingPackage": {
+                "quantity": {
+                  "value": null,
+                  "unitCode": null
+                },
+                "packagingTypeCode": {
+                  "value": "",
+                  "name": "",
+                  "uri": "",
+                  "listID": "",
+                  "listURI": ""
+                }
+              },
+              "deliveryTerms": {
+                "id": null,
+                "estimatedDeliveryPeriod": {
+                  "startDate": null,
+                  "startTime": null,
+                  "endDate": null,
+                  "endTime": null,
+                  "durationMeasure": {
+                    "value": null,
+                    "unitCode": null
+                  }
+                },
+                "specialTerms": [],
+                "incoterms": null,
+                "amount": {
+                  "value": null,
+                  "currencyID": null
+                },
+                "deliveryLocation": {
+                  "address": {
+                    "cityName": "",
+                    "region": "",
+                    "postalZone": "",
+                    "buildingNumber": "",
+                    "streetName": "",
+                    "country": {
+                      "name": {
+                        "value": null,
+                        "languageID": "en"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ],
+          "shipmentStage": [],
+          "transportHandlingUnit": [
+            {
+              "transportHandlingUnitTypeCode": {
+                "value": "",
+                "name": "",
+                "uri": "",
+                "listID": "",
+                "listURI": ""
+              },
+              "measurementDimension": [
+                {
+                  "attributeID": "Handling Unit Length",
+                  "measure": {
+                    "value": null,
+                    "unitCode": null
+                  }
+                },
+                {
+                  "attributeID": "Handling Unit Width",
+                  "measure": {
+                    "value": null,
+                    "unitCode": null
+                  }
+                }
+              ]
+            }
+          ],
+          "originAddress": {
+            "cityName": "",
+            "region": "",
+            "postalZone": "",
+            "buildingNumber": "",
+            "streetName": "",
+            "country": {
+              "name": {
+                "value": null,
+                "languageID": "en"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "deliveryTerms": {
+      "id": null,
+      "estimatedDeliveryPeriod": {
+        "startDate": null,
+        "startTime": null,
+        "endDate": null,
+        "endTime": null,
+        "durationMeasure": {
+          "value": null,
+          "unitCode": null
+        }
+      },
+      "specialTerms": [],
+      "incoterms": null,
+      "amount": {
+        "value": null,
+        "currencyID": null
+      },
+      "deliveryLocation": {
+        "address": {
+          "cityName": "Sinop",
+          "postalZone": "492",
+          "buildingNumber": "16",
+          "streetName": "Silikon",
+          "country": {
+            "name": {
+              "value": "Turkey",
+              "languageID": "en"
+            }
+          }
+        }
+      }
+    },
+    "price": {
+      "priceAmount": {
+        "value": 23,
+        "currencyID": "EUR"
+      },
+      "baseQuantity": {
+        "value": 1,
+        "unitCode": "item(s)"
+      }
+    },
+    "item": {
+      "description": [
+        {
+          "value": "",
+          "languageID": "en"
+        }
+      ],
+      "name": [
+        {
+          "value": "QProduct local",
+          "languageID": "en"
+        }
+      ],
+      "productImage": [],
+      "manufacturersItemIdentification": {
+        "id": "cc070fd4-19a2-4d0b-a711-ca4aa044d1cb"
+      },
+      "catalogueDocumentReference": {
+        "id": "f0779966-a340-463d-9f04-2add5a6912f6",
+        "uuid": null,
+        "documentType": null,
+        "attachment": null,
+        "validityPeriod": null
+      },
+      "itemSpecificationDocumentReference": [],
+      "commodityClassification": [
+        {
+          "natureCode": null,
+          "cargoTypeCode": null,
+          "itemClassificationCode": {
+            "value": "http://www.nimble-project.org/resource/eclass#0173-1#01-AGE748#001",
+            "name": "Body care and personal hygiene",
+            "listID": "eClass",
+            "uri": "http://www.nimble-project.org/resource/eclass#0173-1#01-AGE748#001"
+          }
+        },
+        {
+          "natureCode": null,
+          "cargoTypeCode": null,
+          "itemClassificationCode": {
+            "value": "Product",
+            "name": "Product",
+            "listID": "Default",
+            "uri": null
+          }
+        }
+      ],
+      "additionalItemProperty": [],
+      "manufacturerParty": {
+        "federationInstanceID": null,
+        "nace": [],
+        "description": [],
+        "brandName": [],
+        "partyName": [
+          {
+            "name": {
+              "value": "Wood Supplier",
+              "languageID": "en"
+            }
+          }
+        ],
+        "partyIdentification": [
+          {
+            "id": "706"
+          }
+        ],
+        "websiteURI": "",
+        "industryClassification": null,
+        "industryClassificationCode": {
+          "value": null,
+          "name": "IndustryClassificationCode",
+          "listID": null,
+          "uri": null
+        },
+        "externalAward": null,
+        "ppapCompatibilityLevel": 3,
+        "preferredItemClassificationCode": [
+          {
+            "value": "0173-1#01-AEI956#006::eClass::Notebook::product",
+            "name": null,
+            "listID": null,
+            "uri": null
+          },
+          {
+            "value": "http://www.nimble-project.org/resource/eclass#0173-1#01-AAC350#007::eClass::Auxiliary supply, additive, cleaning agent::product",
+            "name": null,
+            "listID": null,
+            "uri": null
+          },
+          {
+            "value": "0173-1#01-ADU394#007::eClass::Transport (other, unspecified)::transportation",
+            "name": null,
+            "listID": null,
+            "uri": null
+          },
+          {
+            "value": "http://www.nimble-project.org/resource/eclass#0173-1#01-ADG629#002::eClass::Logistics (Service)::transportation",
+            "name": null,
+            "listID": null,
+            "uri": null
+          },
+          {
+            "value": "0173-1#01-AAC286#007::eClass::Home economics, Home technology::product",
+            "name": null,
+            "listID": null,
+            "uri": null
+          },
+          {
+            "value": "0173-1#01-BAC323#011::eClass::Farming vehicle (other, unspecified)::product",
+            "name": null,
+            "listID": null,
+            "uri": null
+          }
+        ],
+        "mostRecentItemsClassificationCode": [
+          {
+            "value": "http://www.nimble-project.org/resource/eclass#0173-1#01-ACZ243#014::eClass::Tapping screw, drilling screw::product::1560688087802",
+            "name": null,
+            "listID": null,
+            "uri": null
+          },
+          {
+            "value": "http://www.nimble-project.org/resource/eclass#0173-1#01-AAC350#007::eClass::Auxiliary supply, additive, cleaning agent::product::1561538316968",
+            "name": null,
+            "listID": null,
+            "uri": null
+          },
+          {
+            "value": "http://www.nimble-project.org/resource/eclass#0173-1#01-AAA647#005::eClass::Construction technology::product::1560691181494",
+            "name": null,
+            "listID": null,
+            "uri": null
+          },
+          {
+            "value": "http://www.aidimme.es/FurnitureSectorOntology.owl#Nail::FurnitureOntology::Nails::product::1560701882069",
+            "name": null,
+            "listID": null,
+            "uri": null
+          },
+          {
+            "value": "http://www.nimble-project.org/resource/eclass#0173-1#01-AAC168#005::eClass::Automotive technology::product::1561554005067",
+            "name": null,
+            "listID": null,
+            "uri": null
+          },
+          {
+            "value": "http://www.nimble-project.org/resource/eclass#0173-1#01-AGE748#001::eClass::Body care and personal hygiene::product::1560890476708",
+            "name": null,
+            "listID": null,
+            "uri": null
+          },
+          {
+            "value": "http://www.nimble-project.org/resource/eclass#0173-1#01-AGE763#001::eClass::Clothing and textile::product::1560930613686",
+            "name": null,
+            "listID": null,
+            "uri": null
+          },
+          {
+            "value": "http://www.aidimme.es/FurnitureSectorOntology.owl#HomeTextile::FurnitureOntology::Home textiles::product::1560698756610",
+            "name": null,
+            "listID": null,
+            "uri": null
+          },
+          {
+            "value": "http://www.nimble-project.org/resource/eclass#0173-1#01-ACO389#011::eClass::Busbar system for distribution boards::product::1560692434566",
+            "name": null,
+            "listID": null,
+            "uri": null
+          },
+          {
+            "value": "http://www.aidimme.es/FurnitureSectorOntology.owl#Screw::FurnitureOntology::Screws::product::1560698822484",
+            "name": null,
+            "listID": null,
+            "uri": null
+          }
+        ],
+        "postalAddress": {
+          "id": null,
+          "streetName": "abcx",
+          "buildingNumber": "",
+          "cityName": "ankara",
+          "postalZone": "234",
+          "region": null,
+          "district": null,
+          "country": {
+            "name": {
+              "value": "turkey",
+              "languageID": null
+            }
+          }
+        },
+        "partyTaxScheme": [
+          {
+            "taxScheme": {
+              "taxTypeCode": {
+                "value": "12",
+                "name": "VAT",
+                "listID": null,
+                "uri": null
+              }
+            }
+          }
+        ],
+        "contact": {
+          "id": null,
+          "name": null,
+          "telephone": null,
+          "telefax": null,
+          "electronicMail": null,
+          "note": null,
+          "otherCommunication": []
+        },
+        "person": [
+          {
+            "id": "704",
+            "firstName": "ali",
+            "familyName": "can",
+            "birthDate": null,
+            "birthplaceName": null,
+            "organizationDepartment": null,
+            "role": [],
+            "favouriteProductID": [],
+            "contact": {
+              "id": null,
+              "name": {
+                "value": null,
+                "languageID": "en"
+              },
+              "telephone": "",
+              "telefax": null,
+              "electronicMail": "can@gmail.com",
+              "note": null,
+              "otherCommunication": []
+            },
+            "birthDateItem": null
+          }
+        ],
+        "certificate": [],
+        "qualityIndicator": [
+          {
+            "qualityParameter": "",
+            "quantity": null
+          }
+        ],
+        "ppapDocumentReference": [],
+        "documentReference": [],
+        "industrySector": [],
+        "salesTerms": {
+          "tradingTerms": [],
+          "deliveryTerms": [],
+          "paymentMeans": [],
+          "termOrCondition": []
+        },
+        "purchaseTerms": {
+          "tradingTerms": [],
+          "deliveryTerms": [
+            {
+              "id": null,
+              "incoterms": null,
+              "specialTerms": [],
+              "amount": null,
+              "transportModeCode": null,
+              "deliveryLocation": {
+                "address": {
+                  "id": null,
+                  "streetName": "abcx",
+                  "buildingNumber": "",
+                  "cityName": "ankara",
+                  "postalZone": "234",
+                  "region": null,
+                  "district": null,
+                  "country": {
+                    "name": {
+                      "value": "turkey",
+                      "languageID": null
+                    }
+                  }
+                }
+              },
+              "estimatedDeliveryPeriod": null
+            }
+          ],
+          "paymentMeans": [],
+          "termOrCondition": []
+        }
+      },
+      "certificate": [],
+      "dimension": [
+        {
+          "attributeID": "Length",
+          "measure": {
+            "value": null,
+            "unitCode": null,
+            "unitCodeListID": null
+          }
+        },
+        {
+          "attributeID": "Width",
+          "measure": {
+            "value": null,
+            "unitCode": null,
+            "unitCodeListID": null
+          }
+        },
+        {
+          "attributeID": "Height",
+          "measure": {
+            "value": null,
+            "unitCode": null,
+            "unitCodeListID": null
+          }
+        }
+      ],
+      "transportationServiceDetails": null,
+      "trackAndTraceDetails": {
+        "eventURL": null,
+        "masterURL": null,
+        "productionProcessTemplate": null
+      },
+      "lifeCyclePerformanceAssessmentDetails": {
+        "lcpaoutput": null,
+        "lcpainput": null
+      }
+    },
+    "warrantyValidityPeriod": {
+      "startDate": null,
+      "startTime": null,
+      "endDate": null,
+      "endTime": null,
+      "durationMeasure": {
+        "value": 0,
+        "unitCode": "month(s)",
+        "unitCodeListID": null
+      }
+    },
+    "lineReference": [
+      {
+        "lineID": "cc070fd4-19a2-4d0b-a711-ca4aa044d1cb"
+      }
+    ]
+  },
+  {
+    "quantity": {
+      "value": 1,
+      "unitCode": "item(s)"
+    },
+    "warrantyInformation": [],
+    "delivery": [
+      {
+        "requestedDeliveryPeriod": {
+          "startDate": null,
+          "startTime": null,
+          "endDate": null,
+          "endTime": null,
+          "durationMeasure": {
+            "value": null,
+            "unitCode": "day(s)",
+            "unitCodeListID": null
+          }
+        },
+        "deliveryAddress": {
+          "cityName": "",
+          "region": "",
+          "postalZone": "",
+          "buildingNumber": "",
+          "streetName": "",
+          "country": {
+            "name": {
+              "value": null,
+              "languageID": "en"
+            }
+          }
+        },
+        "deliveryTerms": {
+          "id": null,
+          "estimatedDeliveryPeriod": {
+            "startDate": null,
+            "startTime": null,
+            "endDate": null,
+            "endTime": null,
+            "durationMeasure": {
+              "value": null,
+              "unitCode": null
+            }
+          },
+          "specialTerms": [],
+          "incoterms": null,
+          "amount": {
+            "value": null,
+            "currencyID": null
+          },
+          "deliveryLocation": {
+            "address": {
+              "cityName": "",
+              "region": "",
+              "postalZone": "",
+              "buildingNumber": "",
+              "streetName": "",
+              "country": {
+                "name": {
+                  "value": null,
+                  "languageID": "en"
+                }
+              }
+            }
+          }
+        },
+        "shipment": {
+          "handlingInstructions": [],
+          "totalTransportHandlingUnitQuantity": {
+            "value": null,
+            "unitCode": null
+          },
+          "consignment": [
+            {
+              "grossWeightMeasure": {
+                "value": null,
+                "unitCode": null
+              },
+              "grossVolumeMeasure": {
+                "value": null,
+                "unitCode": null
+              },
+              "consolidatedShipment": []
+            }
+          ],
+          "goodsItem": [
+            {
+              "id": null,
+              "item": {
+                "name": [],
+                "description": [],
+                "itemSpecificationDocumentReference": [],
+                "productImage": [],
+                "additionalItemProperty": [],
+                "manufacturerParty": null,
+                "manufacturersItemIdentification": {
+                  "id": "2143cb2c-db91-4335-b567-8b8d4fe7b1c8"
+                },
+                "catalogueDocumentReference": null,
+                "commodityClassification": [],
+                "certificate": [],
+                "dimension": [],
+                "transportationServiceDetails": null,
+                "trackAndTraceDetails": {
+                  "eventURL": null,
+                  "masterURL": null,
+                  "productionProcessTemplate": null
+                },
+                "lifeCyclePerformanceAssessmentDetails": {
+                  "lcpainput": {
+                    "lifeCycleLength": {
+                      "value": null,
+                      "unitCode": null
+                    },
+                    "purchasingPrice": {
+                      "value": null,
+                      "currencyID": null
+                    },
+                    "assemblyCost": {
+                      "value": null,
+                      "currencyID": null
+                    },
+                    "transportCost": {
+                      "value": null,
+                      "currencyID": null
+                    },
+                    "consumableCost": {
+                      "value": null,
+                      "currencyID": null
+                    },
+                    "energyConsumptionCost": {
+                      "value": null,
+                      "currencyID": null
+                    },
+                    "maintenanceCost": {
+                      "value": null,
+                      "currencyID": null
+                    },
+                    "sparePartCost": {
+                      "value": null,
+                      "currencyID": null
+                    },
+                    "endOfLifeCost": {
+                      "value": null,
+                      "currencyID": null
+                    },
+                    "additionalLCPAInputDetail": []
+                  },
+                  "lcpaoutput": {}
+                }
+              },
+              "containingPackage": {
+                "quantity": {
+                  "value": null,
+                  "unitCode": null
+                },
+                "packagingTypeCode": {
+                  "value": "",
+                  "name": "",
+                  "uri": "",
+                  "listID": "",
+                  "listURI": ""
+                }
+              },
+              "deliveryTerms": {
+                "id": null,
+                "estimatedDeliveryPeriod": {
+                  "startDate": null,
+                  "startTime": null,
+                  "endDate": null,
+                  "endTime": null,
+                  "durationMeasure": {
+                    "value": null,
+                    "unitCode": null
+                  }
+                },
+                "specialTerms": [],
+                "incoterms": null,
+                "amount": {
+                  "value": null,
+                  "currencyID": null
+                },
+                "deliveryLocation": {
+                  "address": {
+                    "cityName": "",
+                    "region": "",
+                    "postalZone": "",
+                    "buildingNumber": "",
+                    "streetName": "",
+                    "country": {
+                      "name": {
+                        "value": null,
+                        "languageID": "en"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ],
+          "shipmentStage": [],
+          "transportHandlingUnit": [
+            {
+              "transportHandlingUnitTypeCode": {
+                "value": "",
+                "name": "",
+                "uri": "",
+                "listID": "",
+                "listURI": ""
+              },
+              "measurementDimension": [
+                {
+                  "attributeID": "Handling Unit Length",
+                  "measure": {
+                    "value": null,
+                    "unitCode": null
+                  }
+                },
+                {
+                  "attributeID": "Handling Unit Width",
+                  "measure": {
+                    "value": null,
+                    "unitCode": null
+                  }
+                }
+              ]
+            }
+          ],
+          "originAddress": {
+            "cityName": "",
+            "region": "",
+            "postalZone": "",
+            "buildingNumber": "",
+            "streetName": "",
+            "country": {
+              "name": {
+                "value": null,
+                "languageID": "en"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "deliveryTerms": {
+      "id": null,
+      "estimatedDeliveryPeriod": {
+        "startDate": null,
+        "startTime": null,
+        "endDate": null,
+        "endTime": null,
+        "durationMeasure": {
+          "value": null,
+          "unitCode": null
+        }
+      },
+      "specialTerms": [],
+      "incoterms": null,
+      "amount": {
+        "value": null,
+        "currencyID": null
+      },
+      "deliveryLocation": {
+        "address": {
+          "cityName": "Sinop",
+          "postalZone": "492",
+          "buildingNumber": "16",
+          "streetName": "Silikon",
+          "country": {
+            "name": {
+              "value": "Turkey",
+              "languageID": "en"
+            }
+          }
+        }
+      }
+    },
+    "price": {
+      "priceAmount": {
+        "value": 345,
+        "currencyID": "EUR"
+      },
+      "baseQuantity": {
+        "value": 1,
+        "unitCode": "item(s)"
+      }
+    },
+    "item": {
+      "description": [
+        {
+          "value": "",
+          "languageID": "en"
+        }
+      ],
+      "name": [
+        {
+          "value": "QExample local",
+          "languageID": "en"
+        }
+      ],
+      "productImage": [],
+      "manufacturersItemIdentification": {
+        "id": "7a56d940-64e0-4619-a7e2-4d39b6682dd4"
+      },
+      "catalogueDocumentReference": {
+        "id": "f0779966-a340-463d-9f04-2add5a6912f6",
+        "uuid": null,
+        "documentType": null,
+        "attachment": null,
+        "validityPeriod": null
+      },
+      "itemSpecificationDocumentReference": [],
+      "commodityClassification": [
+        {
+          "natureCode": null,
+          "cargoTypeCode": null,
+          "itemClassificationCode": {
+            "value": "http://www.nimble-project.org/resource/eclass#0173-1#01-AAC350#007",
+            "name": "Auxiliary supply, additive, cleaning agent",
+            "listID": "eClass",
+            "uri": "http://www.nimble-project.org/resource/eclass#0173-1#01-AAC350#007"
+          }
+        },
+        {
+          "natureCode": null,
+          "cargoTypeCode": null,
+          "itemClassificationCode": {
+            "value": "Product",
+            "name": "Product",
+            "listID": "Default",
+            "uri": null
+          }
+        }
+      ],
+      "additionalItemProperty": [],
+      "manufacturerParty": {
+        "federationInstanceID": null,
+        "nace": [],
+        "description": [],
+        "brandName": [],
+        "partyName": [
+          {
+            "name": {
+              "value": "Wood Supplier",
+              "languageID": "en"
+            }
+          }
+        ],
+        "partyIdentification": [
+          {
+            "id": "706"
+          }
+        ],
+        "websiteURI": "",
+        "industryClassification": null,
+        "industryClassificationCode": {
+          "value": null,
+          "name": "IndustryClassificationCode",
+          "listID": null,
+          "uri": null
+        },
+        "externalAward": null,
+        "ppapCompatibilityLevel": 3,
+        "preferredItemClassificationCode": [
+          {
+            "value": "0173-1#01-AEI956#006::eClass::Notebook::product",
+            "name": null,
+            "listID": null,
+            "uri": null
+          },
+          {
+            "value": "http://www.nimble-project.org/resource/eclass#0173-1#01-AAC350#007::eClass::Auxiliary supply, additive, cleaning agent::product",
+            "name": null,
+            "listID": null,
+            "uri": null
+          },
+          {
+            "value": "0173-1#01-ADU394#007::eClass::Transport (other, unspecified)::transportation",
+            "name": null,
+            "listID": null,
+            "uri": null
+          },
+          {
+            "value": "http://www.nimble-project.org/resource/eclass#0173-1#01-ADG629#002::eClass::Logistics (Service)::transportation",
+            "name": null,
+            "listID": null,
+            "uri": null
+          },
+          {
+            "value": "0173-1#01-AAC286#007::eClass::Home economics, Home technology::product",
+            "name": null,
+            "listID": null,
+            "uri": null
+          },
+          {
+            "value": "0173-1#01-BAC323#011::eClass::Farming vehicle (other, unspecified)::product",
+            "name": null,
+            "listID": null,
+            "uri": null
+          }
+        ],
+        "mostRecentItemsClassificationCode": [
+          {
+            "value": "http://www.nimble-project.org/resource/eclass#0173-1#01-ACZ243#014::eClass::Tapping screw, drilling screw::product::1560688087802",
+            "name": null,
+            "listID": null,
+            "uri": null
+          },
+          {
+            "value": "http://www.nimble-project.org/resource/eclass#0173-1#01-AAC350#007::eClass::Auxiliary supply, additive, cleaning agent::product::1561538316968",
+            "name": null,
+            "listID": null,
+            "uri": null
+          },
+          {
+            "value": "http://www.nimble-project.org/resource/eclass#0173-1#01-AAA647#005::eClass::Construction technology::product::1560691181494",
+            "name": null,
+            "listID": null,
+            "uri": null
+          },
+          {
+            "value": "http://www.aidimme.es/FurnitureSectorOntology.owl#Nail::FurnitureOntology::Nails::product::1560701882069",
+            "name": null,
+            "listID": null,
+            "uri": null
+          },
+          {
+            "value": "http://www.nimble-project.org/resource/eclass#0173-1#01-AAC168#005::eClass::Automotive technology::product::1561554005067",
+            "name": null,
+            "listID": null,
+            "uri": null
+          },
+          {
+            "value": "http://www.nimble-project.org/resource/eclass#0173-1#01-AGE748#001::eClass::Body care and personal hygiene::product::1560890476708",
+            "name": null,
+            "listID": null,
+            "uri": null
+          },
+          {
+            "value": "http://www.nimble-project.org/resource/eclass#0173-1#01-AGE763#001::eClass::Clothing and textile::product::1560930613686",
+            "name": null,
+            "listID": null,
+            "uri": null
+          },
+          {
+            "value": "http://www.aidimme.es/FurnitureSectorOntology.owl#HomeTextile::FurnitureOntology::Home textiles::product::1560698756610",
+            "name": null,
+            "listID": null,
+            "uri": null
+          },
+          {
+            "value": "http://www.nimble-project.org/resource/eclass#0173-1#01-ACO389#011::eClass::Busbar system for distribution boards::product::1560692434566",
+            "name": null,
+            "listID": null,
+            "uri": null
+          },
+          {
+            "value": "http://www.aidimme.es/FurnitureSectorOntology.owl#Screw::FurnitureOntology::Screws::product::1560698822484",
+            "name": null,
+            "listID": null,
+            "uri": null
+          }
+        ],
+        "postalAddress": {
+          "id": null,
+          "streetName": "abcx",
+          "buildingNumber": "",
+          "cityName": "ankara",
+          "postalZone": "234",
+          "region": null,
+          "district": null,
+          "country": {
+            "name": {
+              "value": "turkey",
+              "languageID": null
+            }
+          }
+        },
+        "partyTaxScheme": [
+          {
+            "taxScheme": {
+              "taxTypeCode": {
+                "value": "12",
+                "name": "VAT",
+                "listID": null,
+                "uri": null
+              }
+            }
+          }
+        ],
+        "contact": {
+          "id": null,
+          "name": null,
+          "telephone": null,
+          "telefax": null,
+          "electronicMail": null,
+          "note": null,
+          "otherCommunication": []
+        },
+        "person": [
+          {
+            "id": "704",
+            "firstName": "ali",
+            "familyName": "can",
+            "birthDate": null,
+            "birthplaceName": null,
+            "organizationDepartment": null,
+            "role": [],
+            "favouriteProductID": [],
+            "contact": {
+              "id": null,
+              "name": {
+                "value": null,
+                "languageID": "en"
+              },
+              "telephone": "",
+              "telefax": null,
+              "electronicMail": "can@gmail.com",
+              "note": null,
+              "otherCommunication": []
+            },
+            "birthDateItem": null
+          }
+        ],
+        "certificate": [],
+        "qualityIndicator": [
+          {
+            "qualityParameter": "",
+            "quantity": null
+          }
+        ],
+        "ppapDocumentReference": [],
+        "documentReference": [],
+        "industrySector": [],
+        "salesTerms": {
+          "tradingTerms": [],
+          "deliveryTerms": [],
+          "paymentMeans": [],
+          "termOrCondition": []
+        },
+        "purchaseTerms": {
+          "tradingTerms": [],
+          "deliveryTerms": [
+            {
+              "id": null,
+              "incoterms": null,
+              "specialTerms": [],
+              "amount": null,
+              "transportModeCode": null,
+              "deliveryLocation": {
+                "address": {
+                  "id": null,
+                  "streetName": "abcx",
+                  "buildingNumber": "",
+                  "cityName": "ankara",
+                  "postalZone": "234",
+                  "region": null,
+                  "district": null,
+                  "country": {
+                    "name": {
+                      "value": "turkey",
+                      "languageID": null
+                    }
+                  }
+                }
+              },
+              "estimatedDeliveryPeriod": null
+            }
+          ],
+          "paymentMeans": [],
+          "termOrCondition": []
+        }
+      },
+      "certificate": [],
+      "dimension": [
+        {
+          "attributeID": "Length",
+          "measure": {
+            "value": null,
+            "unitCode": null,
+            "unitCodeListID": null
+          }
+        },
+        {
+          "attributeID": "Width",
+          "measure": {
+            "value": null,
+            "unitCode": null,
+            "unitCodeListID": null
+          }
+        },
+        {
+          "attributeID": "Height",
+          "measure": {
+            "value": null,
+            "unitCode": null,
+            "unitCodeListID": null
+          }
+        }
+      ],
+      "transportationServiceDetails": null,
+      "trackAndTraceDetails": {
+        "eventURL": null,
+        "masterURL": null,
+        "productionProcessTemplate": null
+      },
+      "lifeCyclePerformanceAssessmentDetails": {
+        "lcpaoutput": null,
+        "lcpainput": null
+      }
+    },
+    "warrantyValidityPeriod": {
+      "startDate": null,
+      "startTime": null,
+      "endDate": null,
+      "endTime": null,
+      "durationMeasure": {
+        "value": 0,
+        "unitCode": "month(s)",
+        "unitCodeListID": null
+      }
+    },
+    "lineReference": [
+      {
+        "lineID": "7a56d940-64e0-4619-a7e2-4d39b6682dd4"
+      }
+    ]
+  }
+]
