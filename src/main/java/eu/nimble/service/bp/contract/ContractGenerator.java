@@ -68,12 +68,15 @@ public class ContractGenerator {
     private boolean firstIIR = true;
 
     public void generateContract(OrderType order,ZipOutputStream zos){
+        // get the order response
+        OrderResponseSimpleType orderResponse = DocumentPersistenceUtility.getOrderResponseDocumentByOrderId(order.getID());
+
         XWPFDocument orderTermsAndConditions = fillOrderTermsAndConditions(order);
-        XWPFDocument purchaseDetails = fillPurchaseDetails(order);
+        XWPFDocument purchaseDetails = fillPurchaseDetails(order,orderResponse);
 
         getAndPopulateClauses(order,zos,purchaseDetails);
         // additional documents of order
-        purchaseDetails = createOrderAdditionalDocuments(order,zos,purchaseDetails);
+        purchaseDetails = createOrderAdditionalDocuments(order,orderResponse,zos,purchaseDetails);
 
         addDocxToZipFile("Standard Purchase Order Terms and Conditions.pdf",orderTermsAndConditions,zos);
         addDocxToZipFile("Company Purchase Details.pdf",purchaseDetails,zos);
@@ -337,7 +340,7 @@ public class ContractGenerator {
         return null;
     }
 
-    private XWPFDocument fillPurchaseDetails(OrderType order){
+    private XWPFDocument fillPurchaseDetails(OrderType order,OrderResponseSimpleType orderResponse){
 
         XWPFDocument document = null;
         try {
@@ -650,11 +653,48 @@ public class ContractGenerator {
                     }
                 }
             }
+
+            // add data monitoring info to Purchase Order Comments section
+            XWPFTable table = getTable(document,"Purchase Order Comments");
+            // get the row for data monitoring info
+            XWPFTableRow dataMonitoringRow = table.getRow(1);
+            // get data monitoring text
+            boolean isPromised = isDataMonitoringPromised(order,orderResponse);
+            String dataMonitoringText = isPromised ? "\n\nYes" : "\n\nNo";
+
+            XWPFRun run = dataMonitoringRow.getCell(0).getParagraphArray(5).createRun();
+            run.setUnderline(UnderlinePatterns.SINGLE);
+            run.setText("\n\nData Monitoring Service");
+
+            dataMonitoringRow.getCell(0).getParagraphArray(5).createRun().setText(dataMonitoringText);
         }
         catch (Exception e){
             logger.error("Failed to fill in 'Company Purchase Details.pdf' for the order with id : {}",order.getID(),e);
         }
         return document;
+    }
+
+
+    private boolean isDataMonitoringPromised(OrderType order, OrderResponseSimpleType orderResponse) {
+        boolean dataMonitoringDemanded = false;
+        ContractType contract = ContractGenerator.getNonTermOrConditionContract(order);
+        if(contract != null){
+            List<ClauseType> clauses = contract.getClause();
+            for(ClauseType clause : clauses) {
+                if(clause.getType().contentEquals(eu.nimble.service.model.ubl.extension.ClauseType.DOCUMENT.toString())) {
+                    DocumentClauseType docClause = (DocumentClauseType) clause;
+                    if(docClause.getClauseDocumentRef().getDocumentType().contentEquals(DocumentType.QUOTATION.toString())) {
+                        QuotationType quotation = (QuotationType) DocumentPersistenceUtility.getUBLDocument(docClause.getClauseDocumentRef().getID(), DocumentType.QUOTATION);
+                        if (quotation.isDataMonitoringPromised()) {
+                            dataMonitoringDemanded = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        return dataMonitoringDemanded && orderResponse.isAcceptedIndicator();
     }
 
     private void addDocxToZipFile(String fileName,XWPFDocument document, ZipOutputStream zos) {
@@ -769,8 +809,7 @@ public class ContractGenerator {
         return map;
     }
 
-    private XWPFDocument createOrderAdditionalDocuments(OrderType order,ZipOutputStream zos,XWPFDocument document){
-        OrderResponseSimpleType orderResponse = DocumentPersistenceUtility.getOrderResponseDocumentByOrderId(order.getID());
+    private XWPFDocument createOrderAdditionalDocuments(OrderType order,OrderResponseSimpleType orderResponse,ZipOutputStream zos,XWPFDocument document){
         try {
             // request
             for(DocumentReferenceType documentReference : order.getAdditionalDocumentReference()){
@@ -1214,6 +1253,27 @@ public class ContractGenerator {
                     }
                 }
             }
+            // add data monitoring info
+            // firstly, get data monitoring text
+            String dataMonitoringText = "No";
+            if(requestForQuotation.isDataMonitoringRequested()){
+                if(quotation.isDataMonitoringPromised()){
+                    dataMonitoringText = "Yes / Data monitoring service confirmed";
+                }
+                else {
+                    dataMonitoringText = "Yes / Data monitoring service not provided";
+                }
+            }
+            // create a row for data monitoring info
+            XWPFTableRow dataMonitoringRow = table.insertNewTableRow(6);
+            XWPFRun run = dataMonitoringRow.createCell().getParagraphs().get(0).createRun();
+            run.setUnderline(UnderlinePatterns.SINGLE);
+            run.setText("Data Monitoring Service Requested");
+            dataMonitoringRow.createCell().getParagraphs().get(0).createRun().setText(dataMonitoringText);
+            // remove the border between columns
+            dataMonitoringRow.getCell(0).getCTTc().addNewTcPr().addNewTcBorders().addNewRight().setVal(STBorder.NIL);
+            dataMonitoringRow.getCell(1).getCTTc().addNewTcPr().addNewTcBorders().addNewLeft().setVal(STBorder.NIL);
+
             // negotiation table 'Notes and Additional Documents' part
             // additional documents
             table = getTable(document,"Negotiation Notes/Additional Documents");
