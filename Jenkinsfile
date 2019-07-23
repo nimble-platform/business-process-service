@@ -92,7 +92,7 @@ node('nimble-jenkins-slave') {
         }
 
         stage('Push Docker') {
-            sh 'docker push nimbleplatform/business-process-service:newk8snimble'
+            sh 'docker push nimbleplatform/business-process-service:efactory'
         }
 
         stage('Deploy') {

@@ -17,7 +17,7 @@ elif [ "$1" == "docker-build-staging" ]; then
 
 elif [ "$1" == "docker-build-efack8s" ]; then
 
-    mvn docker:build -P docker -DdockerImageTag=newk8snimble
+    mvn docker:build -P docker -DdockerImageTag=efactory
 
 elif [ "$1" == "docker-push" ]; then
 
