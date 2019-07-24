@@ -38,7 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @ActiveProfiles("test")
 @RunWith(SpringJUnit4ClassRunner.class)
-public class Test04_BusinessProcessesTest {
+public class BusinessProcessExecutionTest {
 
 
     private final String itemInformationRequestJSON = "/controller/itemInformationRequestJSON2.txt";
@@ -86,6 +86,11 @@ public class Test04_BusinessProcessesTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    /**
+     * Test scenario:
+     * - Test complete cycle (request and response) of all the available business processes
+     */
 
     @Test
     public void test00_businessProcesses() throws Exception {

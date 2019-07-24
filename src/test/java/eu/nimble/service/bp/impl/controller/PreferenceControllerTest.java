@@ -31,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringJUnit4ClassRunner.class)
 @Ignore
-public class Test07_PreferenceControllerTest {
+public class PreferenceControllerTest {
 
     @Autowired
     private MockMvc mockMvc;

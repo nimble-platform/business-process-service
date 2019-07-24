@@ -31,15 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringJUnit4ClassRunner.class)
-/*
-    Here is the scenario:
-        * Buyer initiates an item information request
-        * The seller tries to archive the collaboration group, but it fails since the collaboration is not completed or cancelled, it is still active.
-        * Seller accepts the request and deletes his collaboration group
-        * Then, buyer initiates a PPAP request
-        * We expect that a new collaboration group will be created for the seller
- */
-public class Test15_CollaborationGroupTestSuite {
+public class CollaborationGroupTest2_GroupDeletion {
     @Autowired
     private MockMvc mockMvc;
     @Autowired
@@ -56,6 +48,15 @@ public class Test15_CollaborationGroupTestSuite {
     private static String sellerProcessInstanceGroupID;
     public static String buyerCollaborationGroupID;
     private static String buyerProcessInstanceGroupID;
+
+    /**
+     * Test scenario:
+     * - Buyer initiates an item information request
+     * - The seller tries to archive the collaboration group, but it fails since the collaboration is not completed or cancelled, it is still active.
+     * - Seller accepts the request and deletes his collaboration group
+     * - Then, buyer initiates a PPAP request
+     * - We expect that a new collaboration group will be created for the seller
+     */
 
     @Test
     public void test1_startItemInformationRequest() throws Exception{

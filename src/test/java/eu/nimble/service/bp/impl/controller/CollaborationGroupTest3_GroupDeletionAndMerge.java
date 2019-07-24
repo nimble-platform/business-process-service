@@ -39,10 +39,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         * Then, buyer initiates a PPAP request and deletes his collaboration group
         * Seller accepts the PPAP request
         * We expect that a new collaboration group will be created for the buyer
-        * Then, the buyer merges two collaboration groups: the group created in Test15_CollaborationGroupTestSuite and the group created in Test16_CollaborationGroupTestSuite
+        * Then, the buyer merges two collaboration groups: the group created in CollaborationGroupTest2_GroupDeletion and the group created in CollaborationGroupTest3_GroupDeletionAndMerge
         * Finally, we retrieve collaboration groups which are projects for the buyer.
  */
-public class Test16_CollaborationGroupTestSuite {
+public class CollaborationGroupTest3_GroupDeletionAndMerge {
 
     @Autowired
     private MockMvc mockMvc;
@@ -177,18 +177,18 @@ public class Test16_CollaborationGroupTestSuite {
     }
 
     /*
-        The buyer merges two collaboration groups: the group created in Test15_CollaborationGroupTestSuite and the group created in Test16_CollaborationGroupTestSuite
+        The buyer merges two collaboration groups: the group created in CollaborationGroupTest2_GroupDeletion and the group created in CollaborationGroupTest3_GroupDeletionAndMerge
      */
     @Test
     public void test7_mergeCollaborationGroups() throws Exception{
         MockHttpServletRequestBuilder request = get("/collaboration-groups/merge")
                 .header("Authorization", TestConfig.responderPersonId)
                 .param("bcid", buyerCollaborationGroupID)
-                .param("cgids", Test15_CollaborationGroupTestSuite.buyerCollaborationGroupID);
+                .param("cgids", CollaborationGroupTest2_GroupDeletion.buyerCollaborationGroupID);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         // try to get the old group which is merged to the new one
-        request = get("/collaboration-groups/"+ Test15_CollaborationGroupTestSuite.buyerCollaborationGroupID)
+        request = get("/collaboration-groups/"+ CollaborationGroupTest2_GroupDeletion.buyerCollaborationGroupID)
                 .header("Authorization", TestConfig.responderPersonId);
         mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isNotFound()).andReturn();
         // get the new one

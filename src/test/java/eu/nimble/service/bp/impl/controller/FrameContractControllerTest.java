@@ -53,6 +53,15 @@ public class FrameContractControllerTest {
     private ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
     private static DigitalAgreementType frameContract;
 
+    /**
+     * Test scenario:
+     * 1) Create and retrieve frame contract via its identifier
+     * 2) Retrieve frame contract via participant companies and participant id
+     * 3) Retrieve all frame contracts of a party
+     * 4) Retrieve an expired frame contract (response is supposed to be 404)
+     * 5) Update and existing expired frame contract and retrieve it (response is supposed to be not-null)
+     */
+
     @Test
     public void test1_createAndGetFrameContract() throws Exception {
         // create frame contract
@@ -89,7 +98,7 @@ public class FrameContractControllerTest {
     }
 
     @Test
-    public void test3_getDigitalAgreementForPartiesAndProduct() throws Exception {
+    public void test3_getDigitalAgreementsForParty() throws Exception {
         MockHttpServletRequestBuilder request = get("/contract/digital-agreement/all")
                 .header("Authorization", TestConfig.initiatorPersonId)
                 .param("partyId",TestConfig.sellerPartyID);

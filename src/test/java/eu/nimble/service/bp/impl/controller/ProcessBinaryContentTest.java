@@ -31,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @ActiveProfiles("test")
 @RunWith(SpringJUnit4ClassRunner.class)
-public class Test13_BinaryContentTest {
+public class ProcessBinaryContentTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -41,6 +41,14 @@ public class Test13_BinaryContentTest {
     private final String itemInformationRequest = "/controller/itemInformationRequestBinaryContentJSON.txt";
 
     private static String processInstanceId;
+
+    /**
+     * Test scenario:
+     * - Start a new business process with a message (item information request) containing an additional file
+     * - Retrieve binary contents included in the item information request and item (image and specification document)
+     * - Update the item specification document
+     * - Update a non-existing business process (not found response expected)
+     */
 
     @Test
     public void test1_startProcessInstance() throws Exception {

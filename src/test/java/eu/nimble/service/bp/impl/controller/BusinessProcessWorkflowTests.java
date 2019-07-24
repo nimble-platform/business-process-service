@@ -34,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @ActiveProfiles("test")
 @RunWith(SpringJUnit4ClassRunner.class)
-public class Test18_BusinessWorkflowTests {
+public class BusinessProcessWorkflowTests {
 
     @Autowired
     private MockMvc mockMvc;
@@ -49,6 +49,16 @@ public class Test18_BusinessWorkflowTests {
     private static String processInstanceID;
     public static String sellerCollaborationGroupID;
     public static String sellerProcessInstanceGroupID;
+
+    /**
+     * Test scenario:
+     * - The seller company has only item information request in its business process workflow
+     *
+     * - Start an item information process and retrieve the associated collaboration group
+     * - Complete the process and check a completed task is created for the process
+     * - Start a business process which is not included in the company's workflow (400 expected)
+     * - Check
+     */
 
     @Test
     public void test1_startProcessInstance() throws Exception {
@@ -85,7 +95,7 @@ public class Test18_BusinessWorkflowTests {
         Check whether the Completed Task is created for the process instance or not
      */
     @Test
-    public void test2_startProcessInstance() throws Exception {
+    public void test2_continueProcessInstance() throws Exception {
         // replace the process instance id
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(itemInformationResponseJSON));
         inputMessageAsString = inputMessageAsString.replace("pid", processInstanceID);
@@ -117,4 +127,44 @@ public class Test18_BusinessWorkflowTests {
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isBadRequest()).andReturn();
     }
+
+    /* We will start another Item Information Request. When the seller sends a response, the workflow will be completed.
+      However, since a CompletedTask is created for this collaboration, there should not be a CompletedTask for this process instance.*/
+    @Test
+    public void test4_startProcessInstance() throws Exception {
+        // start Item Information Request
+        String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(itemInformationRequestJSON));
+        inputMessageAsString = inputMessageAsString.replace("2892f360-763f-4e26-843d-c6347d9114ff","34f31vh4-6g42-4e26-3dfg-dtlk20834kaf");
+
+        MockHttpServletRequestBuilder request = post("/start")
+                .header("Authorization", "745")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(inputMessageAsString);
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+
+        // get process instance id
+        ProcessInstance processInstance = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ProcessInstance.class);
+        String processInstanceID = processInstance.getProcessInstanceID();
+
+        // send Item Information Response
+        inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(itemInformationResponseJSON));
+        inputMessageAsString = inputMessageAsString.replace("34f31vh4-6g42-4e26-3dfg-dtlk20834kaf","5629fghq-79ba-4c41-4235-rtyln456poas");
+        // replace the process instance id
+        inputMessageAsString = inputMessageAsString.replace("pid", processInstanceID);
+
+        request = post("/continue")
+                .header("Authorization", "1337")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(inputMessageAsString)
+                .param("gid", sellerProcessInstanceGroupID)
+                .param("collaborationGID", sellerCollaborationGroupID);
+        mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+
+        // check whether there is a CompletedTask for this process or not
+
+        // get QualifyingParty of seller
+        QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingPartyType("747", "745");
+        Assert.assertEquals(false, TrustPersistenceUtility.completedTaskExist(qualifyingParty,processInstanceID));
+    }
+
 }

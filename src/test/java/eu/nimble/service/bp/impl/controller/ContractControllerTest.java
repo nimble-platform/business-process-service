@@ -35,7 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringJUnit4ClassRunner.class)
-public class Test09_ContractControllerTest {
+public class ContractControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -47,18 +47,23 @@ public class Test09_ContractControllerTest {
     private final int test3_expectedSize = 1;
     private final int test4_expectedSize = 2;
     private final int test5_expectedSize = 2;
-    private final int test6_expectedSize = 2;
-    private final String expectedType = "DOCUMENT";
-    private final int test7_expectedSize = 1;
 
     private static String contractId;
-    private static String clauseId;
+
+    /**
+     * Test scenario:
+     * - Add a document clause to contract
+     * - Add a data monitoring clause to a contract
+     * - Retrieve document clauses for a contract
+     * - Retrieve all clauses of a contract
+     * - Construct a contract with the clauses create in the previous steps
+     */
 
     @Test
     public void test1_addDocumentClauseToContract() throws Exception {
-        MockHttpServletRequestBuilder request = patch("/documents/" + Test01_StartControllerTest.orderId1 + "/contract/clause/document")
+        MockHttpServletRequestBuilder request = patch("/documents/" + StartControllerTest.orderId1 + "/contract/clause/document")
                 .param("clauseType", "ITEM_DETAILS")
-                .param("clauseDocumentId", Test01_StartControllerTest.iirId1)
+                .param("clauseDocumentId", StartControllerTest.iirId1)
                 .header("Authorization", TestConfig.initiatorPersonId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
@@ -67,7 +72,7 @@ public class Test09_ContractControllerTest {
         Assert.assertEquals(test1_expectedResult, order.getContract().get(0).getClause().size());
 
         contractId = order.getContract().get(0).getID();
-        clauseId = order.getContract().get(0).getClause().get(0).getID();
+        order.getContract().get(0).getClause().get(0).getID();
 
     }
 
@@ -76,7 +81,7 @@ public class Test09_ContractControllerTest {
         String dataMonitoring = IOUtils.toString(DataMonitoringClauseType.class.getResourceAsStream(dataMonitoringJSON));
 
 
-        MockHttpServletRequestBuilder request = patch("/documents/" + Test01_StartControllerTest.orderId1 + "/contract/clause/data-monitoring")
+        MockHttpServletRequestBuilder request = patch("/documents/" + StartControllerTest.orderId1 + "/contract/clause/data-monitoring")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(dataMonitoring)
                 .header("Authorization", TestConfig.initiatorPersonId);
@@ -89,8 +94,8 @@ public class Test09_ContractControllerTest {
     }
 
     @Test
-    public void test3_getClauseDetails() throws Exception {
-        MockHttpServletRequestBuilder request = get("/documents/" + Test01_StartControllerTest.orderId1 + "/clauses")
+    public void test3_getDocumentClauses() throws Exception {
+        MockHttpServletRequestBuilder request = get("/documents/" + StartControllerTest.orderId1 + "/clauses")
                 .header("Authorization", TestConfig.initiatorPersonId)
                 .param("clauseType", "DOCUMENT");
 
@@ -104,7 +109,7 @@ public class Test09_ContractControllerTest {
 
     @Test
     public void test4_getClausesOfContract() throws Exception {
-        MockHttpServletRequestBuilder request = get("/contracts/" + Test09_ContractControllerTest.contractId + "/clauses")
+        MockHttpServletRequestBuilder request = get("/contracts/" + ContractControllerTest.contractId + "/clauses")
                 .header("Authorization", TestConfig.initiatorPersonId);
 
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -118,7 +123,7 @@ public class Test09_ContractControllerTest {
     @Test
     public void test5_constructContractForProcessInstances() throws Exception {
         MockHttpServletRequestBuilder request = get("/contracts")
-                .param("processInstanceId", Test01_StartControllerTest.processInstanceIdOrder1)
+                .param("processInstanceId", StartControllerTest.processInstanceIdOrder1)
                 .header("Authorization", TestConfig.initiatorPersonId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
@@ -130,7 +135,7 @@ public class Test09_ContractControllerTest {
 //    @Test
 //    public void test6_getClauseDetailsAndUpdate() throws Exception {
 //        // getClauseDetails
-//        MockHttpServletRequestBuilder request = get("/clauses/" + Test09_ContractControllerTest.clauseId)
+//        MockHttpServletRequestBuilder request = get("/clauses/" + ContractControllerTest.clauseId)
 //                .header("Authorization", TestConfig.initiatorPersonId);
 //        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 //
@@ -144,7 +149,7 @@ public class Test09_ContractControllerTest {
 //        clause.setNote(notes);
 //
 //        //updateClause
-//        request = put("/clauses/" + Test09_ContractControllerTest.clauseId)
+//        request = put("/clauses/" + ContractControllerTest.clauseId)
 //                .header("Authorization", TestConfig.initiatorPersonId)
 //                .content(objectMapper.writeValueAsString(clause));
 //        mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -156,7 +161,7 @@ public class Test09_ContractControllerTest {
 
     //    @Test
 //    public void test7_deleteClauseFromContract() throws Exception {
-//        MockHttpServletRequestBuilder request = delete("/contracts/" + Test09_ContractControllerTest.contractId + "/clauses/" + Test09_ContractControllerTest.clauseId)
+//        MockHttpServletRequestBuilder request = delete("/contracts/" + ContractControllerTest.contractId + "/clauses/" + ContractControllerTest.clauseId)
 //                .header("Authorization", TestConfig.initiatorPersonId);
 //
 //        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();

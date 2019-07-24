@@ -31,18 +31,23 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringJUnit4ClassRunner.class)
-public class Test02_ContinueControllerTest {
+public class ContinueControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     private final String orderResponseJSON1 = "/controller/orderResponseJSON1.txt";
 
+    /**
+     * Test scenario:
+     * - Continue a test from the {@link StartControllerTest}
+     */
+
     @Test
     public void continueProcessInstance() throws Exception {
         ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(orderResponseJSON1));
-        inputMessageAsString = inputMessageAsString.replace("pid", Test01_StartControllerTest.processInstanceIdOrder1);
+        inputMessageAsString = inputMessageAsString.replace("pid", StartControllerTest.processInstanceIdOrder1);
 
         // get collaboration group and process instance group ids for seller
         MockHttpServletRequestBuilder request = get("/collaboration-groups")
@@ -67,7 +72,7 @@ public class Test02_ContinueControllerTest {
 
         ProcessInstance processInstance = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ProcessInstance.class);
         Assert.assertEquals(processInstance.getStatus(), ProcessInstance.StatusEnum.COMPLETED);
-        Assert.assertEquals(processInstance.getProcessInstanceID(), Test01_StartControllerTest.processInstanceIdOrder1);
+        Assert.assertEquals(processInstance.getProcessInstanceID(), StartControllerTest.processInstanceIdOrder1);
     }
 
 }

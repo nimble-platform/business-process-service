@@ -55,6 +55,8 @@ public class ContinueController implements ContinueApi {
     private JPARepositoryFactory repoFactory;
     @Autowired
     private EmailSenderUtil emailSenderUtil;
+    @Autowired
+    private ProcessInstanceGroupController processInstanceGroupController;
 
     @Override
     @ApiOperation(value = "", notes = "Sends input to a waiting process instance (because of a human task)")
@@ -142,8 +144,8 @@ public class ContinueController implements ContinueApi {
                 isLastProcessInWorkflow = sellerParty.getProcessID().get(sellerParty.getProcessID().size()-1).contentEquals(processId);
             }
 
-            // if it's the last process in the seller's workflow, create completed tasks for both parties
-            if(isLastProcessInWorkflow){
+            // if it's the last process in the seller's workflow and there is no CompletedTask for this collaboration, create completed tasks for both parties
+            if(isLastProcessInWorkflow && processInstanceGroupController.checkCollaborationFinished(gid,bearerToken).getBody().contentEquals("false")){
                 TrustPersistenceUtility.createCompletedTasksForBothParties(processInstance.getProcessInstanceID(),bearerToken,"Completed");
             }
 
@@ -204,3 +206,4 @@ public class ContinueController implements ContinueApi {
         }
     }
 }
+

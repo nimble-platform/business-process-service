@@ -39,7 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringJUnit4ClassRunner.class)
 @Ignore
-public class Test10_ApplicationControllerTest {
+public class ApplicationControllerTest {
     @Autowired
     private MockMvc mockMvc;
 

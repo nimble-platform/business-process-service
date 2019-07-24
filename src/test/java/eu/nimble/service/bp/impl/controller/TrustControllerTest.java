@@ -30,7 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringJUnit4ClassRunner.class)
-public class Test12_TrustControllerTest {
+public class TrustControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -43,6 +43,18 @@ public class Test12_TrustControllerTest {
     private final String relatedProduct = "QDeneme";
 
     public static String processInstanceId;
+
+    /**
+     * Test scenario:
+     * - Retrieve a collaboration group for a buyer user
+     * - Create ratings and reviews for the last process instance of the collaboration group
+     * - Check whether the collaboration is rated
+     * - Retrieve rating summary
+     * - Retrieve all individual ratings
+     * - Retrieve rating summary non-existing company (bad request expected)
+     * - Retrieve individual ratings for non-existing company (bad request expected)
+     */
+
     @Test
     public void test1_createRatingAndReview() throws Exception {
         // get Receipt advice process instance id
@@ -98,7 +110,7 @@ public class Test12_TrustControllerTest {
         List<NegotiationRatings> negotiationRatings = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),new TypeReference<List<NegotiationRatings>>(){});
         // get ratings for the process instance id
         for(NegotiationRatings ratings:negotiationRatings){
-            if(ratings.getProcessInstanceID().equals(Test12_TrustControllerTest.processInstanceId)){
+            if(ratings.getProcessInstanceID().equals(TrustControllerTest.processInstanceId)){
                 Assert.assertEquals(6,ratings.getRatings().size());
             }
         }
@@ -106,7 +118,7 @@ public class Test12_TrustControllerTest {
 
     // try to get Ratings Summary of a company which does not have a QualifyingParty
     @Test
-    public void test5_getRatingsSummary() throws Exception {
+    public void test5_getRatingsSummaryForNonExistingCompany() throws Exception {
         MockHttpServletRequestBuilder request = get("/ratingsSummary")
                 .header("Authorization", TestConfig.responderPersonId)
                 .param("partyId","9999");
@@ -115,7 +127,7 @@ public class Test12_TrustControllerTest {
 
     // try to get Individual Ratings and Reviews of a company which does not have a QualifyingParty
     @Test
-    public void test6_listAllIndividualRatingsAndReviews() throws Exception {
+    public void test6_listAllIndividualRatingsAndReviewsForNonExistingParty() throws Exception {
         MockHttpServletRequestBuilder request = get("/ratingsAndReviews")
                 .header("Authorization", TestConfig.responderPersonId)
                 .param("partyId","9999");

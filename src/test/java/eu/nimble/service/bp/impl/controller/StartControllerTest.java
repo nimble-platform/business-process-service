@@ -28,7 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @ActiveProfiles("test")
 @RunWith(SpringJUnit4ClassRunner.class)
-public class Test01_StartControllerTest {
+public class StartControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -46,6 +46,12 @@ public class Test01_StartControllerTest {
     public static String processInstanceIdOrder2;
     public static String processInstanceIdOrder3;
     public static String processInstanceIdIIR1;
+
+    /**
+     * Test scenario:
+     * - Create 3 order and 1 item information request processes
+     * - Create negotiations for multiple items
+     */
 
     @Test
     public void test1_startProcessInstance() throws Exception {

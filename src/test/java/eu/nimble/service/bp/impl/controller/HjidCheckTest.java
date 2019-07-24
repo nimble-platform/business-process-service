@@ -29,12 +29,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @ActiveProfiles("test")
 @RunWith(SpringJUnit4ClassRunner.class)
-public class Test14_HjidCheckTest {
+public class HjidCheckTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     private final String itemInformationRequestJSON ="/controller/itemInformationRequestHjidCheck.txt";
+
+    /**
+     * Test scenario:
+     * - Start a new business process (item information request)
+     * - Update the hjid of an object inside the item information request with an existing hjid and try to update the process (bad request response expected)
+     */
 
     @Test
     public void test1_updateBusinessProcess() throws Exception{

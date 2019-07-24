@@ -36,7 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringJUnit4ClassRunner.class)
 @Ignore
-public class Test06_ContentControllerTest {
+public class BusinessProcessDefinitionTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -71,12 +71,12 @@ public class Test06_ContentControllerTest {
         Process process = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), Process.class);
         Assert.assertEquals(processName, process.getProcessName());
 
-        Test06_ContentControllerTest.process = process;
+        BusinessProcessDefinitionTest.process = process;
     }
 
     @Test
     public void test3_deleteProcessDefinition() throws Exception {
-        MockHttpServletRequestBuilder request = delete("/content/" + Test06_ContentControllerTest.process.getProcessID())
+        MockHttpServletRequestBuilder request = delete("/content/" + BusinessProcessDefinitionTest.process.getProcessID())
                 .header("Authorization", TestConfig.initiatorPersonId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andReturn();
 

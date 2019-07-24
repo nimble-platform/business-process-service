@@ -29,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringJUnit4ClassRunner.class)
-public class Test11_CollaborationGroupTest {
+public class CollaborationGroupTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -53,6 +53,28 @@ public class Test11_CollaborationGroupTest {
     public static String cancelledProcessInstanceId;
     private static String processInstanceId;
 
+    /**
+     * Test scenario:
+     * All business processes are executed in the {@link BusinessProcessExecutionTest}, where two process instance groups are created
+     * as a result of executing all types of processes
+     *
+     * - Retrieve the collaboration group of seller including process instance groups related to buyer and transport service provider
+     * - Archive the collaboration group
+     * - Cancel the collaboration group
+     * - Retry canceling the same collaboration group (bad request expected)
+     * - Retrieve collaboration group given a process instance included in the second index of the groups mentioned above
+     * - Archive a non-existing collaboration group (bad request expected)
+     * - Restore a non-existing collaboration group (bad request expected)
+     * - Update the name of the collaboration group
+     * - Restore an existing collaboration group
+     * - Delete a collaboration group
+     *
+     * - Retrieve the order document of an order process given a process instance id such that the
+            corresponding process would be included in the same process instance group with the order process
+     * - Cancel a completed process
+     * - Cancel an already cancelled process (bad request expected)
+     */
+
     @Test
     public void test01_updateCollaborationGroupName() throws Exception {
         // get the collaboration group
@@ -71,13 +93,6 @@ public class Test11_CollaborationGroupTest {
         collaborationGroupID = collaborationGroupResponse.getCollaborationGroups().get(0).getID();
         int sizeOfProcessInstances = collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().get(1).getProcessInstanceIDs().size();
         idOfTheLastProcessInstance = collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().get(1).getProcessInstanceIDs().get(sizeOfProcessInstances - 1);
-
-        // update collaboration group name
-        request = patch("/collaboration-groups/"+collaborationGroupID)
-                .header("Authorization", TestConfig.initiatorPersonId)
-                .param("groupName",groupName);
-        mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
-
     }
 
     @Test
@@ -147,25 +162,31 @@ public class Test11_CollaborationGroupTest {
     }
 
     @Test
-    public void test07_getCollaborationGroup() throws Exception {
-        MockHttpServletRequestBuilder request = get("/collaboration-groups/"+ Test11_CollaborationGroupTest.collaborationGroupID)
+    public void test07_updateCollaborationGroupName() throws Exception {
+        // update collaboration group name
+        MockHttpServletRequestBuilder request = patch("/collaboration-groups/"+collaborationGroupID)
+                .header("Authorization", TestConfig.initiatorPersonId)
+                .param("groupName",groupName);
+         this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+
+        request = get("/collaboration-groups/"+ CollaborationGroupTest.collaborationGroupID)
                 .header("Authorization", TestConfig.initiatorPersonId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         CollaborationGroup collaborationGroup = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), CollaborationGroup.class);
-        Assert.assertEquals(Test11_CollaborationGroupTest.groupName,collaborationGroup.getName());
+        Assert.assertEquals(CollaborationGroupTest.groupName,collaborationGroup.getName());
     }
 
     @Test
     public void test08_restoreCollaborationGroup() throws Exception{
-        MockHttpServletRequestBuilder request = post("/collaboration-groups/"+ Test11_CollaborationGroupTest.collaborationGroupID+"/restore")
+        MockHttpServletRequestBuilder request = post("/collaboration-groups/"+ CollaborationGroupTest.collaborationGroupID+"/restore")
                 .header("Authorization", TestConfig.initiatorPersonId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
     }
 
     @Test
     public void test09_deleteCollaborationGroup() throws Exception{
-        MockHttpServletRequestBuilder request = delete("/collaboration-groups/"+ Test11_CollaborationGroupTest.collaborationGroupToBeDeletedId)
+        MockHttpServletRequestBuilder request = delete("/collaboration-groups/"+ CollaborationGroupTest.collaborationGroupToBeDeletedId)
                 .header("Authorization", TestConfig.initiatorPersonId);
         this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
@@ -182,11 +203,12 @@ public class Test11_CollaborationGroupTest {
         Assert.assertSame(0, collaborationGroupResponse.getSize());
     }
 
+
     @Test
     public void test10_getOrderProcess() throws Exception{
         MockHttpServletRequestBuilder request = get("/process-instance-groups/order-document")
                 .header("Authorization", TestConfig.responderPersonId)
-                .param("processInstanceId", Test11_CollaborationGroupTest.idOfTheLastProcessInstance);
+                .param("processInstanceId", CollaborationGroupTest.idOfTheLastProcessInstance);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         // OrderType order = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), OrderType.class);
@@ -194,14 +216,10 @@ public class Test11_CollaborationGroupTest {
         Assert.assertEquals(test5_productName,order.getOrderLine().get(0).getLineItem().getItem().getName().get(0).getValue());
     }
 
-    /*
-        Firstly, we delete the process instance group and then, delete the associated process instance group.
-        In this case, we test that whether all associations between process instance groups are deleted properly or not
-     */
     @Test
-    public void test11_deleteProcessInstanceGroup() throws Exception {
+    public void test11_deleteProcessInstanceGroupAlongWithTheAssociatedGroup() throws Exception {
         // get the process instance group
-        MockHttpServletRequestBuilder request = get("/process-instance-groups/" + Test04_BusinessProcessesTest.transportProviderProcessInstanceGroupID)
+        MockHttpServletRequestBuilder request = get("/process-instance-groups/" + BusinessProcessExecutionTest.transportProviderProcessInstanceGroupID)
                 .header("Authorization", TestConfig.initiatorPersonId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
@@ -213,24 +231,24 @@ public class Test11_CollaborationGroupTest {
         // get id of associated process instance group
         String associatedProcessInstanceGroupId = processInstanceGroup.getAssociatedGroups().get(0);
         // delete the group
-        request = delete("/process-instance-groups/" + Test04_BusinessProcessesTest.transportProviderProcessInstanceGroupID)
+        request = delete("/process-instance-groups/" + BusinessProcessExecutionTest.transportProviderProcessInstanceGroupID)
                 .header("Authorization", TestConfig.initiatorPersonId);
-        mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+        this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
         // delete the associated group
         request = delete("/process-instance-groups/" + associatedProcessInstanceGroupId)
                 .header("Authorization", TestConfig.initiatorPersonId);
-        mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+        this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
     }
 
     /*
         Try to cancel a completed process instance
-     */
+        */
     @Test
     public void test12_cancelProcessInstance() throws Exception {
         // cancel the process instance
         MockHttpServletRequestBuilder request = post("/processInstance/"+processInstanceId+"/cancel")
                 .header("Authorization", TestConfig.initiatorPersonId);
-        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+        this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
     }
 
     /*
@@ -239,8 +257,8 @@ public class Test11_CollaborationGroupTest {
     @Test
     public void test13_cancelProcessInstance() throws Exception {
         // cancel the process instance
-        MockHttpServletRequestBuilder request = post("/processInstance/"+ Test11_CollaborationGroupTest.cancelledProcessInstanceId+"/cancel")
+        MockHttpServletRequestBuilder request = post("/processInstance/"+ CollaborationGroupTest.cancelledProcessInstanceId+"/cancel")
                 .header("Authorization", TestConfig.initiatorPersonId);
-        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isBadRequest()).andReturn();
+        this.mockMvc.perform(request).andDo(print()).andExpect(status().isBadRequest()).andReturn();
     }
 }

@@ -26,7 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringJUnit4ClassRunner.class)
-public class Test03_StatisticsControllerTest {
+public class StatisticsControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -43,6 +43,14 @@ public class Test03_StatisticsControllerTest {
     private final int expectedCompanyCount = 1;
     private final String businessProcessType = "ORDER";
     private final int expectedProcessCountDown = 2;
+
+    /**
+     * Test scenario:
+     * - Trading volume of processes in waiting response status
+     * - Number of rejected processes
+     * - Number of non-ordered products
+     * - Test number of order processes via complete process break-down
+     */
 
     @Test
     public void getTradingVolume() throws Exception {
