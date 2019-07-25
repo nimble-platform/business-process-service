@@ -71,9 +71,8 @@ public class StartController implements StartApi {
     public ResponseEntity<String> createNegotiationsForLineItems(@ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
                                                                  @ApiParam(value = "Serialized form of line items which are used to create request for quotations.An example line items serialization can be found in:" +
                                                                  "https://github.com/nimble-platform/catalog-service/tree/staging/catalogue-service-micro/src/main/resources/example_content/line_items.json", required = true) @RequestBody String lineItemsJson,
-                                                                 @ApiParam(value = "Identifier of the party which creates negotiations for Bill of Materials", required = true) @RequestParam(value = "partyId") String partyId,
                                                                  @ApiParam(value = "If this parameter is true and a valid frame contract exists between parties, then an order is started for the product using the details of frame contract") @RequestParam(value = "useFrameContract", defaultValue = "false") Boolean useFrameContract) {
-        logger.info("Creating negotiations for line items for party: {}, useFrameContract: {}", partyId, useFrameContract);
+        logger.info("Creating negotiations for line items , useFrameContract: {}", useFrameContract);
         // check token
         ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
         if (tokenCheck != null) {
@@ -85,10 +84,14 @@ public class StartController implements StartApi {
             List<LineItemType> lineItems = JsonSerializationUtility.getObjectMapper().readValue(lineItemsJson, new TypeReference<List<LineItemType>>() {
             });
 
-            // get buyer party and its negotiation settings
-            NegotiationSettings negotiationSettings = SpringBridge.getInstance().getiIdentityClientTyped().getNegotiationSettings(partyId);
             // get person using the given bearer token
             PersonType person = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken);
+            // get party
+            PartyType party = SpringBridge.getInstance().getiIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
+            String partyId = party.getPartyIdentification().get(0).getID();
+
+            // get buyer party and its negotiation settings
+            NegotiationSettings negotiationSettings = SpringBridge.getInstance().getiIdentityClientTyped().getNegotiationSettings(partyId);
 
             String hjidOfBaseGroup = null;
             List<String> hjidOfGroupsToBeMerged = new ArrayList<>();
@@ -112,12 +115,12 @@ public class StartController implements StartApi {
                 collaborationGroupsController.mergeCollaborationGroups(bearerToken, hjidOfBaseGroup, hjidOfGroupsToBeMerged);
             }
         } catch (Exception e) {
-            String msg = String.format("Unexpected error while creating negotiations for line items for party : %s", partyId);
+            String msg = "Unexpected error while creating negotiations for line items";
             logger.error(msg);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
         }
 
-        logger.info("Created negotiations for line items for party: {}, useFrameContract: {}", partyId, useFrameContract);
+        logger.info("Created negotiations for line items, useFrameContract: {}", useFrameContract);
         return ResponseEntity.ok(null);
     }
 

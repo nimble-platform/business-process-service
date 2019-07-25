@@ -127,7 +127,6 @@ public class StartControllerTest {
 
         MockHttpServletRequestBuilder request = post("/start/billofmaterials")
                 .header("Authorization", TestConfig.initiatorPersonId)
-                .param("partyId",TestConfig.buyerPartyID)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
         this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
