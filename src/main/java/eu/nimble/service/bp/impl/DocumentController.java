@@ -1,6 +1,7 @@
 package eu.nimble.service.bp.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import eu.nimble.common.rest.identity.IIdentityClientTyped;
 import eu.nimble.common.rest.identity.IdentityClientTyped;
 import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO;
@@ -56,7 +57,7 @@ public class DocumentController {
     @Autowired
     private ResourceValidationUtility resourceValidationUtility;
     @Autowired
-    private IdentityClientTyped identityClient;
+    private IIdentityClientTyped identityClient;
 
     @ApiOperation(value = "",notes = "Retrieve Json content of the document with the given id")
     @ApiResponses(value = {
