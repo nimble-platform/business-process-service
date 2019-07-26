@@ -1,8 +1,7 @@
 package eu.nimble.service.bp.impl;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import eu.nimble.common.rest.identity.model.NegotiationSettings;
 import eu.nimble.service.bp.bom.BPMessageGenerator;
+import eu.nimble.service.bp.model.billOfMaterial.BillOfMaterial;
 import eu.nimble.service.bp.model.hyperjaxb.*;
 import eu.nimble.service.bp.util.BusinessProcessEvent;
 import eu.nimble.service.bp.util.HttpResponseUtil;
@@ -23,7 +22,6 @@ import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
 import eu.nimble.service.bp.swagger.model.ProcessVariables;
 import eu.nimble.service.bp.swagger.model.Transaction;
-import eu.nimble.service.model.ubl.commonaggregatecomponents.LineItemType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
 import eu.nimble.utility.JsonSerializationUtility;
@@ -65,48 +63,48 @@ public class StartController implements StartApi {
     private CollaborationGroupsController collaborationGroupsController;
 
     @Override
-    @ApiOperation(value = "", notes = "Creates negotiations for the given line items for the given party. If there is a frame contract between parties and useFrameContract parameter is set to true, " +
+    @ApiOperation(value = "", notes = "Creates negotiations for the given bill of materials for the given party. If there is a frame contract between parties and useFrameContract parameter is set to true, " +
             "then the service creates an order for the product using the details of frame contract.The person who starts the process is saved as the creator of process. This information is derived " +
             "from the given bearer token.")
-    public ResponseEntity<String> createNegotiationsForLineItems(@ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
-                                                                 @ApiParam(value = "Serialized form of line items which are used to create request for quotations.An example line items serialization can be found in:" +
-                                                                 "https://github.com/nimble-platform/catalog-service/tree/staging/catalogue-service-micro/src/main/resources/example_content/line_items.json", required = true) @RequestBody String lineItemsJson,
-                                                                 @ApiParam(value = "If this parameter is true and a valid frame contract exists between parties, then an order is started for the product using the details of frame contract") @RequestParam(value = "useFrameContract", defaultValue = "false") Boolean useFrameContract) {
-        logger.info("Creating negotiations for line items , useFrameContract: {}", useFrameContract);
+    public ResponseEntity<String> createNegotiationsForBOM(@ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
+                                                           @ApiParam(value = "Serialized form of bill of materials which are used to create request for quotations.", required = true) @RequestBody BillOfMaterial billOfMaterial,
+                                                           @ApiParam(value = "If this parameter is true and a valid frame contract exists between parties, then an order is started for the product using the details of frame contract") @RequestParam(value = "useFrameContract", defaultValue = "false") Boolean useFrameContract) {
+        logger.info("Creating negotiations for bill of materials , useFrameContract: {}", useFrameContract);
         // check token
         ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
         if (tokenCheck != null) {
             return tokenCheck;
         }
 
-        try {
-            // deserialize LineItems
-            List<LineItemType> lineItems = JsonSerializationUtility.getObjectMapper().readValue(lineItemsJson, new TypeReference<List<LineItemType>>() {
-            });
+        // validate BillOfMaterial
+        if(billOfMaterial.getCatalogueUuids().size() != billOfMaterial.getLineIds().size() || billOfMaterial.getCatalogueUuids().size() != billOfMaterial.getQuantities().size()){
+            String msg = "Number of elements in catalogue uuids list, line ids list and quantities list do not match";
+            logger.error(msg);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(msg);
+        }
 
+        try {
             // get person using the given bearer token
             PersonType person = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken);
-            // get party
-            PartyType party = SpringBridge.getInstance().getiIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
-            String partyId = party.getPartyIdentification().get(0).getID();
-
-            // get buyer party and its negotiation settings
-            NegotiationSettings negotiationSettings = SpringBridge.getInstance().getiIdentityClientTyped().getNegotiationSettings(partyId);
+            // get buyer party
+            PartyType buyerParty = SpringBridge.getInstance().getiIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
+            String buyerPartyId = buyerParty.getPartyIdentification().get(0).getID();
 
             String hjidOfBaseGroup = null;
             List<String> hjidOfGroupsToBeMerged = new ArrayList<>();
 
-            // for each line item, create a RFQ
-            for (LineItemType lineItem : lineItems) {
+            // for each product, create a RFQ
+            int size = billOfMaterial.getCatalogueUuids().size();
+            for(int i = 0 ; i < size ; i++){
                 // create ProcessInstanceInputMessage for line item
-                ProcessInstanceInputMessage processInstanceInputMessage = BPMessageGenerator.createBPMessageForLineItem(lineItem, useFrameContract, partyId, negotiationSettings, person.getID(), bearerToken);
+                ProcessInstanceInputMessage processInstanceInputMessage = BPMessageGenerator.createBPMessageForBOM(billOfMaterial.getCatalogueUuids().get(i),billOfMaterial.getLineIds().get(i),billOfMaterial.getQuantities().get(i), useFrameContract, buyerParty, person.getID(), bearerToken);
                 // start the process and get process instance id since we need this info to find collaboration group of process
                 String processInstanceId = startProcessInstance(bearerToken, processInstanceInputMessage, null, null, null, null).getBody().getProcessInstanceID();
 
                 if (hjidOfBaseGroup == null) {
-                    hjidOfBaseGroup = CollaborationGroupDAOUtility.getCollaborationGroupHjidByProcessInstanceIdAndPartyId(processInstanceId, partyId).toString();
+                    hjidOfBaseGroup = CollaborationGroupDAOUtility.getCollaborationGroupHjidByProcessInstanceIdAndPartyId(processInstanceId, buyerPartyId).toString();
                 } else {
-                    hjidOfGroupsToBeMerged.add(CollaborationGroupDAOUtility.getCollaborationGroupHjidByProcessInstanceIdAndPartyId(processInstanceId, partyId).toString());
+                    hjidOfGroupsToBeMerged.add(CollaborationGroupDAOUtility.getCollaborationGroupHjidByProcessInstanceIdAndPartyId(processInstanceId, buyerPartyId).toString());
                 }
             }
 
@@ -115,12 +113,12 @@ public class StartController implements StartApi {
                 collaborationGroupsController.mergeCollaborationGroups(bearerToken, hjidOfBaseGroup, hjidOfGroupsToBeMerged);
             }
         } catch (Exception e) {
-            String msg = "Unexpected error while creating negotiations for line items";
-            logger.error(msg);
+            String msg = "Unexpected error while creating negotiations for bill of materials";
+            logger.error(msg,e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
         }
 
-        logger.info("Created negotiations for line items, useFrameContract: {}", useFrameContract);
+        logger.info("Created negotiations for bill of materials, useFrameContract: {}", useFrameContract);
         return ResponseEntity.ok(null);
     }
 

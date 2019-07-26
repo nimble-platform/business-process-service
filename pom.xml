@@ -339,6 +339,7 @@
                             <configOptions>
                                 <interfaceOnly>true</interfaceOnly>
                                 <import-mappings>CollaborationGroupResponse=eu.nimble.service.bp.model.dashboard.CollaborationGroupResponse</import-mappings>
+                                <import-mappings>BillOfMaterial=eu.nimble.service.bp.model.billOfMaterial.BillOfMaterial</import-mappings>
                             </configOptions>
                         </configuration>
                     </execution>

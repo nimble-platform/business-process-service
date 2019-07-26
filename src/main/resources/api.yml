@@ -382,7 +382,7 @@ paths:
             $ref: '#/definitions/ProcessInstance'
   /start/billofmaterials:
     post:
-      operationId: createNegotiationsForLineItems
+      operationId: createNegotiationsForBOM
       consumes:
       - application/json
       produces:
@@ -393,10 +393,10 @@ paths:
         type: string
         required: true
       - in: body
-        name: lineItemsJson
+        name: billOfMaterial
         required: true
         schema:
-          type: string
+          $ref: '#/definitions/BillOfMaterial'
       - in: query
         name: useFrameContract
         description: If this parameter is true and a valid frame contract exists between parties, then an order is started for the product using the details of frame contract
@@ -406,6 +406,10 @@ paths:
       responses:
         200:
           description: Created negotiations for line items for the given party
+          schema:
+            type: string
+        400:
+          description: Number of elements in catalogue uuids list, line ids list and quantities list do not match
           schema:
             type: string
         401:
@@ -1240,6 +1244,10 @@ definitions:
 
   CollaborationGroupResponse:
     title: Process Instance Group Response
+    type: object
+
+  BillOfMaterial:
+    title: Bill of Material Object
     type: object
 
   ProcessInstanceGroupFilter:
