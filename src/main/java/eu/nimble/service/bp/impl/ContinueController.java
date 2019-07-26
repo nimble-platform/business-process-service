@@ -183,7 +183,7 @@ public class ContinueController implements ContinueApi {
                     body.getVariables().getRelatedProducts(),
                     sourceGid);
 
-            CollaborationGroupDAO initiatorCollaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroupDAO(body.getVariables().getInitiatorID(), Long.parseLong(responderCollaborationGID));
+            CollaborationGroupDAO initiatorCollaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroupDAO(body.getVariables().getInitiatorID(), Long.parseLong(responderCollaborationGID),responderCollaborationGID);
             // create a new initiator collaboration group
             if (initiatorCollaborationGroup == null) {
                 CollaborationGroupDAO responderCollaborationGroup = repoFactory.forBpRepository(true).getSingleEntityByHjid(CollaborationGroupDAO.class, Long.parseLong(responderCollaborationGID));

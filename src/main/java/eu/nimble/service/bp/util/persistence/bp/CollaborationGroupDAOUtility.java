@@ -21,8 +21,8 @@ import java.util.*;
  */
 public class CollaborationGroupDAOUtility {
     private static final String QUERY_GET_ASSOCIATED_GROUP =
-            "select cg from CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups pig where pig.partyID = :partyId and cg.hjid in " +
-            "(select acg.item from CollaborationGroupDAO cg2 join cg2.associatedCollaborationGroupsItems acg where cg2.hjid = :associatedGroupId)";
+            "select cg from CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups pig where pig.partyID = :partyId and pig.ID = :pigId and cg.hjid in " +
+            "(select acg.item from CollaborationGroupDAO cg2 join cg2.associatedCollaborationGroupsItems acg where cg2.hjid = :associatedCollaborationGroupId)";
     private static final String QUERY_GET_GROUP_OF_PROCESS_INSTANCE_GROUP =
             "select cg from CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups apig where apig.ID = :groupId";
     private static final String QUERY_GET_BY_PARTY_ID_AND_COLLABORATION_ROLE =
@@ -64,13 +64,13 @@ public class CollaborationGroupDAOUtility {
         return new JPARepositoryFactory().forBpRepository().getSingleEntity(QUERY_GET_HJID_BY_PROCESS_INSTANCE_ID_AND_PARTY_ID, new String[]{"partyID", "processInstanceId"}, new Object[]{partyId, processInstanceId});
     }
 
-    public static CollaborationGroupDAO getCollaborationGroupDAO(String partyId, Long associatedGroupId) {
-        CollaborationGroupDAO group = CollaborationGroupDAOUtility.getAssociatedCollaborationGroup(partyId, associatedGroupId);
+    public static CollaborationGroupDAO getCollaborationGroupDAO(String partyId, Long associatedCollaborationGroupId,String associatedProcessInstanceGroupId) {
+        CollaborationGroupDAO group = CollaborationGroupDAOUtility.getAssociatedCollaborationGroup(partyId, associatedCollaborationGroupId, associatedProcessInstanceGroupId);
         return group;
     }
     
-    public static CollaborationGroupDAO getAssociatedCollaborationGroup(String partyId, Long associatedGroupId) {
-        return new JPARepositoryFactory().forBpRepository(true).getSingleEntity(QUERY_GET_ASSOCIATED_GROUP, new String[]{"partyId", "associatedGroupId"}, new Object[]{partyId, associatedGroupId});
+    public static CollaborationGroupDAO getAssociatedCollaborationGroup(String partyId, Long associatedCollaborationGroupId,String associatedProcessInstanceGroupId) {
+        return new JPARepositoryFactory().forBpRepository(true).getSingleEntity(QUERY_GET_ASSOCIATED_GROUP, new String[]{"partyId","pigId", "associatedCollaborationGroupId"}, new Object[]{partyId, associatedProcessInstanceGroupId, associatedCollaborationGroupId});
     }
 
     public static List<Long> getCollaborationGroupHjidOfProcessInstanceGroups(List<String> groupIds) {

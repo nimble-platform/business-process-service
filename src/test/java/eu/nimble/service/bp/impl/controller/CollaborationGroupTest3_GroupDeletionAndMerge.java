@@ -40,7 +40,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         * Seller accepts the PPAP request
         * We expect that a new collaboration group will be created for the buyer
         * Then, the buyer merges two collaboration groups: the group created in CollaborationGroupTest2_GroupDeletion and the group created in CollaborationGroupTest3_GroupDeletionAndMerge
-        * Finally, we retrieve collaboration groups which are projects for the buyer.
+        * We retrieve collaboration groups which are projects for the buyer.
+        * Finally, the buyer initiates another item information request in the project.
  */
 public class CollaborationGroupTest3_GroupDeletionAndMerge {
 
@@ -51,6 +52,7 @@ public class CollaborationGroupTest3_GroupDeletionAndMerge {
 
     private final String itemInformationRequestJSON = "/controller/itemInformationRequestJSON4.txt";
     private final String itemInformationResponseJSON = "/controller/itemInformationResponseJSON4.txt";
+    private final String itemInformationRequestJSON2 = "/controller/itemInformationRequestJSON6.txt";
     private final String PPAPRequestJSON = "/controller/PPAPRequestJSON2.txt";
     private final String PPAPResponseJSON = "/controller/PPAPResponseJSON2.txt";
     private final String relatedProduct = "Quantum Product example";
@@ -213,6 +215,26 @@ public class CollaborationGroupTest3_GroupDeletionAndMerge {
         CollaborationGroupResponse collaborationGroupResponse = mapper.readValue(mvcResult.getResponse().getContentAsString(), CollaborationGroupResponse.class);
         Assert.assertSame(2,collaborationGroupResponse.getSize());
         Assert.assertEquals(buyerCollaborationGroupID,collaborationGroupResponse.getCollaborationGroups().get(0).getID());
+        // update buyer process instance group id
+        buyerProcessInstanceGroupID = collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().get(0).getID();
+    }
+
+    /*
+        After merging collaboration groups, check whether the buyer can start new processes in this project or not.
+     */
+    @Test
+    public void test9_startItemInformationRequest() throws Exception{
+        String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(itemInformationRequestJSON2));
+
+        // start business process
+        MockHttpServletRequestBuilder request = post("/start")
+                .header("Authorization", TestConfig.initiatorPersonId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(inputMessageAsString)
+                .param("gid", buyerProcessInstanceGroupID)
+                .param("collaborationGID", buyerCollaborationGroupID)
+                .param("precedingPid", processInstanceIdPPAP);
+        this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
     }
 
     private CollaborationGroupResponse getCollaborationGroupResponse() throws Exception{

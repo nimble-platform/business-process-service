@@ -248,7 +248,7 @@ public class StartController implements StartApi {
             else {
                 initiatorCollaborationGroupDAO = repo.getSingleEntityByHjid(CollaborationGroupDAO.class, Long.parseLong(collaborationGID));
                 // get responder collaboration group
-                responderCollaborationGroupDAO = CollaborationGroupDAOUtility.getCollaborationGroupDAO(body.getVariables().getResponderID(),initiatorCollaborationGroupDAO.getHjid());
+                responderCollaborationGroupDAO = CollaborationGroupDAOUtility.getCollaborationGroupDAO(body.getVariables().getResponderID(),initiatorCollaborationGroupDAO.getHjid(),gid);
                 // check whether the responder collaboration group is null or not
                 if(responderCollaborationGroupDAO == null){
                     responderCollaborationGroupDAO = CollaborationGroupDAOUtility.createCollaborationGroupDAO();
