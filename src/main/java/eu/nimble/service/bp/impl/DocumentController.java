@@ -1,6 +1,9 @@
 package eu.nimble.service.bp.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import eu.nimble.common.rest.identity.IIdentityClientTyped;
+import eu.nimble.common.rest.identity.IdentityClientTyped;
+import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
@@ -10,20 +13,29 @@ import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
 import eu.nimble.service.model.ubl.order.ObjectFactory;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
+import eu.nimble.utility.Configuration;
+import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.JAXBUtility;
 import eu.nimble.utility.JsonSerializationUtility;
+import eu.nimble.utility.persistence.resource.EntityIdAwareRepositoryWrapper;
+import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.logging.LogLevel;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -41,6 +53,11 @@ import static eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog;
 @Controller
 public class DocumentController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    @Autowired
+    private ResourceValidationUtility resourceValidationUtility;
+    @Autowired
+    private IIdentityClientTyped identityClient;
 
     @ApiOperation(value = "",notes = "Retrieve Json content of the document with the given id")
     @ApiResponses(value = {
@@ -126,6 +143,59 @@ public class DocumentController {
         return new ResponseEntity<>(documentContentXML, HttpStatus.OK);
     }
     // The above two operations are to retrieve the document contents
+
+    @ApiOperation(value = "",notes = "Retrieves XML content of the document with the given id")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Retrieved the specified document"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 404, message = "No document found for the specified id"),
+            @ApiResponse(code = 500, message = "Unexpected error while retrieving the document")
+    })
+    @RequestMapping(value = "/document/{documentID}",
+            produces = "application/json",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            method = RequestMethod.PATCH)
+    public ResponseEntity updateDocument(@ApiParam(value = "Serialized form of the document exchanged in the updated step of the business process", required = true) @RequestBody String content,
+                                         @ApiParam(value = "Identifier of the document", required = true) @PathVariable(value = "documentID", required = true) String documentID,
+                                         @ApiParam(value = "Type of the process instance document to be updated", required = true) @RequestParam(value = "documentType") DocumentType documentType,
+                                         @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
+        try {
+            // check token
+            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
+            if (tokenCheck != null) {
+                return tokenCheck;
+            }
+
+            Object document = DocumentPersistenceUtility.readDocument(documentType, content);
+
+            // get party id in order to validate the hjids
+            String partyId;
+            try {
+                // get person using the given bearer token
+                PersonType person = identityClient.getPerson(bearerToken);
+                // get party for the person
+                PartyType party = identityClient.getPartyByPersonID(person.getID()).get(0);
+                partyId = party.getPartyIdentification().get(0).getID();
+
+            } catch (IOException e) {
+                return createResponseEntityAndLog(String.format("Failed to retrieve party for token: %s", bearerToken), HttpStatus.UNAUTHORIZED);
+            }
+
+            // validate the entity ids
+            boolean hjidsBelongToCompany = resourceValidationUtility.hjidsBelongsToParty(document, partyId, Configuration.Standard.UBL.toString());
+            if (!hjidsBelongToCompany) {
+                return HttpResponseUtil.createResponseEntityAndLog(String.format("Some of the identifiers (hjid fields) do not belong to the party in the passed catalogue: %s", content), null, HttpStatus.BAD_REQUEST, LogLevel.INFO);
+            }
+
+            EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(partyId);
+            document = repositoryWrapper.updateEntity(document);
+
+            return ResponseEntity.ok(JsonSerializationUtility.getObjectMapper().writeValueAsString(document));
+
+        } catch (Exception e) {
+            return createResponseEntityAndLog(String.format("Unexpected error while updating the document id: %s, document type: %s\n, document: %s", documentID, documentType, content), e, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
 //    @Override
 //    @ApiOperation(value = "",notes = "Add a business process document metadata")

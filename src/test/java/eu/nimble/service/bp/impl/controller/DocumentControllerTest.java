@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
+import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
 import eu.nimble.utility.JsonSerializationUtility;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
@@ -34,7 +35,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringJUnit4ClassRunner.class)
-@Ignore
 public class DocumentControllerTest {
 
     @Autowired
@@ -58,8 +58,42 @@ public class DocumentControllerTest {
     private final String status = "WAITINGRESPONSE";
 
     private static String documentId;
+    private static OrderResponseSimpleType orderResponse;
 
     @Test
+    public void test1_getDocument() throws Exception {
+        MockHttpServletRequestBuilder request = get("/document/json/fc3d34b0-6120-4d08-9c40-5bc86ff0cb21")
+                .header("Authorization", TestConfig.responderPersonId);
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andReturn();
+
+        orderResponse = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), OrderResponseSimpleType.class);
+        System.out.println(orderResponse);
+    }
+
+    @Test
+    public void test2_updateDocument() throws Exception {
+        // update document
+        String rejectionNote = "rejection note";
+        orderResponse.setRejectionNote(rejectionNote);
+
+        MockHttpServletRequestBuilder request = patch("/document/fc3d34b0-6120-4d08-9c40-5bc86ff0cb21")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(JsonSerializationUtility.getObjectMapper().writeValueAsString(orderResponse))
+                .param("documentType", "ORDERRESPONSESIMPLE")
+                .param("clauseDocumentId", StartControllerTest.iirId1)
+                .header("Authorization", TestConfig.responderPersonId);
+        this.mockMvc.perform(request).andDo(print()).andReturn();
+
+        request = get("/document/json/fc3d34b0-6120-4d08-9c40-5bc86ff0cb21")
+                .header("Authorization", TestConfig.responderPersonId);
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andReturn();
+        orderResponse = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), OrderResponseSimpleType.class);
+
+        Assert.assertEquals("Rejection notes are not the same", orderResponse.getRejectionNote(), rejectionNote);
+    }
+
+    @Test
+    @Ignore
     public void test1_addDocumentMetadata() throws Exception {
         String documentMetadata = IOUtils.toString(ProcessDocumentMetadata.class.getResourceAsStream(documentMetadataJSON));
         MockHttpServletRequestBuilder request = post("/document")
@@ -75,6 +109,7 @@ public class DocumentControllerTest {
     }
 
     @Test
+    @Ignore
     public void test2_addDocumentMetadata() throws Exception {
         String documentMetadata = IOUtils.toString(ProcessDocumentMetadata.class.getResourceAsStream(documentMetadataJSON2));
         MockHttpServletRequestBuilder request = post("/document")
@@ -90,6 +125,7 @@ public class DocumentControllerTest {
     }
 
     @Test
+    @Ignore
     public void test3_addDocumentMetadata() throws Exception {
         String documentMetadata = IOUtils.toString(ProcessDocumentMetadata.class.getResourceAsStream(documentMetadataJSON3));
         MockHttpServletRequestBuilder request = post("/document")
@@ -105,6 +141,7 @@ public class DocumentControllerTest {
     }
 
     @Test
+    @Ignore
     public void test4_getDocuments() throws Exception {
         MockHttpServletRequestBuilder request = get("/document/" + partnerID + "/" + type)
                 .header("Authorization", TestConfig.initiatorPersonId);
@@ -118,6 +155,7 @@ public class DocumentControllerTest {
     }
 
     @Test
+    @Ignore
     public void test5_getDocuments() throws Exception {
         MockHttpServletRequestBuilder request = get("/document/" + partnerID + "/" + type + "/" + source)
                 .header("Authorization", TestConfig.initiatorPersonId);
@@ -131,6 +169,7 @@ public class DocumentControllerTest {
     }
 
     @Test
+    @Ignore
     public void test6_getDocuments() throws Exception {
         MockHttpServletRequestBuilder request = get("/document/" + partnerID2 + "/" + type + "/" + source + "/" + status)
                 .header("Authorization", TestConfig.initiatorPersonId);
@@ -144,6 +183,7 @@ public class DocumentControllerTest {
     }
 
     @Test
+    @Ignore
     public void test7_updateDocumentMetadata() throws Exception {
         // get document
         MockHttpServletRequestBuilder request = get("/document/" + partnerID + "/" + type)
@@ -172,6 +212,7 @@ public class DocumentControllerTest {
     }
 
     @Test
+    @Ignore
     public void test8_deleteDocument() throws Exception {
         // get the document
         MockHttpServletRequestBuilder request = get("/document/" + partnerID + "/" + type)
