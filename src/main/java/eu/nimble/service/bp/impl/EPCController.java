@@ -45,9 +45,9 @@ public class EPCController {
 
     @ApiOperation(value = "",notes = "Gets product information as CatalogueLine for the specified EPC code. First, the corresponding order" +
             " is fetched for the specified code from the data channel service and then, the CatalogueLine is retrieved for the product" +
-            " included in the order.", response = TTInfo.class)
+            " included in the order.", response = CatalogueLineType.class)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Retrieved the CatalogueLine details successfully", response = TTInfo.class),
+            @ApiResponse(code = 200, message = "Retrieved the CatalogueLine details successfully", response = CatalogueLineType.class),
             @ApiResponse(code = 400, message = "The given epc code is not used in any orders"),
             @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
             @ApiResponse(code = 500, message = "Unexpected error while getting the T&T details for the given epc")
