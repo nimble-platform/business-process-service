@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.common.rest.datachannel.IDataChannelClient;
 import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
 import eu.nimble.service.bp.model.tt.OrderEPC;
-import eu.nimble.service.bp.model.tt.TTInfo;
 import eu.nimble.service.bp.util.HttpResponseUtil;
 import eu.nimble.service.bp.util.persistence.catalogue.CataloguePersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
