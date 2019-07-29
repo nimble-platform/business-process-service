@@ -408,10 +408,6 @@ paths:
           description: Created negotiations for line items for the given party
           schema:
             type: string
-        400:
-          description: Number of elements in catalogue uuids list, line ids list and quantities list do not match
-          schema:
-            type: string
         401:
           description: Invalid token. No user was found for the provided token
           schema:

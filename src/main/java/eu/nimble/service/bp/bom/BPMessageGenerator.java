@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.common.rest.identity.model.NegotiationSettings;
 import eu.nimble.service.bp.contract.ContractGenerator;
+import eu.nimble.service.bp.model.billOfMaterial.BillOfMaterialItem;
 import eu.nimble.service.bp.util.persistence.catalogue.CataloguePersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.ContractPersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
@@ -37,16 +38,16 @@ public class BPMessageGenerator {
     private final static String orderProcessId = "Order";
     private final static String negotiationProcessId = "Negotiation";
 
-    public static ProcessInstanceInputMessage createBPMessageForBOM(String catalogId, String lineId, QuantityType quantity, Boolean useFrameContract, PartyType buyerParty, String creatorUserId, String bearerToken) throws Exception {
+    public static ProcessInstanceInputMessage createBPMessageForBOM(BillOfMaterialItem billOfMaterialItem, Boolean useFrameContract, PartyType buyerParty, String creatorUserId, String bearerToken) throws Exception {
         // get catalogue line
-        CatalogueLineType catalogueLine = CataloguePersistenceUtility.getCatalogueLine(catalogId,lineId);
+        CatalogueLineType catalogueLine = CataloguePersistenceUtility.getCatalogueLine(billOfMaterialItem.getCatalogueUuid(),billOfMaterialItem.getlineId());
         // get seller negotiation settings
         NegotiationSettings sellerNegotiationSettings = SpringBridge.getInstance().getiIdentityClientTyped().getNegotiationSettings(catalogueLine.getGoodsItem().getItem().getManufacturerParty().getPartyIdentification().get(0).getID());
 
         // if there is a valid frame contract and useFrameContract is True, then create an order for the line item using the details of frame contract
         // otherwise, start a negotiation process for the item
         if (useFrameContract) {
-            DigitalAgreementType digitalAgreement = ContractPersistenceUtility.getFrameContractAgreementById(catalogueLine.getGoodsItem().getItem().getManufacturerParty().getPartyIdentification().get(0).getID(), buyerParty.getPartyIdentification().get(0).getID(), lineId);
+            DigitalAgreementType digitalAgreement = ContractPersistenceUtility.getFrameContractAgreementById(catalogueLine.getGoodsItem().getItem().getManufacturerParty().getPartyIdentification().get(0).getID(), buyerParty.getPartyIdentification().get(0).getID(), billOfMaterialItem.getlineId());
 
             if (digitalAgreement != null) {
                 // check whether frame contract is valid or not
@@ -62,7 +63,7 @@ public class BPMessageGenerator {
             }
         }
 
-        RequestForQuotationType requestForQuotation = createRequestForQuotation(catalogueLine, quantity, sellerNegotiationSettings,buyerParty, bearerToken);
+        RequestForQuotationType requestForQuotation = createRequestForQuotation(catalogueLine, billOfMaterialItem.getquantity(), sellerNegotiationSettings,buyerParty, bearerToken);
 
         return BPMessageGenerator.createProcessInstanceInputMessage(requestForQuotation, requestForQuotation.getID(), negotiationProcessId, catalogueLine.getGoodsItem().getItem(), creatorUserId);
     }

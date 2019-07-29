@@ -2,6 +2,7 @@ package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.bom.BPMessageGenerator;
 import eu.nimble.service.bp.model.billOfMaterial.BillOfMaterial;
+import eu.nimble.service.bp.model.billOfMaterial.BillOfMaterialItem;
 import eu.nimble.service.bp.model.hyperjaxb.*;
 import eu.nimble.service.bp.util.BusinessProcessEvent;
 import eu.nimble.service.bp.util.HttpResponseUtil;
@@ -76,13 +77,6 @@ public class StartController implements StartApi {
             return tokenCheck;
         }
 
-        // validate BillOfMaterial
-        if(billOfMaterial.getCatalogueUuids().size() != billOfMaterial.getLineIds().size() || billOfMaterial.getCatalogueUuids().size() != billOfMaterial.getQuantities().size()){
-            String msg = "Number of elements in catalogue uuids list, line ids list and quantities list do not match";
-            logger.error(msg);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(msg);
-        }
-
         try {
             // get person using the given bearer token
             PersonType person = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken);
@@ -94,10 +88,9 @@ public class StartController implements StartApi {
             List<String> hjidOfGroupsToBeMerged = new ArrayList<>();
 
             // for each product, create a RFQ
-            int size = billOfMaterial.getCatalogueUuids().size();
-            for(int i = 0 ; i < size ; i++){
+            for(BillOfMaterialItem billOfMaterialItem: billOfMaterial.getBillOfMaterialItems()){
                 // create ProcessInstanceInputMessage for line item
-                ProcessInstanceInputMessage processInstanceInputMessage = BPMessageGenerator.createBPMessageForBOM(billOfMaterial.getCatalogueUuids().get(i),billOfMaterial.getLineIds().get(i),billOfMaterial.getQuantities().get(i), useFrameContract, buyerParty, person.getID(), bearerToken);
+                ProcessInstanceInputMessage processInstanceInputMessage = BPMessageGenerator.createBPMessageForBOM(billOfMaterialItem, useFrameContract, buyerParty, person.getID(), bearerToken);
                 // start the process and get process instance id since we need this info to find collaboration group of process
                 String processInstanceId = startProcessInstance(bearerToken, processInstanceInputMessage, null, null, null, null).getBody().getProcessInstanceID();
 

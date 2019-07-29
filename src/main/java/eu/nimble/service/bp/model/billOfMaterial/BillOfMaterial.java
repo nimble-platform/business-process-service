@@ -1,6 +1,5 @@
 package eu.nimble.service.bp.model.billOfMaterial;
 
-import eu.nimble.service.model.ubl.commonbasiccomponents.QuantityType;
 import io.swagger.annotations.ApiModelProperty;
 
 import java.util.ArrayList;
@@ -9,52 +8,21 @@ import java.util.Objects;
 
 public class BillOfMaterial {
 
-    private List<String> catalogueUuids = new ArrayList<>();
-    private List<String> lineIds = new ArrayList<>();
-    private List<QuantityType> quantities = new ArrayList<>();
+    private List<BillOfMaterialItem> billOfMaterialItems = new ArrayList<>();
 
     /**
-     * Get catalogueUuids
+     * Get billOfMaterialItems
      *
-     * @return catalogueUuids
+     * @return billOfMaterialItems
      **/
     @ApiModelProperty(value = "")
-    public List<String> getCatalogueUuids() {
-        return catalogueUuids;
+    public List<BillOfMaterialItem> getBillOfMaterialItems() {
+        return billOfMaterialItems;
     }
 
-    public void setCatalogueUuids(List<String> catalogueUuids) {
-        this.catalogueUuids = catalogueUuids;
+    public void setBillOfMaterialItems(List<BillOfMaterialItem> billOfMaterialItems) {
+        this.billOfMaterialItems = billOfMaterialItems;
     }
-
-    /**
-     * Get lineIds
-     *
-     * @return lineIds
-     **/
-    @ApiModelProperty(value = "")
-    public List<String> getLineIds() {
-        return lineIds;
-    }
-
-    public void setLineIds(List<String> lineIds) {
-        this.lineIds = lineIds;
-    }
-
-    /**
-     * Get quantities
-     *
-     * @return quantities
-     **/
-    @ApiModelProperty(value = "")
-    public List<QuantityType> getQuantities() {
-        return quantities;
-    }
-
-    public void setQuantities(List<QuantityType> quantities) {
-        this.quantities = quantities;
-    }
-
 
     @Override
     public boolean equals(Object o) {
@@ -65,14 +33,12 @@ public class BillOfMaterial {
             return false;
         }
         BillOfMaterial billOfMaterial = (BillOfMaterial) o;
-        return Objects.equals(this.catalogueUuids, billOfMaterial.catalogueUuids) &&
-                Objects.equals(this.lineIds, billOfMaterial.lineIds) &&
-                Objects.equals(this.quantities, billOfMaterial.quantities);
+        return Objects.equals(this.billOfMaterialItems, billOfMaterial.billOfMaterialItems);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(catalogueUuids,lineIds,quantities);
+        return Objects.hash(billOfMaterialItems);
     }
 
     @Override
@@ -80,9 +46,7 @@ public class BillOfMaterial {
         StringBuilder sb = new StringBuilder();
         sb.append("class BillOfMaterial {\n");
 
-        sb.append("    catalogueUuids: ").append(toIndentedString(catalogueUuids)).append("\n");
-        sb.append("    lineIds: ").append(toIndentedString(lineIds)).append("\n");
-        sb.append("    quantities: ").append(toIndentedString(quantities)).append("\n");
+        sb.append("    billOfMaterialItems: ").append(toIndentedString(billOfMaterialItems)).append("\n");
         sb.append("}");
         return sb.toString();
     }
