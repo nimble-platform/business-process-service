@@ -24,7 +24,8 @@ import org.junit.runners.Suite;
         HjidCheckTest.class,
         CollaborationGroupTest2_GroupDeletion.class,
         CollaborationGroupTest3_GroupDeletionAndMerge.class,
-        DocumentTypesTest.class
+        DocumentTypesTest.class,
+        EPCControllerTest.class
 })
 public class TestSuite {
 }

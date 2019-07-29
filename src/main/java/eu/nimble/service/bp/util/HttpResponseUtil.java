@@ -2,6 +2,8 @@ package eu.nimble.service.bp.util;
 
 import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.utility.exception.AuthenticationException;
+import feign.Response;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.logging.LogLevel;
@@ -48,6 +50,25 @@ public class HttpResponseUtil {
             }
         } catch (IOException e) {
             throw new AuthenticationException(String.format("Failed to check user authorization for token: %s", token), e);
+        }
+    }
+
+    public static String extractBodyFromFeignClientResponse(Response feignResponse) throws IOException {
+        try {
+            String responseBody = IOUtils.toString(feignResponse.body().asInputStream());
+            if(feignResponse.status() == HttpStatus.OK.value()) {
+                return responseBody;
+
+            } else {
+                String msg = String.format("Unexpected response status: %d.\n%s", feignResponse.status(), responseBody);
+                logger.error(msg);
+                throw new IOException(msg);
+            }
+
+        } catch (IOException e) {
+            String msg = String.format("Failed to extract response body from feign response");
+            logger.error(msg, e);
+            throw e;
         }
     }
 }
