@@ -2,22 +2,27 @@ package eu.nimble.service.bp.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
-import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
-import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceStatus;
-import eu.nimble.service.bp.impl.util.BusinessProcessEvent;
-import eu.nimble.service.bp.impl.model.export.TransactionSummary;
-import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
-import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMapper;
-import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
-import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceDAOUtility;
-import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
-import eu.nimble.service.bp.impl.util.persistence.catalogue.TrustPersistenceUtility;
-import eu.nimble.service.bp.impl.util.spring.SpringBridge;
+import eu.nimble.common.rest.identity.IIdentityClientTyped;
+import eu.nimble.service.bp.model.hyperjaxb.CollaborationGroupDAO;
+import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
+import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceDAO;
+import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceStatus;
+import eu.nimble.service.bp.util.BusinessProcessEvent;
+import eu.nimble.service.bp.model.export.TransactionSummary;
+import eu.nimble.service.bp.util.camunda.CamundaEngine;
+import eu.nimble.service.bp.util.persistence.bp.CollaborationGroupDAOUtility;
+import eu.nimble.service.bp.util.persistence.bp.HibernateSwaggerObjectMapper;
+import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
+import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceDAOUtility;
+import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
+import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
+import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.DocumentReferenceType;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.BinaryObjectType;
 import eu.nimble.service.model.ubl.document.IDocument;
 import eu.nimble.utility.Configuration;
@@ -65,10 +70,13 @@ public class ProcessInstanceController {
 
     @Autowired
     private ResourceValidationUtility resourceValidationUtil;
+    @Autowired
+    private IIdentityClientTyped iIdentityClientTyped;
 
     @ApiOperation(value = "",notes = "Cancels the process instance with the given id")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Cancelled the process instance successfully"),
+            @ApiResponse(code = 400, message = "The process instance with the given id is already cancelled."),
             @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
             @ApiResponse(code = 404, message = "There does not exist a process instance with the given id"),
             @ApiResponse(code = 500, message = "Unexpected error while cancelling the process instance with the given id")
@@ -81,7 +89,7 @@ public class ProcessInstanceController {
 
         try {
             // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
             if (tokenCheck != null) {
                 return tokenCheck;
             }
@@ -92,8 +100,20 @@ public class ProcessInstanceController {
                 logger.error("There does not exist a process instance with id:{}",processInstanceId);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("There does not exist a process instance with the given id");
             }
-            // cancel the process
-            CamundaEngine.cancelProcessInstance(processInstanceId);
+            // check the status of process instance
+            if(instanceDAO.getStatus().equals(ProcessInstanceStatus.CANCELLED)){
+                String msg = String.format("The process instance with id: %s is already cancelled",processInstanceId);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(msg);
+            }
+
+            // if the process is completed or cancelled, we should not call CamundaEngine.cancelProcessInstance method
+            // since there will be no such process instance
+            if(instanceDAO.getStatus().equals(ProcessInstanceStatus.STARTED)){
+                // cancel the process
+                CamundaEngine.cancelProcessInstance(processInstanceId);
+            }
+
             // change status of the process
             instanceDAO.setStatus(ProcessInstanceStatus.CANCELLED);
             new JPARepositoryFactory().forBpRepository().updateEntity(instanceDAO);
@@ -121,7 +141,7 @@ public class ProcessInstanceController {
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Updated the process instance successfully"),
             @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
-            @ApiResponse(code = 404, message = "There does not exist a process instance with the given id"),
+            @ApiResponse(code = 404, message = "There does not exist a document metadata for the process instance with the given id"),
             @ApiResponse(code = 500, message = "Unexpected error while updating the process instance with the given id")
     })
     @RequestMapping(value = "/processInstance",
@@ -139,12 +159,16 @@ public class ProcessInstanceController {
 
         try {
             // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
             if (tokenCheck != null) {
                 return tokenCheck;
             }
 
             ProcessDocumentMetadata processDocumentMetadata = ProcessDocumentMetadataDAOUtility.getRequestMetadata(processInstanceID);
+            if(processDocumentMetadata == null){
+                logger.error("There does not exist a document metadata for the process instance with id:{}",processInstanceID);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("There does not exist a document metadata for the process instance with the given id");
+            }
             Object document = DocumentPersistenceUtility.readDocument(documentType, content);
             // validate the entity ids
             boolean hjidsBelongToCompany = resourceValidationUtil.hjidsBelongsToParty(document, processDocumentMetadata.getInitiatorID(), Configuration.Standard.UBL.toString());
@@ -153,11 +177,6 @@ public class ProcessInstanceController {
             }
 
             ProcessInstanceDAO instanceDAO = ProcessInstanceDAOUtility.getById(processInstanceID);
-            // check whether the process instance with the given id exists or not
-            if(instanceDAO == null){
-                logger.error("There does not exist a process instance with id:{}",processInstanceID);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("There does not exist a process instance with the given id");
-            }
             // update creator user id of metadata
             processDocumentMetadata.setCreatorUserID(creatorUserID);
             ProcessDocumentMetadataDAOUtility.updateDocumentMetadata(businessProcessContext.getId(),processDocumentMetadata);
@@ -205,7 +224,7 @@ public class ProcessInstanceController {
         try {
             logger.info("Getting rating status for process instance: {}, party: {}", processInstanceId, partyId);
             // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
             if (tokenCheck != null) {
                 return tokenCheck;
             }
@@ -224,6 +243,7 @@ public class ProcessInstanceController {
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Retrieved process instance details successfully"),
             @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 404, message = "There does not exist a process instance with the given id"),
             @ApiResponse(code = 500, message = "Unexpected error while getting the details of process instance")
     })
     @RequestMapping(value = "/processInstance/{processInstanceId}/details",
@@ -237,9 +257,17 @@ public class ProcessInstanceController {
             executorService = Executors.newCachedThreadPool();
 
             // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
             if (tokenCheck != null) {
                 return tokenCheck;
+            }
+
+            // check the existence of process instance
+            ProcessInstanceDAO instanceDAO = ProcessInstanceDAOUtility.getById(processInstanceId);
+            if(instanceDAO == null){
+                String msg = String.format("There does not exist a process instance with id: %s",processInstanceId);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
             }
 
             List<HistoricVariableInstance> variableInstanceList = CamundaEngine.getVariableInstances(processInstanceId);
@@ -343,6 +371,44 @@ public class ProcessInstanceController {
         return threadPool.submit(() -> JsonSerializationUtility.getObjectMapper().writeValueAsString(object));
     }
 
+    @ApiOperation(value = "",notes = "Gets CollaborationGroup containing the specified process instance. The party information is derived from the given bearer token and " +
+            "the service returns CollaborationGroup belonging to this party.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Retrieved the CollaborationGroup successfully"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 404, message = "No CollaborationGroup found for the given identifier"),
+            @ApiResponse(code = 500, message = "Unexpected error while getting the CollaborationGroup")
+    })
+    @RequestMapping(value = "/processInstance/{processInstanceId}/collaboration-group",
+            produces = {MediaType.APPLICATION_JSON_VALUE},
+            method = RequestMethod.GET)
+    public ResponseEntity getAssociatedCollaborationGroup(@ApiParam(value = "Identifier of the process instance", required = true) @PathVariable(value = "processInstanceId", required = true) String processInstanceId,
+                                                          @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
+
+        try {
+            // get person using the given bearer token
+            PartyType party;
+            try {
+                PersonType person = iIdentityClientTyped.getPerson(bearerToken);
+                // get party for the person
+                party = iIdentityClientTyped.getPartyByPersonID(person.getID()).get(0);
+
+            } catch (IOException e) {
+                return HttpResponseUtil.createResponseEntityAndLog(String.format("Failed to retrieve party for the token: %s", bearerToken), e, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            CollaborationGroupDAO collaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroupByProcessInstanceIdAndPartyId(processInstanceId, party.getPartyIdentification().get(0).getID());
+            if(collaborationGroup == null) {
+                return HttpResponseUtil.createResponseEntityAndLog(String.format("No CollaborationGroup for the process instance id: %s", processInstanceId), null, HttpStatus.NOT_FOUND, LogLevel.INFO);
+            }
+
+            return ResponseEntity.status(HttpStatus.OK).body(HibernateSwaggerObjectMapper.convertCollaborationGroupDAO(collaborationGroup));
+
+        } catch (Exception e) {
+            return HttpResponseUtil.createResponseEntityAndLog(String.format("Failed to retrieve party for the token: %s", bearerToken), e, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @ApiOperation(value = "", notes = "Exports transaction data according to the specified parameters.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Exported transactions successfully"),
@@ -352,12 +418,12 @@ public class ProcessInstanceController {
     @RequestMapping(value = "/processInstance/export",
             produces = {"application/zip"},
             method = RequestMethod.GET)
-    public void getDashboardProcessInstanceDetails(@ApiParam(value = "Identifier the party as the subject of incoming or outgoing transactions.", required = true) @RequestParam(value = "partyId", required = true) String partyId,
-                                                   @ApiParam(value = "Identifier of the user who initiated the transactions. This parameter is considered only for the outgoing transactions.", required = false) @RequestParam(value = "userId", required = false) String userId,
-                                                   @ApiParam(value = "Direction of the transaction. It can be incoming/outgoing. If not provided, all transactions are considered.", required = false) @RequestParam(value = "direction", required = false) String direction,
-                                                   @ApiParam(value = "Archived status of the CollaborationGroup including the transaction.", required = false) @RequestParam(value = "archived", required = false) Boolean archived,
-                                                   @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
-                                                   HttpServletResponse response) {
+    public void exportProcessInstanceData(@ApiParam(value = "Identifier the party as the subject of incoming or outgoing transactions.", required = true) @RequestParam(value = "partyId", required = true) String partyId,
+                                          @ApiParam(value = "Identifier of the user who initiated the transactions. This parameter is considered only for the outgoing transactions.", required = false) @RequestParam(value = "userId", required = false) String userId,
+                                          @ApiParam(value = "Direction of the transaction. It can be incoming/outgoing. If not provided, all transactions are considered.", required = false) @RequestParam(value = "direction", required = false) String direction,
+                                          @ApiParam(value = "Archived status of the CollaborationGroup including the transaction.", required = false) @RequestParam(value = "archived", required = false) Boolean archived,
+                                          @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
+                                          HttpServletResponse response) {
 
         ZipOutputStream zos = null;
         ByteArrayOutputStream tempOutputStream;

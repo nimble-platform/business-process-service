@@ -28,14 +28,14 @@ public class ObjectController {
     @RequestMapping(value = "/object/{hjid}",
             produces = {"application/json"},
             method = RequestMethod.DELETE)
-    public ResponseEntity getDocumentJsonContent(@ApiParam(value = "The identifier of the object (hjid) to be deleted", required = true) @PathVariable(value = "hjid") String hjid,
+    public ResponseEntity deleteObject(@ApiParam(value = "The identifier of the object (hjid) to be deleted", required = true) @PathVariable(value = "hjid") String hjid,
                                                  @ApiParam(value = "Class name of the object to be deleted. Some examples are eu.nimble.service.model.ubl.quotation.QuotationType and eu.nimble.service.model.ubl.order.OrderType",required = true) @RequestParam(value = "className",required = true) String className,
                                                  @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
     ) {
         logger.info("Deleting the object with hjid: {}, className: {}",hjid,className);
 
         // check token
-        ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
+        ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
         if (tokenCheck != null) {
             return tokenCheck;
         }

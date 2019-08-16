@@ -10,76 +10,76 @@ Generated on: 2019.05.29 at 02:01:18 PM MSK
   -->
   <jaxb:bindings if-exists="true" scd="x-schema::">
     <jaxb:schemaBindings map="false">
-      <jaxb:package name="eu.nimble.service.bp.hyperjaxb.model"/>
+      <jaxb:package name="eu.nimble.service.bp.model.hyperjaxb"/>
     </jaxb:schemaBindings>
     <jaxb:bindings if-exists="true" scd="~ProcessPreferencesDAO">
-      <jaxb:class ref="eu.nimble.service.bp.hyperjaxb.model.ProcessPreferencesDAO"/>
+      <jaxb:class ref="eu.nimble.service.bp.model.hyperjaxb.ProcessPreferencesDAO"/>
     </jaxb:bindings>
     <jaxb:bindings if-exists="true" scd="~ProcessPreferenceDAO">
-      <jaxb:class ref="eu.nimble.service.bp.hyperjaxb.model.ProcessPreferenceDAO"/>
+      <jaxb:class ref="eu.nimble.service.bp.model.hyperjaxb.ProcessPreferenceDAO"/>
     </jaxb:bindings>
     <jaxb:bindings if-exists="true" scd="~ProcessDAO">
-      <jaxb:class ref="eu.nimble.service.bp.hyperjaxb.model.ProcessDAO"/>
+      <jaxb:class ref="eu.nimble.service.bp.model.hyperjaxb.ProcessDAO"/>
     </jaxb:bindings>
     <jaxb:bindings if-exists="true" scd="~TransactionDAO">
-      <jaxb:class ref="eu.nimble.service.bp.hyperjaxb.model.TransactionDAO"/>
+      <jaxb:class ref="eu.nimble.service.bp.model.hyperjaxb.TransactionDAO"/>
     </jaxb:bindings>
     <jaxb:bindings if-exists="true" scd="~ExecutionConfigurationDAO">
-      <jaxb:class ref="eu.nimble.service.bp.hyperjaxb.model.ExecutionConfigurationDAO"/>
+      <jaxb:class ref="eu.nimble.service.bp.model.hyperjaxb.ExecutionConfigurationDAO"/>
     </jaxb:bindings>
     <jaxb:bindings if-exists="true" scd="~TransactionConfigurationDAO">
-      <jaxb:class ref="eu.nimble.service.bp.hyperjaxb.model.TransactionConfigurationDAO"/>
+      <jaxb:class ref="eu.nimble.service.bp.model.hyperjaxb.TransactionConfigurationDAO"/>
     </jaxb:bindings>
     <jaxb:bindings if-exists="true" scd="~ProcessConfigurationDAO">
-      <jaxb:class ref="eu.nimble.service.bp.hyperjaxb.model.ProcessConfigurationDAO"/>
+      <jaxb:class ref="eu.nimble.service.bp.model.hyperjaxb.ProcessConfigurationDAO"/>
     </jaxb:bindings>
     <jaxb:bindings if-exists="true" scd="~ProcessVariablesDAO">
-      <jaxb:class ref="eu.nimble.service.bp.hyperjaxb.model.ProcessVariablesDAO"/>
+      <jaxb:class ref="eu.nimble.service.bp.model.hyperjaxb.ProcessVariablesDAO"/>
     </jaxb:bindings>
     <jaxb:bindings if-exists="true" scd="~ProcessInstanceInputMessageDAO">
-      <jaxb:class ref="eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceInputMessageDAO"/>
+      <jaxb:class ref="eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceInputMessageDAO"/>
     </jaxb:bindings>
     <jaxb:bindings if-exists="true" scd="~ProcessInstanceDAO">
-      <jaxb:class ref="eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO"/>
+      <jaxb:class ref="eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceDAO"/>
     </jaxb:bindings>
     <jaxb:bindings if-exists="true" scd="~ProcessInstanceGroupDAO">
-      <jaxb:class ref="eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO"/>
+      <jaxb:class ref="eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceGroupDAO"/>
     </jaxb:bindings>
     <jaxb:bindings if-exists="true" scd="~CollaborationGroupDAO">
-      <jaxb:class ref="eu.nimble.service.bp.hyperjaxb.model.CollaborationGroupDAO"/>
+      <jaxb:class ref="eu.nimble.service.bp.model.hyperjaxb.CollaborationGroupDAO"/>
     </jaxb:bindings>
     <jaxb:bindings if-exists="true" scd="~AssociatedProcessInstanceGroup">
-      <jaxb:class ref="eu.nimble.service.bp.hyperjaxb.model.AssociatedProcessInstanceGroup"/>
+      <jaxb:class ref="eu.nimble.service.bp.model.hyperjaxb.AssociatedProcessInstanceGroup"/>
     </jaxb:bindings>
     <jaxb:bindings if-exists="true" scd="~ProcessDocumentMetadataDAO">
-      <jaxb:class ref="eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO"/>
+      <jaxb:class ref="eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO"/>
     </jaxb:bindings>
     <jaxb:bindings if-exists="true" scd="~ProcessType">
-      <jaxb:typesafeEnumClass ref="eu.nimble.service.bp.hyperjaxb.model.ProcessType"/>
+      <jaxb:typesafeEnumClass ref="eu.nimble.service.bp.model.hyperjaxb.ProcessType"/>
     </jaxb:bindings>
     <jaxb:bindings if-exists="true" scd="~RoleType">
-      <jaxb:typesafeEnumClass ref="eu.nimble.service.bp.hyperjaxb.model.RoleType"/>
+      <jaxb:typesafeEnumClass ref="eu.nimble.service.bp.model.hyperjaxb.RoleType"/>
     </jaxb:bindings>
     <jaxb:bindings if-exists="true" scd="~ApplicationExecutionType">
-      <jaxb:typesafeEnumClass ref="eu.nimble.service.bp.hyperjaxb.model.ApplicationExecutionType"/>
+      <jaxb:typesafeEnumClass ref="eu.nimble.service.bp.model.hyperjaxb.ApplicationExecutionType"/>
     </jaxb:bindings>
     <jaxb:bindings if-exists="true" scd="~ApplicationType">
-      <jaxb:typesafeEnumClass ref="eu.nimble.service.bp.hyperjaxb.model.ApplicationType"/>
+      <jaxb:typesafeEnumClass ref="eu.nimble.service.bp.model.hyperjaxb.ApplicationType"/>
     </jaxb:bindings>
     <jaxb:bindings if-exists="true" scd="~DocumentType">
-      <jaxb:typesafeEnumClass ref="eu.nimble.service.bp.hyperjaxb.model.DocumentType"/>
+      <jaxb:typesafeEnumClass ref="eu.nimble.service.bp.model.hyperjaxb.DocumentType"/>
     </jaxb:bindings>
     <jaxb:bindings if-exists="true" scd="~ProcessInstanceStatus">
-      <jaxb:typesafeEnumClass ref="eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceStatus"/>
+      <jaxb:typesafeEnumClass ref="eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceStatus"/>
     </jaxb:bindings>
     <jaxb:bindings if-exists="true" scd="~GroupStatus">
-      <jaxb:typesafeEnumClass ref="eu.nimble.service.bp.hyperjaxb.model.GroupStatus"/>
+      <jaxb:typesafeEnumClass ref="eu.nimble.service.bp.model.hyperjaxb.GroupStatus"/>
     </jaxb:bindings>
     <jaxb:bindings if-exists="true" scd="~CollaborationStatus">
-      <jaxb:typesafeEnumClass ref="eu.nimble.service.bp.hyperjaxb.model.CollaborationStatus"/>
+      <jaxb:typesafeEnumClass ref="eu.nimble.service.bp.model.hyperjaxb.CollaborationStatus"/>
     </jaxb:bindings>
     <jaxb:bindings if-exists="true" scd="~ProcessDocumentStatus">
-      <jaxb:typesafeEnumClass ref="eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentStatus"/>
+      <jaxb:typesafeEnumClass ref="eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentStatus"/>
     </jaxb:bindings>
   </jaxb:bindings>
 </jaxb:bindings>

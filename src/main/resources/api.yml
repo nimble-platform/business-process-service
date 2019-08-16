@@ -380,7 +380,42 @@ paths:
           description: Business Process Instance Started
           schema:
             $ref: '#/definitions/ProcessInstance'
-
+  /start/billofmaterials:
+    post:
+      operationId: createNegotiationsForBOM
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - name: bearerToken
+        in: header
+        type: string
+        required: true
+      - in: body
+        name: billOfMaterial
+        required: true
+        schema:
+          $ref: '#/definitions/BillOfMaterial'
+      - in: query
+        name: useFrameContract
+        description: If this parameter is true and a valid frame contract exists between parties, then an order is started for the product using the details of frame contract
+        required: false
+        default: false
+        type: boolean
+      responses:
+        200:
+          description: Created negotiations for line items for the given party
+          schema:
+            type: string
+        401:
+          description: Invalid token. No user was found for the provided token
+          schema:
+            type: string
+        500:
+          description: Unexpected error while creating negotiations for line items for the given party
+          schema:
+            type: string
   /continue:
     post:
       operationId: continueProcessInstance
@@ -662,6 +697,8 @@ paths:
               $ref: '#/definitions/CollaborationGroup'
           401:
             description: Invalid token. No user was found for the provided token
+          404:
+            description: The collaboration group does not exist for the given id
   /collaboration-groups/{id}/restore:
       post:
         operationId: restoreCollaborationGroup
@@ -682,6 +719,8 @@ paths:
               $ref: '#/definitions/CollaborationGroup'
           401:
             description: Invalid token. No user was found for the provided token
+          404:
+            description: The collaboration group does not exist for the given id
   /collaboration-groups/merge:
     get:
       operationId: mergeCollaborationGroups
@@ -709,6 +748,31 @@ paths:
           description: Invalid token. No user was found for the provided token
         400:
           description: Invalid Clause content
+  /collaboration-groups/all-finished:
+      get:
+        operationId: checkAllCollaborationsFinished
+        parameters:
+          - name: Authorization
+            in: header
+            type: string
+            required: true
+          - in: query
+            name: partyId
+            type: string
+            description: Identifier of the party whose collaborations are checked
+            required: true
+          - in: query
+            name: collaborationRole
+            type: string
+            description: Role of the party in the collaboration. Possible values are SELLER and BUYER
+            default: SELLER
+            required: true
+        responses:
+          200:
+            schema:
+              type: string
+          401:
+            description: Invalid token. No user was found for the provided token
   /collaboration-groups:
     get:
       operationId: getCollaborationGroups
@@ -887,7 +951,8 @@ paths:
           description: Deleted the ProcessInstanceGroup successfully
         401:
           description: Invalid token. No user was found for the provided token
-
+        404:
+          description: There does not exist a process instance group with the given id
 definitions:
 
   Version:
@@ -1175,6 +1240,10 @@ definitions:
 
   CollaborationGroupResponse:
     title: Process Instance Group Response
+    type: object
+
+  BillOfMaterial:
+    title: Bill of Material Object
     type: object
 
   ProcessInstanceGroupFilter:

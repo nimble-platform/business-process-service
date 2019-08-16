@@ -2,9 +2,8 @@ package eu.nimble.service.bp.processor.transport_execution_plan;
 
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
-import eu.nimble.service.bp.impl.util.persistence.bp.ExecutionConfigurationDAOUtility;
-import eu.nimble.service.bp.impl.util.persistence.catalogue.TrustPersistenceUtility;
-import eu.nimble.service.bp.serialization.MixInIgnoreProperties;
+import eu.nimble.service.bp.util.persistence.bp.ExecutionConfigurationDAOUtility;
+import eu.nimble.service.bp.util.serialization.MixInIgnoreProperties;
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import eu.nimble.service.model.ubl.transportexecutionplan.TransportExecutionPlanType;
@@ -34,7 +33,6 @@ public class DefaultTransportExecutionPlanSender implements JavaDelegate {
         String buyer = variables.get("initiatorID").toString();
         String seller = variables.get("responderID").toString();
         String processContextId = variables.get("processContextId").toString();
-        String bearerToken = variables.get("bearer_token").toString();
         TransportExecutionPlanType transportExecutionPlan = (TransportExecutionPlanType) variables.get("transportExecutionPlan");
 
         // get application execution configuration
@@ -62,7 +60,5 @@ public class DefaultTransportExecutionPlanSender implements JavaDelegate {
         execution.removeVariables();
         execution.setVariable("initialDocumentID",initialDocumentID);
         execution.setVariable("responseDocumentID",transportExecutionPlan.getID());
-
-        TrustPersistenceUtility.createCompletedTasksForBothParties(processInstanceId,bearerToken,"Completed");
     }
 }

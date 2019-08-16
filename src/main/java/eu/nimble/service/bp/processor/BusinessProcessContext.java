@@ -1,7 +1,7 @@
 package eu.nimble.service.bp.processor;
 
-import eu.nimble.service.bp.hyperjaxb.model.*;
-import eu.nimble.service.bp.impl.util.spring.SpringBridge;
+import eu.nimble.service.bp.model.hyperjaxb.*;
+import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.utility.Configuration;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;

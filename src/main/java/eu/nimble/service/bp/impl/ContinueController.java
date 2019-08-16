@@ -1,25 +1,28 @@
 package eu.nimble.service.bp.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import eu.nimble.service.bp.hyperjaxb.model.*;
-import eu.nimble.service.bp.impl.util.BusinessProcessEvent;
-import eu.nimble.service.bp.impl.util.HttpResponseUtil;
-import eu.nimble.service.bp.impl.util.bp.BusinessProcessUtility;
-import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
-import eu.nimble.service.bp.impl.util.email.EmailSenderUtil;
-import eu.nimble.service.bp.impl.util.persistence.bp.CollaborationGroupDAOUtility;
-import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMapper;
-import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceDAOUtility;
-import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceGroupDAOUtility;
-import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
+import eu.nimble.service.bp.model.hyperjaxb.*;
+import eu.nimble.service.bp.util.BusinessProcessEvent;
+import eu.nimble.service.bp.util.HttpResponseUtil;
+import eu.nimble.service.bp.util.bp.BusinessProcessUtility;
+import eu.nimble.service.bp.util.camunda.CamundaEngine;
+import eu.nimble.service.bp.util.email.EmailSenderUtil;
+import eu.nimble.service.bp.util.persistence.bp.CollaborationGroupDAOUtility;
+import eu.nimble.service.bp.util.persistence.bp.HibernateSwaggerObjectMapper;
+import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceDAOUtility;
+import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceGroupDAOUtility;
+import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
-import eu.nimble.service.bp.serialization.MixInIgnoreProperties;
+import eu.nimble.service.bp.util.serialization.MixInIgnoreProperties;
 import eu.nimble.service.bp.swagger.api.ContinueApi;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
 import eu.nimble.service.bp.swagger.model.ProcessVariables;
 import eu.nimble.service.bp.swagger.model.Transaction;
+import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
+import eu.nimble.service.bp.util.spring.SpringBridge;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.LoggerUtils;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
@@ -52,6 +55,8 @@ public class ContinueController implements ContinueApi {
     private JPARepositoryFactory repoFactory;
     @Autowired
     private EmailSenderUtil emailSenderUtil;
+    @Autowired
+    private ProcessInstanceGroupController processInstanceGroupController;
 
     @Override
     @ApiOperation(value = "", notes = "Sends input to a waiting process instance (because of a human task)")
@@ -87,8 +92,9 @@ public class ContinueController implements ContinueApi {
                 return tokenCheck;
             }
 
+            String processId = body.getVariables().getProcessID();
             // check the entity ids in the passed document
-            Transaction.DocumentTypeEnum documentType = BusinessProcessUtility.getResponseDocumentForProcess(body.getVariables().getProcessID());
+            Transaction.DocumentTypeEnum documentType = BusinessProcessUtility.getResponseDocumentForProcess(processId);
             Object document = DocumentPersistenceUtility.readDocument(DocumentType.valueOf(documentType.toString()), body.getVariables().getContent());
 
             boolean hjidsExists = resourceValidationUtil.hjidsExit(document);
@@ -120,6 +126,29 @@ public class ContinueController implements ContinueApi {
 
             // create process instance groups if this is the first process initializing the process group
             checkExistingGroup(businessProcessContext.getId(), gid, processInstance.getProcessInstanceID(), body, collaborationGID);
+
+            // get the identifier of party whose workflow will be checked
+            String partyId = processId.contentEquals("Fulfilment") ? body.getVariables().getInitiatorID(): body.getVariables().getResponderID();
+
+            // get the seller party to check its workflow
+            PartyType sellerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,partyId);
+
+            // check whether the process is the last step in seller's workflow
+            boolean isLastProcessInWorkflow;
+
+            // no workflow for the seller company, use the default workflow
+            if(sellerParty.getProcessID() == null || sellerParty.getProcessID().size() == 0){
+                isLastProcessInWorkflow = processId.contentEquals("Fulfilment") || processId.contentEquals("Transport_Execution_Plan");
+            }
+            else{
+                isLastProcessInWorkflow = sellerParty.getProcessID().get(sellerParty.getProcessID().size()-1).contentEquals(processId);
+            }
+
+            // if it's the last process in the seller's workflow and there is no CompletedTask for this collaboration, create completed tasks for both parties
+            if(isLastProcessInWorkflow && processInstanceGroupController.checkCollaborationFinished(gid,bearerToken).getBody().contentEquals("false")){
+                TrustPersistenceUtility.createCompletedTasksForBothParties(processInstance.getProcessInstanceID(),bearerToken,"Completed");
+            }
+
             emailSenderUtil.sendActionPendingEmail(bearerToken, businessProcessContext);
 
             //mdc logging
@@ -154,7 +183,7 @@ public class ContinueController implements ContinueApi {
                     body.getVariables().getRelatedProducts(),
                     sourceGid);
 
-            CollaborationGroupDAO initiatorCollaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroupDAO(body.getVariables().getInitiatorID(), Long.parseLong(responderCollaborationGID));
+            CollaborationGroupDAO initiatorCollaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroupDAO(body.getVariables().getInitiatorID(), Long.parseLong(responderCollaborationGID),responderCollaborationGID);
             // create a new initiator collaboration group
             if (initiatorCollaborationGroup == null) {
                 CollaborationGroupDAO responderCollaborationGroup = repoFactory.forBpRepository(true).getSingleEntityByHjid(CollaborationGroupDAO.class, Long.parseLong(responderCollaborationGID));
@@ -177,3 +206,4 @@ public class ContinueController implements ContinueApi {
         }
     }
 }
+

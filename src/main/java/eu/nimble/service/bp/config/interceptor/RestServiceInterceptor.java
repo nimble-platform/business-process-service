@@ -1,6 +1,6 @@
 package eu.nimble.service.bp.config.interceptor;
 
-import eu.nimble.service.bp.impl.util.ExecutionContext;
+import eu.nimble.service.bp.util.ExecutionContext;
 import eu.nimble.utility.exception.AuthenticationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
@@ -30,7 +30,7 @@ public class RestServiceInterceptor extends HandlerInterceptorAdapter {
         // do not validate the token for swagger operations
         if(!(request.getServletPath().contains(swaggerPath) || request.getServletPath().contains(apiDocsPath))){
             // validate token
-            eu.nimble.service.bp.impl.util.HttpResponseUtil.validateToken(bearerToken);
+            eu.nimble.service.bp.util.HttpResponseUtil.validateToken(bearerToken);
         }
 
         // set token to the execution context

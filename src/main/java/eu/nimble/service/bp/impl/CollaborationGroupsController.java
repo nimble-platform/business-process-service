@@ -1,34 +1,35 @@
 package eu.nimble.service.bp.impl;
 
-import eu.nimble.service.bp.hyperjaxb.model.CollaborationGroupDAO;
-import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO;
-import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceStatus;
-import eu.nimble.service.bp.impl.model.dashboard.CollaborationGroupResponse;
-import eu.nimble.service.bp.impl.util.HttpResponseUtil;
-import eu.nimble.service.bp.impl.util.persistence.bp.CollaborationGroupDAOUtility;
-import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMapper;
+import eu.nimble.service.bp.model.hyperjaxb.CollaborationGroupDAO;
+import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceGroupDAO;
+import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceStatus;
+import eu.nimble.service.bp.model.dashboard.CollaborationGroupResponse;
+import eu.nimble.service.bp.util.HttpResponseUtil;
+import eu.nimble.service.bp.util.persistence.bp.CollaborationGroupDAOUtility;
+import eu.nimble.service.bp.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.swagger.api.CollaborationGroupsApi;
 import eu.nimble.service.bp.swagger.model.CollaborationGroup;
+import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 
 /**
  * {@link CollaborationGroupDAO}s are entities that keep track collaboration activities with several companies related to
- * an individual product. Collaborations with distinct companies are kept in {@link eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO}s.
- * In this sense, considering a simple example, {@link CollaborationGroupDAO} of a seller might contain two {@link eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceGroupDAO}s
+ * an individual product. Collaborations with distinct companies are kept in {@link ProcessInstanceGroupDAO}s.
+ * In this sense, considering a simple example, {@link CollaborationGroupDAO} of a seller might contain two {@link ProcessInstanceGroupDAO}s
  * such that the first one contains seller-buyer activities and the second one seller-transport service provider activities.
  */
 @Controller
@@ -51,15 +52,23 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
                 return tokenCheck;
             }
 
+            // check whether the collaboration group exists or not
+            CollaborationGroupDAO collaborationGroupDAO = CollaborationGroupDAOUtility.getCollaborationGroupDAO(Long.parseLong(id));
+            if(collaborationGroupDAO == null){
+                String msg = String.format("CollaborationGroup with id %s does not exist", id);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            }
+
             // check whether the group is archiable or not
-            boolean isArchivable = CollaborationGroupDAOUtility.isCollaborationGroupArchivable(Long.parseLong(id));
+            boolean isArchivable = CollaborationGroupDAOUtility.isCollaborationGroupArchivable(collaborationGroupDAO.getHjid());
             if (!isArchivable) {
                 String msg = String.format("CollaborationGroup with id %s is not archivable", id);
-                logger.info(msg);
+                logger.error(msg);
                 return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(msg);
             }
 
-            CollaborationGroupDAO collaborationGroupDAO = CollaborationGroupDAOUtility.archiveCollaborationGroup(id);
+            collaborationGroupDAO = CollaborationGroupDAOUtility.archiveCollaborationGroup(collaborationGroupDAO);
 
             CollaborationGroup collaborationGroup = HibernateSwaggerObjectMapper.convertCollaborationGroupDAO(collaborationGroupDAO);
             ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(collaborationGroup);
@@ -177,7 +186,14 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
             return tokenCheck;
         }
 
-        CollaborationGroupDAO collaborationGroupDAO = CollaborationGroupDAOUtility.restoreCollaborationGroup(id);
+        // check the existence of collaboration group
+        CollaborationGroupDAO collaborationGroupDAO = CollaborationGroupDAOUtility.getCollaborationGroupDAO(Long.parseLong(id));
+        if(collaborationGroupDAO == null){
+            String msg = String.format("CollaborationGroup with id %s does not exist", id);
+            logger.error(msg);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+        collaborationGroupDAO = CollaborationGroupDAOUtility.restoreCollaborationGroup(collaborationGroupDAO);
 
         CollaborationGroup collaborationGroup = HibernateSwaggerObjectMapper.convertCollaborationGroupDAO(collaborationGroupDAO);
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(collaborationGroup);
@@ -223,7 +239,7 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
             @ApiParam(value = "List of collaboration group id's to be merged.", required = true) @RequestParam(value = "cgids", required = true) List<String> cgids
 
     ) {
-        logger.debug("Merging the collaboration groups");
+        logger.debug("Merging the collaboration groups {} to the base collaboration group {}",cgids,bcid);
         // check token
         ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
         if (tokenCheck != null) {
@@ -272,11 +288,55 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
         }
         collaborationGroupDAO.getAssociatedCollaborationGroups();
 
-        logger.debug("Updated name of the collaboration group :" + cgids);
-
         CollaborationGroup collaborationGroup = HibernateSwaggerObjectMapper.convertCollaborationGroupDAO(collaborationGroupDAO);
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(collaborationGroup);
-        logger.debug("Retrieved CollaborationGroup: {}", bcid);
+        logger.debug("Merged the collaboration groups {} to the base collaboration group {}",cgids,bcid);
         return response;
+    }
+
+    @Override
+    @ApiOperation(value = "",notes = "Checks whether the collaborations of the given party are finished/completed or not. The service considers only the collaborations " +
+            "where the party has the given role.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token")
+    })
+    public ResponseEntity checkAllCollaborationsFinished(@ApiParam(value = "The identifier of party", required = true) @RequestParam(value = "partyId",required = true) String partyId,
+                                                         @ApiParam(value = "Role of the party in the collaboration.<br>Possible values: <ul><li>SELLER</li><li>BUYER</li></ul>") @RequestParam(value = "collaborationRole", required = true,defaultValue = "SELLER") String collaborationRole,
+                                                         @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
+        logger.info("Checking whether all collaborations are finished for party {} and role {}",partyId,collaborationRole);
+        // check token
+        ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
+        if (tokenCheck != null) {
+            return tokenCheck;
+        }
+
+        // whether all collaborations are finished or not
+        Boolean allCollaborationsFinished = true;
+
+        // get collaboration groups
+        List<CollaborationGroupDAO> collaborationGroups = CollaborationGroupDAOUtility.getCollaborationGroupDAOs(partyId,collaborationRole);
+        // check whether there is a CompletedTaskType for each process instance group,that is, collaboration is finished
+        for(CollaborationGroupDAO collaborationGroup:collaborationGroups){
+            Boolean isCollaborationFinished = isCollaborationFinished(collaborationGroup);
+            if(!isCollaborationFinished){
+                allCollaborationsFinished = false;
+                break;
+            }
+        }
+
+        logger.info("All collaborations are finished {} for party {} and role {}",allCollaborationsFinished,partyId,collaborationRole);
+        return ResponseEntity.ok(allCollaborationsFinished.toString());
+    }
+
+    private boolean isCollaborationFinished(CollaborationGroupDAO collaborationGroup){
+        boolean collaborationFinished = true;
+        // check whether there is a CompletedTaskType for each process instance group,that is, collaboration is finished
+        for(ProcessInstanceGroupDAO processInstanceGroup: collaborationGroup.getAssociatedProcessInstanceGroups()){
+            if(!TrustPersistenceUtility.completedTaskExist(processInstanceGroup.getProcessInstanceIDs())){
+                collaborationFinished = false;
+                break;
+            }
+        }
+        return collaborationFinished;
     }
 }
