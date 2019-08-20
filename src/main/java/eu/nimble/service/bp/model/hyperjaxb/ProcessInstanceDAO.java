@@ -9,7 +9,6 @@
 package eu.nimble.service.bp.model.hyperjaxb;
 
 import javax.persistence.Basic;
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -19,8 +18,6 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -49,7 +46,6 @@ import org.jvnet.jaxb2_commons.locator.util.LocatorUtils;
  *         &lt;element name="creationDate" type="{http://www.w3.org/2001/XMLSchema}string"/&gt;
  *         &lt;element name="processID" type="{http://www.w3.org/2001/XMLSchema}string"/&gt;
  *         &lt;element name="status" type="{}ProcessInstanceStatus"/&gt;
- *         &lt;element name="precedingProcess" type="{}ProcessInstanceDAO"/&gt;
  *       &lt;/sequence&gt;
  *     &lt;/restriction&gt;
  *   &lt;/complexContent&gt;
@@ -63,8 +59,7 @@ import org.jvnet.jaxb2_commons.locator.util.LocatorUtils;
     "processInstanceID",
     "creationDate",
     "processID",
-    "status",
-    "precedingProcess"
+    "status"
 })
 @Entity(name = "ProcessInstanceDAO")
 @Table(name = "PROCESS_INSTANCE_DAO")
@@ -82,8 +77,6 @@ public class ProcessInstanceDAO
     @XmlElement(required = true)
     @XmlSchemaType(name = "token")
     protected ProcessInstanceStatus status;
-    @XmlElement(required = true)
-    protected ProcessInstanceDAO precedingProcess;
     @XmlAttribute(name = "Hjid")
     protected Long hjid;
 
@@ -192,37 +185,6 @@ public class ProcessInstanceDAO
         this.status = value;
     }
 
-    /**
-     * Gets the value of the precedingProcess property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link ProcessInstanceDAO }
-     *     
-     */
-    @OneToOne(targetEntity = ProcessInstanceDAO.class, cascade = {
-        CascadeType.ALL,
-        CascadeType.REFRESH,
-        CascadeType.PERSIST,
-        CascadeType.MERGE
-    })
-    @JoinColumn(name = "PRECEDING_PROCESS_PROCESS_IN_0")
-    public ProcessInstanceDAO getPrecedingProcess() {
-        return precedingProcess;
-    }
-
-    /**
-     * Sets the value of the precedingProcess property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link ProcessInstanceDAO }
-     *     
-     */
-    public void setPrecedingProcess(ProcessInstanceDAO value) {
-        this.precedingProcess = value;
-    }
-
     public boolean equals(ObjectLocator thisLocator, ObjectLocator thatLocator, Object object, EqualsStrategy strategy) {
         if ((object == null)||(this.getClass()!= object.getClass())) {
             return false;
@@ -264,15 +226,6 @@ public class ProcessInstanceDAO
             ProcessInstanceStatus rhsStatus;
             rhsStatus = that.getStatus();
             if (!strategy.equals(LocatorUtils.property(thisLocator, "status", lhsStatus), LocatorUtils.property(thatLocator, "status", rhsStatus), lhsStatus, rhsStatus)) {
-                return false;
-            }
-        }
-        {
-            ProcessInstanceDAO lhsPrecedingProcess;
-            lhsPrecedingProcess = this.getPrecedingProcess();
-            ProcessInstanceDAO rhsPrecedingProcess;
-            rhsPrecedingProcess = that.getPrecedingProcess();
-            if (!strategy.equals(LocatorUtils.property(thisLocator, "precedingProcess", lhsPrecedingProcess), LocatorUtils.property(thatLocator, "precedingProcess", rhsPrecedingProcess), lhsPrecedingProcess, rhsPrecedingProcess)) {
                 return false;
             }
         }

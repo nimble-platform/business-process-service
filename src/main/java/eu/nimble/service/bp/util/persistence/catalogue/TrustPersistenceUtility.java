@@ -1,10 +1,11 @@
 package eu.nimble.service.bp.util.persistence.catalogue;
 
 import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO;
+import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceDAO;
 import eu.nimble.service.bp.model.trust.NegotiationRatings;
 import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
-import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceDAOUtility;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
+import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceDAOUtility;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.commonbasiccomponents.TextType;
 import eu.nimble.utility.persistence.GenericJPARepository;
@@ -88,7 +89,8 @@ public class TrustPersistenceUtility {
                 periodType.setEndDate(DatatypeFactory.newInstance().newXMLGregorianCalendar(responseMetadata.getSubmissionDate()));
                 periodType.setEndTime(DatatypeFactory.newInstance().newXMLGregorianCalendar(responseMetadata.getSubmissionDate()));
             }
-            ProcessDocumentMetadata requestMetadata = ProcessDocumentMetadataDAOUtility.getRequestMetadata(ProcessInstanceDAOUtility.getAllProcessInstanceIdsInCollaborationHistory(processInstanceID).get(0));
+            List<ProcessInstanceDAO> processInstanceDAOS = ProcessInstanceDAOUtility.getAllProcessInstancesInCollaborationHistory(processInstanceID);
+            ProcessDocumentMetadata requestMetadata = ProcessDocumentMetadataDAOUtility.getRequestMetadata(processInstanceDAOS.get(0).getProcessInstanceID());
             periodType.setStartDate(DatatypeFactory.newInstance().newXMLGregorianCalendar(requestMetadata.getSubmissionDate()));
             periodType.setStartTime(DatatypeFactory.newInstance().newXMLGregorianCalendar(requestMetadata.getSubmissionDate()));
             completedTask.setPeriod(periodType);

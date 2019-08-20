@@ -175,7 +175,7 @@ public class ContractController {
                 return createResponseEntityAndLog(String.format("Invalid process instance id: %s", processInstanceId), HttpStatus.NOT_FOUND);
             }
 
-            ContractType contract = ContractPersistenceUtility.constructContractForProcessInstances(processInstance);
+            ContractType contract = ContractPersistenceUtility.constructContractForProcessInstances(processInstanceId);
             logger.info("Constructed contract starting from the process instance: {}", processInstanceId);
 
             ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();

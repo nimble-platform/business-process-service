@@ -7,10 +7,8 @@ import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceGroupDAO;
 import eu.nimble.utility.HibernateUtility;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+
+import java.util.*;
 
 /**
  * Created by suat on 26-Mar-18.
@@ -49,12 +47,12 @@ public class ProcessInstanceGroupDAOUtility {
             "select pig from ProcessInstanceGroupDAO pig where pig.partyID = :partyId and pig.ID in " +
                     "(select agrp.item from ProcessInstanceGroupDAO pig2 join pig2.associatedGroupsItems agrp where pig2.ID = :associatedGroupId)";
 
-    private static final String QUERY_GET_PRECEDING_PROCESS_INSTANCE_ID =
-            "SELECT pig.precedingProcess.processInstanceID FROM ProcessInstanceGroupDAO pig join pig.processInstanceIDsItems pid," +
+    private static final String QUERY_GET_PRECEDING_PROCESS_INSTANCE_GROUP =
+            "SELECT pig.precedingProcessInstanceGroup FROM ProcessInstanceGroupDAO pig join pig.processInstanceIDsItems pid," +
                     "ProcessInstanceDAO pi " +
                     "WHERE " +
                     "pid.item = pi.processInstanceID AND " +
-                    "pi.processInstanceID = :processInstanceId AND pig.precedingProcess IS NOT NULL";
+                    "pi.processInstanceID = :processInstanceId AND pig.precedingProcessInstanceGroup IS NOT NULL";
 
     private static final String QUERY_GET_BY_PARTY_ID = "SELECT pig.ID FROM ProcessInstanceGroupDAO pig WHERE pig.partyID in :partyIds";
 
@@ -79,8 +77,8 @@ public class ProcessInstanceGroupDAOUtility {
         return getProcessInstanceGroupDAO(partyId,associatedGroupId,true);
     }
 
-    public static String getPrecedingProcessInstanceId(String processInstanceId) {
-        return new JPARepositoryFactory().forBpRepository().getSingleEntity(QUERY_GET_PRECEDING_PROCESS_INSTANCE_ID, new String[]{"processInstanceId"}, new Object[]{processInstanceId});
+    public static ProcessInstanceGroupDAO getPrecedingProcessInstanceGroup(String processInstanceId) {
+        return new JPARepositoryFactory().forBpRepository(true).getSingleEntity(QUERY_GET_PRECEDING_PROCESS_INSTANCE_GROUP, new String[]{"processInstanceId"}, new Object[]{processInstanceId});
     }
 
     public static ProcessInstanceGroupDAO createProcessInstanceGroupDAO(String partyId, String processInstanceId, String collaborationRole, List<String> relatedProducts) {
@@ -159,12 +157,11 @@ public class ProcessInstanceGroupDAOUtility {
     }
 
     public static String getOrderIdInGroup(String processInstanceId) {
-        // get the id of preceding process instance if there is any
-        String precedingProcessInstanceID = ProcessInstanceGroupDAOUtility.getPrecedingProcessInstanceId(processInstanceId);
+        // get the preceding process instance group if there is any
+        ProcessInstanceGroupDAO precedingProcessInstanceGroup = ProcessInstanceGroupDAOUtility.getPrecedingProcessInstanceGroup(processInstanceId);
         String orderId;
-        // if there is a preceding process instance, using that, get the order id
-        if (precedingProcessInstanceID != null) {
-            orderId = ProcessDocumentMetadataDAOUtility.getRequestMetadata(precedingProcessInstanceID).getDocumentID();
+        if (precedingProcessInstanceGroup != null) {
+            orderId = new JPARepositoryFactory().forBpRepository().getSingleEntity(QUERY_GET_ORDER_ID_IN_GROUP, new String[]{"processInstanceId"}, new Object[]{precedingProcessInstanceGroup.getProcessInstanceIDs().get(0)});
         } else {
             orderId = new JPARepositoryFactory().forBpRepository().getSingleEntity(QUERY_GET_ORDER_ID_IN_GROUP, new String[]{"processInstanceId"}, new Object[]{processInstanceId});
         }
