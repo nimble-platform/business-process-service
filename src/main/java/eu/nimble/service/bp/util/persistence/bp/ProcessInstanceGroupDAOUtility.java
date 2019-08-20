@@ -82,10 +82,10 @@ public class ProcessInstanceGroupDAOUtility {
     }
 
     public static ProcessInstanceGroupDAO createProcessInstanceGroupDAO(String partyId, String processInstanceId, String collaborationRole, List<String> relatedProducts) {
-        return createProcessInstanceGroupDAO(partyId, processInstanceId, collaborationRole, relatedProducts, null);
+        return createProcessInstanceGroupDAO(partyId, processInstanceId, collaborationRole, relatedProducts, null,null);
     }
 
-    public static ProcessInstanceGroupDAO createProcessInstanceGroupDAO(String partyId, String processInstanceId, String collaborationRole, List<String> relatedProducts, String associatedGroup) {
+    public static ProcessInstanceGroupDAO createProcessInstanceGroupDAO(String partyId, String processInstanceId, String collaborationRole, List<String> relatedProducts, String associatedGroup, String dataChannelId) {
         String uuid = UUID.randomUUID().toString();
         ProcessInstanceGroupDAO group = new ProcessInstanceGroupDAO();
         group.setArchived(false);
@@ -101,6 +101,7 @@ public class ProcessInstanceGroupDAOUtility {
         group.setName(groupName);
         group.setPartyID(partyId);
         group.setStatus(GroupStatus.INPROGRESS);
+        group.setDataChannelId(dataChannelId);
         group.setCollaborationRole(collaborationRole);
         List<String> processInstanceIds = new ArrayList<>();
         processInstanceIds.add(processInstanceId);
