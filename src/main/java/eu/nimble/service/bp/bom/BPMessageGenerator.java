@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.common.rest.identity.model.NegotiationSettings;
 import eu.nimble.service.bp.contract.ContractGenerator;
 import eu.nimble.service.bp.model.billOfMaterial.BillOfMaterialItem;
+import eu.nimble.service.bp.util.UBLUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.CataloguePersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.ContractPersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
@@ -58,17 +59,17 @@ public class BPMessageGenerator {
                     // create an order using the frame contract
                     OrderType order = createOrder(quotation, buyerParty, sellerNegotiationSettings.getCompany());
 
-                    return BPMessageGenerator.createProcessInstanceInputMessage(order, order.getID(), orderProcessId, catalogueLine.getGoodsItem().getItem(), creatorUserId);
+                    return BPMessageGenerator.createProcessInstanceInputMessage(order, orderProcessId, catalogueLine.getGoodsItem().getItem(), creatorUserId);
                 }
             }
         }
 
         RequestForQuotationType requestForQuotation = createRequestForQuotation(catalogueLine, billOfMaterialItem.getquantity(), sellerNegotiationSettings,buyerParty, bearerToken);
 
-        return BPMessageGenerator.createProcessInstanceInputMessage(requestForQuotation, requestForQuotation.getID(), negotiationProcessId, catalogueLine.getGoodsItem().getItem(), creatorUserId);
+        return BPMessageGenerator.createProcessInstanceInputMessage(requestForQuotation, negotiationProcessId, catalogueLine.getGoodsItem().getItem(), creatorUserId);
     }
 
-    private static ProcessInstanceInputMessage createProcessInstanceInputMessage(IDocument document, String documentId, String processId, ItemType item, String creatorUserId) throws Exception {
+    public static ProcessInstanceInputMessage createProcessInstanceInputMessage(IDocument document, String processId, ItemType item, String creatorUserId) throws Exception {
         // get related product categories
         List<String> relatedProductCategories = new ArrayList<>();
         for (CommodityClassificationType commodityClassificationType : item.getCommodityClassification()) {
@@ -87,7 +88,7 @@ public class BPMessageGenerator {
         // create process variables
         ProcessVariables processVariables = new ProcessVariables();
 
-        processVariables.setContentUUID(documentId);
+        processVariables.setContentUUID(UBLUtility.getDocumentId(document));
         processVariables.setContent(rfqAsString);
         processVariables.setProcessID(processId);
         processVariables.setCreatorUserID(creatorUserId);
