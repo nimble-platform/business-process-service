@@ -45,7 +45,7 @@ public class ProcessInstanceGroupControllerTest {
     private final String partyId = "706";
     private static String processInstanceGroupId1;
     private static String processInstanceGroupIIR1;
-    private final int test1_expectedValue = 5;
+    private final int test1_expectedValue = 7;
     private final int test2_expectedValue = 1;
 
     /**
