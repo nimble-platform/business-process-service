@@ -1,6 +1,7 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.model.hyperjaxb.*;
+import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.util.email.EmailSenderUtil;
 import eu.nimble.service.bp.util.persistence.bp.*;
 import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
@@ -258,6 +259,39 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
 
         logger.info("The collaboration represented by process instance group {} finished {}",id,collaborationFinished);
         return ResponseEntity.ok(collaborationFinished.toString());
+    }
+
+    @ApiOperation(value = "", notes = "Retrieves the process instances belonging to the specified ProcessInstanceGroup")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Retrieved the process instances for the given group id successfully.", response = ProcessInstance.class,responseContainer = "List"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 404, message = "There does not exist a process instance group with the given id")
+    })
+    @RequestMapping(value = "/process-instance-groups/{id}/process-instances",
+            method = RequestMethod.GET)
+    public ResponseEntity getProcessInstancesIncludedInTheGroup(@ApiParam(value = "Identifier of the process instance group to be checked", required = true) @PathVariable(value = "id", required = true) String id,
+                                                                @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
+
+        logger.debug("Retrieving process instances for the group id: {}", id);
+        // check token
+        ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
+        if (tokenCheck != null) {
+            return tokenCheck;
+        }
+
+        ProcessInstanceGroupDAO groupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(id);
+        if (groupDAO == null) {
+            String msg = String.format("There does not exist a process instance group with the id: %s", id);
+            logger.warn(msg);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+        }
+
+        // get ProcessInstanceDAOs
+        List<ProcessInstanceDAO> processInstanceDAOS = ProcessInstanceDAOUtility.getProcessInstancesIncludedInTheGroup(id);
+        // convert each ProcessInstanceDAO to ProcessInstance
+        List<ProcessInstance> processInstances = HibernateSwaggerObjectMapper.createProcessInstances(processInstanceDAOS);
+        logger.debug("Retrieving process instances for the group id: {} successfully", id);
+        return ResponseEntity.ok(processInstances);
     }
 
     private boolean cancellableGroup(List<String> processInstanceIDs) {

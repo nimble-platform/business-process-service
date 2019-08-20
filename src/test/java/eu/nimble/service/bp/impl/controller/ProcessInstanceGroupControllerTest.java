@@ -1,11 +1,12 @@
 package eu.nimble.service.bp.impl.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.model.dashboard.CollaborationGroupResponse;
 import eu.nimble.service.bp.swagger.model.CollaborationGroup;
+import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroup;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupFilter;
-import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.utility.JsonSerializationUtility;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
@@ -21,9 +22,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
+import java.util.List;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -50,6 +52,7 @@ public class ProcessInstanceGroupControllerTest {
      * Test scenario:
      * - Get collaboration groups for some of the processes instantiated in {@link StartControllerTest}
      * - Retrieve process instance group associated one of the processes instantiated in {@link StartControllerTest}
+     * - Retrieve process instances belonging to process instance group created in {@link StartControllerTest}
      * - Delete process instance group of one of the processes instantiated in {@link StartControllerTest}
      * - Delete a non-existing process instance group (404 is expected)
      * - Retrieve a process instance group (the one created for the transport service order) and delete it
@@ -89,7 +92,19 @@ public class ProcessInstanceGroupControllerTest {
     }
 
     @Test
-    public void test03_deleteProcessInstanceGroup() throws Exception {
+    public void test03_getProcessInstancesIncludedInTheGroup() throws Exception {
+        MockHttpServletRequestBuilder request = get("/process-instance-groups/" + ProcessInstanceGroupControllerTest.processInstanceGroupIIR1 + "/process-instances")
+                .header("Authorization", TestConfig.initiatorPersonId);
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+
+        List<ProcessInstance> processInstances = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), new TypeReference<List<ProcessInstance>>() {});
+
+        Assert.assertSame(test2_expectedValue, processInstances.size());
+        Assert.assertEquals(StartControllerTest.processInstanceIdIIR1, processInstances.get(0).getProcessInstanceID());
+    }
+
+    @Test
+    public void test04_deleteProcessInstanceGroup() throws Exception {
         MockHttpServletRequestBuilder request = delete("/process-instance-groups/" + ProcessInstanceGroupControllerTest.processInstanceGroupId1)
                 .header("Authorization", TestConfig.initiatorPersonId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -101,7 +116,7 @@ public class ProcessInstanceGroupControllerTest {
 
     // try to delete a non-existing process instance group
     @Test
-    public void test04_deleteNonExistingProcessInstanceGroup() throws Exception {
+    public void test05_deleteNonExistingProcessInstanceGroup() throws Exception {
         MockHttpServletRequestBuilder request = delete("/process-instance-groups/999999")
                 .header("Authorization", TestConfig.initiatorPersonId);
         this.mockMvc.perform(request).andDo(print()).andExpect(status().isNotFound()).andReturn();
