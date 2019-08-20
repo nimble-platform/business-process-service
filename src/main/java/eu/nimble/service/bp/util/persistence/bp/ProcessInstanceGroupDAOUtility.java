@@ -54,6 +54,9 @@ public class ProcessInstanceGroupDAOUtility {
                     "pid.item = pi.processInstanceID AND " +
                     "pi.processInstanceID = :processInstanceId AND pig.precedingProcessInstanceGroup IS NOT NULL";
 
+    private static final String QUERY_GET_CONTAINING_THE_PROCESS =
+            "SELECT pig FROM ProcessInstanceGroupDAO pig join pig.processInstanceIDsItems pid WHERE pid.item = :processInstanceID";
+
     private static final String QUERY_GET_BY_PARTY_ID = "SELECT pig.ID FROM ProcessInstanceGroupDAO pig WHERE pig.partyID in :partyIds";
 
     private static final String QUERY_GET_BY_HJID = "SELECT c FROM ProcessInstanceGroupDAO c WHERE c.hjid = :hjid";
@@ -75,6 +78,13 @@ public class ProcessInstanceGroupDAOUtility {
 
     public static ProcessInstanceGroupDAO getProcessInstanceGroupDAO(String partyId, String associatedGroupId) {
         return getProcessInstanceGroupDAO(partyId,associatedGroupId,true);
+    }
+
+    /**
+     * This method is used to retrieve process instance groups which contain the given process instance id.
+     */
+    public static List<ProcessInstanceGroupDAO> getProcessInstanceGroupDAOs(String processInstanceId){
+        return new JPARepositoryFactory().forBpRepository(true).getEntities(QUERY_GET_CONTAINING_THE_PROCESS, new String[]{"processInstanceID"}, new Object[]{processInstanceId});
     }
 
     public static ProcessInstanceGroupDAO getPrecedingProcessInstanceGroup(String processInstanceId) {
