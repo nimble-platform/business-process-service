@@ -2,12 +2,12 @@ package eu.nimble.service.bp.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.nimble.common.rest.datachannel.IDataChannelClient;
 import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
 import eu.nimble.service.bp.model.tt.OrderEPC;
 import eu.nimble.service.bp.util.HttpResponseUtil;
 import eu.nimble.service.bp.util.persistence.catalogue.CataloguePersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
+import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.CatalogueLineType;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.utility.JsonSerializationUtility;
@@ -18,7 +18,6 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -38,9 +37,6 @@ import java.util.List;
 public class EPCController {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
-    @Autowired
-    private IDataChannelClient dataChannelClient;
 
     @ApiOperation(value = "",notes = "Gets product information as CatalogueLine for the specified EPC code. First, the corresponding order" +
             " is fetched for the specified code from the data channel service and then, the CatalogueLine is retrieved for the product" +
@@ -65,7 +61,7 @@ public class EPCController {
                 return tokenCheck;
             }
 
-            Response response = dataChannelClient.getEPCCodesForOrder(bearerToken, epc);
+            Response response = SpringBridge.getInstance().getDataChannelClient().getEPCCodesForOrder(bearerToken, epc);
             String responseBody;
             try {
                 responseBody = HttpResponseUtil.extractBodyFromFeignClientResponse(response);
@@ -131,7 +127,7 @@ public class EPCController {
             ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
 
             List<String> orderIds = DocumentPersistenceUtility.getOrderIds(partyIdAndManufacturerItemId[0].toString(), partyIdAndManufacturerItemId[1].toString());
-            Response response = dataChannelClient.getEPCCodesForOrders(bearerToken, orderIds);
+            Response response = SpringBridge.getInstance().getDataChannelClient().getEPCCodesForOrders(bearerToken, orderIds);
             String responseBody = HttpResponseUtil.extractBodyFromFeignClientResponse(response);
             List<OrderEPC> epcCodesList = objectMapper.readValue(responseBody.toString(),new TypeReference<List<OrderEPC>>(){});
 
