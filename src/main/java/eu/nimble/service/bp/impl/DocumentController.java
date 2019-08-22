@@ -201,15 +201,12 @@ public class DocumentController {
 //    @ApiOperation(value = "",notes = "Add a business process document metadata")
     public ResponseEntity<ModelApiResponse> addDocumentMetadata(@RequestBody ProcessDocumentMetadata body,
                                                                 @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
+        ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
+        if (tokenCheck != null) {
+            return tokenCheck;
+        }
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
         try{
-            // check token
-            boolean isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-            }
             DocumentPersistenceUtility.addDocumentWithMetadata(businessProcessContext.getId(),body, null);
         }
         catch (Exception e){
@@ -225,15 +222,12 @@ public class DocumentController {
 //    @ApiOperation(value = "",notes = "Update a business process document metadata")
     public ResponseEntity<ModelApiResponse> updateDocumentMetadata(@RequestBody ProcessDocumentMetadata body,
                                                                    @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
+        ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
+        if (tokenCheck != null) {
+            return tokenCheck;
+        }
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
         try{
-            // check token
-            boolean isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-            }
             ProcessDocumentMetadataDAOUtility.updateDocumentMetadata(businessProcessContext.getId(),body);
         }
         catch (Exception e){
@@ -250,18 +244,9 @@ public class DocumentController {
     public ResponseEntity<ModelApiResponse> deleteDocument(@PathVariable("documentID") String documentID,
                                                            @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         logger.info(" $$$ Deleting Document for ... {}", documentID);
-        try {
-            // check token
-            boolean isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-            }
-        } catch (IOException e){
-            String msg = String.format("Failed to delete document: %s",documentID);
-            logger.error(msg,e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
+        if (tokenCheck != null) {
+            return tokenCheck;
         }
         DocumentPersistenceUtility.deleteDocumentsWithMetadatas(Collections.singletonList(documentID));
         return HibernateSwaggerObjectMapper.getApiResponse();
@@ -272,18 +257,9 @@ public class DocumentController {
     public ResponseEntity<List<ProcessDocumentMetadata>> getDocuments(@PathVariable("partnerID") String partnerID, @PathVariable("type") String type,
                                                                       @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         logger.info(" $$$ Getting Document for partner {}, type {}", partnerID, type);
-        try {
-            // check token
-            boolean isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-            }
-        } catch (IOException e){
-            String msg = String.format("Failed to retrieve documents for partner: %s, type: %s",partnerID,type);
-            logger.error(msg,e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
+        if (tokenCheck != null) {
+            return tokenCheck;
         }
         List<ProcessDocumentMetadataDAO> processDocumentsDAO = ProcessDocumentMetadataDAOUtility.getProcessDocumentMetadata(partnerID, type);
         List<ProcessDocumentMetadata> processDocuments = new ArrayList<>();
@@ -300,18 +276,9 @@ public class DocumentController {
     public ResponseEntity<List<ProcessDocumentMetadata>> getDocuments(@PathVariable("partnerID") String partnerID, @PathVariable("type") String type, @PathVariable("source") String source,
                                                                       @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         logger.info(" $$$ Getting Document for partner {}, type {}, source {}", partnerID, type, source);
-        try {
-            // check token
-            boolean isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-            }
-        } catch (IOException e){
-            String msg = String.format("Failed to retrieve documents for partner: %s, type: %s, source: %s",partnerID,type,source);
-            logger.error(msg,e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
+        if (tokenCheck != null) {
+            return tokenCheck;
         }
         List<ProcessDocumentMetadataDAO> processDocumentsDAO = ProcessDocumentMetadataDAOUtility.getProcessDocumentMetadata(partnerID, type, source);
         List<ProcessDocumentMetadata> processDocuments = new ArrayList<>();
@@ -328,18 +295,9 @@ public class DocumentController {
             @PathVariable("source") String source, @PathVariable("status") String status,
                                                                       @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         logger.info(" $$$ Getting Document for partner {}, type {}, status {}, source {}", partnerID, type, status, source);
-        try {
-            // check token
-            boolean isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-            }
-        } catch (IOException e){
-            String msg = String.format("Failed to retrieve documents for partner: %s, type: %s, status: %s,source: %s",partnerID,type,status,source);
-            logger.error(msg,e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
+        if (tokenCheck != null) {
+            return tokenCheck;
         }
         List<ProcessDocumentMetadataDAO> processDocumentsDAO = ProcessDocumentMetadataDAOUtility.getProcessDocumentMetadata(partnerID, type, status, source);
         List<ProcessDocumentMetadata> processDocuments = new ArrayList<>();

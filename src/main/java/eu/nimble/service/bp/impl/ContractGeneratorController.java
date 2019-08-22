@@ -2,6 +2,7 @@ package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.contract.ContractGenerator;
 import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
+import eu.nimble.service.bp.util.HttpResponseUtil;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ClauseType;
@@ -43,11 +44,11 @@ public class ContractGeneratorController {
         try{
             logger.info("Generating contract for the order with id : {}",orderId);
             // check token
-            boolean isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
+            ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
+            if (tokenCheck != null) {
+                String msg = (String) tokenCheck.getBody();
                 logger.error(msg);
-                response.setStatus(HttpStatus.UNAUTHORIZED.value());
+                response.setStatus(tokenCheck.getStatusCode().value());
                 try{
                     response.getOutputStream().write(msg.getBytes());
                 }

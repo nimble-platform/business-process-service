@@ -1,6 +1,7 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO;
+import eu.nimble.service.bp.util.HttpResponseUtil;
 import eu.nimble.service.bp.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.util.persistence.bp.*;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
@@ -46,18 +47,9 @@ public class TransactionsController {
         logger.debug("Incoming request to delete transactions for party: {}", partyId);
 
         // check token
-        boolean isValid = false;
-        try {
-            isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-            }
-        } catch (Exception e) {
-            String msg = "Unexpected error while deleting transactions for the party: %s";
-            logger.error(String.format(msg, partyId),e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(String.format(msg, partyId));
+        ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
+        if (tokenCheck != null) {
+            return tokenCheck;
         }
 
         deleteTransactionsForParty(partyId);

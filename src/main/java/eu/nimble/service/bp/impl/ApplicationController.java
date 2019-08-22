@@ -1,6 +1,7 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.model.hyperjaxb.ProcessConfigurationDAO;
+import eu.nimble.service.bp.util.HttpResponseUtil;
 import eu.nimble.service.bp.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.util.persistence.bp.ProcessConfigurationDAOUtility;
 import eu.nimble.service.bp.util.spring.SpringBridge;
@@ -39,18 +40,10 @@ public class ApplicationController implements ApplicationApi {
     ) {
         logger.info(" $$$ Adding ProcessApplicationConfigurations: ");
         logger.debug(" $$$ {}", body.toString());
-        try {
-            // check token
-            boolean isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-            }
-        } catch (IOException e){
-            String msg = String.format("Failed to add process configuration: %s",body.toString());
-            logger.error(msg,e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+
+        ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
+        if (tokenCheck != null) {
+            return tokenCheck;
         }
         ProcessConfigurationDAO processConfigurationDAO = HibernateSwaggerObjectMapper.createProcessConfiguration_DAO(body);
         repositoryFactory.forBpRepository().persistEntity(processConfigurationDAO);
@@ -63,18 +56,9 @@ public class ApplicationController implements ApplicationApi {
                                                                        @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
     ) {
         logger.info(" $$$ Deleting ProcessApplicationConfigurations for ... {}", partnerID);
-        try {
-            // check token
-            boolean isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-            }
-        } catch (IOException e){
-            String msg = String.format("Failed to delete process configuration for partner id: %s",partnerID);
-            logger.error(msg,e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
+        if (tokenCheck != null) {
+            return tokenCheck;
         }
         ProcessConfigurationDAO processConfigurationDAO = ProcessConfigurationDAOUtility.getProcessConfiguration(partnerID, processID, ProcessConfiguration.RoleTypeEnum.valueOf(roleType));
         repositoryFactory.forBpRepository().deleteEntityByHjid(ProcessConfigurationDAO.class, processConfigurationDAO.getHjid());
@@ -87,18 +71,9 @@ public class ApplicationController implements ApplicationApi {
                                                                               @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
     ) {
         logger.info(" $$$ Getting ProcessApplicationConfigurations for ... {}", partnerID);
-        try {
-            // check token
-            boolean isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-            }
-        } catch (IOException e){
-            String msg = String.format("Failed to retrieve process configuration for partner id: %s",partnerID);
-            logger.error(msg,e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
+        if (tokenCheck != null) {
+            return tokenCheck;
         }
         List<ProcessConfigurationDAO> processApplicationConfigurationsDAO = ProcessConfigurationDAOUtility.getProcessConfigurations(partnerID);
 
@@ -118,18 +93,9 @@ public class ApplicationController implements ApplicationApi {
                                                                                    @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
     ) {
         logger.info(" $$$ Deleting ProcessApplicationConfigurations for ... {}", partnerID);
-        try {
-            // check token
-            boolean isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-            }
-        } catch (IOException e){
-            String msg = String.format("Failed to retrieve process configuration for process id: %s",processID);
-            logger.error(msg,e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
+        if (tokenCheck != null) {
+            return tokenCheck;
         }
         ProcessConfigurationDAO processConfigurationDAO = ProcessConfigurationDAOUtility.getProcessConfiguration(partnerID, processID, ProcessConfiguration.RoleTypeEnum.valueOf(roleType));
         ProcessConfiguration processConfiguration = null;
@@ -145,18 +111,9 @@ public class ApplicationController implements ApplicationApi {
     ) {
         logger.info(" $$$ Updating ProcessApplicationConfigurations: ");
         logger.debug(" $$$ {}", body.toString());
-        try {
-            // check token
-            boolean isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-            }
-        } catch (IOException e){
-            String msg = String.format("Failed to update process configuration: %s",body.toString());
-            logger.error(msg,e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
+        if (tokenCheck != null) {
+            return tokenCheck;
         }
         ProcessConfigurationDAO processApplicationConfigurationsDAO = ProcessConfigurationDAOUtility.getProcessConfiguration(body.getPartnerID(), body.getProcessID(), body.getRoleType());
         ProcessConfigurationDAO processApplicationConfigurationsDAONew = HibernateSwaggerObjectMapper.createProcessConfiguration_DAO(body);
