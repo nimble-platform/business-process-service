@@ -188,28 +188,9 @@ public class EFactoryExternalAPIController {
         return ResponseEntity.ok(processInstance);
     }
 
-    // TODO: we can create a method called getRequestDocumentId in IDocument interface
     private String getProcessInstanceId(IDocument responseDocument){
         // get the request document id
-        String requestDocumentId = null;
-        if(responseDocument instanceof OrderResponseSimpleType){
-            requestDocumentId = ((OrderResponseSimpleType) responseDocument).getOrderReference().getDocumentReference().getID();
-        }
-        else if(responseDocument instanceof ItemInformationResponseType){
-            requestDocumentId = ((ItemInformationResponseType) responseDocument).getItemInformationRequestDocumentReference().getID();
-        }
-        else if(responseDocument instanceof QuotationType){
-            requestDocumentId = ((QuotationType) responseDocument).getRequestForQuotationDocumentReference().getID();
-        }
-        else if(responseDocument instanceof PpapResponseType){
-            requestDocumentId = ((PpapResponseType) responseDocument).getPpapDocumentReference().getID();
-        }
-        else if(responseDocument instanceof ReceiptAdviceType){
-            requestDocumentId = ((ReceiptAdviceType) responseDocument).getDespatchDocumentReference().get(0).getID();
-        }
-        else if(responseDocument instanceof TransportExecutionPlanType){
-            requestDocumentId = ((TransportExecutionPlanType) responseDocument).getTransportExecutionPlanRequestDocumentReference().getID();
-        }
+        String requestDocumentId = responseDocument.getRequestDocumentId();
 
         // get the process instance id
         return ProcessDocumentMetadataDAOUtility.findByDocumentID(requestDocumentId).getProcessInstanceID();
