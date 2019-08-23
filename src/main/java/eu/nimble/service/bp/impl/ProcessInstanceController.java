@@ -364,11 +364,8 @@ public class ProcessInstanceController {
     }
 
     private Future<String> getCreatorUser(String bearerToken,String userId, ExecutorService threadPool){
-        // TODO: we should get the person info from the identity-service if it exists, otherwise, we could take it from the database
-//        return threadPool.submit(() -> JsonSerializationUtility.getObjectMapper().writeValueAsString(
-//                SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken,userId)));
         return threadPool.submit(() -> JsonSerializationUtility.getObjectMapper().writeValueAsString(
-                PartyPersistenceUtility.getPersonByID(userId)
+                PartyPersistenceUtility.getPerson(bearerToken,userId)
         ));
     }
 

@@ -320,16 +320,14 @@ public class CollaborationGroupDAOUtility {
                 filter.getTradingPartnerIDs().add(resultColumn);
             }
 
-            // TODO: we need to get party info from the identity-service if it exists, otherwise, we could take it from the database
-//            List<PartyType> parties = null;
-//            try {
-//                parties = SpringBridge.getInstance().getiIdentityClientTyped().getParties(bearerToken, filter.getTradingPartnerIDs());
-//            } catch (IOException e) {
-//                String msg = String.format("Failed to get parties while getting categories for party: %s, collaboration role: %s, archived: %B", partyId, collaborationRole, archived);
-//                logger.error(msg);
-//                throw new RuntimeException(msg, e);
-//            }
-            List<PartyType> parties = PartyPersistenceUtility.getPartyByIDs(filter.getTradingPartnerIDs());
+            List<PartyType> parties = null;
+            try {
+                parties = PartyPersistenceUtility.getParties(bearerToken, filter.getTradingPartnerIDs());
+            } catch (IOException e) {
+                String msg = String.format("Failed to get parties while getting categories for party: %s, collaboration role: %s, archived: %B", partyId, collaborationRole, archived);
+                logger.error(msg);
+                throw new RuntimeException(msg, e);
+            }
 
             // populate partners' names
             if (parties != null) {

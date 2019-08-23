@@ -115,7 +115,7 @@ public class EFactoryExternalAPIController {
             // create ProcessInstanceInputMessage
             ProcessInstanceInputMessage processInstanceInputMessage;
             try {
-                processInstanceInputMessage = BPMessageGenerator.createProcessInstanceInputMessage(document,document.getItemType(),null,"");
+                processInstanceInputMessage = BPMessageGenerator.createProcessInstanceInputMessage(document,document.getItemType(),null,"",token);
             } catch (Exception e) {
                 String msg = "Failed to create process instance input message for the document";
                 logger.error(msg,e);
@@ -131,7 +131,7 @@ public class EFactoryExternalAPIController {
             // create ProcessInstanceInputMessage
             ProcessInstanceInputMessage processInstanceInputMessage;
             try {
-                processInstanceInputMessage = BPMessageGenerator.createProcessInstanceInputMessage(document,document.getItemType(),null,processInstanceId);
+                processInstanceInputMessage = BPMessageGenerator.createProcessInstanceInputMessage(document,document.getItemType(),null,processInstanceId,token);
             } catch (Exception e) {
                 String msg = "Failed to create process instance input message for the document";
                 logger.error(msg,e);

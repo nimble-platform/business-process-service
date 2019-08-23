@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -22,15 +23,10 @@ public class PartyPersistenceUtility {
     private static final Logger logger = LoggerFactory.getLogger(PartyPersistenceUtility.class);
 
     private static final String QUERY_SELECT_BY_ID = "SELECT party FROM PartyType party JOIN party.partyIdentification partyIdentification WHERE partyIdentification.ID = :partyId";
-    private static final String QUERY_SELECT_BY_IDS = "SELECT party FROM PartyType party JOIN party.partyIdentification partyIdentification WHERE partyIdentification.ID in :partyIds";
     private static final String QUERY_SELECT_PERSON_BY_ID = "SELECT person FROM PersonType person WHERE person.ID = :id";
     private static final String QUERY_GET_QUALIFIYING_PARTY = "SELECT qpt FROM QualifyingPartyType qpt JOIN qpt.party.partyIdentification partyIdentification WHERE partyIdentification.ID = :partyId";
 
-    public static List<PartyType> getPartyByIDs(List<String> partyIds) {
-        return new JPARepositoryFactory().forCatalogueRepository(true).getEntities(QUERY_SELECT_BY_IDS, new String[]{"partyIds"}, new Object[]{partyIds});
-    }
-
-    public static PersonType getPersonByID(String personId){
+    private static PersonType getPersonByID(String personId){
         List<PersonType> personTypes = new JPARepositoryFactory().forCatalogueRepository(true).getEntities(QUERY_SELECT_PERSON_BY_ID, new String[]{"id"}, new Object[]{personId});
         if(personTypes.size() > 0){
             return personTypes.get(0);
@@ -110,5 +106,46 @@ public class PartyPersistenceUtility {
             qualifyingParty.setParty(getParty(partyType));
         }
         return qualifyingParty;
+    }
+
+    /**
+     * Retrieve the user with given id. The user info is taken from the identity-service if it exists or
+     * database directly.
+     * */
+    public static PersonType getPerson(String bearerToken, String userId) throws IOException {
+        // get Person info from the identity-service
+        PersonType person = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken,userId);
+        // if there is no such Person in the identity-service, take it from the database
+        if(person == null){
+            person = getPersonByID(userId);
+        }
+        return person;
+    }
+
+    /**
+     * Retrieve the parties with the given ids. The party info is taken from the identity-service if it exists
+     * or database directly.
+     * */
+    public static List<PartyType> getParties(String bearerToken, List<String> partyIds) throws IOException {
+        List<PartyType> parties = new ArrayList<>();
+
+        for(String partyId:partyIds){
+            PartyType party = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,partyId);
+            if(party == null){
+                party = getParty(partyId, true);
+            }
+            parties.add(party);
+        }
+
+        return parties;
+    }
+
+    /**
+     * Retrieve the party info for the given party. The party info is taken from the identity-service if it exists
+     * ,otherwise the given party is returned.
+     * */
+    public static PartyType getParty(String bearerToken, PartyType partyType) throws IOException {
+        PartyType party = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,partyType.getPartyIdentification().get(0).getID());
+        return party == null ? partyType : party;
     }
 }

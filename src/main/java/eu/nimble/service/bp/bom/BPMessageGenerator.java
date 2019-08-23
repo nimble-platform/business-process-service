@@ -58,34 +58,37 @@ public class BPMessageGenerator {
                     // create an order using the frame contract
                     OrderType order = createOrder(quotation, buyerParty, sellerNegotiationSettings.getCompany());
 
-                    return BPMessageGenerator.createProcessInstanceInputMessage(order, catalogueLine.getGoodsItem().getItem(), creatorUserId,"");
+                    return BPMessageGenerator.createProcessInstanceInputMessage(order, catalogueLine.getGoodsItem().getItem(), creatorUserId,"",bearerToken);
                 }
             }
         }
 
         RequestForQuotationType requestForQuotation = createRequestForQuotation(catalogueLine, billOfMaterialItem.getquantity(), sellerNegotiationSettings,buyerParty, bearerToken);
 
-        return BPMessageGenerator.createProcessInstanceInputMessage(requestForQuotation, catalogueLine.getGoodsItem().getItem(), creatorUserId,"");
+        return BPMessageGenerator.createProcessInstanceInputMessage(requestForQuotation, catalogueLine.getGoodsItem().getItem(), creatorUserId,"",bearerToken);
     }
 
-    public static ProcessInstanceInputMessage createProcessInstanceInputMessage(IDocument document, ItemType item, String creatorUserId,String processInstanceId) throws Exception {
+    public static ProcessInstanceInputMessage createProcessInstanceInputMessage(IDocument document, ItemType item, String creatorUserId,String processInstanceId,String bearerToken) throws Exception {
         // get corresponding process type
         String processId = ClassProcessTypeMap.getProcessType(document.getClass());
 
         // the seller is the responder while the buyer is the initiator
-        PartyType responderParty = document.getSellerParty();
-        PartyType initiatorParty = document.getBuyerParty();
+        PartyType responderParty;
+        PartyType initiatorParty;
         // for Fulfilment, it's vice versa
         if(processId.contentEquals("Fulfilment")){
-            responderParty = document.getBuyerParty();
-            initiatorParty = document.getSellerParty();
+            responderParty = PartyPersistenceUtility.getParty(bearerToken, document.getBuyerParty());
+            initiatorParty = PartyPersistenceUtility.getParty(bearerToken, document.getSellerParty());
+        }
+        else{
+            responderParty = PartyPersistenceUtility.getParty(bearerToken, document.getSellerParty());
+            initiatorParty = PartyPersistenceUtility.getParty(bearerToken, document.getBuyerParty());
         }
 
         // when no creator user id is provided, we need to derive this info from the party
         if(creatorUserId == null){
             // check whether it is a request or response document
             boolean isInitialDocument = BusinessProcessUtility.isInitialDocument(document.getClass());
-            // TODO: we need to get party info from the identity-service if it exists
             if(isInitialDocument){
                 creatorUserId = initiatorParty.getPerson().get(0).getID();
             }
