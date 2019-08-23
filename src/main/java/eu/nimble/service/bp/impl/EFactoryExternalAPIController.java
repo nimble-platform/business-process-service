@@ -158,10 +158,10 @@ public class EFactoryExternalAPIController {
             // get corresponding process type
             String processId = ClassProcessTypeMap.getProcessType(document.getClass());
             // get the initiator party id
-            PartyType initiatorParty = BPMessageGenerator.getBuyerParty(document);
+            PartyType initiatorParty = document.getBuyerParty();
             // for Fulfilment, it's vice versa
             if(processId.contentEquals("Fulfilment")){
-                initiatorParty = BPMessageGenerator.getSellerParty(document);
+                initiatorParty = document.getSellerParty();
             }
 
             // get the initiator party

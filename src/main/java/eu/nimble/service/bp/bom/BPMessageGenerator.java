@@ -19,20 +19,11 @@ import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.commonbasiccomponents.CodeType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.QuantityType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.TextType;
-import eu.nimble.service.model.ubl.despatchadvice.DespatchAdviceType;
 import eu.nimble.service.model.ubl.digitalagreement.DigitalAgreementType;
 import eu.nimble.service.model.ubl.document.IDocument;
-import eu.nimble.service.model.ubl.iteminformationrequest.ItemInformationRequestType;
-import eu.nimble.service.model.ubl.iteminformationresponse.ItemInformationResponseType;
 import eu.nimble.service.model.ubl.order.OrderType;
-import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
-import eu.nimble.service.model.ubl.ppaprequest.PpapRequestType;
-import eu.nimble.service.model.ubl.ppapresponse.PpapResponseType;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
-import eu.nimble.service.model.ubl.receiptadvice.ReceiptAdviceType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
-import eu.nimble.service.model.ubl.transportexecutionplan.TransportExecutionPlanType;
-import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
 import eu.nimble.utility.JsonSerializationUtility;
 import org.apache.commons.io.IOUtils;
 import org.json.JSONObject;
@@ -82,12 +73,12 @@ public class BPMessageGenerator {
         String processId = ClassProcessTypeMap.getProcessType(document.getClass());
 
         // the seller is the responder while the buyer is the initiator
-        PartyType responderParty = getSellerParty(document);
-        PartyType initiatorParty = getBuyerParty(document);
+        PartyType responderParty = document.getSellerParty();
+        PartyType initiatorParty = document.getBuyerParty();
         // for Fulfilment, it's vice versa
         if(processId.contentEquals("Fulfilment")){
-            responderParty = getBuyerParty(document);
-            initiatorParty = getSellerParty(document);
+            responderParty = document.getBuyerParty();
+            initiatorParty = document.getSellerParty();
         }
 
         // when no creator user id is provided, we need to derive this info from the party
@@ -302,88 +293,6 @@ public class BPMessageGenerator {
             }
         }
         return tradingTerms;
-    }
-
-    // TODO: create a method in IDocument interface for this method
-    public static PartyType getBuyerParty(IDocument iDocument){
-        if(iDocument instanceof ItemInformationRequestType){
-            return ((ItemInformationRequestType) iDocument).getBuyerCustomerParty().getParty();
-        }
-        else if(iDocument instanceof ItemInformationResponseType){
-            return ((ItemInformationResponseType) iDocument).getBuyerCustomerParty().getParty();
-        }
-        else if(iDocument instanceof PpapRequestType){
-            return ((PpapRequestType) iDocument).getBuyerCustomerParty().getParty();
-        }
-        else if(iDocument instanceof PpapResponseType){
-            return ((PpapResponseType) iDocument).getBuyerCustomerParty().getParty();
-        }
-        else if(iDocument instanceof RequestForQuotationType){
-            return ((RequestForQuotationType) iDocument).getBuyerCustomerParty().getParty();
-        }
-        else if(iDocument instanceof QuotationType){
-            return ((QuotationType) iDocument).getBuyerCustomerParty().getParty();
-        }
-        else if(iDocument instanceof OrderType){
-            return ((OrderType) iDocument).getBuyerCustomerParty().getParty();
-        }
-        else if(iDocument instanceof OrderResponseSimpleType){
-            return ((OrderResponseSimpleType) iDocument).getBuyerCustomerParty().getParty();
-        }
-        else if(iDocument instanceof TransportExecutionPlanRequestType){
-            return ((TransportExecutionPlanRequestType) iDocument).getTransportUserParty();
-        }
-        else if(iDocument instanceof TransportExecutionPlanType){
-            return ((TransportExecutionPlanType) iDocument).getTransportUserParty();
-        }
-        else if(iDocument instanceof DespatchAdviceType){
-            return ((DespatchAdviceType) iDocument).getDeliveryCustomerParty().getParty();
-        }
-        else if(iDocument instanceof ReceiptAdviceType){
-            return ((ReceiptAdviceType) iDocument).getDeliveryCustomerParty().getParty();
-        }
-        return null;
-    }
-
-    // TODO: create a method in IDocument interface for this method
-    public static PartyType getSellerParty(IDocument iDocument){
-        if(iDocument instanceof ItemInformationRequestType){
-            return ((ItemInformationRequestType) iDocument).getSellerSupplierParty().getParty();
-        }
-        else if(iDocument instanceof ItemInformationResponseType){
-            return ((ItemInformationResponseType) iDocument).getSellerSupplierParty().getParty();
-        }
-        else if(iDocument instanceof PpapRequestType){
-            return ((PpapRequestType) iDocument).getSellerSupplierParty().getParty();
-        }
-        else if(iDocument instanceof PpapResponseType){
-            return ((PpapResponseType) iDocument).getSellerSupplierParty().getParty();
-        }
-        else if(iDocument instanceof RequestForQuotationType){
-            return ((RequestForQuotationType) iDocument).getSellerSupplierParty().getParty();
-        }
-        else if(iDocument instanceof QuotationType){
-            return ((QuotationType) iDocument).getSellerSupplierParty().getParty();
-        }
-        else if(iDocument instanceof OrderType){
-            return ((OrderType) iDocument).getSellerSupplierParty().getParty();
-        }
-        else if(iDocument instanceof OrderResponseSimpleType){
-            return ((OrderResponseSimpleType) iDocument).getSellerSupplierParty().getParty();
-        }
-        else if(iDocument instanceof TransportExecutionPlanRequestType){
-            return ((TransportExecutionPlanRequestType) iDocument).getTransportServiceProviderParty();
-        }
-        else if(iDocument instanceof TransportExecutionPlanType){
-            return ((TransportExecutionPlanType) iDocument).getTransportServiceProviderParty();
-        }
-        else if(iDocument instanceof DespatchAdviceType){
-            return ((DespatchAdviceType) iDocument).getDespatchSupplierParty().getParty();
-        }
-        else if(iDocument instanceof ReceiptAdviceType){
-            return ((ReceiptAdviceType) iDocument).getDespatchSupplierParty().getParty();
-        }
-        return null;
     }
 
 }
