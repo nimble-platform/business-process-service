@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.QualifyingPartyType;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
@@ -12,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Created by suat on 01-Jan-19.
@@ -20,7 +22,21 @@ public class PartyPersistenceUtility {
     private static final Logger logger = LoggerFactory.getLogger(PartyPersistenceUtility.class);
 
     private static final String QUERY_SELECT_BY_ID = "SELECT party FROM PartyType party JOIN party.partyIdentification partyIdentification WHERE partyIdentification.ID = :partyId";
+    private static final String QUERY_SELECT_BY_IDS = "SELECT party FROM PartyType party JOIN party.partyIdentification partyIdentification WHERE partyIdentification.ID in :partyIds";
+    private static final String QUERY_SELECT_PERSON_BY_ID = "SELECT person FROM PersonType person WHERE person.ID = :id";
     private static final String QUERY_GET_QUALIFIYING_PARTY = "SELECT qpt FROM QualifyingPartyType qpt JOIN qpt.party.partyIdentification partyIdentification WHERE partyIdentification.ID = :partyId";
+
+    public static List<PartyType> getPartyByIDs(List<String> partyIds) {
+        return new JPARepositoryFactory().forCatalogueRepository(true).getEntities(QUERY_SELECT_BY_IDS, new String[]{"partyIds"}, new Object[]{partyIds});
+    }
+
+    public static PersonType getPersonByID(String personId){
+        List<PersonType> personTypes = new JPARepositoryFactory().forCatalogueRepository(true).getEntities(QUERY_SELECT_PERSON_BY_ID, new String[]{"id"}, new Object[]{personId});
+        if(personTypes.size() > 0){
+            return personTypes.get(0);
+        }
+        return null;
+    }
 
     public static PartyType getPartyByID(String partyId,boolean lazyDisabled) {
         return new JPARepositoryFactory().forCatalogueRepository(lazyDisabled).getSingleEntity(QUERY_SELECT_BY_ID, new String[]{"partyId"}, new Object[]{partyId});

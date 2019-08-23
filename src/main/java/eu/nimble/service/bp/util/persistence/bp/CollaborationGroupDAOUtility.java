@@ -4,6 +4,7 @@ import eu.nimble.service.bp.model.hyperjaxb.CollaborationGroupDAO;
 import eu.nimble.service.bp.model.hyperjaxb.CollaborationStatus;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceGroupDAO;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceStatus;
+import eu.nimble.service.bp.util.persistence.catalogue.PartyPersistenceUtility;
 import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupFilter;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyNameType;
@@ -27,6 +28,8 @@ public class CollaborationGroupDAOUtility {
             "select cg from CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups apig where apig.ID = :groupId";
     private static final String QUERY_GET_BY_PARTY_ID_AND_COLLABORATION_ROLE =
             "select cg from CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups apig where apig.partyID = :partyID AND apig.collaborationRole = :role";
+    private static final String QUERY_GET_BY_PARTY_ID_AND_PROCESS_INSTANCE_ID =
+            "select cg from CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups apig join apig.processInstanceIDsItems pid where apig.partyID = :partyID AND pid.item = :pid";
     private static final String QUERY_GET_GROUP_OF_PROCESS_INSTANCE_GROUPS =
             "select cg.hjid from CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups apig where apig.ID in :groupIds";
     private static final String QUERY_GET_PROCESS_INSTANCES_OF_COLLABORATION_GROUP =
@@ -54,6 +57,13 @@ public class CollaborationGroupDAOUtility {
 
     public static List<CollaborationGroupDAO> getCollaborationGroupDAOs(String partyId, String collaborationRole){
         return new JPARepositoryFactory().forBpRepository(true).getEntities(QUERY_GET_BY_PARTY_ID_AND_COLLABORATION_ROLE, new String[]{"partyID", "role"}, new Object[]{partyId, collaborationRole});
+    }
+
+    /**
+     * @return {@link CollaborationGroupDAO} which contains the given process instance and belongs to the given party
+     * */
+    public static CollaborationGroupDAO getCollaborationGroupDAO(String partyId, String processInstanceId){
+        return new JPARepositoryFactory().forBpRepository(true).getSingleEntity(QUERY_GET_BY_PARTY_ID_AND_PROCESS_INSTANCE_ID, new String[]{"partyID", "pid"}, new Object[]{partyId, processInstanceId});
     }
 
     public static CollaborationGroupDAO getCollaborationGroupByProcessInstanceIdAndPartyId(String processInstanceId, String partyId){
@@ -310,14 +320,16 @@ public class CollaborationGroupDAOUtility {
                 filter.getTradingPartnerIDs().add(resultColumn);
             }
 
-            List<PartyType> parties = null;
-            try {
-                parties = SpringBridge.getInstance().getiIdentityClientTyped().getParties(bearerToken, filter.getTradingPartnerIDs());
-            } catch (IOException e) {
-                String msg = String.format("Failed to get parties while getting categories for party: %s, collaboration role: %s, archived: %B", partyId, collaborationRole, archived);
-                logger.error(msg);
-                throw new RuntimeException(msg, e);
-            }
+            // TODO: we need to get party info from the identity-service if it exists, otherwise, we could take it from the database
+//            List<PartyType> parties = null;
+//            try {
+//                parties = SpringBridge.getInstance().getiIdentityClientTyped().getParties(bearerToken, filter.getTradingPartnerIDs());
+//            } catch (IOException e) {
+//                String msg = String.format("Failed to get parties while getting categories for party: %s, collaboration role: %s, archived: %B", partyId, collaborationRole, archived);
+//                logger.error(msg);
+//                throw new RuntimeException(msg, e);
+//            }
+            List<PartyType> parties = PartyPersistenceUtility.getPartyByIDs(filter.getTradingPartnerIDs());
 
             // populate partners' names
             if (parties != null) {

@@ -15,6 +15,7 @@ import eu.nimble.service.bp.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceDAOUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
+import eu.nimble.service.bp.util.persistence.catalogue.PartyPersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
 import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
@@ -363,8 +364,12 @@ public class ProcessInstanceController {
     }
 
     private Future<String> getCreatorUser(String bearerToken,String userId, ExecutorService threadPool){
+        // TODO: we should get the person info from the identity-service if it exists, otherwise, we could take it from the database
+//        return threadPool.submit(() -> JsonSerializationUtility.getObjectMapper().writeValueAsString(
+//                SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken,userId)));
         return threadPool.submit(() -> JsonSerializationUtility.getObjectMapper().writeValueAsString(
-                SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken,userId)));
+                PartyPersistenceUtility.getPersonByID(userId)
+        ));
     }
 
     private Future<String> serializeObject(Object object, ExecutorService threadPool){

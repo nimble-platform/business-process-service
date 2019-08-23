@@ -6,6 +6,8 @@ import eu.nimble.common.rest.identity.model.NegotiationSettings;
 import eu.nimble.service.bp.contract.ContractGenerator;
 import eu.nimble.service.bp.model.billOfMaterial.BillOfMaterialItem;
 import eu.nimble.service.bp.util.UBLUtility;
+import eu.nimble.service.bp.util.bp.BusinessProcessUtility;
+import eu.nimble.service.bp.util.bp.ClassProcessTypeMap;
 import eu.nimble.service.bp.util.persistence.catalogue.CataloguePersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.ContractPersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
@@ -17,11 +19,20 @@ import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.commonbasiccomponents.CodeType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.QuantityType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.TextType;
+import eu.nimble.service.model.ubl.despatchadvice.DespatchAdviceType;
 import eu.nimble.service.model.ubl.digitalagreement.DigitalAgreementType;
 import eu.nimble.service.model.ubl.document.IDocument;
+import eu.nimble.service.model.ubl.iteminformationrequest.ItemInformationRequestType;
+import eu.nimble.service.model.ubl.iteminformationresponse.ItemInformationResponseType;
 import eu.nimble.service.model.ubl.order.OrderType;
+import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
+import eu.nimble.service.model.ubl.ppaprequest.PpapRequestType;
+import eu.nimble.service.model.ubl.ppapresponse.PpapResponseType;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
+import eu.nimble.service.model.ubl.receiptadvice.ReceiptAdviceType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
+import eu.nimble.service.model.ubl.transportexecutionplan.TransportExecutionPlanType;
+import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
 import eu.nimble.utility.JsonSerializationUtility;
 import org.apache.commons.io.IOUtils;
 import org.json.JSONObject;
@@ -35,9 +46,6 @@ import java.util.*;
 public class BPMessageGenerator {
 
     private final static Logger logger = LoggerFactory.getLogger(BPMessageGenerator.class);
-
-    private final static String orderProcessId = "Order";
-    private final static String negotiationProcessId = "Negotiation";
 
     public static ProcessInstanceInputMessage createBPMessageForBOM(BillOfMaterialItem billOfMaterialItem, Boolean useFrameContract, PartyType buyerParty, String creatorUserId, String bearerToken) throws Exception {
         // get catalogue line
@@ -59,17 +67,41 @@ public class BPMessageGenerator {
                     // create an order using the frame contract
                     OrderType order = createOrder(quotation, buyerParty, sellerNegotiationSettings.getCompany());
 
-                    return BPMessageGenerator.createProcessInstanceInputMessage(order, orderProcessId, catalogueLine.getGoodsItem().getItem(), creatorUserId);
+                    return BPMessageGenerator.createProcessInstanceInputMessage(order, catalogueLine.getGoodsItem().getItem(), creatorUserId,"");
                 }
             }
         }
 
         RequestForQuotationType requestForQuotation = createRequestForQuotation(catalogueLine, billOfMaterialItem.getquantity(), sellerNegotiationSettings,buyerParty, bearerToken);
 
-        return BPMessageGenerator.createProcessInstanceInputMessage(requestForQuotation, negotiationProcessId, catalogueLine.getGoodsItem().getItem(), creatorUserId);
+        return BPMessageGenerator.createProcessInstanceInputMessage(requestForQuotation, catalogueLine.getGoodsItem().getItem(), creatorUserId,"");
     }
 
-    public static ProcessInstanceInputMessage createProcessInstanceInputMessage(IDocument document, String processId, ItemType item, String creatorUserId) throws Exception {
+    public static ProcessInstanceInputMessage createProcessInstanceInputMessage(IDocument document, ItemType item, String creatorUserId,String processInstanceId) throws Exception {
+        // get corresponding process type
+        String processId = ClassProcessTypeMap.getProcessType(document.getClass());
+
+        // the seller is the responder while the buyer is the initiator
+        PartyType responderParty = getSellerParty(document);
+        PartyType initiatorParty = getBuyerParty(document);
+        // for Fulfilment, it's vice versa
+        if(processId.contentEquals("Fulfilment")){
+            responderParty = getBuyerParty(document);
+            initiatorParty = getSellerParty(document);
+        }
+
+        // when no creator user id is provided, we need to derive this info from the party
+        if(creatorUserId == null){
+            // check whether it is a request or response document
+            boolean isInitialDocument = BusinessProcessUtility.isInitialDocument(document.getClass());
+            // TODO: we need to get party info from the identity-service if it exists
+            if(isInitialDocument){
+                creatorUserId = initiatorParty.getPerson().get(0).getID();
+            }
+            else {
+                creatorUserId = responderParty.getPerson().get(0).getID();
+            }
+        }
         // get related product categories
         List<String> relatedProductCategories = new ArrayList<>();
         for (CommodityClassificationType commodityClassificationType : item.getCommodityClassification()) {
@@ -78,28 +110,28 @@ public class BPMessageGenerator {
             }
         }
         // serialize the document
-        String rfqAsString = JsonSerializationUtility.getObjectMapper().writeValueAsString(document);
+        String documentAsString = JsonSerializationUtility.getObjectMapper().writeValueAsString(document);
 
         // remove hjids
-        JSONObject object = new JSONObject(rfqAsString);
+        JSONObject object = new JSONObject(documentAsString);
         JsonSerializationUtility.removeHjidFields(object);
-        rfqAsString = object.toString();
+        documentAsString = object.toString();
 
         // create process variables
         ProcessVariables processVariables = new ProcessVariables();
 
         processVariables.setContentUUID(UBLUtility.getDocumentId(document));
-        processVariables.setContent(rfqAsString);
+        processVariables.setContent(documentAsString);
         processVariables.setProcessID(processId);
         processVariables.setCreatorUserID(creatorUserId);
-        processVariables.setInitiatorID(document.getBuyerPartyId());
-        processVariables.setResponderID(item.getManufacturerParty().getPartyIdentification().get(0).getID());
+        processVariables.setInitiatorID(initiatorParty.getPartyIdentification().get(0).getID());
+        processVariables.setResponderID(responderParty.getPartyIdentification().get(0).getID());
         processVariables.setRelatedProducts(Collections.singletonList(item.getName().get(0).getValue()));
         processVariables.setRelatedProductCategories(relatedProductCategories);
 
         // create Process instance input message
         ProcessInstanceInputMessage processInstanceInputMessage = new ProcessInstanceInputMessage();
-        processInstanceInputMessage.setProcessInstanceID("");
+        processInstanceInputMessage.setProcessInstanceID(processInstanceId);
         processInstanceInputMessage.setVariables(processVariables);
 
         return processInstanceInputMessage;
@@ -270,6 +302,88 @@ public class BPMessageGenerator {
             }
         }
         return tradingTerms;
+    }
+
+    // TODO: create a method in IDocument interface for this method
+    public static PartyType getBuyerParty(IDocument iDocument){
+        if(iDocument instanceof ItemInformationRequestType){
+            return ((ItemInformationRequestType) iDocument).getBuyerCustomerParty().getParty();
+        }
+        else if(iDocument instanceof ItemInformationResponseType){
+            return ((ItemInformationResponseType) iDocument).getBuyerCustomerParty().getParty();
+        }
+        else if(iDocument instanceof PpapRequestType){
+            return ((PpapRequestType) iDocument).getBuyerCustomerParty().getParty();
+        }
+        else if(iDocument instanceof PpapResponseType){
+            return ((PpapResponseType) iDocument).getBuyerCustomerParty().getParty();
+        }
+        else if(iDocument instanceof RequestForQuotationType){
+            return ((RequestForQuotationType) iDocument).getBuyerCustomerParty().getParty();
+        }
+        else if(iDocument instanceof QuotationType){
+            return ((QuotationType) iDocument).getBuyerCustomerParty().getParty();
+        }
+        else if(iDocument instanceof OrderType){
+            return ((OrderType) iDocument).getBuyerCustomerParty().getParty();
+        }
+        else if(iDocument instanceof OrderResponseSimpleType){
+            return ((OrderResponseSimpleType) iDocument).getBuyerCustomerParty().getParty();
+        }
+        else if(iDocument instanceof TransportExecutionPlanRequestType){
+            return ((TransportExecutionPlanRequestType) iDocument).getTransportUserParty();
+        }
+        else if(iDocument instanceof TransportExecutionPlanType){
+            return ((TransportExecutionPlanType) iDocument).getTransportUserParty();
+        }
+        else if(iDocument instanceof DespatchAdviceType){
+            return ((DespatchAdviceType) iDocument).getDeliveryCustomerParty().getParty();
+        }
+        else if(iDocument instanceof ReceiptAdviceType){
+            return ((ReceiptAdviceType) iDocument).getDeliveryCustomerParty().getParty();
+        }
+        return null;
+    }
+
+    // TODO: create a method in IDocument interface for this method
+    public static PartyType getSellerParty(IDocument iDocument){
+        if(iDocument instanceof ItemInformationRequestType){
+            return ((ItemInformationRequestType) iDocument).getSellerSupplierParty().getParty();
+        }
+        else if(iDocument instanceof ItemInformationResponseType){
+            return ((ItemInformationResponseType) iDocument).getSellerSupplierParty().getParty();
+        }
+        else if(iDocument instanceof PpapRequestType){
+            return ((PpapRequestType) iDocument).getSellerSupplierParty().getParty();
+        }
+        else if(iDocument instanceof PpapResponseType){
+            return ((PpapResponseType) iDocument).getSellerSupplierParty().getParty();
+        }
+        else if(iDocument instanceof RequestForQuotationType){
+            return ((RequestForQuotationType) iDocument).getSellerSupplierParty().getParty();
+        }
+        else if(iDocument instanceof QuotationType){
+            return ((QuotationType) iDocument).getSellerSupplierParty().getParty();
+        }
+        else if(iDocument instanceof OrderType){
+            return ((OrderType) iDocument).getSellerSupplierParty().getParty();
+        }
+        else if(iDocument instanceof OrderResponseSimpleType){
+            return ((OrderResponseSimpleType) iDocument).getSellerSupplierParty().getParty();
+        }
+        else if(iDocument instanceof TransportExecutionPlanRequestType){
+            return ((TransportExecutionPlanRequestType) iDocument).getTransportServiceProviderParty();
+        }
+        else if(iDocument instanceof TransportExecutionPlanType){
+            return ((TransportExecutionPlanType) iDocument).getTransportServiceProviderParty();
+        }
+        else if(iDocument instanceof DespatchAdviceType){
+            return ((DespatchAdviceType) iDocument).getDespatchSupplierParty().getParty();
+        }
+        else if(iDocument instanceof ReceiptAdviceType){
+            return ((ReceiptAdviceType) iDocument).getDespatchSupplierParty().getParty();
+        }
+        return null;
     }
 
 }
