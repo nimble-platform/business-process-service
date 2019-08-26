@@ -6,6 +6,8 @@ import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;
 import eu.nimble.service.bp.bom.BPMessageGenerator;
 import eu.nimble.service.bp.model.hyperjaxb.CollaborationGroupDAO;
+import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
+import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceGroupDAO;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
@@ -13,15 +15,12 @@ import eu.nimble.service.bp.util.bp.BusinessProcessUtility;
 import eu.nimble.service.bp.util.bp.ClassProcessTypeMap;
 import eu.nimble.service.bp.util.persistence.bp.CollaborationGroupDAOUtility;
 import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
+import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.util.spring.SpringBridge;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.DocumentReferenceType;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.ItemType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.document.IDocument;
-import eu.nimble.service.model.ubl.iteminformationresponse.ItemInformationResponseType;
-import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
-import eu.nimble.service.model.ubl.ppapresponse.PpapResponseType;
-import eu.nimble.service.model.ubl.quotation.QuotationType;
-import eu.nimble.service.model.ubl.receiptadvice.ReceiptAdviceType;
-import eu.nimble.service.model.ubl.transportexecutionplan.TransportExecutionPlanType;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.serialization.IDocumentDeserializer;
 import io.swagger.annotations.ApiOperation;
@@ -37,11 +36,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import springfox.documentation.annotations.ApiIgnore;
 
 import java.io.IOException;
 
-@ApiIgnore
 @Controller
 public class EFactoryExternalAPIController {
     private final Logger logger = LoggerFactory.getLogger(EFactoryExternalAPIController.class);
@@ -54,10 +51,13 @@ public class EFactoryExternalAPIController {
     // TODO: we need to get a token for business-process service
     private final String token = "Bearer eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICIxYnNrM09PZkNzdWF0LXV1X0lqU2JxX2QwMmtZM2NteXJheUpXeE93MmlZIn0.eyJqdGkiOiJmMzEzOGMzOS1mMWM4LTRmMDYtOGJkZC0zMzBiM2I4ZmE2NTYiLCJleHAiOjE1MzAwODg3MzQsIm5iZiI6MCwiaWF0IjoxNTMwMDAyMzM0LCJpc3MiOiJodHRwOi8va2V5Y2xvYWs6ODA4MC9hdXRoL3JlYWxtcy9tYXN0ZXIiLCJhdWQiOiJuaW1ibGVfY2xpZW50Iiwic3ViIjoiMWVlNmIyNzEtM2MyMy00YTZiLWJlMTktYmI3ZWJmNjVlYTVjIiwidHlwIjoiQmVhcmVyIiwiYXpwIjoibmltYmxlX2NsaWVudCIsImF1dGhfdGltZSI6MCwic2Vzc2lvbl9zdGF0ZSI6ImIyMmQyZDE5LTNhY2ItNDUyMC1iNWFlLTdkOGU2MGQ3ODQ4YyIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOltdLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsibGVnYWxfcmVwcmVzZW50YXRpdmUiLCJuaW1ibGVfdXNlciIsImluaXRpYWxfcmVwcmVzZW50YXRpdmUiLCJ1bWFfYXV0aG9yaXphdGlvbiJdfSwicmVzb3VyY2VfYWNjZXNzIjp7ImFjY291bnQiOnsicm9sZXMiOlsibWFuYWdlLWFjY291bnQiLCJtYW5hZ2UtYWNjb3VudC1saW5rcyIsInZpZXctcHJvZmlsZSJdfX0sIm5hbWUiOiJhbGkgY2FuIiwicHJlZmVycmVkX3VzZXJuYW1lIjoiY2FuQGdtYWlsLmNvbSIsImdpdmVuX25hbWUiOiJhbGkiLCJmYW1pbHlfbmFtZSI6ImNhbiIsImVtYWlsIjoiY2FuQGdtYWlsLmNvbSJ9.Un1K0t37Ln3VN51i-Is_";
 
-    @ApiOperation(value = "",notes = "")
+    @ApiOperation(value = "",notes = "It starts a new process for request documents or completes the existing one for response documents." +
+            "If the request document has a reference (document.additionalDocumentReference) with a 'previousDocument' type (document.additionalDocumentReference.documentType)," +
+            "the new process is placed into the same ProcessInstanceGroup with this referenced process.If the reference type is 'previousOrder', then a new ProcessInstanceGroup" +
+            "will be created for the process in the same CollaborationGroup with the referenced process.Otherwise, a new CollaborationGroup will be created for the process.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = ""),
-            @ApiResponse(code = 400, message = "")
+            @ApiResponse(code = 200, message = "Processes the document successfully", response = ProcessInstance.class),
+            @ApiResponse(code = 404, message = "Seller party does not exist")
     })
     @RequestMapping(value = "/process-document",
             produces = {"application/json"},
@@ -122,16 +122,52 @@ public class EFactoryExternalAPIController {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
             }
 
-            processInstance = startController.startProcessInstance(token,processInstanceInputMessage,null,null,null).getBody();
+            // to start the process, we need to know the details of preceding process instance so that we can place the process instance to correct group
+            ProcessDocumentMetadataDAO processDocumentMetadataDAO = getProcessDocumentMetadataDAO(document, false);
+            String processInstanceId = processDocumentMetadataDAO != null ? processDocumentMetadataDAO.getProcessInstanceID(): null ;
+            String processInstanceIdOfPreviousOrder = getProcessInstanceIdOfPrecedingOrder(document);
+
+            String cgid = null;
+            String gid = null;
+            String precedingGid = null;
+            if(processInstanceId != null){
+                // get the collaboration group containing the process instance for the initiator party
+                CollaborationGroupDAO collaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroupDAO(processInstanceInputMessage.getVariables().getInitiatorID(),processInstanceId);
+                cgid = collaborationGroup.getHjid().toString();
+                // get the identifier of process instance group containing the process instance
+                for(ProcessInstanceGroupDAO processInstanceGroupDAO:collaborationGroup.getAssociatedProcessInstanceGroups()){
+                    if(processInstanceGroupDAO.getProcessInstanceIDs().contains(processInstanceId)){
+                        gid = processInstanceGroupDAO.getID();
+                        break;
+                    }
+                }
+            }
+            else if(processInstanceIdOfPreviousOrder != null){
+                // get the collaboration group containing the process instance for the initiator party
+                CollaborationGroupDAO collaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroupDAO(processInstanceInputMessage.getVariables().getInitiatorID(),processInstanceIdOfPreviousOrder);
+                cgid = collaborationGroup.getHjid().toString();
+                // get the identifier of process instance group containing the process instance
+                for(ProcessInstanceGroupDAO processInstanceGroupDAO:collaborationGroup.getAssociatedProcessInstanceGroups()){
+                    if(processInstanceGroupDAO.getProcessInstanceIDs().contains(processInstanceIdOfPreviousOrder)){
+                        precedingGid = processInstanceGroupDAO.getID();
+                        break;
+                    }
+                }
+            }
+            processInstance = startController.startProcessInstance(token,processInstanceInputMessage,gid,precedingGid,cgid).getBody();
         }
         else{
             // to complete the process, we need to know process instance id
-            String processInstanceId = getProcessInstanceId(document);
+            ProcessDocumentMetadataDAO processDocumentMetadataDAO = getProcessDocumentMetadataDAO(document, true);
+            String processInstanceId = processDocumentMetadataDAO.getProcessInstanceID();
+
+            // since some response documents do not have an item, we need to use the item of request document
+            ItemType item = document.getItemType() != null ? document.getItemType(): getItemType(processDocumentMetadataDAO.getDocumentID(),processDocumentMetadataDAO.getType());
 
             // create ProcessInstanceInputMessage
             ProcessInstanceInputMessage processInstanceInputMessage;
             try {
-                processInstanceInputMessage = BPMessageGenerator.createProcessInstanceInputMessage(document,document.getItemType(),null,processInstanceId,token);
+                processInstanceInputMessage = BPMessageGenerator.createProcessInstanceInputMessage(document,item,null,processInstanceId,token);
             } catch (Exception e) {
                 String msg = "Failed to create process instance input message for the document";
                 logger.error(msg,e);
@@ -188,12 +224,48 @@ public class EFactoryExternalAPIController {
         return ResponseEntity.ok(processInstance);
     }
 
-    private String getProcessInstanceId(IDocument responseDocument){
-        // get the request document id
-        String requestDocumentId = responseDocument.getRequestDocumentId();
+    /**
+     * If the given document is a response document, this method simply returns {@link ProcessDocumentMetadataDAO} representing the corresponding request document.
+     * Otherwise, if it has a reference called {@literal previousDocument}, {@link ProcessDocumentMetadataDAO} representing the previous document is returned.
+     */
+    private ProcessDocumentMetadataDAO getProcessDocumentMetadataDAO(IDocument document, Boolean isResponseDocument){
+        String documentId = null;
+        // if it is a response document, then we need to get the identifier of request document
+        if(isResponseDocument){
+            // get the request document id
+            documentId = document.getRequestDocumentId();
+        }
+        // otherwise, we'll find the identifier of previous document
+        else{
+            for (DocumentReferenceType documentReferenceType : document.getAdditionalDocuments()) {
+                if(documentReferenceType.getDocumentType().contentEquals("previousDocument")){
+                    documentId = documentReferenceType.getID();
+                }
+            }
+        }
 
         // get the process instance id
-        return ProcessDocumentMetadataDAOUtility.findByDocumentID(requestDocumentId).getProcessInstanceID();
+        return documentId != null ? ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId) : null;
     }
 
+    /**
+     * If the given document has a reference called {@literal previousOrder}, this method returns the identifier of process instance associated with that order.
+     * */
+    private String getProcessInstanceIdOfPrecedingOrder(IDocument document){
+        String documentId = null;
+        for (DocumentReferenceType documentReferenceType : document.getAdditionalDocuments()) {
+            if(documentReferenceType.getDocumentType().contentEquals("previousOrder")){
+                documentId = documentReferenceType.getID();
+            }
+        }
+        return documentId != null ? ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId).getProcessInstanceID() : null;
+    }
+
+    /**
+     * It retrieves the specified document and returns its {@link ItemType}
+     * */
+    private ItemType getItemType(String documentId, DocumentType documentType){
+        IDocument iDocument =  DocumentPersistenceUtility.getUBLDocument(documentId, documentType);
+        return iDocument.getItemType();
+    }
 }

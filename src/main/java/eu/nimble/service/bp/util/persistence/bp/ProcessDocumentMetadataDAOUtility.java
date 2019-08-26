@@ -219,10 +219,12 @@ public class ProcessDocumentMetadataDAOUtility {
                 // set transaction date
                 transactionSummary.setTransactionTime(documentMetadata.getSubmissionDate());
 
+                // get auxiliary files
+                List<DocumentReferenceType> auxiliaryFiles = getAuxiliaryFiles(document.getAdditionalDocuments());
                 // set auxiliary files
-                transactionSummary.setAuxiliaryFiles(document.getAdditionalDocuments());
+                transactionSummary.setAuxiliaryFiles(auxiliaryFiles);
                 transactionSummary.setAuxiliaryFileIds(new ArrayList<>());
-                for (DocumentReferenceType auxiliaryFile : document.getAdditionalDocuments()) {
+                for (DocumentReferenceType auxiliaryFile : auxiliaryFiles) {
                     transactionSummary.getAuxiliaryFileIds().add(auxiliaryFile.getAttachment().getEmbeddedDocumentBinaryObject().getUri());
                 }
 
@@ -271,6 +273,20 @@ public class ProcessDocumentMetadataDAOUtility {
         }
 
         return summaries;
+    }
+
+    /**
+     * Some {@link DocumentReferenceType}s have a reference to {@link IDocument}s, therefore they do not have an attached
+     * {@link eu.nimble.service.model.ubl.commonbasiccomponents.BinaryObjectType}. We need to skip them.
+     * */
+    private static List<DocumentReferenceType> getAuxiliaryFiles(List<DocumentReferenceType> documentReferenceTypes){
+        List<DocumentReferenceType> auxiliaryFiles = new ArrayList<>();
+        for (DocumentReferenceType documentReferenceType : documentReferenceTypes) {
+            if(documentReferenceType.getAttachment() != null){
+                auxiliaryFiles.add(documentReferenceType);
+            }
+        }
+        return auxiliaryFiles;
     }
 
     private static Future<List<PartyType>> getParties(ExecutorService threadPool, Set<String> partyIds, String bearerToken) {
