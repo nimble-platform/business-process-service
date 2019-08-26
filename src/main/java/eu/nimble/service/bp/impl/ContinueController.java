@@ -38,6 +38,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
+import springfox.documentation.annotations.ApiIgnore;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -58,6 +59,7 @@ public class ContinueController implements ContinueApi {
     @Autowired
     private ProcessInstanceGroupController processInstanceGroupController;
 
+    @ApiIgnore
     @Override
     @ApiOperation(value = "", notes = "Sends input to a waiting process instance (because of a human task)")
     public ResponseEntity<ProcessInstance> continueProcessInstance(

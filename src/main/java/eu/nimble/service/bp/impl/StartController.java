@@ -39,6 +39,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
 
 import javax.ws.rs.BadRequestException;
 import java.io.IOException;
@@ -115,6 +116,7 @@ public class StartController implements StartApi {
         return ResponseEntity.ok(null);
     }
 
+    @ApiIgnore
     @Override
     @ApiOperation(value = "", notes = "Starts a business process.", response = ProcessInstance.class, tags = {})
     public ResponseEntity<ProcessInstance> startProcessInstance(
