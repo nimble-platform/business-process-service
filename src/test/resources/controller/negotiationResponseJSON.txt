@@ -1,18 +1,4163 @@
 {
-  "variables": {
-    "processID": "Negotiation",
-    "initiatorID": "1339",
-    "responderID": "706",
-    "contentUUID": "28068c78-79ed-4036-84cd-4cfb166b8996",
-    "creatorUserID": "704",
-    "relatedProducts": [
-      "QDeneme"
-    ],
-    "relatedProductCategories": [
-      "Automotive technology",
-      "Product"
-    ],
-    "content": "{\"id\":\"28068c78-79ed-4036-84cd-4cfb166b8996\",\"note\":[\"\"],\"documentStatusCode\":{\"value\":\"\",\"name\":\"Terms Updated\",\"uri\":\"\",\"listID\":\"\",\"listURI\":\"\"},\"documentStatusReasonCode\":{\"value\":\"\",\"name\":\"\",\"uri\":\"\",\"listID\":\"\",\"listURI\":\"\"},\"lineCountNumeric\":1,\"dataMonitoringPromised\":true,\"requestForQuotationDocumentReference\":{\"id\":\"8b9461be-eab6-456c-89c3-841950c9ee07\",\"documentType\":null,\"attachment\":null},\"buyerCustomerParty\":{\"party\":{\"federationInstanceID\":null,\"nace\":[],\"description\":[],\"brandName\":[],\"partyName\":[{\"name\":{\"value\":\"alpCompany\",\"languageID\":\"en\"}}],\"partyIdentification\":[{\"id\":\"1339\"}],\"websiteURI\":\"alp.com\",\"industryClassificationCode\":{\"value\":null,\"name\":\"IndustryClassificationCode\",\"listID\":null,\"uri\":null},\"externalAward\":null,\"ppapCompatibilityLevel\":3,\"preferredItemClassificationCode\":[],\"mostRecentItemsClassificationCode\":[{\"value\":\"0173-1#01-ADU394#007::eClass::Transport (other, unspecified)::transportation::1538379785156\",\"name\":null,\"listID\":null,\"uri\":null},{\"value\":\"0173-1#01-ADT337#002::eClass::Transship (other)::transportation::1537789229382\",\"name\":null,\"listID\":null,\"uri\":null},{\"value\":\"0173-1#01-AAC168#005::eClass::Automotive technology::product::1545033802228\",\"name\":null,\"listID\":null,\"uri\":null},{\"value\":\"0173-1#01-AGE748#001::eClass::Body care and personal hygiene::product::1537258099662\",\"name\":null,\"listID\":null,\"uri\":null},{\"value\":\"0173-1#01-ADR740#003::eClass::Transport service::transportation::1540214118532\",\"name\":null,\"listID\":null,\"uri\":null},{\"value\":\"0173-1#01-ACL614#011::eClass::Keyboard::product::1542614207644\",\"name\":null,\"listID\":null,\"uri\":null}],\"postalAddress\":{\"id\":null,\"streetName\":\"Silikon\",\"buildingNumber\":\"16\",\"cityName\":\"Sinop\",\"postalZone\":\"492\",\"country\":{\"name\":{\"value\":\"Turkey\",\"languageID\":\"en\"}}},\"partyTaxScheme\":[{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"234\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"234\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"234\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"234\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}}],\"contact\":{\"id\":null,\"name\":{\"value\":null,\"languageID\":\"en\"},\"telephone\":null,\"telefax\":null,\"electronicMail\":null,\"note\":null,\"otherCommunication\":[]},\"person\":[{\"id\":\"1337\",\"firstName\":\"alp\",\"familyName\":\"cenk\",\"birthDate\":null,\"birthplaceName\":null,\"organizationDepartment\":null,\"role\":[],\"contact\":{\"id\":null,\"name\":{\"value\":null,\"languageID\":\"en\"},\"telephone\":\"0789-842-53-62\",\"telefax\":null,\"electronicMail\":\"alp@gmail.com\",\"note\":null,\"otherCommunication\":[]},\"birthDateItem\":null}],\"certificate\":[],\"qualityIndicator\":[{\"qualityParameter\":\"\",\"quantity\":null}],\"ppapDocumentReference\":[],\"documentReference\":[],\"industrySector\":[],\"salesTerms\":null,\"purchaseTerms\":{\"tradingTerms\":[],\"deliveryTerms\":[],\"paymentMeans\":[]}}},\"sellerSupplierParty\":{\"party\":{\"federationInstanceID\":null,\"nace\":[],\"description\":[],\"brandName\":[],\"partyName\":[{\"name\":{\"value\":\"canCompany\",\"languageID\":\"en\"}}],\"partyIdentification\":[{\"id\":\"706\"}],\"websiteURI\":\"\",\"industryClassificationCode\":{\"value\":null,\"name\":\"IndustryClassificationCode\",\"listID\":null,\"uri\":null},\"externalAward\":null,\"ppapCompatibilityLevel\":1,\"preferredItemClassificationCode\":[{\"value\":\"0173-1#01-AAC286#007::eClass::Home economics, Home technology::product\",\"name\":null,\"listID\":null,\"uri\":null},{\"value\":\"0173-1#01-AEI956#006::eClass::Notebook::product\",\"name\":null,\"listID\":null,\"uri\":null},{\"value\":\"0173-1#01-ADU394#007::eClass::Transport (other, unspecified)::transportation\",\"name\":null,\"listID\":null,\"uri\":null},{\"value\":\"0173-1#01-BAC323#011::eClass::Farming vehicle (other, unspecified)::product\",\"name\":null,\"listID\":null,\"uri\":null}],\"mostRecentItemsClassificationCode\":[{\"value\":\"0173-1#01-AEI956#006::eClass::Notebook::product::1546001272533\",\"name\":null,\"listID\":null,\"uri\":null},{\"value\":\"http://www.aidimme.es/FurnitureSectorOntology.owl#MDFBoard::FurnitureOntology::MDFBoard::product::1547034223954\",\"name\":null,\"listID\":null,\"uri\":null},{\"value\":\"0173-1#01-AKJ050#013::eClass::MDF raw::product::1547548730947\",\"name\":null,\"listID\":null,\"uri\":null},{\"value\":\"0173-1#01-AGE763#001::eClass::Clothing and textile::product::1543581462872\",\"name\":null,\"listID\":null,\"uri\":null},{\"value\":\"0173-1#01-ACH237#011::eClass::MDF, painted::product::1547034223954\",\"name\":null,\"listID\":null,\"uri\":null},{\"value\":\"0173-1#01-AGF725#001::eClass::Component bathroom (unspecified)::product::1544789945992\",\"name\":null,\"listID\":null,\"uri\":null},{\"value\":\"0173-1#01-ACL457#011::eClass::Mobile PC (unspecified)::product::1546001236455\",\"name\":null,\"listID\":null,\"uri\":null},{\"value\":\"0173-1#01-AAC168#005::eClass::Automotive technology::product::1547644388251\",\"name\":null,\"listID\":null,\"uri\":null},{\"value\":\"0173-1#01-AAC350#007::eClass::Auxiliary supply, additive, cleaning agent::product::1545998076993\",\"name\":null,\"listID\":null,\"uri\":null},{\"value\":\"0173-1#01-ADU394#007::eClass::Transport (other, unspecified)::transportation::1545042918468\",\"name\":null,\"listID\":null,\"uri\":null}],\"postalAddress\":{\"id\":null,\"streetName\":\"abcx\",\"buildingNumber\":\"\",\"cityName\":\"ankara\",\"postalZone\":\"234\",\"country\":{\"name\":{\"value\":\"turkey\",\"languageID\":\"en\"}}},\"partyTaxScheme\":[{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}}],\"contact\":{\"id\":null,\"name\":{\"value\":null,\"languageID\":\"en\"},\"telephone\":null,\"telefax\":null,\"electronicMail\":null,\"note\":null,\"otherCommunication\":[]},\"person\":[{\"id\":\"704\",\"firstName\":\"ali\",\"familyName\":\"can\",\"birthDate\":null,\"birthplaceName\":null,\"organizationDepartment\":null,\"role\":[],\"contact\":{\"id\":null,\"name\":{\"value\":null,\"languageID\":\"en\"},\"telephone\":\"\",\"telefax\":null,\"electronicMail\":\"can@gmail.com\",\"note\":null,\"otherCommunication\":[]},\"birthDateItem\":null}],\"certificate\":[],\"qualityIndicator\":[{\"qualityParameter\":\"\",\"quantity\":null}],\"ppapDocumentReference\":[],\"documentReference\":[],\"industrySector\":[],\"salesTerms\":null,\"purchaseTerms\":{\"tradingTerms\":[],\"deliveryTerms\":[],\"paymentMeans\":[]}}},\"quotationLine\":[{\"lineItem\":{\"id\":null,\"quantity\":{\"value\":1,\"unitCode\":\"item(s)\",\"unitCodeListID\":null},\"deliveryTerms\":{\"id\":null,\"incoterms\":null,\"specialTerms\":[],\"amount\":{\"value\":null,\"currencyID\":null},\"transportModeCode\":null,\"deliveryLocation\":{\"address\":{\"id\":null,\"streetName\":\"Silikon\",\"buildingNumber\":\"16\",\"cityName\":\"Sinop\",\"postalZone\":\"492\",\"country\":{\"name\":{\"value\":\"Turkey\",\"languageID\":\"en\"}}}},\"estimatedDeliveryPeriod\":{\"startDate\":null,\"startTime\":null,\"endDate\":null,\"endTime\":null,\"durationMeasure\":{\"value\":null,\"unitCode\":\"working days\",\"unitCodeListID\":null}}},\"delivery\":[{\"deliveryAddress\":{\"id\":null,\"streetName\":\"\",\"buildingNumber\":\"\",\"cityName\":\"\",\"postalZone\":\"\",\"country\":{\"name\":{\"value\":null,\"languageID\":\"en\"}}},\"requestedDeliveryPeriod\":{\"startDate\":null,\"startTime\":null,\"endDate\":null,\"endTime\":null,\"durationMeasure\":{\"value\":null,\"unitCode\":\"day(s)\",\"unitCodeListID\":null}},\"deliveryTerms\":{\"id\":null,\"incoterms\":null,\"specialTerms\":[],\"amount\":{\"value\":null,\"currencyID\":null},\"transportModeCode\":null,\"deliveryLocation\":{\"address\":{\"id\":null,\"streetName\":\"\",\"buildingNumber\":\"\",\"cityName\":\"\",\"postalZone\":\"\",\"country\":{\"name\":{\"value\":null,\"languageID\":\"en\"}}}},\"estimatedDeliveryPeriod\":{\"startDate\":null,\"startTime\":null,\"endDate\":null,\"endTime\":null,\"durationMeasure\":{\"value\":null,\"unitCode\":\"working days\",\"unitCodeListID\":null}}},\"shipment\":{\"id\":null,\"handlingInstructions\":[],\"totalTransportHandlingUnitQuantity\":{\"value\":null,\"unitCode\":null,\"unitCodeListID\":null},\"consignment\":[{\"id\":null,\"grossWeightMeasure\":{\"value\":null,\"unitCode\":null,\"unitCodeListID\":null},\"grossVolumeMeasure\":{\"value\":null,\"unitCode\":null,\"unitCodeListID\":null},\"consolidatedShipment\":[]}],\"goodsItem\":[{\"id\":null,\"item\":{\"description\":[],\"name\":[],\"productImage\":[],\"manufacturersItemIdentification\":{\"id\":\"8d375862-49c8-485f-b723-74ece143a48c\"},\"catalogueDocumentReference\":null,\"itemSpecificationDocumentReference\":[],\"commodityClassification\":[],\"additionalItemProperty\":[],\"manufacturerParty\":null,\"certificate\":[],\"dimension\":[],\"transportationServiceDetails\":null,\"trackAndTraceDetails\":{\"eventURL\":null,\"masterURL\":null,\"productionProcessTemplate\":null}},\"containingPackage\":{\"quantity\":{\"value\":null,\"unitCode\":null,\"unitCodeListID\":null},\"packagingTypeCode\":{\"value\":\"\",\"name\":\"\",\"listID\":\"\",\"uri\":\"\"},\"measurementDimension\":[]},\"deliveryTerms\":{\"id\":null,\"incoterms\":null,\"specialTerms\":[],\"amount\":{\"value\":null,\"currencyID\":null},\"transportModeCode\":null,\"deliveryLocation\":{\"address\":{\"id\":null,\"streetName\":\"\",\"buildingNumber\":\"\",\"cityName\":\"\",\"postalZone\":\"\",\"country\":{\"name\":{\"value\":null,\"languageID\":\"en\"}}}},\"estimatedDeliveryPeriod\":{\"startDate\":null,\"startTime\":null,\"endDate\":null,\"endTime\":null,\"durationMeasure\":{\"value\":null,\"unitCode\":\"working days\",\"unitCodeListID\":null}}},\"allowanceCharge\":[]}],\"shipmentStage\":[],\"transportHandlingUnit\":[{\"transportHandlingUnitTypeCode\":{\"value\":\"\",\"name\":\"\",\"listID\":\"\",\"uri\":\"\"},\"measurementDimension\":[{\"attributeID\":\"Handling Unit Length\",\"measure\":{\"value\":null,\"unitCode\":null,\"unitCodeListID\":null}},{\"attributeID\":\"Handling Unit Width\",\"measure\":{\"value\":null,\"unitCode\":null,\"unitCodeListID\":null}}]}],\"originAddress\":{\"id\":null,\"streetName\":\"\",\"buildingNumber\":\"\",\"cityName\":\"\",\"postalZone\":\"\",\"country\":{\"name\":{\"value\":null,\"languageID\":\"en\"}}}}}],\"price\":{\"priceAmount\":{\"value\":1,\"currencyID\":\"EUR\"},\"baseQuantity\":{\"value\":1,\"unitCode\":\"item(s)\",\"unitCodeListID\":null}},\"item\":{\"description\":[],\"name\":[{\"value\":\"QExample local\",\"languageID\":\"en\"}],\"productImage\":[],\"manufacturersItemIdentification\":{\"id\":\"a24b6447-3cb2-495c-b643-6c590c78f25d\"},\"catalogueDocumentReference\":{\"id\":\"2511e0ae-aa76-49cd-8d64-246d93f18f23\",\"uuid\":null,\"documentType\":null,\"attachment\":null,\"validityPeriod\":null},\"itemSpecificationDocumentReference\":[],\"commodityClassification\":[{\"natureCode\":null,\"cargoTypeCode\":null,\"itemClassificationCode\":{\"value\":\"0173-1#01-AAC168#005\",\"name\":\"Automotive technology\",\"listID\":\"eClass\",\"uri\":\"http://www.nimble-project.org/resource/eclass/28000000\"}},{\"natureCode\":null,\"cargoTypeCode\":null,\"itemClassificationCode\":{\"value\":\"Product\",\"name\":\"Product\",\"listID\":\"Default\",\"uri\":null}}],\"additionalItemProperty\":[{\"id\":\"b93d3970-b9fd-43fd-8ff2-ed69d75c06f7\",\"name\":[{\"value\":\"Color\",\"languageID\":\"en\"}],\"value\":[{\"value\":\"red\",\"languageID\":\"en\"}],\"valueQuantity\":[{\"value\":null,\"unitCode\":null,\"unitCodeListID\":null}],\"valueDecimal\":[0],\"valueBinary\":[],\"valueQualifier\":\"STRING\",\"uri\":null,\"itemClassificationCode\":{\"value\":null,\"name\":null,\"listID\":\"Custom\",\"uri\":null}}],\"manufacturerParty\":{\"federationInstanceID\":null,\"nace\":[],\"description\":[],\"brandName\":[],\"partyName\":[{\"name\":{\"value\":\"canCompany\",\"languageID\":\"en\"}}],\"partyIdentification\":[{\"id\":\"706\"}],\"websiteURI\":\"\",\"industryClassificationCode\":{\"value\":null,\"name\":\"IndustryClassificationCode\",\"listID\":null,\"uri\":null},\"externalAward\":null,\"ppapCompatibilityLevel\":1,\"preferredItemClassificationCode\":[{\"value\":\"0173-1#01-AAC286#007::eClass::Home economics, Home technology::product\",\"name\":null,\"listID\":null,\"uri\":null},{\"value\":\"0173-1#01-AEI956#006::eClass::Notebook::product\",\"name\":null,\"listID\":null,\"uri\":null},{\"value\":\"0173-1#01-ADU394#007::eClass::Transport (other, unspecified)::transportation\",\"name\":null,\"listID\":null,\"uri\":null},{\"value\":\"0173-1#01-BAC323#011::eClass::Farming vehicle (other, unspecified)::product\",\"name\":null,\"listID\":null,\"uri\":null}],\"mostRecentItemsClassificationCode\":[{\"value\":\"0173-1#01-AEI956#006::eClass::Notebook::product::1546001272533\",\"name\":null,\"listID\":null,\"uri\":null},{\"value\":\"http://www.aidimme.es/FurnitureSectorOntology.owl#MDFBoard::FurnitureOntology::MDFBoard::product::1547034223954\",\"name\":null,\"listID\":null,\"uri\":null},{\"value\":\"0173-1#01-AKJ050#013::eClass::MDF raw::product::1547548730947\",\"name\":null,\"listID\":null,\"uri\":null},{\"value\":\"0173-1#01-AGE763#001::eClass::Clothing and textile::product::1543581462872\",\"name\":null,\"listID\":null,\"uri\":null},{\"value\":\"0173-1#01-ACH237#011::eClass::MDF, painted::product::1547034223954\",\"name\":null,\"listID\":null,\"uri\":null},{\"value\":\"0173-1#01-AGF725#001::eClass::Component bathroom (unspecified)::product::1544789945992\",\"name\":null,\"listID\":null,\"uri\":null},{\"value\":\"0173-1#01-ACL457#011::eClass::Mobile PC (unspecified)::product::1546001236455\",\"name\":null,\"listID\":null,\"uri\":null},{\"value\":\"0173-1#01-AAC168#005::eClass::Automotive technology::product::1547644388251\",\"name\":null,\"listID\":null,\"uri\":null},{\"value\":\"0173-1#01-AAC350#007::eClass::Auxiliary supply, additive, cleaning agent::product::1545998076993\",\"name\":null,\"listID\":null,\"uri\":null},{\"value\":\"0173-1#01-ADU394#007::eClass::Transport (other, unspecified)::transportation::1545042918468\",\"name\":null,\"listID\":null,\"uri\":null}],\"postalAddress\":{\"id\":null,\"streetName\":\"abcx\",\"buildingNumber\":\"\",\"cityName\":\"ankara\",\"postalZone\":\"234\",\"country\":{\"name\":{\"value\":\"turkey\",\"languageID\":\"en\"}}},\"partyTaxScheme\":[{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}},{\"taxScheme\":{\"taxTypeCode\":{\"value\":\"12\",\"name\":\"VAT\",\"listID\":null,\"uri\":null}}}],\"contact\":{\"id\":null,\"name\":{\"value\":null,\"languageID\":\"en\"},\"telephone\":null,\"telefax\":null,\"electronicMail\":null,\"note\":null,\"otherCommunication\":[]},\"person\":[{\"id\":\"704\",\"firstName\":\"ali\",\"familyName\":\"can\",\"birthDate\":null,\"birthplaceName\":null,\"organizationDepartment\":null,\"role\":[],\"contact\":{\"id\":null,\"name\":{\"value\":null,\"languageID\":\"en\"},\"telephone\":\"\",\"telefax\":null,\"electronicMail\":\"can@gmail.com\",\"note\":null,\"otherCommunication\":[]},\"birthDateItem\":null}],\"certificate\":[],\"qualityIndicator\":[{\"qualityParameter\":\"\",\"quantity\":null}],\"ppapDocumentReference\":[],\"documentReference\":[],\"industrySector\":[],\"salesTerms\":null,\"purchaseTerms\":{\"tradingTerms\":[],\"deliveryTerms\":[],\"paymentMeans\":[]}},\"certificate\":[],\"dimension\":[],\"transportationServiceDetails\":null,\"trackAndTraceDetails\":{\"eventURL\":null,\"masterURL\":null,\"productionProcessTemplate\":null}},\"warrantyValidityPeriod\":{\"startDate\":null,\"startTime\":null,\"endDate\":null,\"endTime\":null,\"durationMeasure\":{\"value\":0,\"unitCode\":\"month(s)\",\"unitCodeListID\":null}},\"lineReference\":[{\"lineID\":\"a24b6447-3cb2-495c-b643-6c590c78f25d\"}]}}],\"paymentMeans\":{\"id\":null,\"paymentMeansCode\":{\"value\":\"Credit Card\",\"name\":\"Credit Card\",\"listID\":\"\",\"uri\":\"\"},\"instructionNote\":[]},\"paymentTerms\":{\"paymentConditions\":[],\"tradingTerms\":[{\"id\":\"Payment_In_Advance\",\"description\":[{\"value\":\"Payment in advance\",\"languageID\":\"en\"}],\"tradingTermFormat\":\"PIA\",\"value\":{\"value\":[{\"value\":\"true\",\"languageID\":\"en\"}]}},{\"id\":\"End_of_month\",\"description\":[{\"value\":\"End of month\",\"languageID\":\"en\"}],\"tradingTermFormat\":\"EOM\",\"value\":{\"value\":[{\"value\":\"false\",\"languageID\":\"en\"}]}},{\"id\":\"Cash_next_delivery\",\"description\":[{\"value\":\"Cash next delivery\",\"languageID\":\"en\"}],\"tradingTermFormat\":\"CND\",\"value\":{\"value\":[{\"value\":\"false\",\"languageID\":\"en\"}]}},{\"id\":\"Cash_before_shipment\",\"description\":[{\"value\":\"Cash before shipment\",\"languageID\":\"en\"}],\"tradingTermFormat\":\"CBS\",\"value\":{\"value\":[{\"value\":\"false\",\"languageID\":\"en\"}]}},{\"id\":\"Cash_on_delivery\",\"description\":[{\"value\":\"Cash on delivery\",\"languageID\":\"en\"}],\"tradingTermFormat\":\"COD\",\"value\":{\"value\":[{\"value\":\"false\",\"languageID\":\"en\"}]}},{\"id\":\"Cash_with_order\",\"description\":[{\"value\":\"Cash with order\",\"languageID\":\"en\"}],\"tradingTermFormat\":\"CWO\",\"value\":{\"value\":[{\"value\":\"false\",\"languageID\":\"en\"}]}},{\"id\":\"Cash_in_advance\",\"description\":[{\"value\":\"Cash in advance\",\"languageID\":\"en\"}],\"tradingTermFormat\":\"CIA\",\"value\":{\"value\":[{\"value\":\"false\",\"languageID\":\"en\"}]}}]},\"additionalDocumentReference\":[]}"
+  "id": "28068c78-79ed-4036-84cd-4cfb166b8996",
+  "note": [
+    ""
+  ],
+  "documentStatusCode": {
+    "value": "",
+    "name": "Terms Updated",
+    "uri": "",
+    "listID": "",
+    "listURI": ""
   },
-  "processInstanceID": "pid"
+  "documentStatusReasonCode": {
+    "value": "",
+    "name": "",
+    "uri": "",
+    "listID": "",
+    "listURI": ""
+  },
+  "lineCountNumeric": 1,
+  "dataMonitoringPromised": true,
+  "requestForQuotationDocumentReference": {
+    "id": "8b9461be-eab6-456c-89c3-841950c9ee07",
+    "documentType": null,
+    "attachment": null
+  },
+  "buyerCustomerParty": {
+    "party": {
+      "federationInstanceID": null,
+      "nace": [],
+      "description": [],
+      "brandName": [],
+      "partyName": [
+        {
+          "name": {
+            "value": "alpCompany",
+            "languageID": "en"
+          }
+        }
+      ],
+      "partyIdentification": [
+        {
+          "id": "1339"
+        }
+      ],
+      "websiteURI": "alp.com",
+      "industryClassificationCode": {
+        "value": null,
+        "name": "IndustryClassificationCode",
+        "listID": null,
+        "uri": null
+      },
+      "externalAward": null,
+      "ppapCompatibilityLevel": 3,
+      "preferredItemClassificationCode": [],
+      "mostRecentItemsClassificationCode": [
+        {
+          "value": "0173-1#01-ADU394#007::eClass::Transport (other, unspecified)::transportation::1538379785156",
+          "name": null,
+          "listID": null,
+          "uri": null
+        },
+        {
+          "value": "0173-1#01-ADT337#002::eClass::Transship (other)::transportation::1537789229382",
+          "name": null,
+          "listID": null,
+          "uri": null
+        },
+        {
+          "value": "0173-1#01-AAC168#005::eClass::Automotive technology::product::1545033802228",
+          "name": null,
+          "listID": null,
+          "uri": null
+        },
+        {
+          "value": "0173-1#01-AGE748#001::eClass::Body care and personal hygiene::product::1537258099662",
+          "name": null,
+          "listID": null,
+          "uri": null
+        },
+        {
+          "value": "0173-1#01-ADR740#003::eClass::Transport service::transportation::1540214118532",
+          "name": null,
+          "listID": null,
+          "uri": null
+        },
+        {
+          "value": "0173-1#01-ACL614#011::eClass::Keyboard::product::1542614207644",
+          "name": null,
+          "listID": null,
+          "uri": null
+        }
+      ],
+      "postalAddress": {
+        "id": null,
+        "streetName": "Silikon",
+        "buildingNumber": "16",
+        "cityName": "Sinop",
+        "postalZone": "492",
+        "country": {
+          "name": {
+            "value": "Turkey",
+            "languageID": "en"
+          }
+        }
+      },
+      "partyTaxScheme": [
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "234",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "234",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "234",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "234",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        }
+      ],
+      "contact": {
+        "id": null,
+        "name": {
+          "value": null,
+          "languageID": "en"
+        },
+        "telephone": null,
+        "telefax": null,
+        "electronicMail": null,
+        "note": null,
+        "otherCommunication": []
+      },
+      "person": [
+        {
+          "id": "1337",
+          "firstName": "alp",
+          "familyName": "cenk",
+          "birthDate": null,
+          "birthplaceName": null,
+          "organizationDepartment": null,
+          "role": [],
+          "contact": {
+            "id": null,
+            "name": {
+              "value": null,
+              "languageID": "en"
+            },
+            "telephone": "0789-842-53-62",
+            "telefax": null,
+            "electronicMail": "alp@gmail.com",
+            "note": null,
+            "otherCommunication": []
+          },
+          "birthDateItem": null
+        }
+      ],
+      "certificate": [],
+      "qualityIndicator": [
+        {
+          "qualityParameter": "",
+          "quantity": null
+        }
+      ],
+      "ppapDocumentReference": [],
+      "documentReference": [],
+      "industrySector": [],
+      "salesTerms": null,
+      "purchaseTerms": {
+        "tradingTerms": [],
+        "deliveryTerms": [],
+        "paymentMeans": []
+      }
+    }
+  },
+  "sellerSupplierParty": {
+    "party": {
+      "federationInstanceID": null,
+      "nace": [],
+      "description": [],
+      "brandName": [],
+      "partyName": [
+        {
+          "name": {
+            "value": "canCompany",
+            "languageID": "en"
+          }
+        }
+      ],
+      "partyIdentification": [
+        {
+          "id": "706"
+        }
+      ],
+      "websiteURI": "",
+      "industryClassificationCode": {
+        "value": null,
+        "name": "IndustryClassificationCode",
+        "listID": null,
+        "uri": null
+      },
+      "externalAward": null,
+      "ppapCompatibilityLevel": 1,
+      "preferredItemClassificationCode": [
+        {
+          "value": "0173-1#01-AAC286#007::eClass::Home economics, Home technology::product",
+          "name": null,
+          "listID": null,
+          "uri": null
+        },
+        {
+          "value": "0173-1#01-AEI956#006::eClass::Notebook::product",
+          "name": null,
+          "listID": null,
+          "uri": null
+        },
+        {
+          "value": "0173-1#01-ADU394#007::eClass::Transport (other, unspecified)::transportation",
+          "name": null,
+          "listID": null,
+          "uri": null
+        },
+        {
+          "value": "0173-1#01-BAC323#011::eClass::Farming vehicle (other, unspecified)::product",
+          "name": null,
+          "listID": null,
+          "uri": null
+        }
+      ],
+      "mostRecentItemsClassificationCode": [
+        {
+          "value": "0173-1#01-AEI956#006::eClass::Notebook::product::1546001272533",
+          "name": null,
+          "listID": null,
+          "uri": null
+        },
+        {
+          "value": "http://www.aidimme.es/FurnitureSectorOntology.owl#MDFBoard::FurnitureOntology::MDFBoard::product::1547034223954",
+          "name": null,
+          "listID": null,
+          "uri": null
+        },
+        {
+          "value": "0173-1#01-AKJ050#013::eClass::MDF raw::product::1547548730947",
+          "name": null,
+          "listID": null,
+          "uri": null
+        },
+        {
+          "value": "0173-1#01-AGE763#001::eClass::Clothing and textile::product::1543581462872",
+          "name": null,
+          "listID": null,
+          "uri": null
+        },
+        {
+          "value": "0173-1#01-ACH237#011::eClass::MDF, painted::product::1547034223954",
+          "name": null,
+          "listID": null,
+          "uri": null
+        },
+        {
+          "value": "0173-1#01-AGF725#001::eClass::Component bathroom (unspecified)::product::1544789945992",
+          "name": null,
+          "listID": null,
+          "uri": null
+        },
+        {
+          "value": "0173-1#01-ACL457#011::eClass::Mobile PC (unspecified)::product::1546001236455",
+          "name": null,
+          "listID": null,
+          "uri": null
+        },
+        {
+          "value": "0173-1#01-AAC168#005::eClass::Automotive technology::product::1547644388251",
+          "name": null,
+          "listID": null,
+          "uri": null
+        },
+        {
+          "value": "0173-1#01-AAC350#007::eClass::Auxiliary supply, additive, cleaning agent::product::1545998076993",
+          "name": null,
+          "listID": null,
+          "uri": null
+        },
+        {
+          "value": "0173-1#01-ADU394#007::eClass::Transport (other, unspecified)::transportation::1545042918468",
+          "name": null,
+          "listID": null,
+          "uri": null
+        }
+      ],
+      "postalAddress": {
+        "id": null,
+        "streetName": "abcx",
+        "buildingNumber": "",
+        "cityName": "ankara",
+        "postalZone": "234",
+        "country": {
+          "name": {
+            "value": "turkey",
+            "languageID": "en"
+          }
+        }
+      },
+      "partyTaxScheme": [
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        },
+        {
+          "taxScheme": {
+            "taxTypeCode": {
+              "value": "12",
+              "name": "VAT",
+              "listID": null,
+              "uri": null
+            }
+          }
+        }
+      ],
+      "contact": {
+        "id": null,
+        "name": {
+          "value": null,
+          "languageID": "en"
+        },
+        "telephone": null,
+        "telefax": null,
+        "electronicMail": null,
+        "note": null,
+        "otherCommunication": []
+      },
+      "person": [
+        {
+          "id": "704",
+          "firstName": "ali",
+          "familyName": "can",
+          "birthDate": null,
+          "birthplaceName": null,
+          "organizationDepartment": null,
+          "role": [],
+          "contact": {
+            "id": null,
+            "name": {
+              "value": null,
+              "languageID": "en"
+            },
+            "telephone": "",
+            "telefax": null,
+            "electronicMail": "can@gmail.com",
+            "note": null,
+            "otherCommunication": []
+          },
+          "birthDateItem": null
+        }
+      ],
+      "certificate": [],
+      "qualityIndicator": [
+        {
+          "qualityParameter": "",
+          "quantity": null
+        }
+      ],
+      "ppapDocumentReference": [],
+      "documentReference": [],
+      "industrySector": [],
+      "salesTerms": null,
+      "purchaseTerms": {
+        "tradingTerms": [],
+        "deliveryTerms": [],
+        "paymentMeans": []
+      }
+    }
+  },
+  "quotationLine": [
+    {
+      "lineItem": {
+        "id": null,
+        "quantity": {
+          "value": 1,
+          "unitCode": "item(s)",
+          "unitCodeListID": null
+        },
+        "deliveryTerms": {
+          "id": null,
+          "incoterms": null,
+          "specialTerms": [],
+          "amount": {
+            "value": null,
+            "currencyID": null
+          },
+          "transportModeCode": null,
+          "deliveryLocation": {
+            "address": {
+              "id": null,
+              "streetName": "Silikon",
+              "buildingNumber": "16",
+              "cityName": "Sinop",
+              "postalZone": "492",
+              "country": {
+                "name": {
+                  "value": "Turkey",
+                  "languageID": "en"
+                }
+              }
+            }
+          },
+          "estimatedDeliveryPeriod": {
+            "startDate": null,
+            "startTime": null,
+            "endDate": null,
+            "endTime": null,
+            "durationMeasure": {
+              "value": null,
+              "unitCode": "working days",
+              "unitCodeListID": null
+            }
+          }
+        },
+        "delivery": [
+          {
+            "deliveryAddress": {
+              "id": null,
+              "streetName": "",
+              "buildingNumber": "",
+              "cityName": "",
+              "postalZone": "",
+              "country": {
+                "name": {
+                  "value": null,
+                  "languageID": "en"
+                }
+              }
+            },
+            "requestedDeliveryPeriod": {
+              "startDate": null,
+              "startTime": null,
+              "endDate": null,
+              "endTime": null,
+              "durationMeasure": {
+                "value": null,
+                "unitCode": "day(s)",
+                "unitCodeListID": null
+              }
+            },
+            "deliveryTerms": {
+              "id": null,
+              "incoterms": null,
+              "specialTerms": [],
+              "amount": {
+                "value": null,
+                "currencyID": null
+              },
+              "transportModeCode": null,
+              "deliveryLocation": {
+                "address": {
+                  "id": null,
+                  "streetName": "",
+                  "buildingNumber": "",
+                  "cityName": "",
+                  "postalZone": "",
+                  "country": {
+                    "name": {
+                      "value": null,
+                      "languageID": "en"
+                    }
+                  }
+                }
+              },
+              "estimatedDeliveryPeriod": {
+                "startDate": null,
+                "startTime": null,
+                "endDate": null,
+                "endTime": null,
+                "durationMeasure": {
+                  "value": null,
+                  "unitCode": "working days",
+                  "unitCodeListID": null
+                }
+              }
+            },
+            "shipment": {
+              "id": null,
+              "handlingInstructions": [],
+              "totalTransportHandlingUnitQuantity": {
+                "value": null,
+                "unitCode": null,
+                "unitCodeListID": null
+              },
+              "consignment": [
+                {
+                  "id": null,
+                  "grossWeightMeasure": {
+                    "value": null,
+                    "unitCode": null,
+                    "unitCodeListID": null
+                  },
+                  "grossVolumeMeasure": {
+                    "value": null,
+                    "unitCode": null,
+                    "unitCodeListID": null
+                  },
+                  "consolidatedShipment": []
+                }
+              ],
+              "goodsItem": [
+                {
+                  "id": null,
+                  "item": {
+                    "description": [],
+                    "name": [],
+                    "productImage": [],
+                    "manufacturersItemIdentification": {
+                      "id": "8d375862-49c8-485f-b723-74ece143a48c"
+                    },
+                    "catalogueDocumentReference": null,
+                    "itemSpecificationDocumentReference": [],
+                    "commodityClassification": [],
+                    "additionalItemProperty": [],
+                    "manufacturerParty": null,
+                    "certificate": [],
+                    "dimension": [],
+                    "transportationServiceDetails": null,
+                    "trackAndTraceDetails": {
+                      "eventURL": null,
+                      "masterURL": null,
+                      "productionProcessTemplate": null
+                    }
+                  },
+                  "containingPackage": {
+                    "quantity": {
+                      "value": null,
+                      "unitCode": null,
+                      "unitCodeListID": null
+                    },
+                    "packagingTypeCode": {
+                      "value": "",
+                      "name": "",
+                      "listID": "",
+                      "uri": ""
+                    },
+                    "measurementDimension": []
+                  },
+                  "deliveryTerms": {
+                    "id": null,
+                    "incoterms": null,
+                    "specialTerms": [],
+                    "amount": {
+                      "value": null,
+                      "currencyID": null
+                    },
+                    "transportModeCode": null,
+                    "deliveryLocation": {
+                      "address": {
+                        "id": null,
+                        "streetName": "",
+                        "buildingNumber": "",
+                        "cityName": "",
+                        "postalZone": "",
+                        "country": {
+                          "name": {
+                            "value": null,
+                            "languageID": "en"
+                          }
+                        }
+                      }
+                    },
+                    "estimatedDeliveryPeriod": {
+                      "startDate": null,
+                      "startTime": null,
+                      "endDate": null,
+                      "endTime": null,
+                      "durationMeasure": {
+                        "value": null,
+                        "unitCode": "working days",
+                        "unitCodeListID": null
+                      }
+                    }
+                  },
+                  "allowanceCharge": []
+                }
+              ],
+              "shipmentStage": [],
+              "transportHandlingUnit": [
+                {
+                  "transportHandlingUnitTypeCode": {
+                    "value": "",
+                    "name": "",
+                    "listID": "",
+                    "uri": ""
+                  },
+                  "measurementDimension": [
+                    {
+                      "attributeID": "Handling Unit Length",
+                      "measure": {
+                        "value": null,
+                        "unitCode": null,
+                        "unitCodeListID": null
+                      }
+                    },
+                    {
+                      "attributeID": "Handling Unit Width",
+                      "measure": {
+                        "value": null,
+                        "unitCode": null,
+                        "unitCodeListID": null
+                      }
+                    }
+                  ]
+                }
+              ],
+              "originAddress": {
+                "id": null,
+                "streetName": "",
+                "buildingNumber": "",
+                "cityName": "",
+                "postalZone": "",
+                "country": {
+                  "name": {
+                    "value": null,
+                    "languageID": "en"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "price": {
+          "priceAmount": {
+            "value": 1,
+            "currencyID": "EUR"
+          },
+          "baseQuantity": {
+            "value": 1,
+            "unitCode": "item(s)",
+            "unitCodeListID": null
+          }
+        },
+        "item": {
+          "description": [],
+          "name": [
+            {
+              "value": "QExample local",
+              "languageID": "en"
+            }
+          ],
+          "productImage": [],
+          "manufacturersItemIdentification": {
+            "id": "a24b6447-3cb2-495c-b643-6c590c78f25d"
+          },
+          "catalogueDocumentReference": {
+            "id": "2511e0ae-aa76-49cd-8d64-246d93f18f23",
+            "uuid": null,
+            "documentType": null,
+            "attachment": null,
+            "validityPeriod": null
+          },
+          "itemSpecificationDocumentReference": [],
+          "commodityClassification": [
+            {
+              "natureCode": null,
+              "cargoTypeCode": null,
+              "itemClassificationCode": {
+                "value": "0173-1#01-AAC168#005",
+                "name": "Automotive technology",
+                "listID": "eClass",
+                "uri": "http://www.nimble-project.org/resource/eclass/28000000"
+              }
+            },
+            {
+              "natureCode": null,
+              "cargoTypeCode": null,
+              "itemClassificationCode": {
+                "value": "Product",
+                "name": "Product",
+                "listID": "Default",
+                "uri": null
+              }
+            }
+          ],
+          "additionalItemProperty": [
+            {
+              "id": "b93d3970-b9fd-43fd-8ff2-ed69d75c06f7",
+              "name": [
+                {
+                  "value": "Color",
+                  "languageID": "en"
+                }
+              ],
+              "value": [
+                {
+                  "value": "red",
+                  "languageID": "en"
+                }
+              ],
+              "valueQuantity": [
+                {
+                  "value": null,
+                  "unitCode": null,
+                  "unitCodeListID": null
+                }
+              ],
+              "valueDecimal": [
+                0
+              ],
+              "valueBinary": [],
+              "valueQualifier": "STRING",
+              "uri": null,
+              "itemClassificationCode": {
+                "value": null,
+                "name": null,
+                "listID": "Custom",
+                "uri": null
+              }
+            }
+          ],
+          "manufacturerParty": {
+            "federationInstanceID": null,
+            "nace": [],
+            "description": [],
+            "brandName": [],
+            "partyName": [
+              {
+                "name": {
+                  "value": "canCompany",
+                  "languageID": "en"
+                }
+              }
+            ],
+            "partyIdentification": [
+              {
+                "id": "706"
+              }
+            ],
+            "websiteURI": "",
+            "industryClassificationCode": {
+              "value": null,
+              "name": "IndustryClassificationCode",
+              "listID": null,
+              "uri": null
+            },
+            "externalAward": null,
+            "ppapCompatibilityLevel": 1,
+            "preferredItemClassificationCode": [
+              {
+                "value": "0173-1#01-AAC286#007::eClass::Home economics, Home technology::product",
+                "name": null,
+                "listID": null,
+                "uri": null
+              },
+              {
+                "value": "0173-1#01-AEI956#006::eClass::Notebook::product",
+                "name": null,
+                "listID": null,
+                "uri": null
+              },
+              {
+                "value": "0173-1#01-ADU394#007::eClass::Transport (other, unspecified)::transportation",
+                "name": null,
+                "listID": null,
+                "uri": null
+              },
+              {
+                "value": "0173-1#01-BAC323#011::eClass::Farming vehicle (other, unspecified)::product",
+                "name": null,
+                "listID": null,
+                "uri": null
+              }
+            ],
+            "mostRecentItemsClassificationCode": [
+              {
+                "value": "0173-1#01-AEI956#006::eClass::Notebook::product::1546001272533",
+                "name": null,
+                "listID": null,
+                "uri": null
+              },
+              {
+                "value": "http://www.aidimme.es/FurnitureSectorOntology.owl#MDFBoard::FurnitureOntology::MDFBoard::product::1547034223954",
+                "name": null,
+                "listID": null,
+                "uri": null
+              },
+              {
+                "value": "0173-1#01-AKJ050#013::eClass::MDF raw::product::1547548730947",
+                "name": null,
+                "listID": null,
+                "uri": null
+              },
+              {
+                "value": "0173-1#01-AGE763#001::eClass::Clothing and textile::product::1543581462872",
+                "name": null,
+                "listID": null,
+                "uri": null
+              },
+              {
+                "value": "0173-1#01-ACH237#011::eClass::MDF, painted::product::1547034223954",
+                "name": null,
+                "listID": null,
+                "uri": null
+              },
+              {
+                "value": "0173-1#01-AGF725#001::eClass::Component bathroom (unspecified)::product::1544789945992",
+                "name": null,
+                "listID": null,
+                "uri": null
+              },
+              {
+                "value": "0173-1#01-ACL457#011::eClass::Mobile PC (unspecified)::product::1546001236455",
+                "name": null,
+                "listID": null,
+                "uri": null
+              },
+              {
+                "value": "0173-1#01-AAC168#005::eClass::Automotive technology::product::1547644388251",
+                "name": null,
+                "listID": null,
+                "uri": null
+              },
+              {
+                "value": "0173-1#01-AAC350#007::eClass::Auxiliary supply, additive, cleaning agent::product::1545998076993",
+                "name": null,
+                "listID": null,
+                "uri": null
+              },
+              {
+                "value": "0173-1#01-ADU394#007::eClass::Transport (other, unspecified)::transportation::1545042918468",
+                "name": null,
+                "listID": null,
+                "uri": null
+              }
+            ],
+            "postalAddress": {
+              "id": null,
+              "streetName": "abcx",
+              "buildingNumber": "",
+              "cityName": "ankara",
+              "postalZone": "234",
+              "country": {
+                "name": {
+                  "value": "turkey",
+                  "languageID": "en"
+                }
+              }
+            },
+            "partyTaxScheme": [
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              },
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null
+                  }
+                }
+              }
+            ],
+            "contact": {
+              "id": null,
+              "name": {
+                "value": null,
+                "languageID": "en"
+              },
+              "telephone": null,
+              "telefax": null,
+              "electronicMail": null,
+              "note": null,
+              "otherCommunication": []
+            },
+            "person": [
+              {
+                "id": "704",
+                "firstName": "ali",
+                "familyName": "can",
+                "birthDate": null,
+                "birthplaceName": null,
+                "organizationDepartment": null,
+                "role": [],
+                "contact": {
+                  "id": null,
+                  "name": {
+                    "value": null,
+                    "languageID": "en"
+                  },
+                  "telephone": "",
+                  "telefax": null,
+                  "electronicMail": "can@gmail.com",
+                  "note": null,
+                  "otherCommunication": []
+                },
+                "birthDateItem": null
+              }
+            ],
+            "certificate": [],
+            "qualityIndicator": [
+              {
+                "qualityParameter": "",
+                "quantity": null
+              }
+            ],
+            "ppapDocumentReference": [],
+            "documentReference": [],
+            "industrySector": [],
+            "salesTerms": null,
+            "purchaseTerms": {
+              "tradingTerms": [],
+              "deliveryTerms": [],
+              "paymentMeans": []
+            }
+          },
+          "certificate": [],
+          "dimension": [],
+          "transportationServiceDetails": null,
+          "trackAndTraceDetails": {
+            "eventURL": null,
+            "masterURL": null,
+            "productionProcessTemplate": null
+          }
+        },
+        "warrantyValidityPeriod": {
+          "startDate": null,
+          "startTime": null,
+          "endDate": null,
+          "endTime": null,
+          "durationMeasure": {
+            "value": 0,
+            "unitCode": "month(s)",
+            "unitCodeListID": null
+          }
+        },
+        "lineReference": [
+          {
+            "lineID": "a24b6447-3cb2-495c-b643-6c590c78f25d"
+          }
+        ]
+      }
+    }
+  ],
+  "paymentMeans": {
+    "id": null,
+    "paymentMeansCode": {
+      "value": "Credit Card",
+      "name": "Credit Card",
+      "listID": "",
+      "uri": ""
+    },
+    "instructionNote": []
+  },
+  "paymentTerms": {
+    "paymentConditions": [],
+    "tradingTerms": [
+      {
+        "id": "Payment_In_Advance",
+        "description": [
+          {
+            "value": "Payment in advance",
+            "languageID": "en"
+          }
+        ],
+        "tradingTermFormat": "PIA",
+        "value": {
+          "value": [
+            {
+              "value": "true",
+              "languageID": "en"
+            }
+          ]
+        }
+      },
+      {
+        "id": "End_of_month",
+        "description": [
+          {
+            "value": "End of month",
+            "languageID": "en"
+          }
+        ],
+        "tradingTermFormat": "EOM",
+        "value": {
+          "value": [
+            {
+              "value": "false",
+              "languageID": "en"
+            }
+          ]
+        }
+      },
+      {
+        "id": "Cash_next_delivery",
+        "description": [
+          {
+            "value": "Cash next delivery",
+            "languageID": "en"
+          }
+        ],
+        "tradingTermFormat": "CND",
+        "value": {
+          "value": [
+            {
+              "value": "false",
+              "languageID": "en"
+            }
+          ]
+        }
+      },
+      {
+        "id": "Cash_before_shipment",
+        "description": [
+          {
+            "value": "Cash before shipment",
+            "languageID": "en"
+          }
+        ],
+        "tradingTermFormat": "CBS",
+        "value": {
+          "value": [
+            {
+              "value": "false",
+              "languageID": "en"
+            }
+          ]
+        }
+      },
+      {
+        "id": "Cash_on_delivery",
+        "description": [
+          {
+            "value": "Cash on delivery",
+            "languageID": "en"
+          }
+        ],
+        "tradingTermFormat": "COD",
+        "value": {
+          "value": [
+            {
+              "value": "false",
+              "languageID": "en"
+            }
+          ]
+        }
+      },
+      {
+        "id": "Cash_with_order",
+        "description": [
+          {
+            "value": "Cash with order",
+            "languageID": "en"
+          }
+        ],
+        "tradingTermFormat": "CWO",
+        "value": {
+          "value": [
+            {
+              "value": "false",
+              "languageID": "en"
+            }
+          ]
+        }
+      },
+      {
+        "id": "Cash_in_advance",
+        "description": [
+          {
+            "value": "Cash in advance",
+            "languageID": "en"
+          }
+        ],
+        "tradingTermFormat": "CIA",
+        "value": {
+          "value": [
+            {
+              "value": "false",
+              "languageID": "en"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "additionalDocumentReference": []
 }
