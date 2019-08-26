@@ -338,7 +338,8 @@ public class StartController implements StartApi {
                     processInstanceId,
                     CamundaEngine.getTransactions(body.getVariables().getProcessID()).get(0).getResponderRole().toString(),
                     body.getVariables().getRelatedProducts(),
-                    sourceGroup.getID());
+                    sourceGroup.getID(),
+                    sourceGroup.getDataChannelId());
 
             sourceGroup.getAssociatedGroups().add(targetGroup.getID());
             sourceGroup = repo.updateEntity(sourceGroup);

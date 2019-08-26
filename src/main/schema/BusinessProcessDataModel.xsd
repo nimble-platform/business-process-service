@@ -157,6 +157,7 @@
 			<!-- see the temp element for proper referencing -->
 			<!-- first try to use manytomany annotation, see the second temp !!! -->
 			<xsd:element name="associatedGroups" type="xsd:string" maxOccurs="unbounded"/>
+			<xsd:element name="dataChannelId" type="xsd:string"/>
             <xsd:element name="precedingProcessInstanceGroup" minOccurs="0" type="ProcessInstanceGroupDAO">
                 <xsd:annotation>
                     <xsd:appinfo>

@@ -287,6 +287,7 @@ public class HibernateSwaggerObjectMapper {
         processInstanceGroupDAO.setPartyID(processInstanceGroup.getPartyID());
         processInstanceGroupDAO.setProcessInstanceIDs(processInstanceGroup.getProcessInstanceIDs());
         processInstanceGroupDAO.setName(processInstanceGroup.getName());
+        processInstanceGroupDAO.setDataChannelId(processInstanceGroup.getDataChannelId());
         if(processInstanceGroup.getPrecedingProcessInstanceGroup() != null){
             processInstanceGroupDAO.setPrecedingProcessInstanceGroup(createProcessInstanceGroup_DAO(processInstanceGroup.getPrecedingProcessInstanceGroup()));
         }
@@ -313,6 +314,7 @@ public class HibernateSwaggerObjectMapper {
         processInstanceGroup.setLastActivityTime(processInstanceGroupDAO.getLastActivityTime());
         processInstanceGroup.setFirstActivityTime(processInstanceGroupDAO.getFirstActivityTime());
         processInstanceGroup.setName(processInstanceGroupDAO.getName());
+        processInstanceGroup.setDataChannelId(processInstanceGroupDAO.getDataChannelId());
         if(processInstanceGroupDAO.getPrecedingProcessInstanceGroup() != null){
             processInstanceGroup.setPrecedingProcessInstanceGroup(convertProcessInstanceGroupDAO(processInstanceGroupDAO.getPrecedingProcessInstanceGroup()));
         }
