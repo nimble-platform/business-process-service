@@ -20,6 +20,7 @@ import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.DocumentReferenceType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ItemType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
 import eu.nimble.service.model.ubl.document.IDocument;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.serialization.IDocumentDeserializer;
@@ -30,10 +31,12 @@ import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.logging.LogLevel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
@@ -62,8 +65,37 @@ public class EFactoryExternalAPIController {
     @RequestMapping(value = "/process-document",
             produces = {"application/json"},
             method = RequestMethod.POST)
-    public ResponseEntity processDocument(@ApiParam(value = "Serialized form of the document", required = true) @RequestBody String documentAsString) {
+    public ResponseEntity processDocument(@ApiParam(value = "Serialized form of the document", required = true) @RequestBody String documentAsString,
+                                          @ApiParam(value = "The Bearer token provided by the identity service", required = false)
+                                          @RequestHeader(value = "Authorization", required = false) String bearerToken) {
         logger.info("Getting request to process document");
+
+        /**
+         * If the bearer token is provided, it's used to set the creator user for the process.
+         * Otherwise, the first user of party is set as the creator user for the process.
+         * */
+        String creatorUserId = null;
+        // check the bearer token if it's provided
+        if(bearerToken != null){
+            // check token and get creator user id
+            try {
+                PersonType creatorUser = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken);
+                if(creatorUser == null){
+                    String msg = String.format("No user exists for the given token : %s", bearerToken);
+                    return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog(msg, null, HttpStatus.UNAUTHORIZED, LogLevel.INFO);
+                }
+                // set creator user id
+                creatorUserId = creatorUser.getID();
+            } catch (IOException e) {
+                logger.error("Failed to get person",e);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to get person");
+            }
+        }
+
+        // if no bearer token is provided, use the default one.
+        if(bearerToken == null){
+            bearerToken = token;
+        }
 
         /**
          * Deserialize the given document using the custom deserializer {@link IDocumentDeserializer}
@@ -89,7 +121,7 @@ public class EFactoryExternalAPIController {
          * */
         String sellerPartyId = document.getSellerPartyId();
         try {
-            PartyType sellerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(token,sellerPartyId);
+            PartyType sellerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,sellerPartyId);
 
             if(sellerParty == null){
                 String msg = String.format("There does not exist a party for : %s", sellerPartyId);
@@ -115,7 +147,7 @@ public class EFactoryExternalAPIController {
             // create ProcessInstanceInputMessage
             ProcessInstanceInputMessage processInstanceInputMessage;
             try {
-                processInstanceInputMessage = BPMessageGenerator.createProcessInstanceInputMessage(document,document.getItemType(),null,"",token);
+                processInstanceInputMessage = BPMessageGenerator.createProcessInstanceInputMessage(document,document.getItemType(),creatorUserId,"",bearerToken);
             } catch (Exception e) {
                 String msg = "Failed to create process instance input message for the document";
                 logger.error(msg,e);
@@ -154,7 +186,7 @@ public class EFactoryExternalAPIController {
                     }
                 }
             }
-            processInstance = startController.startProcessInstance(token,processInstanceInputMessage,gid,precedingGid,cgid).getBody();
+            processInstance = startController.startProcessInstance(bearerToken,processInstanceInputMessage,gid,precedingGid,cgid).getBody();
         }
         else{
             // to complete the process, we need to know process instance id
@@ -167,7 +199,7 @@ public class EFactoryExternalAPIController {
             // create ProcessInstanceInputMessage
             ProcessInstanceInputMessage processInstanceInputMessage;
             try {
-                processInstanceInputMessage = BPMessageGenerator.createProcessInstanceInputMessage(document,item,null,processInstanceId,token);
+                processInstanceInputMessage = BPMessageGenerator.createProcessInstanceInputMessage(document,item,creatorUserId,processInstanceId,bearerToken);
             } catch (Exception e) {
                 String msg = "Failed to create process instance input message for the document";
                 logger.error(msg,e);
@@ -186,7 +218,7 @@ public class EFactoryExternalAPIController {
                 }
             }
 
-            processInstance = continueController.continueProcessInstance(processInstanceInputMessage,gid,collaborationGroup.getHjid().toString(),token).getBody();
+            processInstance = continueController.continueProcessInstance(processInstanceInputMessage,gid,collaborationGroup.getHjid().toString(),bearerToken).getBody();
 
             /**
              * Send response document to the initiator party
