@@ -65,10 +65,10 @@ public class EFactoryExternalAPIController {
     @RequestMapping(value = "/process-document",
             produces = {"application/json"},
             method = RequestMethod.POST)
-    public ResponseEntity processDocument(@ApiParam(value = "Serialized form of the document", required = true) @RequestBody String documentAsString,
+    public ResponseEntity startProcessWithDocument(@ApiParam(value = "Serialized form of the document", required = true) @RequestBody String documentAsString,
                                           @ApiParam(value = "The Bearer token provided by the identity service", required = false)
                                           @RequestHeader(value = "Authorization", required = false) String bearerToken) {
-        logger.info("Getting request to process document");
+        logger.info("Getting request to start process with document");
 
         /**
          * If the bearer token is provided, it's used to set the creator user for the process.
@@ -252,7 +252,7 @@ public class EFactoryExternalAPIController {
             }
         }
 
-        logger.info("Completed the request to process document");
+        logger.info("Completed the request to start process with document");
         return ResponseEntity.ok(processInstance);
     }
 
