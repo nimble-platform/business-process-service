@@ -156,7 +156,6 @@
 			<!-- Otherwise we need to define a foreign key constraint in the database -->
 			<!-- see the temp element for proper referencing -->
 			<!-- first try to use manytomany annotation, see the second temp !!! -->
-			<xsd:element name="associatedGroups" type="xsd:string" maxOccurs="unbounded"/>
 			<xsd:element name="dataChannelId" type="xsd:string"/>
             <xsd:element name="precedingProcessInstanceGroup" minOccurs="0" type="ProcessInstanceGroupDAO">
                 <xsd:annotation>
@@ -209,7 +208,6 @@
 			<xsd:element name="archived" type="xsd:boolean"/>
 			<xsd:element name="status" type="CollaborationStatus"/>
 			<xsd:element name="isProject" type="xsd:boolean"/>
-			<xsd:element name="associatedCollaborationGroups" type="xsd:long" maxOccurs="unbounded"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	<xsd:simpleType name="CollaborationStatus">

@@ -22,8 +22,7 @@ import java.util.*;
  */
 public class CollaborationGroupDAOUtility {
     private static final String QUERY_GET_ASSOCIATED_GROUP =
-            "select cg from CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups pig where pig.partyID = :partyId and pig.ID = :pigId and cg.hjid in " +
-            "(select acg.item from CollaborationGroupDAO cg2 join cg2.associatedCollaborationGroupsItems acg where cg2.hjid = :associatedCollaborationGroupId)";
+            "select cg from CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups pig join pig.processInstanceIDsItems pid where pig.partyID = :partyId and pid.item in :pids";
     private static final String QUERY_GET_GROUP_OF_PROCESS_INSTANCE_GROUP =
             "select cg from CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups apig where apig.ID = :groupId";
     private static final String QUERY_GET_BY_PARTY_ID_AND_COLLABORATION_ROLE =
@@ -74,13 +73,8 @@ public class CollaborationGroupDAOUtility {
         return new JPARepositoryFactory().forBpRepository().getSingleEntity(QUERY_GET_HJID_BY_PROCESS_INSTANCE_ID_AND_PARTY_ID, new String[]{"partyID", "processInstanceId"}, new Object[]{partyId, processInstanceId});
     }
 
-    public static CollaborationGroupDAO getCollaborationGroupDAO(String partyId, Long associatedCollaborationGroupId,String associatedProcessInstanceGroupId) {
-        CollaborationGroupDAO group = CollaborationGroupDAOUtility.getAssociatedCollaborationGroup(partyId, associatedCollaborationGroupId, associatedProcessInstanceGroupId);
-        return group;
-    }
-    
-    public static CollaborationGroupDAO getAssociatedCollaborationGroup(String partyId, Long associatedCollaborationGroupId,String associatedProcessInstanceGroupId) {
-        return new JPARepositoryFactory().forBpRepository(true).getSingleEntity(QUERY_GET_ASSOCIATED_GROUP, new String[]{"partyId","pigId", "associatedCollaborationGroupId"}, new Object[]{partyId, associatedProcessInstanceGroupId, associatedCollaborationGroupId});
+    public static CollaborationGroupDAO getCollaborationGroup(String partyId, List<String> processInstanceIds) {
+        return new JPARepositoryFactory().forBpRepository(true).getSingleEntity(QUERY_GET_ASSOCIATED_GROUP, new String[]{"partyId","pids"}, new Object[]{partyId, processInstanceIds});
     }
 
     public static List<Long> getCollaborationGroupHjidOfProcessInstanceGroups(List<String> groupIds) {
@@ -104,20 +98,6 @@ public class CollaborationGroupDAOUtility {
             GenericJPARepository repo = new JPARepositoryFactory().forBpRepository(true);
             CollaborationGroupDAO collaborationGroup = repo.getSingleEntityByHjid(CollaborationGroupDAO.class, groupID);
             if(collaborationGroup != null){
-                // delete references to the collaboration group
-                for (Long id : collaborationGroup.getAssociatedCollaborationGroups()) {
-                    CollaborationGroupDAO groupDAO = repo.getSingleEntityByHjid(CollaborationGroupDAO.class, id);
-                    groupDAO.getAssociatedCollaborationGroups().remove(groupID);
-                    repo.updateEntity(groupDAO);
-                }
-                // delete references to the process instance groups inside this collaboration group
-                for(ProcessInstanceGroupDAO processInstanceGroup:collaborationGroup.getAssociatedProcessInstanceGroups()){
-                    for(String associatedProcessInstanceGroupId:processInstanceGroup.getAssociatedGroups()){
-                        ProcessInstanceGroupDAO groupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(associatedProcessInstanceGroupId);
-                        groupDAO.getAssociatedGroups().remove(processInstanceGroup.getID());
-                        repo.updateEntity(groupDAO);
-                    }
-                }
                 repo.deleteEntityByHjid(CollaborationGroupDAO.class, groupID);
             }
         }
@@ -189,6 +169,15 @@ public class CollaborationGroupDAOUtility {
         }
         collaborationGroupDAO = repo.updateEntity(collaborationGroupDAO);
         return collaborationGroupDAO;
+    }
+
+    // returns the process instance ids included in the given CollaborationGroup
+    public static List<String> getProcessInstanceIds(CollaborationGroupDAO collaborationGroupDAO){
+        Set<String> ids = new HashSet<String>();
+        for(ProcessInstanceGroupDAO processInstanceGroupDAO : collaborationGroupDAO.getAssociatedProcessInstanceGroups()){
+            ids.addAll(processInstanceGroupDAO.getProcessInstanceIDs());
+        }
+        return new ArrayList<>(ids);
     }
 
     public static List<CollaborationGroupDAO> getCollaborationGroupDAOs(

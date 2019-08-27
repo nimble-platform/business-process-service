@@ -47,22 +47,6 @@ public class MigrationUtil {
             logger.info("Collaboration group is created for process instance group: {}",groupDAO.getID());
         }
         logger.info("Collaboration groups are created for all process instance groups.");
-        // set association between collaboration groups
-        for(ProcessInstanceGroupDAO groupDAO: groupDAOS){
-            // get collaboration group of the group
-            query = "select cg from CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups apig where apig.ID = '"+groupDAO.getID()+"'";
-            CollaborationGroupDAO collaborationGroupDAO = (CollaborationGroupDAO) hibernateUtility.loadIndividualItem(query);
-            // get collaboration groups' hjids which have a reference to the group
-            query = "select cg.hjid from CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups apig where apig.ID in " +
-                    "(select pig.ID from ProcessInstanceGroupDAO pig join pig.associatedGroupsItems agitem where agitem.item = '" + groupDAO.getID()+"')";
-            List<Long> associatedCollaborationGroupIds = (List<Long>) hibernateUtility.loadAll(query);
-
-            collaborationGroupDAO.setAssociatedCollaborationGroups(associatedCollaborationGroupIds);
-
-            hibernateUtility.update(collaborationGroupDAO);
-            logger.info("Collaboration association is created for process instance group: {}",collaborationGroupDAO.getHjid());
-        }
-        logger.info("Collaboration associations are created for all process instance groups.");
 
 //        // create groups and association between groups
 //        for (ProcessInstanceGroupDAO groupDAO: groupDAOS){
@@ -162,7 +146,6 @@ public class MigrationUtil {
         group.setStatus(groupStatus);
         group.setCollaborationRole(collaborationRole);
         group.setProcessInstanceIDs(processInstanceIds);
-        group.setAssociatedGroups(Arrays.asList(associatedGroup));
         hibernateUtility.persist(group);
         return group;
     }

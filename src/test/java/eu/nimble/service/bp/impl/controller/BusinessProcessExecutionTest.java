@@ -5,6 +5,8 @@ import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
 import eu.nimble.service.bp.contract.ContractGenerator;
 import eu.nimble.service.bp.model.dashboard.CollaborationGroupResponse;
 import eu.nimble.service.bp.swagger.model.*;
+import eu.nimble.service.bp.util.persistence.bp.CollaborationGroupDAOUtility;
+import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceGroupDAOUtility;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ClauseType;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.utility.JsonSerializationUtility;
@@ -25,6 +27,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -108,6 +111,9 @@ public class BusinessProcessExecutionTest {
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
+        // get process instance id
+        ProcessInstance processInstance = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ProcessInstance.class);
+
         // get collaboration group information for seller
         request = get("/collaboration-groups")
                 .header("Authorization", TestConfig.initiatorPersonId)
@@ -121,7 +127,7 @@ public class BusinessProcessExecutionTest {
 
         Assert.assertSame(1, collaborationGroupResponse.getSize());
         // set collaboration group and process instance groups ids
-        buyerProcessInstanceGroupID = collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().get(0).getAssociatedGroups().get(0);
+        buyerProcessInstanceGroupID = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(TestConfig.buyerPartyID,Arrays.asList(processInstance.getProcessInstanceID())).getID();
     }
 
     public void test02_ItemInformationResponse() throws Exception {
@@ -213,6 +219,9 @@ public class BusinessProcessExecutionTest {
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
+        // get process instance id
+        ProcessInstance processInstance = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ProcessInstance.class);
+
         // get process instance group info
         request = get("/collaboration-groups")
                 .header("Authorization", TestConfig.initiatorPersonId)
@@ -227,7 +236,7 @@ public class BusinessProcessExecutionTest {
         Assert.assertSame(2, collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().size());
 
         // set collaboration group and process instance groups ids
-        transportProviderProcessInstanceGroupID = collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().get(1).getAssociatedGroups().get(0);
+        transportProviderProcessInstanceGroupID = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(TestConfig.transportProviderPartyId,Arrays.asList(processInstance.getProcessInstanceID())).getID();
     }
 
     public void test10_TEPItemInformationResponse() throws Exception {

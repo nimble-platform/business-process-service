@@ -1190,10 +1190,6 @@ definitions:
         type: boolean
       collaborationRole:
         type: string
-      associatedGroups:
-        type: array
-        items:
-          type: string
       firstActivityTime:
         type: string
       lastActivityTime:
@@ -1224,10 +1220,6 @@ definitions:
         - INPROGRESS
       isProject:
         type: boolean
-      associatedCollaborationGroups:
-        type: array
-        items:
-          type: integer
       associatedProcessInstanceGroups:
         type: array
         items:

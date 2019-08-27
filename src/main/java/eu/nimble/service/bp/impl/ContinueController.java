@@ -2,6 +2,7 @@ package eu.nimble.service.bp.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import eu.nimble.service.bp.model.hyperjaxb.*;
+import eu.nimble.service.bp.swagger.model.*;
 import eu.nimble.service.bp.util.BusinessProcessEvent;
 import eu.nimble.service.bp.util.HttpResponseUtil;
 import eu.nimble.service.bp.util.bp.BusinessProcessUtility;
@@ -16,10 +17,6 @@ import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.util.serialization.MixInIgnoreProperties;
 import eu.nimble.service.bp.swagger.api.ContinueApi;
-import eu.nimble.service.bp.swagger.model.ProcessInstance;
-import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
-import eu.nimble.service.bp.swagger.model.ProcessVariables;
-import eu.nimble.service.bp.swagger.model.Transaction;
 import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
 import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
@@ -40,6 +37,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import springfox.documentation.annotations.ApiIgnore;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -127,7 +125,7 @@ public class ContinueController implements ContinueApi {
             businessProcessContext.setProcessInstanceDAO(storedInstance);
 
             // create process instance groups if this is the first process initializing the process group
-            checkExistingGroup(businessProcessContext.getId(), gid, processInstance.getProcessInstanceID(), body, collaborationGID);
+            checkExistingGroup(businessProcessContext.getId(), gid, processInstance.getProcessInstanceID(), body);
 
             // get the identifier of party whose workflow will be checked
             String partyId = processId.contentEquals("Fulfilment") ? body.getVariables().getInitiatorID(): body.getVariables().getResponderID();
@@ -172,40 +170,29 @@ public class ContinueController implements ContinueApi {
         return new ResponseEntity<>(processInstance, HttpStatus.OK);
     }
 
-    private void checkExistingGroup(String businessContextId, String sourceGid, String processInstanceId, ProcessInstanceInputMessage body, String responderCollaborationGID) {
+    private void checkExistingGroup(String businessContextId, String sourceGid, String processInstanceId, ProcessInstanceInputMessage body) {
         ProcessInstanceGroupDAO existingGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(sourceGid);
 
         // check whether the group for the trading partner is still there. If not, create a new one
-        ProcessInstanceGroupDAO associatedGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(body.getVariables().getInitiatorID(), sourceGid,false);
+        ProcessInstanceGroupDAO associatedGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(body.getVariables().getInitiatorID(), Arrays.asList(processInstanceId),false);
         if (associatedGroup == null) {
             associatedGroup = ProcessInstanceGroupDAOUtility.createProcessInstanceGroupDAO(
                     body.getVariables().getInitiatorID(),
                     processInstanceId,
                     CamundaEngine.getTransactions(body.getVariables().getProcessID()).get(0).getInitiatorRole().toString(),
                     body.getVariables().getRelatedProducts(),
-                    sourceGid,
                     existingGroup.getDataChannelId());
 
-            CollaborationGroupDAO initiatorCollaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroupDAO(body.getVariables().getInitiatorID(), Long.parseLong(responderCollaborationGID),responderCollaborationGID);
+            CollaborationGroupDAO initiatorCollaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroup(body.getVariables().getInitiatorID(), Arrays.asList(processInstanceId));
             // create a new initiator collaboration group
             if (initiatorCollaborationGroup == null) {
-                CollaborationGroupDAO responderCollaborationGroup = repoFactory.forBpRepository(true).getSingleEntityByHjid(CollaborationGroupDAO.class, Long.parseLong(responderCollaborationGID));
                 initiatorCollaborationGroup = CollaborationGroupDAOUtility.createCollaborationGroupDAO();
-
-                // set association between collaboration groups
-                initiatorCollaborationGroup.getAssociatedCollaborationGroups().add(responderCollaborationGroup.getHjid());
-                responderCollaborationGroup.getAssociatedCollaborationGroups().add(initiatorCollaborationGroup.getHjid());
-                repoFactory.forBpRepository().updateEntity(responderCollaborationGroup);
             }
 
             // add new group to the collaboration group
             initiatorCollaborationGroup.getAssociatedProcessInstanceGroups().add(associatedGroup);
             repoFactory.forBpRepository().updateEntity(initiatorCollaborationGroup);
             BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId).setUpdatedAssociatedGroup(associatedGroup);
-
-            // associate groups
-            existingGroup.getAssociatedGroups().add(associatedGroup.getID());
-            repoFactory.forBpRepository().updateEntity(existingGroup);
         }
     }
 }

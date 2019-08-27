@@ -246,9 +246,6 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
             return tokenCheck;
         }
 
-        List<ProcessInstanceGroupDAO> allProcessInstanceGroups = new ArrayList<>();
-        List<Long> allColabrationGroupList  = new ArrayList<>();
-
         GenericJPARepository repo = repoFactory.forBpRepository(true);
         CollaborationGroupDAO collaborationGroupDAO = repo.getSingleEntityByHjid(CollaborationGroupDAO.class, Long.parseLong(bcid));
         if (collaborationGroupDAO == null) {
@@ -258,26 +255,15 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
             return response;
         }
 
-        allProcessInstanceGroups = collaborationGroupDAO.getAssociatedProcessInstanceGroups();
-        allColabrationGroupList = collaborationGroupDAO.getAssociatedCollaborationGroups();
+        List<ProcessInstanceGroupDAO> allProcessInstanceGroups = collaborationGroupDAO.getAssociatedProcessInstanceGroups();
 
         for(String cgid : cgids){
             CollaborationGroupDAO mergeCollaborationGroupDAO = repo.getSingleEntityByHjid(CollaborationGroupDAO.class, Long.parseLong(cgid));
             if(mergeCollaborationGroupDAO != null) {
                 allProcessInstanceGroups.addAll(mergeCollaborationGroupDAO.getAssociatedProcessInstanceGroups());
-                allColabrationGroupList.addAll(mergeCollaborationGroupDAO.getAssociatedCollaborationGroups());
-                for (Long mergeId:mergeCollaborationGroupDAO.getAssociatedCollaborationGroups()) {
-                    CollaborationGroupDAO mergeCollaborationGroupDAOInstance = repo.getSingleEntityByHjid(CollaborationGroupDAO.class, mergeId);
-                    List<Long> finalAssociatedInstanceIdList = mergeCollaborationGroupDAOInstance.getAssociatedCollaborationGroups();
-                    finalAssociatedInstanceIdList.remove(Long.parseLong(cgid));
-                    finalAssociatedInstanceIdList.add(Long.parseLong(bcid));
-                    mergeCollaborationGroupDAOInstance.setAssociatedCollaborationGroups(finalAssociatedInstanceIdList);
-                    repo.updateEntity(mergeCollaborationGroupDAOInstance);
-                }
             }
         }
 
-        collaborationGroupDAO.setAssociatedCollaborationGroups(allColabrationGroupList);
         collaborationGroupDAO.setAssociatedProcessInstanceGroups(allProcessInstanceGroups);
         collaborationGroupDAO.setIsProject(true);
 
@@ -286,7 +272,6 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
         for(String cgid : cgids){
             CollaborationGroupDAOUtility.deleteCollaborationGroupDAOsByID(Collections.singletonList(Long.parseLong(cgid)));
         }
-        collaborationGroupDAO.getAssociatedCollaborationGroups();
 
         CollaborationGroup collaborationGroup = HibernateSwaggerObjectMapper.convertCollaborationGroupDAO(collaborationGroupDAO);
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(collaborationGroup);

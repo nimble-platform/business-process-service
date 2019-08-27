@@ -61,13 +61,6 @@ public class BusinessProcessContext {
                     repo.deleteEntity(p);
                 }
             }
-            if (targetGroup != null) {
-                for (ProcessInstanceGroupDAO.ProcessInstanceGroupDAOAssociatedGroupsItem p : sourceGroup.getAssociatedGroupsItems()) {
-                    if (p.getItem().equals(targetGroup.getID())) {
-                        repo.deleteEntity(p);
-                    }
-                }
-            }
         }
         if (associatedGroup != null) {
             for (ProcessInstanceGroupDAO.ProcessInstanceGroupDAOProcessInstanceIDsItem p : associatedGroup.getProcessInstanceIDsItems()) {

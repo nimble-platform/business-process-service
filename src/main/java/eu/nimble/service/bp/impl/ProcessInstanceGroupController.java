@@ -209,8 +209,8 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
             }
 
             // update the groups associated with the first group
-            for (String groupId : groupDAO.getAssociatedGroups()) {
-                ProcessInstanceGroupDAO group = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(groupId);
+            List<ProcessInstanceGroupDAO> associatedProcessInstanceGroups = ProcessInstanceGroupDAOUtility.getAssociatedProcessInstanceGroupDAOs(groupDAO.getPartyID(),groupDAO.getProcessInstanceIDs());
+            for (ProcessInstanceGroupDAO group : associatedProcessInstanceGroups) {
                 // check whether the associated group can be cancelled or not
                 isCancellableGroup = cancellableGroup(group.getProcessInstanceIDs());
                 // if it is ok, change status of the associated group

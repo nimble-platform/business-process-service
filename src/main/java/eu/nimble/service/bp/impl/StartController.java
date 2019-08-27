@@ -210,26 +210,24 @@ public class StartController implements StartApi {
             if(collaborationGID == null){
                 initiatorCollaborationGroupDAO = CollaborationGroupDAOUtility.createCollaborationGroupDAO();
                 responderCollaborationGroupDAO = CollaborationGroupDAOUtility.createCollaborationGroupDAO();
-
-                // set association between collaboration groups
-                initiatorCollaborationGroupDAO.getAssociatedCollaborationGroups().add(responderCollaborationGroupDAO.getHjid());
-                responderCollaborationGroupDAO.getAssociatedCollaborationGroups().add(initiatorCollaborationGroupDAO.getHjid());
-
-                initiatorCollaborationGroupDAO = repo.updateEntity(initiatorCollaborationGroupDAO);
-                responderCollaborationGroupDAO = repo.updateEntity(responderCollaborationGroupDAO);
             }
             else {
                 initiatorCollaborationGroupDAO = repo.getSingleEntityByHjid(CollaborationGroupDAO.class, Long.parseLong(collaborationGID));
+                // if there is a process instance group id, then get the process ids included in this group
+                // otherwise, get the process ids included in the collaboration group
+                List<String> processInstanceIds = new ArrayList<>();
+                if(gid != null){
+                    ProcessInstanceGroupDAO processInstanceGroupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(gid);
+                    processInstanceIds = processInstanceGroupDAO.getProcessInstanceIDs();
+                }
+                else {
+                    processInstanceIds = CollaborationGroupDAOUtility.getProcessInstanceIds(initiatorCollaborationGroupDAO);
+                }
                 // get responder collaboration group
-                responderCollaborationGroupDAO = CollaborationGroupDAOUtility.getCollaborationGroupDAO(body.getVariables().getResponderID(),initiatorCollaborationGroupDAO.getHjid(),gid);
+                responderCollaborationGroupDAO = CollaborationGroupDAOUtility.getCollaborationGroup(body.getVariables().getResponderID(),processInstanceIds);
                 // check whether the responder collaboration group is null or not
                 if(responderCollaborationGroupDAO == null){
                     responderCollaborationGroupDAO = CollaborationGroupDAOUtility.createCollaborationGroupDAO();
-                    // set association between collaboration groups
-                    initiatorCollaborationGroupDAO.getAssociatedCollaborationGroups().add(responderCollaborationGroupDAO.getHjid());
-                    responderCollaborationGroupDAO.getAssociatedCollaborationGroups().add(initiatorCollaborationGroupDAO.getHjid());
-                    initiatorCollaborationGroupDAO = repo.updateEntity(initiatorCollaborationGroupDAO);
-                    responderCollaborationGroupDAO = repo.updateEntity(responderCollaborationGroupDAO);
                 }
             }
 
@@ -284,22 +282,10 @@ public class StartController implements StartApi {
                 CamundaEngine.getTransactions(body.getVariables().getProcessID()).get(1).getInitiatorRole().toString(),
                 body.getVariables().getRelatedProducts());
 
-        // associate groups
-        List<String> associatedGroups = new ArrayList<>();
-        associatedGroups.add(processInstanceGroupDAO2.getID());
-        processInstanceGroupDAO1.setAssociatedGroups(associatedGroups);
-
-        // below assignment fetches the hjids from the
-        processInstanceGroupDAO1 = repo.updateEntity(processInstanceGroupDAO1);
-
         // add this group to initiator collaboration group
         initiatorCollaborationGroupDAO.getAssociatedProcessInstanceGroups().add(processInstanceGroupDAO1);
         // update collaboration group
         repo.updateEntity(initiatorCollaborationGroupDAO);
-        associatedGroups = new ArrayList<>();
-        associatedGroups.add(processInstanceGroupDAO1.getID());
-        processInstanceGroupDAO2.setAssociatedGroups(associatedGroups);
-        processInstanceGroupDAO2 = repo.updateEntity(processInstanceGroupDAO2);
 
         // add this group to responder collaboration group
         responderCollaborationGroupDAO.getAssociatedProcessInstanceGroups().add(processInstanceGroupDAO2);
@@ -333,18 +319,14 @@ public class StartController implements StartApi {
 
         // add the new process instance to the recipient's group
         // if such a group exists add into it otherwise create a new group
-        ProcessInstanceGroupDAO associatedGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(body.getVariables().getResponderID(), sourceGroup.getID());
+        ProcessInstanceGroupDAO associatedGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(body.getVariables().getResponderID(), sourceGroup.getProcessInstanceIDs());
         if (associatedGroup == null) {
             ProcessInstanceGroupDAO targetGroup = ProcessInstanceGroupDAOUtility.createProcessInstanceGroupDAO(
                     body.getVariables().getResponderID(),
                     processInstanceId,
                     CamundaEngine.getTransactions(body.getVariables().getProcessID()).get(0).getResponderRole().toString(),
                     body.getVariables().getRelatedProducts(),
-                    sourceGroup.getID(),
                     sourceGroup.getDataChannelId());
-
-            sourceGroup.getAssociatedGroups().add(targetGroup.getID());
-            sourceGroup = repo.updateEntity(sourceGroup);
 
             // add new group to responder collaboration group
             responderCollaborationGroupDAO.getAssociatedProcessInstanceGroups().add(targetGroup);

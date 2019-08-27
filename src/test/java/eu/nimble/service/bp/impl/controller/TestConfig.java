@@ -6,5 +6,6 @@ public class TestConfig {
     public final static String tepPersonId = "745";
     public final static String sellerPartyID = "706";
     public final static String buyerPartyID = "1339";
+    public final static String transportProviderPartyId = "747";
     public final static String checkEntityIds = "false";
 }
