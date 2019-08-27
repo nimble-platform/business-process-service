@@ -63,11 +63,6 @@ public class ProcessInstanceGroupDAOUtility {
 
     private static final String QUERY_GET_BY_PARTY_ID = "SELECT pig.ID FROM ProcessInstanceGroupDAO pig WHERE pig.partyID in :partyIds";
 
-    private static final String QUERY_GET_BY_HJID = "SELECT c FROM ProcessInstanceGroupDAO c WHERE c.hjid = :hjid";
-    public static List<ProcessInstanceGroupDAO> getProcessInstanceGroupDAO(Long hjid) {
-        return new JPARepositoryFactory().forBpRepository(true).getSingleEntity(QUERY_GET_BY_HJID, new String[]{"hjid"}, new Object[]{hjid});
-    }
-
     public static List<String> getProcessInstanceGroupIdsForParty(List<String> partyIds){
         return new JPARepositoryFactory().forBpRepository().getEntities(QUERY_GET_BY_PARTY_ID, new String[]{"partyIds"}, new Object[]{partyIds});
     }
