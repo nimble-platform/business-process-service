@@ -64,6 +64,7 @@ public class BusinessProcessExecutionTest {
     private final String productName = "QDeneme";
     private final String serviceName = "QService";
 
+    public static String buyerProcessInstanceGroupID;
     public static String transportProviderProcessInstanceGroupID;
 
     @Autowired
@@ -119,6 +120,8 @@ public class BusinessProcessExecutionTest {
         CollaborationGroupResponse collaborationGroupResponse = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), CollaborationGroupResponse.class);
 
         Assert.assertSame(1, collaborationGroupResponse.getSize());
+        // set collaboration group and process instance groups ids
+        buyerProcessInstanceGroupID = collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().get(0).getAssociatedGroups().get(0);
     }
 
     public void test02_ItemInformationResponse() throws Exception {
@@ -304,23 +307,19 @@ public class BusinessProcessExecutionTest {
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
     }
 
-//    @Test
-//    public void test17_dataChannelCreationConditions() throws Exception {
-//        DefaultOrderResponseSender defaultOrderResponseSender = new DefaultOrderResponseSender();
-//        String orderProcessInstanceInputMessageString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(orderRequestJSON));
-//        String orderResponseProcessInstanceInputMessageString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(orderResponseJSON));
-//        ProcessInstanceInputMessage orderProcessInstanceInputMessage = JsonSerializationUtility.getObjectMapper().readValue(orderProcessInstanceInputMessageString, ProcessInstanceInputMessage.class);
-//        ProcessInstanceInputMessage orderResponseProcessInstanceInputMessage = JsonSerializationUtility.getObjectMapper().readValue(orderResponseProcessInstanceInputMessageString, ProcessInstanceInputMessage.class);
-//
-//        OrderType order = JsonSerializationUtility.getObjectMapper().readValue(orderProcessInstanceInputMessage.getVariables().getContent(), OrderType.class);
-//        OrderResponseSimpleType orderResponse = JsonSerializationUtility.getObjectMapper().readValue(orderResponseProcessInstanceInputMessage.getVariables().getContent(), OrderResponseSimpleType.class);
-//
-//        Method method = DefaultOrderResponseSender.class.getDeclaredMethod("needToCreateDataChannel", OrderType.class, OrderResponseSimpleType.class);
-//        method.setAccessible(true);
-//        Boolean needToCreateDataChannel = (Boolean) method.invoke(defaultOrderResponseSender, order, orderResponse);
-//        method.setAccessible(false);
-//        Assert.assertTrue(needToCreateDataChannel);
-//    }
+    /**
+     * After {@link #test06_NegotiationResponse} step, a data channel should be created since data monitoring is requested.
+     */
+    @Test
+    public void test17_dataChannelCreation() throws Exception {
+        MockHttpServletRequestBuilder request = get("/process-instance-groups/" + buyerProcessInstanceGroupID)
+                .header("Authorization", TestConfig.initiatorPersonId);
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+
+        ProcessInstanceGroup processInstanceGroup = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ProcessInstanceGroup.class);
+
+        Assert.assertNotNull(processInstanceGroup.getDataChannelId());
+    }
 
     @Test
     public void test18_getClauses() throws Exception{

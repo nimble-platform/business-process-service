@@ -1180,6 +1180,8 @@ definitions:
         type: string
       partyID:
         type: string
+      dataChannelId:
+        type: string
       processInstanceIDs:
         type: array
         items:
