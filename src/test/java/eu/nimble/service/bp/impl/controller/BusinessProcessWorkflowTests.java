@@ -134,7 +134,7 @@ public class BusinessProcessWorkflowTests {
     public void test4_startProcessInstance() throws Exception {
         // start Item Information Request
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(itemInformationRequestJSON));
-        inputMessageAsString = inputMessageAsString.replace("2892f360-763f-4e26-843d-c6347d9114ff","34f31vh4-6g42-4e26-3dfg-dtlk20834kaf");
+        inputMessageAsString = inputMessageAsString.replaceAll("2892f360-763f-4e26-843d-c6347d9114ff","34f31vh4-6g42-4e26-3dfg-dtlk20834kaf");
 
         MockHttpServletRequestBuilder request = post("/start")
                 .header("Authorization", "745")
@@ -148,7 +148,7 @@ public class BusinessProcessWorkflowTests {
 
         // send Item Information Response
         inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(itemInformationResponseJSON));
-        inputMessageAsString = inputMessageAsString.replace("34f31vh4-6g42-4e26-3dfg-dtlk20834kaf","5629fghq-79ba-4c41-4235-rtyln456poas");
+        inputMessageAsString = inputMessageAsString.replaceAll("5a9a43e9-79ba-4c41-9dab-f8b61245ffc9","5629fghq-79ba-4c41-4235-rtyln456poas");
         // replace the process instance id
         inputMessageAsString = inputMessageAsString.replace("pid", processInstanceID);
 
