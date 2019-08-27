@@ -63,6 +63,7 @@ public class StartControllerTest {
      * Test scenario:
      * - Create 3 order and 1 item information request processes
      * - Create negotiations for multiple items
+     * - Start an item information request with a previously used document (fails since duplicate documents are not allowed)
      */
 
     @BeforeClass
@@ -153,6 +154,21 @@ public class StartControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body);
         this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+    }
+
+    /**
+     * In this test case, we use an item information request document which is the same with the one used in {@link #test4_startProcessInstance}.
+     * Since duplicate documents are not allowed, the process should not be started.
+     * */
+    @Test
+    public void test6_startProcessInstance() throws Exception {
+        String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(iirJSON1));
+
+        MockHttpServletRequestBuilder request = post("/start")
+                .header("Authorization", TestConfig.initiatorPersonId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(inputMessageAsString);
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isInternalServerError()).andReturn();
     }
 
     private BillOfMaterial createBillOfMaterial(){
