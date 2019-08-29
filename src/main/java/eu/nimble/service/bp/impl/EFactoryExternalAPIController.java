@@ -11,6 +11,7 @@ import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceGroupDAO;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
+import eu.nimble.service.bp.util.UBLUtility;
 import eu.nimble.service.bp.util.bp.BusinessProcessUtility;
 import eu.nimble.service.bp.util.bp.ClassProcessTypeMap;
 import eu.nimble.service.bp.util.persistence.bp.CollaborationGroupDAOUtility;
@@ -234,7 +235,9 @@ public class EFactoryExternalAPIController {
 
             // get the initiator party
             try {
-                if(initiatorParty.getContact().getOtherCommunication().size() > 0 && initiatorParty.getContact().getOtherCommunication().get(0).getChannelCode().getName().contentEquals("REST")){
+                if(initiatorParty.getContact().getOtherCommunication().size() > 0 &&
+                        UBLUtility.doesCodeHaveName(initiatorParty.getContact().getOtherCommunication().get(0).getChannelCode()) &&
+                        initiatorParty.getContact().getOtherCommunication().get(0).getChannelCode().getName().contentEquals("REST")){
                     String endpoint = initiatorParty.getContact().getOtherCommunication().get(0).getChannelCode().getValue();
                     HttpResponse<String> response = Unirest.post(endpoint)
                             .body(documentAsString)
