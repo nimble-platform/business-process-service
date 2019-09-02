@@ -245,12 +245,12 @@ public class EFactoryExternalAPIController {
                             .asString();
 
                     if(response.getStatus() != 200){
-                        logger.error("Failed send the document to the initiator party {}, endpoint: {} : {}",initiatorParty, endpoint, response.getBody());
+                        logger.error("Failed send the document to the initiator party {}, endpoint: {} : {}",initiatorParty.getPartyIdentification().get(0).getID(), endpoint, response.getBody());
                         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
                     }
                 }
             } catch (Exception e) {
-                String msg = String.format("Failed to send the document to the initiator party : %s", initiatorParty);
+                String msg = String.format("Failed to send the document to the initiator party : %s", initiatorParty.getPartyIdentification().get(0).getID());
                 logger.error(msg,e);
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
             }
