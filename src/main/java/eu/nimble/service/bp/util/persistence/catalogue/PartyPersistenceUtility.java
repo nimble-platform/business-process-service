@@ -129,13 +129,7 @@ public class PartyPersistenceUtility {
     public static List<PartyType> getParties(String bearerToken, List<String> partyIds) throws IOException {
         List<PartyType> parties = new ArrayList<>();
 
-        for(String partyId:partyIds){
-            PartyType party = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,partyId);
-            if(party == null){
-                party = getParty(partyId, true);
-            }
-            parties.add(party);
-        }
+        parties = SpringBridge.getInstance().getiIdentityClientTyped().getParties(bearerToken,partyIds);
 
         return parties;
     }
