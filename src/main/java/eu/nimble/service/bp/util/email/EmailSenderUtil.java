@@ -6,7 +6,6 @@ import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentStatus;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceGroupDAO;
 import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
-import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
 import eu.nimble.utility.email.EmailService;
@@ -122,10 +121,12 @@ public class EmailSenderUtil {
         emailService.send(new String[]{toEmail}, subject, "cancelled_collaboration", context);
     }
 
-    public void sendActionPendingEmail(String bearerToken, BusinessProcessContext businessProcessContext) {
+    public void sendActionPendingEmail(String bearerToken, String documentId) {
         new Thread(() -> {
+            // Get ProcessDocumentMetadataDAO for the given document id
+            ProcessDocumentMetadataDAO processDocumentMetadataDAO = ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId);
             // if negotiation awaits response
-            ProcessDocumentStatus processDocumentStatus = businessProcessContext.getMetadataDAO().getStatus();
+            ProcessDocumentStatus processDocumentStatus = processDocumentMetadataDAO.getStatus();
             List<String> emailList = new ArrayList<>();
             PartyType respondingParty;
             PartyType initiatingParty;
@@ -140,15 +141,15 @@ public class EmailSenderUtil {
 
             try {
                 if (processDocumentStatus.equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
-                    respondingParty = iIdentityClientTyped.getParty(bearerToken, businessProcessContext.getMetadataDAO().getResponderID());
-                    initiatingParty = iIdentityClientTyped.getParty(bearerToken, businessProcessContext.getMetadataDAO().getInitiatorID());
+                    respondingParty = iIdentityClientTyped.getParty(bearerToken, processDocumentMetadataDAO.getResponderID());
+                    initiatingParty = iIdentityClientTyped.getParty(bearerToken, processDocumentMetadataDAO.getInitiatorID());
                 }else {
-                    respondingParty = iIdentityClientTyped.getParty(bearerToken, businessProcessContext.getMetadataDAO().getInitiatorID());
-                    initiatingParty = iIdentityClientTyped.getParty(bearerToken, businessProcessContext.getMetadataDAO().getResponderID());
+                    respondingParty = iIdentityClientTyped.getParty(bearerToken, processDocumentMetadataDAO.getInitiatorID());
+                    initiatingParty = iIdentityClientTyped.getParty(bearerToken, processDocumentMetadataDAO.getResponderID());
                 }
 
             } catch (IOException e) {
-                logger.error("Failed to get party with id: {} from identity service", businessProcessContext.getMetadataDAO().getResponderID(), e);
+                logger.error("Failed to get party with id: {} from identity service", processDocumentMetadataDAO.getResponderID(), e);
                 return;
             }
 
@@ -160,7 +161,7 @@ public class EmailSenderUtil {
             }
 
             String initiatingPersonName = new StringBuilder("").append(initiatingPerson.getFirstName()).append(" ").append(initiatingPerson.getFamilyName()).toString();
-            String productName = businessProcessContext.getMetadataDAO().getRelatedProducts().get(0);
+            String productName = processDocumentMetadataDAO.getRelatedProducts().get(0);
 
             List<PersonType> personTypeList = respondingParty.getPerson();
             for (PersonType p : personTypeList) {
@@ -169,7 +170,7 @@ public class EmailSenderUtil {
             respondingPartyName = respondingParty.getPartyName().get(0).getName().getValue();
             initiatingPartyName = initiatingParty.getPartyName().get(0).getName().getValue();
 
-            DocumentType documentType = businessProcessContext.getMetadataDAO().getType();
+            DocumentType documentType = processDocumentMetadataDAO.getType();
             if (documentType.equals(DocumentType.ITEMINFORMATIONREQUEST)) {
                 subject = "NIMBLE: Information Requested for " + productName + " from " + initiatingPartyName;
             }else if(documentType.equals(DocumentType.REQUESTFORQUOTATION)) {
@@ -178,16 +179,16 @@ public class EmailSenderUtil {
                 subject = "NIMBLE: Order Received for " + productName + " from " + initiatingPartyName;
             }else if(documentType.equals(DocumentType.RECEIPTADVICE)) {
                 subject = "NIMBLE: Receipt Advice Received for " + productName + " from " + initiatingPartyName;
-            }else if (businessProcessContext.getMetadataDAO().getType().equals(DocumentType.ITEMINFORMATIONRESPONSE)){
+            }else if (processDocumentMetadataDAO.getType().equals(DocumentType.ITEMINFORMATIONRESPONSE)){
                 initiatorIsBuyer = false;
                 subject = "NIMBLE: Information Received for " + productName + " from " + initiatingPartyName;
-            }else if (businessProcessContext.getMetadataDAO().getType().equals(DocumentType.QUOTATION)){
+            }else if (processDocumentMetadataDAO.getType().equals(DocumentType.QUOTATION)){
                 initiatorIsBuyer = false;
                 subject = "NIMBLE: Quotation Received for " + productName + " from " + initiatingPartyName;
-            } else if (businessProcessContext.getMetadataDAO().getType().equals(DocumentType.ORDERRESPONSESIMPLE)){
+            } else if (processDocumentMetadataDAO.getType().equals(DocumentType.ORDERRESPONSESIMPLE)){
                 initiatorIsBuyer = false;
                 subject = "NIMBLE: Order Response for " + productName + " from " + initiatingPartyName;
-            }else if (businessProcessContext.getMetadataDAO().getType().equals(DocumentType.DESPATCHADVICE)){
+            }else if (processDocumentMetadataDAO.getType().equals(DocumentType.DESPATCHADVICE)){
                 initiatorIsBuyer = false;
                 subject = "NIMBLE: Dispatch Advice Received for " + productName + " from " + initiatingPartyName;
             }else {
@@ -205,13 +206,13 @@ public class EmailSenderUtil {
             String url = EMPTY_TEXT;
 
             if (showURL) {
-                if (businessProcessContext.getMetadataDAO().getResponderID().equals(String.valueOf(sellerParty.getPartyIdentification().get(0).getID()))) {
+                if (processDocumentMetadataDAO.getResponderID().equals(String.valueOf(sellerParty.getPartyIdentification().get(0).getID()))) {
                     if (processDocumentStatus.equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
                         url = getPendingActionURL(COLLABORATION_ROLE_SELLER);
                     }else {
                         url = getPendingActionURL(COLLABORATION_ROLE_BUYER);
                     }
-                } else if (businessProcessContext.getMetadataDAO().getResponderID().equals(String.valueOf(buyerParty.getPartyIdentification().get(0).getID()))) {
+                } else if (processDocumentMetadataDAO.getResponderID().equals(String.valueOf(buyerParty.getPartyIdentification().get(0).getID()))) {
                     if (processDocumentStatus.equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
                         url = getPendingActionURL(COLLABORATION_ROLE_BUYER);
                     }else {

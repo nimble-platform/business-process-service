@@ -58,7 +58,11 @@ public class ProcessDocumentMetadataDAOUtility {
     private static final Logger logger = LoggerFactory.getLogger(ProcessDocumentMetadataDAOUtility.class);
 
     public static ProcessDocumentMetadataDAO findByDocumentID(String documentId) {
-        return new JPARepositoryFactory().forBpRepository(true).getSingleEntity(QUERY_GET_BY_DOCUMENT_ID, new String[]{"documentId"}, new Object[]{documentId});
+        List<ProcessDocumentMetadataDAO> processDocumentMetadataDAOS = new JPARepositoryFactory().forBpRepository(true).getEntities(QUERY_GET_BY_DOCUMENT_ID, new String[]{"documentId"}, new Object[]{documentId});
+        if(processDocumentMetadataDAOS != null && processDocumentMetadataDAOS.size() > 0){
+            return processDocumentMetadataDAOS.get(0);
+        }
+        return null;
     }
 
     public static List<ProcessDocumentMetadataDAO> findByProcessInstanceID(String processInstanceId) {

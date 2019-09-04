@@ -274,7 +274,7 @@ public class EFactoryExternalAPIController {
         // otherwise, we'll find the identifier of previous document
         else{
             for (DocumentReferenceType documentReferenceType : document.getAdditionalDocuments()) {
-                if(documentReferenceType.getDocumentType().contentEquals("previousDocument")){
+                if(documentReferenceType.getDocumentType() != null && documentReferenceType.getDocumentType().contentEquals("previousDocument")){
                     documentId = documentReferenceType.getID();
                 }
             }
@@ -290,7 +290,7 @@ public class EFactoryExternalAPIController {
     private String getProcessInstanceIdOfPrecedingOrder(IDocument document){
         String documentId = null;
         for (DocumentReferenceType documentReferenceType : document.getAdditionalDocuments()) {
-            if(documentReferenceType.getDocumentType().contentEquals("previousOrder")){
+            if(documentReferenceType.getDocumentType() != null && documentReferenceType.getDocumentType().contentEquals("previousOrder")){
                 documentId = documentReferenceType.getID();
             }
         }
