@@ -2,6 +2,8 @@ package eu.nimble.service.bp.impl.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.nimble.service.bp.contract.ContractGenerator;
+import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ClauseType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ContractType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.DataMonitoringClauseType;
@@ -24,7 +26,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
+import java.io.ByteArrayOutputStream;
+import java.lang.reflect.Method;
 import java.util.List;
+import java.util.zip.ZipOutputStream;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -169,4 +174,31 @@ public class ContractControllerTest {
 //
 //        Assert.assertEquals(test7_expectedSize, contract.getClause().size());
 //    }
+
+    /**
+     * Check whether the contract is properly (without exceptions) generated for the order {@link BusinessProcessExecutionTest#test07_OrderRequest()} or not
+     * */
+    @Test
+    public void test8_generateContract() throws Exception {
+        String orderId = "146b213d-24a8-4645-a03f-193bc1a5d403";
+
+        ContractGenerator contractGenerator = new ContractGenerator();
+        OrderType order = (OrderType) DocumentPersistenceUtility.getUBLDocument(orderId);
+        ZipOutputStream zipOutputStream = new ZipOutputStream(new ByteArrayOutputStream());
+
+        Method method = ContractGenerator.class.getDeclaredMethod("generateContract", OrderType.class, ZipOutputStream.class);
+        method.setAccessible(true);
+
+        try {
+            method.invoke(contractGenerator, order, zipOutputStream);
+        }
+        catch (Exception e){
+            Assert.fail("Failed while testing the generation of contract");
+            throw e;
+        }
+
+        method.setAccessible(false);
+
+        zipOutputStream.close();
+    }
 }
