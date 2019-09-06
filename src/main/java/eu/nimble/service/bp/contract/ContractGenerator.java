@@ -40,6 +40,7 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -67,7 +68,7 @@ public class ContractGenerator {
 
     private boolean firstIIR = true;
 
-    public void generateContract(OrderType order,ZipOutputStream zos){
+    public void generateContract(OrderType order,ZipOutputStream zos) throws Exception{
         // get the order response
         OrderResponseSimpleType orderResponse = DocumentPersistenceUtility.getOrderResponseDocumentByOrderId(order.getID());
 
@@ -83,7 +84,7 @@ public class ContractGenerator {
 
     }
 
-    public List<ClauseType> getTermsAndConditions(String orderId,String rfqId, String sellerPartyId, String buyerPartyId, String incoterms, String tradingTerm, String bearerToken){
+    public List<ClauseType> getTermsAndConditions(String orderId,String rfqId, String sellerPartyId, String buyerPartyId, String incoterms, String tradingTerm, String bearerToken) throws IOException {
         List<ClauseType> clauses = new ArrayList<>();
 
         OrderType order = null;
@@ -194,6 +195,7 @@ public class ContractGenerator {
                 }
                 catch (Exception e){
                     logger.error("Failed to create terms and conditions for orderId: {}, rfqId: {}, sellerPartyId: {}, buyerPartyId: {}, incoterms: {}, tradingTerm : {}", orderId, rfqId, sellerPartyId, buyerPartyId, incoterms, tradingTerm, e);
+                    throw e;
                 }
                 finally {
                     if(inputStream != null){
@@ -204,12 +206,13 @@ public class ContractGenerator {
         }
         catch (Exception e){
             logger.error("Failed to create terms and conditions for orderId: {}, rfqId: {}, sellerPartyId: {}, buyerPartyId: {}, incoterms: {}, tradingTerm : {}", orderId, rfqId, sellerPartyId, buyerPartyId, incoterms, tradingTerm, e);
+            throw e;
         }
 
         return clauses;
     }
 
-    private XWPFDocument fillOrderTermsAndConditions(OrderType order){
+    private XWPFDocument fillOrderTermsAndConditions(OrderType order) throws Exception{
 
         XWPFDocument document = null;
         try {
@@ -263,6 +266,7 @@ public class ContractGenerator {
         }
         catch (Exception e){
             logger.error("Failed to fill in 'Standard Purchase Order Terms and Conditions.pdf' for the order with id : {}",order.getID(),e);
+            throw e;
         }
         return document;
     }
@@ -340,7 +344,7 @@ public class ContractGenerator {
         return null;
     }
 
-    private XWPFDocument fillPurchaseDetails(OrderType order,OrderResponseSimpleType orderResponse){
+    private XWPFDocument fillPurchaseDetails(OrderType order,OrderResponseSimpleType orderResponse) throws Exception{
 
         XWPFDocument document = null;
         try {
@@ -670,6 +674,7 @@ public class ContractGenerator {
         }
         catch (Exception e){
             logger.error("Failed to fill in 'Company Purchase Details.pdf' for the order with id : {}",order.getID(),e);
+            throw e;
         }
         return document;
     }
@@ -697,7 +702,7 @@ public class ContractGenerator {
         return dataMonitoringDemanded && orderResponse.isAcceptedIndicator();
     }
 
-    private void addDocxToZipFile(String fileName,XWPFDocument document, ZipOutputStream zos) {
+    private void addDocxToZipFile(String fileName,XWPFDocument document, ZipOutputStream zos) throws Exception{
         try{
             ZipEntry zipEntry = new ZipEntry(fileName);
             zos.putNextEntry(zipEntry);
@@ -712,10 +717,11 @@ public class ContractGenerator {
         }
         catch (Exception e){
             logger.error("Failed to create zip file",e);
+            throw e;
         }
     }
 
-    private void getAndPopulateClauses(OrderType order,ZipOutputStream zos,XWPFDocument document){
+    private void getAndPopulateClauses(OrderType order,ZipOutputStream zos,XWPFDocument document) throws Exception{
         try{
             // if there is no contract, simple remove the tables and return
             if(order.getContract().size() <= 0){
@@ -777,6 +783,7 @@ public class ContractGenerator {
         }
         catch (Exception e){
             logger.error("Failed to create entries for clauses",e);
+            throw e;
         }
 
     }
@@ -809,7 +816,7 @@ public class ContractGenerator {
         return map;
     }
 
-    private XWPFDocument createOrderAdditionalDocuments(OrderType order,OrderResponseSimpleType orderResponse,ZipOutputStream zos,XWPFDocument document){
+    private XWPFDocument createOrderAdditionalDocuments(OrderType order,OrderResponseSimpleType orderResponse,ZipOutputStream zos,XWPFDocument document) throws Exception{
         try {
             // request
             for(DocumentReferenceType documentReference : order.getAdditionalDocumentReference()){
@@ -895,11 +902,12 @@ public class ContractGenerator {
         }
         catch (Exception e){
             logger.error("Failed to create Order additional documents entry",e);
+            throw e;
         }
         return document;
     }
 
-    private void createPPAPEntry(XWPFDocument document,ZipOutputStream zos,ClauseType clause){
+    private void createPPAPEntry(XWPFDocument document,ZipOutputStream zos,ClauseType clause) throws Exception{
         try {
             PpapResponseType ppapResponse = (PpapResponseType) DocumentPersistenceUtility.getUBLDocument(((DocumentClauseType) clause).getClauseDocumentRef().getID(), DocumentType.PPAPRESPONSE);
 
@@ -1033,10 +1041,11 @@ public class ContractGenerator {
         }
         catch (Exception e){
             logger.error("Failed to create PPAP entry",e);
+            throw e;
         }
     }
 
-    private void createItemDetailsEntry(XWPFDocument document,ZipOutputStream zos,ClauseType clause,int id){
+    private void createItemDetailsEntry(XWPFDocument document,ZipOutputStream zos,ClauseType clause,int id) throws IOException {
         try {
             XWPFTable table = getTable(document,"Item Information Request");
             XWPFTable noteAndDocumentTable = getTable(document,"Item Information Request Notes/Additional Documents");
@@ -1072,6 +1081,7 @@ public class ContractGenerator {
         }
         catch (Exception e){
             logger.error("Failed to create item details entry",e);
+            throw e;
         }
     }
 
@@ -1313,11 +1323,12 @@ public class ContractGenerator {
         }
         catch (Exception e){
             logger.error("Failed to create negotiation entry",e);
+            throw e;
         }
 
     }
 
-    private void fillItemDetails(XWPFDocument document,XWPFTable table,XWPFTable noteAndDocumentTable,ZipOutputStream zos,ClauseType clause,int id){
+    private void fillItemDetails(XWPFDocument document,XWPFTable table,XWPFTable noteAndDocumentTable,ZipOutputStream zos,ClauseType clause,int id) throws IOException {
         try {
             ItemInformationResponseType itemDetails = (ItemInformationResponseType) DocumentPersistenceUtility.getUBLDocument(((DocumentClauseType) clause).getClauseDocumentRef().getID(), DocumentType.ITEMINFORMATIONRESPONSE);
 
@@ -1424,6 +1435,7 @@ public class ContractGenerator {
         }
         catch (Exception e){
             logger.error("Failed to fill item details",e);
+            throw e;
         }
 
     }
