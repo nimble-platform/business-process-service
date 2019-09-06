@@ -283,7 +283,7 @@ public class ProcessDocumentMetadataDAOUtility {
      * Some {@link DocumentReferenceType}s have a reference to {@link IDocument}s, therefore they do not have an attached
      * {@link eu.nimble.service.model.ubl.commonbasiccomponents.BinaryObjectType}. We need to skip them.
      * */
-    private static List<DocumentReferenceType> getAuxiliaryFiles(List<DocumentReferenceType> documentReferenceTypes){
+    public static List<DocumentReferenceType> getAuxiliaryFiles(List<DocumentReferenceType> documentReferenceTypes){
         List<DocumentReferenceType> auxiliaryFiles = new ArrayList<>();
         for (DocumentReferenceType documentReferenceType : documentReferenceTypes) {
             if(documentReferenceType.getAttachment() != null){

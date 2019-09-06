@@ -818,8 +818,10 @@ public class ContractGenerator {
 
     private XWPFDocument createOrderAdditionalDocuments(OrderType order,OrderResponseSimpleType orderResponse,ZipOutputStream zos,XWPFDocument document) throws Exception{
         try {
+            List<DocumentReferenceType> orderAuxiliaryFiles = ProcessDocumentMetadataDAOUtility.getAuxiliaryFiles(order.getAdditionalDocumentReference());
+            List<DocumentReferenceType> orderResponseAuxiliaryFiles = null;
             // request
-            for(DocumentReferenceType documentReference : order.getAdditionalDocumentReference()){
+            for(DocumentReferenceType documentReference : orderAuxiliaryFiles){
                 byte[] bytes = SpringBridge.getInstance().getBinaryContentService().retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
                 ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
                 bos.write(bytes,0,bytes.length);
@@ -830,7 +832,8 @@ public class ContractGenerator {
             }
             // response
             if(orderResponse != null){
-                for(DocumentReferenceType documentReference : orderResponse.getAdditionalDocumentReference()){
+                orderResponseAuxiliaryFiles = ProcessDocumentMetadataDAOUtility.getAuxiliaryFiles(orderResponse.getAdditionalDocumentReference());
+                for(DocumentReferenceType documentReference : orderResponseAuxiliaryFiles){
                     byte[] bytes = SpringBridge.getInstance().getBinaryContentService().retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
                     ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
                     bos.write(bytes,0,bytes.length);
@@ -876,24 +879,24 @@ public class ContractGenerator {
 
             // additional documents in table
             // request
-            if(order.getAdditionalDocumentReference().size() == 0){
+            if(orderAuxiliaryFiles.size() == 0){
                 XWPFTableRow row = table.getRows().get(table.getNumberOfRows()-2);
                 XWPFRun run = row.getCell(3).getParagraphs().get(0).createRun();
                 run.setText("-");
             }
-            for(DocumentReferenceType documentReference : order.getAdditionalDocumentReference()){
+            for(DocumentReferenceType documentReference : orderAuxiliaryFiles){
                 XWPFTableRow row = table.getRows().get(table.getNumberOfRows()-2);
                 XWPFRun run = row.getCell(3).getParagraphs().get(0).createRun();
                 run.setText(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName()+"\n");
                 run.setItalic(true);
             }
-            if(orderResponse.getAdditionalDocumentReference().size() == 0){
+            if(orderResponseAuxiliaryFiles.size() == 0){
                 XWPFTableRow row = table.getRows().get(table.getNumberOfRows()-1);
                 XWPFRun run = row.getCell(3).getParagraphs().get(0).createRun();
                 run.setText("-");
             }
             // response
-            for(DocumentReferenceType documentReference : orderResponse.getAdditionalDocumentReference()){
+            for(DocumentReferenceType documentReference : orderResponseAuxiliaryFiles){
                 XWPFTableRow row = table.getRows().get(table.getNumberOfRows()-1);
                 XWPFRun run = row.getCell(3).getParagraphs().get(0).createRun();
                 run.setText(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName()+"\n");
@@ -931,7 +934,8 @@ public class ContractGenerator {
 
             // additional documents
             // request
-            for(DocumentReferenceType documentReference : ppapRequest.getAdditionalDocumentReference()){
+            List<DocumentReferenceType> ppapRequestAuxiliaryFiles = ProcessDocumentMetadataDAOUtility.getAuxiliaryFiles(ppapRequest.getAdditionalDocumentReference());
+            for(DocumentReferenceType documentReference : ppapRequestAuxiliaryFiles){
                 byte[] bytes = SpringBridge.getInstance().getBinaryContentService().retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
                 ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
                 bos.write(bytes,0,bytes.length);
@@ -941,7 +945,8 @@ public class ContractGenerator {
                 bos.writeTo(zos);
             }
             // response
-            for(DocumentReferenceType documentReference : ppapResponse.getAdditionalDocumentReference()){
+            List<DocumentReferenceType> ppapResponseAuxiliaryFiles = ProcessDocumentMetadataDAOUtility.getAuxiliaryFiles(ppapResponse.getAdditionalDocumentReference());
+            for(DocumentReferenceType documentReference : ppapResponseAuxiliaryFiles){
                 byte[] bytes = SpringBridge.getInstance().getBinaryContentService().retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
                 ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
                 bos.write(bytes,0,bytes.length);
@@ -1016,22 +1021,22 @@ public class ContractGenerator {
             // additional documents in table
             // request
             XWPFTableRow row = table.getRows().get(table.getNumberOfRows()-2);
-            if(ppapRequest.getAdditionalDocumentReference().size() == 0){
+            if(ppapRequestAuxiliaryFiles.size() == 0){
                 XWPFRun run = row.getCell(3).getParagraphs().get(0).createRun();
                 run.setText("-");
             }
-            for(DocumentReferenceType documentReference : ppapRequest.getAdditionalDocumentReference()){
+            for(DocumentReferenceType documentReference : ppapRequestAuxiliaryFiles){
                 XWPFRun run = row.getCell(3).getParagraphs().get(0).createRun();
                 run.setText(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName()+"\n");
                 run.setItalic(true);
             }
             XWPFTableRow row1 = table.getRows().get(table.getNumberOfRows()-1);
-            if(ppapResponse.getAdditionalDocumentReference().size() == 0){
+            if(ppapResponseAuxiliaryFiles.size() == 0){
                 XWPFRun run = row1.getCell(3).getParagraphs().get(0).createRun();
                 run.setText("-");
             }
             // response
-            for(DocumentReferenceType documentReference : ppapResponse.getAdditionalDocumentReference()){
+            for(DocumentReferenceType documentReference : ppapResponseAuxiliaryFiles){
                 XWPFRun run = row1.getCell(3).getParagraphs().get(0).createRun();
                 run.setText(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName()+"\n");
                 run.setItalic(true);
@@ -1091,7 +1096,8 @@ public class ContractGenerator {
 
         // additional documents
         // request
-        for(DocumentReferenceType documentReference : requestForQuotation.getAdditionalDocumentReference()){
+        List<DocumentReferenceType> rfqAuxiliaryFiles = ProcessDocumentMetadataDAOUtility.getAuxiliaryFiles(requestForQuotation.getAdditionalDocumentReference());
+        for(DocumentReferenceType documentReference : rfqAuxiliaryFiles){
             byte[] bytes = SpringBridge.getInstance().getBinaryContentService().retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
             ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
             bos.write(bytes,0,bytes.length);
@@ -1101,7 +1107,8 @@ public class ContractGenerator {
             bos.writeTo(zos);
         }
         // response
-        for(DocumentReferenceType documentReference : quotation.getAdditionalDocumentReference()){
+        List<DocumentReferenceType> quotationAuxiliaryFiles = ProcessDocumentMetadataDAOUtility.getAuxiliaryFiles(quotation.getAdditionalDocumentReference());
+        for(DocumentReferenceType documentReference : quotationAuxiliaryFiles){
             byte[] bytes = SpringBridge.getInstance().getBinaryContentService().retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
             ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
             bos.write(bytes,0,bytes.length);
@@ -1287,18 +1294,18 @@ public class ContractGenerator {
             // negotiation table 'Notes and Additional Documents' part
             // additional documents
             table = getTable(document,"Negotiation Notes/Additional Documents");
-            if(requestForQuotation.getAdditionalDocumentReference().size() == 0){
+            if(rfqAuxiliaryFiles.size() == 0){
                 table.getRow(table.getNumberOfRows()-2).getCell(3).getParagraphs().get(0).createRun().setText("-");
             }
-            for(DocumentReferenceType documentReference : requestForQuotation.getAdditionalDocumentReference()){
+            for(DocumentReferenceType documentReference : rfqAuxiliaryFiles){
                 XWPFRun run6 = table.getRow(table.getNumberOfRows()-2).getCell(3).getParagraphs().get(0).createRun();
                 run6.setText(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName()+"\n");
                 run6.setItalic(true);
             }
-            if(quotation.getAdditionalDocumentReference().size() == 0){
+            if(quotationAuxiliaryFiles.size() == 0){
                 table.getRow(table.getNumberOfRows()-1).getCell(3).getParagraphs().get(0).createRun().setText("-");
             }
-            for(DocumentReferenceType documentReference : quotation.getAdditionalDocumentReference()){
+            for(DocumentReferenceType documentReference : quotationAuxiliaryFiles){
                 XWPFRun run6 = table.getRow(table.getNumberOfRows()-1).getCell(3).getParagraphs().get(0).createRun();
                 run6.setText(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName()+"\n");
                 run6.setItalic(true);
@@ -1354,11 +1361,13 @@ public class ContractGenerator {
             }
 
             // additional documents
+            List<DocumentReferenceType> itemInformationRequestAuxiliaryFiles = ProcessDocumentMetadataDAOUtility.getAuxiliaryFiles(itemInformationRequest.getAdditionalDocumentReference());
+            List<DocumentReferenceType> itemDetailsAuxiliaryFiles = ProcessDocumentMetadataDAOUtility.getAuxiliaryFiles(itemDetails.getAdditionalDocumentReference());
             // request
-            if(itemInformationRequest.getAdditionalDocumentReference().size() == 0){
+            if(itemInformationRequestAuxiliaryFiles.size() == 0){
                 noteAndDocumentTable.getRow(noteAndDocumentTable.getNumberOfRows()-2).getCell(3).getParagraphs().get(0).createRun().setText("-");
             }
-            for(DocumentReferenceType documentReference : itemInformationRequest.getAdditionalDocumentReference()){
+            for(DocumentReferenceType documentReference : itemInformationRequestAuxiliaryFiles){
                 byte[] bytes = SpringBridge.getInstance().getBinaryContentService().retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
                 ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
                 bos.write(bytes,0,bytes.length);
@@ -1372,10 +1381,10 @@ public class ContractGenerator {
                 run5.setItalic(true);
             }
             // response
-            if(itemDetails.getAdditionalDocumentReference().size() == 0){
+            if(itemDetailsAuxiliaryFiles.size() == 0){
                 noteAndDocumentTable.getRow(noteAndDocumentTable.getNumberOfRows()-1).getCell(3).getParagraphs().get(0).createRun().setText("-");
             }
-            for(DocumentReferenceType documentReference : itemDetails.getAdditionalDocumentReference()){
+            for(DocumentReferenceType documentReference : itemDetailsAuxiliaryFiles){
                 byte[] bytes = SpringBridge.getInstance().getBinaryContentService().retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
                 ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
                 bos.write(bytes,0,bytes.length);
