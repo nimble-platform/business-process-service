@@ -320,7 +320,7 @@ public class CollaborationGroupDAOUtility {
 
         List<PartyType> parties = null;
         try {
-            parties = PartyPersistenceUtility.getParties(bearerToken, filter.getTradingPartnerIDs());
+            parties = PartyPersistenceUtility.getParties(bearerToken, new ArrayList<>(filter.getTradingPartnerIDs()));
         } catch (IOException e) {
             String msg = String.format("Failed to get parties while getting categories for party: %s, collaboration role: %s, archived: %B", partyId, collaborationRole, archived);
             logger.error(msg);
