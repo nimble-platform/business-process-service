@@ -1,6 +1,7 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.bom.BPMessageGenerator;
+import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.model.billOfMaterial.BillOfMaterial;
 import eu.nimble.service.bp.model.billOfMaterial.BillOfMaterialItem;
 import eu.nimble.service.bp.model.hyperjaxb.*;
@@ -30,6 +31,8 @@ import eu.nimble.utility.LoggerUtils;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
+import eu.nimble.utility.validation.IValidationUtil;
+import eu.nimble.utility.validation.ValidationUtil;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
@@ -63,6 +66,8 @@ public class StartController implements StartApi {
     private EmailSenderUtil emailSenderUtil;
     @Autowired
     private CollaborationGroupsController collaborationGroupsController;
+    @Autowired
+    private IValidationUtil validationUtil;
 
     @Override
     @ApiOperation(value = "", notes = "Creates negotiations for the given bill of materials for the given party. If there is a frame contract between parties and useFrameContract parameter is set to true, " +
@@ -72,10 +77,9 @@ public class StartController implements StartApi {
                                                            @ApiParam(value = "Serialized form of bill of materials which are used to create request for quotations.", required = true) @RequestBody BillOfMaterial billOfMaterial,
                                                            @ApiParam(value = "If this parameter is true and a valid frame contract exists between parties, then an order is started for the product using the details of frame contract") @RequestParam(value = "useFrameContract", defaultValue = "false") Boolean useFrameContract) {
         logger.info("Creating negotiations for bill of materials , useFrameContract: {}", useFrameContract);
-        // check token
-        ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
-        if (tokenCheck != null) {
-            return tokenCheck;
+        // validate role
+        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES)) {
+            return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
         }
 
         try {
@@ -146,6 +150,11 @@ public class StartController implements StartApi {
             @RequestParam(value = "collaborationGID", required = false) String collaborationGID) {
 
         logger.debug(" $$$ Start Process with ProcessInstanceInputMessage {}", JsonSerializationUtility.serializeEntitySilentlyWithMixin(body, ProcessVariables.class, MixInIgnoreProperties.class));
+
+        // validate role
+        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+            return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+        }
 
         // check whether the process is included in the workflow of seller company
         String processId = body.getVariables().getProcessID();

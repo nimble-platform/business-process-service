@@ -1,6 +1,7 @@
 package eu.nimble.service.bp.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.model.hyperjaxb.*;
 import eu.nimble.service.bp.swagger.model.*;
 import eu.nimble.service.bp.util.BusinessProcessEvent;
@@ -24,6 +25,8 @@ import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.LoggerUtils;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
+import eu.nimble.utility.validation.IValidationUtil;
+import eu.nimble.utility.validation.ValidationUtil;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
@@ -56,6 +59,8 @@ public class ContinueController implements ContinueApi {
     private EmailSenderUtil emailSenderUtil;
     @Autowired
     private ProcessInstanceGroupController processInstanceGroupController;
+    @Autowired
+    private IValidationUtil validationUtil;
 
     @ApiIgnore
     @Override
@@ -86,10 +91,9 @@ public class ContinueController implements ContinueApi {
         ProcessInstance processInstance = null;
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
         try {
-            // check token
-            ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
-            if (tokenCheck != null) {
-                return tokenCheck;
+            // validate role
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_SALES)) {
+                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
             String processId = body.getVariables().getProcessID();

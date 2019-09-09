@@ -2,6 +2,7 @@ package eu.nimble.service.bp.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
 import eu.nimble.service.bp.model.tt.OrderEPC;
 import eu.nimble.service.bp.util.HttpResponseUtil;
@@ -11,6 +12,8 @@ import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.CatalogueLineType;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.utility.JsonSerializationUtility;
+import eu.nimble.utility.validation.IValidationUtil;
+import eu.nimble.utility.validation.ValidationUtil;
 import feign.Response;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -18,6 +21,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -38,6 +42,9 @@ public class EPCController {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    @Autowired
+    private IValidationUtil validationUtil;
+
     @ApiOperation(value = "",notes = "Gets product information as CatalogueLine for the specified EPC code. First, the corresponding order" +
             " is fetched for the specified code from the data channel service and then, the CatalogueLine is retrieved for the product" +
             " included in the order.", response = CatalogueLineType.class)
@@ -55,10 +62,9 @@ public class EPCController {
         logger.info("Getting track & tracing details for epc: {}", epc);
 
         try {
-            // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
-            if (tokenCheck != null) {
-                return tokenCheck;
+            // validate role
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
             Response response = SpringBridge.getInstance().getDataChannelClient().getEPCCodesForOrder(bearerToken, epc);
@@ -110,10 +116,9 @@ public class EPCController {
                                                       @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         logger.info("Getting epc codes for productId: {}", publishedProductID);
         try {
-            // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
-            if (tokenCheck != null) {
-                return tokenCheck;
+            // validate role
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
             Object[] partyIdAndManufacturerItemId = CataloguePersistenceUtility.getCatalogueLinePartyIdAndManufacturersItemIdentification(publishedProductID);

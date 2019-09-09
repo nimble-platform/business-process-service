@@ -1,6 +1,7 @@
 package eu.nimble.service.bp.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceDAO;
@@ -16,7 +17,8 @@ import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecut
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.persistence.resource.EntityIdAwareRepositoryWrapper;
-import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
+import eu.nimble.utility.validation.IValidationUtil;
+import eu.nimble.utility.validation.ValidationUtil;
 import io.swagger.annotations.*;
 import org.joda.time.DateTime;
 import org.joda.time.Days;
@@ -41,7 +43,7 @@ public class ContractController {
     private final Logger logger = LoggerFactory.getLogger(ContractController.class);
 
     @Autowired
-    private ResourceValidationUtility resourceValidationUtil;
+    private IValidationUtil validationUtil;
 
 //    @ApiOperation(value = "",notes = "Retrieves the specified ClauseType")
 //    @ApiResponses(value = {
@@ -163,12 +165,10 @@ public class ContractController {
                                                                @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         try {
             logger.info("Constructing contract starting from the process instance: {}", processInstanceId);
-            // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
-            if (tokenCheck != null) {
-                return tokenCheck;
+            // validate role
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
-
             // check existence and type of the process instance
             ProcessInstanceDAO processInstance = ProcessInstanceDAOUtility.getById(processInstanceId);
             if (processInstance == null) {
@@ -200,10 +200,9 @@ public class ContractController {
     ) {
         try {
             logger.info("Getting clauses for contract: {}", contractId);
-            // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
-            if (tokenCheck != null) {
-                return tokenCheck;
+            // validate role
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
             ContractType contract = ContractPersistenceUtility.getContract(contractId);
@@ -292,10 +291,9 @@ public class ContractController {
                                            @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         try {
             logger.info("Getting clause for document: {}, type: {}", documentId, clauseType);
-            // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
-            if (tokenCheck != null) {
-                return tokenCheck;
+            // validate role
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
             // check existence and type of the document bound to the contract
@@ -335,10 +333,9 @@ public class ContractController {
                                                       @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         try {
             logger.info("Adding document clause to contract. Bounded-document id: {}, clause document id: {}", documentId, clauseDocumentId);
-            // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
-            if (tokenCheck != null) {
-                return tokenCheck;
+            // validate role
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
             // check the passed parameters
@@ -406,10 +403,9 @@ public class ContractController {
 
         try {
             logger.info("Adding data monitoring clause to contract. Bounded-document id: {}", documentId);
-            // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
-            if (tokenCheck != null) {
-                return tokenCheck;
+            // validate role
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
             // check existence and type of the document bound to the contract
@@ -588,10 +584,9 @@ public class ContractController {
 
         try {
             logger.info("Incoming request to retrieve a DigitalAgreement. hjid: {}", contractId);
-            // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
-            if (tokenCheck != null) {
-                return tokenCheck;
+            // validate role
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
             DigitalAgreementType digitalAgreement = new JPARepositoryFactory().forCatalogueRepository(true).getSingleEntityByHjid(DigitalAgreementType.class, contractId);
@@ -624,10 +619,9 @@ public class ContractController {
 
         try {
             logger.info("Incoming request to retrieve a DigitalAgreement. seller id: {}, buyer id: {}, product hjid: {}", sellerId, buyerId, manufacturersItemId);
-            // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
-            if (tokenCheck != null) {
-                return tokenCheck;
+            // validate role
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
             DigitalAgreementType digitalAgreement = ContractPersistenceUtility.getFrameContractAgreementById(sellerId, buyerId, manufacturersItemId);
@@ -663,10 +657,9 @@ public class ContractController {
 
         try {
             logger.info("Incoming request to retrieve a DigitalAgreements for party: {}", partyId);
-            // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
-            if (tokenCheck != null) {
-                return tokenCheck;
+            // validate role
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
             List<DigitalAgreementType> digitalAgreements = ContractPersistenceUtility.getFrameContractsByPartyId(partyId);

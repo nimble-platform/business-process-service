@@ -21,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import springfox.documentation.annotations.ApiIgnore;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -29,6 +30,7 @@ import java.util.List;
 /**
  * Created by yildiray on 5/25/2017.
  */
+@ApiIgnore
 public class ContentController implements ContentApi {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
