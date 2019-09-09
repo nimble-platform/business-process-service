@@ -58,15 +58,23 @@ public class ProcessDocumentMetadataDAOUtility {
     private static final Logger logger = LoggerFactory.getLogger(ProcessDocumentMetadataDAOUtility.class);
 
     public static ProcessDocumentMetadataDAO findByDocumentID(String documentId) {
-        List<ProcessDocumentMetadataDAO> processDocumentMetadataDAOS = new JPARepositoryFactory().forBpRepository(true).getEntities(QUERY_GET_BY_DOCUMENT_ID, new String[]{"documentId"}, new Object[]{documentId});
+        return findByDocumentID(documentId, new JPARepositoryFactory().forBpRepository(true));
+    }
+
+    public static ProcessDocumentMetadataDAO findByDocumentID(String documentId, GenericJPARepository repository) {
+        List<ProcessDocumentMetadataDAO> processDocumentMetadataDAOS = repository.getEntities(QUERY_GET_BY_DOCUMENT_ID, new String[]{"documentId"}, new Object[]{documentId});
         if(processDocumentMetadataDAOS != null && processDocumentMetadataDAOS.size() > 0){
             return processDocumentMetadataDAOS.get(0);
         }
         return null;
     }
 
+    public static List<ProcessDocumentMetadataDAO> findByProcessInstanceID(String processInstanceId, GenericJPARepository repository) {
+        return repository.getEntities(QUERY_GET_BY_PROCESS_INSTANCE_ID, new String[]{"processInstanceId"}, new Object[]{processInstanceId});
+    }
+
     public static List<ProcessDocumentMetadataDAO> findByProcessInstanceID(String processInstanceId) {
-        return new JPARepositoryFactory().forBpRepository(true).getEntities(QUERY_GET_BY_PROCESS_INSTANCE_ID, new String[]{"processInstanceId"}, new Object[]{processInstanceId});
+        return findByProcessInstanceID(processInstanceId, new JPARepositoryFactory().forBpRepository(true));
     }
 
     public static List<ProcessDocumentMetadataDAO> findByPartyID(String partyId) {
@@ -470,17 +478,13 @@ public class ProcessDocumentMetadataDAOUtility {
     public static void updateDocumentMetadata(String processContextId, ProcessDocumentMetadata body) {
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(processContextId);
 
-        ProcessDocumentMetadataDAO storedDocumentDAO = ProcessDocumentMetadataDAOUtility.findByDocumentID(body.getDocumentID());
-
-        businessProcessContext.setPreviousDocumentMetadataStatus(storedDocumentDAO.getStatus());
+        ProcessDocumentMetadataDAO storedDocumentDAO = ProcessDocumentMetadataDAOUtility.findByDocumentID(body.getDocumentID(),businessProcessContext.getBpRepository());
 
         ProcessDocumentMetadataDAO newDocumentDAO = HibernateSwaggerObjectMapper.createProcessDocumentMetadata_DAO(body);
 
-        GenericJPARepository repo = new JPARepositoryFactory().forBpRepository();
+        GenericJPARepository repo = businessProcessContext.getBpRepository();
         repo.deleteEntityByHjid(ProcessDocumentMetadataDAO.class, storedDocumentDAO.getHjid());
         repo.persistEntity(newDocumentDAO);
-
-        businessProcessContext.setUpdatedDocumentMetadata(newDocumentDAO);
     }
 
     public static ProcessDocumentMetadata getOrderResponseMetadataByOrderId(String documentID) {
@@ -489,24 +493,31 @@ public class ProcessDocumentMetadataDAOUtility {
     }
 
     public static ProcessDocumentMetadata getRequestMetadata(String processInstanceId) {
+        return getRequestMetadata(processInstanceId,new JPARepositoryFactory().forBpRepository(true));
+    }
+    public static ProcessDocumentMetadata getRequestMetadata(String processInstanceId, GenericJPARepository repository) {
         List<Transaction.DocumentTypeEnum> documentTypes = BusinessProcessUtility.getInitialDocumentsForAllProcesses();
         List<String> parameterNames = new ArrayList<>();
         List<Object> parameterValues = new ArrayList<>();
         parameterNames.add("processInstanceId");
         parameterValues.add(processInstanceId);
         String query = String.format(QUERY_GET_METADATA_BY_PROCESS_INSTANCE_ID_AND_ARBITRARY_CONDITIONS, createConditionsForMetadataQuery(documentTypes, parameterNames, parameterValues));
-        ProcessDocumentMetadataDAO processDocumentDAO = new JPARepositoryFactory().forBpRepository(true).getSingleEntity(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
+        ProcessDocumentMetadataDAO processDocumentDAO = repository.getSingleEntity(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
         return HibernateSwaggerObjectMapper.createProcessDocumentMetadata(processDocumentDAO);
     }
 
     public static ProcessDocumentMetadata getResponseMetadata(String processInstanceId) {
+        return getResponseMetadata(processInstanceId, new JPARepositoryFactory().forBpRepository(true));
+    }
+
+    public static ProcessDocumentMetadata getResponseMetadata(String processInstanceId, GenericJPARepository repository) {
         List<Transaction.DocumentTypeEnum> documentTypes = BusinessProcessUtility.getResponseDocumentsForAllProcesses();
         List<String> parameterNames = new ArrayList<>();
         List<Object> parameterValues = new ArrayList<>();
         parameterNames.add("processInstanceId");
         parameterValues.add(processInstanceId);
         String query = String.format(QUERY_GET_METADATA_BY_PROCESS_INSTANCE_ID_AND_ARBITRARY_CONDITIONS, createConditionsForMetadataQuery(documentTypes, parameterNames, parameterValues));
-        ProcessDocumentMetadataDAO processDocumentDAO = new JPARepositoryFactory().forBpRepository(true).getSingleEntity(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
+        ProcessDocumentMetadataDAO processDocumentDAO = repository.getSingleEntity(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
         if (processDocumentDAO == null) {
             return null;
         }

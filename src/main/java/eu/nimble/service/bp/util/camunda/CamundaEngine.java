@@ -37,7 +37,7 @@ public class CamundaEngine {
 
     private static Logger logger = LoggerFactory.getLogger(CamundaEngine.class);
 
-    public static ProcessInstance continueProcessInstance(String processContextId,ProcessInstanceInputMessage body, String bearerToken) {
+    public static void continueProcessInstance(String processContextId,ProcessInstanceInputMessage body, String bearerToken) {
         String processInstanceID = body.getProcessInstanceID();
         Task task = taskService.createTaskQuery().processInstanceId(processInstanceID).list().get(0);
 
@@ -46,12 +46,6 @@ public class CamundaEngine {
         data.put("processContextId",processContextId);
         data.put("bearer_token", bearerToken);
 
-        ProcessInstance processInstance = new ProcessInstance();
-        processInstance.setProcessID(body.getVariables().getProcessID());
-        processInstance.setProcessInstanceID(processInstanceID);
-        //processInstance.setProcessInstanceID("prc124");
-        processInstance.setStatus(ProcessInstance.StatusEnum.COMPLETED);
-
         try {
             logger.info(" Completing business process instance {}, with data {}", processInstanceID, JsonSerializationUtility.getObjectMapperWithMixIn(Map.class, MixInIgnoreProperties.class).writeValueAsString(data));
         } catch (JsonProcessingException e) {
@@ -59,8 +53,6 @@ public class CamundaEngine {
         }
         taskService.complete(task.getId(), data);
         logger.info(" Completed business process instance {}", processInstanceID);
-
-        return processInstance;
     }
 
     public static ProcessInstance startProcessInstance(String processContextId,ProcessInstanceInputMessage body) {

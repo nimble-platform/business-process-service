@@ -1,6 +1,7 @@
 package eu.nimble.service.bp.util.persistence.bp;
 
 import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceDAO;
+import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 
 import java.util.Arrays;
@@ -23,7 +24,11 @@ public class ProcessInstanceDAOUtility {
                     "ORDER BY pi.creationDate DESC";
 
     public static ProcessInstanceDAO getById(String processInstanceId) {
-        return new JPARepositoryFactory().forBpRepository(true).getSingleEntity(QUERY_GET_BY_ID, new String[]{"processInstanceId"}, new Object[]{processInstanceId});
+        return getById(processInstanceId,new JPARepositoryFactory().forBpRepository(true));
+    }
+
+    public static ProcessInstanceDAO getById(String processInstanceId, GenericJPARepository repository) {
+        return repository.getSingleEntity(QUERY_GET_BY_ID, new String[]{"processInstanceId"}, new Object[]{processInstanceId});
     }
 
     public static void deleteByIds(List<String> processInstanceIds){
@@ -34,7 +39,10 @@ public class ProcessInstanceDAOUtility {
         return new JPARepositoryFactory().forBpRepository(true).getEntities(QUERY_GET_PROCESS_INSTANCE_DAOS_IN_GROUP, new String[]{"pig"}, new Object[]{processInstanceGroupID});
     }
 
+    public static List<ProcessInstanceDAO> getAllProcessInstancesInCollaborationHistory(String processInstanceID,GenericJPARepository repository) {
+        return repository.getEntities(QUERY_GET_PROCESS_INSTANCE_DAOS_IN_COLLABORATION, new String[]{"pids"}, new Object[]{Arrays.asList(processInstanceID)});
+    }
     public static List<ProcessInstanceDAO> getAllProcessInstancesInCollaborationHistory(String processInstanceID) {
-        return new JPARepositoryFactory().forBpRepository(true).getEntities(QUERY_GET_PROCESS_INSTANCE_DAOS_IN_COLLABORATION, new String[]{"pids"}, new Object[]{Arrays.asList(processInstanceID)});
+        return getAllProcessInstancesInCollaborationHistory(processInstanceID,new JPARepositoryFactory().forBpRepository(true));
     }
 }

@@ -3,6 +3,7 @@ package eu.nimble.service.bp.processor.negotiation;
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceGroupDAO;
+import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.util.HttpResponseUtil;
 import eu.nimble.service.bp.util.persistence.bp.ExecutionConfigurationDAOUtility;
 import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceGroupDAOUtility;
@@ -13,7 +14,6 @@ import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.GenericJPARepository;
-import eu.nimble.utility.persistence.JPARepositoryFactory;
 import feign.Response;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
@@ -67,7 +67,7 @@ public class DefaultQuotationSender  implements JavaDelegate {
             businessProcessApplication.sendDocument(processContextId,processInstanceId, seller, buyer, quotation);
 
             // create the data channel
-            createDataChannel(quotation.getDocumentStatusCode().getName(),quotation.isDataMonitoringPromised(), bearerToken, buyer, seller, productName, processInstanceId);
+            createDataChannel(quotation.getDocumentStatusCode().getName(),quotation.isDataMonitoringPromised(), bearerToken, buyer, seller, productName, processInstanceId, processContextId);
         } else if(executionType == ExecutionConfiguration.ExecutionTypeEnum.MICROSERVICE) {
             // TODO: How to call a microservice
         } else {
@@ -85,9 +85,9 @@ public class DefaultQuotationSender  implements JavaDelegate {
      *  - there is no data channel created for the process instance groups which contain the specified process instance
      *  - data monitoring is promised and status of the negotiation is not equal to 'Rejected'
      */
-    private void createDataChannel(String status, Boolean dataMonitoringPromised, String bearerToken, String buyerId, String sellerId, String productName, String processInstanceId){
+    private void createDataChannel(String status, Boolean dataMonitoringPromised, String bearerToken, String buyerId, String sellerId, String productName, String processInstanceId, String processContextId){
         // get the process instance groups containing the given process instance
-        List<ProcessInstanceGroupDAO> processInstanceGroupDAOs = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAOs(processInstanceId);
+        List<ProcessInstanceGroupDAO> processInstanceGroupDAOs = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAOs(processInstanceId, BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(processContextId).getBpRepository());
         // check whether there is data channel in the group or not
         for(ProcessInstanceGroupDAO processInstanceGroupDAO: processInstanceGroupDAOs){
             if(processInstanceGroupDAO.getDataChannelId() != null){
@@ -116,7 +116,7 @@ public class DefaultQuotationSender  implements JavaDelegate {
             else{
                 logger.info("Created data channel for processInstanceId: {}, buyerId: {}, sellerId: {} successfully", processInstanceId, buyerId, sellerId);
 
-                GenericJPARepository repo = new JPARepositoryFactory().forBpRepository();
+                GenericJPARepository repo = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(processContextId).getBpRepository();
 
                 CreateChannel.Response channelResponse = JsonSerializationUtility.getObjectMapper().readValue(responseBody,CreateChannel.Response.class);
                 // set data channel id for each process instance group
