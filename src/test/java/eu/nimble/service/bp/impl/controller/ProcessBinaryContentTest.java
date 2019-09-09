@@ -35,8 +35,7 @@ public class ProcessBinaryContentTest {
 
     @Autowired
     private MockMvc mockMvc;
-    @Autowired
-    private BinaryContentService binaryContentService;
+    private BinaryContentService binaryContentService = new BinaryContentService();
 
     private final String itemInformationRequest = "/controller/itemInformationRequestBinaryContentJSON.txt";
 

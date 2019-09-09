@@ -57,32 +57,26 @@ public class DocumentPersistenceUtility {
         }
     }
 
-    public static void updateDocument(String processContextId, Object document, String documentId, DocumentType documentType, String partyId) {
+    public static void updateDocument(String processContextId, Object document, String partyId) {
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(processContextId);
 
-        Object existingDocument = getUBLDocument(documentId, documentType);
-        businessProcessContext.setPreviousDocument(existingDocument);
-        EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(partyId);
-        DataIntegratorUtil.checkExistingParties(document);
-        document = repositoryWrapper.updateEntity(document);
-        businessProcessContext.setDocument(document);
+        EntityIdAwareRepositoryWrapper repositoryWrapper = businessProcessContext.getEntityIdAwareRepository(partyId);
+        DataIntegratorUtil.checkExistingParties(document,processContextId);
+        repositoryWrapper.updateEntity(document);
     }
 
     public static void addDocumentWithMetadata(String processContextId, ProcessDocumentMetadata documentMetadata, Object document) {
         ProcessDocumentMetadataDAO processDocumentDAO = HibernateSwaggerObjectMapper.createProcessDocumentMetadata_DAO(documentMetadata);
-        new JPARepositoryFactory().forBpRepository().persistEntity(processDocumentDAO);
-        // save ProcessDocumentMetadataDAO
+
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(processContextId);
-        businessProcessContext.setMetadataDAO(processDocumentDAO);
+
+        businessProcessContext.getBpRepository().persistEntity(processDocumentDAO);
 
         if (document != null) {
             // remove binary content from the document
-            EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(documentMetadata.getInitiatorID());
+            EntityIdAwareRepositoryWrapper repositoryWrapper = businessProcessContext.getEntityIdAwareRepository(documentMetadata.getInitiatorID());
             repositoryWrapper.updateEntityForPersistCases(document);
-            // save Object
-            businessProcessContext.setDocument(document);
         }
-
     }
 
     public static void deleteDocumentsWithMetadatas(List<String> documentIds) {

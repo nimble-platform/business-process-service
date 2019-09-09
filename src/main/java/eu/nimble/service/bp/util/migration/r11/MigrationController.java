@@ -4,12 +4,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import eu.nimble.service.bp.util.migration.r11.serialization.BinaryObjectSerializerGetBinaryObjects;
-import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.catalogue.CatalogueType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.BinaryObjectType;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
+import eu.nimble.utility.persistence.binary.BinaryContentService;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -85,7 +85,7 @@ public class MigrationController {
             updateBinaryContentUris(bpBinaryObjects, BUSINESS_PROCESS_BINARY_CONTENT_URI,previousUri);
             logger.info("Updated uris of business process binary objects");
             // delete old binary contents
-            SpringBridge.getInstance().getBinaryContentService().deleteContents(urisToBeDeleted);
+            new BinaryContentService().deleteContents(urisToBeDeleted);
             logger.info("Deleted binary contents with old uris");
         }
         catch (Exception e){
@@ -130,11 +130,12 @@ public class MigrationController {
 
     public void updateBinaryContentUris(List<BinaryObjectType> binaryObjects, String newUrl, String oldUrl){
         GenericJPARepository repo = new JPARepositoryFactory().forCatalogueRepository();
+        BinaryContentService binaryContentService = new BinaryContentService();
         for(BinaryObjectType binaryObject: binaryObjects){
 
             if(binaryObject.getUri().contains(oldUrl)){
                 // get binary content
-                BinaryObjectType binaryContent = SpringBridge.getInstance().getBinaryContentService().retrieveContent(binaryObject.getUri());
+                BinaryObjectType binaryContent = binaryContentService.retrieveContent(binaryObject.getUri());
                 if(binaryContent != null){
                     // create a new content
                     BinaryObjectType newBinaryContent = new BinaryObjectType();
@@ -143,8 +144,8 @@ public class MigrationController {
                     newBinaryContent.setFileName(binaryContent.getFileName());
                     newBinaryContent.setUri(binaryContent.getUri().replace(oldUrl,newUrl));
 
-                    if(SpringBridge.getInstance().getBinaryContentService().retrieveContent(newBinaryContent.getUri()) == null){
-                        SpringBridge.getInstance().getBinaryContentService().createContent(newBinaryContent,false);
+                    if(binaryContentService.retrieveContent(newBinaryContent.getUri()) == null){
+                        binaryContentService.createContent(newBinaryContent,false);
                     }
                 }
 

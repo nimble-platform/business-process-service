@@ -210,9 +210,11 @@ public class DocumentController {
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
         try{
             DocumentPersistenceUtility.addDocumentWithMetadata(businessProcessContext.getId(),body, null);
+            businessProcessContext.commitDbUpdates();
         }
         catch (Exception e){
-            businessProcessContext.handleExceptions();
+            logger.error("Failed to add document metadata",e);
+            businessProcessContext.rollbackDbUpdates();
         }
         finally {
             BusinessProcessContextHandler.getBusinessProcessContextHandler().deleteBusinessProcessContext(businessProcessContext.getId());
@@ -231,9 +233,11 @@ public class DocumentController {
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
         try{
             ProcessDocumentMetadataDAOUtility.updateDocumentMetadata(businessProcessContext.getId(),body);
+            businessProcessContext.commitDbUpdates();
         }
         catch (Exception e){
-            businessProcessContext.handleExceptions();
+            logger.error("Failed to update document metadata",e);
+            businessProcessContext.rollbackDbUpdates();
         }
         finally {
             BusinessProcessContextHandler.getBusinessProcessContextHandler().deleteBusinessProcessContext(businessProcessContext.getId());

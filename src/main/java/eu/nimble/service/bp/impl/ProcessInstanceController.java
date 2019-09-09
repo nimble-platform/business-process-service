@@ -168,7 +168,7 @@ public class ProcessInstanceController {
                 return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
-            ProcessDocumentMetadata processDocumentMetadata = ProcessDocumentMetadataDAOUtility.getRequestMetadata(processInstanceID);
+            ProcessDocumentMetadata processDocumentMetadata = ProcessDocumentMetadataDAOUtility.getRequestMetadata(processInstanceID,businessProcessContext.getBpRepository());
             if(processDocumentMetadata == null){
                 logger.error("There does not exist a document metadata for the process instance with id:{}",processInstanceID);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("There does not exist a document metadata for the process instance with the given id");
@@ -180,13 +180,14 @@ public class ProcessInstanceController {
                 return HttpResponseUtil.createResponseEntityAndLog(String.format("Some of the identifiers (hjid fields) do not belong to the party in the passed catalogue: %s", content), null, HttpStatus.BAD_REQUEST, LogLevel.INFO);
             }
 
-            ProcessInstanceDAO instanceDAO = ProcessInstanceDAOUtility.getById(processInstanceID);
+            ProcessInstanceDAO instanceDAO = ProcessInstanceDAOUtility.getById(processInstanceID,businessProcessContext.getBpRepository());
             // update creator user id of metadata
             processDocumentMetadata.setCreatorUserID(creatorUserID);
             ProcessDocumentMetadataDAOUtility.updateDocumentMetadata(businessProcessContext.getId(),processDocumentMetadata);
             // update the corresponding document
-            DocumentPersistenceUtility.updateDocument(businessProcessContext.getId(), document, processDocumentMetadata.getDocumentID(), documentType, processDocumentMetadata.getInitiatorID());
+            DocumentPersistenceUtility.updateDocument(businessProcessContext.getId(), document, processDocumentMetadata.getInitiatorID());
 
+            businessProcessContext.commitDbUpdates();
             //mdc logging
             Map<String,String> logParamMap = new HashMap<String, String>();
             logParamMap.put("bpInitUserId", processDocumentMetadata.getCreatorUserID());
@@ -202,7 +203,7 @@ public class ProcessInstanceController {
         }
         catch (Exception e) {
             logger.error("Failed to update the process instance with id:{}",processInstanceID,e);
-            businessProcessContext.handleExceptions();
+            businessProcessContext.rollbackDbUpdates();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to update the process instance with the given id");
         }
         finally {

@@ -5,7 +5,6 @@ import eu.nimble.service.bp.model.hyperjaxb.CollaborationStatus;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceGroupDAO;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceStatus;
 import eu.nimble.service.bp.util.persistence.catalogue.PartyPersistenceUtility;
-import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupFilter;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyNameType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
@@ -73,8 +72,12 @@ public class CollaborationGroupDAOUtility {
         return new JPARepositoryFactory().forBpRepository().getSingleEntity(QUERY_GET_HJID_BY_PROCESS_INSTANCE_ID_AND_PARTY_ID, new String[]{"partyID", "processInstanceId"}, new Object[]{partyId, processInstanceId});
     }
 
+    public static CollaborationGroupDAO getCollaborationGroup(String partyId, List<String> processInstanceIds, GenericJPARepository repository) {
+        return repository.getSingleEntity(QUERY_GET_ASSOCIATED_GROUP, new String[]{"partyId","pids"}, new Object[]{partyId, processInstanceIds});
+    }
+
     public static CollaborationGroupDAO getCollaborationGroup(String partyId, List<String> processInstanceIds) {
-        return new JPARepositoryFactory().forBpRepository(true).getSingleEntity(QUERY_GET_ASSOCIATED_GROUP, new String[]{"partyId","pids"}, new Object[]{partyId, processInstanceIds});
+        return getCollaborationGroup(partyId,  processInstanceIds,new JPARepositoryFactory().forBpRepository(true));
     }
 
     public static List<Long> getCollaborationGroupHjidOfProcessInstanceGroups(List<String> groupIds) {
@@ -85,11 +88,11 @@ public class CollaborationGroupDAOUtility {
         return new JPARepositoryFactory().forBpRepository(true).getSingleEntity(QUERY_GET_GROUP_OF_PROCESS_INSTANCE_GROUP, new String[]{"groupId"}, new Object[]{groupId});
     }
 
-    public static CollaborationGroupDAO createCollaborationGroupDAO() {
+    public static CollaborationGroupDAO createCollaborationGroupDAO(GenericJPARepository genericJPARepository) {
         CollaborationGroupDAO collaborationGroupDAO = new CollaborationGroupDAO();
         collaborationGroupDAO.setStatus(CollaborationStatus.INPROGRESS);
         collaborationGroupDAO.setArchived(false);
-        new JPARepositoryFactory().forBpRepository().persistEntity(collaborationGroupDAO);
+        genericJPARepository.persistEntity(collaborationGroupDAO);
         return collaborationGroupDAO;
     }
 

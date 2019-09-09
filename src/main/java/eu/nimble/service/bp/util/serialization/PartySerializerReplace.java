@@ -17,10 +17,16 @@ import java.io.IOException;
  */
 public class PartySerializerReplace extends JsonSerializer<PartyType> {
 
+    private String businessContextId = null;
+
+    public PartySerializerReplace(String businessContextId) {
+        this.businessContextId = businessContextId;
+    }
+
     @Override
     public void serialize(PartyType partyType, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
 
-        PartyType catalogueParty = PartyPersistenceUtility.getParty(partyType);
+        PartyType catalogueParty = PartyPersistenceUtility.getParty(partyType,businessContextId);
         DataModelUtility.nullifyPartyFields(partyType);
         DataModelUtility.copyParty(partyType, catalogueParty);
 

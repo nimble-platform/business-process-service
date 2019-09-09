@@ -88,7 +88,11 @@ public class ContinueController implements ContinueApi {
         } catch (JsonProcessingException e) {
             logger.warn("Failed to serialize process instance input message: ",e);
         }
-        ProcessInstance processInstance = null;
+        ProcessInstance processInstance = new ProcessInstance();
+        processInstance.setProcessID(body.getVariables().getProcessID());
+        processInstance.setProcessInstanceID(body.getProcessInstanceID());
+        processInstance.setStatus(ProcessInstance.StatusEnum.COMPLETED);
+
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
         try {
             // validate role
@@ -109,24 +113,13 @@ public class ContinueController implements ContinueApi {
             }
 
             ProcessInstanceInputMessageDAO processInstanceInputMessageDAO = HibernateSwaggerObjectMapper.createProcessInstanceInputMessage_DAO(body);
-            new JPARepositoryFactory().forBpRepository().persistEntity(processInstanceInputMessageDAO);
+            businessProcessContext.getBpRepository().persistEntity(processInstanceInputMessageDAO);
 
-            // save ProcessInstanceInputMessageDAO
-            businessProcessContext.setMessageDAO(processInstanceInputMessageDAO);
-
-            processInstance = CamundaEngine.continueProcessInstance(businessProcessContext.getId(), body, bearerToken);
-
-            ProcessInstanceDAO storedInstance = ProcessInstanceDAOUtility.getById(processInstance.getProcessInstanceID());
-
-            // save previous status
-            businessProcessContext.setPreviousStatus(storedInstance.getStatus());
+            ProcessInstanceDAO storedInstance = ProcessInstanceDAOUtility.getById(processInstance.getProcessInstanceID(),businessProcessContext.getBpRepository());
 
             storedInstance.setStatus(ProcessInstanceStatus.fromValue(processInstance.getStatus().toString()));
 
-            storedInstance = new JPARepositoryFactory().forBpRepository().updateEntity(storedInstance);
-
-            // save ProcessInstanceDAO
-            businessProcessContext.setProcessInstanceDAO(storedInstance);
+            storedInstance = businessProcessContext.getBpRepository().updateEntity(storedInstance);
 
             // create process instance groups if this is the first process initializing the process group
             checkExistingGroup(businessProcessContext.getId(), gid, processInstance.getProcessInstanceID(), body);
@@ -150,9 +143,12 @@ public class ContinueController implements ContinueApi {
 
             // if it's the last process in the seller's workflow and there is no CompletedTask for this collaboration, create completed tasks for both parties
             if(isLastProcessInWorkflow && processInstanceGroupController.checkCollaborationFinished(gid,bearerToken).getBody().contentEquals("false")){
-                TrustPersistenceUtility.createCompletedTasksForBothParties(processInstance.getProcessInstanceID(),bearerToken,"Completed");
+                TrustPersistenceUtility.createCompletedTasksForBothParties(processInstance.getProcessInstanceID(),bearerToken,"Completed",businessProcessContext.getId());
             }
 
+            CamundaEngine.continueProcessInstance(businessProcessContext.getId(), body, bearerToken);
+
+            businessProcessContext.commitDbUpdates();
             emailSenderUtil.sendActionPendingEmail(bearerToken, body.getVariables().getContentUUID());
 
             //mdc logging
@@ -165,7 +161,7 @@ public class ContinueController implements ContinueApi {
                     storedInstance.getProcessInstanceID(), storedInstance.getProcessID());
         } catch (Exception e) {
             logger.error(" $$$ Failed to continue process with ProcessInstanceInputMessage {}", body.toString(), e);
-            businessProcessContext.handleExceptions();
+            businessProcessContext.rollbackDbUpdates();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         } finally {
             BusinessProcessContextHandler.getBusinessProcessContextHandler().deleteBusinessProcessContext(businessProcessContext.getId());
@@ -175,28 +171,29 @@ public class ContinueController implements ContinueApi {
     }
 
     private void checkExistingGroup(String businessContextId, String sourceGid, String processInstanceId, ProcessInstanceInputMessage body) {
-        ProcessInstanceGroupDAO existingGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(sourceGid);
+        BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId);
+        ProcessInstanceGroupDAO existingGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(sourceGid,businessProcessContext.getBpRepository());
 
         // check whether the group for the trading partner is still there. If not, create a new one
-        ProcessInstanceGroupDAO associatedGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(body.getVariables().getInitiatorID(), Arrays.asList(processInstanceId),false);
+        ProcessInstanceGroupDAO associatedGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(body.getVariables().getInitiatorID(), Arrays.asList(processInstanceId),businessProcessContext.getBpRepository());
         if (associatedGroup == null) {
             associatedGroup = ProcessInstanceGroupDAOUtility.createProcessInstanceGroupDAO(
                     body.getVariables().getInitiatorID(),
                     processInstanceId,
                     CamundaEngine.getTransactions(body.getVariables().getProcessID()).get(0).getInitiatorRole().toString(),
                     body.getVariables().getRelatedProducts(),
-                    existingGroup.getDataChannelId());
+                    existingGroup.getDataChannelId(),
+                    businessProcessContext.getBpRepository());
 
-            CollaborationGroupDAO initiatorCollaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroup(body.getVariables().getInitiatorID(), Arrays.asList(processInstanceId));
+            CollaborationGroupDAO initiatorCollaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroup(body.getVariables().getInitiatorID(), Arrays.asList(processInstanceId),businessProcessContext.getBpRepository());
             // create a new initiator collaboration group
             if (initiatorCollaborationGroup == null) {
-                initiatorCollaborationGroup = CollaborationGroupDAOUtility.createCollaborationGroupDAO();
+                initiatorCollaborationGroup = CollaborationGroupDAOUtility.createCollaborationGroupDAO(businessProcessContext.getBpRepository());
             }
 
             // add new group to the collaboration group
             initiatorCollaborationGroup.getAssociatedProcessInstanceGroups().add(associatedGroup);
-            repoFactory.forBpRepository().updateEntity(initiatorCollaborationGroup);
-            BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId).setUpdatedAssociatedGroup(associatedGroup);
+            businessProcessContext.getBpRepository().updateEntity(initiatorCollaborationGroup);
         }
     }
 }

@@ -2,11 +2,13 @@ package eu.nimble.service.bp.util.persistence.catalogue;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.QualifyingPartyType;
 import eu.nimble.utility.JsonSerializationUtility;
+import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -36,25 +38,38 @@ public class PartyPersistenceUtility {
     }
 
     public static PartyType getPartyByID(String partyId,boolean lazyDisabled) {
-        return new JPARepositoryFactory().forCatalogueRepository(lazyDisabled).getSingleEntity(QUERY_SELECT_BY_ID, new String[]{"partyId"}, new Object[]{partyId});
+        return getPartyByID(partyId,new JPARepositoryFactory().forCatalogueRepository(lazyDisabled));
     }
 
-    public static PartyType getPartyByID(String partyId) {
-        return getPartyByID(partyId,true);
+    public static PartyType getPartyByID(String partyId,GenericJPARepository repository) {
+        return repository.getSingleEntity(QUERY_SELECT_BY_ID, new String[]{"partyId"}, new Object[]{partyId});
     }
 
     public static List<PartyType> getPartyByIDs(List<String> partyIds) {
         return new JPARepositoryFactory().forCatalogueRepository(true).getEntities(QUERY_SELECT_BY_IDS, new String[]{"partyIds"}, new Object[]{partyIds});
     }
 
-    public static QualifyingPartyType getQualifyingParty(String partyId) {
-        return new JPARepositoryFactory().forCatalogueRepository(true).getSingleEntity(QUERY_GET_QUALIFIYING_PARTY, new String[]{"partyId"}, new Object[]{partyId});
+    public static QualifyingPartyType getQualifyingParty(String partyId, GenericJPARepository repository) {
+        return repository.getSingleEntity(QUERY_GET_QUALIFIYING_PARTY, new String[]{"partyId"}, new Object[]{partyId});
     }
 
-    public static PartyType getParty(PartyType party) {
+    public static QualifyingPartyType getQualifyingParty(String partyId) {
+        return getQualifyingParty(partyId, new JPARepositoryFactory().forCatalogueRepository(true));
+    }
+
+    public static PartyType getParty(PartyType party,String businessProcessContextId) {
         if (party == null) {
             return null;
         }
+
+        GenericJPARepository repository;
+        if(businessProcessContextId != null){
+            repository = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessProcessContextId).getCatalogRepository();
+        }
+        else{
+            repository = new JPARepositoryFactory().forCatalogueRepository(true);
+        }
+
         PartyType catalogueParty;
         // For some cases (for example, carrier party in despatch advice), we have parties which do not have any identifiers
         // In such cases, we simply save the given party.
@@ -62,7 +77,7 @@ public class PartyPersistenceUtility {
             catalogueParty = null;
         }
         else {
-            catalogueParty = PartyPersistenceUtility.getPartyByID(party.getPartyIdentification().get(0).getID());
+            catalogueParty = PartyPersistenceUtility.getPartyByID(party.getPartyIdentification().get(0).getID(),repository);
         }
         if (catalogueParty != null) {
             return catalogueParty;
@@ -80,9 +95,13 @@ public class PartyPersistenceUtility {
                 throw new RuntimeException(msg, e);
             }
 
-            new JPARepositoryFactory().forCatalogueRepository().persistEntity(party);
+            repository.persistEntity(party);
             return party;
         }
+    }
+
+    public static PartyType getParty(PartyType party) {
+        return getParty(party,null);
     }
 
     public static PartyType getParty(String partyId) {
@@ -94,8 +113,14 @@ public class PartyPersistenceUtility {
         return party;
     }
 
-    public static QualifyingPartyType getQualifyingPartyType(String partyID, String bearerToken) {
-        QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingParty(partyID);
+    public static QualifyingPartyType getQualifyingPartyType(String partyID, String bearerToken, String businessContextId) {
+        QualifyingPartyType qualifyingParty;
+        if(businessContextId != null){
+            qualifyingParty = PartyPersistenceUtility.getQualifyingParty(partyID,BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId).getCatalogRepository());
+        }
+        else {
+            qualifyingParty = PartyPersistenceUtility.getQualifyingParty(partyID);
+        }
         if (qualifyingParty == null) {
             qualifyingParty = new QualifyingPartyType();
             // get party using identity service
@@ -107,10 +132,13 @@ public class PartyPersistenceUtility {
                 logger.error(msg);
                 throw new RuntimeException(msg, e);
             }
-
-            qualifyingParty.setParty(getParty(partyType));
+            qualifyingParty.setParty(getParty(partyType,businessContextId));
         }
         return qualifyingParty;
+    }
+
+    public static QualifyingPartyType getQualifyingPartyType(String partyID, String bearerToken) {
+        return getQualifyingPartyType(partyID, bearerToken,null);
     }
 
     /**

@@ -67,23 +67,23 @@ public class ProcessInstanceGroupDAOUtility {
         return new JPARepositoryFactory().forBpRepository().getEntities(QUERY_GET_BY_PARTY_ID, new String[]{"partyIds"}, new Object[]{partyIds});
     }
 
-    public static Object getProcessInstanceGroups(String groupId) {
-        return new JPARepositoryFactory().forBpRepository(true).getSingleEntity(QUERY_GET_PROCESS_INSTANCE_GROUPS, new String[]{"groupId"}, new Object[]{groupId});
+    public static Object getProcessInstanceGroups(String groupId, GenericJPARepository repository) {
+        return repository.getSingleEntity(QUERY_GET_PROCESS_INSTANCE_GROUPS, new String[]{"groupId"}, new Object[]{groupId});
     }
 
-    public static ProcessInstanceGroupDAO getProcessInstanceGroupDAO(String partyId, List<String> processInstanceIds,boolean lazyDisabled) {
-        return new JPARepositoryFactory().forBpRepository(lazyDisabled).getSingleEntity(QUERY_GET_BY_ASSOCIATED_GROUP_ID, new String[]{"partyId", "pids"}, new Object[]{partyId, processInstanceIds});
+    public static ProcessInstanceGroupDAO getProcessInstanceGroupDAO(String partyId, List<String> processInstanceIds, GenericJPARepository genericJPARepository) {
+        return genericJPARepository.getSingleEntity(QUERY_GET_BY_ASSOCIATED_GROUP_ID, new String[]{"partyId", "pids"}, new Object[]{partyId, processInstanceIds});
     }
 
     public static ProcessInstanceGroupDAO getProcessInstanceGroupDAO(String partyId, List<String> processInstanceIds) {
-        return getProcessInstanceGroupDAO(partyId,processInstanceIds,true);
+        return getProcessInstanceGroupDAO(partyId, processInstanceIds, new JPARepositoryFactory().forBpRepository(true));
     }
 
     /**
      * This method is used to retrieve process instance groups which contain the given process instance id.
      */
-    public static List<ProcessInstanceGroupDAO> getProcessInstanceGroupDAOs(String processInstanceId){
-        return new JPARepositoryFactory().forBpRepository(true).getEntities(QUERY_GET_CONTAINING_THE_PROCESS, new String[]{"processInstanceID"}, new Object[]{processInstanceId});
+    public static List<ProcessInstanceGroupDAO> getProcessInstanceGroupDAOs(String processInstanceId, GenericJPARepository repository){
+        return repository.getEntities(QUERY_GET_CONTAINING_THE_PROCESS, new String[]{"processInstanceID"}, new Object[]{processInstanceId});
     }
 
     public static List<ProcessInstanceGroupDAO> getAssociatedProcessInstanceGroupDAOs(String partyId, List<String> processInstanceIds){
@@ -94,11 +94,11 @@ public class ProcessInstanceGroupDAOUtility {
         return new JPARepositoryFactory().forBpRepository(true).getSingleEntity(QUERY_GET_PRECEDING_PROCESS_INSTANCE_GROUP, new String[]{"processInstanceId"}, new Object[]{processInstanceId});
     }
 
-    public static ProcessInstanceGroupDAO createProcessInstanceGroupDAO(String partyId, String processInstanceId, String collaborationRole, List<String> relatedProducts) {
-        return createProcessInstanceGroupDAO(partyId, processInstanceId, collaborationRole, relatedProducts, null);
+    public static ProcessInstanceGroupDAO createProcessInstanceGroupDAO(String partyId, String processInstanceId, String collaborationRole, List<String> relatedProducts,GenericJPARepository repo) {
+        return createProcessInstanceGroupDAO(partyId, processInstanceId, collaborationRole, relatedProducts, null,repo);
     }
 
-    public static ProcessInstanceGroupDAO createProcessInstanceGroupDAO(String partyId, String processInstanceId, String collaborationRole, List<String> relatedProducts, String dataChannelId) {
+    public static ProcessInstanceGroupDAO createProcessInstanceGroupDAO(String partyId, String processInstanceId, String collaborationRole, List<String> relatedProducts, String dataChannelId, GenericJPARepository repo) {
         String uuid = UUID.randomUUID().toString();
         ProcessInstanceGroupDAO group = new ProcessInstanceGroupDAO();
         group.setArchived(false);
@@ -119,12 +119,12 @@ public class ProcessInstanceGroupDAOUtility {
         List<String> processInstanceIds = new ArrayList<>();
         processInstanceIds.add(processInstanceId);
         group.setProcessInstanceIDs(processInstanceIds);
-        new JPARepositoryFactory().forBpRepository().persistEntity(group);
+        repo.persistEntity(group);
         return group;
     }
 
-    public static ProcessInstanceGroupDAO getProcessInstanceGroupDAO(String groupID) {
-        Object[] resultItems = (Object[]) getProcessInstanceGroups(groupID);
+    public static ProcessInstanceGroupDAO getProcessInstanceGroupDAO(String groupID, GenericJPARepository repository) {
+        Object[] resultItems = (Object[]) getProcessInstanceGroups(groupID,repository);
         // return null if there is no process instance group with the given id
         if(resultItems == null){
             return null;
@@ -133,6 +133,10 @@ public class ProcessInstanceGroupDAOUtility {
         pig.setLastActivityTime((String) resultItems[1]);
         pig.setFirstActivityTime((String) resultItems[2]);
         return pig;
+    }
+
+    public static ProcessInstanceGroupDAO getProcessInstanceGroupDAO(String groupID) {
+        return getProcessInstanceGroupDAO(groupID,new JPARepositoryFactory().forBpRepository(true));
     }
 
     public static ProcessInstanceDAO getProcessInstance(String processInstanceId) {

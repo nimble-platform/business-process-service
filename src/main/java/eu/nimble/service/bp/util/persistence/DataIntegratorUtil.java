@@ -15,9 +15,13 @@ public class DataIntegratorUtil {
     private static final Logger logger = LoggerFactory.getLogger(DataIntegratorUtil.class);
 
     public static void checkExistingParties(Object object){
+        checkExistingParties(object,null);
+    }
+
+    public static void checkExistingParties(Object object, String businessContextId){
         ObjectMapper mapper = JsonSerializationUtility.getObjectMapper();
         SimpleModule simpleModule = new SimpleModule();
-        simpleModule.addSerializer(PartyType.class, new PartySerializerReplace());
+        simpleModule.addSerializer(PartyType.class, new PartySerializerReplace(businessContextId));
         mapper.registerModule(simpleModule);
 
         try {
