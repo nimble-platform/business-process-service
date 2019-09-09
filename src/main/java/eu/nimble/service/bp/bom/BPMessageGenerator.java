@@ -162,7 +162,7 @@ public class BPMessageGenerator {
         return order;
     }
 
-    private static RequestForQuotationType createRequestForQuotation(CatalogueLineType catalogueLine, QuantityType quantity, NegotiationSettings sellerNegotiationSettings,PartyType buyerParty, String bearerToken) {
+    private static RequestForQuotationType createRequestForQuotation(CatalogueLineType catalogueLine, QuantityType quantity, NegotiationSettings sellerNegotiationSettings,PartyType buyerParty, String bearerToken) throws IOException {
         PartyType sellerParty = sellerNegotiationSettings.getCompany();
 
         // create request for quotation

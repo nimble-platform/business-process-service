@@ -23,6 +23,7 @@ public class PartyPersistenceUtility {
     private static final Logger logger = LoggerFactory.getLogger(PartyPersistenceUtility.class);
 
     private static final String QUERY_SELECT_BY_ID = "SELECT party FROM PartyType party JOIN party.partyIdentification partyIdentification WHERE partyIdentification.ID = :partyId";
+    private static final String QUERY_SELECT_BY_IDS = "SELECT party FROM PartyType party JOIN party.partyIdentification partyIdentification WHERE partyIdentification.ID IN :partyIds";
     private static final String QUERY_SELECT_PERSON_BY_ID = "SELECT person FROM PersonType person WHERE person.ID = :id";
     private static final String QUERY_GET_QUALIFIYING_PARTY = "SELECT qpt FROM QualifyingPartyType qpt JOIN qpt.party.partyIdentification partyIdentification WHERE partyIdentification.ID = :partyId";
 
@@ -40,6 +41,10 @@ public class PartyPersistenceUtility {
 
     public static PartyType getPartyByID(String partyId) {
         return getPartyByID(partyId,true);
+    }
+
+    public static List<PartyType> getPartyByIDs(List<String> partyIds) {
+        return new JPARepositoryFactory().forCatalogueRepository(true).getEntities(QUERY_SELECT_BY_IDS, new String[]{"partyIds"}, new Object[]{partyIds});
     }
 
     public static QualifyingPartyType getQualifyingParty(String partyId) {
@@ -129,12 +134,19 @@ public class PartyPersistenceUtility {
     public static List<PartyType> getParties(String bearerToken, List<String> partyIds) throws IOException {
         List<PartyType> parties = new ArrayList<>();
 
-        for(String partyId:partyIds){
-            PartyType party = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,partyId);
-            if(party == null){
-                party = getParty(partyId, true);
+        List<PartyType> identityParties = SpringBridge.getInstance().getiIdentityClientTyped().getParties(bearerToken,partyIds);
+        // check whether there are parties which are not available in the identity-service
+        if(identityParties != null){
+            // update the party id list
+            for (PartyType party : identityParties) {
+                partyIds.remove(party.getPartyIdentification().get(0).getID());
             }
-            parties.add(party);
+
+            parties.addAll(identityParties);
+        }
+        // if there are parties which are not in the identity-service, retrieve them from the ubldb database
+        if(partyIds.size() > 0){
+            parties.addAll(getPartyByIDs(partyIds));
         }
 
         return parties;

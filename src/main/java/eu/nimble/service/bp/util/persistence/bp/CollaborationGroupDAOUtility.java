@@ -309,37 +309,7 @@ public class CollaborationGroupDAOUtility {
                 filter.getTradingPartnerIDs().add(resultColumn);
             }
 
-            List<PartyType> parties = null;
-            try {
-                parties = PartyPersistenceUtility.getParties(bearerToken, filter.getTradingPartnerIDs());
-            } catch (IOException e) {
-                String msg = String.format("Failed to get parties while getting categories for party: %s, collaboration role: %s, archived: %B", partyId, collaborationRole, archived);
-                logger.error(msg);
-                throw new RuntimeException(msg, e);
-            }
 
-            // populate partners' names
-            if (parties != null) {
-                for (String tradingPartnerId : filter.getTradingPartnerIDs()) {
-                    for (PartyType party : parties) {
-                        if (party.getPartyIdentification().get(0).getID().equals(tradingPartnerId)) {
-                            // check whether trading partner names array of filter contains any names of the party
-                            boolean partyExists = false;
-                            for(PartyNameType partyName : party.getPartyName()){
-                                if(filter.getTradingPartnerNames().contains(partyName.getName().getValue())){
-                                    partyExists = true;
-                                    break;
-                                }
-                            }
-
-                            if(!partyExists){
-                                filter.getTradingPartnerNames().add(party.getPartyName().get(0).getName().getValue());
-                            }
-                            break;
-                        }
-                    }
-                }
-            }
 
             // status
             ProcessInstanceStatus processInstanceStatus = (ProcessInstanceStatus) returnedColumns.get(4);
@@ -347,6 +317,39 @@ public class CollaborationGroupDAOUtility {
                 filter.getStatus().add(ProcessInstanceGroupFilter.StatusEnum.valueOf(processInstanceStatus.value()));
             }
         }
+
+        List<PartyType> parties = null;
+        try {
+            parties = PartyPersistenceUtility.getParties(bearerToken, new ArrayList<>(filter.getTradingPartnerIDs()));
+        } catch (IOException e) {
+            String msg = String.format("Failed to get parties while getting categories for party: %s, collaboration role: %s, archived: %B", partyId, collaborationRole, archived);
+            logger.error(msg);
+            throw new RuntimeException(msg, e);
+        }
+
+        // populate partners' names
+        if (parties != null) {
+            for (String tradingPartnerId : filter.getTradingPartnerIDs()) {
+                for (PartyType party : parties) {
+                    if (party.getPartyIdentification().get(0).getID().equals(tradingPartnerId)) {
+                        // check whether trading partner names array of filter contains any names of the party
+                        boolean partyExists = false;
+                        for(PartyNameType partyName : party.getPartyName()){
+                            if(filter.getTradingPartnerNames().contains(partyName.getName().getValue())){
+                                partyExists = true;
+                                break;
+                            }
+                        }
+
+                        if(!partyExists){
+                            filter.getTradingPartnerNames().add(party.getPartyName().get(0).getName().getValue());
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
         return filter;
     }
 

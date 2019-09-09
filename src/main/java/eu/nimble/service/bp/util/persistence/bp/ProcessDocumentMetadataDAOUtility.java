@@ -58,7 +58,11 @@ public class ProcessDocumentMetadataDAOUtility {
     private static final Logger logger = LoggerFactory.getLogger(ProcessDocumentMetadataDAOUtility.class);
 
     public static ProcessDocumentMetadataDAO findByDocumentID(String documentId) {
-        return new JPARepositoryFactory().forBpRepository(true).getSingleEntity(QUERY_GET_BY_DOCUMENT_ID, new String[]{"documentId"}, new Object[]{documentId});
+        List<ProcessDocumentMetadataDAO> processDocumentMetadataDAOS = new JPARepositoryFactory().forBpRepository(true).getEntities(QUERY_GET_BY_DOCUMENT_ID, new String[]{"documentId"}, new Object[]{documentId});
+        if(processDocumentMetadataDAOS != null && processDocumentMetadataDAOS.size() > 0){
+            return processDocumentMetadataDAOS.get(0);
+        }
+        return null;
     }
 
     public static List<ProcessDocumentMetadataDAO> findByProcessInstanceID(String processInstanceId) {
@@ -279,7 +283,7 @@ public class ProcessDocumentMetadataDAOUtility {
      * Some {@link DocumentReferenceType}s have a reference to {@link IDocument}s, therefore they do not have an attached
      * {@link eu.nimble.service.model.ubl.commonbasiccomponents.BinaryObjectType}. We need to skip them.
      * */
-    private static List<DocumentReferenceType> getAuxiliaryFiles(List<DocumentReferenceType> documentReferenceTypes){
+    public static List<DocumentReferenceType> getAuxiliaryFiles(List<DocumentReferenceType> documentReferenceTypes){
         List<DocumentReferenceType> auxiliaryFiles = new ArrayList<>();
         for (DocumentReferenceType documentReferenceType : documentReferenceTypes) {
             if(documentReferenceType.getAttachment() != null){

@@ -248,7 +248,7 @@ public class StartController implements StartApi {
             } else {
                 addNewProcessInstanceToGroup(businessProcessContext.getId(),gid, processInstance.getProcessInstanceID(), body,responderCollaborationGroupDAO);
             }
-            emailSenderUtil.sendActionPendingEmail(bearerToken, businessProcessContext);
+            emailSenderUtil.sendActionPendingEmail(bearerToken, body.getVariables().getContentUUID());
             //mdc logging
             Map<String,String> logParamMap = new HashMap<String, String>();
             ProcessVariablesDAO processVariables = processInstanceInputMessageDAO.getVariables();

@@ -40,6 +40,7 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -67,7 +68,7 @@ public class ContractGenerator {
 
     private boolean firstIIR = true;
 
-    public void generateContract(OrderType order,ZipOutputStream zos){
+    public void generateContract(OrderType order,ZipOutputStream zos) throws Exception{
         // get the order response
         OrderResponseSimpleType orderResponse = DocumentPersistenceUtility.getOrderResponseDocumentByOrderId(order.getID());
 
@@ -83,7 +84,7 @@ public class ContractGenerator {
 
     }
 
-    public List<ClauseType> getTermsAndConditions(String orderId,String rfqId, String sellerPartyId, String buyerPartyId, String incoterms, String tradingTerm, String bearerToken){
+    public List<ClauseType> getTermsAndConditions(String orderId,String rfqId, String sellerPartyId, String buyerPartyId, String incoterms, String tradingTerm, String bearerToken) throws IOException {
         List<ClauseType> clauses = new ArrayList<>();
 
         OrderType order = null;
@@ -194,6 +195,7 @@ public class ContractGenerator {
                 }
                 catch (Exception e){
                     logger.error("Failed to create terms and conditions for orderId: {}, rfqId: {}, sellerPartyId: {}, buyerPartyId: {}, incoterms: {}, tradingTerm : {}", orderId, rfqId, sellerPartyId, buyerPartyId, incoterms, tradingTerm, e);
+                    throw e;
                 }
                 finally {
                     if(inputStream != null){
@@ -204,12 +206,13 @@ public class ContractGenerator {
         }
         catch (Exception e){
             logger.error("Failed to create terms and conditions for orderId: {}, rfqId: {}, sellerPartyId: {}, buyerPartyId: {}, incoterms: {}, tradingTerm : {}", orderId, rfqId, sellerPartyId, buyerPartyId, incoterms, tradingTerm, e);
+            throw e;
         }
 
         return clauses;
     }
 
-    private XWPFDocument fillOrderTermsAndConditions(OrderType order){
+    private XWPFDocument fillOrderTermsAndConditions(OrderType order) throws Exception{
 
         XWPFDocument document = null;
         try {
@@ -263,6 +266,7 @@ public class ContractGenerator {
         }
         catch (Exception e){
             logger.error("Failed to fill in 'Standard Purchase Order Terms and Conditions.pdf' for the order with id : {}",order.getID(),e);
+            throw e;
         }
         return document;
     }
@@ -340,7 +344,7 @@ public class ContractGenerator {
         return null;
     }
 
-    private XWPFDocument fillPurchaseDetails(OrderType order,OrderResponseSimpleType orderResponse){
+    private XWPFDocument fillPurchaseDetails(OrderType order,OrderResponseSimpleType orderResponse) throws Exception{
 
         XWPFDocument document = null;
         try {
@@ -670,6 +674,7 @@ public class ContractGenerator {
         }
         catch (Exception e){
             logger.error("Failed to fill in 'Company Purchase Details.pdf' for the order with id : {}",order.getID(),e);
+            throw e;
         }
         return document;
     }
@@ -697,7 +702,7 @@ public class ContractGenerator {
         return dataMonitoringDemanded && orderResponse.isAcceptedIndicator();
     }
 
-    private void addDocxToZipFile(String fileName,XWPFDocument document, ZipOutputStream zos) {
+    private void addDocxToZipFile(String fileName,XWPFDocument document, ZipOutputStream zos) throws Exception{
         try{
             ZipEntry zipEntry = new ZipEntry(fileName);
             zos.putNextEntry(zipEntry);
@@ -712,10 +717,11 @@ public class ContractGenerator {
         }
         catch (Exception e){
             logger.error("Failed to create zip file",e);
+            throw e;
         }
     }
 
-    private void getAndPopulateClauses(OrderType order,ZipOutputStream zos,XWPFDocument document){
+    private void getAndPopulateClauses(OrderType order,ZipOutputStream zos,XWPFDocument document) throws Exception{
         try{
             // if there is no contract, simple remove the tables and return
             if(order.getContract().size() <= 0){
@@ -777,6 +783,7 @@ public class ContractGenerator {
         }
         catch (Exception e){
             logger.error("Failed to create entries for clauses",e);
+            throw e;
         }
 
     }
@@ -809,10 +816,12 @@ public class ContractGenerator {
         return map;
     }
 
-    private XWPFDocument createOrderAdditionalDocuments(OrderType order,OrderResponseSimpleType orderResponse,ZipOutputStream zos,XWPFDocument document){
+    private XWPFDocument createOrderAdditionalDocuments(OrderType order,OrderResponseSimpleType orderResponse,ZipOutputStream zos,XWPFDocument document) throws Exception{
         try {
+            List<DocumentReferenceType> orderAuxiliaryFiles = ProcessDocumentMetadataDAOUtility.getAuxiliaryFiles(order.getAdditionalDocumentReference());
+            List<DocumentReferenceType> orderResponseAuxiliaryFiles = null;
             // request
-            for(DocumentReferenceType documentReference : order.getAdditionalDocumentReference()){
+            for(DocumentReferenceType documentReference : orderAuxiliaryFiles){
                 byte[] bytes = SpringBridge.getInstance().getBinaryContentService().retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
                 ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
                 bos.write(bytes,0,bytes.length);
@@ -823,7 +832,8 @@ public class ContractGenerator {
             }
             // response
             if(orderResponse != null){
-                for(DocumentReferenceType documentReference : orderResponse.getAdditionalDocumentReference()){
+                orderResponseAuxiliaryFiles = ProcessDocumentMetadataDAOUtility.getAuxiliaryFiles(orderResponse.getAdditionalDocumentReference());
+                for(DocumentReferenceType documentReference : orderResponseAuxiliaryFiles){
                     byte[] bytes = SpringBridge.getInstance().getBinaryContentService().retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
                     ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
                     bos.write(bytes,0,bytes.length);
@@ -869,24 +879,24 @@ public class ContractGenerator {
 
             // additional documents in table
             // request
-            if(order.getAdditionalDocumentReference().size() == 0){
+            if(orderAuxiliaryFiles.size() == 0){
                 XWPFTableRow row = table.getRows().get(table.getNumberOfRows()-2);
                 XWPFRun run = row.getCell(3).getParagraphs().get(0).createRun();
                 run.setText("-");
             }
-            for(DocumentReferenceType documentReference : order.getAdditionalDocumentReference()){
+            for(DocumentReferenceType documentReference : orderAuxiliaryFiles){
                 XWPFTableRow row = table.getRows().get(table.getNumberOfRows()-2);
                 XWPFRun run = row.getCell(3).getParagraphs().get(0).createRun();
                 run.setText(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName()+"\n");
                 run.setItalic(true);
             }
-            if(orderResponse.getAdditionalDocumentReference().size() == 0){
+            if(orderResponseAuxiliaryFiles.size() == 0){
                 XWPFTableRow row = table.getRows().get(table.getNumberOfRows()-1);
                 XWPFRun run = row.getCell(3).getParagraphs().get(0).createRun();
                 run.setText("-");
             }
             // response
-            for(DocumentReferenceType documentReference : orderResponse.getAdditionalDocumentReference()){
+            for(DocumentReferenceType documentReference : orderResponseAuxiliaryFiles){
                 XWPFTableRow row = table.getRows().get(table.getNumberOfRows()-1);
                 XWPFRun run = row.getCell(3).getParagraphs().get(0).createRun();
                 run.setText(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName()+"\n");
@@ -895,11 +905,12 @@ public class ContractGenerator {
         }
         catch (Exception e){
             logger.error("Failed to create Order additional documents entry",e);
+            throw e;
         }
         return document;
     }
 
-    private void createPPAPEntry(XWPFDocument document,ZipOutputStream zos,ClauseType clause){
+    private void createPPAPEntry(XWPFDocument document,ZipOutputStream zos,ClauseType clause) throws Exception{
         try {
             PpapResponseType ppapResponse = (PpapResponseType) DocumentPersistenceUtility.getUBLDocument(((DocumentClauseType) clause).getClauseDocumentRef().getID(), DocumentType.PPAPRESPONSE);
 
@@ -923,7 +934,8 @@ public class ContractGenerator {
 
             // additional documents
             // request
-            for(DocumentReferenceType documentReference : ppapRequest.getAdditionalDocumentReference()){
+            List<DocumentReferenceType> ppapRequestAuxiliaryFiles = ProcessDocumentMetadataDAOUtility.getAuxiliaryFiles(ppapRequest.getAdditionalDocumentReference());
+            for(DocumentReferenceType documentReference : ppapRequestAuxiliaryFiles){
                 byte[] bytes = SpringBridge.getInstance().getBinaryContentService().retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
                 ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
                 bos.write(bytes,0,bytes.length);
@@ -933,7 +945,8 @@ public class ContractGenerator {
                 bos.writeTo(zos);
             }
             // response
-            for(DocumentReferenceType documentReference : ppapResponse.getAdditionalDocumentReference()){
+            List<DocumentReferenceType> ppapResponseAuxiliaryFiles = ProcessDocumentMetadataDAOUtility.getAuxiliaryFiles(ppapResponse.getAdditionalDocumentReference());
+            for(DocumentReferenceType documentReference : ppapResponseAuxiliaryFiles){
                 byte[] bytes = SpringBridge.getInstance().getBinaryContentService().retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
                 ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
                 bos.write(bytes,0,bytes.length);
@@ -1008,22 +1021,22 @@ public class ContractGenerator {
             // additional documents in table
             // request
             XWPFTableRow row = table.getRows().get(table.getNumberOfRows()-2);
-            if(ppapRequest.getAdditionalDocumentReference().size() == 0){
+            if(ppapRequestAuxiliaryFiles.size() == 0){
                 XWPFRun run = row.getCell(3).getParagraphs().get(0).createRun();
                 run.setText("-");
             }
-            for(DocumentReferenceType documentReference : ppapRequest.getAdditionalDocumentReference()){
+            for(DocumentReferenceType documentReference : ppapRequestAuxiliaryFiles){
                 XWPFRun run = row.getCell(3).getParagraphs().get(0).createRun();
                 run.setText(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName()+"\n");
                 run.setItalic(true);
             }
             XWPFTableRow row1 = table.getRows().get(table.getNumberOfRows()-1);
-            if(ppapResponse.getAdditionalDocumentReference().size() == 0){
+            if(ppapResponseAuxiliaryFiles.size() == 0){
                 XWPFRun run = row1.getCell(3).getParagraphs().get(0).createRun();
                 run.setText("-");
             }
             // response
-            for(DocumentReferenceType documentReference : ppapResponse.getAdditionalDocumentReference()){
+            for(DocumentReferenceType documentReference : ppapResponseAuxiliaryFiles){
                 XWPFRun run = row1.getCell(3).getParagraphs().get(0).createRun();
                 run.setText(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName()+"\n");
                 run.setItalic(true);
@@ -1033,10 +1046,11 @@ public class ContractGenerator {
         }
         catch (Exception e){
             logger.error("Failed to create PPAP entry",e);
+            throw e;
         }
     }
 
-    private void createItemDetailsEntry(XWPFDocument document,ZipOutputStream zos,ClauseType clause,int id){
+    private void createItemDetailsEntry(XWPFDocument document,ZipOutputStream zos,ClauseType clause,int id) throws IOException {
         try {
             XWPFTable table = getTable(document,"Item Information Request");
             XWPFTable noteAndDocumentTable = getTable(document,"Item Information Request Notes/Additional Documents");
@@ -1072,6 +1086,7 @@ public class ContractGenerator {
         }
         catch (Exception e){
             logger.error("Failed to create item details entry",e);
+            throw e;
         }
     }
 
@@ -1081,7 +1096,8 @@ public class ContractGenerator {
 
         // additional documents
         // request
-        for(DocumentReferenceType documentReference : requestForQuotation.getAdditionalDocumentReference()){
+        List<DocumentReferenceType> rfqAuxiliaryFiles = ProcessDocumentMetadataDAOUtility.getAuxiliaryFiles(requestForQuotation.getAdditionalDocumentReference());
+        for(DocumentReferenceType documentReference : rfqAuxiliaryFiles){
             byte[] bytes = SpringBridge.getInstance().getBinaryContentService().retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
             ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
             bos.write(bytes,0,bytes.length);
@@ -1091,7 +1107,8 @@ public class ContractGenerator {
             bos.writeTo(zos);
         }
         // response
-        for(DocumentReferenceType documentReference : quotation.getAdditionalDocumentReference()){
+        List<DocumentReferenceType> quotationAuxiliaryFiles = ProcessDocumentMetadataDAOUtility.getAuxiliaryFiles(quotation.getAdditionalDocumentReference());
+        for(DocumentReferenceType documentReference : quotationAuxiliaryFiles){
             byte[] bytes = SpringBridge.getInstance().getBinaryContentService().retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
             ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
             bos.write(bytes,0,bytes.length);
@@ -1277,18 +1294,18 @@ public class ContractGenerator {
             // negotiation table 'Notes and Additional Documents' part
             // additional documents
             table = getTable(document,"Negotiation Notes/Additional Documents");
-            if(requestForQuotation.getAdditionalDocumentReference().size() == 0){
+            if(rfqAuxiliaryFiles.size() == 0){
                 table.getRow(table.getNumberOfRows()-2).getCell(3).getParagraphs().get(0).createRun().setText("-");
             }
-            for(DocumentReferenceType documentReference : requestForQuotation.getAdditionalDocumentReference()){
+            for(DocumentReferenceType documentReference : rfqAuxiliaryFiles){
                 XWPFRun run6 = table.getRow(table.getNumberOfRows()-2).getCell(3).getParagraphs().get(0).createRun();
                 run6.setText(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName()+"\n");
                 run6.setItalic(true);
             }
-            if(quotation.getAdditionalDocumentReference().size() == 0){
+            if(quotationAuxiliaryFiles.size() == 0){
                 table.getRow(table.getNumberOfRows()-1).getCell(3).getParagraphs().get(0).createRun().setText("-");
             }
-            for(DocumentReferenceType documentReference : quotation.getAdditionalDocumentReference()){
+            for(DocumentReferenceType documentReference : quotationAuxiliaryFiles){
                 XWPFRun run6 = table.getRow(table.getNumberOfRows()-1).getCell(3).getParagraphs().get(0).createRun();
                 run6.setText(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName()+"\n");
                 run6.setItalic(true);
@@ -1313,11 +1330,12 @@ public class ContractGenerator {
         }
         catch (Exception e){
             logger.error("Failed to create negotiation entry",e);
+            throw e;
         }
 
     }
 
-    private void fillItemDetails(XWPFDocument document,XWPFTable table,XWPFTable noteAndDocumentTable,ZipOutputStream zos,ClauseType clause,int id){
+    private void fillItemDetails(XWPFDocument document,XWPFTable table,XWPFTable noteAndDocumentTable,ZipOutputStream zos,ClauseType clause,int id) throws IOException {
         try {
             ItemInformationResponseType itemDetails = (ItemInformationResponseType) DocumentPersistenceUtility.getUBLDocument(((DocumentClauseType) clause).getClauseDocumentRef().getID(), DocumentType.ITEMINFORMATIONRESPONSE);
 
@@ -1343,11 +1361,13 @@ public class ContractGenerator {
             }
 
             // additional documents
+            List<DocumentReferenceType> itemInformationRequestAuxiliaryFiles = ProcessDocumentMetadataDAOUtility.getAuxiliaryFiles(itemInformationRequest.getAdditionalDocumentReference());
+            List<DocumentReferenceType> itemDetailsAuxiliaryFiles = ProcessDocumentMetadataDAOUtility.getAuxiliaryFiles(itemDetails.getAdditionalDocumentReference());
             // request
-            if(itemInformationRequest.getAdditionalDocumentReference().size() == 0){
+            if(itemInformationRequestAuxiliaryFiles.size() == 0){
                 noteAndDocumentTable.getRow(noteAndDocumentTable.getNumberOfRows()-2).getCell(3).getParagraphs().get(0).createRun().setText("-");
             }
-            for(DocumentReferenceType documentReference : itemInformationRequest.getAdditionalDocumentReference()){
+            for(DocumentReferenceType documentReference : itemInformationRequestAuxiliaryFiles){
                 byte[] bytes = SpringBridge.getInstance().getBinaryContentService().retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
                 ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
                 bos.write(bytes,0,bytes.length);
@@ -1361,10 +1381,10 @@ public class ContractGenerator {
                 run5.setItalic(true);
             }
             // response
-            if(itemDetails.getAdditionalDocumentReference().size() == 0){
+            if(itemDetailsAuxiliaryFiles.size() == 0){
                 noteAndDocumentTable.getRow(noteAndDocumentTable.getNumberOfRows()-1).getCell(3).getParagraphs().get(0).createRun().setText("-");
             }
-            for(DocumentReferenceType documentReference : itemDetails.getAdditionalDocumentReference()){
+            for(DocumentReferenceType documentReference : itemDetailsAuxiliaryFiles){
                 byte[] bytes = SpringBridge.getInstance().getBinaryContentService().retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
                 ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
                 bos.write(bytes,0,bytes.length);
@@ -1424,6 +1444,7 @@ public class ContractGenerator {
         }
         catch (Exception e){
             logger.error("Failed to fill item details",e);
+            throw e;
         }
 
     }

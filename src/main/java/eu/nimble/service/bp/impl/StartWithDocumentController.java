@@ -246,6 +246,7 @@ public class StartWithDocumentController {
             // get the initiator party
             try {
                 if(initiatorParty.getContact().getOtherCommunication().size() > 0 &&
+                        initiatorParty.getContact().getOtherCommunication().get(0).getChannelCode() != null &&
                         UBLUtility.doesCodeHaveName(initiatorParty.getContact().getOtherCommunication().get(0).getChannelCode()) &&
                         initiatorParty.getContact().getOtherCommunication().get(0).getChannelCode().getName().contentEquals("REST")){
                     String endpoint = initiatorParty.getContact().getOtherCommunication().get(0).getChannelCode().getValue();
@@ -254,12 +255,12 @@ public class StartWithDocumentController {
                             .asString();
 
                     if(response.getStatus() != 200){
-                        logger.error("Failed send the document to the initiator party {}, endpoint: {} : {}",initiatorParty, endpoint, response.getBody());
+                        logger.error("Failed send the document to the initiator party {}, endpoint: {} : {}",initiatorParty.getPartyIdentification().get(0).getID(), endpoint, response.getBody());
                         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
                     }
                 }
             } catch (Exception e) {
-                String msg = String.format("Failed to send the document to the initiator party : %s", initiatorParty);
+                String msg = String.format("Failed to send the document to the initiator party : %s", initiatorParty.getPartyIdentification().get(0).getID());
                 logger.error(msg,e);
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
             }
@@ -283,7 +284,7 @@ public class StartWithDocumentController {
         // otherwise, we'll find the identifier of previous document
         else{
             for (DocumentReferenceType documentReferenceType : document.getAdditionalDocuments()) {
-                if(documentReferenceType.getDocumentType().contentEquals("previousDocument")){
+                if(documentReferenceType.getDocumentType() != null && documentReferenceType.getDocumentType().contentEquals("previousDocument")){
                     documentId = documentReferenceType.getID();
                 }
             }
@@ -299,7 +300,7 @@ public class StartWithDocumentController {
     private String getProcessInstanceIdOfPrecedingOrder(IDocument document){
         String documentId = null;
         for (DocumentReferenceType documentReferenceType : document.getAdditionalDocuments()) {
-            if(documentReferenceType.getDocumentType().contentEquals("previousOrder")){
+            if(documentReferenceType.getDocumentType() != null && documentReferenceType.getDocumentType().contentEquals("previousOrder")){
                 documentId = documentReferenceType.getID();
             }
         }

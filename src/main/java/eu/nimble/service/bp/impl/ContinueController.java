@@ -153,7 +153,7 @@ public class ContinueController implements ContinueApi {
                 TrustPersistenceUtility.createCompletedTasksForBothParties(processInstance.getProcessInstanceID(),bearerToken,"Completed");
             }
 
-            emailSenderUtil.sendActionPendingEmail(bearerToken, businessProcessContext);
+            emailSenderUtil.sendActionPendingEmail(bearerToken, body.getVariables().getContentUUID());
 
             //mdc logging
             Map<String,String> logParamMap = new HashMap<String, String>();
