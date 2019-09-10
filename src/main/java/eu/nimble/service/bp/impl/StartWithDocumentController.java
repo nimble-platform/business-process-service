@@ -245,11 +245,8 @@ public class StartWithDocumentController {
 
             // get the initiator party
             try {
-                if(initiatorParty.getContact().getOtherCommunication().size() > 0 &&
-                        initiatorParty.getContact().getOtherCommunication().get(0).getChannelCode() != null &&
-                        UBLUtility.doesCodeHaveName(initiatorParty.getContact().getOtherCommunication().get(0).getChannelCode()) &&
-                        initiatorParty.getContact().getOtherCommunication().get(0).getChannelCode().getName().contentEquals("REST")){
-                    String endpoint = initiatorParty.getContact().getOtherCommunication().get(0).getChannelCode().getValue();
+                String endpoint = UBLUtility.getPartyRestEndpoint(initiatorParty);
+                if(endpoint != null){
                     HttpResponse<String> response = Unirest.post(endpoint)
                             .body(documentAsString)
                             .asString();
