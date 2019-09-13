@@ -66,6 +66,7 @@ public class StartWithDocumentController {
             "will be created for the process in the same CollaborationGroup with the referenced process.Otherwise, a new CollaborationGroup will be created for the process.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Processes the document successfully", response = ProcessInstance.class),
+            @ApiResponse(code = 400, message = "Each response document should have a valid reference to the request document"),
             @ApiResponse(code = 404, message = "Seller party does not exist")
     })
     @RequestMapping(value = "/process-document",
@@ -202,6 +203,11 @@ public class StartWithDocumentController {
         else{
             // to complete the process, we need to know process instance id
             ProcessDocumentMetadataDAO processDocumentMetadataDAO = getProcessDocumentMetadataDAO(document, true);
+            if(processDocumentMetadataDAO == null){
+                String msg = "Each response document should have a valid reference to the request document";
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(msg);
+            }
             String processInstanceId = processDocumentMetadataDAO.getProcessInstanceID();
 
             // since some response documents do not have an item, we need to use the item of request document
