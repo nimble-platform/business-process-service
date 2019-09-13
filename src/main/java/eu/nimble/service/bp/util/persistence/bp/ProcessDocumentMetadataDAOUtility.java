@@ -55,32 +55,24 @@ public class ProcessDocumentMetadataDAOUtility {
     private static final String QUERY_GET_METADATA_BY_ARBITRARY_CONDITIONS = "SELECT document FROM ProcessDocumentMetadataDAO document WHERE (%s)";
     private static final String QUERY_GET_METADATA_BY_PROCESS_INSTANCE_ID_AND_ARBITRARY_CONDITIONS = "SELECT documentMetadata FROM ProcessDocumentMetadataDAO documentMetadata WHERE documentMetadata.processInstanceID=:processInstanceId AND %s";
     private static final String QUERY_GET_UNSHIPPED_ORDER_IDENTIFIERS_FOR_ALL_PARTIES =
-            " SELECT docMetadata.documentID FROM " +
-            "   ProcessInstanceGroupDAO pig join pig.processInstanceIDsItems pid, ProcessDocumentMetadataDAO docMetadata" +
-            " WHERE " +
-            "   docMetadata.type = 'ORDER'" +
-            "   AND docMetadata.processInstanceID = pid.item" +
-            "   AND NOT EXISTS " +
-                    " (SELECT pig2 FROM " +
-                    "   ProcessInstanceGroupDAO pig2 join pig2.processInstanceIDsItems pid2, ProcessDocumentMetadataDAO docMetadata2" +
-                    " WHERE " +
-                    "   pig2.hjid = pig.hjid" +
-                    "   AND docMetadata2.processInstanceID = pid2.item" +
-                    "   AND docMetadata2.type = 'DESPATCHADVICE')";
+            "SELECT order_.ID FROM" +
+                    " OrderType order_, " +
+                    " OrderResponseSimpleType orderResponse, " +
+                    " DespatchAdviceType despatchAdvice join despatchAdvice.orderReference despatchOrderRef" +
+            " WHERE" +
+                    " order_.ID = despatchOrderRef.documentReference.ID" +
+                    " AND orderResponse.orderReference.documentReference.ID = order_.ID" +
+                    " AND orderResponse.acceptedIndicator = true";
     private static final String QUERY_GET_UNSHIPPED_ORDER_IDENTIFIERS_FOR_SPECIFIC_PARTY =
-            " SELECT docMetadata.documentID FROM " +
-                    "   ProcessInstanceGroupDAO pig join pig.processInstanceIDsItems pid, ProcessDocumentMetadataDAO docMetadata" +
-                    " WHERE " +
-                    "   docMetadata.type = 'ORDER'" +
-                    "   AND pig.partyID = :partyId" +
-                    "   AND docMetadata.processInstanceID = pid.item" +
-                    "   AND NOT EXISTS " +
-                    " (SELECT pig2 FROM " +
-                    "   ProcessInstanceGroupDAO pig2 join pig2.processInstanceIDsItems pid2, ProcessDocumentMetadataDAO docMetadata2" +
-                    " WHERE " +
-                    "   pig2.hjid = pig.hjid" +
-                    "   AND docMetadata2.processInstanceID = pid2.item" +
-                    "   AND docMetadata2.type = 'DESPATCHADVICE')";
+            "SELECT order_.ID FROM" +
+                    " OrderType order_ join order_.sellerSupplierParty.party.partyIdentification pid, " +
+                    " OrderResponseSimpleType orderResponse, " +
+                    " DespatchAdviceType despatchAdvice join despatchAdvice.orderReference despatchOrderRef" +
+                    " WHERE" +
+                    " order_.ID = despatchOrderRef.documentReference.ID" +
+                    " AND pid.ID = :sellerPartyId" +
+                    " AND orderResponse.orderReference.documentReference.ID = order_.ID" +
+                    " AND orderResponse.acceptedIndicator = true";
 
     private static final Logger logger = LoggerFactory.getLogger(ProcessDocumentMetadataDAOUtility.class);
 
@@ -555,11 +547,11 @@ public class ProcessDocumentMetadataDAOUtility {
         return getUnshippedOrderIds(null);
     }
 
-    public static List<String> getUnshippedOrderIds(String partyId) {
-        GenericJPARepository repository = new JPARepositoryFactory().forBpRepository();
+    public static List<String> getUnshippedOrderIds(String sellerPartyId) {
+        GenericJPARepository repository = new JPARepositoryFactory().forCatalogueRepository();
         List<String> results;
-        if(partyId != null) {
-            results = repository.getEntities(QUERY_GET_UNSHIPPED_ORDER_IDENTIFIERS_FOR_SPECIFIC_PARTY, new String[]{"partyId"}, new Object[]{partyId});
+        if(sellerPartyId != null) {
+            results = repository.getEntities(QUERY_GET_UNSHIPPED_ORDER_IDENTIFIERS_FOR_SPECIFIC_PARTY, new String[]{"sellerPartyId"}, new Object[]{sellerPartyId});
         } else {
             results = repository.getEntities(QUERY_GET_UNSHIPPED_ORDER_IDENTIFIERS_FOR_ALL_PARTIES);
         }
