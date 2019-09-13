@@ -14,6 +14,7 @@ import org.junit.runners.Suite;
         ContinueControllerTest.class,
         StatisticsControllerTest.class,
         BusinessProcessExecutionTest.class,
+        StartWithDocumentControllerTest.class,
         DocumentsControllerTest.class,
         TransactionSummaryTest.class,
         ProcessInstanceGroupControllerTest.class,
