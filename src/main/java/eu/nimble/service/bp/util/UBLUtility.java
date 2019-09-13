@@ -1,5 +1,7 @@
 package eu.nimble.service.bp.util;
 
+import eu.nimble.service.model.ubl.commonaggregatecomponents.CommunicationType;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.CodeType;
 import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
@@ -47,16 +49,16 @@ public class UBLUtility {
         return result;
     }
 
-    public static boolean doesCodeHaveName(CodeType code) {
-        if(code == null) {
-            return false;
+    public static String getPartyRestEndpoint(PartyType party){
+        if(party != null && party.getContact() != null && party.getContact().getOtherCommunication() != null){
+            for (CommunicationType communicationType : party.getContact().getOtherCommunication()) {
+                CodeType code = communicationType.getChannelCode();
+                if(code != null && code.getName() != null && code.getName().contentEquals("REST")){
+                    return code.getValue();
+                }
+            }
         }
-
-        if(code.getName() == null) {
-            return false;
-        }
-
-        return true;
+        return null;
     }
 
 //    private static Logger logger = LoggerFactory.getLogger(UBLUtility.class);
