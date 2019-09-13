@@ -54,6 +54,29 @@ public class ProcessDocumentMetadataDAOUtility {
             " ORDER BY documentMetadata.submissionDate ASC";
     private static final String QUERY_GET_METADATA_BY_ARBITRARY_CONDITIONS = "SELECT document FROM ProcessDocumentMetadataDAO document WHERE (%s)";
     private static final String QUERY_GET_METADATA_BY_PROCESS_INSTANCE_ID_AND_ARBITRARY_CONDITIONS = "SELECT documentMetadata FROM ProcessDocumentMetadataDAO documentMetadata WHERE documentMetadata.processInstanceID=:processInstanceId AND %s";
+    private static final String QUERY_GET_UNSHIPPED_ORDER_IDENTIFIERS_FOR_ALL_PARTIES =
+            "SELECT DISTINCT order_.ID FROM" +
+                    " OrderType order_, " +
+                    " OrderResponseSimpleType orderResponse, " +
+                    " DespatchAdviceType despatchAdvice join despatchAdvice.orderReference despatchOrderRef" +
+            " WHERE" +
+                    " orderResponse.orderReference.documentReference.ID = order_.ID" +
+                    " AND orderResponse.acceptedIndicator = true" +
+                    " AND order_.ID NOT IN " +
+                    "(SELECT despatchOrderRef2.documentReference.ID " +
+                    "FROM DespatchAdviceType despatchAdvice2 join despatchAdvice2.orderReference despatchOrderRef2)";
+    private static final String QUERY_GET_UNSHIPPED_ORDER_IDENTIFIERS_FOR_SPECIFIC_PARTY =
+            "SELECT DISTINCT order_.ID FROM" +
+                    " OrderType order_ join order_.sellerSupplierParty.party.partyIdentification pid, " +
+                    " OrderResponseSimpleType orderResponse, " +
+                    " DespatchAdviceType despatchAdvice join despatchAdvice.orderReference despatchOrderRef" +
+            " WHERE" +
+                    " pid.ID = :sellerPartyId" +
+                    " AND orderResponse.orderReference.documentReference.ID = order_.ID" +
+                    " AND orderResponse.acceptedIndicator = true" +
+                    " AND order_.ID NOT IN " +
+                    "(SELECT despatchOrderRef2.documentReference.ID " +
+                    "FROM DespatchAdviceType despatchAdvice2 join despatchAdvice2.orderReference despatchOrderRef2)";
 
     private static final Logger logger = LoggerFactory.getLogger(ProcessDocumentMetadataDAOUtility.class);
 
@@ -522,6 +545,21 @@ public class ProcessDocumentMetadataDAOUtility {
             return null;
         }
         return HibernateSwaggerObjectMapper.createProcessDocumentMetadata(processDocumentDAO);
+    }
+
+    public static List<String> getUnshippedOrderIds() {
+        return getUnshippedOrderIds(null);
+    }
+
+    public static List<String> getUnshippedOrderIds(String sellerPartyId) {
+        GenericJPARepository repository = new JPARepositoryFactory().forCatalogueRepository();
+        List<String> results;
+        if(sellerPartyId != null) {
+            results = repository.getEntities(QUERY_GET_UNSHIPPED_ORDER_IDENTIFIERS_FOR_SPECIFIC_PARTY, new String[]{"sellerPartyId"}, new Object[]{sellerPartyId});
+        } else {
+            results = repository.getEntities(QUERY_GET_UNSHIPPED_ORDER_IDENTIFIERS_FOR_ALL_PARTIES);
+        }
+        return results;
     }
 
     private static String createConditionsForMetadataQuery(List<Transaction.DocumentTypeEnum> documentTypes, List<String> parameterNames, List<Object> parameterValues) {

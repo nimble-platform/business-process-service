@@ -3,6 +3,10 @@ package eu.nimble.service.bp.impl.controller;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
+/**
+ * This class specifies the order of tests to be run. The tests are not STATELESS. For many cases, previously started
+ * business processes DOES matter. For instance, in {@link StatisticsControllerTest} or {@link DocumentsControllerTest}.
+ */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
         BusinessProcessWorkflowTests.class,
@@ -10,6 +14,7 @@ import org.junit.runners.Suite;
         ContinueControllerTest.class,
         StatisticsControllerTest.class,
         BusinessProcessExecutionTest.class,
+        DocumentsControllerTest.class,
         TransactionSummaryTest.class,
         ProcessInstanceGroupControllerTest.class,
         BusinessProcessDefinitionTest.class,
