@@ -15,6 +15,7 @@ import eu.nimble.service.bp.util.persistence.bp.CollaborationGroupDAOUtility;
 import eu.nimble.service.bp.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceDAOUtility;
+import eu.nimble.service.bp.util.persistence.catalogue.CataloguePersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.PartyPersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
@@ -22,9 +23,7 @@ import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
-import eu.nimble.service.model.ubl.commonaggregatecomponents.DocumentReferenceType;
-import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
-import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.commonbasiccomponents.BinaryObjectType;
 import eu.nimble.service.model.ubl.document.IDocument;
 import eu.nimble.utility.Configuration;
@@ -345,7 +344,11 @@ public class ProcessInstanceController {
             if(iDocument == null){
                 return null;
             }
-            return  "{\"item\":"+objectMapper.writeValueAsString(iDocument.getItemType()) +
+            ItemType item = iDocument.getItemType();
+            // get catalogue line to check whether the product is deleted or not
+            CatalogueLineType catalogueLine = CataloguePersistenceUtility.getCatalogueLine(item.getCatalogueDocumentReference().getID(), item.getManufacturersItemIdentification().getID(),false);
+            return  "{\"item\":"+objectMapper.writeValueAsString(item) +
+                    ",\"isProductDeleted\":" + (catalogueLine == null) +
                     ",\"buyerPartyId\":\""+ iDocument.getBuyerPartyId() +
                     "\",\"buyerPartyName\":"+objectMapper.writeValueAsString(iDocument.getBuyerPartyName())+
                     ",\"sellerPartyId\":\""+ iDocument.getSellerPartyId()+

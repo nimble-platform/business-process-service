@@ -24,7 +24,11 @@ public class CataloguePersistenceUtility {
     }
 
     public static CatalogueLineType getCatalogueLine(String catalogueUuid, String lineId){
-        return new JPARepositoryFactory().forCatalogueRepository(true).getSingleEntity(QUERY_SELECT_LINE_BY_CATALOG_AND_LINE_IDS,
+        return getCatalogueLine(catalogueUuid, lineId, true);
+    }
+
+    public static CatalogueLineType getCatalogueLine(String catalogueUuid, String lineId, Boolean lazyLoadingDisabled){
+        return new JPARepositoryFactory().forCatalogueRepository(lazyLoadingDisabled).getSingleEntity(QUERY_SELECT_LINE_BY_CATALOG_AND_LINE_IDS,
                 new String[]{"uuid","id"},
                 new Object[]{catalogueUuid,lineId});
     }
