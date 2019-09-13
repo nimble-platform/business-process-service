@@ -162,7 +162,7 @@ public class BPMessageGenerator {
         return order;
     }
 
-    private static RequestForQuotationType createRequestForQuotation(CatalogueLineType catalogueLine, QuantityType quantity, NegotiationSettings sellerNegotiationSettings,PartyType buyerParty, String bearerToken) throws IOException {
+    public static RequestForQuotationType createRequestForQuotation(CatalogueLineType catalogueLine, QuantityType quantity, NegotiationSettings sellerNegotiationSettings,PartyType buyerParty, String bearerToken) throws IOException {
         PartyType sellerParty = sellerNegotiationSettings.getCompany();
 
         // create request for quotation
@@ -230,7 +230,7 @@ public class BPMessageGenerator {
 
         LocationType location = new LocationType();
 
-        if(buyerParty.getPurchaseTerms().getDeliveryTerms().size() > 0 && buyerParty.getPurchaseTerms().getDeliveryTerms().get(0).getDeliveryLocation() != null){
+        if(buyerParty.getPurchaseTerms() != null && buyerParty.getPurchaseTerms().getDeliveryTerms() != null && buyerParty.getPurchaseTerms().getDeliveryTerms().size() > 0 && buyerParty.getPurchaseTerms().getDeliveryTerms().get(0).getDeliveryLocation() != null){
             location = buyerParty.getPurchaseTerms().getDeliveryTerms().get(0).getDeliveryLocation();
         }
         else{
