@@ -54,6 +54,33 @@ public class ProcessDocumentMetadataDAOUtility {
             " ORDER BY documentMetadata.submissionDate ASC";
     private static final String QUERY_GET_METADATA_BY_ARBITRARY_CONDITIONS = "SELECT document FROM ProcessDocumentMetadataDAO document WHERE (%s)";
     private static final String QUERY_GET_METADATA_BY_PROCESS_INSTANCE_ID_AND_ARBITRARY_CONDITIONS = "SELECT documentMetadata FROM ProcessDocumentMetadataDAO documentMetadata WHERE documentMetadata.processInstanceID=:processInstanceId AND %s";
+    private static final String QUERY_GET_UNSHIPPED_ORDER_IDENTIFIERS_FOR_ALL_PARTIES =
+            " SELECT docMetadata.documentID FROM " +
+            "   ProcessInstanceGroupDAO pig join pig.processInstanceIDsItems pid, ProcessDocumentMetadataDAO docMetadata" +
+            " WHERE " +
+            "   docMetadata.type = 'ORDER'" +
+            "   AND docMetadata.processInstanceID = pid.item" +
+            "   AND NOT EXISTS " +
+                    " (SELECT pig2 FROM " +
+                    "   ProcessInstanceGroupDAO pig2 join pig2.processInstanceIDsItems pid2, ProcessDocumentMetadataDAO docMetadata2" +
+                    " WHERE " +
+                    "   pig2.hjid = pig.hjid" +
+                    "   AND docMetadata2.processInstanceID = pid2.item" +
+                    "   AND docMetadata2.type = 'DESPATCHADVICE')";
+    private static final String QUERY_GET_UNSHIPPED_ORDER_IDENTIFIERS_FOR_SPECIFIC_PARTY =
+            " SELECT docMetadata.documentID FROM " +
+                    "   ProcessInstanceGroupDAO pig join pig.processInstanceIDsItems pid, ProcessDocumentMetadataDAO docMetadata" +
+                    " WHERE " +
+                    "   docMetadata.type = 'ORDER'" +
+                    "   AND pig.partyID = :partyId" +
+                    "   AND docMetadata.processInstanceID = pid.item" +
+                    "   AND NOT EXISTS " +
+                    " (SELECT pig2 FROM " +
+                    "   ProcessInstanceGroupDAO pig2 join pig2.processInstanceIDsItems pid2, ProcessDocumentMetadataDAO docMetadata2" +
+                    " WHERE " +
+                    "   pig2.hjid = pig.hjid" +
+                    "   AND docMetadata2.processInstanceID = pid2.item" +
+                    "   AND docMetadata2.type = 'DESPATCHADVICE')";
 
     private static final Logger logger = LoggerFactory.getLogger(ProcessDocumentMetadataDAOUtility.class);
 
@@ -522,6 +549,21 @@ public class ProcessDocumentMetadataDAOUtility {
             return null;
         }
         return HibernateSwaggerObjectMapper.createProcessDocumentMetadata(processDocumentDAO);
+    }
+
+    public static List<String> getUnshippedOrderIds() {
+        return getUnshippedOrderIds(null);
+    }
+
+    public static List<String> getUnshippedOrderIds(String partyId) {
+        GenericJPARepository repository = new JPARepositoryFactory().forBpRepository();
+        List<String> results;
+        if(partyId != null) {
+            results = repository.getEntities(QUERY_GET_UNSHIPPED_ORDER_IDENTIFIERS_FOR_SPECIFIC_PARTY, new String[]{"partyId"}, new Object[]{partyId});
+        } else {
+            results = repository.getEntities(QUERY_GET_UNSHIPPED_ORDER_IDENTIFIERS_FOR_ALL_PARTIES);
+        }
+        return results;
     }
 
     private static String createConditionsForMetadataQuery(List<Transaction.DocumentTypeEnum> documentTypes, List<String> parameterNames, List<Object> parameterValues) {
