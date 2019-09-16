@@ -1,5 +1,6 @@
 package eu.nimble.service.bp.application.ubl;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
 import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
@@ -32,6 +33,9 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
     @Override
     public Object createDocument(String initiatorID, String responderID, String content, ProcessDocumentMetadata.TypeEnum documentType) {
         ObjectMapper mapper = JsonSerializationUtility.getObjectMapper();
+        // set DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES to true, otherwise,
+        // it will deserialize the content even if its type is different from the given document type
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,true);
         Class documentClass = DocumentEnumClassMapper.getDocumentClass(DocumentType.valueOf(documentType.toString()));
         Object document;
         try {
