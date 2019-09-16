@@ -199,6 +199,12 @@ public class StartWithDocumentController {
                 }
             }
             processInstance = startController.startProcessInstance(bearerToken,processInstanceInputMessage,gid,precedingGid,cgid).getBody();
+
+            if(processInstance == null){
+                String msg = "Failed to start process for the given document";
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+            }
         }
         else{
             // to complete the process, we need to know process instance id
@@ -236,6 +242,11 @@ public class StartWithDocumentController {
             }
 
             processInstance = continueController.continueProcessInstance(processInstanceInputMessage,gid,collaborationGroup.getHjid().toString(),bearerToken).getBody();
+            if(processInstance == null){
+                String msg = "Failed to complete process for the given document";
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+            }
 
             /**
              * Send response document to the initiator party
