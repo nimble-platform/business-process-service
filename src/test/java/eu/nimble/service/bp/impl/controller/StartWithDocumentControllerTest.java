@@ -30,13 +30,15 @@ public class StartWithDocumentControllerTest {
     /**
      * Test scenario:
      * - Check whether a process is completed using a response document which does not have a valid reference to a request document
+     * - Check whether a process {@link #test02_startItemInformationRequest()} can be completed by a different process {@link #test03_completeItemInformationProcessUsingPPAP()} (Internal Server Error expected)
      */
 
     @Autowired
     private MockMvc mockMvc;
 
     private final String itemInformationResponseJSON = "/controller/itemInformationResponseJSON6.txt";
-
+    private final String itemInformationRequestJSON = "/controller/itemInformationRequestJSON7.txt";
+    private final String ppapResponseJSON = "/controller/ppapResponseJSON3.txt";
     @Test
     public void test01_responseDocumentWithNoReferenceToRequestDocument() throws Exception {
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(itemInformationResponseJSON));
@@ -48,4 +50,25 @@ public class StartWithDocumentControllerTest {
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isBadRequest()).andReturn();
     }
 
+    @Test
+    public void test02_startItemInformationRequest() throws Exception {
+        String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(itemInformationRequestJSON));
+
+        MockHttpServletRequestBuilder request = post("/process-document")
+                .header("Authorization", TestConfig.responderPersonId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(inputMessageAsString);
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+    }
+
+    @Test
+    public void test03_completeItemInformationProcessUsingPPAP() throws Exception {
+        String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(ppapResponseJSON));
+
+        MockHttpServletRequestBuilder request = post("/process-document")
+                .header("Authorization", TestConfig.responderPersonId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(inputMessageAsString);
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isInternalServerError()).andReturn();
+    }
 }
