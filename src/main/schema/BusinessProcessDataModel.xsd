@@ -137,20 +137,6 @@
             <xsd:element name="creationDate" type="xsd:string"/>
 			<xsd:element name="processID" type="xsd:string"/>
 			<xsd:element name="status" type="ProcessInstanceStatus"/>
-			<xsd:element name="precedingProcess" type="ProcessInstanceDAO">
-				<xsd:annotation>
-					<xsd:appinfo>
-						<hj:one-to-one>
-							<orm:cascade>
-								<orm:cascade-detach/>
-								<orm:cascade-persist/>
-								<orm:cascade-merge/>
-								<orm:cascade-refresh/>
-							</orm:cascade>
-						</hj:one-to-one>
-					</xsd:appinfo>
-				</xsd:annotation>
-			</xsd:element>
 		</xsd:sequence>
 	</xsd:complexType>
 	<xsd:complexType name="ProcessInstanceGroupDAO">
@@ -170,22 +156,8 @@
 			<!-- Otherwise we need to define a foreign key constraint in the database -->
 			<!-- see the temp element for proper referencing -->
 			<!-- first try to use manytomany annotation, see the second temp !!! -->
-			<xsd:element name="associatedGroups" type="xsd:string" maxOccurs="unbounded"/>
+			<xsd:element name="dataChannelId" type="xsd:string"/>
             <xsd:element name="precedingProcessInstanceGroup" minOccurs="0" type="ProcessInstanceGroupDAO">
-                <xsd:annotation>
-                    <xsd:appinfo>
-                        <hj:one-to-one merge="false">
-                            <orm:cascade>
-                                <orm:cascade-detach/>
-                                <orm:cascade-persist/>
-                                <orm:cascade-merge/>
-                                <orm:cascade-refresh/>
-                            </orm:cascade>
-                        </hj:one-to-one>
-                    </xsd:appinfo>
-                </xsd:annotation>
-            </xsd:element>
-            <xsd:element name="precedingProcess" minOccurs="0" type="ProcessInstanceDAO">
                 <xsd:annotation>
                     <xsd:appinfo>
                         <hj:one-to-one merge="false">
@@ -235,7 +207,7 @@
 			<xsd:element name="associatedProcessInstanceGroups" type="ProcessInstanceGroupDAO" maxOccurs="unbounded"/>
 			<xsd:element name="archived" type="xsd:boolean"/>
 			<xsd:element name="status" type="CollaborationStatus"/>
-			<xsd:element name="associatedCollaborationGroups" type="xsd:long" maxOccurs="unbounded"/>
+			<xsd:element name="isProject" type="xsd:boolean"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	<xsd:simpleType name="CollaborationStatus">

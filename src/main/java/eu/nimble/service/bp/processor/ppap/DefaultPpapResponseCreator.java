@@ -2,8 +2,8 @@ package eu.nimble.service.bp.processor.ppap;
 
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
-import eu.nimble.service.bp.impl.util.persistence.bp.ExecutionConfigurationDAOUtility;
-import eu.nimble.service.bp.serialization.MixInIgnoreProperties;
+import eu.nimble.service.bp.util.persistence.bp.ExecutionConfigurationDAOUtility;
+import eu.nimble.service.bp.util.serialization.MixInIgnoreProperties;
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;

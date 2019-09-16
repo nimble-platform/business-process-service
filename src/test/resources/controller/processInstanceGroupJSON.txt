@@ -3,7 +3,6 @@
 "processInstanceIDs":["979534"],
 "archived":false,
 "collaborationRole":"BUYER",
-"associatedGroups":null,
 "firstActivityTime":"2018-07-12T09:48:20.217+03:00",
 "lastActivityTime":"2018-07-12T09:55:23.743+03:00",
 "id":"798757"}

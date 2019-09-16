@@ -1,22 +1,24 @@
 package eu.nimble.service.bp.impl;
 
-import eu.nimble.service.bp.impl.model.statistics.BusinessProcessCount;
-import eu.nimble.service.bp.impl.model.statistics.NonOrderedProducts;
-import eu.nimble.service.bp.impl.model.statistics.OverallStatistics;
-import eu.nimble.service.bp.impl.util.bp.BusinessProcessUtility;
-import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
-import eu.nimble.service.bp.impl.util.controller.InputValidatorUtil;
-import eu.nimble.service.bp.impl.util.controller.ValidationResponse;
-import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
-import eu.nimble.service.bp.impl.util.persistence.catalogue.StatisticsPersistenceUtility;
-import eu.nimble.service.bp.impl.util.spring.SpringBridge;
+import eu.nimble.service.bp.config.RoleConfig;
+import eu.nimble.service.bp.model.statistics.BusinessProcessCount;
+import eu.nimble.service.bp.model.statistics.NonOrderedProducts;
+import eu.nimble.service.bp.model.statistics.OverallStatistics;
+import eu.nimble.service.bp.util.bp.BusinessProcessUtility;
+import eu.nimble.service.bp.util.controller.InputValidatorUtil;
+import eu.nimble.service.bp.util.controller.ValidationResponse;
+import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
+import eu.nimble.service.bp.util.persistence.catalogue.StatisticsPersistenceUtility;
 import eu.nimble.service.bp.swagger.model.Transaction;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.JsonSerializationUtility;
+import eu.nimble.utility.validation.IValidationUtil;
+import eu.nimble.utility.validation.ValidationUtil;
 import io.swagger.annotations.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -25,7 +27,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,6 +35,9 @@ import java.util.List;
 @Controller
 public class StatisticsController {
     private final Logger logger = LoggerFactory.getLogger(StatisticsController.class);
+
+    @Autowired
+    private IValidationUtil validationUtil;
 
     @ApiOperation(value = "",notes = "Gets the total number of process instances which require an action")
     @ApiResponses(value = {
@@ -48,7 +52,12 @@ public class StatisticsController {
                                                         @ApiParam(value = "Role of the party in the business process.<br>Possible values: <ul><li>seller</li><li>buyer</li></ul>", required = true) @RequestParam(value = "role", required = true, defaultValue = "seller") String role,
                                                         @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
         logger.info("Getting total number of process instances which require an action for party id:{},archived: {}, role: {}",partyId,archived,role);
-        // check role
+        // validate role of the client
+        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+            return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+        }
+
+        // check role parameter
         ValidationResponse response = InputValidatorUtil.checkRole(role, false);
         if (response.getInvalidResponse() != null) {
             return response.getInvalidResponse();
@@ -80,10 +89,9 @@ public class StatisticsController {
 
         try {
             logger.info("Getting total number of documents for start date: {}, end date: {}, type: {}, party id: {}, role: {}, state: {}", startDateStr, endDateStr, businessProcessType, partyId, role, status);
-            // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
-            if (tokenCheck != null) {
-                return tokenCheck;
+            // validate role
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
             ValidationResponse response;
@@ -160,10 +168,9 @@ public class StatisticsController {
 
         try {
             logger.info("Getting total number of documents for start date: {}, end date: {}, party id: {}, role: {}", startDateStr, endDateStr, partyId, role);
-            // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
-            if (tokenCheck != null) {
-                return tokenCheck;
+            // validate role
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
             ValidationResponse response;
@@ -204,13 +211,12 @@ public class StatisticsController {
     ) {
         try {
             logger.info("Getting non-ordered products for party id: {}", partyId);
-            // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
-            if (tokenCheck != null) {
-                return tokenCheck;
+            // validate role
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
-            NonOrderedProducts nonOrderedProducts = StatisticsPersistenceUtility.getNonOrderedProducts(partyId);
+            NonOrderedProducts nonOrderedProducts = StatisticsPersistenceUtility.getNonOrderedProducts(bearerToken,partyId);
             String serializedResponse = JsonSerializationUtility.getObjectMapperForFilledFields().writeValueAsString(nonOrderedProducts);
             logger.info("Retrieved the products that are not ordered for party id: {}", partyId);
             return ResponseEntity.ok().body(serializedResponse);
@@ -239,11 +245,11 @@ public class StatisticsController {
     ) {
         try {
             logger.info("Getting total number of documents for start date: {}, end date: {}, party id: {}, role: {}, state: {}", startDateStr, endDateStr, partyId, role, status);
-            // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
-            if (tokenCheck != null) {
-                return tokenCheck;
+            // validate role
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
+
             ValidationResponse response;
 
             // check start date
@@ -294,10 +300,9 @@ public class StatisticsController {
     public ResponseEntity getInactiveCompanies(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         try {
             logger.info("Getting inactive companies");
-            // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
-            if (tokenCheck != null) {
-                return tokenCheck;
+            // validate role
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
             List<PartyType> inactiveCompanies = StatisticsPersistenceUtility.getInactiveCompanies(bearerToken);
@@ -322,10 +327,9 @@ public class StatisticsController {
     public ResponseEntity getAverageResponseTime(@ApiParam(value = "Identifier of the party as specified by the identity service", required = true) @RequestParam(value = "partyId") String partyId,
                                                  @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         logger.info("Getting average response time for the party with id: {}",partyId);
-        // check token
-        ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
-        if (tokenCheck != null) {
-            return tokenCheck;
+        // validate role
+        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+            return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
         }
 
         double averageResponseTime;
@@ -350,10 +354,9 @@ public class StatisticsController {
     public ResponseEntity getAverageCollaborationTime(@ApiParam(value = "Identifier of the party as specified by the identity service", required = true) @RequestParam(value = "partyId") String partyId,
                                                     @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         logger.info("Getting average negotiation time for the party with id: {}",partyId);
-        // check token
-        ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
-        if (tokenCheck != null) {
-            return tokenCheck;
+        // validate role
+        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+            return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
         }
 
         double averageNegotiationTime = StatisticsPersistenceUtility.calculateAverageCollaborationTime(partyId,bearerToken);
@@ -370,16 +373,15 @@ public class StatisticsController {
     @RequestMapping(value = "/overall",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity getStatistics(@ApiParam(value = "Identifier of the party as specified by the identity service") @RequestParam(value = "partyId") String partyId,
+    public ResponseEntity getStatistics(@ApiParam(value = "Identifier of the party as specified by the identity service",required = true) @RequestParam(value = "partyId",required = true) String partyId,
                                         @ApiParam(value = "Role of the party in the business process.<br>Possible values:<ul><li>seller</li><li>buyer</li></ul>", defaultValue = "seller", required = false) @RequestParam(value = "role", required = false, defaultValue = "SELLER") String role,
                                         @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         logger.info("Getting statistics for the party with id: {}",partyId);
         OverallStatistics statistics = new OverallStatistics();
         try {
-            // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
-            if (tokenCheck != null) {
-                return tokenCheck;
+            // validate role
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
             statistics.setAverageCollaborationTime((double) getAverageCollaborationTime(partyId,bearerToken).getBody());

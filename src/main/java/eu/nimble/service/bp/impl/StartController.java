@@ -1,26 +1,37 @@
 package eu.nimble.service.bp.impl;
 
-import eu.nimble.service.bp.hyperjaxb.model.*;
-import eu.nimble.service.bp.impl.util.bp.BusinessProcessUtility;
-import eu.nimble.service.bp.impl.util.camunda.CamundaEngine;
-import eu.nimble.service.bp.impl.util.email.EmailSenderUtil;
-import eu.nimble.service.bp.impl.util.persistence.bp.CollaborationGroupDAOUtility;
-import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMapper;
-import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceDAOUtility;
-import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceGroupDAOUtility;
-import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
+import eu.nimble.service.bp.bom.BPMessageGenerator;
+import eu.nimble.service.bp.config.RoleConfig;
+import eu.nimble.service.bp.model.billOfMaterial.BillOfMaterial;
+import eu.nimble.service.bp.model.billOfMaterial.BillOfMaterialItem;
+import eu.nimble.service.bp.model.hyperjaxb.*;
+import eu.nimble.service.bp.util.BusinessProcessEvent;
+import eu.nimble.service.bp.util.HttpResponseUtil;
+import eu.nimble.service.bp.util.bp.BusinessProcessUtility;
+import eu.nimble.service.bp.util.camunda.CamundaEngine;
+import eu.nimble.service.bp.util.email.EmailSenderUtil;
+import eu.nimble.service.bp.util.persistence.bp.CollaborationGroupDAOUtility;
+import eu.nimble.service.bp.util.persistence.bp.HibernateSwaggerObjectMapper;
+import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceGroupDAOUtility;
+import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
+import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
-import eu.nimble.service.bp.serialization.MixInIgnoreProperties;
+import eu.nimble.service.bp.util.serialization.MixInIgnoreProperties;
 import eu.nimble.service.bp.swagger.api.StartApi;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
 import eu.nimble.service.bp.swagger.model.ProcessVariables;
 import eu.nimble.service.bp.swagger.model.Transaction;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
 import eu.nimble.utility.JsonSerializationUtility;
+import eu.nimble.utility.LoggerUtils;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
+import eu.nimble.utility.validation.IValidationUtil;
+import eu.nimble.utility.validation.ValidationUtil;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
@@ -30,10 +41,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
 
 import javax.ws.rs.BadRequestException;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * Created by yildiray on 5/25/2017.
@@ -48,7 +60,63 @@ public class StartController implements StartApi {
     private JPARepositoryFactory repoFactory;
     @Autowired
     private EmailSenderUtil emailSenderUtil;
+    @Autowired
+    private CollaborationGroupsController collaborationGroupsController;
+    @Autowired
+    private IValidationUtil validationUtil;
 
+    @Override
+    @ApiOperation(value = "", notes = "Creates negotiations for the given bill of materials for the given party. If there is a frame contract between parties and useFrameContract parameter is set to true, " +
+            "then the service creates an order for the product using the details of frame contract.The person who starts the process is saved as the creator of process. This information is derived " +
+            "from the given bearer token.")
+    public ResponseEntity<String> createNegotiationsForBOM(@ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
+                                                           @ApiParam(value = "Serialized form of bill of materials which are used to create request for quotations.", required = true) @RequestBody BillOfMaterial billOfMaterial,
+                                                           @ApiParam(value = "If this parameter is true and a valid frame contract exists between parties, then an order is started for the product using the details of frame contract") @RequestParam(value = "useFrameContract", defaultValue = "false") Boolean useFrameContract) {
+        logger.info("Creating negotiations for bill of materials , useFrameContract: {}", useFrameContract);
+        // validate role
+        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES)) {
+            return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+        }
+
+        try {
+            // get person using the given bearer token
+            PersonType person = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken);
+            // get buyer party
+            PartyType buyerParty = SpringBridge.getInstance().getiIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
+            String buyerPartyId = buyerParty.getPartyIdentification().get(0).getID();
+
+            String hjidOfBaseGroup = null;
+            List<String> hjidOfGroupsToBeMerged = new ArrayList<>();
+
+            // for each product, create a RFQ
+            for(BillOfMaterialItem billOfMaterialItem: billOfMaterial.getBillOfMaterialItems()){
+                // create ProcessInstanceInputMessage for line item
+                ProcessInstanceInputMessage processInstanceInputMessage = BPMessageGenerator.createBPMessageForBOM(billOfMaterialItem, useFrameContract, buyerParty, person.getID(), bearerToken);
+                // start the process and get process instance id since we need this info to find collaboration group of process
+                String processInstanceId = startProcessInstance(bearerToken, processInstanceInputMessage, null, null, null).getBody().getProcessInstanceID();
+
+                if (hjidOfBaseGroup == null) {
+                    hjidOfBaseGroup = CollaborationGroupDAOUtility.getCollaborationGroupHjidByProcessInstanceIdAndPartyId(processInstanceId, buyerPartyId).toString();
+                } else {
+                    hjidOfGroupsToBeMerged.add(CollaborationGroupDAOUtility.getCollaborationGroupHjidByProcessInstanceIdAndPartyId(processInstanceId, buyerPartyId).toString());
+                }
+            }
+
+            // merge groups to create a project
+            if (hjidOfGroupsToBeMerged.size() > 0) {
+                collaborationGroupsController.mergeCollaborationGroups(bearerToken, hjidOfBaseGroup, hjidOfGroupsToBeMerged);
+            }
+        } catch (Exception e) {
+            String msg = "Unexpected error while creating negotiations for bill of materials";
+            logger.error(msg,e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+        }
+
+        logger.info("Created negotiations for bill of materials, useFrameContract: {}", useFrameContract);
+        return ResponseEntity.ok(null);
+    }
+
+    @ApiIgnore
     @Override
     @ApiOperation(value = "", notes = "Starts a business process.", response = ProcessInstance.class, tags = {})
     public ResponseEntity<ProcessInstance> startProcessInstance(
@@ -70,22 +138,41 @@ public class StartController implements StartApi {
                     "For the subsequent process for this group, it would contain the identifier of the ProcessInstanceGroup " +
                     "(i.e. processInstanceGroup.id)")
             @RequestParam(value = "gid", required = false) String gid,
-            @ApiParam(value = "Identifier of the preceding process instance. If we want to start a new process (for example,PPAP) " +
-                    "after a completed process (for example, item information request), then this parameter should be the identifier of the " +
-                    "completed process instance, (i.e. the item information request process), i.e. processInstance.id. This " +
-                    "identifier corresponds to the identifier generated by Camunda for the corresponding process instance.")
-            @RequestParam(value = "precedingPid", required = false) String precedingPid,
             @ApiParam(value = "Identifier of the preceding ProcessInstanceGroup. This parameter should be set when a " +
                     "continuation relation between two ProcessInstanceGroups. For example, a transport related ProcessInstanceGroup " +
                     "needs to know the preceding ProcessInstanceGroup in order to find the corresponding Order inside the previous group.")
             @RequestParam(value = "precedingGid", required = false) String precedingGid,
-            @ApiParam(value = "Identifier of the Collaboration (i.e. collaborationGroup.id) which the ProcessInstanceGroup belongs to")
+            @ApiParam(value = "Identifier of the Collaboration (i.e. collaborationGroup.hjid) which the ProcessInstanceGroup belongs to")
             @RequestParam(value = "collaborationGID", required = false) String collaborationGID) {
 
         logger.debug(" $$$ Start Process with ProcessInstanceInputMessage {}", JsonSerializationUtility.serializeEntitySilentlyWithMixin(body, ProcessVariables.class, MixInIgnoreProperties.class));
 
+        // validate role
+        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+            return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+        }
+
+        // check whether the process is included in the workflow of seller company
+        String processId = body.getVariables().getProcessID();
+        // get the identifier of party whose workflow will be checked
+        String partyId = processId.contentEquals("Fulfilment") ? body.getVariables().getInitiatorID(): body.getVariables().getResponderID();
+        PartyType sellerParty;
+        try {
+            sellerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,partyId);
+        } catch (IOException e) {
+            String msg = String.format("Failed to retrieve party information for : %s", partyId);
+            logger.warn(msg);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+
+        if(sellerParty.getProcessID() != null && sellerParty.getProcessID().size() > 0 && !sellerParty.getProcessID().contains(processId)){
+            String msg = String.format("%s is not included in the workflow of %s", processId,sellerParty.getPartyName().get(0).getName().getValue());
+            logger.error(msg);
+            throw new BadRequestException(msg);
+        }
+
         // check the entity ids in the passed document
-        Transaction.DocumentTypeEnum documentType = BusinessProcessUtility.getInitialDocumentForProcess(body.getVariables().getProcessID());
+        Transaction.DocumentTypeEnum documentType = BusinessProcessUtility.getInitialDocumentForProcess(processId);
         Object document = DocumentPersistenceUtility.readDocument(DocumentType.valueOf(documentType.toString()), body.getVariables().getContent());
 
         boolean hjidsExists = resourceValidationUtil.hjidsExit(document);
@@ -102,84 +189,82 @@ public class StartController implements StartApi {
             throw new BadRequestException(msg);
         }
 
-        // TODO move the business logic below, to a dedicated place
-        GenericJPARepository repo = repoFactory.forBpRepository();
-        ProcessInstance processInstance = null;
         // get BusinessProcessContext
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
+
+        // TODO move the business logic below, to a dedicated place
+        // we want to perform all database-actions in a single transaction
+        GenericJPARepository repo = businessProcessContext.getBpRepository();
+
+        ProcessInstance processInstance = null;
         try {
             ProcessInstanceInputMessageDAO processInstanceInputMessageDAO = HibernateSwaggerObjectMapper.createProcessInstanceInputMessage_DAO(body);
             repo.persistEntity(processInstanceInputMessageDAO);
-
-            // save ProcessInstanceInputMessageDAO
-            businessProcessContext.setMessageDAO(processInstanceInputMessageDAO);
 
             processInstance = CamundaEngine.startProcessInstance(businessProcessContext.getId(),body);
 
             ProcessInstanceDAO processInstanceDAO = HibernateSwaggerObjectMapper.createProcessInstance_DAO(processInstance);
             processInstanceDAO = repo.updateEntity(processInstanceDAO);
 
-            // save ProcessInstanceDAO
-            businessProcessContext.setProcessInstanceDAO(processInstanceDAO);
-
-            // get the process previous process instance if and only if precedingGid is null
-            if(precedingPid != null && precedingGid == null) {
-                ProcessInstanceDAO precedingInstance = ProcessInstanceDAOUtility.getById(precedingPid);
-                if (precedingInstance == null) {
-                    String msg = "Invalid preceding process instance ID: %s";
-                    logger.warn(String.format(msg, precedingPid));
-                    return ResponseEntity.badRequest().body(null);
-                }
-                processInstanceDAO.setPrecedingProcess(precedingInstance);
-                processInstanceDAO = repo.updateEntity(processInstanceDAO);
-
-                // update ProcessInstanceDAO
-                businessProcessContext.setProcessInstanceDAO(processInstanceDAO);
-            }
-
             CollaborationGroupDAO initiatorCollaborationGroupDAO;
             CollaborationGroupDAO responderCollaborationGroupDAO;
 
             // create collaboration group if this is the first process initializing the collaboration group
             if(collaborationGID == null){
-                initiatorCollaborationGroupDAO = CollaborationGroupDAOUtility.createCollaborationGroupDAO();
-                responderCollaborationGroupDAO = CollaborationGroupDAOUtility.createCollaborationGroupDAO();
-
-                // set association between collaboration groups
-                initiatorCollaborationGroupDAO.getAssociatedCollaborationGroups().add(responderCollaborationGroupDAO.getHjid());
-                responderCollaborationGroupDAO.getAssociatedCollaborationGroups().add(initiatorCollaborationGroupDAO.getHjid());
-
-                initiatorCollaborationGroupDAO = repo.updateEntity(initiatorCollaborationGroupDAO);
-                responderCollaborationGroupDAO = repo.updateEntity(responderCollaborationGroupDAO);
+                initiatorCollaborationGroupDAO = CollaborationGroupDAOUtility.createCollaborationGroupDAO(repo);
+                responderCollaborationGroupDAO = CollaborationGroupDAOUtility.createCollaborationGroupDAO(repo);
             }
             else {
                 initiatorCollaborationGroupDAO = repo.getSingleEntityByHjid(CollaborationGroupDAO.class, Long.parseLong(collaborationGID));
+                // if there is a process instance group id, then get the process ids included in this group
+                // otherwise, get the process ids included in the collaboration group
+                List<String> processInstanceIds = new ArrayList<>();
+                if(gid != null){
+                    ProcessInstanceGroupDAO processInstanceGroupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(gid,repo);
+                    processInstanceIds = processInstanceGroupDAO.getProcessInstanceIDs();
+                }
+                else {
+                    processInstanceIds = CollaborationGroupDAOUtility.getProcessInstanceIds(initiatorCollaborationGroupDAO);
+                }
                 // get responder collaboration group
-                responderCollaborationGroupDAO = CollaborationGroupDAOUtility.getCollaborationGroupDAO(body.getVariables().getResponderID(),initiatorCollaborationGroupDAO.getHjid());
+                responderCollaborationGroupDAO = CollaborationGroupDAOUtility.getCollaborationGroup(body.getVariables().getResponderID(),processInstanceIds,repo);
                 // check whether the responder collaboration group is null or not
                 if(responderCollaborationGroupDAO == null){
-                    responderCollaborationGroupDAO = CollaborationGroupDAOUtility.createCollaborationGroupDAO();
-                    // set association between collaboration groups
-                    initiatorCollaborationGroupDAO.getAssociatedCollaborationGroups().add(responderCollaborationGroupDAO.getHjid());
-                    responderCollaborationGroupDAO.getAssociatedCollaborationGroups().add(initiatorCollaborationGroupDAO.getHjid());
-                    initiatorCollaborationGroupDAO = repo.updateEntity(initiatorCollaborationGroupDAO);
-                    responderCollaborationGroupDAO = repo.updateEntity(responderCollaborationGroupDAO);
+                    responderCollaborationGroupDAO = CollaborationGroupDAOUtility.createCollaborationGroupDAO(repo);
                 }
             }
 
             // create process instance groups if this is the first process initializing the process group
             if (gid == null) {
-                createProcessInstanceGroups(businessProcessContext.getId(),body, processInstance,initiatorCollaborationGroupDAO,responderCollaborationGroupDAO,precedingGid,precedingPid);
+                createProcessInstanceGroups(businessProcessContext.getId(),body, processInstance,initiatorCollaborationGroupDAO,responderCollaborationGroupDAO,precedingGid);
                 // the group exists for the initiator but the trading partner is a new one
                 // so, a new group should be created for the new party
             } else {
                 addNewProcessInstanceToGroup(businessProcessContext.getId(),gid, processInstance.getProcessInstanceID(), body,responderCollaborationGroupDAO);
             }
-            emailSenderUtil.sendActionPendingEmail(bearerToken, businessProcessContext);
+            businessProcessContext.commitDbUpdates();
+            emailSenderUtil.sendActionPendingEmail(bearerToken, body.getVariables().getContentUUID());
+            //mdc logging
+            Map<String,String> logParamMap = new HashMap<String, String>();
+            ProcessVariablesDAO processVariables = processInstanceInputMessageDAO.getVariables();
+            if(processVariables != null) {
+                logParamMap.put("bpInitCompanyId", processVariables.getInitiatorID());
+                logParamMap.put("bpRespondCompanyId", processVariables.getResponderID());
+                logParamMap.put("bpInitUserId", processVariables.getCreatorUserID());
+            }
+            logParamMap.put("bpId", processInstance.getProcessInstanceID());
+            logParamMap.put("bpType", processInstance.getProcessID());
+            logParamMap.put("bpStatus", processInstance.getStatus().toString());
+            logParamMap.put("activity", BusinessProcessEvent.BUSINESS_PROCESS_START.getActivity());
+            LoggerUtils.logWithMDC(logger, logParamMap, LoggerUtils.LogLevel.INFO, "Started a business process instance with id: {}, process type: {}",
+                    processInstance.getProcessInstanceID(), processInstance.getProcessID());
         }
         catch (Exception e){
             logger.error(" $$$ Failed to start process with ProcessInstanceInputMessage {}", body.toString(),e);
-            businessProcessContext.handleExceptions();
+            if(processInstance != null){
+                businessProcessContext.setProcessInstanceId(processInstance.getProcessInstanceID());
+            }
+            businessProcessContext.rollbackDbUpdates();
             throw e;
         }
         finally {
@@ -188,38 +273,28 @@ public class StartController implements StartApi {
         return new ResponseEntity<>(processInstance, HttpStatus.OK);
     }
 
-    private void createProcessInstanceGroups(String businessContextId,ProcessInstanceInputMessage body, ProcessInstance processInstance,CollaborationGroupDAO initiatorCollaborationGroupDAO,CollaborationGroupDAO responderCollaborationGroupDAO, String precedingGid,String precedingPid) {
-        GenericJPARepository repo = repoFactory.forBpRepository();
+    private void createProcessInstanceGroups(String businessContextId, ProcessInstanceInputMessage body, ProcessInstance processInstance, CollaborationGroupDAO initiatorCollaborationGroupDAO, CollaborationGroupDAO responderCollaborationGroupDAO, String precedingGid) {
+        GenericJPARepository repo = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId).getBpRepository();
         // create group for initiating party
         ProcessInstanceGroupDAO processInstanceGroupDAO1 = ProcessInstanceGroupDAOUtility.createProcessInstanceGroupDAO(
                 body.getVariables().getInitiatorID(),
                 processInstance.getProcessInstanceID(),
                 CamundaEngine.getTransactions(body.getVariables().getProcessID()).get(0).getInitiatorRole().toString(),
-                body.getVariables().getRelatedProducts());
+                body.getVariables().getRelatedProducts(),
+                repo);
 
         // create group for responder party
         ProcessInstanceGroupDAO processInstanceGroupDAO2 = ProcessInstanceGroupDAOUtility.createProcessInstanceGroupDAO(
                 body.getVariables().getResponderID(),
                 processInstance.getProcessInstanceID(),
                 CamundaEngine.getTransactions(body.getVariables().getProcessID()).get(1).getInitiatorRole().toString(),
-                body.getVariables().getRelatedProducts());
-
-        // associate groups
-        List<String> associatedGroups = new ArrayList<>();
-        associatedGroups.add(processInstanceGroupDAO2.getID());
-        processInstanceGroupDAO1.setAssociatedGroups(associatedGroups);
-
-        // below assignment fetches the hjids from the
-        processInstanceGroupDAO1 = repo.updateEntity(processInstanceGroupDAO1);
+                body.getVariables().getRelatedProducts(),
+                repo);
 
         // add this group to initiator collaboration group
         initiatorCollaborationGroupDAO.getAssociatedProcessInstanceGroups().add(processInstanceGroupDAO1);
         // update collaboration group
         repo.updateEntity(initiatorCollaborationGroupDAO);
-        associatedGroups = new ArrayList<>();
-        associatedGroups.add(processInstanceGroupDAO1.getID());
-        processInstanceGroupDAO2.setAssociatedGroups(associatedGroups);
-        processInstanceGroupDAO2 = repo.updateEntity(processInstanceGroupDAO2);
 
         // add this group to responder collaboration group
         responderCollaborationGroupDAO.getAssociatedProcessInstanceGroups().add(processInstanceGroupDAO2);
@@ -228,56 +303,39 @@ public class StartController implements StartApi {
         // when a negotiation is started for a transport service after an order
         if(precedingGid != null){
             processInstanceGroupDAO1.setPrecedingProcessInstanceGroup(ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(precedingGid));
-            processInstanceGroupDAO1.setPrecedingProcess(ProcessInstanceDAOUtility.getById(precedingPid));
-            processInstanceGroupDAO1 = repo.updateEntity(processInstanceGroupDAO1);
+            repo.updateEntity(processInstanceGroupDAO1);
         }
-
-        // save ProcessInstanceGroupDAOs
-        BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId).setProcessInstanceGroupDAO1(processInstanceGroupDAO1);
-        BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId).setProcessInstanceGroupDAO2(processInstanceGroupDAO2);
     }
 
     private void addNewProcessInstanceToGroup(String businessContextId,String sourceGid, String processInstanceId, ProcessInstanceInputMessage body, CollaborationGroupDAO responderCollaborationGroupDAO) {
-        GenericJPARepository repo = repoFactory.forBpRepository();
+        GenericJPARepository repo = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId).getBpRepository();
 
         ProcessInstanceGroupDAO sourceGroup;
-        sourceGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(sourceGid);
+        sourceGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(sourceGid,repo);
         if(body.getVariables().getProcessID().equals("Fulfilment") && sourceGroup.getPrecedingProcessInstanceGroup() != null){
             sourceGroup = sourceGroup.getPrecedingProcessInstanceGroup();
         }
         sourceGroup.getProcessInstanceIDs().add(processInstanceId);
         sourceGroup = repo.updateEntity(sourceGroup);
 
-        // save sourceGroup
-        BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId);
-        businessProcessContext.setSourceGroup(sourceGroup);
-
         // add the new process instance to the recipient's group
         // if such a group exists add into it otherwise create a new group
-        ProcessInstanceGroupDAO associatedGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(body.getVariables().getResponderID(), sourceGroup.getID());
+        ProcessInstanceGroupDAO associatedGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(body.getVariables().getResponderID(), sourceGroup.getProcessInstanceIDs(),repo);
         if (associatedGroup == null) {
             ProcessInstanceGroupDAO targetGroup = ProcessInstanceGroupDAOUtility.createProcessInstanceGroupDAO(
                     body.getVariables().getResponderID(),
                     processInstanceId,
                     CamundaEngine.getTransactions(body.getVariables().getProcessID()).get(0).getResponderRole().toString(),
                     body.getVariables().getRelatedProducts(),
-                    sourceGroup.getID());
-
-            sourceGroup.getAssociatedGroups().add(targetGroup.getID());
-            sourceGroup = repo.updateEntity(sourceGroup);
+                    sourceGroup.getDataChannelId(),
+                    repo);
 
             // add new group to responder collaboration group
             responderCollaborationGroupDAO.getAssociatedProcessInstanceGroups().add(targetGroup);
             repo.updateEntity(responderCollaborationGroupDAO);
-            // save targetGroup and sourceGroup
-            businessProcessContext.setTargetGroup(targetGroup);
-            businessProcessContext.setSourceGroup(sourceGroup);
         } else {
             associatedGroup.getProcessInstanceIDs().add(processInstanceId);
-            associatedGroup = repo.updateEntity(associatedGroup);
-
-            // save associatedGroup
-            businessProcessContext.setAssociatedGroup(associatedGroup);
+            repo.updateEntity(associatedGroup);
         }
     }
 }

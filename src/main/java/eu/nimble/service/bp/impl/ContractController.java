@@ -1,33 +1,35 @@
 package eu.nimble.service.bp.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.nimble.service.bp.hyperjaxb.model.DocumentType;
-import eu.nimble.service.bp.hyperjaxb.model.ProcessDocumentMetadataDAO;
-import eu.nimble.service.bp.hyperjaxb.model.ProcessInstanceDAO;
-import eu.nimble.service.bp.impl.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
-import eu.nimble.service.bp.impl.util.persistence.bp.ProcessInstanceDAOUtility;
-import eu.nimble.service.bp.impl.util.persistence.catalogue.ContractPersistenceUtility;
-import eu.nimble.service.bp.impl.util.persistence.catalogue.DocumentPersistenceUtility;
-import eu.nimble.service.bp.impl.util.spring.SpringBridge;
+import eu.nimble.service.bp.config.RoleConfig;
+import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
+import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO;
+import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceDAO;
+import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
+import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceDAOUtility;
+import eu.nimble.service.bp.util.persistence.catalogue.ContractPersistenceUtility;
+import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
+import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
+import eu.nimble.service.model.ubl.digitalagreement.DigitalAgreementType;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
-import eu.nimble.utility.Configuration;
-import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.JsonSerializationUtility;
+import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.persistence.resource.EntityIdAwareRepositoryWrapper;
-import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
+import eu.nimble.utility.validation.IValidationUtil;
+import eu.nimble.utility.validation.ValidationUtil;
 import io.swagger.annotations.*;
+import org.joda.time.DateTime;
+import org.joda.time.Days;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.logging.LogLevel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
@@ -41,113 +43,113 @@ public class ContractController {
     private final Logger logger = LoggerFactory.getLogger(ContractController.class);
 
     @Autowired
-    private ResourceValidationUtility resourceValidationUtil;
+    private IValidationUtil validationUtil;
 
-    @ApiOperation(value = "",notes = "Retrieves the specified ClauseType")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200,message = "Retrieved the clause successfully",response = ClauseType.class),
-            @ApiResponse(code = 401,message = "Invalid token. No user was found for the provided token"),
-            @ApiResponse(code = 404,message = "No clause for the given id"),
-            @ApiResponse(code = 500,message = "Unexpected error while getting the clause")
-    })
-    @RequestMapping(value = "/clauses/{clauseId}",
-            produces = {"application/json"},
-            method = RequestMethod.GET)
-    public ResponseEntity getClauseDetails(@ApiParam(value = "Unique identifier of the ClauseType to be retrieved (clause.id)", required = true) @PathVariable(value = "clauseId", required = true) String clauseId,
-                                           @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
-        try {
-            logger.info("Getting clause with id: {}", clauseId);
-            // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
-            if (tokenCheck != null) {
-                return tokenCheck;
-            }
-
-            ClauseType clause = ContractPersistenceUtility.getClause(clauseId);
-            if (clause == null) {
-                return createResponseEntityAndLog(String.format("No clause for the given id: %s", clauseId), HttpStatus.NOT_FOUND);
-            }
-            logger.info("Retrieved clause with id: {}", clauseId);
-            return ResponseEntity.ok().body(clause);
-
-        } catch (Exception e) {
-            return createResponseEntityAndLog(String.format("Unexpected error while getting the clause with id: %s", clauseId), e, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @ApiOperation(value = "",notes = "Updates the ClauseType with the specifiedId")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200,message = "Updated the clause successfully",response = ClauseType.class),
-            @ApiResponse(code = 400,message = "Invalid Clause content"),
-            @ApiResponse(code = 401,message = "Invalid token. No user was found for the provided token"),
-            @ApiResponse(code = 500,message = "Unexpected error while updating the clause")
-    })
-    @RequestMapping(value = "/clauses/{clauseId}",
-            method = RequestMethod.PUT)
-    public ResponseEntity updateClause(@ApiParam(value = "Identifier of the ClauseType to be updated (clause.id)", required = true) @PathVariable(value = "clauseId") String clauseId,
-                                       @ApiParam(value = "Serialized form of the complete ClauseType", required = true) @RequestBody String serializedClause,
-                                       @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
-
-        try {
-            logger.info("Updating clause with id: {}", clauseId);
-            // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
-            if (tokenCheck != null) {
-                return tokenCheck;
-            }
-
-            // get person using the given bearer token
-            PersonType person = SpringBridge.getInstance().getIdentityClientTyped().getPerson(bearerToken);
-            // get party for the person
-            PartyType party = SpringBridge.getInstance().getIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
-
-            // parse the base clause object to get the type
-            ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
-            ClauseType clause;
-            try {
-                clause = objectMapper.readValue(serializedClause, ClauseType.class);
-            } catch (IOException e) {
-                return createResponseEntityAndLog("Failed to deserialize the clause: " + serializedClause, e, HttpStatus.BAD_REQUEST);
-            }
-
-            // parse the derived clause object
-            Object clauseObject;
-            if (clause.getType().contentEquals(eu.nimble.service.model.ubl.extension.ClauseType.DATA_MONITORING.toString())) {
-                try {
-                    clauseObject = objectMapper.readValue(serializedClause, DataMonitoringClauseType.class);
-                } catch (IOException e) {
-                    return createResponseEntityAndLog("Failed to deserialize data monitoring clause: " + serializedClause, e, HttpStatus.BAD_REQUEST);
-                }
-
-            } else {
-                try {
-                    clauseObject = objectMapper.readValue(serializedClause, DocumentClauseType.class);
-                } catch (IOException e) {
-                    return createResponseEntityAndLog("Failed to deserialize document clause: " + serializedClause, e, HttpStatus.BAD_REQUEST);
-                }
-            }
-
-            // validate the entity ids
-            boolean hjidsBelongToCompany = resourceValidationUtil.hjidsBelongsToParty(clauseObject, party.getPartyIdentification().get(0).getID(), Configuration.Standard.UBL.toString());
-            if(!hjidsBelongToCompany) {
-                return HttpResponseUtil.createResponseEntityAndLog(String.format("Some of the identifiers (hjid fields) do not belong to the party in the passed clause: %s", serializedClause), null, HttpStatus.BAD_REQUEST, LogLevel.INFO);
-            }
-
-            // update clause
-            try {
-                EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(party.getPartyIdentification().get(0).getID());
-                clauseObject = repositoryWrapper.updateEntity(clauseObject);
-            } catch (Exception e) {
-                return createResponseEntityAndLog("Failed to update the clause: " + clauseId, e, HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-
-            logger.info("Updated clause with id: {}", clauseId);
-            return ResponseEntity.ok().body(clauseObject);
-
-        } catch (Exception e) {
-            return createResponseEntityAndLog("Unexpected error in updating the clause: " + clauseId, e, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
+//    @ApiOperation(value = "",notes = "Retrieves the specified ClauseType")
+//    @ApiResponses(value = {
+//            @ApiResponse(code = 200,message = "Retrieved the clause successfully",response = ClauseType.class),
+//            @ApiResponse(code = 401,message = "Invalid token. No user was found for the provided token"),
+//            @ApiResponse(code = 404,message = "No clause for the given id"),
+//            @ApiResponse(code = 500,message = "Unexpected error while getting the clause")
+//    })
+//    @RequestMapping(value = "/clauses/{clauseId}",
+//            produces = {"application/json"},
+//            method = RequestMethod.GET)
+//    public ResponseEntity getClauseDetails(@ApiParam(value = "Unique identifier of the ClauseType to be retrieved (clause.id)", required = true) @PathVariable(value = "clauseId", required = true) String clauseId,
+//                                           @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
+//        try {
+//            logger.info("Getting clause with id: {}", clauseId);
+//            // check token
+//            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
+//            if (tokenCheck != null) {
+//                return tokenCheck;
+//            }
+//
+//            ClauseType clause = ContractPersistenceUtility.getClause(clauseId);
+//            if (clause == null) {
+//                return createResponseEntityAndLog(String.format("No clause for the given id: %s", clauseId), HttpStatus.NOT_FOUND);
+//            }
+//            logger.info("Retrieved clause with id: {}", clauseId);
+//            return ResponseEntity.ok().body(clause);
+//
+//        } catch (Exception e) {
+//            return createResponseEntityAndLog(String.format("Unexpected error while getting the clause with id: %s", clauseId), e, HttpStatus.INTERNAL_SERVER_ERROR);
+//        }
+//    }
+//
+//    @ApiOperation(value = "",notes = "Updates the ClauseType with the specifiedId")
+//    @ApiResponses(value = {
+//            @ApiResponse(code = 200,message = "Updated the clause successfully",response = ClauseType.class),
+//            @ApiResponse(code = 400,message = "Invalid Clause content"),
+//            @ApiResponse(code = 401,message = "Invalid token. No user was found for the provided token"),
+//            @ApiResponse(code = 500,message = "Unexpected error while updating the clause")
+//    })
+//    @RequestMapping(value = "/clauses/{clauseId}",
+//            method = RequestMethod.PUT)
+//    public ResponseEntity updateClause(@ApiParam(value = "Identifier of the ClauseType to be updated (clause.id)", required = true) @PathVariable(value = "clauseId") String clauseId,
+//                                       @ApiParam(value = "Serialized form of the complete ClauseType", required = true) @RequestBody String serializedClause,
+//                                       @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
+//
+//        try {
+//            logger.info("Updating clause with id: {}", clauseId);
+//            // check token
+//            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
+//            if (tokenCheck != null) {
+//                return tokenCheck;
+//            }
+//
+//            // get person using the given bearer token
+//            PersonType person = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken);
+//            // get party for the person
+//            PartyType party = SpringBridge.getInstance().getiIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
+//
+//            // parse the base clause object to get the type
+//            ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
+//            ClauseType clause;
+//            try {
+//                clause = objectMapper.readValue(serializedClause, ClauseType.class);
+//            } catch (IOException e) {
+//                return createResponseEntityAndLog("Failed to deserialize the clause: " + serializedClause, e, HttpStatus.BAD_REQUEST);
+//            }
+//
+//            // parse the derived clause object
+//            Object clauseObject;
+//            if (clause.getType().contentEquals(eu.nimble.service.model.ubl.extension.ClauseType.DATA_MONITORING.toString())) {
+//                try {
+//                    clauseObject = objectMapper.readValue(serializedClause, DataMonitoringClauseType.class);
+//                } catch (IOException e) {
+//                    return createResponseEntityAndLog("Failed to deserialize data monitoring clause: " + serializedClause, e, HttpStatus.BAD_REQUEST);
+//                }
+//
+//            } else {
+//                try {
+//                    clauseObject = objectMapper.readValue(serializedClause, DocumentClauseType.class);
+//                } catch (IOException e) {
+//                    return createResponseEntityAndLog("Failed to deserialize document clause: " + serializedClause, e, HttpStatus.BAD_REQUEST);
+//                }
+//            }
+//
+//            // validate the entity ids
+//            boolean hjidsBelongToCompany = resourceValidationUtil.hjidsBelongsToParty(clauseObject, party.getPartyIdentification().get(0).getID(), Configuration.Standard.UBL.toString());
+//            if(!hjidsBelongToCompany) {
+//                return HttpResponseUtil.createResponseEntityAndLog(String.format("Some of the identifiers (hjid fields) do not belong to the party in the passed clause: %s", serializedClause), null, HttpStatus.BAD_REQUEST, LogLevel.INFO);
+//            }
+//
+//            // update clause
+//            try {
+//                EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(party.getPartyIdentification().get(0).getID());
+//                clauseObject = repositoryWrapper.updateEntity(clauseObject);
+//            } catch (Exception e) {
+//                return createResponseEntityAndLog("Failed to update the clause: " + clauseId, e, HttpStatus.INTERNAL_SERVER_ERROR);
+//            }
+//
+//            logger.info("Updated clause with id: {}", clauseId);
+//            return ResponseEntity.ok().body(clauseObject);
+//
+//        } catch (Exception e) {
+//            return createResponseEntityAndLog("Unexpected error in updating the clause: " + clauseId, e, HttpStatus.INTERNAL_SERVER_ERROR);
+//        }
+//    }
 
     @ApiOperation(value = "",notes = "Constructs a contract for the business processes where the specified process instance" +
             " is the last business process. All the business processes until the initial business process are considered. ")
@@ -163,19 +165,17 @@ public class ContractController {
                                                                @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         try {
             logger.info("Constructing contract starting from the process instance: {}", processInstanceId);
-            // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
-            if (tokenCheck != null) {
-                return tokenCheck;
+            // validate role
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
-
             // check existence and type of the process instance
             ProcessInstanceDAO processInstance = ProcessInstanceDAOUtility.getById(processInstanceId);
             if (processInstance == null) {
                 return createResponseEntityAndLog(String.format("Invalid process instance id: %s", processInstanceId), HttpStatus.NOT_FOUND);
             }
 
-            ContractType contract = ContractPersistenceUtility.constructContractForProcessInstances(processInstance);
+            ContractType contract = ContractPersistenceUtility.constructContractForProcessInstances(processInstanceId);
             logger.info("Constructed contract starting from the process instance: {}", processInstanceId);
 
             ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
@@ -200,10 +200,9 @@ public class ContractController {
     ) {
         try {
             logger.info("Getting clauses for contract: {}", contractId);
-            // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
-            if (tokenCheck != null) {
-                return tokenCheck;
+            // validate role
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
             ContractType contract = ContractPersistenceUtility.getContract(contractId);
@@ -221,60 +220,59 @@ public class ContractController {
         }
     }
 
-    @ApiOperation(value = "",notes = "Deletes a clause from the contract")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200,message = "Deleted clause from the contract and returned the updated contract successfully",response = ContractType.class),
-            @ApiResponse(code = 401,message = "Invalid token. No user was found for the provided token"),
-            @ApiResponse(code = 404,message = "No contract or clause for the specified identifiers"),
-            @ApiResponse(code = 500,message = "Unexpected error while deleting the clause from the contract")
-    })
-    @RequestMapping(value = "/contracts/{contractId}/clauses/{clauseId}",
-            method = RequestMethod.DELETE)
-    public ResponseEntity deleteClauseFromContract(@ApiParam(value = "Identifier of the contract (contract.id) from which the clause to be deleted", required = true) @PathVariable(value = "contractId") String contractId,
-                                                   @ApiParam(value = "Identifier of the clause (clause.id) to be deleted", required = true) @PathVariable(value = "clauseId") String clauseId,
-                                                   @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
-        try {
-            logger.info("Deleting clause: {} from contract: {}", clauseId, contractId);
-            // get person using the given bearer token
-            PersonType person = SpringBridge.getInstance().getIdentityClientTyped().getPerson(bearerToken);
-            // get party for the person
-            PartyType party = SpringBridge.getInstance().getIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
-
-            // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
-            if (tokenCheck != null) {
-                return tokenCheck;
-            }
-
-            // check existence of contract
-            ContractType contract = ContractPersistenceUtility.getContract(contractId);
-            if (contract == null) {
-                return createResponseEntityAndLog("Invalid contract id: " + contractId, HttpStatus.NOT_FOUND);
-            }
-
-            // check existence of clause
-            ClauseType clause = ContractPersistenceUtility.getContractClause(contractId, clauseId);
-            if (clause == null) {
-                return createResponseEntityAndLog("Invalid clause id: " + clauseId + " for contract: " + contractId, HttpStatus.NOT_FOUND);
-            }
-
-            // delete the clause
-            try {
-                EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(party.getPartyIdentification().get(0).getID());
-                repositoryWrapper.deleteEntity(clause);
-            } catch (Exception e) {
-                return createResponseEntityAndLog("Failed to delete clause: " + clauseId + " from contract: " + contractId, e, HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-
-            // return updated version
-            contract = ContractPersistenceUtility.getContract(contractId);
-            logger.info("Deleted clause: {} from contract: {}", clauseId, contractId);
-            return ResponseEntity.ok().body(contract);
-
-        } catch (Exception e) {
-            return createResponseEntityAndLog("Unexpected error while deleting the clause: " + clauseId + " from contract: " + contractId, e, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
+//    @ApiOperation(value = "",notes = "Deletes a clause from the contract")
+//    @ApiResponses(value = {
+//            @ApiResponse(code = 200,message = "Deleted clause from the contract and returned the updated contract successfully",response = ContractType.class),
+//            @ApiResponse(code = 401,message = "Invalid token. No user was found for the provided token"),
+//            @ApiResponse(code = 404,message = "No contract or clause for the specified identifiers"),
+//            @ApiResponse(code = 500,message = "Unexpected error while deleting the clause from the contract")
+//    })
+//    @RequestMapping(value = "/contracts/{contractId}/clauses/{clauseId}",
+//            method = RequestMethod.DELETE)
+//    public ResponseEntity deleteClauseFromContract(@ApiParam(value = "Identifier of the contract (contract.id) from which the clause to be deleted", required = true) @PathVariable(value = "contractId") String contractId,
+//                                                   @ApiParam(value = "Identifier of the clause (clause.id) to be deleted", required = true) @PathVariable(value = "clauseId") String clauseId,
+//                                                   @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
+//        try {
+//            logger.info("Deleting clause: {} from contract: {}", clauseId, contractId);
+//            // get person using the given bearer token
+//            PersonType person = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken);
+//            // get party for the person
+//            PartyType party = SpringBridge.getInstance().getiIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
+//
+//            // check token
+//            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
+//            if (tokenCheck != null) {
+//                return tokenCheck;
+//            }
+//
+//            // check existence of contract
+//            if (!ContractPersistenceUtility.contractExists(contractId)) {
+//                return createResponseEntityAndLog("Invalid contract id: " + contractId, HttpStatus.NOT_FOUND);
+//            }
+//
+//            // check existence of clause
+//            ClauseType clause = ContractPersistenceUtility.getContractClause(contractId, clauseId);
+//            if (clause == null) {
+//                return createResponseEntityAndLog("Invalid clause id: " + clauseId + " for contract: " + contractId, HttpStatus.NOT_FOUND);
+//            }
+//
+//            // delete the clause
+//            try {
+//                EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(party.getPartyIdentification().get(0).getID());
+//                repositoryWrapper.deleteEntity(clause);
+//            } catch (Exception e) {
+//                return createResponseEntityAndLog("Failed to delete clause: " + clauseId + " from contract: " + contractId, e, HttpStatus.INTERNAL_SERVER_ERROR);
+//            }
+//
+//            // return updated version
+//            ContractType contract = ContractPersistenceUtility.getContract(contractId);
+//            logger.info("Deleted clause: {} from contract: {}", clauseId, contractId);
+//            return ResponseEntity.ok().body(contract);
+//
+//        } catch (Exception e) {
+//            return createResponseEntityAndLog("Unexpected error while deleting the clause: " + clauseId + " from contract: " + contractId, e, HttpStatus.INTERNAL_SERVER_ERROR);
+//        }
+//    }
 
     @ApiOperation(value = "",notes = "Retrieves ClauseType instances having the specified clauseType for the document specified with" +
             " documentId. The document is supposed to have a ContractType inside i.e. OrderType or TransportExecutionPlanRequestType.")
@@ -289,20 +287,19 @@ public class ContractController {
             produces = {"application/json"},
             method = RequestMethod.GET)
     public ResponseEntity getClauseDetails(@ApiParam(value = "Identifier of the document for which the inner clauses to be retrieved", required = true) @PathVariable(value = "documentId", required = true) String documentId,
-                                           @ApiParam(value = "Type of the clauses to be retrieved. If no type specified all the clauses are retrieved.") @RequestParam(value = "clauseType") eu.nimble.service.model.ubl.extension.ClauseType clauseType,
+                                           @ApiParam(value = "Type of the clauses to be retrieved. If no type specified all the clauses are retrieved.", required = false) @RequestParam(value = "clauseType", required = false) eu.nimble.service.model.ubl.extension.ClauseType clauseType,
                                            @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         try {
             logger.info("Getting clause for document: {}, type: {}", documentId, clauseType);
-            // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
-            if (tokenCheck != null) {
-                return tokenCheck;
+            // validate role
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
             // check existence and type of the document bound to the contract
             ProcessDocumentMetadataDAO documentMetadata = ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId);
             if (documentMetadata == null) {
-                return createResponseEntityAndLog(String.format("No document for the specified id: %s", documentMetadata.getDocumentID()), HttpStatus.NOT_FOUND);
+                return createResponseEntityAndLog(String.format("No document for the specified id: %s", documentId), HttpStatus.NOT_FOUND);
             }
             DocumentType documentType = documentMetadata.getType();
             if (!(documentType == DocumentType.ORDER || documentType == DocumentType.TRANSPORTEXECUTIONPLANREQUEST)) {
@@ -336,10 +333,9 @@ public class ContractController {
                                                       @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         try {
             logger.info("Adding document clause to contract. Bounded-document id: {}, clause document id: {}", documentId, clauseDocumentId);
-            // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
-            if (tokenCheck != null) {
-                return tokenCheck;
+            // validate role
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
             // check the passed parameters
@@ -356,9 +352,9 @@ public class ContractController {
             }
 
             // get person using the given bearer token
-            PersonType person = SpringBridge.getInstance().getIdentityClientTyped().getPerson(bearerToken);
+            PersonType person = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken);
             // get party for the person
-            PartyType party = SpringBridge.getInstance().getIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
+            PartyType party = SpringBridge.getInstance().getiIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
 
             // get contract of the specified document
             Object document = DocumentPersistenceUtility.getUBLDocument(documentId, clauseDocumentMetadata.getType());
@@ -407,10 +403,9 @@ public class ContractController {
 
         try {
             logger.info("Adding data monitoring clause to contract. Bounded-document id: {}", documentId);
-            // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.impl.util.HttpResponseUtil.checkToken(bearerToken);
-            if (tokenCheck != null) {
-                return tokenCheck;
+            // validate role
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
             // check existence and type of the document bound to the contract
@@ -420,9 +415,9 @@ public class ContractController {
             }
 
             // get person using the given bearer token
-            PersonType person = SpringBridge.getInstance().getIdentityClientTyped().getPerson(bearerToken);
+            PersonType person = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken);
             // get party for the person
-            PartyType party = SpringBridge.getInstance().getIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
+            PartyType party = SpringBridge.getInstance().getiIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
 
             // check contract of the document
             ProcessDocumentMetadataDAO documentMetadata = ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId);
@@ -472,6 +467,209 @@ public class ContractController {
         }
 
         return contract;
+    }
+
+//    @ApiOperation(value = "",notes = "Saves a DigitalAgreement instance to be referred by a RequestForQuotation or Quotation")
+//    @ApiResponses(value = {
+//            @ApiResponse(code = 200,message = "Saved the passed instance of DigitalAgreement", response = DigitalAgreementType.class),
+//            @ApiResponse(code = 401,message = "Invalid token. No user was found for the provided token"),
+//            @ApiResponse(code = 500,message = "Unexpected error while saving the passed DigitalAgreement")
+//    })
+//    @RequestMapping(value = "/contract/digital-agreement",
+//            consumes = {"application/json"},
+//            produces = {"application/json"},
+//            method = RequestMethod.POST)
+//    public ResponseEntity saveFrameContract(@ApiParam(value = "Serialized form of the DigitalAgreement to be added", required = true) @RequestBody String digitalAgreementJson,
+//                                            @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
+//
+//        try {
+//            logger.info("Incoming request to save a DigitalAgreement instance");
+//            // check token
+//            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
+//            if (tokenCheck != null) {
+//                return tokenCheck;
+//            }
+//
+//            DigitalAgreementType digitalAgreement = JsonSerializationUtility.getObjectMapper().readValue(digitalAgreementJson, DigitalAgreementType.class);
+//
+//            // get person using the given bearer token
+//            PersonType person = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken);
+//            // get party for the person
+//            PartyType party = SpringBridge.getInstance().getiIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
+//
+//            // set an identifier to the document
+//            digitalAgreement.setID(UUID.randomUUID().toString());
+//
+//            // persist the update
+//            try {
+//                DataIntegratorUtil.checkExistingParties(digitalAgreement);
+//                EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(party.getPartyIdentification().get(0).getID());
+//                digitalAgreement = repositoryWrapper.updateEntityForPersistCases(digitalAgreement);
+//            } catch (Exception e) {
+//                return createResponseEntityAndLog(String.format("Failed to save DigitalAgreement: %s", digitalAgreementJson), e, HttpStatus.INTERNAL_SERVER_ERROR);
+//            }
+//
+//            logger.info("Saved DigitalAgreement successfully");
+//            return ResponseEntity.ok(JsonSerializationUtility.getObjectMapper().writeValueAsString(digitalAgreement));
+//
+//        } catch (Exception e) {
+//            return createResponseEntityAndLog(String.format("Unexpected error while saving DigitalAgreement: %s", digitalAgreementJson), e, HttpStatus.INTERNAL_SERVER_ERROR);
+//        }
+//    }
+//
+//    @ApiOperation(value = "",notes = "Replace the passed DigitalAgreement with the existing DigitalAgreement. The existing " +
+//            "instance is resolved via the hjid field of the passed instance")
+//    @ApiResponses(value = {
+//            @ApiResponse(code = 200,message = "Retrieved the specified DigitalAgreement successfully", response = DigitalAgreementType.class),
+//            @ApiResponse(code = 401,message = "Invalid token. No user was found for the provided token"),
+//            @ApiResponse(code = 500,message = "Unexpected error while retriving the passed DigitalAgreement")
+//    })
+//    @RequestMapping(value = "/contract/digital-agreement/{id}",
+//            consumes = MediaType.APPLICATION_JSON_VALUE,
+//            produces = MediaType.APPLICATION_JSON_VALUE,
+//            method = RequestMethod.PUT)
+//    public ResponseEntity updateDigitalAgreement(@ApiParam(value = "Updated DigitalAgreement to be replaced with the existing one", required = true) @RequestBody String digitalAgreementJson,
+//                                                @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
+//
+//        try {
+//            logger.info("Incoming request to update a DigitalAgreement.");
+//            // check token
+//            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
+//            if (tokenCheck != null) {
+//                return tokenCheck;
+//            }
+//
+//            // parse the request body
+//            DigitalAgreementType digitalAgreement = JsonSerializationUtility.getObjectMapper().readValue(digitalAgreementJson, DigitalAgreementType.class);
+//
+//            // get person using the given bearer token
+//            PersonType person = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken);
+//            // get party for the person
+//            PartyType party = SpringBridge.getInstance().getiIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
+//
+//            // validate the entity ids
+//            boolean hjidsBelongToCompany = resourceValidationUtil.hjidsBelongsToParty(digitalAgreement, party.getPartyIdentification().get(0).getID(), Configuration.Standard.UBL.toString());
+//            if (!hjidsBelongToCompany) {
+//                return HttpResponseUtil.createResponseEntityAndLog(String.format("Some of the identifiers (hjid fields) do not belong to the party in the passed catalogue: %s", digitalAgreementJson), null, HttpStatus.BAD_REQUEST, LogLevel.INFO);
+//            }
+//
+//            // update
+//            try {
+//                EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(party.getPartyIdentification().get(0).getID());
+//                repositoryWrapper.updateEntity(digitalAgreement);
+//            } catch (Exception e) {
+//                return createResponseEntityAndLog(String.format("Failed to save DigitalAgreement: %s", digitalAgreementJson), e, HttpStatus.INTERNAL_SERVER_ERROR);
+//            }
+//
+//            logger.info("Updated DigitalAgreement successfully.");
+//            return ResponseEntity.ok(JsonSerializationUtility.getObjectMapper().writeValueAsString(digitalAgreement));
+//
+//        } catch (Exception e) {
+//            return createResponseEntityAndLog(String.format("Unexpected error while updating DigitalAgreement: %s", digitalAgreementJson), e, HttpStatus.INTERNAL_SERVER_ERROR);
+//        }
+//    }
+
+    @ApiOperation(value = "", notes = "Gets the DigitalAgreement specified by the buyer, seller and product ids")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Retrieved the specified DigitalAgreement successfully", response = DigitalAgreementType.class),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 404, message = "No DigitalAgreement found for the given id"),
+            @ApiResponse(code = 500, message = "Unexpected error while retriving the passed DigitalAgreement")
+    })
+    @RequestMapping(value = "/contract/digital-agreement/{id}",
+            produces = {"application/json"},
+            method = RequestMethod.GET)
+    public ResponseEntity getDigitalAgreementForPartiesAndProduct(@ApiParam(value = "Identifier (digitalAgreement.hjid) of the DigitalAgreement", required = true) @PathVariable(value = "id") Long contractId,
+                                                                  @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
+
+        try {
+            logger.info("Incoming request to retrieve a DigitalAgreement. hjid: {}", contractId);
+            // validate role
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+            }
+
+            DigitalAgreementType digitalAgreement = new JPARepositoryFactory().forCatalogueRepository(true).getSingleEntityByHjid(DigitalAgreementType.class, contractId);
+            if(digitalAgreement == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(String.format("No DigitalAgreement found. hjid: %d", contractId));
+            }
+
+            logger.info("Retrieved DigitalAgreement. hjid: {}", contractId);
+            return ResponseEntity.ok(JsonSerializationUtility.getObjectMapper().writeValueAsString(digitalAgreement));
+
+        } catch (Exception e) {
+            return createResponseEntityAndLog(String.format("Unexpected error while getting DigitalAgreement. hjid: %d", contractId), e, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @ApiOperation(value = "", notes = "Gets the DigitalAgreement specified by the buyer, seller and product ids")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Retrieved the specified DigitalAgreement successfully", response = DigitalAgreementType.class),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 404, message = "No DigitalAgreement found for the given parameters"),
+            @ApiResponse(code = 500, message = "Unexpected error while retriving the passed DigitalAgreement")
+    })
+    @RequestMapping(value = "/contract/digital-agreement",
+            produces = {"application/json"},
+            method = RequestMethod.GET)
+    public ResponseEntity getDigitalAgreementForPartiesAndProduct(@ApiParam(value = "Identifier of the buyer company participating in the DigitalAgreement", required = true) @RequestParam(value = "buyerId") String buyerId,
+                                                                  @ApiParam(value = "Identifier of the seller company participating in the DigitalAgreement", required = true) @RequestParam(value = "sellerId") String sellerId,
+                                                                  @ApiParam(value = "Manufacturer item identification of the product being the subject of the DigitalAgreement", required = true) @RequestParam(value = "productId") String manufacturersItemId,
+                                                                  @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
+
+        try {
+            logger.info("Incoming request to retrieve a DigitalAgreement. seller id: {}, buyer id: {}, product hjid: {}", sellerId, buyerId, manufacturersItemId);
+            // validate role
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+            }
+
+            DigitalAgreementType digitalAgreement = ContractPersistenceUtility.getFrameContractAgreementById(sellerId, buyerId, manufacturersItemId);
+            if(digitalAgreement == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(String.format("No DigitalAgreement found. seller id: %s, buyer id: %s, product hjid: %s", sellerId, buyerId, manufacturersItemId));
+            }
+
+            DateTime endDate = new DateTime(digitalAgreement.getDigitalAgreementTerms().getValidityPeriod().getEndDate().toGregorianCalendar().getTime());
+            DateTime currentDate = new DateTime();
+            if(Days.daysBetween(endDate, currentDate).getDays() > 0) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(String.format("DigitalAgreement expired. seller id: %s, buyer id: %s, product hjid: %s", sellerId, buyerId, manufacturersItemId));
+            }
+
+            logger.info("Retrieved DigitalAgreement. seller id: {}, buyer id: {}, product hjid: {}", sellerId, buyerId, manufacturersItemId);
+            return ResponseEntity.ok(JsonSerializationUtility.getObjectMapper().writeValueAsString(digitalAgreement));
+
+        } catch (Exception e) {
+            return createResponseEntityAndLog(String.format("Unexpected error while getting DigitalAgreement. seller id: %s, buyer id: %s, product hjid: %s", sellerId, buyerId, manufacturersItemId), e, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @ApiOperation(value = "", notes = "Gets the DigitalAgreement specified by the buyer, seller and product ids")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Retrieved the specified DigitalAgreement successfully", response = DigitalAgreementType.class),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 500, message = "Unexpected error while retriving the passed DigitalAgreement")
+    })
+    @RequestMapping(value = "/contract/digital-agreement/all",
+            produces = {"application/json"},
+            method = RequestMethod.GET)
+    public ResponseEntity getDigitalAgreementForPartiesAndProduct(@ApiParam(value = "Identifier of the company participating in the DigitalAgreement", required = true) @RequestParam(value = "partyId") String partyId,
+                                                                  @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
+
+        try {
+            logger.info("Incoming request to retrieve a DigitalAgreements for party: {}", partyId);
+            // validate role
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+            }
+
+            List<DigitalAgreementType> digitalAgreements = ContractPersistenceUtility.getFrameContractsByPartyId(partyId);
+
+            logger.info("Completed request to retrieve all DigitalAgreement for party: {}", partyId);
+            return ResponseEntity.ok(JsonSerializationUtility.getObjectMapper().writeValueAsString(digitalAgreements));
+
+        } catch (Exception e) {
+            return createResponseEntityAndLog(String.format("Unexpected error while getting all DigitalAgreements for party: %s", partyId), e, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     private ResponseEntity validateDocumentExistence(ProcessDocumentMetadataDAO documentMetadata) {

@@ -2,10 +2,15 @@ package eu.nimble.service.bp.processor.negotiation;
 
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
-import eu.nimble.service.bp.impl.util.persistence.bp.ExecutionConfigurationDAOUtility;
-import eu.nimble.service.bp.serialization.MixInIgnoreProperties;
+import eu.nimble.service.bp.util.persistence.bp.ExecutionConfigurationDAOUtility;
+import eu.nimble.service.bp.util.spring.SpringBridge;
+import eu.nimble.service.bp.util.serialization.MixInIgnoreProperties;
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.ItemType;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.TradingTermType;
+import eu.nimble.service.model.ubl.commonbasiccomponents.QuantityType;
+import eu.nimble.service.model.ubl.digitalagreement.DigitalAgreementType;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.utility.JsonSerializationUtility;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
@@ -58,10 +63,44 @@ public class DefaultQuotationProcessor  implements JavaDelegate {
 
             // NOTE: Pay attention to the direction of the document. Here it is from seller to buyer
             businessProcessApplication.saveDocument(processContextId,processInstanceId, seller, buyer,creatorUserID, quotation, relatedProducts, relatedProductCategories);
+
+            // check the conditions related to frame contracts
+            createOrUpdateFrameContract(quotation);
+
         } else if(executionType == ExecutionConfiguration.ExecutionTypeEnum.MICROSERVICE) {
             // TODO: How to call a microservice
         } else {
             // TODO: think other types of execution possibilities
         }
+    }
+
+    /**
+     * Creates frame contract if the quotation includes a term related to frame contract duration and if the quotation
+     * is accepted. If there exists a frame contract already update its duration if it's changed.
+     */
+    private DigitalAgreementType createOrUpdateFrameContract(QuotationType quotation) {
+        TradingTermType frameContractDurationTerm = getFrameContractTerm(quotation);
+        // there is no terms regarding the frame contract duration
+        if(frameContractDurationTerm == null) {
+            return null;
+        }
+
+        String sellerId = quotation.getSellerSupplierParty().getParty().getPartyIdentification().get(0).getID();
+        String buyerId = quotation.getBuyerCustomerParty().getParty().getPartyIdentification().get(0).getID();
+        ItemType item = quotation.getQuotationLine().get(0).getLineItem().getItem();
+        QuantityType duration = frameContractDurationTerm.getValue().getValueQuantity().get(0);
+
+        DigitalAgreementType frameContract = SpringBridge.getInstance().getFrameContractService().createOrUpdateFrameContract(sellerId, buyerId, item, duration, quotation.getID());
+        return frameContract;
+    }
+
+    private TradingTermType getFrameContractTerm(QuotationType quotation) {
+        List<TradingTermType> tradingTerms = quotation.getTradingTerms();
+        for(TradingTermType term : tradingTerms) {
+            if (term.getID().contentEquals("FRAME_CONTRACT_DURATION")) {
+                return term;
+            }
+        }
+        return null;
     }
 }

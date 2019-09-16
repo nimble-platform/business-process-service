@@ -51,8 +51,33 @@ public class BusinessProcessDBConfig {
         return emfBean;
     }
 
+    @Bean(name = "bpdbLazyDisabledEmfBean")
+    public LocalContainerEntityManagerFactoryBean bpdbLazyDisabledEntityManagerFactoryBean(
+            EntityManagerFactoryBuilder builder,
+            @Qualifier("bpdbHibernateConfigs") Map hibernateConfigs,
+            @Qualifier("bpdbDataSource") DataSource dataSource) {
+        LocalContainerEntityManagerFactoryBean emfBean = builder
+                .dataSource(dataSource)
+                .persistenceUnit("bp-data-model")
+                .build();
+
+        Properties hibernateProperties = new Properties();
+        hibernateProperties.putAll(hibernateConfigs);
+        // enable hibernate.enable_lazy_load_no_trans property
+        hibernateProperties.put("hibernate.enable_lazy_load_no_trans",true);
+        HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
+        emfBean.setJpaVendorAdapter(vendorAdapter);
+        emfBean.setJpaProperties(hibernateProperties);
+        return emfBean;
+    }
+
     @Bean(name = "bpdbEntityManagerFactory")
     public EntityManagerFactory bpdbEntityManagerFactory(@Qualifier("bpdbEmfBean") LocalContainerEntityManagerFactoryBean emfBean) {
+        return emfBean.getObject();
+    }
+
+    @Bean(name = "bpdbLazyDisabledEntityManagerFactory")
+    public EntityManagerFactory bpdbLazyEnabledEntityManagerFactory(@Qualifier("bpdbLazyDisabledEmfBean") LocalContainerEntityManagerFactoryBean emfBean) {
         return emfBean.getObject();
     }
 }

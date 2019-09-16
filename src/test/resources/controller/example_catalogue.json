@@ -1,0 +1,2528 @@
+{
+  "id": "default",
+  "uuid": "f0779966-a340-463d-9f04-2add5a6912f6",
+  "name": null,
+  "issueDate": null,
+  "providerParty": {
+    "federationInstanceID": null,
+    "nace": [],
+    "description": [],
+    "brandName": [],
+    "partyName": [
+      {
+        "name": {
+          "value": "canCompany",
+          "languageID": "en",
+          "hjid": null
+        },
+        "hjid": null
+      }
+    ],
+    "partyIdentification": [
+      {
+        "id": "706",
+        "hjid": null
+      }
+    ],
+    "websiteURI": "",
+    "industryClassificationCode": {
+      "value": null,
+      "name": "IndustryClassificationCode",
+      "listID": null,
+      "uri": null,
+      "hjid": null
+    },
+    "externalAward": null,
+    "ppapCompatibilityLevel": 1,
+    "preferredItemClassificationCode": [
+      {
+        "value": "0173-1#01-AEI956#006::eClass::Notebook::product",
+        "name": null,
+        "listID": null,
+        "uri": null,
+        "hjid": null
+      },
+      {
+        "value": "0173-1#01-ADU394#007::eClass::Transport (other, unspecified)::transportation",
+        "name": null,
+        "listID": null,
+        "uri": null,
+        "hjid": null
+      },
+      {
+        "value": "0173-1#01-AAC286#007::eClass::Home economics, Home technology::product",
+        "name": null,
+        "listID": null,
+        "uri": null,
+        "hjid": null
+      },
+      {
+        "value": "0173-1#01-BAC323#011::eClass::Farming vehicle (other, unspecified)::product",
+        "name": null,
+        "listID": null,
+        "uri": null,
+        "hjid": null
+      }
+    ],
+    "mostRecentItemsClassificationCode": [
+      {
+        "value": "0173-1#01-AAB315#006::eClass::General service::product::1549367203416",
+        "name": null,
+        "listID": null,
+        "uri": null,
+        "hjid": null
+      },
+      {
+        "value": "0173-1#01-AKJ050#013::eClass::MDF raw::product::1549885037770",
+        "name": null,
+        "listID": null,
+        "uri": null,
+        "hjid": null
+      },
+      {
+        "value": "0173-1#01-ACH237#011::eClass::MDF, painted::product::1547034223954",
+        "name": null,
+        "listID": null,
+        "uri": null,
+        "hjid": null
+      },
+      {
+        "value": "0173-1#01-AAC350#007::eClass::Auxiliary supply, additive, cleaning agent::product::1549884023679",
+        "name": null,
+        "listID": null,
+        "uri": null,
+        "hjid": null
+      },
+      {
+        "value": "0173-1#01-ACE546#006::eClass::Food, beverage, tobacco::product::1549914240904",
+        "name": null,
+        "listID": null,
+        "uri": null,
+        "hjid": null
+      },
+      {
+        "value": "0173-1#01-AEI956#006::eClass::Notebook::product::1549284216242",
+        "name": null,
+        "listID": null,
+        "uri": null,
+        "hjid": null
+      },
+      {
+        "value": "http://www.aidimme.es/FurnitureSectorOntology.owl#MDFBoard::FurnitureOntology::MDFBoard::product::1549367609782",
+        "name": null,
+        "listID": null,
+        "uri": null,
+        "hjid": null
+      },
+      {
+        "value": "0173-1#01-AGE763#001::eClass::Clothing and textile::product::1549368501617",
+        "name": null,
+        "listID": null,
+        "uri": null,
+        "hjid": null
+      },
+      {
+        "value": "0173-1#01-AAC168#005::eClass::Automotive technology::product::1549883194387",
+        "name": null,
+        "listID": null,
+        "uri": null,
+        "hjid": null
+      },
+      {
+        "value": "0173-1#01-AAA647#005::eClass::Construction technology::product::1549884974088",
+        "name": null,
+        "listID": null,
+        "uri": null,
+        "hjid": null
+      }
+    ],
+    "postalAddress": {
+      "id": null,
+      "streetName": "abcx",
+      "buildingNumber": "",
+      "cityName": "ankara",
+      "postalZone": "234",
+      "country": {
+        "name": {
+          "value": "turkey",
+          "languageID": null,
+          "hjid": null
+        },
+        "hjid": null
+      },
+      "hjid": null
+    },
+    "partyTaxScheme": [
+      {
+        "taxScheme": {
+          "taxTypeCode": {
+            "value": "12",
+            "name": "VAT",
+            "listID": null,
+            "uri": null,
+            "hjid": null
+          },
+          "hjid": null
+        },
+        "hjid": null
+      }
+    ],
+    "contact": {
+      "id": null,
+      "name": null,
+      "telephone": null,
+      "telefax": null,
+      "electronicMail": null,
+      "note": null,
+      "otherCommunication": [],
+      "hjid": null
+    },
+    "person": [
+      {
+        "id": "704",
+        "firstName": "ali",
+        "familyName": "can",
+        "birthDate": null,
+        "birthplaceName": null,
+        "organizationDepartment": null,
+        "role": [],
+        "contact": {
+          "id": null,
+          "name": {
+            "value": null,
+            "languageID": "en",
+            "hjid": null
+          },
+          "telephone": "",
+          "telefax": null,
+          "electronicMail": "can@gmail.com",
+          "note": null,
+          "otherCommunication": [],
+          "hjid": null
+        },
+        "hjid": null,
+        "birthDateItem": null
+      }
+    ],
+    "certificate": [],
+    "qualityIndicator": [
+      {
+        "qualityParameter": "",
+        "quantity": null,
+        "hjid": null
+      }
+    ],
+    "ppapDocumentReference": [],
+    "documentReference": [],
+    "industrySector": [],
+    "salesTerms": null,
+    "purchaseTerms": {
+      "tradingTerms": [],
+      "deliveryTerms": [
+        {
+          "id": null,
+          "incoterms": null,
+          "specialTerms": [
+            {
+              "value": "",
+              "languageID": "en",
+              "hjid": null
+            }
+          ],
+          "amount": null,
+          "transportModeCode": null,
+          "deliveryLocation": {
+            "address": {
+              "id": null,
+              "streetName": "abcx",
+              "buildingNumber": "",
+              "cityName": "ankara",
+              "postalZone": "234",
+              "country": {
+                "name": {
+                  "value": "turkey",
+                  "languageID": null,
+                  "hjid": null
+                },
+                "hjid": null
+              },
+              "hjid": null
+            },
+            "hjid": null
+          },
+          "estimatedDeliveryPeriod": null,
+          "hjid": null
+        }
+      ],
+      "paymentMeans": [],
+      "hjid": null
+    },
+    "hjid": null
+  },
+  "catalogueLine": [
+    {
+      "id": "7a56d940-64e0-4619-a7e2-4d39b6682dd4",
+      "minimumOrderQuantity": null,
+      "freeOfChargeIndicator": false,
+      "warrantyInformation": [],
+      "warrantyValidityPeriod": {
+        "startDate": null,
+        "startTime": null,
+        "endDate": null,
+        "endTime": null,
+        "durationMeasure": {
+          "value": 0,
+          "unitCode": "month(s)",
+          "unitCodeListID": null,
+          "hjid": null
+        },
+        "hjid": null,
+        "startDateItem": null,
+        "startTimeItem": null,
+        "endDateItem": null,
+        "endTimeItem": null
+      },
+      "requiredItemLocationQuantity": {
+        "minimumQuantity": null,
+        "applicableTerritoryAddress": [],
+        "price": {
+          "priceAmount": {
+            "value": 400,
+            "currencyID": "EUR",
+            "hjid": null
+          },
+          "baseQuantity": {
+            "value": 1,
+            "unitCode": "item(s)",
+            "unitCodeListID": null,
+            "hjid": null
+          },
+          "hjid": null
+        },
+        "allowanceCharge": [],
+        "hjid": null
+      },
+      "priceOption": [],
+      "goodsItem": {
+        "id": "7a56d940-64e0-4619-a7e2-4d39b6682dd4",
+        "item": {
+          "description": [
+            {
+              "value": null,
+              "languageID": "en",
+              "hjid": null
+            }
+          ],
+          "name": [
+            {
+              "value": "QExample local",
+              "languageID": "en",
+              "hjid": null
+            }
+          ],
+          "productImage": [],
+          "manufacturersItemIdentification": {
+            "id": "7a56d940-64e0-4619-a7e2-4d39b6682dd4",
+            "hjid": null
+          },
+          "catalogueDocumentReference": {
+            "id": "f0779966-a340-463d-9f04-2add5a6912f6",
+            "uuid": null,
+            "documentType": null,
+            "attachment": null,
+            "validityPeriod": null,
+            "hjid": null
+          },
+          "itemSpecificationDocumentReference": [],
+          "commodityClassification": [
+            {
+              "natureCode": null,
+              "cargoTypeCode": null,
+              "itemClassificationCode": {
+                "value": "http://www.nimble-project.org/resource/eclass#0173-1#01-AAC168#005",
+                "name": "Automotive technology",
+                "listID": "eClass",
+                "uri": "http://www.nimble-project.org/resource/eclass#0173-1#01-AAC168#005",
+                "hjid": null
+              },
+              "hjid": null
+            },
+            {
+              "natureCode": null,
+              "cargoTypeCode": null,
+              "itemClassificationCode": {
+                "value": "Product",
+                "name": "Product",
+                "listID": "Default",
+                "uri": null,
+                "hjid": null
+              },
+              "hjid": null
+            }
+          ],
+          "additionalItemProperty": [],
+          "manufacturerParty": {
+            "federationInstanceID": null,
+            "nace": [],
+            "description": [],
+            "brandName": [],
+            "partyName": [
+              {
+                "name": {
+                  "value": "canCompany",
+                  "languageID": "en",
+                  "hjid": null
+                },
+                "hjid": null
+              }
+            ],
+            "partyIdentification": [
+              {
+                "id": "706",
+                "hjid": null
+              }
+            ],
+            "websiteURI": "",
+            "industryClassificationCode": {
+              "value": null,
+              "name": "IndustryClassificationCode",
+              "listID": null,
+              "uri": null,
+              "hjid": null
+            },
+            "externalAward": null,
+            "ppapCompatibilityLevel": 1,
+            "preferredItemClassificationCode": [
+              {
+                "value": "0173-1#01-AEI956#006::eClass::Notebook::product",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-ADU394#007::eClass::Transport (other, unspecified)::transportation",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-AAC286#007::eClass::Home economics, Home technology::product",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-BAC323#011::eClass::Farming vehicle (other, unspecified)::product",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              }
+            ],
+            "mostRecentItemsClassificationCode": [
+              {
+                "value": "0173-1#01-AAB315#006::eClass::General service::product::1549367203416",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-AKJ050#013::eClass::MDF raw::product::1549885037770",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-ACH237#011::eClass::MDF, painted::product::1547034223954",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-AAC350#007::eClass::Auxiliary supply, additive, cleaning agent::product::1549884023679",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-ACE546#006::eClass::Food, beverage, tobacco::product::1549914240904",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-AEI956#006::eClass::Notebook::product::1549284216242",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "http://www.aidimme.es/FurnitureSectorOntology.owl#MDFBoard::FurnitureOntology::MDFBoard::product::1549367609782",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-AGE763#001::eClass::Clothing and textile::product::1549368501617",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-AAC168#005::eClass::Automotive technology::product::1549883194387",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-AAA647#005::eClass::Construction technology::product::1549884974088",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              }
+            ],
+            "postalAddress": {
+              "id": null,
+              "streetName": "abcx",
+              "buildingNumber": "",
+              "cityName": "ankara",
+              "postalZone": "234",
+              "country": {
+                "name": {
+                  "value": "turkey",
+                  "languageID": null,
+                  "hjid": null
+                },
+                "hjid": null
+              },
+              "hjid": null
+            },
+            "partyTaxScheme": [
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null,
+                    "hjid": null
+                  },
+                  "hjid": null
+                },
+                "hjid": null
+              }
+            ],
+            "contact": {
+              "id": null,
+              "name": null,
+              "telephone": null,
+              "telefax": null,
+              "electronicMail": null,
+              "note": null,
+              "otherCommunication": [],
+              "hjid": null
+            },
+            "person": [
+              {
+                "id": "704",
+                "firstName": "ali",
+                "familyName": "can",
+                "birthDate": null,
+                "birthplaceName": null,
+                "organizationDepartment": null,
+                "role": [],
+                "contact": {
+                  "id": null,
+                  "name": {
+                    "value": null,
+                    "languageID": "en",
+                    "hjid": null
+                  },
+                  "telephone": "",
+                  "telefax": null,
+                  "electronicMail": "can@gmail.com",
+                  "note": null,
+                  "otherCommunication": [],
+                  "hjid": null
+                },
+                "hjid": null,
+                "birthDateItem": null
+              }
+            ],
+            "certificate": [],
+            "qualityIndicator": [
+              {
+                "qualityParameter": "",
+                "quantity": null,
+                "hjid": null
+              }
+            ],
+            "ppapDocumentReference": [],
+            "documentReference": [],
+            "industrySector": [],
+            "salesTerms": null,
+            "purchaseTerms": {
+              "tradingTerms": [],
+              "deliveryTerms": [
+                {
+                  "id": null,
+                  "incoterms": null,
+                  "specialTerms": [
+                    {
+                      "value": "",
+                      "languageID": "en",
+                      "hjid": null
+                    }
+                  ],
+                  "amount": null,
+                  "transportModeCode": null,
+                  "deliveryLocation": {
+                    "address": {
+                      "id": null,
+                      "streetName": "abcx",
+                      "buildingNumber": "",
+                      "cityName": "ankara",
+                      "postalZone": "234",
+                      "country": {
+                        "name": {
+                          "value": "turkey",
+                          "languageID": null,
+                          "hjid": null
+                        },
+                        "hjid": null
+                      },
+                      "hjid": null
+                    },
+                    "hjid": null
+                  },
+                  "estimatedDeliveryPeriod": null,
+                  "hjid": null
+                }
+              ],
+              "paymentMeans": [],
+              "hjid": null
+            },
+            "hjid": null
+          },
+          "certificate": [],
+          "dimension": [],
+          "transportationServiceDetails": null,
+          "trackAndTraceDetails": {
+            "eventURL": null,
+            "masterURL": null,
+            "productionProcessTemplate": null,
+            "hjid": null
+          },
+          "hjid": null
+        },
+        "containingPackage": {
+          "quantity": {
+            "value": 1,
+            "unitCode": "item(s)",
+            "unitCodeListID": null,
+            "hjid": null
+          },
+          "packagingTypeCode": {
+            "value": "",
+            "name": "",
+            "listID": "",
+            "uri": "",
+            "hjid": null
+          },
+          "measurementDimension": [],
+          "hjid": null
+        },
+        "deliveryTerms": {
+          "id": null,
+          "incoterms": null,
+          "specialTerms": [],
+          "amount": {
+            "value": null,
+            "currencyID": null,
+            "hjid": null
+          },
+          "transportModeCode": null,
+          "deliveryLocation": {
+            "address": {
+              "id": null,
+              "streetName": "",
+              "buildingNumber": "",
+              "cityName": "",
+              "postalZone": "",
+              "country": {
+                "name": {
+                  "value": null,
+                  "languageID": "en",
+                  "hjid": null
+                },
+                "hjid": null
+              },
+              "hjid": null
+            },
+            "hjid": null
+          },
+          "estimatedDeliveryPeriod": {
+            "startDate": null,
+            "startTime": null,
+            "endDate": null,
+            "endTime": null,
+            "durationMeasure": {
+              "value": null,
+              "unitCode": "day(s)",
+              "unitCodeListID": null,
+              "hjid": null
+            },
+            "hjid": null,
+            "startDateItem": null,
+            "startTimeItem": null,
+            "endDateItem": null,
+            "endTimeItem": null
+          },
+          "hjid": null
+        },
+        "allowanceCharge": [],
+        "hjid": null
+      },
+      "hjid": null
+    },
+    {
+      "id": "d1cd2d23-f151-4064-8c39-9127d11a924e",
+      "minimumOrderQuantity": null,
+      "freeOfChargeIndicator": false,
+      "warrantyInformation": [],
+      "warrantyValidityPeriod": {
+        "startDate": null,
+        "startTime": null,
+        "endDate": null,
+        "endTime": null,
+        "durationMeasure": {
+          "value": 0,
+          "unitCode": "month(s)",
+          "unitCodeListID": null,
+          "hjid": null
+        },
+        "hjid": null,
+        "startDateItem": null,
+        "startTimeItem": null,
+        "endDateItem": null,
+        "endTimeItem": null
+      },
+      "requiredItemLocationQuantity": {
+        "minimumQuantity": null,
+        "applicableTerritoryAddress": [],
+        "price": {
+          "priceAmount": {
+            "value": 1200,
+            "currencyID": "EUR",
+            "hjid": null
+          },
+          "baseQuantity": {
+            "value": 1,
+            "unitCode": "item(s)",
+            "unitCodeListID": null,
+            "hjid": null
+          },
+          "hjid": null
+        },
+        "allowanceCharge": [],
+        "hjid": null
+      },
+      "priceOption": [],
+      "goodsItem": {
+        "id": "d1cd2d23-f151-4064-8c39-9127d11a924e",
+        "item": {
+          "description": [
+            {
+              "value": "There is no description here",
+              "languageID": "en",
+              "hjid": null
+            }
+          ],
+          "name": [
+            {
+              "value": "My final product",
+              "languageID": "en",
+              "hjid": null
+            }
+          ],
+          "productImage": [],
+          "manufacturersItemIdentification": {
+            "id": "d1cd2d23-f151-4064-8c39-9127d11a924e",
+            "hjid": null
+          },
+          "catalogueDocumentReference": {
+            "id": "f0779966-a340-463d-9f04-2add5a6912f6",
+            "uuid": null,
+            "documentType": null,
+            "attachment": null,
+            "validityPeriod": null,
+            "hjid": null
+          },
+          "itemSpecificationDocumentReference": [],
+          "commodityClassification": [
+            {
+              "natureCode": null,
+              "cargoTypeCode": null,
+              "itemClassificationCode": {
+                "value": "http://www.nimble-project.org/resource/eclass#0173-1#01-AAB315#006",
+                "name": "General service",
+                "listID": "eClass",
+                "uri": "http://www.nimble-project.org/resource/eclass#0173-1#01-AAB315#006",
+                "hjid": null
+              },
+              "hjid": null
+            },
+            {
+              "natureCode": null,
+              "cargoTypeCode": null,
+              "itemClassificationCode": {
+                "value": "Product",
+                "name": "Product",
+                "listID": "Default",
+                "uri": null,
+                "hjid": null
+              },
+              "hjid": null
+            }
+          ],
+          "additionalItemProperty": [],
+          "manufacturerParty": {
+            "federationInstanceID": null,
+            "nace": [],
+            "description": [],
+            "brandName": [],
+            "partyName": [
+              {
+                "name": {
+                  "value": "canCompany",
+                  "languageID": "en",
+                  "hjid": null
+                },
+                "hjid": null
+              }
+            ],
+            "partyIdentification": [
+              {
+                "id": "706",
+                "hjid": null
+              }
+            ],
+            "websiteURI": "",
+            "industryClassificationCode": {
+              "value": null,
+              "name": "IndustryClassificationCode",
+              "listID": null,
+              "uri": null,
+              "hjid": null
+            },
+            "externalAward": null,
+            "ppapCompatibilityLevel": 1,
+            "preferredItemClassificationCode": [
+              {
+                "value": "0173-1#01-AEI956#006::eClass::Notebook::product",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-ADU394#007::eClass::Transport (other, unspecified)::transportation",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-AAC286#007::eClass::Home economics, Home technology::product",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-BAC323#011::eClass::Farming vehicle (other, unspecified)::product",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              }
+            ],
+            "mostRecentItemsClassificationCode": [
+              {
+                "value": "0173-1#01-AAB315#006::eClass::General service::product::1549367203416",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-AKJ050#013::eClass::MDF raw::product::1549885037770",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-ACH237#011::eClass::MDF, painted::product::1547034223954",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-AAC350#007::eClass::Auxiliary supply, additive, cleaning agent::product::1549884023679",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-ACE546#006::eClass::Food, beverage, tobacco::product::1549914240904",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-AEI956#006::eClass::Notebook::product::1549284216242",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "http://www.aidimme.es/FurnitureSectorOntology.owl#MDFBoard::FurnitureOntology::MDFBoard::product::1549367609782",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-AGE763#001::eClass::Clothing and textile::product::1549368501617",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-AAC168#005::eClass::Automotive technology::product::1549883194387",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-AAA647#005::eClass::Construction technology::product::1549884974088",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              }
+            ],
+            "postalAddress": {
+              "id": null,
+              "streetName": "abcx",
+              "buildingNumber": "",
+              "cityName": "ankara",
+              "postalZone": "234",
+              "country": {
+                "name": {
+                  "value": "turkey",
+                  "languageID": null,
+                  "hjid": null
+                },
+                "hjid": null
+              },
+              "hjid": null
+            },
+            "partyTaxScheme": [
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null,
+                    "hjid": null
+                  },
+                  "hjid": null
+                },
+                "hjid": null
+              }
+            ],
+            "contact": {
+              "id": null,
+              "name": null,
+              "telephone": null,
+              "telefax": null,
+              "electronicMail": null,
+              "note": null,
+              "otherCommunication": [],
+              "hjid": null
+            },
+            "person": [
+              {
+                "id": "704",
+                "firstName": "ali",
+                "familyName": "can",
+                "birthDate": null,
+                "birthplaceName": null,
+                "organizationDepartment": null,
+                "role": [],
+                "contact": {
+                  "id": null,
+                  "name": {
+                    "value": null,
+                    "languageID": "en",
+                    "hjid": null
+                  },
+                  "telephone": "",
+                  "telefax": null,
+                  "electronicMail": "can@gmail.com",
+                  "note": null,
+                  "otherCommunication": [],
+                  "hjid": null
+                },
+                "hjid": null,
+                "birthDateItem": null
+              }
+            ],
+            "certificate": [],
+            "qualityIndicator": [
+              {
+                "qualityParameter": "",
+                "quantity": null,
+                "hjid": null
+              }
+            ],
+            "ppapDocumentReference": [],
+            "documentReference": [],
+            "industrySector": [],
+            "salesTerms": null,
+            "purchaseTerms": {
+              "tradingTerms": [],
+              "deliveryTerms": [
+                {
+                  "id": null,
+                  "incoterms": null,
+                  "specialTerms": [
+                    {
+                      "value": "",
+                      "languageID": "en",
+                      "hjid": null
+                    }
+                  ],
+                  "amount": null,
+                  "transportModeCode": null,
+                  "deliveryLocation": {
+                    "address": {
+                      "id": null,
+                      "streetName": "abcx",
+                      "buildingNumber": "",
+                      "cityName": "ankara",
+                      "postalZone": "234",
+                      "country": {
+                        "name": {
+                          "value": "turkey",
+                          "languageID": null,
+                          "hjid": null
+                        },
+                        "hjid": null
+                      },
+                      "hjid": null
+                    },
+                    "hjid": null
+                  },
+                  "estimatedDeliveryPeriod": null,
+                  "hjid": null
+                }
+              ],
+              "paymentMeans": [],
+              "hjid": null
+            },
+            "hjid": null
+          },
+          "certificate": [],
+          "dimension": [],
+          "transportationServiceDetails": null,
+          "trackAndTraceDetails": {
+            "eventURL": null,
+            "masterURL": null,
+            "productionProcessTemplate": null,
+            "hjid": null
+          },
+          "hjid": null
+        },
+        "containingPackage": {
+          "quantity": {
+            "value": 1,
+            "unitCode": "item(s)",
+            "unitCodeListID": null,
+            "hjid": null
+          },
+          "packagingTypeCode": {
+            "value": "",
+            "name": "",
+            "listID": "",
+            "uri": "",
+            "hjid": null
+          },
+          "measurementDimension": [],
+          "hjid": null
+        },
+        "deliveryTerms": {
+          "id": null,
+          "incoterms": null,
+          "specialTerms": [],
+          "amount": {
+            "value": null,
+            "currencyID": null,
+            "hjid": null
+          },
+          "transportModeCode": null,
+          "deliveryLocation": {
+            "address": {
+              "id": null,
+              "streetName": "",
+              "buildingNumber": "",
+              "cityName": "",
+              "postalZone": "",
+              "country": {
+                "name": {
+                  "value": null,
+                  "languageID": "en",
+                  "hjid": null
+                },
+                "hjid": null
+              },
+              "hjid": null
+            },
+            "hjid": null
+          },
+          "estimatedDeliveryPeriod": {
+            "startDate": null,
+            "startTime": null,
+            "endDate": null,
+            "endTime": null,
+            "durationMeasure": {
+              "value": null,
+              "unitCode": "day(s)",
+              "unitCodeListID": null,
+              "hjid": null
+            },
+            "hjid": null,
+            "startDateItem": null,
+            "startTimeItem": null,
+            "endDateItem": null,
+            "endTimeItem": null
+          },
+          "hjid": null
+        },
+        "allowanceCharge": [],
+        "hjid": null
+      },
+      "hjid": null
+    },
+    {
+      "id": "47097533-a523-40aa-b915-be35a2768016",
+      "minimumOrderQuantity": null,
+      "freeOfChargeIndicator": false,
+      "warrantyInformation": [],
+      "warrantyValidityPeriod": {
+        "startDate": null,
+        "startTime": null,
+        "endDate": null,
+        "endTime": null,
+        "durationMeasure": {
+          "value": 0,
+          "unitCode": "month(s)",
+          "unitCodeListID": null,
+          "hjid": null
+        },
+        "hjid": null,
+        "startDateItem": null,
+        "startTimeItem": null,
+        "endDateItem": null,
+        "endTimeItem": null
+      },
+      "requiredItemLocationQuantity": {
+        "minimumQuantity": null,
+        "applicableTerritoryAddress": [],
+        "price": {
+          "priceAmount": {
+            "value": 2000,
+            "currencyID": "USD",
+            "hjid": null
+          },
+          "baseQuantity": {
+            "value": 1,
+            "unitCode": "item(s)",
+            "unitCodeListID": null,
+            "hjid": null
+          },
+          "hjid": null
+        },
+        "allowanceCharge": [],
+        "hjid": null
+      },
+      "priceOption": [],
+      "goodsItem": {
+        "id": "47097533-a523-40aa-b915-be35a2768016",
+        "item": {
+          "description": [
+            {
+              "value": "this is the latest one",
+              "languageID": "en",
+              "hjid": null
+            }
+          ],
+          "name": [
+            {
+              "value": "The best notebook ever",
+              "languageID": "en",
+              "hjid": null
+            }
+          ],
+          "productImage": [],
+          "manufacturersItemIdentification": {
+            "id": "47097533-a523-40aa-b915-be35a2768016",
+            "hjid": null
+          },
+          "catalogueDocumentReference": {
+            "id": "f0779966-a340-463d-9f04-2add5a6912f6",
+            "uuid": null,
+            "documentType": null,
+            "attachment": null,
+            "validityPeriod": null,
+            "hjid": null
+          },
+          "itemSpecificationDocumentReference": [],
+          "commodityClassification": [
+            {
+              "natureCode": null,
+              "cargoTypeCode": null,
+              "itemClassificationCode": {
+                "value": "http://www.nimble-project.org/resource/eclass#0173-1#01-AEI956#006",
+                "name": "Notebook",
+                "listID": "eClass",
+                "uri": "http://www.nimble-project.org/resource/eclass#0173-1#01-AEI956#006",
+                "hjid": null
+              },
+              "hjid": null
+            },
+            {
+              "natureCode": null,
+              "cargoTypeCode": null,
+              "itemClassificationCode": {
+                "value": "Product",
+                "name": "Product",
+                "listID": "Default",
+                "uri": null,
+                "hjid": null
+              },
+              "hjid": null
+            },
+            {
+              "natureCode": null,
+              "cargoTypeCode": null,
+              "itemClassificationCode": {
+                "value": "http://www.nimble-project.org/resource/eclass#0173-1#01-AKJ313#005",
+                "name": "Information, communication and media technology",
+                "listID": "eClass",
+                "uri": "http://www.nimble-project.org/resource/eclass#0173-1#01-AKJ313#005",
+                "hjid": null
+              },
+              "hjid": null
+            },
+            {
+              "natureCode": null,
+              "cargoTypeCode": null,
+              "itemClassificationCode": {
+                "value": "http://www.nimble-project.org/resource/eclass#0173-1#01-AKJ317#008",
+                "name": "Computer system",
+                "listID": "eClass",
+                "uri": "http://www.nimble-project.org/resource/eclass#0173-1#01-AKJ317#008",
+                "hjid": null
+              },
+              "hjid": null
+            },
+            {
+              "natureCode": null,
+              "cargoTypeCode": null,
+              "itemClassificationCode": {
+                "value": "http://www.nimble-project.org/resource/eclass#0173-1#01-ACL245#007",
+                "name": "Mobile PC",
+                "listID": "eClass",
+                "uri": "http://www.nimble-project.org/resource/eclass#0173-1#01-ACL245#007",
+                "hjid": null
+              },
+              "hjid": null
+            }
+          ],
+          "additionalItemProperty": [],
+          "manufacturerParty": {
+            "federationInstanceID": null,
+            "nace": [],
+            "description": [],
+            "brandName": [],
+            "partyName": [
+              {
+                "name": {
+                  "value": "canCompany",
+                  "languageID": "en",
+                  "hjid": null
+                },
+                "hjid": null
+              }
+            ],
+            "partyIdentification": [
+              {
+                "id": "706",
+                "hjid": null
+              }
+            ],
+            "websiteURI": "",
+            "industryClassificationCode": {
+              "value": null,
+              "name": "IndustryClassificationCode",
+              "listID": null,
+              "uri": null,
+              "hjid": null
+            },
+            "externalAward": null,
+            "ppapCompatibilityLevel": 1,
+            "preferredItemClassificationCode": [
+              {
+                "value": "0173-1#01-AEI956#006::eClass::Notebook::product",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-ADU394#007::eClass::Transport (other, unspecified)::transportation",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-AAC286#007::eClass::Home economics, Home technology::product",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-BAC323#011::eClass::Farming vehicle (other, unspecified)::product",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              }
+            ],
+            "mostRecentItemsClassificationCode": [
+              {
+                "value": "0173-1#01-AAB315#006::eClass::General service::product::1549367203416",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-AKJ050#013::eClass::MDF raw::product::1549885037770",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-ACH237#011::eClass::MDF, painted::product::1547034223954",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-AAC350#007::eClass::Auxiliary supply, additive, cleaning agent::product::1549884023679",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-ACE546#006::eClass::Food, beverage, tobacco::product::1549914240904",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-AEI956#006::eClass::Notebook::product::1549284216242",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "http://www.aidimme.es/FurnitureSectorOntology.owl#MDFBoard::FurnitureOntology::MDFBoard::product::1549367609782",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-AGE763#001::eClass::Clothing and textile::product::1549368501617",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-AAC168#005::eClass::Automotive technology::product::1549883194387",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-AAA647#005::eClass::Construction technology::product::1549884974088",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              }
+            ],
+            "postalAddress": {
+              "id": null,
+              "streetName": "abcx",
+              "buildingNumber": "",
+              "cityName": "ankara",
+              "postalZone": "234",
+              "country": {
+                "name": {
+                  "value": "turkey",
+                  "languageID": null,
+                  "hjid": null
+                },
+                "hjid": null
+              },
+              "hjid": null
+            },
+            "partyTaxScheme": [
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null,
+                    "hjid": null
+                  },
+                  "hjid": null
+                },
+                "hjid": null
+              }
+            ],
+            "contact": {
+              "id": null,
+              "name": null,
+              "telephone": null,
+              "telefax": null,
+              "electronicMail": null,
+              "note": null,
+              "otherCommunication": [],
+              "hjid": null
+            },
+            "person": [
+              {
+                "id": "704",
+                "firstName": "ali",
+                "familyName": "can",
+                "birthDate": null,
+                "birthplaceName": null,
+                "organizationDepartment": null,
+                "role": [],
+                "contact": {
+                  "id": null,
+                  "name": {
+                    "value": null,
+                    "languageID": "en",
+                    "hjid": null
+                  },
+                  "telephone": "",
+                  "telefax": null,
+                  "electronicMail": "can@gmail.com",
+                  "note": null,
+                  "otherCommunication": [],
+                  "hjid": null
+                },
+                "hjid": null,
+                "birthDateItem": null
+              }
+            ],
+            "certificate": [],
+            "qualityIndicator": [
+              {
+                "qualityParameter": "",
+                "quantity": null,
+                "hjid": null
+              }
+            ],
+            "ppapDocumentReference": [],
+            "documentReference": [],
+            "industrySector": [],
+            "salesTerms": null,
+            "purchaseTerms": {
+              "tradingTerms": [],
+              "deliveryTerms": [
+                {
+                  "id": null,
+                  "incoterms": null,
+                  "specialTerms": [
+                    {
+                      "value": "",
+                      "languageID": "en",
+                      "hjid": null
+                    }
+                  ],
+                  "amount": null,
+                  "transportModeCode": null,
+                  "deliveryLocation": {
+                    "address": {
+                      "id": null,
+                      "streetName": "abcx",
+                      "buildingNumber": "",
+                      "cityName": "ankara",
+                      "postalZone": "234",
+                      "country": {
+                        "name": {
+                          "value": "turkey",
+                          "languageID": null,
+                          "hjid": null
+                        },
+                        "hjid": null
+                      },
+                      "hjid": null
+                    },
+                    "hjid": null
+                  },
+                  "estimatedDeliveryPeriod": null,
+                  "hjid": null
+                }
+              ],
+              "paymentMeans": [],
+              "hjid": null
+            },
+            "hjid": null
+          },
+          "certificate": [],
+          "dimension": [],
+          "transportationServiceDetails": null,
+          "trackAndTraceDetails": {
+            "eventURL": null,
+            "masterURL": null,
+            "productionProcessTemplate": null,
+            "hjid": null
+          },
+          "hjid": null
+        },
+        "containingPackage": {
+          "quantity": {
+            "value": 1,
+            "unitCode": "item(s)",
+            "unitCodeListID": null,
+            "hjid": null
+          },
+          "packagingTypeCode": {
+            "value": "",
+            "name": "",
+            "listID": "",
+            "uri": "",
+            "hjid": null
+          },
+          "measurementDimension": [],
+          "hjid": null
+        },
+        "deliveryTerms": {
+          "id": null,
+          "incoterms": null,
+          "specialTerms": [],
+          "amount": {
+            "value": null,
+            "currencyID": null,
+            "hjid": null
+          },
+          "transportModeCode": null,
+          "deliveryLocation": {
+            "address": {
+              "id": null,
+              "streetName": "",
+              "buildingNumber": "",
+              "cityName": "",
+              "postalZone": "",
+              "country": {
+                "name": {
+                  "value": null,
+                  "languageID": "en",
+                  "hjid": null
+                },
+                "hjid": null
+              },
+              "hjid": null
+            },
+            "hjid": null
+          },
+          "estimatedDeliveryPeriod": {
+            "startDate": null,
+            "startTime": null,
+            "endDate": null,
+            "endTime": null,
+            "durationMeasure": {
+              "value": null,
+              "unitCode": "day(s)",
+              "unitCodeListID": null,
+              "hjid": null
+            },
+            "hjid": null,
+            "startDateItem": null,
+            "startTimeItem": null,
+            "endDateItem": null,
+            "endTimeItem": null
+          },
+          "hjid": null
+        },
+        "allowanceCharge": [],
+        "hjid": null
+      },
+      "hjid": null
+    },
+    {
+      "id": "f450b263-8443-43c2-ae79-fbb08c4cc339",
+      "minimumOrderQuantity": null,
+      "freeOfChargeIndicator": false,
+      "warrantyInformation": [],
+      "warrantyValidityPeriod": {
+        "startDate": null,
+        "startTime": null,
+        "endDate": null,
+        "endTime": null,
+        "durationMeasure": {
+          "value": 0,
+          "unitCode": "month(s)",
+          "unitCodeListID": null,
+          "hjid": null
+        },
+        "hjid": null,
+        "startDateItem": null,
+        "startTimeItem": null,
+        "endDateItem": null,
+        "endTimeItem": null
+      },
+      "requiredItemLocationQuantity": {
+        "minimumQuantity": null,
+        "applicableTerritoryAddress": [],
+        "price": {
+          "priceAmount": {
+            "value": null,
+            "currencyID": "EUR",
+            "hjid": null
+          },
+          "baseQuantity": {
+            "value": 1,
+            "unitCode": "item(s)",
+            "unitCodeListID": null,
+            "hjid": null
+          },
+          "hjid": null
+        },
+        "allowanceCharge": [],
+        "hjid": null
+      },
+      "priceOption": [],
+      "goodsItem": {
+        "id": "f450b263-8443-43c2-ae79-fbb08c4cc339",
+        "item": {
+          "description": [
+            {
+              "value": null,
+              "languageID": "en",
+              "hjid": null
+            }
+          ],
+          "name": [
+            {
+              "value": "Best control tool",
+              "languageID": "en",
+              "hjid": null
+            }
+          ],
+          "productImage": [],
+          "manufacturersItemIdentification": {
+            "id": "f450b263-8443-43c2-ae79-fbb08c4cc339",
+            "hjid": null
+          },
+          "catalogueDocumentReference": {
+            "id": "f0779966-a340-463d-9f04-2add5a6912f6",
+            "uuid": null,
+            "documentType": null,
+            "attachment": null,
+            "validityPeriod": null,
+            "hjid": null
+          },
+          "itemSpecificationDocumentReference": [],
+          "commodityClassification": [
+            {
+              "natureCode": null,
+              "cargoTypeCode": null,
+              "itemClassificationCode": {
+                "value": "http://www.nimble-project.org/resource/eclass#0173-1#01-AAB572#005",
+                "name": "Electric engineering, automation, process control engineering",
+                "listID": "eClass",
+                "uri": "http://www.nimble-project.org/resource/eclass#0173-1#01-AAB572#005",
+                "hjid": null
+              },
+              "hjid": null
+            },
+            {
+              "natureCode": null,
+              "cargoTypeCode": null,
+              "itemClassificationCode": {
+                "value": "Product",
+                "name": "Product",
+                "listID": "Default",
+                "uri": null,
+                "hjid": null
+              },
+              "hjid": null
+            }
+          ],
+          "additionalItemProperty": [],
+          "manufacturerParty": {
+            "federationInstanceID": null,
+            "nace": [],
+            "description": [],
+            "brandName": [],
+            "partyName": [
+              {
+                "name": {
+                  "value": "canCompany",
+                  "languageID": "en",
+                  "hjid": null
+                },
+                "hjid": null
+              }
+            ],
+            "partyIdentification": [
+              {
+                "id": "706",
+                "hjid": null
+              }
+            ],
+            "websiteURI": "",
+            "industryClassificationCode": {
+              "value": null,
+              "name": "IndustryClassificationCode",
+              "listID": null,
+              "uri": null,
+              "hjid": null
+            },
+            "externalAward": null,
+            "ppapCompatibilityLevel": 1,
+            "preferredItemClassificationCode": [
+              {
+                "value": "0173-1#01-AEI956#006::eClass::Notebook::product",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-ADU394#007::eClass::Transport (other, unspecified)::transportation",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-AAC286#007::eClass::Home economics, Home technology::product",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-BAC323#011::eClass::Farming vehicle (other, unspecified)::product",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              }
+            ],
+            "mostRecentItemsClassificationCode": [
+              {
+                "value": "0173-1#01-AAB315#006::eClass::General service::product::1549367203416",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-AKJ050#013::eClass::MDF raw::product::1549885037770",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-ACH237#011::eClass::MDF, painted::product::1547034223954",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-AAC350#007::eClass::Auxiliary supply, additive, cleaning agent::product::1549884023679",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-ACE546#006::eClass::Food, beverage, tobacco::product::1549914240904",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-AEI956#006::eClass::Notebook::product::1549284216242",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "http://www.aidimme.es/FurnitureSectorOntology.owl#MDFBoard::FurnitureOntology::MDFBoard::product::1549367609782",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-AGE763#001::eClass::Clothing and textile::product::1549368501617",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-AAC168#005::eClass::Automotive technology::product::1549883194387",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-AAA647#005::eClass::Construction technology::product::1549884974088",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              }
+            ],
+            "postalAddress": {
+              "id": null,
+              "streetName": "abcx",
+              "buildingNumber": "",
+              "cityName": "ankara",
+              "postalZone": "234",
+              "country": {
+                "name": {
+                  "value": "turkey",
+                  "languageID": null,
+                  "hjid": null
+                },
+                "hjid": null
+              },
+              "hjid": null
+            },
+            "partyTaxScheme": [
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null,
+                    "hjid": null
+                  },
+                  "hjid": null
+                },
+                "hjid": null
+              }
+            ],
+            "contact": {
+              "id": null,
+              "name": null,
+              "telephone": null,
+              "telefax": null,
+              "electronicMail": null,
+              "note": null,
+              "otherCommunication": [],
+              "hjid": null
+            },
+            "person": [
+              {
+                "id": "704",
+                "firstName": "ali",
+                "familyName": "can",
+                "birthDate": null,
+                "birthplaceName": null,
+                "organizationDepartment": null,
+                "role": [],
+                "contact": {
+                  "id": null,
+                  "name": {
+                    "value": null,
+                    "languageID": "en",
+                    "hjid": null
+                  },
+                  "telephone": "",
+                  "telefax": null,
+                  "electronicMail": "can@gmail.com",
+                  "note": null,
+                  "otherCommunication": [],
+                  "hjid": null
+                },
+                "hjid": null,
+                "birthDateItem": null
+              }
+            ],
+            "certificate": [],
+            "qualityIndicator": [
+              {
+                "qualityParameter": "",
+                "quantity": null,
+                "hjid": null
+              }
+            ],
+            "ppapDocumentReference": [],
+            "documentReference": [],
+            "industrySector": [],
+            "salesTerms": null,
+            "purchaseTerms": {
+              "tradingTerms": [],
+              "deliveryTerms": [
+                {
+                  "id": null,
+                  "incoterms": null,
+                  "specialTerms": [
+                    {
+                      "value": "",
+                      "languageID": "en",
+                      "hjid": null
+                    }
+                  ],
+                  "amount": null,
+                  "transportModeCode": null,
+                  "deliveryLocation": {
+                    "address": {
+                      "id": null,
+                      "streetName": "abcx",
+                      "buildingNumber": "",
+                      "cityName": "ankara",
+                      "postalZone": "234",
+                      "country": {
+                        "name": {
+                          "value": "turkey",
+                          "languageID": null,
+                          "hjid": null
+                        },
+                        "hjid": null
+                      },
+                      "hjid": null
+                    },
+                    "hjid": null
+                  },
+                  "estimatedDeliveryPeriod": null,
+                  "hjid": null
+                }
+              ],
+              "paymentMeans": [],
+              "hjid": null
+            },
+            "hjid": null
+          },
+          "certificate": [],
+          "dimension": [],
+          "transportationServiceDetails": null,
+          "trackAndTraceDetails": {
+            "eventURL": null,
+            "masterURL": null,
+            "productionProcessTemplate": null,
+            "hjid": null
+          },
+          "hjid": null
+        },
+        "containingPackage": {
+          "quantity": {
+            "value": 1,
+            "unitCode": "item(s)",
+            "unitCodeListID": null,
+            "hjid": null
+          },
+          "packagingTypeCode": {
+            "value": "",
+            "name": "",
+            "listID": "",
+            "uri": "",
+            "hjid": null
+          },
+          "measurementDimension": [],
+          "hjid": null
+        },
+        "deliveryTerms": {
+          "id": null,
+          "incoterms": null,
+          "specialTerms": [],
+          "amount": {
+            "value": null,
+            "currencyID": null,
+            "hjid": null
+          },
+          "transportModeCode": null,
+          "deliveryLocation": {
+            "address": {
+              "id": null,
+              "streetName": "",
+              "buildingNumber": "",
+              "cityName": "",
+              "postalZone": "",
+              "country": {
+                "name": {
+                  "value": null,
+                  "languageID": "en",
+                  "hjid": null
+                },
+                "hjid": null
+              },
+              "hjid": null
+            },
+            "hjid": null
+          },
+          "estimatedDeliveryPeriod": {
+            "startDate": null,
+            "startTime": null,
+            "endDate": null,
+            "endTime": null,
+            "durationMeasure": {
+              "value": null,
+              "unitCode": "day(s)",
+              "unitCodeListID": null,
+              "hjid": null
+            },
+            "hjid": null,
+            "startDateItem": null,
+            "startTimeItem": null,
+            "endDateItem": null,
+            "endTimeItem": null
+          },
+          "hjid": null
+        },
+        "allowanceCharge": [],
+        "hjid": null
+      },
+      "hjid": null
+    },
+    {
+      "id": "bd52ae1c-6a80-4562-ab7c-70c5c8b7158e",
+      "minimumOrderQuantity": null,
+      "freeOfChargeIndicator": false,
+      "warrantyInformation": [],
+      "warrantyValidityPeriod": {
+        "startDate": null,
+        "startTime": null,
+        "endDate": null,
+        "endTime": null,
+        "durationMeasure": {
+          "value": 0,
+          "unitCode": "month(s)",
+          "unitCodeListID": null,
+          "hjid": null
+        },
+        "hjid": null,
+        "startDateItem": null,
+        "startTimeItem": null,
+        "endDateItem": null,
+        "endTimeItem": null
+      },
+      "requiredItemLocationQuantity": {
+        "minimumQuantity": null,
+        "applicableTerritoryAddress": [],
+        "price": {
+          "priceAmount": {
+            "value": 90,
+            "currencyID": "EUR",
+            "hjid": null
+          },
+          "baseQuantity": {
+            "value": 1,
+            "unitCode": "item(s)",
+            "unitCodeListID": null,
+            "hjid": null
+          },
+          "hjid": null
+        },
+        "allowanceCharge": [],
+        "hjid": null
+      },
+      "priceOption": [],
+      "goodsItem": {
+        "id": "bd52ae1c-6a80-4562-ab7c-70c5c8b7158e",
+        "item": {
+          "description": [
+            {
+              "value": null,
+              "languageID": "en",
+              "hjid": null
+            }
+          ],
+          "name": [
+            {
+              "value": "Samsung notebook",
+              "languageID": "en",
+              "hjid": null
+            }
+          ],
+          "productImage": [],
+          "manufacturersItemIdentification": {
+            "id": "bd52ae1c-6a80-4562-ab7c-70c5c8b7158e",
+            "hjid": null
+          },
+          "catalogueDocumentReference": {
+            "id": "f0779966-a340-463d-9f04-2add5a6912f6",
+            "uuid": null,
+            "documentType": null,
+            "attachment": null,
+            "validityPeriod": null,
+            "hjid": null
+          },
+          "itemSpecificationDocumentReference": [],
+          "commodityClassification": [
+            {
+              "natureCode": null,
+              "cargoTypeCode": null,
+              "itemClassificationCode": {
+                "value": "http://www.nimble-project.org/resource/eclass#0173-1#01-AEI956#006",
+                "name": "Notebook",
+                "listID": "eClass",
+                "uri": "http://www.nimble-project.org/resource/eclass#0173-1#01-AEI956#006",
+                "hjid": null
+              },
+              "hjid": null
+            },
+            {
+              "natureCode": null,
+              "cargoTypeCode": null,
+              "itemClassificationCode": {
+                "value": "Product",
+                "name": "Product",
+                "listID": "Default",
+                "uri": null,
+                "hjid": null
+              },
+              "hjid": null
+            },
+            {
+              "natureCode": null,
+              "cargoTypeCode": null,
+              "itemClassificationCode": {
+                "value": "http://www.nimble-project.org/resource/eclass#0173-1#01-AKJ313#005",
+                "name": "Information, communication and media technology",
+                "listID": "eClass",
+                "uri": "http://www.nimble-project.org/resource/eclass#0173-1#01-AKJ313#005",
+                "hjid": null
+              },
+              "hjid": null
+            },
+            {
+              "natureCode": null,
+              "cargoTypeCode": null,
+              "itemClassificationCode": {
+                "value": "http://www.nimble-project.org/resource/eclass#0173-1#01-AKJ317#008",
+                "name": "Computer system",
+                "listID": "eClass",
+                "uri": "http://www.nimble-project.org/resource/eclass#0173-1#01-AKJ317#008",
+                "hjid": null
+              },
+              "hjid": null
+            },
+            {
+              "natureCode": null,
+              "cargoTypeCode": null,
+              "itemClassificationCode": {
+                "value": "http://www.nimble-project.org/resource/eclass#0173-1#01-ACL245#007",
+                "name": "Mobile PC",
+                "listID": "eClass",
+                "uri": "http://www.nimble-project.org/resource/eclass#0173-1#01-ACL245#007",
+                "hjid": null
+              },
+              "hjid": null
+            }
+          ],
+          "additionalItemProperty": [],
+          "manufacturerParty": {
+            "federationInstanceID": null,
+            "nace": [],
+            "description": [],
+            "brandName": [],
+            "partyName": [
+              {
+                "name": {
+                  "value": "canCompany",
+                  "languageID": "en",
+                  "hjid": null
+                },
+                "hjid": null
+              }
+            ],
+            "partyIdentification": [
+              {
+                "id": "706",
+                "hjid": null
+              }
+            ],
+            "websiteURI": "",
+            "industryClassificationCode": {
+              "value": null,
+              "name": "IndustryClassificationCode",
+              "listID": null,
+              "uri": null,
+              "hjid": null
+            },
+            "externalAward": null,
+            "ppapCompatibilityLevel": 1,
+            "preferredItemClassificationCode": [
+              {
+                "value": "0173-1#01-AEI956#006::eClass::Notebook::product",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-ADU394#007::eClass::Transport (other, unspecified)::transportation",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-AAC286#007::eClass::Home economics, Home technology::product",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-BAC323#011::eClass::Farming vehicle (other, unspecified)::product",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              }
+            ],
+            "mostRecentItemsClassificationCode": [
+              {
+                "value": "0173-1#01-AAB315#006::eClass::General service::product::1549367203416",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-AKJ050#013::eClass::MDF raw::product::1549885037770",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-ACH237#011::eClass::MDF, painted::product::1547034223954",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-AAC350#007::eClass::Auxiliary supply, additive, cleaning agent::product::1549884023679",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-ACE546#006::eClass::Food, beverage, tobacco::product::1549914240904",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-AEI956#006::eClass::Notebook::product::1549284216242",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "http://www.aidimme.es/FurnitureSectorOntology.owl#MDFBoard::FurnitureOntology::MDFBoard::product::1549367609782",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-AGE763#001::eClass::Clothing and textile::product::1549368501617",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-AAC168#005::eClass::Automotive technology::product::1549883194387",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              },
+              {
+                "value": "0173-1#01-AAA647#005::eClass::Construction technology::product::1549884974088",
+                "name": null,
+                "listID": null,
+                "uri": null,
+                "hjid": null
+              }
+            ],
+            "postalAddress": {
+              "id": null,
+              "streetName": "abcx",
+              "buildingNumber": "",
+              "cityName": "ankara",
+              "postalZone": "234",
+              "country": {
+                "name": {
+                  "value": "turkey",
+                  "languageID": null,
+                  "hjid": null
+                },
+                "hjid": null
+              },
+              "hjid": null
+            },
+            "partyTaxScheme": [
+              {
+                "taxScheme": {
+                  "taxTypeCode": {
+                    "value": "12",
+                    "name": "VAT",
+                    "listID": null,
+                    "uri": null,
+                    "hjid": null
+                  },
+                  "hjid": null
+                },
+                "hjid": null
+              }
+            ],
+            "contact": {
+              "id": null,
+              "name": null,
+              "telephone": null,
+              "telefax": null,
+              "electronicMail": null,
+              "note": null,
+              "otherCommunication": [],
+              "hjid": null
+            },
+            "person": [
+              {
+                "id": "704",
+                "firstName": "ali",
+                "familyName": "can",
+                "birthDate": null,
+                "birthplaceName": null,
+                "organizationDepartment": null,
+                "role": [],
+                "contact": {
+                  "id": null,
+                  "name": {
+                    "value": null,
+                    "languageID": "en",
+                    "hjid": null
+                  },
+                  "telephone": "",
+                  "telefax": null,
+                  "electronicMail": "can@gmail.com",
+                  "note": null,
+                  "otherCommunication": [],
+                  "hjid": null
+                },
+                "hjid": null,
+                "birthDateItem": null
+              }
+            ],
+            "certificate": [],
+            "qualityIndicator": [
+              {
+                "qualityParameter": "",
+                "quantity": null,
+                "hjid": null
+              }
+            ],
+            "ppapDocumentReference": [],
+            "documentReference": [],
+            "industrySector": [],
+            "salesTerms": null,
+            "purchaseTerms": {
+              "tradingTerms": [],
+              "deliveryTerms": [
+                {
+                  "id": null,
+                  "incoterms": null,
+                  "specialTerms": [
+                    {
+                      "value": "",
+                      "languageID": "en",
+                      "hjid": null
+                    }
+                  ],
+                  "amount": null,
+                  "transportModeCode": null,
+                  "deliveryLocation": {
+                    "address": {
+                      "id": null,
+                      "streetName": "abcx",
+                      "buildingNumber": "",
+                      "cityName": "ankara",
+                      "postalZone": "234",
+                      "country": {
+                        "name": {
+                          "value": "turkey",
+                          "languageID": null,
+                          "hjid": null
+                        },
+                        "hjid": null
+                      },
+                      "hjid": null
+                    },
+                    "hjid": null
+                  },
+                  "estimatedDeliveryPeriod": null,
+                  "hjid": null
+                }
+              ],
+              "paymentMeans": [],
+              "hjid": null
+            },
+            "hjid": null
+          },
+          "certificate": [],
+          "dimension": [],
+          "transportationServiceDetails": null,
+          "trackAndTraceDetails": {
+            "eventURL": null,
+            "masterURL": null,
+            "productionProcessTemplate": null,
+            "hjid": null
+          },
+          "hjid": null
+        },
+        "containingPackage": {
+          "quantity": {
+            "value": 1,
+            "unitCode": "item(s)",
+            "unitCodeListID": null,
+            "hjid": null
+          },
+          "packagingTypeCode": {
+            "value": "",
+            "name": "",
+            "listID": "",
+            "uri": "",
+            "hjid": null
+          },
+          "measurementDimension": [],
+          "hjid": null
+        },
+        "deliveryTerms": {
+          "id": null,
+          "incoterms": null,
+          "specialTerms": [],
+          "amount": {
+            "value": null,
+            "currencyID": null,
+            "hjid": null
+          },
+          "transportModeCode": null,
+          "deliveryLocation": {
+            "address": {
+              "id": null,
+              "streetName": "",
+              "buildingNumber": "",
+              "cityName": "",
+              "postalZone": "",
+              "country": {
+                "name": {
+                  "value": null,
+                  "languageID": "en",
+                  "hjid": null
+                },
+                "hjid": null
+              },
+              "hjid": null
+            },
+            "hjid": null
+          },
+          "estimatedDeliveryPeriod": {
+            "startDate": null,
+            "startTime": null,
+            "endDate": null,
+            "endTime": null,
+            "durationMeasure": {
+              "value": null,
+              "unitCode": "day(s)",
+              "unitCodeListID": null,
+              "hjid": null
+            },
+            "hjid": null,
+            "startDateItem": null,
+            "startTimeItem": null,
+            "endDateItem": null,
+            "endTimeItem": null
+          },
+          "hjid": null
+        },
+        "allowanceCharge": [],
+        "hjid": null
+      },
+      "hjid": null
+    }
+  ],
+  "hjid": null,
+  "issueDateItem": null
+}

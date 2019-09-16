@@ -1,9 +1,10 @@
 package eu.nimble.service.bp.impl;
 
-import eu.nimble.service.bp.hyperjaxb.model.ProcessPreferencesDAO;
-import eu.nimble.service.bp.impl.util.persistence.bp.HibernateSwaggerObjectMapper;
-import eu.nimble.service.bp.impl.util.persistence.bp.ProcessPreferencesDAOUtility;
-import eu.nimble.service.bp.impl.util.spring.SpringBridge;
+import eu.nimble.service.bp.model.hyperjaxb.ProcessPreferencesDAO;
+import eu.nimble.service.bp.util.HttpResponseUtil;
+import eu.nimble.service.bp.util.persistence.bp.HibernateSwaggerObjectMapper;
+import eu.nimble.service.bp.util.persistence.bp.ProcessPreferencesDAOUtility;
+import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.bp.swagger.api.PreferenceApi;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
 import eu.nimble.service.bp.swagger.model.ProcessPreferences;
@@ -15,16 +16,17 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import springfox.documentation.annotations.ApiIgnore;
 
 import java.io.IOException;
 
 /**
  * Created by yildiray on 5/25/2017.
  */
+@ApiIgnore
 public class PreferenceController implements PreferenceApi {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -37,18 +39,9 @@ public class PreferenceController implements PreferenceApi {
                                                                         @RequestBody ProcessPreferences body) {
         logger.info(" $$$ Adding ProcessPreferences: ");
         logger.debug(" $$$ {}", body.toString());
-        try {
-            // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-            }
-        } catch (IOException e){
-            String msg = String.format("Failed to add process partner preference: %s",body.toString());
-            logger.error(msg,e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
+        if (tokenCheck != null) {
+            return tokenCheck;
         }
         ProcessPreferencesDAO processPreferencesDAO = HibernateSwaggerObjectMapper.createProcessPreferences_DAO(body);
         repositoryFactory.forBpRepository().persistEntity(processPreferencesDAO);
@@ -60,20 +53,11 @@ public class PreferenceController implements PreferenceApi {
     public ResponseEntity<ModelApiResponse> deleteProcessPartnerPreference(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
                                                                            @PathVariable("partnerID") String partnerID) {
         logger.info(" $$$ Deleting ProcessPreferences for ... {}", partnerID);
-        try {
-            // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-            }
-        } catch (IOException e){
-            String msg = String.format("Failed to delete process partner preference for partner: %s",partnerID);
-            logger.error(msg,e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
+        if (tokenCheck != null) {
+            return tokenCheck;
         }
-        ProcessPreferencesDAO processPreferencesDAO = ProcessPreferencesDAOUtility.getProcessPreferences(partnerID);
+        ProcessPreferencesDAO processPreferencesDAO = ProcessPreferencesDAOUtility.getProcessPreferences(partnerID,false);
         repositoryFactory.forBpRepository().deleteEntityByHjid(ProcessPreferencesDAO.class, processPreferencesDAO.getHjid());
         return HibernateSwaggerObjectMapper.getApiResponse();
     }
@@ -83,18 +67,9 @@ public class PreferenceController implements PreferenceApi {
     public ResponseEntity<ProcessPreferences> getProcessPartnerPreference(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
                                                                           @PathVariable("partnerID") String partnerID) {
         logger.info(" $$$ Getting ProcessPreferences for ... {}", partnerID);
-        try {
-            // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-            }
-        } catch (IOException e){
-            String msg = String.format("Failed to retrieve process partner preference for partner: %s",partnerID);
-            logger.error(msg,e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
+        if (tokenCheck != null) {
+            return tokenCheck;
         }
         ProcessPreferencesDAO businessProcessPreferencesDAO = ProcessPreferencesDAOUtility.getProcessPreferences(partnerID);
         ProcessPreferences businessProcessPreferences = null;
@@ -113,20 +88,11 @@ public class PreferenceController implements PreferenceApi {
                                                                            @RequestBody ProcessPreferences body) {
         logger.info(" $$$ Updating ProcessPreferences: ");
         logger.debug(" $$$ {}", body.toString());
-        try {
-            // check token
-            boolean isValid = SpringBridge.getInstance().getIdentityClientTyped().getUserInfo(bearerToken);
-            if(!isValid){
-                String msg = String.format("No user exists for the given token : %s",bearerToken);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-            }
-        } catch (IOException e){
-            String msg = String.format("Failed to update partner preference: %s",body.toString());
-            logger.error(msg,e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
+        if (tokenCheck != null) {
+            return tokenCheck;
         }
-        ProcessPreferencesDAO processPreferencesDAO = ProcessPreferencesDAOUtility.getProcessPreferences(body.getPartnerID());
+        ProcessPreferencesDAO processPreferencesDAO = ProcessPreferencesDAOUtility.getProcessPreferences(body.getPartnerID(),false);
         ProcessPreferencesDAO processPreferencesDAONew = HibernateSwaggerObjectMapper.createProcessPreferences_DAO(body);
         processPreferencesDAONew.setHjid(processPreferencesDAO.getHjid());
         repositoryFactory.forBpRepository().updateEntity(processPreferencesDAONew);

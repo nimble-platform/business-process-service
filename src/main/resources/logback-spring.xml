@@ -30,6 +30,13 @@
                         "thread": "%thread",
                         "class": "%logger{40}",
                         "version": "${build-version:-}",
+                        "bpId": "%X{bpId}",
+                        "bpType": "%X{bpType}",
+                        "bpStatus": "%X{bpStatus}",
+                        "activity": "%X{activity}",
+                        "bpInitCompanyId": "%X{bpInitCompanyId}",
+                        "bpInitUserId": "%X{bpInitUserId}",
+                        "bpRespondCompanyId": "%X{bpRespondCompanyId}",
                         "message": "%message",
                         "exception": "%exception"
                         }
