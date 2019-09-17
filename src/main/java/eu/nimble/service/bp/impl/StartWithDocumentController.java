@@ -32,6 +32,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -265,7 +266,7 @@ public class StartWithDocumentController {
                 String endpoint = UBLUtility.getPartyRestEndpoint(initiatorParty);
                 if(endpoint != null){
                     HttpResponse<String> response = Unirest.post(endpoint)
-                            .body(documentAsString)
+                            .body(createQuotationBody(documentAsString))
                             .asString();
 
                     if(response.getStatus() != 200){
@@ -327,5 +328,24 @@ public class StartWithDocumentController {
     private ItemType getItemType(String documentId, DocumentType documentType){
         IDocument iDocument =  DocumentPersistenceUtility.getUBLDocument(documentId, documentType);
         return iDocument.getItemType();
+    }
+
+    /**
+     * Prepare the json which has the following format:
+     * {
+     *     "processVariables":{
+     *          "quotationData":{"value":"<quotation_data_here></>","type":"String"}
+     *     }
+     * }
+     * */
+    private String createQuotationBody(String documentAsString){
+        JSONObject quotationData = new JSONObject();
+        quotationData.put("type","String");
+        quotationData.put("value",documentAsString);
+        JSONObject processVariables = new JSONObject();
+        processVariables.put("quotationData",quotationData);
+        JSONObject json = new JSONObject();
+        json.put("processVariables",processVariables);
+        return json.toString();
     }
 }
