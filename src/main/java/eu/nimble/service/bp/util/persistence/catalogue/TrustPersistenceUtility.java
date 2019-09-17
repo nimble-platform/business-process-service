@@ -112,7 +112,12 @@ public class TrustPersistenceUtility {
         }
 
         qualifyingParty.getCompletedTask().add(completedTask);
-        BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId).getCatalogRepository().updateEntity(qualifyingParty);
+        if(businessContextId == null){
+            new JPARepositoryFactory().forCatalogueRepository().updateEntity(qualifyingParty);
+        }
+        else {
+            BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId).getCatalogRepository().updateEntity(qualifyingParty);
+        }
     }
 
     public static void createCompletedTasksForBothParties(String processInstanceID,String bearerToken,String status, String businessContextId) {
