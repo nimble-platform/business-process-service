@@ -26,6 +26,8 @@ public class R13MigrationController {
 
     private final String QUERY_GET_DUPLICATE_IDS = "SELECT ID FROM %s GROUP BY ID HAVING count(ID) > 1";
     private final String QUERY_GET_DOCUMENTS_BY_ID = "FROM %s WHERE ID = :id";
+    private final String QUERY_GET_DUPLICATE_METADATA_IDS = "SELECT documentID FROM %s GROUP BY documentID HAVING count(documentID) > 1";
+    private final String QUERY_GET_METADATA_BY_ID = "FROM %s WHERE documentID = :documentID";
 
     private final int LIMIT = 100;
     private final int OFFSET = 1;
@@ -49,7 +51,7 @@ public class R13MigrationController {
         }
 
         GenericJPARepository repo = new JPARepositoryFactory().forCatalogueRepository(true);
-
+        // UBLDB
         List<String> tableNames = getTableNames();
         for (String tableName : tableNames) {
             // get duplicate ids
@@ -65,7 +67,20 @@ public class R13MigrationController {
                 }
             }
         }
-
+        // Business Process DB
+        GenericJPARepository bpRepo = new JPARepositoryFactory().forBpRepository(true);
+        // get duplicate ids
+        List<String> duplicateIds = bpRepo.getEntities(String.format(QUERY_GET_DUPLICATE_METADATA_IDS, "ProcessDocumentMetadataDAO"));
+        if(duplicateIds.size() > 0){
+            logger.info("In table ProcessDocumentMetadataDAO, duplicates exist for the documents with following ids: {}", duplicateIds);
+            for (String id : duplicateIds) {
+                // remove duplicate ProcessDocumentMetadataDAO
+                List<Object> metadataDAOs = bpRepo.getEntities(String.format(QUERY_GET_METADATA_BY_ID, "ProcessDocumentMetadataDAO"), new String[]{"documentID"}, new Object[]{id}, LIMIT, OFFSET);
+                for (Object metadataDAO : metadataDAOs) {
+                    bpRepo.deleteEntity(metadataDAO);
+                }
+            }
+        }
         logger.info("Completed request to delete duplicate documents");
         return ResponseEntity.ok(null);
     }
