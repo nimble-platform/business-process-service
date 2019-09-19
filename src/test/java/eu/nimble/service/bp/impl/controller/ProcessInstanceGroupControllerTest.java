@@ -3,6 +3,7 @@ package eu.nimble.service.bp.impl.controller;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.model.dashboard.CollaborationGroupResponse;
+import eu.nimble.service.bp.model.hyperjaxb.GroupStatus;
 import eu.nimble.service.bp.swagger.model.CollaborationGroup;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroup;
@@ -58,7 +59,8 @@ public class ProcessInstanceGroupControllerTest {
      * - Retrieve a process instance group (the one created for the transport service order) and delete it
      * - Delete also the associated process instance group
      * - Filter the process instance groups based for a specific party and its role
-     * - Check whether a collaboration is finished
+     * - Check whether a collaboration is finished,
+     * - Check the status of a Process Instance Group representing a completed collaboration
      */
 
     @Test
@@ -143,5 +145,16 @@ public class ProcessInstanceGroupControllerTest {
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         Assert.assertEquals("true",mvcResult.getResponse().getContentAsString());
+    }
+
+    @Test
+    public void test08_checkProcessInstanceGroupStatus() throws Exception {
+        MockHttpServletRequestBuilder request = get("/process-instance-groups/" + BusinessProcessExecutionTest.buyerProcessInstanceGroupID)
+                .header("Authorization", TestConfig.initiatorPersonId);
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+
+        ProcessInstanceGroup processInstanceGroup = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ProcessInstanceGroup.class);
+
+        Assert.assertSame(GroupStatus.COMPLETED.value(), processInstanceGroup.getStatus().toString());
     }
 }
