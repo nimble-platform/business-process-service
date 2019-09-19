@@ -1199,8 +1199,10 @@ definitions:
       status:
         type: string
         enum:
-        - INPROGRESS
-        - CANCELLED
+          - INPROGRESS
+          - CANCELLED
+          - COMPLETED
+          - SUCCESSFULLY_TERMINATED
 
   CollaborationGroup:
     title: Collaboration Group

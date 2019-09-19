@@ -23,6 +23,7 @@ import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.LoggerUtils;
+import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
 import eu.nimble.utility.validation.IValidationUtil;
@@ -144,6 +145,15 @@ public class ContinueController implements ContinueApi {
             // if it's the last process in the seller's workflow and there is no CompletedTask for this collaboration, create completed tasks for both parties
             if(isLastProcessInWorkflow && processInstanceGroupController.checkCollaborationFinished(gid,bearerToken).getBody().contentEquals("false")){
                 TrustPersistenceUtility.createCompletedTasksForBothParties(processInstance.getProcessInstanceID(),bearerToken,"Completed",businessProcessContext.getId());
+                GenericJPARepository bpRepository = businessProcessContext.getBpRepository();
+                // update the status of process instance group for the initiator
+                ProcessInstanceGroupDAO initiatorGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(body.getVariables().getInitiatorID(),Arrays.asList(processInstance.getProcessInstanceID()),bpRepository);
+                initiatorGroup.setStatus(GroupStatus.COMPLETED);
+                bpRepository.updateEntity(initiatorGroup);
+                // update the status of process instance group for the responder
+                ProcessInstanceGroupDAO responderGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(body.getVariables().getResponderID(),Arrays.asList(processInstance.getProcessInstanceID()),bpRepository);
+                responderGroup.setStatus(GroupStatus.COMPLETED);
+                bpRepository.updateEntity(responderGroup);
             }
 
             CamundaEngine.continueProcessInstance(businessProcessContext.getId(), body, bearerToken);

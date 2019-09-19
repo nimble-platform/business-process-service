@@ -144,11 +144,6 @@ public class TrustPersistenceUtility {
         TrustPersistenceUtility.createCompletedTask(responderID,processDocumentMetadata.getProcessInstanceID(),bearerToken,status,businessContextId);
     }
 
-    public static void createCompletedTasksForBothParties(ProcessDocumentMetadataDAO processDocumentMetadata,String bearerToken,String status) {
-        createCompletedTasksForBothParties(processDocumentMetadata,bearerToken,status,null);
-    }
-
-
     public static List<NegotiationRatings> createNegotiationRatings(List<CompletedTaskType> completedTasks){
         List<NegotiationRatings> negotiationRatings = new ArrayList<>();
 
