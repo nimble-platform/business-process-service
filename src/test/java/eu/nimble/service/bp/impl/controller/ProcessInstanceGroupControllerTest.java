@@ -25,8 +25,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 
 import java.util.List;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -59,6 +58,7 @@ public class ProcessInstanceGroupControllerTest {
      * - Retrieve a process instance group (the one created for the transport service order) and delete it
      * - Delete also the associated process instance group
      * - Filter the process instance groups based for a specific party and its role
+     * - Finish a collaboration
      * - Check whether a collaboration is finished,
      * - Check the status of a Process Instance Group representing a completed collaboration
      */
@@ -139,7 +139,14 @@ public class ProcessInstanceGroupControllerTest {
     }
 
     @Test
-    public void test07_checkCollaborationFinished() throws Exception{
+    public void test07_finishCollaboration() throws Exception{
+        MockHttpServletRequestBuilder request = post("/process-instance-groups/"+ BusinessProcessWorkflowTests.sellerProcessInstanceGroupID+"/finish")
+                .header("Authorization", TestConfig.responderPersonId);
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+    }
+
+    @Test
+    public void test08_checkCollaborationFinished() throws Exception{
         MockHttpServletRequestBuilder request = get("/process-instance-groups/"+ BusinessProcessWorkflowTests.sellerProcessInstanceGroupID+"/finished")
                 .header("Authorization", TestConfig.responderPersonId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -148,7 +155,7 @@ public class ProcessInstanceGroupControllerTest {
     }
 
     @Test
-    public void test08_checkProcessInstanceGroupStatus() throws Exception {
+    public void test09_checkProcessInstanceGroupStatus() throws Exception {
         MockHttpServletRequestBuilder request = get("/process-instance-groups/" + BusinessProcessExecutionTest.buyerProcessInstanceGroupID)
                 .header("Authorization", TestConfig.initiatorPersonId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
