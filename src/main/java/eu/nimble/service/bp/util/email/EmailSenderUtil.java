@@ -1,10 +1,7 @@
 package eu.nimble.service.bp.util.email;
 
 import eu.nimble.common.rest.identity.IIdentityClientTyped;
-import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
-import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO;
-import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentStatus;
-import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceGroupDAO;
+import eu.nimble.service.bp.model.hyperjaxb.*;
 import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
@@ -42,17 +39,17 @@ public class EmailSenderUtil {
     private String frontEndURL;
 
     // email sender thread
-    public void sendCancellationEmail(String bearerToken, ProcessInstanceGroupDAO groupDAO) {
+    public void sendCollaborationStatusEmail(String bearerToken, ProcessInstanceGroupDAO groupDAO) {
         new Thread(() -> {
             // Collect the trading partner name
-            String cancellingPartyId = groupDAO.getPartyID();
+            String partyId = groupDAO.getPartyID();
             PartyType tradingPartner;
-            String tradingPartnerId = ProcessDocumentMetadataDAOUtility.getTradingPartnerId(groupDAO.getProcessInstanceIDs().get(0), cancellingPartyId);
+            String tradingPartnerId = ProcessDocumentMetadataDAOUtility.getTradingPartnerId(groupDAO.getProcessInstanceIDs().get(0), partyId);
             try {
                 tradingPartner = iIdentityClientTyped.getParty(bearerToken, tradingPartnerId);
 
             } catch (IOException e) {
-                logger.error("Failed to send email for cancellation of group: {}", groupDAO.getID());
+                logger.error("Failed to send email for group: {} with status: {}", groupDAO.getID(), groupDAO.getStatus().toString());
                 logger.error("Failed to get party with id: {} from identity service", tradingPartnerId, e);
                 return;
             }
@@ -73,7 +70,7 @@ public class EmailSenderUtil {
             // person associated with the trading partner
             String toEmail;
             if (groupDAO.getProcessInstanceIDs().size() > 1) {
-                ProcessDocumentMetadataDAO documentMetadataDAO = ProcessDocumentMetadataDAOUtility.getDocumentOfTheOtherParty(groupDAO.getProcessInstanceIDs().get(0), cancellingPartyId);
+                ProcessDocumentMetadataDAO documentMetadataDAO = ProcessDocumentMetadataDAOUtility.getDocumentOfTheOtherParty(groupDAO.getProcessInstanceIDs().get(0), partyId);
                 // get person via the identity client
                 String personId = documentMetadataDAO.getCreatorUserID();
                 PersonType person;
@@ -81,7 +78,7 @@ public class EmailSenderUtil {
                     person = iIdentityClientTyped.getPerson(bearerToken, personId);
                     toEmail = person.getContact().getElectronicMail();
                 } catch (IOException e) {
-                    logger.error("Failed to send email for cancellation of group: {}", groupDAO.getID());
+                    logger.error("Failed to send email for group: {} with status: {}", groupDAO.getID(), groupDAO.getStatus().toString());
                     logger.error("Failed to get person with id: {} from identity service", personId, e);
                     return;
                 }
@@ -91,34 +88,42 @@ public class EmailSenderUtil {
             }
 
             // collect name of the person cancelling the collaboration
-            PersonType cancellingPerson;
-            String cancellingPersonName;
+            PersonType person;
+            String personName;
             try {
-                cancellingPerson = iIdentityClientTyped.getPerson(bearerToken);
+                person = iIdentityClientTyped.getPerson(bearerToken);
 
             } catch (IOException e) {
-                logger.error("Failed to send email for cancellation of group: {}", groupDAO.getID());
+                logger.error("Failed to send email for group: {} with status: {}", groupDAO.getID(), groupDAO.getStatus().toString());
                 logger.error("Failed to get person with token: {} from identity service", bearerToken, e);
                 return;
             }
-            cancellingPersonName = new StringBuilder("").append(cancellingPerson.getFirstName()).append(" ").append(cancellingPerson.getFamilyName()).toString();
+            personName = new StringBuilder("").append(person.getFirstName()).append(" ").append(person.getFamilyName()).toString();
 
-
-            notifyPartyWithCancelledCollaboration(toEmail, cancellingPersonName, productNames.toString(), tradingPartner.getPartyName().get(0).getName().getValue());
-            logger.info("Collaboration cancellation mail sent to: {} for cancellation of group: {}", toEmail, groupDAO.getID());
+            notifyPartyOnCollaborationStatus(toEmail, personName, productNames.toString(), tradingPartner.getPartyName().get(0).getName().getValue(),groupDAO.getStatus());
+            logger.info("Collaboration status mail sent to: {} for group: {} with status: {}", toEmail, groupDAO.getID(), groupDAO.getStatus().toString());
         }).start();
     }
 
-    public void notifyPartyWithCancelledCollaboration(String toEmail, String cancellingPersonName, String productName, String tradingPartnerName) {
+    public void notifyPartyOnCollaborationStatus(String toEmail, String tradingPartnerPersonName, String productName, String tradingPartnerName, GroupStatus status){
         Context context = new Context();
+        String subject;
+        String template;
 
-        context.setVariable("tradingPartnerPerson", cancellingPersonName);
+        context.setVariable("tradingPartnerPerson", tradingPartnerPersonName);
         context.setVariable("tradingPartner", tradingPartnerName);
         context.setVariable("product", productName);
 
-        String subject = "NIMBLE: Business process cancelled";
+        if(status.equals(GroupStatus.CANCELLED)){
+            subject = "NIMBLE: Business process cancelled";
+            template = "cancelled_collaboration";
+        }
+        else{
+            subject = "NIMBLE: Business process finished";
+            template = "finished_collaboration";
+        }
 
-        emailService.send(new String[]{toEmail}, subject, "cancelled_collaboration", context);
+        emailService.send(new String[]{toEmail}, subject, template, context);
     }
 
     public void sendActionPendingEmail(String bearerToken, String documentId) {
