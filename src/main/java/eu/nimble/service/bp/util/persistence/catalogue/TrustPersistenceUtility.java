@@ -150,7 +150,7 @@ public class TrustPersistenceUtility {
         for (CompletedTaskType completedTask:completedTasks){
 
             // consider only Completed tasks
-            if(completedTask.getDescription().get(0).equals("Completed")){
+            if(completedTask.getDescription().get(0).getValue().contentEquals("Completed")){
                 List<EvidenceSuppliedType> ratings = new ArrayList<>();
                 List<CommentType> reviews = new ArrayList<>();
 
