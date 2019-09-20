@@ -1202,7 +1202,6 @@ definitions:
           - INPROGRESS
           - CANCELLED
           - COMPLETED
-          - SUCCESSFULLY_TERMINATED
 
   CollaborationGroup:
     title: Collaboration Group
