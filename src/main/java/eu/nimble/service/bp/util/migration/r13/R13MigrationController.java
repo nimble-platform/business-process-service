@@ -1,5 +1,9 @@
 package eu.nimble.service.bp.util.migration.r13;
 
+import eu.nimble.service.bp.model.hyperjaxb.GroupStatus;
+import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceGroupDAO;
+import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceGroupDAOUtility;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.CompletedTaskType;
 import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.DocumentReferenceType;
@@ -23,6 +27,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -153,6 +158,58 @@ public class R13MigrationController {
         }
         logger.info("Completed request to update duplicate document ids");
         return ResponseEntity.ok("Completed request to update duplicate document ids");
+    }
+
+    @ApiOperation(value = "", notes = "It sets the status of ProcessInstanceGroups to COMPLETED if the collaboration is completed for that group.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Updated process instance group status successfully"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 500, message = "Unexpected error while updating the status of Process Instance Groups")
+    })
+    @RequestMapping(value = "/r13/migration/update-group-status",
+            produces = {"application/json"},
+            method = RequestMethod.PATCH)
+    public ResponseEntity updateProcessInstanceGroupStatus(@ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken
+    ) {
+        logger.info("Incoming request to update process instance group status");
+
+        // check token
+        ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
+        if (tokenCheck != null) {
+            return tokenCheck;
+        }
+
+        try{
+            GenericJPARepository catalogueRepo = new JPARepositoryFactory().forCatalogueRepository(true);
+            GenericJPARepository bpRepo = new JPARepositoryFactory().forBpRepository(true);
+
+            // get CompletedTasks
+            List<CompletedTaskType> completedTasks = catalogueRepo.getEntities(CompletedTaskType.class);
+            for(CompletedTaskType completedTask : completedTasks){
+                // only consider the completed tasks whose status is Completed
+                if(completedTask.getDescription().get(0).getValue().contentEquals("Completed")){
+                    String processInstanceId = completedTask.getAssociatedProcessInstanceID();
+                    // get process instance groups
+                    List<ProcessInstanceGroupDAO> processInstanceGroupDAOS = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAOs(processInstanceId, bpRepo);
+                    logger.info("For process instance id: {}, there are {} process instance groups",processInstanceId, processInstanceGroupDAOS.size());
+                    // update the status of process instance group
+                    for(ProcessInstanceGroupDAO processInstanceGroupDAO: processInstanceGroupDAOS){
+                        logger.debug("Updating the status of ProcessInstanceGroup with id {}",processInstanceGroupDAO.getID());
+                        processInstanceGroupDAO.setStatus(GroupStatus.COMPLETED);
+                        bpRepo.updateEntity(processInstanceGroupDAO);
+                        logger.debug("Updated the status of ProcessInstanceGroup with id {}",processInstanceGroupDAO.getID());
+                    }
+                }
+            }
+        }
+        catch (Exception e){
+            String msg = "Unexpected error while updating the status of Process Instance Groups";
+            logger.error(msg,e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+        }
+
+        logger.info("Completed request to update process instance group status");
+        return ResponseEntity.ok(null);
     }
 
     // get table names for UBL documents

@@ -110,8 +110,8 @@ public class BusinessProcessWorkflowTests {
 
         // get QualifyingParty of seller
         QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingPartyType("747", "745");
-        // since the seller's workflow consists of only Item_Information_Request, we expect to have a CompletedTask for this process instance
-        Assert.assertEquals(true, TrustPersistenceUtility.completedTaskExist(qualifyingParty,processInstanceID));
+        // although the seller's workflow is completed, CompletedTask should not be created for this collaboration automatically
+        Assert.assertEquals(false, TrustPersistenceUtility.completedTaskExist(qualifyingParty,processInstanceID));
     }
 
     /* In this test case, we try to start a PPAP process.

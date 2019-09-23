@@ -41,6 +41,8 @@ public class TrustControllerTest {
     private final String buyerPartyID = "1339";
     private final String collaborationRole = "BUYER";
     private final String relatedProduct = "QDeneme";
+    private final String ratings = "[{\"id\":\"QualityOfTheNegotiationProcess\",\"valueDecimal\":5},{\"id\":\"QualityOfTheOrderingProcess\",\"valueDecimal\":3},{\"id\":\"ResponseTime\",\"valueDecimal\":4},{\"id\":\"ProductListingAccuracy\",\"valueDecimal\":2},{\"id\":\"ConformanceToOtherAgreedTerms\",\"valueDecimal\":5},{\"id\":\"DeliveryAndPackaging\",\"valueDecimal\":3}]";
+    private final String reviews = "[{\"comment\":\"It's working\",\"typeCode\":{\"value\":\"that's ok\",\"name\":\"\",\"uri\":\"\",\"listID\":\"\",\"listURI\":\"\"}},{\"comment\":\"not bad\",\"typeCode\":{\"value\":\"cool\",\"name\":\"\",\"uri\":\"\",\"listID\":\"\",\"listURI\":\"\"}}]";
 
     public static String processInstanceId;
 
@@ -53,6 +55,7 @@ public class TrustControllerTest {
      * - Retrieve all individual ratings
      * - Retrieve rating summary non-existing company (bad request expected)
      * - Retrieve individual ratings for non-existing company (bad request expected)
+     * - Create ratings for an uncompleted collaboration (bad request expected)
      */
 
     @Test
@@ -70,8 +73,6 @@ public class TrustControllerTest {
         int size = collaborationGroupResponse.getCollaborationGroups().get(1).getAssociatedProcessInstanceGroups().get(0).getProcessInstanceIDs().size();
         processInstanceId = collaborationGroupResponse.getCollaborationGroups().get(1).getAssociatedProcessInstanceGroups().get(0).getProcessInstanceIDs().get(size - 1);
 
-        String ratings = "[{\"id\":\"QualityOfTheNegotiationProcess\",\"valueDecimal\":5},{\"id\":\"QualityOfTheOrderingProcess\",\"valueDecimal\":3},{\"id\":\"ResponseTime\",\"valueDecimal\":4},{\"id\":\"ProductListingAccuracy\",\"valueDecimal\":2},{\"id\":\"ConformanceToOtherAgreedTerms\",\"valueDecimal\":5},{\"id\":\"DeliveryAndPackaging\",\"valueDecimal\":3}]";
-        String reviews = "[{\"comment\":\"It's working\",\"typeCode\":{\"value\":\"that's ok\",\"name\":\"\",\"uri\":\"\",\"listID\":\"\",\"listURI\":\"\"}},{\"comment\":\"not bad\",\"typeCode\":{\"value\":\"cool\",\"name\":\"\",\"uri\":\"\",\"listID\":\"\",\"listURI\":\"\"}}]";
         // create ratings and reviews
         request = post("/ratingsAndReviews")
                 .header("Authorization",TestConfig.responderPersonId)
@@ -131,6 +132,19 @@ public class TrustControllerTest {
         MockHttpServletRequestBuilder request = get("/ratingsAndReviews")
                 .header("Authorization", TestConfig.responderPersonId)
                 .param("partyId","9999");
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isBadRequest()).andReturn();
+    }
+
+    // try to create ratings for a collaboration which is not completed yet
+    @Test
+    public void test7_createRatingAndReview() throws Exception {
+        // create ratings and reviews
+        MockHttpServletRequestBuilder request = post("/ratingsAndReviews")
+                .header("Authorization",TestConfig.responderPersonId)
+                .param("processInstanceID",StartControllerTest.processInstanceIdOrder3)
+                .param("reviews", reviews)
+                .param("ratings",ratings)
+                .param("partyId", partyID);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isBadRequest()).andReturn();
     }
 }

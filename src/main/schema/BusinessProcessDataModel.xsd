@@ -199,6 +199,7 @@
 		<xsd:restriction base="xsd:token">
 			<xsd:enumeration value="INPROGRESS"/>
 			<xsd:enumeration value="CANCELLED"/>
+			<xsd:enumeration value="COMPLETED"/>
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:complexType name="CollaborationGroupDAO">
