@@ -7,6 +7,7 @@ import eu.nimble.service.model.ubl.commonaggregatecomponents.CompletedTaskType;
 import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.DocumentReferenceType;
+import eu.nimble.service.model.ubl.commonbasiccomponents.TextType;
 import eu.nimble.service.model.ubl.despatchadvice.DespatchAdviceType;
 import eu.nimble.service.model.ubl.iteminformationrequest.ItemInformationRequestType;
 import eu.nimble.service.model.ubl.iteminformationresponse.ItemInformationResponseType;
@@ -186,8 +187,10 @@ public class R13MigrationController {
             // get CompletedTasks
             List<CompletedTaskType> completedTasks = catalogueRepo.getEntities(CompletedTaskType.class);
             for(CompletedTaskType completedTask : completedTasks){
+                // get CompletedTask descriptions
+                List<TextType> descriptions = completedTask.getDescription();
                 // only consider the completed tasks whose status is Completed
-                if(completedTask.getDescription().get(0).getValue().contentEquals("Completed")){
+                if(descriptions != null && descriptions.size() > 0 && descriptions.get(0).getValue().contentEquals("Completed")){
                     String processInstanceId = completedTask.getAssociatedProcessInstanceID();
                     // get process instance groups
                     List<ProcessInstanceGroupDAO> processInstanceGroupDAOS = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAOs(processInstanceId, bpRepo);
