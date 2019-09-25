@@ -127,44 +127,4 @@ public class BusinessProcessWorkflowTests {
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isBadRequest()).andReturn();
     }
-
-    /* We will start another Item Information Request. When the seller sends a response, the workflow will be completed.
-      However, since a CompletedTask is created for this collaboration, there should not be a CompletedTask for this process instance.*/
-    @Test
-    public void test4_startProcessInstance() throws Exception {
-        // start Item Information Request
-        String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(itemInformationRequestJSON));
-        inputMessageAsString = inputMessageAsString.replaceAll("2892f360-763f-4e26-843d-c6347d9114ff","34f31vh4-6g42-4e26-3dfg-dtlk20834kaf");
-
-        MockHttpServletRequestBuilder request = post("/start")
-                .header("Authorization", "745")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(inputMessageAsString);
-        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
-
-        // get process instance id
-        ProcessInstance processInstance = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ProcessInstance.class);
-        String processInstanceID = processInstance.getProcessInstanceID();
-
-        // send Item Information Response
-        inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(itemInformationResponseJSON));
-        inputMessageAsString = inputMessageAsString.replaceAll("5a9a43e9-79ba-4c41-9dab-f8b61245ffc9","5629fghq-79ba-4c41-4235-rtyln456poas");
-        // replace the process instance id
-        inputMessageAsString = inputMessageAsString.replace("pid", processInstanceID);
-
-        request = post("/continue")
-                .header("Authorization", "1337")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(inputMessageAsString)
-                .param("gid", sellerProcessInstanceGroupID)
-                .param("collaborationGID", sellerCollaborationGroupID);
-        mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
-
-        // check whether there is a CompletedTask for this process or not
-
-        // get QualifyingParty of seller
-        QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingPartyType("747", "745");
-        Assert.assertEquals(false, TrustPersistenceUtility.completedTaskExist(qualifyingParty,processInstanceID));
-    }
-
 }
