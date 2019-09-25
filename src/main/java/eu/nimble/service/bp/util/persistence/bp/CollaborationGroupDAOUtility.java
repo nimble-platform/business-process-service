@@ -465,7 +465,7 @@ public class CollaborationGroupDAOUtility {
 
         if (queryType == GroupQueryType.GROUP || queryType == GroupQueryType.PROJECT) {
             query += " group by cg.hjid";
-            query += " order by firstActivityTime desc";
+            query += " order by lastActivityTime desc";
         }
 
         query += ") > 0";
