@@ -3,6 +3,7 @@ package eu.nimble.service.bp.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import eu.nimble.common.rest.identity.model.NegotiationSettings;
 import eu.nimble.service.bp.bom.BPMessageGenerator;
+import eu.nimble.service.bp.model.efactoryDemo.RFQSummary;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.util.persistence.catalogue.CataloguePersistenceUtility;
 import eu.nimble.service.bp.util.spring.SpringBridge;
@@ -13,7 +14,6 @@ import eu.nimble.service.model.ubl.commonbasiccomponents.TextType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
 import eu.nimble.utility.JsonSerializationUtility;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
@@ -22,13 +22,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 import springfox.documentation.annotations.ApiIgnore;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.Arrays;
 
 @ApiIgnore
@@ -48,18 +47,14 @@ public class EFactoryDemoController {
     @RequestMapping(value = "/start-rfq",
             produces = {"application/json"},
             method = RequestMethod.POST)
-    public ResponseEntity startRFQProcess(@ApiParam(value = "Identifier (catalogueLine.hjid) of the product for which the request for quotation is created", required = true) @RequestParam(value = "productID",required = true) String productID,
-                                          @ApiParam(value = "Number of the product requested", required = true) @RequestParam(value = "numberOfProductsRequested", required = true) BigDecimal numberOfProductsRequested,
-                                          @ApiParam(value = "Endpoint of the buyer company which is used to send Quotation document", required = true) @RequestParam(value = "endpointOfTheBuyer",required = true) String endpointOfTheBuyer,
-                                          @ApiParam(value = "Identifier of the buyer company", required = true) @RequestParam(value = "buyerPartyId",required = true) String buyerPartyId,
-                                          @ApiParam(value = "Name of the buyer company", required = true) @RequestParam(value = "buyerPartyName",required = true) String buyerPartyName) {
+    public ResponseEntity startRFQProcess(@RequestBody RFQSummary rfqSummary) {
         logger.info("Getting request to start request for quotation process");
 
         // retrieve the product details
-        CatalogueLineType catalogueLine = CataloguePersistenceUtility.getCatalogueLine(productID);
+        CatalogueLineType catalogueLine = CataloguePersistenceUtility.getCatalogueLine(rfqSummary.getProductID());
         // check the existence of catalogue line
         if(catalogueLine == null){
-            String msg = String.format("There does not exist a product for the given id: %s",productID);
+            String msg = String.format("There does not exist a product for the given id: %s",rfqSummary.getProductID());
             logger.error(msg);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
         }
@@ -74,24 +69,24 @@ public class EFactoryDemoController {
         }
         // create quantity
         QuantityType quantity = new QuantityType();
-        quantity.setValue(numberOfProductsRequested);
+        quantity.setValue(rfqSummary.getNumberOfProductsRequested());
         quantity.setUnitCode(catalogueLine.getRequiredItemLocationQuantity().getPrice().getBaseQuantity().getUnitCode());
 
         // create buyer party
         PartyType buyerParty;
         try {
-            buyerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(StartWithDocumentController.token,buyerPartyId);
+            buyerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(StartWithDocumentController.token,rfqSummary.getBuyerPartyId());
             // create the party if it does not exist
             if(buyerParty == null){
                 buyerParty = new PartyType();
                 PartyIdentificationType partyIdentification = new PartyIdentificationType();
-                partyIdentification.setID(buyerPartyId);
+                partyIdentification.setID(rfqSummary.getBuyerPartyId());
                 buyerParty.setPartyIdentification(Arrays.asList(partyIdentification));
                 PersonType person = new PersonType();
                 person.setID("213");
                 buyerParty.getPerson().add(person);
                 TextType partyName = new TextType();
-                partyName.setValue(buyerPartyName);
+                partyName.setValue(rfqSummary.getBuyerPartyName());
                 partyName.setLanguageID("en");
                 PartyNameType partyNameType = new PartyNameType();
                 partyNameType.setName(partyName);
@@ -101,7 +96,9 @@ public class EFactoryDemoController {
                 CommunicationType communicationType = new CommunicationType();
                 CodeType codeType = new CodeType();
                 codeType.setName("REST");
-                codeType.setValue(endpointOfTheBuyer);
+                codeType.setValue(rfqSummary.getEndpointOfTheBuyer());
+                codeType.setListID(rfqSummary.getMessageName());
+                codeType.setURI(rfqSummary.getProcessInstanceId());
                 communicationType.setChannelCode(codeType);
                 contact.setOtherCommunication(Arrays.asList(communicationType));
                 buyerParty.setContact(contact);
@@ -118,7 +115,7 @@ public class EFactoryDemoController {
         try {
             requestForQuotationType = BPMessageGenerator.createRequestForQuotation(catalogueLine,quantity,sellerNegotiationSettings,buyerParty,StartWithDocumentController.token);
         } catch (IOException e) {
-            String msg = String.format("Unexpected error while creating request for quotation for product: %s",productID);
+            String msg = String.format("Unexpected error while creating request for quotation for product: %s",rfqSummary.getProductID());
             logger.error(msg,e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
         }

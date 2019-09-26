@@ -5,7 +5,6 @@ import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.model.hyperjaxb.*;
 import eu.nimble.service.bp.swagger.model.*;
 import eu.nimble.service.bp.util.BusinessProcessEvent;
-import eu.nimble.service.bp.util.HttpResponseUtil;
 import eu.nimble.service.bp.util.bp.BusinessProcessUtility;
 import eu.nimble.service.bp.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.util.email.EmailSenderUtil;
@@ -18,15 +17,11 @@ import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.util.serialization.MixInIgnoreProperties;
 import eu.nimble.service.bp.swagger.api.ContinueApi;
-import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
-import eu.nimble.service.bp.util.spring.SpringBridge;
-import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.LoggerUtils;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
 import eu.nimble.utility.validation.IValidationUtil;
-import eu.nimble.utility.validation.ValidationUtil;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
@@ -57,8 +52,6 @@ public class ContinueController implements ContinueApi {
     private JPARepositoryFactory repoFactory;
     @Autowired
     private EmailSenderUtil emailSenderUtil;
-    @Autowired
-    private ProcessInstanceGroupController processInstanceGroupController;
     @Autowired
     private IValidationUtil validationUtil;
 
@@ -124,27 +117,6 @@ public class ContinueController implements ContinueApi {
             // create process instance groups if this is the first process initializing the process group
             checkExistingGroup(businessProcessContext.getId(), gid, processInstance.getProcessInstanceID(), body);
 
-            // get the identifier of party whose workflow will be checked
-            String partyId = processId.contentEquals("Fulfilment") ? body.getVariables().getInitiatorID(): body.getVariables().getResponderID();
-
-            // get the seller party to check its workflow
-            PartyType sellerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,partyId);
-
-            // check whether the process is the last step in seller's workflow
-            boolean isLastProcessInWorkflow;
-
-            // no workflow for the seller company, use the default workflow
-            if(sellerParty.getProcessID() == null || sellerParty.getProcessID().size() == 0){
-                isLastProcessInWorkflow = processId.contentEquals("Fulfilment") || processId.contentEquals("Transport_Execution_Plan");
-            }
-            else{
-                isLastProcessInWorkflow = sellerParty.getProcessID().get(sellerParty.getProcessID().size()-1).contentEquals(processId);
-            }
-
-            // if it's the last process in the seller's workflow and there is no CompletedTask for this collaboration, create completed tasks for both parties
-            if(isLastProcessInWorkflow && processInstanceGroupController.checkCollaborationFinished(gid,bearerToken).getBody().contentEquals("false")){
-                TrustPersistenceUtility.createCompletedTasksForBothParties(processInstance.getProcessInstanceID(),bearerToken,"Completed",businessProcessContext.getId());
-            }
 
             CamundaEngine.continueProcessInstance(businessProcessContext.getId(), body, bearerToken);
 

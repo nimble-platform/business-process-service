@@ -43,6 +43,7 @@ public class ContinueControllerTest {
      * Test scenario:
      * - Continue the first order process from the {@link StartControllerTest}
      * - Continue the second order process from the {@link StartControllerTest}
+     * - Finish the collaboration to which the second order process from the {@link StartControllerTest} belongs
      */
 
     @Test
@@ -51,26 +52,14 @@ public class ContinueControllerTest {
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(orderResponseJSON1));
         inputMessageAsString = inputMessageAsString.replace("pid", StartControllerTest.processInstanceIdOrder1);
 
-        // get collaboration group and process instance group ids for seller
-        MockHttpServletRequestBuilder request = get("/collaboration-groups")
-                .header("Authorization", TestConfig.initiatorPersonId)
-                .param("partyID","706")
-                .param("collaborationRole","SELLER")
-                .param("offset", "0")
-                .param("limit", "10");
-        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
-        CollaborationGroupResponse collaborationGroupResponse = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), CollaborationGroupResponse.class);
-        String sellerCollaborationGroupID = collaborationGroupResponse.getCollaborationGroups().get(0).getID();
-        String sellerProcessInstanceGroupID = collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().get(0).getID();
-
         // continue the process
-        request = post("/continue")
+        MockHttpServletRequestBuilder request = post("/continue")
                 .header("Authorization", TestConfig.responderPersonId)
-                .param("gid", sellerProcessInstanceGroupID)
-                .param("collaborationGID", sellerCollaborationGroupID)
+                .param("gid", StartControllerTest.sellerProcessInstanceGroupIdContainingOrder1)
+                .param("collaborationGID", StartControllerTest.sellerCollaborationGroupIdContainingOrder1)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
-        mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         ProcessInstance processInstance = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ProcessInstance.class);
         Assert.assertEquals(processInstance.getStatus(), ProcessInstance.StatusEnum.COMPLETED);
@@ -83,29 +72,24 @@ public class ContinueControllerTest {
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(orderResponseJSON2));
         inputMessageAsString = inputMessageAsString.replace("pid", StartControllerTest.processInstanceIdOrder2);
 
-        // get collaboration group and process instance group ids for seller
-        MockHttpServletRequestBuilder request = get("/collaboration-groups")
-                .header("Authorization", TestConfig.initiatorPersonId)
-                .param("partyID","706")
-                .param("collaborationRole","SELLER")
-                .param("offset", "0")
-                .param("limit", "10");
-        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
-        CollaborationGroupResponse collaborationGroupResponse = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), CollaborationGroupResponse.class);
-        String sellerCollaborationGroupID = collaborationGroupResponse.getCollaborationGroups().get(0).getID();
-        String sellerProcessInstanceGroupID = collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().get(0).getID();
-
         // continue the process
-        request = post("/continue")
+        MockHttpServletRequestBuilder request = post("/continue")
                 .header("Authorization", TestConfig.responderPersonId)
-                .param("gid", sellerProcessInstanceGroupID)
-                .param("collaborationGID", sellerCollaborationGroupID)
+                .param("gid", StartControllerTest.sellerProcessInstanceGroupIdContainingOrder2)
+                .param("collaborationGID", StartControllerTest.sellerCollaborationGroupIdContainingOrder2)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
-        mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         ProcessInstance processInstance = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ProcessInstance.class);
         Assert.assertEquals(processInstance.getStatus(), ProcessInstance.StatusEnum.COMPLETED);
         Assert.assertEquals(processInstance.getProcessInstanceID(), StartControllerTest.processInstanceIdOrder2);
+    }
+
+    @Test
+    public void test3_finishCollaboration() throws Exception{
+        MockHttpServletRequestBuilder request = post("/process-instance-groups/"+ StartControllerTest.sellerProcessInstanceGroupIdContainingOrder2+"/finish")
+                .header("Authorization", TestConfig.responderPersonId);
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
     }
 }

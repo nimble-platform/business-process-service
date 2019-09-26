@@ -347,4 +347,11 @@ public class BusinessProcessExecutionTest {
         Assert.assertSame(1,clauses.get(DocumentType.PPAPRESPONSE).size());
         Assert.assertSame(1,clauses.get(DocumentType.ITEMINFORMATIONRESPONSE).size());
     }
+
+    @Test
+    public void test19_finishCollaboration() throws Exception{
+        MockHttpServletRequestBuilder request = post("/process-instance-groups/"+ buyerProcessInstanceGroupID+"/finish")
+                .header("Authorization", TestConfig.initiatorPersonId);
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+    }
 }

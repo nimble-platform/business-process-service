@@ -23,6 +23,7 @@ import eu.nimble.service.model.ubl.commonaggregatecomponents.DocumentReferenceTy
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ItemType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
+import eu.nimble.service.model.ubl.commonbasiccomponents.CodeType;
 import eu.nimble.service.model.ubl.document.IDocument;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.serialization.IDocumentDeserializer;
@@ -263,14 +264,16 @@ public class StartWithDocumentController {
 
             // get the initiator party
             try {
-                String endpoint = UBLUtility.getPartyRestEndpoint(initiatorParty);
-                if(endpoint != null){
-                    HttpResponse<String> response = Unirest.post(endpoint)
-                            .body(createQuotationBody(documentAsString))
+                CodeType communicationChannel = UBLUtility.getPartyCommunicationChannel(initiatorParty);
+                if(communicationChannel != null){
+                    HttpResponse<String> response = Unirest.post(communicationChannel.getValue())
+                            .header("Content-Type", "application/json")
+                            .header("accept", "*/*")
+                            .body(createQuotationBody(documentAsString,communicationChannel.getListID(),communicationChannel.getURI()))
                             .asString();
 
                     if(response.getStatus() != 200){
-                        logger.error("Failed send the document to the initiator party {}, endpoint: {} : {}",initiatorParty.getPartyIdentification().get(0).getID(), endpoint, response.getBody());
+                        logger.error("Failed send the document to the initiator party {}, endpoint: {} : {}",initiatorParty.getPartyIdentification().get(0).getID(), communicationChannel.getValue(), response.getBody());
                         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
                     }
                 }
@@ -333,12 +336,14 @@ public class StartWithDocumentController {
     /**
      * Prepare the json which has the following format:
      * {
-     *     "processVariables":{
-     *          "quotationData":{"value":"<quotation_data_here></>","type":"String"}
-     *     }
+     *   "messageName": "<message_name_here>",
+     *   "processInstanceId": "<process_instance_id_here>",
+     *   "processVariables": {
+     *          "quotationData": {"value":"<quotation_data_here>","type":"String"}
+     *   }
      * }
      * */
-    private String createQuotationBody(String documentAsString){
+    private String createQuotationBody(String documentAsString, String messageName, String processInstanceId){
         JSONObject quotationData = new JSONObject();
         quotationData.put("type","String");
         quotationData.put("value",documentAsString);
@@ -346,6 +351,8 @@ public class StartWithDocumentController {
         processVariables.put("quotationData",quotationData);
         JSONObject json = new JSONObject();
         json.put("processVariables",processVariables);
+        json.put("messageName",messageName);
+        json.put("processInstanceId",processInstanceId);
         return json.toString();
     }
 }

@@ -59,29 +59,27 @@ public class StatisticsPersistenceUtility {
         List<String> parameterNames = new ArrayList<>();
         List<Object> parameterValues = new ArrayList<>();
 
-        if (partyId != null || role != null || startDate != null || endDate != null || status != null) {
-            List<String> documentTypes = new ArrayList<>();
-            documentTypes.add("ORDER");
-            List<String> orderIds = ProcessDocumentMetadataDAOUtility.getDocumentIds(partyId, documentTypes, role, startDate, endDate, status);
+        List<String> documentTypes = new ArrayList<>();
+        documentTypes.add("ORDER");
+        List<String> orderIds = ProcessDocumentMetadataDAOUtility.getDocumentIds(partyId, documentTypes, role, startDate, endDate, status, true);
 
-            // no orders for the specified criteria
-            if (orderIds.size() == 0) {
-                logger.info("No orders for the specified criteria");
-                return 0;
-            }
-
-            query += " and (";
-            for (int i = 0; i < orderIds.size() - 1; i++) {
-                query += " order_.ID = :id" + i + " or ";
-
-                parameterNames.add("id" + i);
-                parameterValues.add(orderIds.get(i));
-            }
-            query += " order_.ID = :id" + (orderIds.size()-1) + ")";
-
-            parameterNames.add("id" + (orderIds.size()-1));
-            parameterValues.add(orderIds.get(orderIds.size()-1));
+        // no orders for the specified criteria
+        if (orderIds.size() == 0) {
+            logger.info("No orders for the specified criteria");
+            return 0;
         }
+
+        query += " and (";
+        for (int i = 0; i < orderIds.size() - 1; i++) {
+            query += " order_.ID = :id" + i + " or ";
+
+            parameterNames.add("id" + i);
+            parameterValues.add(orderIds.get(i));
+        }
+        query += " order_.ID = :id" + (orderIds.size()-1) + ")";
+
+        parameterNames.add("id" + (orderIds.size()-1));
+        parameterValues.add(orderIds.get(orderIds.size()-1));
 
         double tradingVolume = ((BigDecimal) new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray())).doubleValue();
         return tradingVolume;
@@ -99,9 +97,16 @@ public class StatisticsPersistenceUtility {
             parameterValues.add(partyId.toString());
         }
 
-        query += " and item.manufacturersItemIdentification.ID not in " +
-                "(select line.lineItem.item.manufacturersItemIdentification.ID from OrderType order_ join order_.orderLine line join line.lineItem.item.manufacturerParty.partyIdentification orderPartyIdentification " +
-                " where orderPartyIdentification.ID = partyIdentification.ID) ";
+        List<String> orderIds = ProcessDocumentMetadataDAOUtility.getOrderIdsBelongToCompletedCollaborations();
+        if(orderIds.size() > 0){
+            query += " and item.manufacturersItemIdentification.ID not in " +
+                    "(select line.lineItem.item.manufacturersItemIdentification.ID from OrderType order_ join order_.orderLine line join line.lineItem.item.manufacturerParty.partyIdentification orderPartyIdentification " +
+                    " where orderPartyIdentification.ID = partyIdentification.ID and (";
+            for (int i = 0; i < orderIds.size() - 1; i++) {
+                query += " order_.ID = '" + orderIds.get(i) + "' or";
+            }
+            query += " order_.ID = '" +orderIds.get(orderIds.size()-1) + "'))";
+        }
 
         NonOrderedProducts nonOrderedProducts = new NonOrderedProducts();
         List<Object> results = new JPARepositoryFactory().forCatalogueRepository().getEntities(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());

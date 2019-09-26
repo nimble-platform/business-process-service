@@ -77,6 +77,14 @@ public class ProcessDocumentMetadataDAOUtility {
                         "(SELECT despatchOrderRef2.documentReference.ID " +
                         "FROM DespatchAdviceType despatchAdvice2 join despatchAdvice2.orderReference despatchOrderRef2)" +
                     " ORDER BY order_.hjid DESC";
+    private static final String QUERY_GET_ORDERS_BELONG_TO_COMPLETED_COLLABORATIONS =
+            "SELECT metadata.documentID " +
+            "FROM ProcessDocumentMetadataDAO metadata " +
+            "WHERE metadata.type = 'ORDER' AND NOT EXISTS(" +
+                    "SELECT pig.ID " +
+                    "FROM ProcessInstanceGroupDAO pig join pig.processInstanceIDsItems idItems " +
+                    "WHERE metadata.processInstanceID = idItems.item AND pig.status != 'COMPLETED' " +
+                    ")";
 
     private static final Logger logger = LoggerFactory.getLogger(ProcessDocumentMetadataDAOUtility.class);
 
@@ -98,6 +106,10 @@ public class ProcessDocumentMetadataDAOUtility {
 
     public static List<ProcessDocumentMetadataDAO> findByProcessInstanceID(String processInstanceId) {
         return findByProcessInstanceID(processInstanceId, new JPARepositoryFactory().forBpRepository(true));
+    }
+
+    public static List<String> getOrderIdsBelongToCompletedCollaborations() {
+        return new JPARepositoryFactory().forBpRepository().getEntities(QUERY_GET_ORDERS_BELONG_TO_COMPLETED_COLLABORATIONS);
     }
 
     public static List<ProcessDocumentMetadataDAO> findByPartyID(String partyId) {
@@ -181,11 +193,11 @@ public class ProcessDocumentMetadataDAOUtility {
         return resultSet;
     }
 
-    public static List<String> getDocumentIds(Integer partyId, List<String> documentTypes, String role, String startDateStr, String endDateStr, String status) {
+    public static List<String> getDocumentIds(Integer partyId, List<String> documentTypes, String role, String startDateStr, String endDateStr, String status, Boolean belongsToCompletedCollaboration) {
         if(role == null) {
             role = RoleType.SELLER.toString();
         }
-        DocumentMetadataQuery query = getDocumentMetadataQuery(partyId, documentTypes, role, startDateStr, endDateStr, status, null, null, DocumentMetadataQueryType.DOCUMENT_IDS);
+        DocumentMetadataQuery query = getDocumentMetadataQuery(partyId, documentTypes, role, startDateStr, endDateStr, status, null, null, belongsToCompletedCollaboration, DocumentMetadataQueryType.DOCUMENT_IDS);
         List<String> documentIds = new JPARepositoryFactory().forBpRepository().getEntities(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray());
         return documentIds;
     }
@@ -194,7 +206,7 @@ public class ProcessDocumentMetadataDAOUtility {
         if(role == null) {
             role = RoleType.SELLER.toString();
         }
-        DocumentMetadataQuery query = getDocumentMetadataQuery(partyId, documentTypes, role, startDateStr, endDateStr, status, null, null, DocumentMetadataQueryType.TOTAL_TRANSACTION_COUNT);
+        DocumentMetadataQuery query = getDocumentMetadataQuery(partyId, documentTypes, role, startDateStr, endDateStr, status, null, null, null, DocumentMetadataQueryType.TOTAL_TRANSACTION_COUNT);
         int count = ((Long) new JPARepositoryFactory().forBpRepository().getSingleEntity(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray())).intValue();
         return count;
     }
@@ -213,7 +225,7 @@ public class ProcessDocumentMetadataDAOUtility {
                 }
             }
 
-            DocumentMetadataQuery query = getDocumentMetadataQuery(Integer.parseInt(partyId), null, role, null, null, null, userId, archived, DocumentMetadataQueryType.TRANSACTION_METADATA);
+            DocumentMetadataQuery query = getDocumentMetadataQuery(Integer.parseInt(partyId), null, role, null, null, null, userId, archived, null, DocumentMetadataQueryType.TRANSACTION_METADATA);
             List<ProcessDocumentMetadataDAO> metadataObjects = new JPARepositoryFactory().forBpRepository(true).getEntities(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray());
             Set<String> partyIds = new HashSet<>();
             Set<String> personIds = new HashSet<>();
@@ -356,7 +368,7 @@ public class ProcessDocumentMetadataDAOUtility {
         if(role == null) {
             role = RoleType.SELLER.toString();
         }
-        DocumentMetadataQuery query = getDocumentMetadataQuery(partyId, new ArrayList<>(), role, startDateStr, endDateStr, null, null, null, DocumentMetadataQueryType.GROUPED_TRANSACTION_COUNT);
+        DocumentMetadataQuery query = getDocumentMetadataQuery(partyId, new ArrayList<>(), role, startDateStr, endDateStr, null, null, null, null, DocumentMetadataQueryType.GROUPED_TRANSACTION_COUNT);
 
         List<Object> results = new JPARepositoryFactory().forBpRepository(true).getEntities(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray());
 
@@ -384,6 +396,7 @@ public class ProcessDocumentMetadataDAOUtility {
                                                                   String status,
                                                                   String userId,
                                                                   Boolean belongsToArchivedCollaborationGroup,
+                                                                  Boolean belongsToCompletedCollaboration,
                                                                   DocumentMetadataQueryType queryType) {
         DocumentMetadataQuery query = new DocumentMetadataQuery();
         List<String> parameterNames = query.parameterNames;
@@ -478,6 +491,18 @@ public class ProcessDocumentMetadataDAOUtility {
                 parameterNames.add("archived");
                 parameterValues.add(belongsToArchivedCollaborationGroup);
             }
+        } else if(queryType.equals(DocumentMetadataQueryType.DOCUMENT_IDS) && belongsToCompletedCollaboration){
+            if (!filterExists) {
+                conditions += " where ";
+            } else {
+                conditions += " and ";
+            }
+
+            conditions += "NOT EXISTS(" +
+                    "SELECT pig.ID " +
+                    "FROM ProcessInstanceGroupDAO pig join pig.processInstanceIDsItems idItems " +
+                    "WHERE documentMetadata.processInstanceID = idItems.item AND pig.status != 'COMPLETED' " +
+                    ")";
         }
 
         if (queryType.equals(DocumentMetadataQueryType.TOTAL_TRANSACTION_COUNT)) {

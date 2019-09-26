@@ -113,9 +113,7 @@ public class TrustServiceController {
 
             boolean completedTaskExist = TrustPersistenceUtility.completedTaskExist(qualifyingParty, processInstanceID);
             if (!completedTaskExist) {
-                TrustPersistenceUtility.createCompletedTasksForBothParties(processDocumentMetadatas.get(0), bearerToken, "Completed");
-                // get qualifyingParty (which contains the completed task) again
-                qualifyingParty = PartyPersistenceUtility.getQualifyingPartyType(partyId, bearerToken);
+                return HttpResponseUtil.createResponseEntityAndLog(String.format("No completed task exists for the given party id: %s and process instance id: %s", partyId, processInstanceID), HttpStatus.BAD_REQUEST);
             }
             CompletedTaskType completedTaskType = TrustPersistenceUtility.fillCompletedTask(qualifyingParty, ratings, reviews, processInstanceID);
             new JPARepositoryFactory().forCatalogueRepository().updateEntity(qualifyingParty);
