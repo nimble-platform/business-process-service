@@ -49,12 +49,12 @@ public class UBLUtility {
         return result;
     }
 
-    public static String getPartyRestEndpoint(PartyType party){
+    public static CodeType getPartyCommunicationChannel(PartyType party){
         if(party != null && party.getContact() != null && party.getContact().getOtherCommunication() != null){
             for (CommunicationType communicationType : party.getContact().getOtherCommunication()) {
                 CodeType code = communicationType.getChannelCode();
                 if(code != null && code.getName() != null && code.getName().contentEquals("REST")){
-                    return code.getValue();
+                    return code;
                 }
             }
         }
