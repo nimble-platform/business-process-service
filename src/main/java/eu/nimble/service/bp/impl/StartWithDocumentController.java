@@ -339,13 +339,13 @@ public class StartWithDocumentController {
      *   "messageName": "<message_name_here>",
      *   "processInstanceId": "<process_instance_id_here>",
      *   "processVariables": {
-     *          "quotationData": {"value":"<quotation_data_here>","type":"String"}
+     *          "quotationData": {"value":"<quotation_data_here>","type":"Object"}
      *   }
      * }
      * */
     private String createQuotationBody(String documentAsString, String messageName, String processInstanceId){
         JSONObject quotationData = new JSONObject();
-        quotationData.put("type","String");
+        quotationData.put("type","Object");
         quotationData.put("value",documentAsString);
         JSONObject processVariables = new JSONObject();
         processVariables.put("quotationData",quotationData);
