@@ -266,10 +266,12 @@ public class StartWithDocumentController {
             try {
                 CodeType communicationChannel = UBLUtility.getPartyCommunicationChannel(initiatorParty);
                 if(communicationChannel != null){
+                    String msg = createQuotationBody(documentAsString,communicationChannel.getListID(),communicationChannel.getURI());
+                    logger.info("Message sent: {}",msg);
                     HttpResponse<String> response = Unirest.post(communicationChannel.getValue())
                             .header("Content-Type", "application/json")
                             .header("accept", "*/*")
-                            .body(createQuotationBody(documentAsString,communicationChannel.getListID(),communicationChannel.getURI()))
+                            .body(msg)
                             .asString();
 
                     if(response.getStatus() != 200){
