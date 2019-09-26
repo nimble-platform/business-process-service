@@ -4,9 +4,14 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.nimble.service.bp.model.hyperjaxb.CollaborationGroupDAO;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO;
+import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceDAO;
+import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceGroupDAO;
 import eu.nimble.service.bp.model.statistics.NonOrderedProducts;
+import eu.nimble.service.bp.util.persistence.bp.CollaborationGroupDAOUtility;
 import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
+import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceDAOUtility;
 import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.commonbasiccomponents.TextType;
@@ -169,21 +174,41 @@ public class StatisticsPersistenceUtility {
         return inactiveParties;
     }
 
-    public static double calculateAverageCollaborationTime(String partyID, String bearerToken){
+    public static double calculateAverageCollaborationTime(String partyID, String bearerToken, String role){
         int numberOfCollaborations = 0;
         double totalTime = 0;
         QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingPartyType(partyID,bearerToken);
+        PartyType part =  qualifyingParty.getParty();
+
         for (CompletedTaskType completedTask:qualifyingParty.getCompletedTask()){
             if(completedTask.getPeriod().getEndDate() == null || completedTask.getPeriod().getEndTime() == null){
                 continue;
             }
-            Date startDate = completedTask.getPeriod().getStartDate().toGregorianCalendar().getTime();
-            Date endDate = completedTask.getPeriod().getEndDate().toGregorianCalendar().getTime();
-            Date startTime = completedTask.getPeriod().getStartTime().toGregorianCalendar().getTime();
-            Date endTime = completedTask.getPeriod().getEndTime().toGregorianCalendar().getTime();
 
-            numberOfCollaborations++;
-            totalTime += ((endDate.getTime()-startDate.getTime())+(endTime.getTime()-startTime.getTime()))/86400000.0;
+            String processInstanceId = completedTask.getAssociatedProcessInstanceID();
+            ProcessInstanceDAO instanceDAO = ProcessInstanceDAOUtility.getById(processInstanceId);
+
+            CollaborationGroupDAO collaborationGroup = CollaborationGroupDAOUtility
+                    .getCollaborationGroupByProcessInstanceIdAndPartyId(processInstanceId, partyID);
+
+            List<ProcessInstanceGroupDAO> processInstanceGroups =   collaborationGroup.getAssociatedProcessInstanceGroups();
+
+            for(ProcessInstanceGroupDAO pid :processInstanceGroups ){
+                List<String> pidstrs = pid.getProcessInstanceIDs();
+                for(String pidstr : pidstrs){
+                    if(pidstr.equals(processInstanceId) && pid.getCollaborationRole().equals(role)){
+                        Date startDate = completedTask.getPeriod().getStartDate().toGregorianCalendar().getTime();
+                        Date endDate = completedTask.getPeriod().getEndDate().toGregorianCalendar().getTime();
+                        Date startTime = completedTask.getPeriod().getStartTime().toGregorianCalendar().getTime();
+                        Date endTime = completedTask.getPeriod().getEndTime().toGregorianCalendar().getTime();
+                        numberOfCollaborations++;
+                        totalTime += ((endDate.getTime()-startDate.getTime())+(endTime.getTime()-startTime.getTime()))/86400000.0;
+                    }
+                }
+
+            }
+
+
         }
         if(numberOfCollaborations == 0){
             return 0.0;
