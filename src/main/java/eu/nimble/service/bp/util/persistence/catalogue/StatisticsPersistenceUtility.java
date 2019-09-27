@@ -243,4 +243,79 @@ public class StatisticsPersistenceUtility {
         }
         return totalTime/numberOfResponses;
     }
+
+    public static Map<Integer,Double> calculateAverageResponseTimeInMonths(String partyID) throws Exception{
+
+        int numberOfResponses = 0;
+        double totalTime = 0;
+        int currentmonth = 0 ;
+
+        List<String> processInstanceIDs = ProcessDocumentMetadataDAOUtility.getProcessInstanceIds(partyID);
+
+        Set<Integer> monthList = new HashSet<>();
+
+        currentmonth  = new GregorianCalendar().get(Calendar.MONTH);
+
+        while(monthList.size() < 6){
+            if(currentmonth < 0){
+                currentmonth = 11;
+            }
+
+            monthList.add(currentmonth);
+            currentmonth--;
+        }
+
+        Map<Integer,Double> storeMonth = new HashMap<>();
+        Map<Integer,Integer> storeResponseTime = new HashMap<>();
+
+        for (String processInstanceID:processInstanceIDs){
+            List<ProcessDocumentMetadataDAO> processDocumentMetadataDAOS = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(processInstanceID);
+            if (processDocumentMetadataDAOS.size() != 2){
+                continue;
+            }
+
+            ProcessDocumentMetadataDAO docMetadata = processDocumentMetadataDAOS.get(1);
+            ProcessDocumentMetadataDAO reqMetadata = processDocumentMetadataDAOS.get(0);
+
+            int month = DatatypeFactory.newInstance().newXMLGregorianCalendar(reqMetadata.getSubmissionDate()).toGregorianCalendar().get(Calendar.MONTH);
+
+            if(monthList.contains(month)) {
+                Date startDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(reqMetadata.getSubmissionDate())
+                        .toGregorianCalendar().getTime();
+                Date endDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(docMetadata.getSubmissionDate())
+                        .toGregorianCalendar().getTime();
+
+                double timeAll = 0;
+                int responseno = 0;
+
+                if (storeMonth.containsKey(month)) {
+                    timeAll = storeMonth.get(month);
+                    responseno = storeResponseTime.get(month);
+                }
+
+                timeAll += (endDate.getTime() - startDate.getTime()) / 86400000.0;
+                responseno += 1;
+                storeMonth.put(month,timeAll);
+                storeResponseTime.put(month,responseno);
+
+            }
+        }
+
+        int noOfMonths = monthList.size();
+
+        Iterator<Integer> itr = monthList.iterator();
+
+        while(itr.hasNext()){
+            int itra = itr.next();
+            if(storeResponseTime.containsKey(itra)){
+                double b = storeMonth.get(itra);
+                int aa = storeResponseTime.get(itra);
+                storeMonth.put(itra,(storeMonth.get(itra)/storeResponseTime.get(itra)));
+            }else{
+                storeMonth.put(itra,0.0) ;
+            }
+        }
+
+        return storeMonth;
+    }
 }
