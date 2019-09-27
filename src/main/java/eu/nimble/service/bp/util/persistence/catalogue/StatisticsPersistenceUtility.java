@@ -249,12 +249,15 @@ public class StatisticsPersistenceUtility {
         int numberOfResponses = 0;
         double totalTime = 0;
         int currentmonth = 0 ;
+        int currentyear = 0;
+
 
         List<String> processInstanceIDs = ProcessDocumentMetadataDAOUtility.getProcessInstanceIds(partyID);
 
         Set<Integer> monthList = new HashSet<>();
 
         currentmonth  = new GregorianCalendar().get(Calendar.MONTH);
+        currentyear = new GregorianCalendar().get(Calendar.YEAR);
 
         while(monthList.size() < 6){
             if(currentmonth < 0){
@@ -278,8 +281,9 @@ public class StatisticsPersistenceUtility {
             ProcessDocumentMetadataDAO reqMetadata = processDocumentMetadataDAOS.get(0);
 
             int month = DatatypeFactory.newInstance().newXMLGregorianCalendar(reqMetadata.getSubmissionDate()).toGregorianCalendar().get(Calendar.MONTH);
+            int year = DatatypeFactory.newInstance().newXMLGregorianCalendar(reqMetadata.getSubmissionDate()).toGregorianCalendar().get(Calendar.YEAR);
 
-            if(monthList.contains(month)) {
+            if(monthList.contains(month) && year== currentyear) {
                 Date startDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(reqMetadata.getSubmissionDate())
                         .toGregorianCalendar().getTime();
                 Date endDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(docMetadata.getSubmissionDate())
