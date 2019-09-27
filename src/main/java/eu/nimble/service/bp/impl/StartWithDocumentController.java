@@ -25,10 +25,10 @@ import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.CodeType;
 import eu.nimble.service.model.ubl.document.IDocument;
+import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.serialization.IDocumentDeserializer;
 import eu.nimble.utility.validation.IValidationUtil;
-import eu.nimble.utility.validation.ValidationUtil;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -265,9 +265,11 @@ public class StartWithDocumentController {
             // get the initiator party
             try {
                 CodeType communicationChannel = UBLUtility.getPartyCommunicationChannel(initiatorParty);
-                if(communicationChannel != null){
-                    String msg = createQuotationBody(documentAsString,communicationChannel.getListID(),communicationChannel.getURI());
-                    logger.info("Message sent: {}",msg);
+                // send document to initiator party iff it's a Quotation
+                if(communicationChannel != null && document instanceof QuotationType){
+                    QuotationType quotation = (QuotationType) document;
+                    String msg = createRequestBody(quotation,communicationChannel.getListID(),communicationChannel.getURI());
+                    logger.info("Sending quotation {} to {}",msg, communicationChannel.getValue());
                     HttpResponse<String> response = Unirest.post(communicationChannel.getValue())
                             .header("Content-Type", "application/json")
                             .header("accept", "*/*")
@@ -341,14 +343,29 @@ public class StartWithDocumentController {
      *   "messageName": "<message_name_here>",
      *   "processInstanceId": "<process_instance_id_here>",
      *   "processVariables": {
-     *          "quotationData": {"value":"<quotation_data_here>","type":"Object"}
+     *          "quotationData": {
+     *              "type": "String",
+     *              "value": {
+     *                  "status ": "<status_of_quotation>",
+     *                  "netPrice": "<net_price_of_quotation>"
+     *              }
+     *          }
      *   }
      * }
      * */
-    private String createQuotationBody(String documentAsString, String messageName, String processInstanceId){
+    private String createRequestBody(QuotationType quotation, String messageName, String processInstanceId){
+        String price = quotation.getQuotationLine().get(0).getLineItem().getPrice().getPriceAmount().getValue().multiply(quotation.getQuotationLine().get(0).getLineItem().getQuantity().getValue()).toString()
+                + " " + quotation.getQuotationLine().get(0).getLineItem().getPrice().getPriceAmount().getCurrencyID();
+        String status = quotation.getDocumentStatusCode().getName();
+
+        JSONObject quotationDetails = new JSONObject();
+        quotationDetails.put("netPrice",price);
+        quotationDetails.put("status ",status);
+
         JSONObject quotationData = new JSONObject();
-        quotationData.put("type","Object");
-        quotationData.put("value",documentAsString);
+        quotationData.put("type","String");
+        quotationData.put("value",quotationDetails);
+
         JSONObject processVariables = new JSONObject();
         processVariables.put("quotationData",quotationData);
         JSONObject json = new JSONObject();
