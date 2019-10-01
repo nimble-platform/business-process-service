@@ -186,28 +186,25 @@ public class StatisticsPersistenceUtility {
             }
 
             String processInstanceId = completedTask.getAssociatedProcessInstanceID();
-            ProcessInstanceDAO instanceDAO = ProcessInstanceDAOUtility.getById(processInstanceId);
-
             CollaborationGroupDAO collaborationGroup = CollaborationGroupDAOUtility
                     .getCollaborationGroupByProcessInstanceIdAndPartyId(processInstanceId, partyID);
 
-            List<ProcessInstanceGroupDAO> processInstanceGroups =   collaborationGroup.getAssociatedProcessInstanceGroups();
-
-            for(ProcessInstanceGroupDAO pid :processInstanceGroups ){
-                List<String> pidstrs = pid.getProcessInstanceIDs();
-                for(String pidstr : pidstrs){
-                    if(pidstr.equals(processInstanceId) && pid.getCollaborationRole().equals(role)){
-                        Date startDate = completedTask.getPeriod().getStartDate().toGregorianCalendar().getTime();
-                        Date endDate = completedTask.getPeriod().getEndDate().toGregorianCalendar().getTime();
-                        Date startTime = completedTask.getPeriod().getStartTime().toGregorianCalendar().getTime();
-                        Date endTime = completedTask.getPeriod().getEndTime().toGregorianCalendar().getTime();
-                        numberOfCollaborations++;
-                        totalTime += ((endDate.getTime()-startDate.getTime())+(endTime.getTime()-startTime.getTime()))/86400000.0;
+            if(collaborationGroup != null){
+                List<ProcessInstanceGroupDAO> processInstanceGroups =   collaborationGroup.getAssociatedProcessInstanceGroups();
+                for(ProcessInstanceGroupDAO pid :processInstanceGroups ){
+                    List<String> pidstrs = pid.getProcessInstanceIDs();
+                    for(String pidstr : pidstrs){
+                        if(pidstr.equals(processInstanceId) && pid.getCollaborationRole().equals(role)){
+                            Date startDate = completedTask.getPeriod().getStartDate().toGregorianCalendar().getTime();
+                            Date endDate = completedTask.getPeriod().getEndDate().toGregorianCalendar().getTime();
+                            Date startTime = completedTask.getPeriod().getStartTime().toGregorianCalendar().getTime();
+                            Date endTime = completedTask.getPeriod().getEndTime().toGregorianCalendar().getTime();
+                            numberOfCollaborations++;
+                            totalTime += ((endDate.getTime()-startDate.getTime())+(endTime.getTime()-startTime.getTime()))/86400000.0;
+                        }
                     }
                 }
-
             }
-
 
         }
         if(numberOfCollaborations == 0){
