@@ -5,6 +5,8 @@ import eu.nimble.service.bp.model.dashboard.CollaborationGroupResponse;
 import eu.nimble.service.bp.swagger.model.CollaborationGroup;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
+import eu.nimble.service.bp.util.persistence.bp.CollaborationGroupDAOUtility;
+import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceGroupDAOUtility;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
@@ -20,6 +22,8 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+
+import java.util.Arrays;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -82,9 +86,9 @@ public class CollaborationGroupTest3_GroupDeletionAndMerge {
         CollaborationGroupResponse collaborationGroupResponse = getCollaborationGroupResponse();
         // set collaboration group and process instance groups ids
         buyerCollaborationGroupID = collaborationGroupResponse.getCollaborationGroups().get(0).getID();
-        sellerCollaborationGroupID = collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedCollaborationGroups().get(0).toString();
+        sellerCollaborationGroupID = CollaborationGroupDAOUtility.getCollaborationGroup(TestConfig.sellerPartyID, Arrays.asList(processInstanceIdIIR)).getHjid().toString();
         buyerProcessInstanceGroupID = collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().get(0).getID();
-        sellerProcessInstanceGroupID = collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().get(0).getAssociatedGroups().get(0);
+        sellerProcessInstanceGroupID = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(TestConfig.sellerPartyID,Arrays.asList(processInstanceIdIIR)).getID();
 
     }
 
@@ -213,7 +217,7 @@ public class CollaborationGroupTest3_GroupDeletionAndMerge {
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         CollaborationGroupResponse collaborationGroupResponse = mapper.readValue(mvcResult.getResponse().getContentAsString(), CollaborationGroupResponse.class);
-        Assert.assertSame(1,collaborationGroupResponse.getSize());
+        Assert.assertSame(2,collaborationGroupResponse.getSize());
         Assert.assertEquals(buyerCollaborationGroupID,collaborationGroupResponse.getCollaborationGroups().get(0).getID());
         // update buyer process instance group id
         buyerProcessInstanceGroupID = collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().get(0).getID();

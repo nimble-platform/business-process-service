@@ -360,11 +360,6 @@ paths:
         required: false
         type: string
       - in: query
-        name: preceding_pid
-        description: The id of the preceding process instance
-        required: false
-        type: string
-      - in: query
         name: preceding_gid
         description: The UUID of the preceding process instance group
         required: false
@@ -1185,6 +1180,8 @@ definitions:
         type: string
       partyID:
         type: string
+      dataChannelId:
+        type: string
       processInstanceIDs:
         type: array
         items:
@@ -1193,23 +1190,18 @@ definitions:
         type: boolean
       collaborationRole:
         type: string
-      associatedGroups:
-        type: array
-        items:
-          type: string
       firstActivityTime:
         type: string
       lastActivityTime:
         type: string
       precedingProcessInstanceGroup:
         $ref: '#/definitions/ProcessInstanceGroup'
-      precedingProcess:
-        $ref: '#/definitions/ProcessInstance'
       status:
         type: string
         enum:
-        - INPROGRESS
-        - CANCELLED
+          - INPROGRESS
+          - CANCELLED
+          - COMPLETED
 
   CollaborationGroup:
     title: Collaboration Group
@@ -1229,10 +1221,6 @@ definitions:
         - INPROGRESS
       isProject:
         type: boolean
-      associatedCollaborationGroups:
-        type: array
-        items:
-          type: integer
       associatedProcessInstanceGroups:
         type: array
         items:

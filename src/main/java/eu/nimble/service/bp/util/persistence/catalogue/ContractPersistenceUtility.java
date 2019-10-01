@@ -5,6 +5,7 @@ import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceDAO;
 import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.swagger.model.Process;
+import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceDAOUtility;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.digitalagreement.DigitalAgreementType;
 import eu.nimble.service.model.ubl.order.OrderType;
@@ -115,10 +116,10 @@ public class ContractPersistenceUtility {
      * process instances until the beginning and add the response document of each process instances as a
      * {@link DocumentClauseType}s.
      *
-     * @param processInstance
+     * @param processInstanceId
      * @return
      */
-    public static ContractType constructContractForProcessInstances(ProcessInstanceDAO processInstance) {
+    public static ContractType constructContractForProcessInstances(String processInstanceId) {
         ContractType realContract = null;
 
         ContractType contract = new ContractType();
@@ -127,7 +128,16 @@ public class ContractPersistenceUtility {
         boolean negotiationClauseFound = false;
         boolean ppapClauseFound = false;
 
-        do {
+        List<ProcessInstanceDAO> processInstances = ProcessInstanceDAOUtility.getAllProcessInstancesInCollaborationHistory(processInstanceId);
+
+        for (ProcessInstanceDAO processInstance : processInstances) {
+
+            if (negotiationClauseFound && processInstance.getProcessID().equalsIgnoreCase(Process.ProcessTypeEnum.NEGOTIATION.toString())) {
+                continue;
+            } else if (ppapClauseFound && processInstance.getProcessID().equalsIgnoreCase(Process.ProcessTypeEnum.PPAP.toString())) {
+                continue;
+            }
+
             List<ProcessDocumentMetadataDAO> documents = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(processInstance.getProcessInstanceID());
 
             // if the process is completed
@@ -181,22 +191,7 @@ public class ContractPersistenceUtility {
                     }
                 }
             }
-
-            // keep only the latest negotiation and ppap clauses
-            boolean skipNextInstance;
-            do {
-                skipNextInstance = false;
-                processInstance = processInstance.getPrecedingProcess();
-                if (processInstance != null) {
-                    if (negotiationClauseFound && processInstance.getProcessID().equalsIgnoreCase(Process.ProcessTypeEnum.NEGOTIATION.toString())) {
-                        skipNextInstance = true;
-                    } else if (ppapClauseFound && processInstance.getProcessID().equalsIgnoreCase(Process.ProcessTypeEnum.PPAP.toString())) {
-                        skipNextInstance = true;
-                    }
-                }
-            } while (skipNextInstance == true) ;
-
-        } while (processInstance != null);
+        }
 
         // Add new clauses to the contract
         if(realContract != null){

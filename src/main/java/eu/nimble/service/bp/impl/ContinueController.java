@@ -1,9 +1,10 @@
 package eu.nimble.service.bp.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.model.hyperjaxb.*;
+import eu.nimble.service.bp.swagger.model.*;
 import eu.nimble.service.bp.util.BusinessProcessEvent;
-import eu.nimble.service.bp.util.HttpResponseUtil;
 import eu.nimble.service.bp.util.bp.BusinessProcessUtility;
 import eu.nimble.service.bp.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.util.email.EmailSenderUtil;
@@ -16,17 +17,11 @@ import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.util.serialization.MixInIgnoreProperties;
 import eu.nimble.service.bp.swagger.api.ContinueApi;
-import eu.nimble.service.bp.swagger.model.ProcessInstance;
-import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
-import eu.nimble.service.bp.swagger.model.ProcessVariables;
-import eu.nimble.service.bp.swagger.model.Transaction;
-import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
-import eu.nimble.service.bp.util.spring.SpringBridge;
-import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.LoggerUtils;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
+import eu.nimble.utility.validation.IValidationUtil;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
@@ -38,7 +33,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
+import springfox.documentation.annotations.ApiIgnore;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -56,8 +53,9 @@ public class ContinueController implements ContinueApi {
     @Autowired
     private EmailSenderUtil emailSenderUtil;
     @Autowired
-    private ProcessInstanceGroupController processInstanceGroupController;
+    private IValidationUtil validationUtil;
 
+    @ApiIgnore
     @Override
     @ApiOperation(value = "", notes = "Sends input to a waiting process instance (because of a human task)")
     public ResponseEntity<ProcessInstance> continueProcessInstance(
@@ -83,13 +81,16 @@ public class ContinueController implements ContinueApi {
         } catch (JsonProcessingException e) {
             logger.warn("Failed to serialize process instance input message: ",e);
         }
-        ProcessInstance processInstance = null;
+        ProcessInstance processInstance = new ProcessInstance();
+        processInstance.setProcessID(body.getVariables().getProcessID());
+        processInstance.setProcessInstanceID(body.getProcessInstanceID());
+        processInstance.setStatus(ProcessInstance.StatusEnum.COMPLETED);
+
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
         try {
-            // check token
-            ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
-            if (tokenCheck != null) {
-                return tokenCheck;
+            // validate role
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_SALES)) {
+                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
             String processId = body.getVariables().getProcessID();
@@ -105,51 +106,22 @@ public class ContinueController implements ContinueApi {
             }
 
             ProcessInstanceInputMessageDAO processInstanceInputMessageDAO = HibernateSwaggerObjectMapper.createProcessInstanceInputMessage_DAO(body);
-            new JPARepositoryFactory().forBpRepository().persistEntity(processInstanceInputMessageDAO);
+            businessProcessContext.getBpRepository().persistEntity(processInstanceInputMessageDAO);
 
-            // save ProcessInstanceInputMessageDAO
-            businessProcessContext.setMessageDAO(processInstanceInputMessageDAO);
-
-            processInstance = CamundaEngine.continueProcessInstance(businessProcessContext.getId(), body, bearerToken);
-
-            ProcessInstanceDAO storedInstance = ProcessInstanceDAOUtility.getById(processInstance.getProcessInstanceID());
-
-            // save previous status
-            businessProcessContext.setPreviousStatus(storedInstance.getStatus());
+            ProcessInstanceDAO storedInstance = ProcessInstanceDAOUtility.getById(processInstance.getProcessInstanceID(),businessProcessContext.getBpRepository());
 
             storedInstance.setStatus(ProcessInstanceStatus.fromValue(processInstance.getStatus().toString()));
 
-            storedInstance = new JPARepositoryFactory().forBpRepository().updateEntity(storedInstance);
-
-            // save ProcessInstanceDAO
-            businessProcessContext.setProcessInstanceDAO(storedInstance);
+            storedInstance = businessProcessContext.getBpRepository().updateEntity(storedInstance);
 
             // create process instance groups if this is the first process initializing the process group
-            checkExistingGroup(businessProcessContext.getId(), gid, processInstance.getProcessInstanceID(), body, collaborationGID);
+            checkExistingGroup(businessProcessContext.getId(), gid, processInstance.getProcessInstanceID(), body);
 
-            // get the identifier of party whose workflow will be checked
-            String partyId = processId.contentEquals("Fulfilment") ? body.getVariables().getInitiatorID(): body.getVariables().getResponderID();
 
-            // get the seller party to check its workflow
-            PartyType sellerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,partyId);
+            CamundaEngine.continueProcessInstance(businessProcessContext.getId(), body, bearerToken);
 
-            // check whether the process is the last step in seller's workflow
-            boolean isLastProcessInWorkflow;
-
-            // no workflow for the seller company, use the default workflow
-            if(sellerParty.getProcessID() == null || sellerParty.getProcessID().size() == 0){
-                isLastProcessInWorkflow = processId.contentEquals("Fulfilment") || processId.contentEquals("Transport_Execution_Plan");
-            }
-            else{
-                isLastProcessInWorkflow = sellerParty.getProcessID().get(sellerParty.getProcessID().size()-1).contentEquals(processId);
-            }
-
-            // if it's the last process in the seller's workflow and there is no CompletedTask for this collaboration, create completed tasks for both parties
-            if(isLastProcessInWorkflow && processInstanceGroupController.checkCollaborationFinished(gid,bearerToken).getBody().contentEquals("false")){
-                TrustPersistenceUtility.createCompletedTasksForBothParties(processInstance.getProcessInstanceID(),bearerToken,"Completed");
-            }
-
-            emailSenderUtil.sendActionPendingEmail(bearerToken, businessProcessContext);
+            businessProcessContext.commitDbUpdates();
+            emailSenderUtil.sendActionPendingEmail(bearerToken, body.getVariables().getContentUUID());
 
             //mdc logging
             Map<String,String> logParamMap = new HashMap<String, String>();
@@ -161,7 +133,7 @@ public class ContinueController implements ContinueApi {
                     storedInstance.getProcessInstanceID(), storedInstance.getProcessID());
         } catch (Exception e) {
             logger.error(" $$$ Failed to continue process with ProcessInstanceInputMessage {}", body.toString(), e);
-            businessProcessContext.handleExceptions();
+            businessProcessContext.rollbackDbUpdates();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         } finally {
             BusinessProcessContextHandler.getBusinessProcessContextHandler().deleteBusinessProcessContext(businessProcessContext.getId());
@@ -170,39 +142,30 @@ public class ContinueController implements ContinueApi {
         return new ResponseEntity<>(processInstance, HttpStatus.OK);
     }
 
-    private void checkExistingGroup(String businessContextId, String sourceGid, String processInstanceId, ProcessInstanceInputMessage body, String responderCollaborationGID) {
-        ProcessInstanceGroupDAO existingGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(sourceGid);
+    private void checkExistingGroup(String businessContextId, String sourceGid, String processInstanceId, ProcessInstanceInputMessage body) {
+        BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId);
+        ProcessInstanceGroupDAO existingGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(sourceGid,businessProcessContext.getBpRepository());
 
         // check whether the group for the trading partner is still there. If not, create a new one
-        ProcessInstanceGroupDAO associatedGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(body.getVariables().getInitiatorID(), sourceGid,false);
+        ProcessInstanceGroupDAO associatedGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(body.getVariables().getInitiatorID(), Arrays.asList(processInstanceId),businessProcessContext.getBpRepository());
         if (associatedGroup == null) {
             associatedGroup = ProcessInstanceGroupDAOUtility.createProcessInstanceGroupDAO(
                     body.getVariables().getInitiatorID(),
                     processInstanceId,
                     CamundaEngine.getTransactions(body.getVariables().getProcessID()).get(0).getInitiatorRole().toString(),
                     body.getVariables().getRelatedProducts(),
-                    sourceGid);
+                    existingGroup.getDataChannelId(),
+                    businessProcessContext.getBpRepository());
 
-            CollaborationGroupDAO initiatorCollaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroupDAO(body.getVariables().getInitiatorID(), Long.parseLong(responderCollaborationGID),responderCollaborationGID);
+            CollaborationGroupDAO initiatorCollaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroup(body.getVariables().getInitiatorID(), Arrays.asList(processInstanceId),businessProcessContext.getBpRepository());
             // create a new initiator collaboration group
             if (initiatorCollaborationGroup == null) {
-                CollaborationGroupDAO responderCollaborationGroup = repoFactory.forBpRepository(true).getSingleEntityByHjid(CollaborationGroupDAO.class, Long.parseLong(responderCollaborationGID));
-                initiatorCollaborationGroup = CollaborationGroupDAOUtility.createCollaborationGroupDAO();
-
-                // set association between collaboration groups
-                initiatorCollaborationGroup.getAssociatedCollaborationGroups().add(responderCollaborationGroup.getHjid());
-                responderCollaborationGroup.getAssociatedCollaborationGroups().add(initiatorCollaborationGroup.getHjid());
-                repoFactory.forBpRepository().updateEntity(responderCollaborationGroup);
+                initiatorCollaborationGroup = CollaborationGroupDAOUtility.createCollaborationGroupDAO(businessProcessContext.getBpRepository());
             }
 
             // add new group to the collaboration group
             initiatorCollaborationGroup.getAssociatedProcessInstanceGroups().add(associatedGroup);
-            repoFactory.forBpRepository().updateEntity(initiatorCollaborationGroup);
-            BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId).setUpdatedAssociatedGroup(associatedGroup);
-
-            // associate groups
-            existingGroup.getAssociatedGroups().add(associatedGroup.getID());
-            repoFactory.forBpRepository().updateEntity(existingGroup);
+            businessProcessContext.getBpRepository().updateEntity(initiatorCollaborationGroup);
         }
     }
 }

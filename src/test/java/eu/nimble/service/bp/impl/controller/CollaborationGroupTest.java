@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.model.dashboard.CollaborationGroupResponse;
 import eu.nimble.service.bp.swagger.model.CollaborationGroup;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroup;
+import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceGroupDAOUtility;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.utility.JsonSerializationUtility;
 import org.junit.Assert;
@@ -229,7 +230,7 @@ public class CollaborationGroupTest {
         // get process instance id
         processInstanceId = processInstanceGroup.getProcessInstanceIDs().get(0);
         // get id of associated process instance group
-        String associatedProcessInstanceGroupId = processInstanceGroup.getAssociatedGroups().get(0);
+        String associatedProcessInstanceGroupId = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(TestConfig.sellerPartyID,processInstanceGroup.getProcessInstanceIDs()).getID();
         // delete the group
         request = delete("/process-instance-groups/" + BusinessProcessExecutionTest.transportProviderProcessInstanceGroupID)
                 .header("Authorization", TestConfig.initiatorPersonId);

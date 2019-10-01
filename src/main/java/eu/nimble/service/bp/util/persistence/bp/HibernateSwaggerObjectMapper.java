@@ -287,12 +287,7 @@ public class HibernateSwaggerObjectMapper {
         processInstanceGroupDAO.setPartyID(processInstanceGroup.getPartyID());
         processInstanceGroupDAO.setProcessInstanceIDs(processInstanceGroup.getProcessInstanceIDs());
         processInstanceGroupDAO.setName(processInstanceGroup.getName());
-        if(processInstanceGroup.getPrecedingProcess() != null){
-            processInstanceGroupDAO.setPrecedingProcess(createProcessInstance_DAO(processInstanceGroup.getPrecedingProcess()));
-        }
-        else {
-            processInstanceGroupDAO.setPrecedingProcess(null);
-        }
+        processInstanceGroupDAO.setDataChannelId(processInstanceGroup.getDataChannelId());
         if(processInstanceGroup.getPrecedingProcessInstanceGroup() != null){
             processInstanceGroupDAO.setPrecedingProcessInstanceGroup(createProcessInstanceGroup_DAO(processInstanceGroup.getPrecedingProcessInstanceGroup()));
         }
@@ -315,16 +310,10 @@ public class HibernateSwaggerObjectMapper {
         processInstanceGroup.setPartyID(processInstanceGroupDAO.getPartyID());
         processInstanceGroup.setCollaborationRole(processInstanceGroupDAO.getCollaborationRole());
         processInstanceGroup.setProcessInstanceIDs(processInstanceGroupDAO.getProcessInstanceIDs());
-        processInstanceGroup.setAssociatedGroups(processInstanceGroupDAO.getAssociatedGroups());
         processInstanceGroup.setLastActivityTime(processInstanceGroupDAO.getLastActivityTime());
         processInstanceGroup.setFirstActivityTime(processInstanceGroupDAO.getFirstActivityTime());
         processInstanceGroup.setName(processInstanceGroupDAO.getName());
-        if(processInstanceGroupDAO.getPrecedingProcess() != null){
-            processInstanceGroup.setPrecedingProcess(convertProcessInstance_DAO(processInstanceGroupDAO.getPrecedingProcess()));
-        }
-        else {
-            processInstanceGroup.setPrecedingProcess(null);
-        }
+        processInstanceGroup.setDataChannelId(processInstanceGroupDAO.getDataChannelId());
         if(processInstanceGroupDAO.getPrecedingProcessInstanceGroup() != null){
             processInstanceGroup.setPrecedingProcessInstanceGroup(convertProcessInstanceGroupDAO(processInstanceGroupDAO.getPrecedingProcessInstanceGroup()));
         }
@@ -341,9 +330,6 @@ public class HibernateSwaggerObjectMapper {
         collaborationGroup.setArchived(collaborationGroupDAO.isArchived());
         collaborationGroup.setID(collaborationGroupDAO.getHjid().toString());
         collaborationGroup.setIsProject(collaborationGroupDAO.isIsProject());
-        for(Long id: collaborationGroupDAO.getAssociatedCollaborationGroups()){
-            collaborationGroup.getAssociatedCollaborationGroups().add(id.intValue());
-        }
 
         List<ProcessInstanceGroup> processInstanceGroups = new ArrayList<>();
         for(ProcessInstanceGroupDAO processInstanceGroupDAO: collaborationGroupDAO.getAssociatedProcessInstanceGroups()){

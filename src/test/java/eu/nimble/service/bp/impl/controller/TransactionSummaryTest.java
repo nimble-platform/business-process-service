@@ -31,7 +31,7 @@ public class TransactionSummaryTest {
         List<TransactionSummary> transactionSummaries = ProcessDocumentMetadataDAOUtility.getTransactionSummaries("747","745","incoming",false,TestConfig.buyerPartyID);
         Assert.assertEquals(3,transactionSummaries.size());
         transactionSummaries = ProcessDocumentMetadataDAOUtility.getTransactionSummaries("1339",null,"outgoing",null,TestConfig.buyerPartyID);
-        Assert.assertEquals(12,transactionSummaries.size());
+        Assert.assertEquals(16,transactionSummaries.size());
     }
 
 }

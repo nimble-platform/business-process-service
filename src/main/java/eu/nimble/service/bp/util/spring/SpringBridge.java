@@ -1,10 +1,10 @@
 package eu.nimble.service.bp.util.spring;
 
+import eu.nimble.common.rest.datachannel.IDataChannelClient;
 import eu.nimble.common.rest.identity.IIdentityClientTyped;
 import eu.nimble.service.bp.config.BusinessProcessPersistenceConfig;
 import eu.nimble.service.bp.config.GenericConfig;
 import eu.nimble.service.bp.contract.FrameContractService;
-import eu.nimble.utility.persistence.binary.BinaryContentService;
 import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,9 +29,9 @@ public class SpringBridge implements ApplicationContextAware {
     @Autowired
     private ResourceValidationUtility resourceValidationUtil;
     @Autowired
-    private BinaryContentService binaryContentService;
-    @Autowired
     private FrameContractService frameContractService;
+    @Autowired
+    private IDataChannelClient dataChannelClient;
 
     public static SpringBridge getInstance() {
         return applicationContext.getBean(SpringBridge.class);
@@ -59,11 +59,11 @@ public class SpringBridge implements ApplicationContextAware {
         return resourceValidationUtil;
     }
 
-    public BinaryContentService getBinaryContentService() {
-        return binaryContentService;
-    }
-
     public FrameContractService getFrameContractService() {
         return frameContractService;
+    }
+
+    public IDataChannelClient getDataChannelClient() {
+        return dataChannelClient;
     }
 }

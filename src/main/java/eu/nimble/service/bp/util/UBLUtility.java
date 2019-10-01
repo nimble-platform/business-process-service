@@ -1,5 +1,8 @@
 package eu.nimble.service.bp.util;
 
+import eu.nimble.service.model.ubl.commonaggregatecomponents.CommunicationType;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
+import eu.nimble.service.model.ubl.commonbasiccomponents.CodeType;
 import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.service.model.ubl.transportexecutionplan.TransportExecutionPlanType;
@@ -44,6 +47,18 @@ public class UBLUtility {
             result = transportExecutionPlanType.getDocumentStatusCode().getName().equals("Accepted");
         }
         return result;
+    }
+
+    public static CodeType getPartyCommunicationChannel(PartyType party){
+        if(party != null && party.getContact() != null && party.getContact().getOtherCommunication() != null){
+            for (CommunicationType communicationType : party.getContact().getOtherCommunication()) {
+                CodeType code = communicationType.getChannelCode();
+                if(code != null && code.getName() != null && code.getName().contentEquals("REST")){
+                    return code;
+                }
+            }
+        }
+        return null;
     }
 
 //    private static Logger logger = LoggerFactory.getLogger(UBLUtility.class);

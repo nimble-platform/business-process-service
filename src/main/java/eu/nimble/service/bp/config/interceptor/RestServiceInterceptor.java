@@ -28,7 +28,7 @@ public class RestServiceInterceptor extends HandlerInterceptorAdapter {
         String bearerToken = request.getHeader(HttpHeaders.AUTHORIZATION);
 
         // do not validate the token for swagger operations
-        if(!(request.getServletPath().contains(swaggerPath) || request.getServletPath().contains(apiDocsPath))){
+        if(bearerToken != null && !(request.getServletPath().contains(swaggerPath) || request.getServletPath().contains(apiDocsPath))){
             // validate token
             eu.nimble.service.bp.util.HttpResponseUtil.validateToken(bearerToken);
         }

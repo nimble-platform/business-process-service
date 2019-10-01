@@ -2,15 +2,18 @@ package eu.nimble.service.bp.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.nimble.common.rest.datachannel.IDataChannelClient;
+import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
 import eu.nimble.service.bp.model.tt.OrderEPC;
 import eu.nimble.service.bp.util.HttpResponseUtil;
 import eu.nimble.service.bp.util.persistence.catalogue.CataloguePersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
+import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.CatalogueLineType;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.utility.JsonSerializationUtility;
+import eu.nimble.utility.validation.IValidationUtil;
+import eu.nimble.utility.validation.ValidationUtil;
 import feign.Response;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -40,7 +43,7 @@ public class EPCController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    private IDataChannelClient dataChannelClient;
+    private IValidationUtil validationUtil;
 
     @ApiOperation(value = "",notes = "Gets product information as CatalogueLine for the specified EPC code. First, the corresponding order" +
             " is fetched for the specified code from the data channel service and then, the CatalogueLine is retrieved for the product" +
@@ -59,13 +62,12 @@ public class EPCController {
         logger.info("Getting track & tracing details for epc: {}", epc);
 
         try {
-            // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
-            if (tokenCheck != null) {
-                return tokenCheck;
+            // validate role
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
-            Response response = dataChannelClient.getEPCCodesForOrder(bearerToken, epc);
+            Response response = SpringBridge.getInstance().getDataChannelClient().getEPCCodesForOrder(bearerToken, epc);
             String responseBody;
             try {
                 responseBody = HttpResponseUtil.extractBodyFromFeignClientResponse(response);
@@ -114,10 +116,9 @@ public class EPCController {
                                                       @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         logger.info("Getting epc codes for productId: {}", publishedProductID);
         try {
-            // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
-            if (tokenCheck != null) {
-                return tokenCheck;
+            // validate role
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
             Object[] partyIdAndManufacturerItemId = CataloguePersistenceUtility.getCatalogueLinePartyIdAndManufacturersItemIdentification(publishedProductID);
@@ -131,7 +132,7 @@ public class EPCController {
             ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
 
             List<String> orderIds = DocumentPersistenceUtility.getOrderIds(partyIdAndManufacturerItemId[0].toString(), partyIdAndManufacturerItemId[1].toString());
-            Response response = dataChannelClient.getEPCCodesForOrders(bearerToken, orderIds);
+            Response response = SpringBridge.getInstance().getDataChannelClient().getEPCCodesForOrders(bearerToken, orderIds);
             String responseBody = HttpResponseUtil.extractBodyFromFeignClientResponse(response);
             List<OrderEPC> epcCodesList = objectMapper.readValue(responseBody.toString(),new TypeReference<List<OrderEPC>>(){});
 

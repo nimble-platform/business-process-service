@@ -5,6 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.common.rest.identity.model.NegotiationSettings;
 import eu.nimble.service.bp.contract.ContractGenerator;
 import eu.nimble.service.bp.model.billOfMaterial.BillOfMaterialItem;
+import eu.nimble.service.bp.util.UBLUtility;
+import eu.nimble.service.bp.util.bp.BusinessProcessUtility;
+import eu.nimble.service.bp.util.bp.ClassProcessTypeMap;
 import eu.nimble.service.bp.util.persistence.catalogue.CataloguePersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.ContractPersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
@@ -35,9 +38,6 @@ public class BPMessageGenerator {
 
     private final static Logger logger = LoggerFactory.getLogger(BPMessageGenerator.class);
 
-    private final static String orderProcessId = "Order";
-    private final static String negotiationProcessId = "Negotiation";
-
     public static ProcessInstanceInputMessage createBPMessageForBOM(BillOfMaterialItem billOfMaterialItem, Boolean useFrameContract, PartyType buyerParty, String creatorUserId, String bearerToken) throws Exception {
         // get catalogue line
         CatalogueLineType catalogueLine = CataloguePersistenceUtility.getCatalogueLine(billOfMaterialItem.getCatalogueUuid(),billOfMaterialItem.getlineId());
@@ -58,17 +58,44 @@ public class BPMessageGenerator {
                     // create an order using the frame contract
                     OrderType order = createOrder(quotation, buyerParty, sellerNegotiationSettings.getCompany());
 
-                    return BPMessageGenerator.createProcessInstanceInputMessage(order, order.getID(), orderProcessId, catalogueLine.getGoodsItem().getItem(), creatorUserId);
+                    return BPMessageGenerator.createProcessInstanceInputMessage(order, catalogueLine.getGoodsItem().getItem(), creatorUserId,"",bearerToken);
                 }
             }
         }
 
         RequestForQuotationType requestForQuotation = createRequestForQuotation(catalogueLine, billOfMaterialItem.getquantity(), sellerNegotiationSettings,buyerParty, bearerToken);
 
-        return BPMessageGenerator.createProcessInstanceInputMessage(requestForQuotation, requestForQuotation.getID(), negotiationProcessId, catalogueLine.getGoodsItem().getItem(), creatorUserId);
+        return BPMessageGenerator.createProcessInstanceInputMessage(requestForQuotation, catalogueLine.getGoodsItem().getItem(), creatorUserId,"",bearerToken);
     }
 
-    private static ProcessInstanceInputMessage createProcessInstanceInputMessage(IDocument document, String documentId, String processId, ItemType item, String creatorUserId) throws Exception {
+    public static ProcessInstanceInputMessage createProcessInstanceInputMessage(IDocument document, ItemType item, String creatorUserId,String processInstanceId,String bearerToken) throws Exception {
+        // get corresponding process type
+        String processId = ClassProcessTypeMap.getProcessType(document.getClass());
+
+        // the seller is the responder while the buyer is the initiator
+        PartyType responderParty;
+        PartyType initiatorParty;
+        // for Fulfilment, it's vice versa
+        if(processId.contentEquals("Fulfilment")){
+            responderParty = PartyPersistenceUtility.getParty(bearerToken, document.getBuyerParty());
+            initiatorParty = PartyPersistenceUtility.getParty(bearerToken, document.getSellerParty());
+        }
+        else{
+            responderParty = PartyPersistenceUtility.getParty(bearerToken, document.getSellerParty());
+            initiatorParty = PartyPersistenceUtility.getParty(bearerToken, document.getBuyerParty());
+        }
+
+        // when no creator user id is provided, we need to derive this info from the party
+        if(creatorUserId == null){
+            // check whether it is a request or response document
+            boolean isInitialDocument = BusinessProcessUtility.isInitialDocument(document.getClass());
+            if(isInitialDocument){
+                creatorUserId = initiatorParty.getPerson().get(0).getID();
+            }
+            else {
+                creatorUserId = responderParty.getPerson().get(0).getID();
+            }
+        }
         // get related product categories
         List<String> relatedProductCategories = new ArrayList<>();
         for (CommodityClassificationType commodityClassificationType : item.getCommodityClassification()) {
@@ -77,28 +104,28 @@ public class BPMessageGenerator {
             }
         }
         // serialize the document
-        String rfqAsString = JsonSerializationUtility.getObjectMapper().writeValueAsString(document);
+        String documentAsString = JsonSerializationUtility.getObjectMapper().writeValueAsString(document);
 
         // remove hjids
-        JSONObject object = new JSONObject(rfqAsString);
+        JSONObject object = new JSONObject(documentAsString);
         JsonSerializationUtility.removeHjidFields(object);
-        rfqAsString = object.toString();
+        documentAsString = object.toString();
 
         // create process variables
         ProcessVariables processVariables = new ProcessVariables();
 
-        processVariables.setContentUUID(documentId);
-        processVariables.setContent(rfqAsString);
+        processVariables.setContentUUID(UBLUtility.getDocumentId(document));
+        processVariables.setContent(documentAsString);
         processVariables.setProcessID(processId);
         processVariables.setCreatorUserID(creatorUserId);
-        processVariables.setInitiatorID(document.getBuyerPartyId());
-        processVariables.setResponderID(item.getManufacturerParty().getPartyIdentification().get(0).getID());
+        processVariables.setInitiatorID(initiatorParty.getPartyIdentification().get(0).getID());
+        processVariables.setResponderID(responderParty.getPartyIdentification().get(0).getID());
         processVariables.setRelatedProducts(Collections.singletonList(item.getName().get(0).getValue()));
         processVariables.setRelatedProductCategories(relatedProductCategories);
 
         // create Process instance input message
         ProcessInstanceInputMessage processInstanceInputMessage = new ProcessInstanceInputMessage();
-        processInstanceInputMessage.setProcessInstanceID("");
+        processInstanceInputMessage.setProcessInstanceID(processInstanceId);
         processInstanceInputMessage.setVariables(processVariables);
 
         return processInstanceInputMessage;
@@ -135,7 +162,7 @@ public class BPMessageGenerator {
         return order;
     }
 
-    private static RequestForQuotationType createRequestForQuotation(CatalogueLineType catalogueLine, QuantityType quantity, NegotiationSettings sellerNegotiationSettings,PartyType buyerParty, String bearerToken) {
+    public static RequestForQuotationType createRequestForQuotation(CatalogueLineType catalogueLine, QuantityType quantity, NegotiationSettings sellerNegotiationSettings,PartyType buyerParty, String bearerToken) throws IOException {
         PartyType sellerParty = sellerNegotiationSettings.getCompany();
 
         // create request for quotation
@@ -203,7 +230,7 @@ public class BPMessageGenerator {
 
         LocationType location = new LocationType();
 
-        if(buyerParty.getPurchaseTerms().getDeliveryTerms().size() > 0 && buyerParty.getPurchaseTerms().getDeliveryTerms().get(0).getDeliveryLocation() != null){
+        if(buyerParty.getPurchaseTerms() != null && buyerParty.getPurchaseTerms().getDeliveryTerms() != null && buyerParty.getPurchaseTerms().getDeliveryTerms().size() > 0 && buyerParty.getPurchaseTerms().getDeliveryTerms().get(0).getDeliveryLocation() != null){
             location = buyerParty.getPurchaseTerms().getDeliveryTerms().get(0).getDeliveryLocation();
         }
         else{

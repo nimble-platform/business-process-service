@@ -1,9 +1,11 @@
 package eu.nimble.service.bp.application.ubl;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
 import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO;
+import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.util.UBLUtility;
 import eu.nimble.service.bp.util.bp.DocumentEnumClassMapper;
 import eu.nimble.service.bp.util.bp.BusinessProcessUtility;
@@ -14,6 +16,7 @@ import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtilit
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.utility.DateUtility;
 import eu.nimble.utility.JsonSerializationUtility;
+import eu.nimble.utility.persistence.GenericJPARepository;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +33,9 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
     @Override
     public Object createDocument(String initiatorID, String responderID, String content, ProcessDocumentMetadata.TypeEnum documentType) {
         ObjectMapper mapper = JsonSerializationUtility.getObjectMapper();
+        // set DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES to true, otherwise,
+        // it will deserialize the content even if its type is different from the given document type
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,true);
         Class documentClass = DocumentEnumClassMapper.getDocumentClass(DocumentType.valueOf(documentType.toString()));
         Object document;
         try {
@@ -70,7 +76,7 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
         }
 
         //replace parties with the ones persisted in the database
-        DataIntegratorUtil.checkExistingParties(document);
+        DataIntegratorUtil.checkExistingParties(document,businessContextId);
 
         // persist the document metadata
         DocumentPersistenceUtility.addDocumentWithMetadata(businessContextId,documentMetadata, document);
@@ -78,7 +84,8 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
 
     @Override
     public void sendDocument(String businessContextId,String processInstanceId, String initiatorID, String responderID, Object document) {
-        List<ProcessDocumentMetadataDAO> documentMetadata = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(processInstanceId);
+        GenericJPARepository repository = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId).getBpRepository();
+        List<ProcessDocumentMetadataDAO> documentMetadata = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(processInstanceId,repository);
 
         if(documentMetadata.size() > 1) {
             ProcessDocumentMetadata initiatingDocumentMetadata = HibernateSwaggerObjectMapper.createProcessDocumentMetadata(documentMetadata.get(0));

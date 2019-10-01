@@ -4,7 +4,7 @@ import eu.nimble.service.bp.model.hyperjaxb.CollaborationGroupDAO;
 import eu.nimble.service.bp.model.hyperjaxb.CollaborationStatus;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceGroupDAO;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceStatus;
-import eu.nimble.service.bp.util.spring.SpringBridge;
+import eu.nimble.service.bp.util.persistence.catalogue.PartyPersistenceUtility;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupFilter;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyNameType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
@@ -21,12 +21,13 @@ import java.util.*;
  */
 public class CollaborationGroupDAOUtility {
     private static final String QUERY_GET_ASSOCIATED_GROUP =
-            "select cg from CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups pig where pig.partyID = :partyId and pig.ID = :pigId and cg.hjid in " +
-            "(select acg.item from CollaborationGroupDAO cg2 join cg2.associatedCollaborationGroupsItems acg where cg2.hjid = :associatedCollaborationGroupId)";
+            "select cg from CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups pig join pig.processInstanceIDsItems pid where pig.partyID = :partyId and pid.item in :pids";
     private static final String QUERY_GET_GROUP_OF_PROCESS_INSTANCE_GROUP =
             "select cg from CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups apig where apig.ID = :groupId";
     private static final String QUERY_GET_BY_PARTY_ID_AND_COLLABORATION_ROLE =
             "select cg from CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups apig where apig.partyID = :partyID AND apig.collaborationRole = :role";
+    private static final String QUERY_GET_BY_PARTY_ID_AND_PROCESS_INSTANCE_ID =
+            "select cg from CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups apig join apig.processInstanceIDsItems pid where apig.partyID = :partyID AND pid.item = :pid";
     private static final String QUERY_GET_GROUP_OF_PROCESS_INSTANCE_GROUPS =
             "select cg.hjid from CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups apig where apig.ID in :groupIds";
     private static final String QUERY_GET_PROCESS_INSTANCES_OF_COLLABORATION_GROUP =
@@ -56,6 +57,13 @@ public class CollaborationGroupDAOUtility {
         return new JPARepositoryFactory().forBpRepository(true).getEntities(QUERY_GET_BY_PARTY_ID_AND_COLLABORATION_ROLE, new String[]{"partyID", "role"}, new Object[]{partyId, collaborationRole});
     }
 
+    /**
+     * @return {@link CollaborationGroupDAO} which contains the given process instance and belongs to the given party
+     * */
+    public static CollaborationGroupDAO getCollaborationGroupDAO(String partyId, String processInstanceId){
+        return new JPARepositoryFactory().forBpRepository(true).getSingleEntity(QUERY_GET_BY_PARTY_ID_AND_PROCESS_INSTANCE_ID, new String[]{"partyID", "pid"}, new Object[]{partyId, processInstanceId});
+    }
+
     public static CollaborationGroupDAO getCollaborationGroupByProcessInstanceIdAndPartyId(String processInstanceId, String partyId){
         return new JPARepositoryFactory().forBpRepository(true).getSingleEntity(QUERY_GET_BY_PROCESS_INSTANCE_ID_AND_PARTY_ID, new String[]{"partyID", "processInstanceId"}, new Object[]{partyId, processInstanceId});
     }
@@ -64,13 +72,12 @@ public class CollaborationGroupDAOUtility {
         return new JPARepositoryFactory().forBpRepository().getSingleEntity(QUERY_GET_HJID_BY_PROCESS_INSTANCE_ID_AND_PARTY_ID, new String[]{"partyID", "processInstanceId"}, new Object[]{partyId, processInstanceId});
     }
 
-    public static CollaborationGroupDAO getCollaborationGroupDAO(String partyId, Long associatedCollaborationGroupId,String associatedProcessInstanceGroupId) {
-        CollaborationGroupDAO group = CollaborationGroupDAOUtility.getAssociatedCollaborationGroup(partyId, associatedCollaborationGroupId, associatedProcessInstanceGroupId);
-        return group;
+    public static CollaborationGroupDAO getCollaborationGroup(String partyId, List<String> processInstanceIds, GenericJPARepository repository) {
+        return repository.getSingleEntity(QUERY_GET_ASSOCIATED_GROUP, new String[]{"partyId","pids"}, new Object[]{partyId, processInstanceIds});
     }
-    
-    public static CollaborationGroupDAO getAssociatedCollaborationGroup(String partyId, Long associatedCollaborationGroupId,String associatedProcessInstanceGroupId) {
-        return new JPARepositoryFactory().forBpRepository(true).getSingleEntity(QUERY_GET_ASSOCIATED_GROUP, new String[]{"partyId","pigId", "associatedCollaborationGroupId"}, new Object[]{partyId, associatedProcessInstanceGroupId, associatedCollaborationGroupId});
+
+    public static CollaborationGroupDAO getCollaborationGroup(String partyId, List<String> processInstanceIds) {
+        return getCollaborationGroup(partyId,  processInstanceIds,new JPARepositoryFactory().forBpRepository(true));
     }
 
     public static List<Long> getCollaborationGroupHjidOfProcessInstanceGroups(List<String> groupIds) {
@@ -81,11 +88,11 @@ public class CollaborationGroupDAOUtility {
         return new JPARepositoryFactory().forBpRepository(true).getSingleEntity(QUERY_GET_GROUP_OF_PROCESS_INSTANCE_GROUP, new String[]{"groupId"}, new Object[]{groupId});
     }
 
-    public static CollaborationGroupDAO createCollaborationGroupDAO() {
+    public static CollaborationGroupDAO createCollaborationGroupDAO(GenericJPARepository genericJPARepository) {
         CollaborationGroupDAO collaborationGroupDAO = new CollaborationGroupDAO();
         collaborationGroupDAO.setStatus(CollaborationStatus.INPROGRESS);
         collaborationGroupDAO.setArchived(false);
-        new JPARepositoryFactory().forBpRepository().persistEntity(collaborationGroupDAO);
+        genericJPARepository.persistEntity(collaborationGroupDAO);
         return collaborationGroupDAO;
     }
 
@@ -94,20 +101,6 @@ public class CollaborationGroupDAOUtility {
             GenericJPARepository repo = new JPARepositoryFactory().forBpRepository(true);
             CollaborationGroupDAO collaborationGroup = repo.getSingleEntityByHjid(CollaborationGroupDAO.class, groupID);
             if(collaborationGroup != null){
-                // delete references to the collaboration group
-                for (Long id : collaborationGroup.getAssociatedCollaborationGroups()) {
-                    CollaborationGroupDAO groupDAO = repo.getSingleEntityByHjid(CollaborationGroupDAO.class, id);
-                    groupDAO.getAssociatedCollaborationGroups().remove(groupID);
-                    repo.updateEntity(groupDAO);
-                }
-                // delete references to the process instance groups inside this collaboration group
-                for(ProcessInstanceGroupDAO processInstanceGroup:collaborationGroup.getAssociatedProcessInstanceGroups()){
-                    for(String associatedProcessInstanceGroupId:processInstanceGroup.getAssociatedGroups()){
-                        ProcessInstanceGroupDAO groupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(associatedProcessInstanceGroupId);
-                        groupDAO.getAssociatedGroups().remove(processInstanceGroup.getID());
-                        repo.updateEntity(groupDAO);
-                    }
-                }
                 repo.deleteEntityByHjid(CollaborationGroupDAO.class, groupID);
             }
         }
@@ -179,6 +172,15 @@ public class CollaborationGroupDAOUtility {
         }
         collaborationGroupDAO = repo.updateEntity(collaborationGroupDAO);
         return collaborationGroupDAO;
+    }
+
+    // returns the process instance ids included in the given CollaborationGroup
+    public static List<String> getProcessInstanceIds(CollaborationGroupDAO collaborationGroupDAO){
+        Set<String> ids = new HashSet<String>();
+        for(ProcessInstanceGroupDAO processInstanceGroupDAO : collaborationGroupDAO.getAssociatedProcessInstanceGroups()){
+            ids.addAll(processInstanceGroupDAO.getProcessInstanceIDs());
+        }
+        return new ArrayList<>(ids);
     }
 
     public static List<CollaborationGroupDAO> getCollaborationGroupDAOs(
@@ -310,37 +312,7 @@ public class CollaborationGroupDAOUtility {
                 filter.getTradingPartnerIDs().add(resultColumn);
             }
 
-            List<PartyType> parties = null;
-            try {
-                parties = SpringBridge.getInstance().getiIdentityClientTyped().getParties(bearerToken, filter.getTradingPartnerIDs());
-            } catch (IOException e) {
-                String msg = String.format("Failed to get parties while getting categories for party: %s, collaboration role: %s, archived: %B", partyId, collaborationRole, archived);
-                logger.error(msg);
-                throw new RuntimeException(msg, e);
-            }
 
-            // populate partners' names
-            if (parties != null) {
-                for (String tradingPartnerId : filter.getTradingPartnerIDs()) {
-                    for (PartyType party : parties) {
-                        if (party.getPartyIdentification().get(0).getID().equals(tradingPartnerId)) {
-                            // check whether trading partner names array of filter contains any names of the party
-                            boolean partyExists = false;
-                            for(PartyNameType partyName : party.getPartyName()){
-                                if(filter.getTradingPartnerNames().contains(partyName.getName().getValue())){
-                                    partyExists = true;
-                                    break;
-                                }
-                            }
-
-                            if(!partyExists){
-                                filter.getTradingPartnerNames().add(party.getPartyName().get(0).getName().getValue());
-                            }
-                            break;
-                        }
-                    }
-                }
-            }
 
             // status
             ProcessInstanceStatus processInstanceStatus = (ProcessInstanceStatus) returnedColumns.get(4);
@@ -348,6 +320,39 @@ public class CollaborationGroupDAOUtility {
                 filter.getStatus().add(ProcessInstanceGroupFilter.StatusEnum.valueOf(processInstanceStatus.value()));
             }
         }
+
+        List<PartyType> parties = null;
+        try {
+            parties = PartyPersistenceUtility.getParties(bearerToken, new ArrayList<>(filter.getTradingPartnerIDs()));
+        } catch (IOException e) {
+            String msg = String.format("Failed to get parties while getting categories for party: %s, collaboration role: %s, archived: %B", partyId, collaborationRole, archived);
+            logger.error(msg);
+            throw new RuntimeException(msg, e);
+        }
+
+        // populate partners' names
+        if (parties != null) {
+            for (String tradingPartnerId : filter.getTradingPartnerIDs()) {
+                for (PartyType party : parties) {
+                    if (party.getPartyIdentification().get(0).getID().equals(tradingPartnerId)) {
+                        // check whether trading partner names array of filter contains any names of the party
+                        boolean partyExists = false;
+                        for(PartyNameType partyName : party.getPartyName()){
+                            if(filter.getTradingPartnerNames().contains(partyName.getName().getValue())){
+                                partyExists = true;
+                                break;
+                            }
+                        }
+
+                        if(!partyExists){
+                            filter.getTradingPartnerNames().add(party.getPartyName().get(0).getName().getValue());
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
         return filter;
     }
 
@@ -460,7 +465,7 @@ public class CollaborationGroupDAOUtility {
 
         if (queryType == GroupQueryType.GROUP || queryType == GroupQueryType.PROJECT) {
             query += " group by cg.hjid";
-            query += " order by firstActivityTime desc";
+            query += " order by lastActivityTime desc";
         }
 
         query += ") > 0";

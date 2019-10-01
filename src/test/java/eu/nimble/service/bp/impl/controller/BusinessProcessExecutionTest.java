@@ -5,6 +5,8 @@ import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
 import eu.nimble.service.bp.contract.ContractGenerator;
 import eu.nimble.service.bp.model.dashboard.CollaborationGroupResponse;
 import eu.nimble.service.bp.swagger.model.*;
+import eu.nimble.service.bp.util.persistence.bp.CollaborationGroupDAOUtility;
+import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceGroupDAOUtility;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ClauseType;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.utility.JsonSerializationUtility;
@@ -25,6 +27,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -64,21 +67,7 @@ public class BusinessProcessExecutionTest {
     private final String productName = "QDeneme";
     private final String serviceName = "QService";
 
-    private String itemInformationProcessInstanceID;
-    private String PPAPProcessInstanceID;
-    private String negotiationProcessInstanceID;
-    private String orderProcessInstanceID;
-    private String tepItemInformationProcessInstanceID;
-    private String tepNegotiationProcessInstanceID;
-    private String tepProcessInstanceID;
-    private String dispatchProcessInstanceID;
-
-    private String sellerCollaborationGroupID;
-    private String sellerProcessInstanceGroupID;
-    private String sellerTransportProcessInstanceGroupID;
-    private String buyerCollaborationGroupID;
-    private String buyerProcessInstanceGroupID;
-    private String transportProviderCollaborationGroupID;
+    public static String buyerProcessInstanceGroupID;
     public static String transportProviderProcessInstanceGroupID;
 
     @Autowired
@@ -116,7 +105,7 @@ public class BusinessProcessExecutionTest {
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(itemInformationRequestJSON));
 
         // start business process
-        MockHttpServletRequestBuilder request = post("/start")
+        MockHttpServletRequestBuilder request = post("/process-document")
                 .header("Authorization", TestConfig.initiatorPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
@@ -124,7 +113,6 @@ public class BusinessProcessExecutionTest {
 
         // get process instance id
         ProcessInstance processInstance = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ProcessInstance.class);
-        itemInformationProcessInstanceID = processInstance.getProcessInstanceID();
 
         // get collaboration group information for seller
         request = get("/collaboration-groups")
@@ -138,26 +126,18 @@ public class BusinessProcessExecutionTest {
         CollaborationGroupResponse collaborationGroupResponse = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), CollaborationGroupResponse.class);
 
         Assert.assertSame(1, collaborationGroupResponse.getSize());
-
-
         // set collaboration group and process instance groups ids
-        sellerCollaborationGroupID = collaborationGroupResponse.getCollaborationGroups().get(0).getID();
-        buyerCollaborationGroupID = collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedCollaborationGroups().get(0).toString();
-        sellerProcessInstanceGroupID = collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().get(0).getID();
-        buyerProcessInstanceGroupID = collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().get(0).getAssociatedGroups().get(0);
+        buyerProcessInstanceGroupID = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(TestConfig.buyerPartyID,Arrays.asList(processInstance.getProcessInstanceID())).getID();
     }
 
     public void test02_ItemInformationResponse() throws Exception {
         // replace the process instance id
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(itemInformationResponseJSON));
-        inputMessageAsString = inputMessageAsString.replace("pid", itemInformationProcessInstanceID);
 
-        MockHttpServletRequestBuilder request = post("/continue")
+        MockHttpServletRequestBuilder request = post("/process-document")
                 .header("Authorization", TestConfig.responderPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(inputMessageAsString)
-                .param("gid", sellerProcessInstanceGroupID)
-                .param("collaborationGID", sellerCollaborationGroupID);
+                .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
     }
 
@@ -165,32 +145,22 @@ public class BusinessProcessExecutionTest {
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(PPAPRequestJSON));
 
         // start business process
-        MockHttpServletRequestBuilder request = post("/start")
+        MockHttpServletRequestBuilder request = post("/process-document")
                 .header("Authorization", TestConfig.initiatorPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(inputMessageAsString)
-                .param("gid", buyerProcessInstanceGroupID)
-                .param("collaborationGID", buyerCollaborationGroupID)
-                .param("precedingPid", itemInformationProcessInstanceID);
+                .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
-
-        // get process instance id
-        ProcessInstance processInstance = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ProcessInstance.class);
-        PPAPProcessInstanceID = processInstance.getProcessInstanceID();
     }
 
 
     public void test04_PPAPResponse() throws Exception {
         // replace the process instance id
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(PPAPResponseJSON));
-        inputMessageAsString = inputMessageAsString.replace("pid", PPAPProcessInstanceID);
 
-        MockHttpServletRequestBuilder request = post("/continue")
+        MockHttpServletRequestBuilder request = post("/process-document")
                 .header("Authorization", TestConfig.responderPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(inputMessageAsString)
-                .param("gid", sellerProcessInstanceGroupID)
-                .param("collaborationGID", sellerCollaborationGroupID);
+                .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
     }
 
@@ -198,31 +168,21 @@ public class BusinessProcessExecutionTest {
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(negotiationRequestJSON));
 
         // start business process
-        MockHttpServletRequestBuilder request = post("/start")
+        MockHttpServletRequestBuilder request = post("/process-document")
                 .header("Authorization", TestConfig.initiatorPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(inputMessageAsString)
-                .param("gid", buyerProcessInstanceGroupID)
-                .param("collaborationGID", buyerCollaborationGroupID)
-                .param("precedingPid", PPAPProcessInstanceID);
+                .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
-
-        // get process instance id
-        ProcessInstance processInstance = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ProcessInstance.class);
-        negotiationProcessInstanceID = processInstance.getProcessInstanceID();
     }
 
     public void test06_NegotiationResponse() throws Exception {
         // replace the process instance id
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(negotiationResponseJSON));
-        inputMessageAsString = inputMessageAsString.replace("pid", negotiationProcessInstanceID);
 
-        MockHttpServletRequestBuilder request = post("/continue")
+        MockHttpServletRequestBuilder request = post("/process-document")
                 .header("Authorization", TestConfig.responderPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(inputMessageAsString)
-                .param("gid", sellerProcessInstanceGroupID)
-                .param("collaborationGID", sellerCollaborationGroupID);
+                .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
     }
 
@@ -231,31 +191,21 @@ public class BusinessProcessExecutionTest {
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(orderRequestJSON));
 
         // start business process
-        MockHttpServletRequestBuilder request = post("/start")
+        MockHttpServletRequestBuilder request = post("/process-document")
                 .header("Authorization", TestConfig.initiatorPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(inputMessageAsString)
-                .param("gid", buyerProcessInstanceGroupID)
-                .param("collaborationGID", buyerCollaborationGroupID)
-                .param("precedingPid", PPAPProcessInstanceID);
+                .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
-
-        // get process instance id
-        ProcessInstance processInstance = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ProcessInstance.class);
-        orderProcessInstanceID = processInstance.getProcessInstanceID();
     }
 
     public void test08_OrderResponse() throws Exception {
         // replace the process instance id
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(orderResponseJSON));
-        inputMessageAsString = inputMessageAsString.replace("pid", orderProcessInstanceID);
 
-        MockHttpServletRequestBuilder request = post("/continue")
+        MockHttpServletRequestBuilder request = post("/process-document")
                 .header("Authorization", TestConfig.responderPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(inputMessageAsString)
-                .param("gid", sellerProcessInstanceGroupID)
-                .param("collaborationGID", sellerCollaborationGroupID);
+                .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
     }
 
@@ -263,18 +213,14 @@ public class BusinessProcessExecutionTest {
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(tepItemInformationRequestJSON));
 
         // start business process
-        MockHttpServletRequestBuilder request = post("/start")
-                .header("Authorization", TestConfig.initiatorPersonId)
+        MockHttpServletRequestBuilder request = post("/process-document")
+                .header("Authorization", TestConfig.responderPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(inputMessageAsString)
-                .param("collaborationGID", sellerCollaborationGroupID)
-                .param("precedingGid", sellerProcessInstanceGroupID)
-                .param("precedingPid", orderProcessInstanceID);
+                .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         // get process instance id
         ProcessInstance processInstance = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ProcessInstance.class);
-        tepItemInformationProcessInstanceID = processInstance.getProcessInstanceID();
 
         // get process instance group info
         request = get("/collaboration-groups")
@@ -290,22 +236,17 @@ public class BusinessProcessExecutionTest {
         Assert.assertSame(2, collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().size());
 
         // set collaboration group and process instance groups ids
-        sellerTransportProcessInstanceGroupID = collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().get(1).getID();
-        transportProviderCollaborationGroupID = collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedCollaborationGroups().get(1).toString();
-        transportProviderProcessInstanceGroupID = collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().get(1).getAssociatedGroups().get(0);
+        transportProviderProcessInstanceGroupID = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(TestConfig.transportProviderPartyId,Arrays.asList(processInstance.getProcessInstanceID())).getID();
     }
 
     public void test10_TEPItemInformationResponse() throws Exception {
         // replace the process instance id
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(tepItemInformationResponseJSON));
-        inputMessageAsString = inputMessageAsString.replace("pid", tepItemInformationProcessInstanceID);
 
-        MockHttpServletRequestBuilder request = post("/continue")
-                .header("Authorization", TestConfig.responderPersonId)
+        MockHttpServletRequestBuilder request = post("/process-document")
+                .header("Authorization", TestConfig.tepPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(inputMessageAsString)
-                .param("gid", transportProviderProcessInstanceGroupID)
-                .param("collaborationGID", transportProviderCollaborationGroupID);
+                .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
     }
 
@@ -313,31 +254,21 @@ public class BusinessProcessExecutionTest {
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(tepNegotiationRequestJSON));
 
         // start business process
-        MockHttpServletRequestBuilder request = post("/start")
-                .header("Authorization", TestConfig.initiatorPersonId)
+        MockHttpServletRequestBuilder request = post("/process-document")
+                .header("Authorization", TestConfig.responderPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(inputMessageAsString)
-                .param("gid", sellerTransportProcessInstanceGroupID)
-                .param("collaborationGID", sellerCollaborationGroupID)
-                .param("precedingPid", tepItemInformationProcessInstanceID);
+                .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
-
-        // get process instance id
-        ProcessInstance processInstance = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ProcessInstance.class);
-        tepNegotiationProcessInstanceID = processInstance.getProcessInstanceID();
     }
 
     public void test12_TEPNegotiationResponse() throws Exception {
         // replace the process instance id
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(tepNegotiationResponseJSON));
-        inputMessageAsString = inputMessageAsString.replace("pid", tepNegotiationProcessInstanceID);
 
-        MockHttpServletRequestBuilder request = post("/continue")
-                .header("Authorization", TestConfig.responderPersonId)
+        MockHttpServletRequestBuilder request = post("/process-document")
+                .header("Authorization", TestConfig.tepPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(inputMessageAsString)
-                .param("gid", transportProviderProcessInstanceGroupID)
-                .param("collaborationGID", transportProviderCollaborationGroupID);
+                .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
     }
 
@@ -345,31 +276,21 @@ public class BusinessProcessExecutionTest {
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(tepRequestJSON));
 
         // start business process
-        MockHttpServletRequestBuilder request = post("/start")
-                .header("Authorization", TestConfig.initiatorPersonId)
+        MockHttpServletRequestBuilder request = post("/process-document")
+                .header("Authorization", TestConfig.responderPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(inputMessageAsString)
-                .param("gid", sellerTransportProcessInstanceGroupID)
-                .param("collaborationGID", sellerCollaborationGroupID)
-                .param("precedingPid", tepNegotiationProcessInstanceID);
+                .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
-
-        // get process instance id
-        ProcessInstance processInstance = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ProcessInstance.class);
-        tepProcessInstanceID = processInstance.getProcessInstanceID();
     }
 
     public void test14_TEPResponse() throws Exception {
         // replace the process instance id
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(tepResponseJSON));
-        inputMessageAsString = inputMessageAsString.replace("pid", tepProcessInstanceID);
 
-        MockHttpServletRequestBuilder request = post("/continue")
-                .header("Authorization", TestConfig.responderPersonId)
+        MockHttpServletRequestBuilder request = post("/process-document")
+                .header("Authorization", TestConfig.tepPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(inputMessageAsString)
-                .param("gid", transportProviderProcessInstanceGroupID)
-                .param("collaborationGID", transportProviderCollaborationGroupID);
+                .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
     }
 
@@ -377,58 +298,43 @@ public class BusinessProcessExecutionTest {
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(dispatchRequestJSON));
 
         // start business process
-        MockHttpServletRequestBuilder request = post("/start")
-                .header("Authorization", TestConfig.initiatorPersonId)
+        MockHttpServletRequestBuilder request = post("/process-document")
+                .header("Authorization", TestConfig.responderPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(inputMessageAsString)
-                .param("gid", sellerTransportProcessInstanceGroupID)
-                .param("collaborationGID", sellerCollaborationGroupID)
-                .param("precedingPid", tepProcessInstanceID);
+                .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
-
-        // get process instance id
-        ProcessInstance processInstance = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ProcessInstance.class);
-        dispatchProcessInstanceID = processInstance.getProcessInstanceID();
     }
 
     public void test16_ReceiptAdviceResponse() throws Exception {
         // replace the process instance id
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(receiptAdviceResponseJSON));
-        inputMessageAsString = inputMessageAsString.replace("pid", dispatchProcessInstanceID);
 
-        MockHttpServletRequestBuilder request = post("/continue")
-                .header("Authorization", TestConfig.responderPersonId)
+        MockHttpServletRequestBuilder request = post("/process-document")
+                .header("Authorization", TestConfig.initiatorPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(inputMessageAsString)
-                .param("gid", buyerProcessInstanceGroupID)
-                .param("collaborationGID", buyerCollaborationGroupID);
+                .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
     }
 
-//    @Test
-//    public void test17_dataChannelCreationConditions() throws Exception {
-//        DefaultOrderResponseSender defaultOrderResponseSender = new DefaultOrderResponseSender();
-//        String orderProcessInstanceInputMessageString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(orderRequestJSON));
-//        String orderResponseProcessInstanceInputMessageString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(orderResponseJSON));
-//        ProcessInstanceInputMessage orderProcessInstanceInputMessage = JsonSerializationUtility.getObjectMapper().readValue(orderProcessInstanceInputMessageString, ProcessInstanceInputMessage.class);
-//        ProcessInstanceInputMessage orderResponseProcessInstanceInputMessage = JsonSerializationUtility.getObjectMapper().readValue(orderResponseProcessInstanceInputMessageString, ProcessInstanceInputMessage.class);
-//
-//        OrderType order = JsonSerializationUtility.getObjectMapper().readValue(orderProcessInstanceInputMessage.getVariables().getContent(), OrderType.class);
-//        OrderResponseSimpleType orderResponse = JsonSerializationUtility.getObjectMapper().readValue(orderResponseProcessInstanceInputMessage.getVariables().getContent(), OrderResponseSimpleType.class);
-//
-//        Method method = DefaultOrderResponseSender.class.getDeclaredMethod("needToCreateDataChannel", OrderType.class, OrderResponseSimpleType.class);
-//        method.setAccessible(true);
-//        Boolean needToCreateDataChannel = (Boolean) method.invoke(defaultOrderResponseSender, order, orderResponse);
-//        method.setAccessible(false);
-//        Assert.assertTrue(needToCreateDataChannel);
-//    }
+    /**
+     * After {@link #test06_NegotiationResponse} step, a data channel should be created since data monitoring is requested.
+     */
+    @Test
+    public void test17_dataChannelCreation() throws Exception {
+        MockHttpServletRequestBuilder request = get("/process-instance-groups/" + buyerProcessInstanceGroupID)
+                .header("Authorization", TestConfig.initiatorPersonId);
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+
+        ProcessInstanceGroup processInstanceGroup = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ProcessInstanceGroup.class);
+
+        Assert.assertNotNull(processInstanceGroup.getDataChannelId());
+    }
 
     @Test
     public void test18_getClauses() throws Exception{
         // get the order
-        String orderProcessInstanceInputMessageString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(orderRequestJSON));
-        ProcessInstanceInputMessage orderProcessInstanceInputMessage = JsonSerializationUtility.getObjectMapper().readValue(orderProcessInstanceInputMessageString, ProcessInstanceInputMessage.class);
-        OrderType order = JsonSerializationUtility.getObjectMapper().readValue(orderProcessInstanceInputMessage.getVariables().getContent(), OrderType.class);
+        String orderString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(orderRequestJSON));
+        OrderType order = JsonSerializationUtility.getObjectMapper().readValue(orderString, OrderType.class);
 
         // getClauses method will be tested
         Method method = ContractGenerator.class.getDeclaredMethod("getClauses", OrderType.class);
@@ -440,5 +346,12 @@ public class BusinessProcessExecutionTest {
         Assert.assertSame(1,clauses.get(DocumentType.QUOTATION).size());
         Assert.assertSame(1,clauses.get(DocumentType.PPAPRESPONSE).size());
         Assert.assertSame(1,clauses.get(DocumentType.ITEMINFORMATIONRESPONSE).size());
+    }
+
+    @Test
+    public void test19_finishCollaboration() throws Exception{
+        MockHttpServletRequestBuilder request = post("/process-instance-groups/"+ buyerProcessInstanceGroupID+"/finish")
+                .header("Authorization", TestConfig.initiatorPersonId);
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
     }
 }
