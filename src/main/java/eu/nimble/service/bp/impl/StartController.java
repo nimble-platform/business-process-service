@@ -6,7 +6,6 @@ import eu.nimble.service.bp.model.billOfMaterial.BillOfMaterial;
 import eu.nimble.service.bp.model.billOfMaterial.BillOfMaterialItem;
 import eu.nimble.service.bp.model.hyperjaxb.*;
 import eu.nimble.service.bp.util.BusinessProcessEvent;
-import eu.nimble.service.bp.util.HttpResponseUtil;
 import eu.nimble.service.bp.util.bp.BusinessProcessUtility;
 import eu.nimble.service.bp.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.util.email.EmailSenderUtil;
@@ -31,7 +30,6 @@ import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
 import eu.nimble.utility.validation.IValidationUtil;
-import eu.nimble.utility.validation.ValidationUtil;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
@@ -148,7 +146,7 @@ public class StartController implements StartApi {
         logger.debug(" $$$ Start Process with ProcessInstanceInputMessage {}", JsonSerializationUtility.serializeEntitySilentlyWithMixin(body, ProcessVariables.class, MixInIgnoreProperties.class));
 
         // validate role
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
             return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
         }
 
