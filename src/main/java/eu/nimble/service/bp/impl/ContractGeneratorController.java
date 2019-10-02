@@ -3,14 +3,11 @@ package eu.nimble.service.bp.impl;
 import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.contract.ContractGenerator;
 import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
-import eu.nimble.service.bp.util.HttpResponseUtil;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
-import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ClauseType;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.validation.IValidationUtil;
-import eu.nimble.utility.validation.ValidationUtil;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -25,7 +22,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
 import java.util.List;
 import java.util.zip.ZipOutputStream;
 
@@ -52,7 +48,7 @@ public class ContractGeneratorController {
         try{
             logger.info("Generating contract for the order with id : {}",orderId);
             // validate role
-            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 eu.nimble.utility.HttpResponseUtil.writeMessageServletResponseAndLog(response, "Invalid role", HttpStatus.UNAUTHORIZED);
                 return;
             }
@@ -112,7 +108,7 @@ public class ContractGeneratorController {
 
         try {
             // validate role
-            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 

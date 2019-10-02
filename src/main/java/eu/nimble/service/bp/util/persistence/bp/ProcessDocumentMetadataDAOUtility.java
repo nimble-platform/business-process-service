@@ -55,28 +55,28 @@ public class ProcessDocumentMetadataDAOUtility {
     private static final String QUERY_GET_METADATA_BY_ARBITRARY_CONDITIONS = "SELECT document FROM ProcessDocumentMetadataDAO document WHERE (%s)";
     private static final String QUERY_GET_METADATA_BY_PROCESS_INSTANCE_ID_AND_ARBITRARY_CONDITIONS = "SELECT documentMetadata FROM ProcessDocumentMetadataDAO documentMetadata WHERE documentMetadata.processInstanceID=:processInstanceId AND %s";
     private static final String QUERY_GET_UNSHIPPED_ORDER_IDENTIFIERS_FOR_ALL_PARTIES =
-            "SELECT DISTINCT order_.ID FROM" +
+            "SELECT DISTINCT order_.ID, order_.hjid FROM" +
                     " OrderType order_, " +
-                    " OrderResponseSimpleType orderResponse, " +
-                    " DespatchAdviceType despatchAdvice join despatchAdvice.orderReference despatchOrderRef" +
+                    " OrderResponseSimpleType orderResponse" +
             " WHERE" +
                     " orderResponse.orderReference.documentReference.ID = order_.ID" +
                     " AND orderResponse.acceptedIndicator = true" +
                     " AND order_.ID NOT IN " +
-                    "(SELECT despatchOrderRef2.documentReference.ID " +
-                    "FROM DespatchAdviceType despatchAdvice2 join despatchAdvice2.orderReference despatchOrderRef2)";
+                        "(SELECT despatchOrderRef2.documentReference.ID " +
+                        "FROM DespatchAdviceType despatchAdvice2 join despatchAdvice2.orderReference despatchOrderRef2)" +
+                    " ORDER BY order_.hjid DESC";
     private static final String QUERY_GET_UNSHIPPED_ORDER_IDENTIFIERS_FOR_SPECIFIC_PARTY =
-            "SELECT DISTINCT order_.ID FROM" +
+            "SELECT DISTINCT order_.ID, order_.hjid FROM" +
                     " OrderType order_ join order_.sellerSupplierParty.party.partyIdentification pid, " +
-                    " OrderResponseSimpleType orderResponse, " +
-                    " DespatchAdviceType despatchAdvice join despatchAdvice.orderReference despatchOrderRef" +
+                    " OrderResponseSimpleType orderResponse" +
             " WHERE" +
                     " pid.ID = :sellerPartyId" +
                     " AND orderResponse.orderReference.documentReference.ID = order_.ID" +
                     " AND orderResponse.acceptedIndicator = true" +
                     " AND order_.ID NOT IN " +
-                    "(SELECT despatchOrderRef2.documentReference.ID " +
-                    "FROM DespatchAdviceType despatchAdvice2 join despatchAdvice2.orderReference despatchOrderRef2)";
+                        "(SELECT despatchOrderRef2.documentReference.ID " +
+                        "FROM DespatchAdviceType despatchAdvice2 join despatchAdvice2.orderReference despatchOrderRef2)" +
+                    " ORDER BY order_.hjid DESC";
     private static final String QUERY_GET_ORDERS_BELONG_TO_COMPLETED_COLLABORATIONS =
             "SELECT metadata.documentID " +
             "FROM ProcessDocumentMetadataDAO metadata " +
@@ -578,12 +578,19 @@ public class ProcessDocumentMetadataDAOUtility {
 
     public static List<String> getUnshippedOrderIds(String sellerPartyId) {
         GenericJPARepository repository = new JPARepositoryFactory().forCatalogueRepository();
-        List<String> results;
+        List<Object[]> dbResults;
         if(sellerPartyId != null) {
-            results = repository.getEntities(QUERY_GET_UNSHIPPED_ORDER_IDENTIFIERS_FOR_SPECIFIC_PARTY, new String[]{"sellerPartyId"}, new Object[]{sellerPartyId});
+            dbResults = repository.getEntities(QUERY_GET_UNSHIPPED_ORDER_IDENTIFIERS_FOR_SPECIFIC_PARTY, new String[]{"sellerPartyId"}, new Object[]{sellerPartyId});
         } else {
-            results = repository.getEntities(QUERY_GET_UNSHIPPED_ORDER_IDENTIFIERS_FOR_ALL_PARTIES);
+            dbResults = repository.getEntities(QUERY_GET_UNSHIPPED_ORDER_IDENTIFIERS_FOR_ALL_PARTIES);
         }
+        List<String> results = new ArrayList<>();
+        if(dbResults != null && dbResults.size() > 0) {
+            for(Object[] result : dbResults) {
+                results.add((String) result[0]);
+            }
+        }
+
         return results;
     }
 

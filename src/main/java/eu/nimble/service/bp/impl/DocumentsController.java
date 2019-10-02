@@ -1,8 +1,6 @@
 package eu.nimble.service.bp.impl;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import eu.nimble.service.bp.config.RoleConfig;
-import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
 import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
@@ -56,7 +54,7 @@ public class DocumentsController {
         try {
             logger.info("Getting unshipped order ids");
             // validate role
-            if (!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+            if (!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
