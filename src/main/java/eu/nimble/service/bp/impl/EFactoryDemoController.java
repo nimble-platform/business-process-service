@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import springfox.documentation.annotations.ApiIgnore;
 
+import javax.validation.Valid;
 import java.io.IOException;
 import java.util.Arrays;
 
@@ -49,8 +50,15 @@ public class EFactoryDemoController {
     @RequestMapping(value = "/start-rfq",
             produces = {"application/json"},
             method = RequestMethod.POST)
-    public ResponseEntity startRFQProcess(@RequestBody RFQSummary rfqSummary) {
+    public ResponseEntity startRFQProcess(@RequestBody @Valid RFQSummary rfqSummary) {
         logger.info("Getting request to start request for quotation process");
+        try {
+            logger.info("RFQSummary: {}",JsonSerializationUtility.getObjectMapper().writeValueAsString(rfqSummary));
+        } catch (JsonProcessingException e) {
+            String msg = "Unexpected error while serializing the RFQSummary";
+            logger.error(msg,e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+        }
 
         // retrieve the product details
         CatalogueLineType catalogueLine = CataloguePersistenceUtility.getCatalogueLine(rfqSummary.getProductID());
