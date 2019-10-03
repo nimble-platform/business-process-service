@@ -59,7 +59,8 @@ public class FrameContractControllerTest {
      * 2) Retrieve frame contract via participant companies and participant id
      * 3) Retrieve all frame contracts of a party
      * 4) Retrieve an expired frame contract (response is supposed to be 404)
-     * 5) Update and existing expired frame contract and retrieve it (response is supposed to be not-null)
+     * 5) Retrieve all frame contracts of a party (no available frame contract since the existing one expired)
+     * 6) Update and existing expired frame contract and retrieve it (response is supposed to be not-null)
      */
 
     @Test
@@ -125,7 +126,17 @@ public class FrameContractControllerTest {
     }
 
     @Test
-    public void test5_updateExpiredContractNotFoundTest() throws Exception {
+    public void test5_getDigitalAgreementsForParty() throws Exception {
+        MockHttpServletRequestBuilder request = get("/contract/digital-agreement/all")
+                .header("Authorization", TestConfig.initiatorPersonId)
+                .param("partyId",TestConfig.sellerPartyID);
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+        List<DigitalAgreementType> frameContracts = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),new TypeReference<List<DigitalAgreementType>>(){});
+        Assert.assertEquals(0,frameContracts.size());
+    }
+
+    @Test
+    public void test6_updateExpiredContractNotFoundTest() throws Exception {
         // retrieve contract
         MockHttpServletRequestBuilder request = get("/contract/digital-agreement/" + frameContract.getHjid())
                 .header("Authorization", TestConfig.initiatorPersonId);

@@ -29,6 +29,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -628,9 +629,7 @@ public class ContractController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(String.format("No DigitalAgreement found. seller id: %s, buyer id: %s, product hjid: %s", sellerId, buyerId, manufacturersItemId));
             }
 
-            DateTime endDate = new DateTime(digitalAgreement.getDigitalAgreementTerms().getValidityPeriod().getEndDate().toGregorianCalendar().getTime());
-            DateTime currentDate = new DateTime();
-            if(Days.daysBetween(endDate, currentDate).getDays() > 0) {
+            if(isDigitalAgreementExpired(digitalAgreement)) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(String.format("DigitalAgreement expired. seller id: %s, buyer id: %s, product hjid: %s", sellerId, buyerId, manufacturersItemId));
             }
 
@@ -662,6 +661,14 @@ public class ContractController {
             }
 
             List<DigitalAgreementType> digitalAgreements = ContractPersistenceUtility.getFrameContractsByPartyId(partyId);
+            // remove expired digital agreements
+            List<DigitalAgreementType> expiredDigitalAgreements = new ArrayList<>();
+            for (DigitalAgreementType digitalAgreement : digitalAgreements) {
+                if(isDigitalAgreementExpired(digitalAgreement)){
+                    expiredDigitalAgreements.add(digitalAgreement);
+                }
+            }
+            digitalAgreements.removeAll(expiredDigitalAgreements);
 
             logger.info("Completed request to retrieve all DigitalAgreement for party: {}", partyId);
             return ResponseEntity.ok(JsonSerializationUtility.getObjectMapper().writeValueAsString(digitalAgreements));
@@ -686,5 +693,15 @@ public class ContractController {
     private ResponseEntity validateDocumentExistence(String documentId) {
         ProcessDocumentMetadataDAO documentMetadata = ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId);
         return validateDocumentExistence(documentMetadata);
+    }
+
+    // TODO: Remove this method later.
+    private boolean isDigitalAgreementExpired(DigitalAgreementType digitalAgreement){
+        DateTime endDate = new DateTime(digitalAgreement.getDigitalAgreementTerms().getValidityPeriod().getEndDate().toGregorianCalendar().getTime());
+        DateTime currentDate = new DateTime();
+        if(Days.daysBetween(endDate, currentDate).getDays() > 0) {
+            return true;
+        }
+        return false;
     }
 }
