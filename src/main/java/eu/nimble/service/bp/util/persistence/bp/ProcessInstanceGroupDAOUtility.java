@@ -166,9 +166,9 @@ public class ProcessInstanceGroupDAOUtility {
         ProcessInstanceGroupDAO precedingProcessInstanceGroup = ProcessInstanceGroupDAOUtility.getPrecedingProcessInstanceGroup(processInstanceId);
         String orderId;
         if (precedingProcessInstanceGroup != null) {
-            orderId = new JPARepositoryFactory().forBpRepository().getSingleEntity(QUERY_GET_ORDER_ID_IN_GROUP, new String[]{"processInstanceId"}, new Object[]{precedingProcessInstanceGroup.getProcessInstanceIDs().get(0)});
+            orderId = new JPARepositoryFactory().forBpRepository(true).getSingleEntity(QUERY_GET_ORDER_ID_IN_GROUP, new String[]{"processInstanceId"}, new Object[]{precedingProcessInstanceGroup.getProcessInstanceIDs().get(0)});
         } else {
-            orderId = new JPARepositoryFactory().forBpRepository().getSingleEntity(QUERY_GET_ORDER_ID_IN_GROUP, new String[]{"processInstanceId"}, new Object[]{processInstanceId});
+            orderId = new JPARepositoryFactory().forBpRepository(true).getSingleEntity(QUERY_GET_ORDER_ID_IN_GROUP, new String[]{"processInstanceId"}, new Object[]{processInstanceId});
         }
         return orderId;
     }

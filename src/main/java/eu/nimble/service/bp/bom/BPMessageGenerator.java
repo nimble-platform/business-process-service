@@ -76,7 +76,7 @@ public class BPMessageGenerator {
         PartyType responderParty;
         PartyType initiatorParty;
         // for Fulfilment, it's vice versa
-        if(processId.contentEquals("Fulfilment")){
+        if(processId.contentEquals(ClassProcessTypeMap.CAMUNDA_PROCESS_ID_FULFILMENT)){
             responderParty = PartyPersistenceUtility.getParty(bearerToken, document.getBuyerParty());
             initiatorParty = PartyPersistenceUtility.getParty(bearerToken, document.getSellerParty());
         }

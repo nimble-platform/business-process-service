@@ -258,7 +258,7 @@ public class StartWithDocumentController {
             // get the initiator party id
             PartyType initiatorParty = document.getBuyerParty();
             // for Fulfilment, it's vice versa
-            if(processId.contentEquals("Fulfilment")){
+            if(processId.contentEquals(ClassProcessTypeMap.CAMUNDA_PROCESS_ID_FULFILMENT)){
                 initiatorParty = document.getSellerParty();
             }
 

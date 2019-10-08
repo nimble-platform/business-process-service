@@ -6,6 +6,7 @@
 package eu.nimble.service.bp.util.camunda;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import eu.nimble.service.bp.util.bp.ClassProcessTypeMap;
 import eu.nimble.service.bp.util.serialization.MixInIgnoreProperties;
 import eu.nimble.service.bp.swagger.model.*;
 import eu.nimble.service.bp.swagger.model.Process;
@@ -160,12 +161,12 @@ public class CamundaEngine {
 
     private static String getProcessTextContent(String processID) {
         switch (processID) {
-            case "Order":
+            case ClassProcessTypeMap.CAMUNDA_PROCESS_ID_ORDER:
                 return "Title: ORDER\n" +
                         "Buyer -> Seller: Order\n" +
                         "Note right of Seller: Evaluate Order\n" +
                         "Seller -> Buyer: Order Response";
-            case "Negotiation":
+            case ClassProcessTypeMap.CAMUNDA_PROCESS_ID_NEGOTIATION:
                 return "Title: NEGOTIATION\n" +
                         "Buyer -> Seller: Request For Quotation\n" +
                         "Note right of Seller: Evaluate RfQ\n" +
