@@ -28,6 +28,8 @@ public class PartyPersistenceUtility {
     private static final String QUERY_SELECT_BY_IDS = "SELECT party FROM PartyType party JOIN party.partyIdentification partyIdentification WHERE partyIdentification.ID IN :partyIds";
     private static final String QUERY_SELECT_PERSON_BY_ID = "SELECT person FROM PersonType person WHERE person.ID = :id";
     private static final String QUERY_GET_QUALIFIYING_PARTY = "SELECT qpt FROM QualifyingPartyType qpt JOIN qpt.party.partyIdentification partyIdentification WHERE partyIdentification.ID = :partyId";
+    private static final String QUERY_GET_ALL_QUALIFIYING_PARTIES = "SELECT qpt FROM QualifyingPartyType qpt where qpt.completedTask.size > 0 and qpt.party is not null";
+
 
     private static PersonType getPersonByID(String personId){
         List<PersonType> personTypes = new JPARepositoryFactory().forCatalogueRepository(true).getEntities(QUERY_SELECT_PERSON_BY_ID, new String[]{"id"}, new Object[]{personId});
@@ -55,6 +57,15 @@ public class PartyPersistenceUtility {
 
     public static QualifyingPartyType getQualifyingParty(String partyId) {
         return getQualifyingParty(partyId, new JPARepositoryFactory().forCatalogueRepository(true));
+    }
+
+    public static List<QualifyingPartyType> getQualifyingParties() {
+        return getQualifyingParties(new JPARepositoryFactory().forCatalogueRepository(true));
+    }
+
+
+    public static List<QualifyingPartyType> getQualifyingParties(GenericJPARepository repository) {
+        return repository.getEntities(QUERY_GET_ALL_QUALIFIYING_PARTIES);
     }
 
     public static PartyType getParty(PartyType party,String businessProcessContextId) {
