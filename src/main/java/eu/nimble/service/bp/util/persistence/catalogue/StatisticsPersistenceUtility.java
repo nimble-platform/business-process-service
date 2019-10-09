@@ -217,7 +217,7 @@ public class StatisticsPersistenceUtility {
         int numberOfCollaborations = 0;
         double totalTime = 0;
         List<CompletedTaskType> completedtasks = PartyPersistenceUtility.getCompletedTasks();
-        List<String> processInstanceIds = CollaborationGroupDAOUtility.getCollaborationGroupByProcessInstanceIdsByRole(role);
+        List<String> processInstanceIds = CollaborationGroupDAOUtility.getProcessInstanceIdsByCollborationRole(role);
         Set set = new HashSet(processInstanceIds);
 
         for(CompletedTaskType completedtask : completedtasks){
@@ -249,10 +249,9 @@ public class StatisticsPersistenceUtility {
         List<String> processInstanceIDs;
 
         if(partyID != null){
-            processInstanceIDs = ProcessDocumentMetadataDAOUtility.getProcessInstanceIds(partyID);
-
+            processInstanceIDs = CollaborationGroupDAOUtility.getProcessInstanceIdsByParty(partyID);
         }else {
-            processInstanceIDs = ProcessDocumentMetadataDAOUtility.getAllProcessInstanceIds();
+            processInstanceIDs =  CollaborationGroupDAOUtility.getProcessInstanceIds();
         }
 
         for (String processInstanceID:processInstanceIDs){
@@ -287,10 +286,10 @@ public class StatisticsPersistenceUtility {
         List<String> processInstanceIDs;
 
         if(partyID != null){
-            processInstanceIDs = ProcessDocumentMetadataDAOUtility.getProcessInstanceIds(partyID);
+            processInstanceIDs = CollaborationGroupDAOUtility.getProcessInstanceIdsByParty(partyID);
 
         }else {
-            processInstanceIDs = ProcessDocumentMetadataDAOUtility.getAllProcessInstanceIds();
+            processInstanceIDs =  CollaborationGroupDAOUtility.getProcessInstanceIds();
         }
 
         Set<Integer> monthList = new HashSet<>();
