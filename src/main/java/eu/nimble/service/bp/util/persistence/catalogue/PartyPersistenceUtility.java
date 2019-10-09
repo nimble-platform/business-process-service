@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.util.spring.SpringBridge;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.CompletedTaskType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.QualifyingPartyType;
@@ -28,7 +29,7 @@ public class PartyPersistenceUtility {
     private static final String QUERY_SELECT_BY_IDS = "SELECT party FROM PartyType party JOIN party.partyIdentification partyIdentification WHERE partyIdentification.ID IN :partyIds";
     private static final String QUERY_SELECT_PERSON_BY_ID = "SELECT person FROM PersonType person WHERE person.ID = :id";
     private static final String QUERY_GET_QUALIFIYING_PARTY = "SELECT qpt FROM QualifyingPartyType qpt JOIN qpt.party.partyIdentification partyIdentification WHERE partyIdentification.ID = :partyId";
-    private static final String QUERY_GET_ALL_QUALIFIYING_PARTIES = "SELECT qpt FROM QualifyingPartyType qpt where qpt.completedTask.size > 0 and qpt.party is not null";
+    private static final String QUERY_GET_ALL_QUALIFIYING_PARTIES = "SELECT qpt.completedTask FROM QualifyingPartyType qpt where qpt.completedTask.size > 0 and qpt.party is not null";
 
 
     private static PersonType getPersonByID(String personId){
@@ -59,12 +60,12 @@ public class PartyPersistenceUtility {
         return getQualifyingParty(partyId, new JPARepositoryFactory().forCatalogueRepository(true));
     }
 
-    public static List<QualifyingPartyType> getQualifyingParties() {
-        return getQualifyingParties(new JPARepositoryFactory().forCatalogueRepository(true));
+    public static List<CompletedTaskType> getCompletedTasks() {
+        return getCompletedTasks(new JPARepositoryFactory().forCatalogueRepository(true));
     }
 
 
-    public static List<QualifyingPartyType> getQualifyingParties(GenericJPARepository repository) {
+    public static List<CompletedTaskType> getCompletedTasks(GenericJPARepository repository) {
         return repository.getEntities(QUERY_GET_ALL_QUALIFIYING_PARTIES);
     }
 

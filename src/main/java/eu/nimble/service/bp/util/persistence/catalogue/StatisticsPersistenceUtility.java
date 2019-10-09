@@ -216,32 +216,24 @@ public class StatisticsPersistenceUtility {
     public static double calculateAverageCollaborationTimeForPlatform(String bearerToken, String role){
         int numberOfCollaborations = 0;
         double totalTime = 0;
-        List<QualifyingPartyType> qualifyingParties = PartyPersistenceUtility.getQualifyingParties();
+        List<CompletedTaskType> completedtasks = PartyPersistenceUtility.getCompletedTasks();
+        List<String> processInstanceIds = CollaborationGroupDAOUtility.getCollaborationGroupByProcessInstanceIdsByRole(role);
+        Set set = new HashSet(processInstanceIds);
 
-        for(QualifyingPartyType qualifyingPartyType : qualifyingParties){
-            PartyType part =  qualifyingPartyType.getParty();
-
-            List<PartyIdentificationType> partyId = part.getPartyIdentification();
-            String partyID = partyId.get(0).getID();
-
-            if(partyID != null){
-                for (CompletedTaskType completedTask:qualifyingPartyType.getCompletedTask()){
-                    if(completedTask.getPeriod().getEndDate() == null || completedTask.getPeriod().getEndTime() == null){
-                        continue;
-                    }
-                    String processInstanceId = completedTask.getAssociatedProcessInstanceID();
-                    CollaborationGroupDAO collaborationGroup = CollaborationGroupDAOUtility
-                            .getCollaborationGroupByProcessInstanceIdAndPartyIdRole(processInstanceId,partyID,role);
-                    if(collaborationGroup != null){
-                        Date startDate = completedTask.getPeriod().getStartDate().toGregorianCalendar().getTime();
-                        Date endDate = completedTask.getPeriod().getEndDate().toGregorianCalendar().getTime();
-                        Date startTime = completedTask.getPeriod().getStartTime().toGregorianCalendar().getTime();
-                        Date endTime = completedTask.getPeriod().getEndTime().toGregorianCalendar().getTime();
-                        numberOfCollaborations++;
-                        totalTime += ((endDate.getTime()-startDate.getTime())+(endTime.getTime()-startTime.getTime()))/86400000.0;
-                    }
-                }
+        for(CompletedTaskType completedtask : completedtasks){
+            if(completedtask.getPeriod().getEndDate() == null || completedtask.getPeriod().getEndTime() == null){
+                continue;
             }
+
+            if(set.contains(completedtask.getAssociatedProcessInstanceID())){
+                Date startDate = completedtask.getPeriod().getStartDate().toGregorianCalendar().getTime();
+                Date endDate = completedtask.getPeriod().getEndDate().toGregorianCalendar().getTime();
+                Date startTime = completedtask.getPeriod().getStartTime().toGregorianCalendar().getTime();
+                Date endTime = completedtask.getPeriod().getEndTime().toGregorianCalendar().getTime();
+                numberOfCollaborations++;
+                totalTime += ((endDate.getTime()-startDate.getTime())+(endTime.getTime()-startTime.getTime()))/86400000.0;
+            }
+
         }
 
         if(numberOfCollaborations == 0){
