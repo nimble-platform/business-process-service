@@ -247,9 +247,9 @@ public class StatisticsPersistenceUtility {
         int numberOfResponses = 0;
         double totalTime = 0;
 
-        List<String> processInstanceIDs = ProcessDocumentMetadataDAOUtility.getProcessInstanceIds(partyID);
-
-        for (String processInstanceID:processInstanceIDs){
+        if(partyID != null){
+            List<String> processInstanceIDs = ProcessDocumentMetadataDAOUtility.getProcessInstanceIds(partyID);
+            for (String processInstanceID:processInstanceIDs){
                 List<ProcessDocumentMetadataDAO> processDocumentMetadataDAOS = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(processInstanceID);
                 if (processDocumentMetadataDAOS.size() != 2){
                     continue;
@@ -263,7 +263,26 @@ public class StatisticsPersistenceUtility {
 
                 numberOfResponses++;
                 totalTime += (endDate.getTime()-startDate.getTime())/86400000.0;
+            }
+        }else {
+            List<String> processInstanceIDs = ProcessDocumentMetadataDAOUtility.getAllProcessInstanceIds();
+            for (String processInstanceID:processInstanceIDs){
+                List<ProcessDocumentMetadataDAO> processDocumentMetadataDAOS = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(processInstanceID);
+                if (processDocumentMetadataDAOS.size() != 2){
+                    continue;
+                }
+
+                ProcessDocumentMetadataDAO docMetadata = processDocumentMetadataDAOS.get(1);
+                ProcessDocumentMetadataDAO reqMetadata = processDocumentMetadataDAOS.get(0);
+
+                Date startDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(reqMetadata.getSubmissionDate()).toGregorianCalendar().getTime();
+                Date endDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(docMetadata.getSubmissionDate()).toGregorianCalendar().getTime();
+
+                numberOfResponses++;
+                totalTime += (endDate.getTime()-startDate.getTime())/86400000.0;
+            }
         }
+
         if(numberOfResponses == 0){
             return 0.0;
         }
