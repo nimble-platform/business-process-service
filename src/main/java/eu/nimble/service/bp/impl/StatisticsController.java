@@ -325,7 +325,7 @@ public class StatisticsController {
     @RequestMapping(value = "/response-time",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity getAverageResponseTime(@ApiParam(value = "Identifier of the party as specified by the identity service", required = true) @RequestParam(value = "partyId") String partyId,
+    public ResponseEntity getAverageResponseTime(@ApiParam(value = "Identifier of the party as specified by the identity service",required = false) @RequestParam(value = "partyId",required = false) String partyId,
                                                  @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         logger.info("Getting average response time for the party with id: {}",partyId);
         // validate role
@@ -334,12 +334,23 @@ public class StatisticsController {
         }
 
         double averageResponseTime;
-        try {
-            averageResponseTime = StatisticsPersistenceUtility.calculateAverageResponseTime(partyId);
+
+        if (partyId != null) {
+            try {
+                averageResponseTime = StatisticsPersistenceUtility.calculateAverageResponseTime(partyId);
+            }
+            catch (Exception e){
+                return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting average response time for the party with id: %s", partyId), e, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }else{
+            try {
+                averageResponseTime = StatisticsPersistenceUtility.calculateAverageResponseTime(null);
+            }
+            catch (Exception e){
+                return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting average response time for the party with id: %s", partyId), e, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
         }
-        catch (Exception e){
-            return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting average response time for the party with id: %s", partyId), e, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+
         logger.info("Retrieved average response time for the party with id: {}",partyId);
         return ResponseEntity.ok(averageResponseTime);
     }
@@ -375,7 +386,7 @@ public class StatisticsController {
     @RequestMapping(value = "/collaboration-time",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity getAverageCollaborationTime(@ApiParam(value = "Identifier of the party as specified by the identity service") @RequestParam(value = "partyId") String partyId,
+    public ResponseEntity getAverageCollaborationTime(@ApiParam(value = "Identifier of the party as specified by the identity service",required = false) @RequestParam(value = "partyId",required = false) String partyId,
             @ApiParam(value = "Role of the party in the business process.<br>Possible values:<ul><li>SELLER</li><li>BUYER</li></ul>", defaultValue = "SELLER", required = false) @RequestParam(value = "role", required = false, defaultValue = "SELLER") String role,
             @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         logger.info("Getting average negotiation time for the party with id: {}",partyId);
