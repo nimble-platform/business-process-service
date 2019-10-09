@@ -375,7 +375,7 @@ public class StatisticsController {
     @RequestMapping(value = "/collaboration-time",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity getAverageCollaborationTime(@ApiParam(value = "Identifier of the party as specified by the identity service", required = true) @RequestParam(value = "partyId") String partyId,
+    public ResponseEntity getAverageCollaborationTime(@ApiParam(value = "Identifier of the party as specified by the identity service") @RequestParam(value = "partyId") String partyId,
             @ApiParam(value = "Role of the party in the business process.<br>Possible values:<ul><li>SELLER</li><li>BUYER</li></ul>", defaultValue = "SELLER", required = false) @RequestParam(value = "role", required = false, defaultValue = "SELLER") String role,
             @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         logger.info("Getting average negotiation time for the party with id: {}",partyId);
@@ -383,8 +383,12 @@ public class StatisticsController {
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
             return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
         }
-
-        double averageNegotiationTime = StatisticsPersistenceUtility.calculateAverageCollaborationTime(partyId,bearerToken,role);
+        double averageNegotiationTime;
+        if (partyId != null) {
+            averageNegotiationTime = StatisticsPersistenceUtility.calculateAverageCollaborationTime(partyId,bearerToken,role);
+        }else{
+            averageNegotiationTime = StatisticsPersistenceUtility.calculateAverageCollaborationTimeForPlatform(bearerToken,role);
+        }
         logger.info("Retrieved average negotiation time for the party with id: {}",partyId);
         return ResponseEntity.ok(averageNegotiationTime);
     }
