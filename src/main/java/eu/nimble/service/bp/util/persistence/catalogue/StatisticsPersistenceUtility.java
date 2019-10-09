@@ -213,28 +213,63 @@ public class StatisticsPersistenceUtility {
         return totalTime/numberOfCollaborations;
     }
 
+    public static double calculateAverageCollaborationTimeForPlatform(String bearerToken, String role){
+        int numberOfCollaborations = 0;
+        double totalTime = 0;
+        List<CompletedTaskType> completedtasks = PartyPersistenceUtility.getCompletedTasks();
+        List<String> processInstanceIds = CollaborationGroupDAOUtility.getProcessInstanceIdsByCollborationRole(role);
+        Set set = new HashSet(processInstanceIds);
+
+        for(CompletedTaskType completedtask : completedtasks){
+            if(completedtask.getPeriod().getEndDate() == null || completedtask.getPeriod().getEndTime() == null){
+                continue;
+            }
+
+            if(set.contains(completedtask.getAssociatedProcessInstanceID())){
+                Date startDate = completedtask.getPeriod().getStartDate().toGregorianCalendar().getTime();
+                Date endDate = completedtask.getPeriod().getEndDate().toGregorianCalendar().getTime();
+                Date startTime = completedtask.getPeriod().getStartTime().toGregorianCalendar().getTime();
+                Date endTime = completedtask.getPeriod().getEndTime().toGregorianCalendar().getTime();
+                numberOfCollaborations++;
+                totalTime += ((endDate.getTime()-startDate.getTime())+(endTime.getTime()-startTime.getTime()))/86400000.0;
+            }
+
+        }
+
+        if(numberOfCollaborations == 0){
+            return 0.0;
+        }
+        return totalTime/numberOfCollaborations;
+    }
+
     public static double calculateAverageResponseTime(String partyID) throws Exception{
 
         int numberOfResponses = 0;
         double totalTime = 0;
+        List<String> processInstanceIDs;
 
-        List<String> processInstanceIDs = ProcessDocumentMetadataDAOUtility.getProcessInstanceIds(partyID);
+        if(partyID != null){
+            processInstanceIDs = CollaborationGroupDAOUtility.getProcessInstanceIdsByParty(partyID);
+        }else {
+            processInstanceIDs =  CollaborationGroupDAOUtility.getProcessInstanceIds();
+        }
 
         for (String processInstanceID:processInstanceIDs){
-                List<ProcessDocumentMetadataDAO> processDocumentMetadataDAOS = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(processInstanceID);
-                if (processDocumentMetadataDAOS.size() != 2){
-                    continue;
-                }
+            List<ProcessDocumentMetadataDAO> processDocumentMetadataDAOS = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(processInstanceID);
+            if (processDocumentMetadataDAOS.size() != 2){
+                continue;
+            }
 
-                ProcessDocumentMetadataDAO docMetadata = processDocumentMetadataDAOS.get(1);
-                ProcessDocumentMetadataDAO reqMetadata = processDocumentMetadataDAOS.get(0);
+            ProcessDocumentMetadataDAO docMetadata = processDocumentMetadataDAOS.get(1);
+            ProcessDocumentMetadataDAO reqMetadata = processDocumentMetadataDAOS.get(0);
 
-                Date startDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(reqMetadata.getSubmissionDate()).toGregorianCalendar().getTime();
-                Date endDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(docMetadata.getSubmissionDate()).toGregorianCalendar().getTime();
+            Date startDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(reqMetadata.getSubmissionDate()).toGregorianCalendar().getTime();
+            Date endDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(docMetadata.getSubmissionDate()).toGregorianCalendar().getTime();
 
-                numberOfResponses++;
-                totalTime += (endDate.getTime()-startDate.getTime())/86400000.0;
+            numberOfResponses++;
+            totalTime += (endDate.getTime()-startDate.getTime())/86400000.0;
         }
+
         if(numberOfResponses == 0){
             return 0.0;
         }
@@ -248,8 +283,14 @@ public class StatisticsPersistenceUtility {
         int currentmonth = 0 ;
         int currentyear = 0;
 
+        List<String> processInstanceIDs;
 
-        List<String> processInstanceIDs = ProcessDocumentMetadataDAOUtility.getProcessInstanceIds(partyID);
+        if(partyID != null){
+            processInstanceIDs = CollaborationGroupDAOUtility.getProcessInstanceIdsByParty(partyID);
+
+        }else {
+            processInstanceIDs =  CollaborationGroupDAOUtility.getProcessInstanceIds();
+        }
 
         Set<Integer> monthList = new HashSet<>();
 
