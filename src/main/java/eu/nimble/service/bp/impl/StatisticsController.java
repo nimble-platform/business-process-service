@@ -358,7 +358,7 @@ public class StatisticsController {
     @RequestMapping(value = "/response-time-months",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity getAverageResponseTimeForMonths(@ApiParam(value = "Identifier of the party as specified by the identity service", required = true) @RequestParam(value = "partyId") String partyId,
+    public ResponseEntity getAverageResponseTimeForMonths(@ApiParam(value = "Identifier of the party as specified by the identity service", required = false) @RequestParam(value = "partyId",required = false) String partyId,
             @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         logger.info("Getting average response time for the party with id: {}",partyId);
         // validate role
@@ -367,12 +367,26 @@ public class StatisticsController {
         }
 
         Map<Integer,Double> averageResponseTime;
-        try {
-            averageResponseTime = StatisticsPersistenceUtility.calculateAverageResponseTimeInMonths(partyId);
+        if (partyId != null) {
+            try {
+                averageResponseTime = StatisticsPersistenceUtility.calculateAverageResponseTimeInMonths(partyId);
+            }
+            catch (Exception e) {
+                return HttpResponseUtil.createResponseEntityAndLog(
+                        String.format("Unexpected error while getting average response time for the party with id: %s",
+                                partyId), e, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }else {
+            try {
+                averageResponseTime = StatisticsPersistenceUtility.calculateAverageResponseTimeInMonths(null);
+            }
+            catch (Exception e) {
+                return HttpResponseUtil.createResponseEntityAndLog(
+                        String.format("Unexpected error while getting average response time for the party with id: %s",
+                                partyId), e, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
         }
-        catch (Exception e){
-            return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting average response time for the party with id: %s", partyId), e, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+
         logger.info("Retrieved average response time for the party with id: {}",partyId);
         return ResponseEntity.ok(averageResponseTime);
     }
