@@ -35,14 +35,20 @@ import java.util.concurrent.*;
  * Created by suat on 16-Oct-18.
  */
 public class ProcessDocumentMetadataDAOUtility {
+    /**
+     * The conditions for the queries (including %s placeholder) below are initialized during the query instantiation
+     */
+
     private static final String QUERY_GET_BY_DOCUMENT_ID = "SELECT pdm FROM ProcessDocumentMetadataDAO pdm WHERE pdm.documentID = :documentId";
     private static final String QUERY_GET_BY_PROCESS_INSTANCE_ID = "SELECT pdm FROM ProcessDocumentMetadataDAO pdm WHERE pdm.processInstanceID = :processInstanceId ORDER BY pdm.submissionDate ASC";
     private static final String QUERY_GET_BY_RESPONDER_ID = "SELECT DISTINCT metadataDAO.processInstanceID FROM ProcessDocumentMetadataDAO metadataDAO WHERE metadataDAO.responderID = :responderId";
     private static final String QUERY_GET_BY_PARTY_ID = "SELECT pdm FROM ProcessDocumentMetadataDAO pdm WHERE pdm.initiatorID = :partyId OR pdm.responderID = :partyId";
+    private static final String QUERY_GET_METADATA_FOR_CORRESPONDING_DOCUMENT =
+            "SELECT docMetadata2 FROM ProcessDocumentMetadataDAO docMetadata, ProcessDocumentMetadataDAO docMetadata2" +
+                    " WHERE docMetadata.documentID = :documentId AND" +
+                    " docMetadata2.processInstanceID = docMetadata.processInstanceID AND" +
+                    " docMetadata2.documentID <> docMetadata.documentID";
 
-    /**
-     * The conditions for the queries below are initialized during the query instantiation
-     */
     private static final String QUERY_GET_TRANSACTION_COUNT = "SELECT count(*) FROM ProcessDocumentMetadataDAO documentMetadata %s";
     private static final String QUERY_GET_DOCUMENT_IDS = "SELECT documentMetadata.documentID FROM ProcessDocumentMetadataDAO documentMetadata %s";
     private static final String QUERY_GET_GROUPED_TRANSACTIONS = "SELECT documentMetadata.initiatorID, documentMetadata.type, documentMetadata.status, count(*) FROM ProcessDocumentMetadataDAO documentMetadata %s";
@@ -118,6 +124,13 @@ public class ProcessDocumentMetadataDAOUtility {
 
     public static List<String> getProcessInstanceIds(String responderId) {
         return new JPARepositoryFactory().forBpRepository().getEntities(QUERY_GET_BY_RESPONDER_ID, new String[]{"responderId"}, new Object[]{responderId});
+    }
+
+    /**
+     * Given by a specific document id which has an associated ProcessDocumentMetadata, Retrieves the document metadata of the document associated to
+     */
+    public static ProcessDocumentMetadataDAO getMetadataForCorrespondingDocument(String initialDocumentId) {
+        return new JPARepositoryFactory().forBpRepository().getSingleEntity(QUERY_GET_METADATA_FOR_CORRESPONDING_DOCUMENT, new String[]{"documentId"}, new Object[]{initialDocumentId});
     }
 
     public static ProcessDocumentMetadataDAO getDocumentOfTheOtherParty(String processInstanceId, String thisPartyId) {
