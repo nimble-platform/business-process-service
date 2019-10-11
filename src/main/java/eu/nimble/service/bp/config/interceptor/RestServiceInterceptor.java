@@ -2,6 +2,8 @@ package eu.nimble.service.bp.config.interceptor;
 
 import eu.nimble.service.bp.util.ExecutionContext;
 import eu.nimble.utility.exception.AuthenticationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
@@ -17,6 +19,9 @@ import javax.servlet.http.HttpServletResponse;
  */
 @Configuration
 public class RestServiceInterceptor extends HandlerInterceptorAdapter {
+
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
     @Autowired
     private ExecutionContext executionContext;
 
@@ -30,7 +35,12 @@ public class RestServiceInterceptor extends HandlerInterceptorAdapter {
         // do not validate the token for swagger operations
         if(bearerToken != null && !(request.getServletPath().contains(swaggerPath) || request.getServletPath().contains(apiDocsPath))){
             // validate token
-            eu.nimble.service.bp.util.HttpResponseUtil.validateToken(bearerToken);
+            try {
+                eu.nimble.service.bp.util.HttpResponseUtil.validateToken(bearerToken);
+            } catch (AuthenticationException e) {
+                logger.error("RestServiceInterceptor.preHandle failed ",e);
+                throw e;
+            }
         }
 
         // set token to the execution context

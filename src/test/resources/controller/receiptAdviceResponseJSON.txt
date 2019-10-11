@@ -24,7 +24,7 @@
   ],
   "deliveryCustomerParty": {
     "party": {
-      "federationInstanceID": null,
+      "federationInstanceID": "11",
       "nace": [],
       "description": [],
       "brandName": [],
@@ -200,7 +200,7 @@
   },
   "despatchSupplierParty": {
     "party": {
-      "federationInstanceID": null,
+      "federationInstanceID": "11",
       "nace": [],
       "description": [],
       "brandName": [],
@@ -2011,7 +2011,7 @@
           }
         ],
         "manufacturerParty": {
-          "federationInstanceID": null,
+          "federationInstanceID": "11",
           "nace": [],
           "description": [],
           "brandName": [],

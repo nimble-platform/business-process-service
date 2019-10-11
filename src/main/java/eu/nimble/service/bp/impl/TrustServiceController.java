@@ -61,20 +61,22 @@ public class TrustServiceController {
                                                 @ApiParam(value = "JSON string representing an array of Comment instances.<br>Example:<br>[{\"comment\":\"Awesome trading partner\",\"typeCode\":{\"value\":\"\",\"name\":\"\",\"uri\":\"\",\"listID\":\"\",\"listURI\":\"\"}},{\"comment\":\"Perfect collaboration\",\"typeCode\":{\"value\":\"\",\"name\":\"\",\"uri\":\"\",\"listID\":\"\",\"listURI\":\"\"}}]") @RequestParam(value = "reviews", required = false) String reviewsString,
                                                 @ApiParam(value = "Identifier of the party for which a rating and reviews will be created", required = true) @RequestParam(value = "partyId") String partyId,
                                                 @ApiParam(value = "Identifier of the process instance associated with the ratings and reviews.Usually,it is the identifier of the last process instance which concludes the collaboration", required = true) @RequestParam(value = "processInstanceID") String processInstanceID,
-                                                @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
+                                                @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
+                                                @ApiParam(value = "", required = true) @RequestHeader(value = "federationId", required = true) String federationId) {
         try {
             logger.info("Creating rating and reviews for the party with id: {} and process instance with id: {}", partyId, processInstanceID);
             /**
              * CHECKS
              */
 
-            // validate role
-            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
-                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+            // check token
+            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
+            if (tokenCheck != null) {
+                return tokenCheck;
             }
 
             // check party
-            QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingParty(partyId);
+            QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingParty(partyId,federationId);
             if (qualifyingParty == null) {
                 return HttpResponseUtil.createResponseEntityAndLog(String.format("No qualifying party exists for the given party id: %s", partyId), HttpStatus.BAD_REQUEST);
             }
@@ -85,12 +87,13 @@ public class TrustServiceController {
             }
             // check the trading partner existence
             String tradingPartnerId = ProcessDocumentMetadataDAOUtility.getTradingPartnerId(processDocumentMetadatas.get(0), partyId);
-            PartyType tradingParty = PartyPersistenceUtility.getParty(tradingPartnerId);
+            String tradingPartnerFederationId = ProcessDocumentMetadataDAOUtility.getTradingPartnerFederationId(processDocumentMetadatas.get(0),partyId);
+            PartyType tradingParty = PartyPersistenceUtility.getParty(tradingPartnerId,tradingPartnerFederationId);
             if(tradingParty == null) {
                 return HttpResponseUtil.createResponseEntityAndLog(String.format("No party exists for the given party id: %s", tradingPartnerId), HttpStatus.BAD_REQUEST);
             }
             // check whether the party is included in the process
-            if(!(processDocumentMetadatas.get(0).getInitiatorID().contentEquals(partyId) || processDocumentMetadatas.get(0).getResponderID().contentEquals(partyId))) {
+            if(!((processDocumentMetadatas.get(0).getInitiatorID().contentEquals(partyId) && processDocumentMetadatas.get(0).getInitiatorFederationID().contentEquals(federationId)) || (processDocumentMetadatas.get(0).getResponderID().contentEquals(partyId) && processDocumentMetadatas.get(0).getResponderFederationID().contentEquals(federationId)))) {
                 return HttpResponseUtil.createResponseEntityAndLog(String.format("Party: %s is not included in the process instance: %s", tradingPartnerId, processInstanceID), HttpStatus.BAD_REQUEST);
             }
             // check the values
@@ -113,7 +116,9 @@ public class TrustServiceController {
 
             boolean completedTaskExist = TrustPersistenceUtility.completedTaskExist(qualifyingParty, processInstanceID);
             if (!completedTaskExist) {
-                return HttpResponseUtil.createResponseEntityAndLog(String.format("No completed task exists for the given party id: %s and process instance id: %s", partyId, processInstanceID), HttpStatus.BAD_REQUEST);
+                TrustPersistenceUtility.createCompletedTasksForBothParties(processDocumentMetadatas.get(0).getProcessInstanceID(), bearerToken, "Completed");
+                // get qualifyingParty (which contains the completed task) again
+                qualifyingParty = PartyPersistenceUtility.getQualifyingPartyType(partyId,federationId, bearerToken);
             }
             CompletedTaskType completedTaskType = TrustPersistenceUtility.fillCompletedTask(qualifyingParty, ratings, reviews, processInstanceID);
             new JPARepositoryFactory().forCatalogueRepository().updateEntity(qualifyingParty);
@@ -140,7 +145,8 @@ public class TrustServiceController {
             produces = {"application/json"},
             method = RequestMethod.GET)
     public ResponseEntity getRatingsSummary(@ApiParam(value = "Identifier of the party whose ratings will be received", required = true) @RequestParam(value = "partyId") String partyId,
-                                            @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
+                                            @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
+                                            @ApiParam(value = "" ,required=true ) @RequestHeader(value="federationId", required=true) String federationId){
         logger.info("Getting ratings summary for the party with id: {}",partyId);
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
@@ -148,7 +154,7 @@ public class TrustServiceController {
         }
 
         // check party
-        QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingParty(partyId);
+        QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingParty(partyId,federationId);
         if (qualifyingParty == null) {
             return HttpResponseUtil.createResponseEntityAndLog(String.format("No qualifying party exists for the given party id: %s", partyId), HttpStatus.BAD_REQUEST);
         }
@@ -168,7 +174,8 @@ public class TrustServiceController {
             produces = {"application/json"},
             method = RequestMethod.GET)
     public ResponseEntity listAllIndividualRatingsAndReviews(@ApiParam(value = "Identifier of the party whose individual ratings and reviews will be received", required = true) @RequestParam(value = "partyId") String partyId,
-                                                             @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
+                                                             @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
+                                                             @ApiParam(value = "" ,required=true ) @RequestHeader(value="federationId", required=true) String federationId){
         try {
             logger.info("Getting all individual ratings and review for the party with id: {}",partyId);
             // validate role
@@ -177,7 +184,7 @@ public class TrustServiceController {
             }
 
             // check party
-            QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingParty(partyId);
+            QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingParty(partyId,federationId);
             if (qualifyingParty == null) {
                 return HttpResponseUtil.createResponseEntityAndLog(String.format("No qualifying party exists for the given party id: %s", partyId), HttpStatus.BAD_REQUEST);
             }

@@ -224,6 +224,7 @@ public class ProcessInstanceController {
             method = RequestMethod.GET)
     public ResponseEntity isRated(@ApiParam(value = "Identifier of the process instance", required = true) @PathVariable(value = "processInstanceId", required = true) String processInstanceId,
                                   @ApiParam(value = "Identifier of the party (the rated) for which the existence of a rating to be checked", required = true) @RequestParam(value = "partyId", required = true) String partyId,
+                                  @ApiParam(value = "", required = true) @RequestHeader(value = "federationId", required = true) String federationId,
                                   @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
         try {
             logger.info("Getting rating status for process instance: {}, party: {}", processInstanceId, partyId);
@@ -232,7 +233,7 @@ public class ProcessInstanceController {
                 return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
-            Boolean rated = TrustPersistenceUtility.processInstanceIsRated(partyId,processInstanceId);
+            Boolean rated = TrustPersistenceUtility.processInstanceIsRated(partyId,federationId,processInstanceId);
 
             logger.info("Retrieved rating status for process instance: {}, party: {}", processInstanceId, partyId);
             return ResponseEntity.ok(rated.toString());
@@ -409,7 +410,7 @@ public class ProcessInstanceController {
                 return HttpResponseUtil.createResponseEntityAndLog(String.format("Failed to retrieve party for the token: %s", bearerToken), e, HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
-            CollaborationGroupDAO collaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroupByProcessInstanceIdAndPartyId(processInstanceId, party.getPartyIdentification().get(0).getID());
+            CollaborationGroupDAO collaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroupByProcessInstanceIdAndPartyId(processInstanceId, party.getPartyIdentification().get(0).getID(), party.getFederationInstanceID());
             if(collaborationGroup == null) {
                 return HttpResponseUtil.createResponseEntityAndLog(String.format("No CollaborationGroup for the process instance id: %s", processInstanceId), null, HttpStatus.NOT_FOUND, LogLevel.INFO);
             }
@@ -435,6 +436,7 @@ public class ProcessInstanceController {
                                           @ApiParam(value = "Direction of the transaction. It can be incoming/outgoing. If not provided, all transactions are considered.", required = false) @RequestParam(value = "direction", required = false) String direction,
                                           @ApiParam(value = "Archived status of the CollaborationGroup including the transaction.", required = false) @RequestParam(value = "archived", required = false) Boolean archived,
                                           @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
+                                          @ApiParam(value = "", required = true) @RequestHeader(value = "federationId", required = true) String federationId,
                                           HttpServletResponse response) {
 
         ZipOutputStream zos = null;
@@ -449,7 +451,7 @@ public class ProcessInstanceController {
 
 
             logger.info("Incoming request to export transactions. party id: {}, user id: {}, direction: {}", partyId, userId, direction);
-            List<TransactionSummary> transactions = ProcessDocumentMetadataDAOUtility.getTransactionSummaries(partyId, userId, direction, archived, bearerToken);
+            List<TransactionSummary> transactions = ProcessDocumentMetadataDAOUtility.getTransactionSummaries(partyId, federationId,userId, direction, archived, bearerToken);
             ZipEntry zipEntry;
             tempOutputStream = null;
             try {

@@ -107,6 +107,8 @@ public class BusinessProcessExecutionTest {
         // start business process
         MockHttpServletRequestBuilder request = post("/process-document")
                 .header("Authorization", TestConfig.initiatorPersonId)
+                .header("initiatorFederationId",TestConfig.federationId)
+                .header("responderFederationId",TestConfig.federationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -117,7 +119,8 @@ public class BusinessProcessExecutionTest {
         // get collaboration group information for seller
         request = get("/collaboration-groups")
                 .header("Authorization", TestConfig.initiatorPersonId)
-                .param("partyID",partyID)
+                .header("federationId",TestConfig.federationId)
+                .param("partyId",partyID)
                 .param("relatedProducts",productName)
                 .param("collaborationRole","SELLER")
                 .param("offset",offset)
@@ -127,7 +130,7 @@ public class BusinessProcessExecutionTest {
 
         Assert.assertSame(1, collaborationGroupResponse.getSize());
         // set collaboration group and process instance groups ids
-        buyerProcessInstanceGroupID = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(TestConfig.buyerPartyID,Arrays.asList(processInstance.getProcessInstanceID())).getID();
+        buyerProcessInstanceGroupID = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(TestConfig.buyerPartyID,TestConfig.federationId,Arrays.asList(processInstance.getProcessInstanceID())).getID();
     }
 
     public void test02_ItemInformationResponse() throws Exception {
@@ -136,6 +139,8 @@ public class BusinessProcessExecutionTest {
 
         MockHttpServletRequestBuilder request = post("/process-document")
                 .header("Authorization", TestConfig.responderPersonId)
+                .header("initiatorFederationId",TestConfig.federationId)
+                .header("responderFederationId",TestConfig.federationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -147,6 +152,8 @@ public class BusinessProcessExecutionTest {
         // start business process
         MockHttpServletRequestBuilder request = post("/process-document")
                 .header("Authorization", TestConfig.initiatorPersonId)
+                .header("initiatorFederationId",TestConfig.federationId)
+                .header("responderFederationId",TestConfig.federationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -159,6 +166,8 @@ public class BusinessProcessExecutionTest {
 
         MockHttpServletRequestBuilder request = post("/process-document")
                 .header("Authorization", TestConfig.responderPersonId)
+                .header("initiatorFederationId",TestConfig.federationId)
+                .header("responderFederationId",TestConfig.federationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -170,6 +179,8 @@ public class BusinessProcessExecutionTest {
         // start business process
         MockHttpServletRequestBuilder request = post("/process-document")
                 .header("Authorization", TestConfig.initiatorPersonId)
+                .header("initiatorFederationId",TestConfig.federationId)
+                .header("responderFederationId",TestConfig.federationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -181,6 +192,8 @@ public class BusinessProcessExecutionTest {
 
         MockHttpServletRequestBuilder request = post("/process-document")
                 .header("Authorization", TestConfig.responderPersonId)
+                .header("initiatorFederationId",TestConfig.federationId)
+                .header("responderFederationId",TestConfig.federationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -193,6 +206,8 @@ public class BusinessProcessExecutionTest {
         // start business process
         MockHttpServletRequestBuilder request = post("/process-document")
                 .header("Authorization", TestConfig.initiatorPersonId)
+                .header("initiatorFederationId",TestConfig.federationId)
+                .header("responderFederationId",TestConfig.federationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -204,6 +219,8 @@ public class BusinessProcessExecutionTest {
 
         MockHttpServletRequestBuilder request = post("/process-document")
                 .header("Authorization", TestConfig.responderPersonId)
+                .header("initiatorFederationId",TestConfig.federationId)
+                .header("responderFederationId",TestConfig.federationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -215,6 +232,8 @@ public class BusinessProcessExecutionTest {
         // start business process
         MockHttpServletRequestBuilder request = post("/process-document")
                 .header("Authorization", TestConfig.responderPersonId)
+                .header("initiatorFederationId",TestConfig.federationId)
+                .header("responderFederationId",TestConfig.federationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -225,7 +244,8 @@ public class BusinessProcessExecutionTest {
         // get process instance group info
         request = get("/collaboration-groups")
                 .header("Authorization", TestConfig.initiatorPersonId)
-                .param("partyID",partyID)
+                .header("federationId",TestConfig.federationId)
+                .param("partyId",partyID)
                 .param("relatedProducts",serviceName)
                 .param("collaborationRole","BUYER")
                 .param("offset",offset)
@@ -233,10 +253,11 @@ public class BusinessProcessExecutionTest {
         mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
         CollaborationGroupResponse collaborationGroupResponse = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), CollaborationGroupResponse.class);
 
-        Assert.assertSame(2, collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().size());
+        Assert.assertSame(1, collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().size());
+        Assert.assertSame(1, collaborationGroupResponse.getCollaborationGroups().get(0).getFederatedCollaborationGroupMetadatas().size());
 
         // set collaboration group and process instance groups ids
-        transportProviderProcessInstanceGroupID = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(TestConfig.transportProviderPartyId,Arrays.asList(processInstance.getProcessInstanceID())).getID();
+        transportProviderProcessInstanceGroupID = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(TestConfig.transportProviderPartyId,TestConfig.federationId,Arrays.asList(processInstance.getProcessInstanceID())).getID();
     }
 
     public void test10_TEPItemInformationResponse() throws Exception {
@@ -245,6 +266,8 @@ public class BusinessProcessExecutionTest {
 
         MockHttpServletRequestBuilder request = post("/process-document")
                 .header("Authorization", TestConfig.tepPersonId)
+                .header("initiatorFederationId",TestConfig.federationId)
+                .header("responderFederationId",TestConfig.federationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -256,6 +279,8 @@ public class BusinessProcessExecutionTest {
         // start business process
         MockHttpServletRequestBuilder request = post("/process-document")
                 .header("Authorization", TestConfig.responderPersonId)
+                .header("initiatorFederationId",TestConfig.federationId)
+                .header("responderFederationId",TestConfig.federationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -267,6 +292,8 @@ public class BusinessProcessExecutionTest {
 
         MockHttpServletRequestBuilder request = post("/process-document")
                 .header("Authorization", TestConfig.tepPersonId)
+                .header("initiatorFederationId",TestConfig.federationId)
+                .header("responderFederationId",TestConfig.federationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -278,6 +305,8 @@ public class BusinessProcessExecutionTest {
         // start business process
         MockHttpServletRequestBuilder request = post("/process-document")
                 .header("Authorization", TestConfig.responderPersonId)
+                .header("initiatorFederationId",TestConfig.federationId)
+                .header("responderFederationId",TestConfig.federationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -289,6 +318,8 @@ public class BusinessProcessExecutionTest {
 
         MockHttpServletRequestBuilder request = post("/process-document")
                 .header("Authorization", TestConfig.tepPersonId)
+                .header("initiatorFederationId",TestConfig.federationId)
+                .header("responderFederationId",TestConfig.federationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -300,6 +331,8 @@ public class BusinessProcessExecutionTest {
         // start business process
         MockHttpServletRequestBuilder request = post("/process-document")
                 .header("Authorization", TestConfig.responderPersonId)
+                .header("initiatorFederationId",TestConfig.federationId)
+                .header("responderFederationId",TestConfig.federationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -311,6 +344,8 @@ public class BusinessProcessExecutionTest {
 
         MockHttpServletRequestBuilder request = post("/process-document")
                 .header("Authorization", TestConfig.initiatorPersonId)
+                .header("initiatorFederationId",TestConfig.federationId)
+                .header("responderFederationId",TestConfig.federationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -346,12 +381,5 @@ public class BusinessProcessExecutionTest {
         Assert.assertSame(1,clauses.get(DocumentType.QUOTATION).size());
         Assert.assertSame(1,clauses.get(DocumentType.PPAPRESPONSE).size());
         Assert.assertSame(1,clauses.get(DocumentType.ITEMINFORMATIONRESPONSE).size());
-    }
-
-    @Test
-    public void test19_finishCollaboration() throws Exception{
-        MockHttpServletRequestBuilder request = post("/process-instance-groups/"+ buyerProcessInstanceGroupID+"/finish")
-                .header("Authorization", TestConfig.initiatorPersonId);
-        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
     }
 }

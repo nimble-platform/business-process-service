@@ -29,7 +29,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @Api(value = "statistics", description = "The statistics API")
 @RequestMapping(value = "/statistics")
@@ -51,7 +50,8 @@ public class StatisticsController {
     public ResponseEntity getActionRequiredProcessCount(@ApiParam(value = "The identifier of the party whose action required process count will be received", required = true) @RequestParam(value = "partyId", required = true) Integer partyId,
                                                         @ApiParam(value = "Whether the group which contains process instances is archived or not.", defaultValue = "false") @RequestParam(value = "archived", required = false, defaultValue="false") Boolean archived,
                                                         @ApiParam(value = "Role of the party in the business process.<br>Possible values: <ul><li>seller</li><li>buyer</li></ul>", required = true) @RequestParam(value = "role", required = true, defaultValue = "seller") String role,
-                                                        @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
+                                                        @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
+                                                        @ApiParam(value = "", required = true) @RequestHeader(value = "federationId", required = true) String federationId) {
         logger.info("Getting total number of process instances which require an action for party id:{},archived: {}, role: {}",partyId,archived,role);
         // validate role of the client
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
@@ -64,7 +64,7 @@ public class StatisticsController {
             return response.getInvalidResponse();
         }
 
-        long count = StatisticsPersistenceUtility.getActionRequiredProcessCount(String.valueOf(partyId),role,archived);
+        long count = StatisticsPersistenceUtility.getActionRequiredProcessCount(String.valueOf(partyId),federationId,role,archived);
         logger.info("Retrieved total number of process instances which require an action for company id:{},archived: {}, role: {}",partyId,archived,role);
         return ResponseEntity.ok(count);
     }
@@ -85,7 +85,8 @@ public class StatisticsController {
                                           @ApiParam(value = "Identifier of the party as specified by the identity service", required = false) @RequestParam(value = "partyId", required = false) Integer partyId,
                                           @ApiParam(value = "Role of the party in the business process.<br>Possible values:<ul><li>seller</li><li>buyer</li></ul>", defaultValue = "seller", required = false) @RequestParam(value = "role", required = false, defaultValue = "seller") String role,
                                           @ApiParam(value = "State of the transaction.<br>Possible values: <ul><li>WaitingResponse</li><li>Approved</li><li>Denied</li></ul>", required = false) @RequestParam(value = "status", required = false) String status,
-                                          @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
+                                          @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
+                                          @ApiParam(value = "" ,required=true ) @RequestHeader(value="federationId", required=true) String federationId
     ) {
 
         try {
@@ -140,7 +141,7 @@ public class StatisticsController {
             }
             status = response.getValidatedObject() != null ? (String) response.getValidatedObject() : null;
 
-            int count = ProcessDocumentMetadataDAOUtility.getTransactionCount(partyId, documentTypes, role, startDateStr, endDateStr, status);
+            int count = ProcessDocumentMetadataDAOUtility.getTransactionCount(partyId, federationId,documentTypes, role, startDateStr, endDateStr, status);
 
             logger.info("Number of business process for start date: {}, end date: {}, type: {}, party id: {}, role: {}, state: {}", startDateStr, endDateStr, businessProcessType, partyId, role, status);
             return ResponseEntity.ok().body(count);
@@ -165,7 +166,8 @@ public class StatisticsController {
                                                    @ApiParam(value = "End date (DD-MM-YYYY) of the process", required = false) @RequestParam(value = "endDate", required = false) String endDateStr,
                                                    @ApiParam(value = "Identifier of the party as specified by the identity service", required = false) @RequestParam(value = "partyId", required = false) Integer partyId,
                                                    @ApiParam(value = "Role of the party in the business process.<br>Possible values:<ul><li>seller</li><li>buyer</li></ul>", defaultValue = "seller", required = false) @RequestParam(value = "role",required = false, defaultValue = "seller") String role,
-                                                   @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
+                                                   @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
+                                                   @ApiParam(value = "" ,required=true ) @RequestHeader(value="federationId", required=true) String federationId) {
 
         try {
             logger.info("Getting total number of documents for start date: {}, end date: {}, party id: {}, role: {}", startDateStr, endDateStr, partyId, role);
@@ -188,7 +190,7 @@ public class StatisticsController {
                 return response.getInvalidResponse();
             }
 
-            BusinessProcessCount counts = ProcessDocumentMetadataDAOUtility.getGroupTransactionCounts(partyId, startDateStr, endDateStr,role,bearerToken);
+            BusinessProcessCount counts = ProcessDocumentMetadataDAOUtility.getGroupTransactionCounts(partyId,federationId, startDateStr, endDateStr,role,bearerToken);
             logger.info("Number of business process for start date: {}, end date: {}, company id: {}, role: {}", startDateStr, endDateStr, partyId, role);
             return ResponseEntity.ok().body(counts);
 
@@ -238,11 +240,12 @@ public class StatisticsController {
             produces = {"application/json"},
             method = RequestMethod.GET)
     public ResponseEntity getTradingVolume(@ApiParam(value = "Start date (DD-MM-YYYY) of the transaction", required = false) @RequestParam(value = "startDate", required = false) String startDateStr,
-                                          @ApiParam(value = "End date (DD-MM-YYYY) of the transaction", required = false) @RequestParam(value = "endDate", required = false) String endDateStr,
-                                          @ApiParam(value = "Identifier of the party as specified by the identity service", required = false) @RequestParam(value = "partyId", required = false) Integer partyId,
-                                          @ApiParam(value = "Role of the party in the business process.<br>Possible values:<ul><li>seller</li><li>buyer</li></ul>", required = false) @RequestParam(value = "role", required = false, defaultValue = "SELLER") String role,
-                                          @ApiParam(value = "State of the transaction.<br>Possible values: <ul><li>WaitingResponse</li><li>Approved</li><li>Denied</li></ul>", required = false) @RequestParam(value = "status", required = false) String status,
-                                          @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
+                                           @ApiParam(value = "End date (DD-MM-YYYY) of the transaction", required = false) @RequestParam(value = "endDate", required = false) String endDateStr,
+                                           @ApiParam(value = "Identifier of the party as specified by the identity service", required = false) @RequestParam(value = "partyId", required = false) Integer partyId,
+                                           @ApiParam(value = "Role of the party in the business process.<br>Possible values:<ul><li>seller</li><li>buyer</li></ul>", required = false) @RequestParam(value = "role", required = false, defaultValue = "SELLER") String role,
+                                           @ApiParam(value = "State of the transaction.<br>Possible values: <ul><li>WaitingResponse</li><li>Approved</li><li>Denied</li></ul>", required = false) @RequestParam(value = "status", required = false) String status,
+                                           @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
+                                           @ApiParam(value = "" ,required=true ) @RequestHeader(value="federationId", required=true) String federationId
     ) {
         try {
             logger.info("Getting total number of documents for start date: {}, end date: {}, party id: {}, role: {}, state: {}", startDateStr, endDateStr, partyId, role, status);
@@ -279,7 +282,7 @@ public class StatisticsController {
             }
             status = response.getValidatedObject() != null ? (String) response.getValidatedObject() : null;
 
-            double tradingVolume = StatisticsPersistenceUtility.getTradingVolume(partyId, role, startDateStr, endDateStr, status);
+            double tradingVolume = StatisticsPersistenceUtility.getTradingVolume(partyId, federationId,role, startDateStr, endDateStr, status);
 
             logger.info("Number of business process for start date: {}, end date: {}, party id: {}, role: {}, state: {}", startDateStr, endDateStr, partyId, role, status);
             return ResponseEntity.ok().body(tradingVolume);
@@ -326,7 +329,8 @@ public class StatisticsController {
             produces = {"application/json"},
             method = RequestMethod.GET)
     public ResponseEntity getAverageResponseTime(@ApiParam(value = "Identifier of the party as specified by the identity service", required = true) @RequestParam(value = "partyId") String partyId,
-                                                 @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
+                                                 @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
+                                                 @ApiParam(value = "" ,required=true ) @RequestHeader(value="federationId", required=true) String federationId){
         logger.info("Getting average response time for the party with id: {}",partyId);
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
@@ -335,7 +339,7 @@ public class StatisticsController {
 
         double averageResponseTime;
         try {
-            averageResponseTime = StatisticsPersistenceUtility.calculateAverageResponseTime(partyId);
+            averageResponseTime = StatisticsPersistenceUtility.calculateAverageResponseTime(partyId,federationId);
         }
         catch (Exception e){
             return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting average response time for the party with id: %s", partyId), e, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -343,29 +347,6 @@ public class StatisticsController {
         logger.info("Retrieved average response time for the party with id: {}",partyId);
         return ResponseEntity.ok(averageResponseTime);
     }
-
-    @RequestMapping(value = "/response-time-months",
-            produces = {"application/json"},
-            method = RequestMethod.GET)
-    public ResponseEntity getAverageResponseTimeForMonths(@ApiParam(value = "Identifier of the party as specified by the identity service", required = true) @RequestParam(value = "partyId") String partyId,
-            @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
-        logger.info("Getting average response time for the party with id: {}",partyId);
-        // validate role
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
-            return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
-        }
-
-        Map<Integer,Double> averageResponseTime;
-        try {
-            averageResponseTime = StatisticsPersistenceUtility.calculateAverageResponseTimeInMonths(partyId);
-        }
-        catch (Exception e){
-            return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting average response time for the party with id: %s", partyId), e, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        logger.info("Retrieved average response time for the party with id: {}",partyId);
-        return ResponseEntity.ok(averageResponseTime);
-    }
-
 
     @ApiOperation(value = "Gets average collaboration time for the party in terms of days")
     @ApiResponses(value = {
@@ -376,15 +357,15 @@ public class StatisticsController {
             produces = {"application/json"},
             method = RequestMethod.GET)
     public ResponseEntity getAverageCollaborationTime(@ApiParam(value = "Identifier of the party as specified by the identity service", required = true) @RequestParam(value = "partyId") String partyId,
-            @ApiParam(value = "Role of the party in the business process.<br>Possible values:<ul><li>seller</li><li>buyer</li></ul>", defaultValue = "seller", required = false) @RequestParam(value = "role", required = false, defaultValue = "SELLER") String role,
-            @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
+                                                      @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
+                                                      @ApiParam(value = "" ,required=true ) @RequestHeader(value="federationId", required=true) String federationId){
         logger.info("Getting average negotiation time for the party with id: {}",partyId);
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
             return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
         }
 
-        double averageNegotiationTime = StatisticsPersistenceUtility.calculateAverageCollaborationTime(partyId,bearerToken,role);
+        double averageNegotiationTime = StatisticsPersistenceUtility.calculateAverageCollaborationTime(partyId,federationId,bearerToken);
         logger.info("Retrieved average negotiation time for the party with id: {}",partyId);
         return ResponseEntity.ok(averageNegotiationTime);
     }
@@ -399,8 +380,9 @@ public class StatisticsController {
             produces = {"application/json"},
             method = RequestMethod.GET)
     public ResponseEntity getStatistics(@ApiParam(value = "Identifier of the party as specified by the identity service",required = true) @RequestParam(value = "partyId",required = true) String partyId,
-                                        @ApiParam(value = "Role of the party in the business process.<br>Possible values:<ul><li>SELLER</li><li>BUYER</li></ul>", defaultValue = "SELLER", required = false) @RequestParam(value = "role", required = false, defaultValue = "SELLER") String role,
-                                        @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
+                                        @ApiParam(value = "Role of the party in the business process.<br>Possible values:<ul><li>seller</li><li>buyer</li></ul>", defaultValue = "seller", required = false) @RequestParam(value = "role", required = false, defaultValue = "SELLER") String role,
+                                        @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
+                                        @ApiParam(value = "" ,required=true ) @RequestHeader(value="federationId", required=true) String federationId){
         logger.info("Getting statistics for the party with id: {}",partyId);
         OverallStatistics statistics = new OverallStatistics();
         try {
@@ -409,10 +391,10 @@ public class StatisticsController {
                 return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
-            statistics.setAverageCollaborationTime((double) getAverageCollaborationTime(partyId,bearerToken,role).getBody());
-            statistics.setAverageResponseTime((double)getAverageResponseTime(partyId,bearerToken).getBody());
-            statistics.setTradingVolume((double) getTradingVolume(null,null,Integer.valueOf(partyId), role,null,bearerToken).getBody());
-            statistics.setNumberOfTransactions((int)getProcessCount(null,null,null,Integer.valueOf(partyId),role,null,bearerToken).getBody());
+            statistics.setAverageCollaborationTime((double) getAverageCollaborationTime(partyId,bearerToken,federationId).getBody());
+            statistics.setAverageResponseTime((double)getAverageResponseTime(partyId,bearerToken,federationId).getBody());
+            statistics.setTradingVolume((double) getTradingVolume(null,null,Integer.valueOf(partyId), role,null,bearerToken,federationId).getBody());
+            statistics.setNumberOfTransactions((int)getProcessCount(null,null,null,Integer.valueOf(partyId),role,null,bearerToken, federationId).getBody());
         }
         catch (Exception e){
             return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting statistics for the party with id: %s", partyId), e, HttpStatus.INTERNAL_SERVER_ERROR);

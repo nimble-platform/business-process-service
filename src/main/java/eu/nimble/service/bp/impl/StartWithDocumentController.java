@@ -1,15 +1,21 @@
 package eu.nimble.service.bp.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.mashape.unirest.http.HttpResponse;
+import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
+import com.mashape.unirest.http.exceptions.UnirestException;
 import eu.nimble.service.bp.bom.BPMessageGenerator;
 import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.model.hyperjaxb.CollaborationGroupDAO;
 import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceGroupDAO;
+import eu.nimble.service.bp.swagger.model.FederatedCollaborationGroupMetadata;
+import eu.nimble.service.bp.swagger.model.GroupIdTuple;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
 import eu.nimble.service.bp.util.UBLUtility;
@@ -23,9 +29,7 @@ import eu.nimble.service.model.ubl.commonaggregatecomponents.DocumentReferenceTy
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ItemType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
-import eu.nimble.service.model.ubl.commonbasiccomponents.CodeType;
 import eu.nimble.service.model.ubl.document.IDocument;
-import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.serialization.IDocumentDeserializer;
 import eu.nimble.utility.validation.IValidationUtil;
@@ -33,7 +37,6 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +50,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.io.IOException;
+import java.util.List;
 
 @Controller
 public class StartWithDocumentController {
@@ -76,7 +80,9 @@ public class StartWithDocumentController {
             method = RequestMethod.POST)
     public ResponseEntity startProcessWithDocument(@ApiParam(value = "Serialized form of the document", required = true) @RequestBody String documentAsString,
                                           @ApiParam(value = "The Bearer token provided by the identity service", required = false)
-                                          @RequestHeader(value = "Authorization", required = false) String bearerToken) {
+                                          @RequestHeader(value = "Authorization", required = false) String bearerToken,
+                                       @ApiParam(value = "" ,required=true ) @RequestHeader(value="initiatorFederationId", required=true) String initiatorFederationId,
+                                       @ApiParam(value = "" ,required=true ) @RequestHeader(value="responderFederationId", required=true) String responderFederationId) {
         logger.info("Getting request to start process with document");
 
         /**
@@ -171,14 +177,14 @@ public class StartWithDocumentController {
             // to start the process, we need to know the details of preceding process instance so that we can place the process instance to correct group
             ProcessDocumentMetadataDAO processDocumentMetadataDAO = getProcessDocumentMetadataDAO(document, false);
             String processInstanceId = processDocumentMetadataDAO != null ? processDocumentMetadataDAO.getProcessInstanceID(): null ;
-            String processInstanceIdOfPreviousOrder = getProcessInstanceIdOfPrecedingOrder(document);
+            String precedingOrderId = getPrecedingOrderId(document);
 
             String cgid = null;
             String gid = null;
             String precedingGid = null;
             if(processInstanceId != null){
                 // get the collaboration group containing the process instance for the initiator party
-                CollaborationGroupDAO collaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroupDAO(processInstanceInputMessage.getVariables().getInitiatorID(),processInstanceId);
+                CollaborationGroupDAO collaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroupDAO(processInstanceInputMessage.getVariables().getInitiatorID(),initiatorFederationId,processInstanceId);
                 cgid = collaborationGroup.getHjid().toString();
                 // get the identifier of process instance group containing the process instance
                 for(ProcessInstanceGroupDAO processInstanceGroupDAO:collaborationGroup.getAssociatedProcessInstanceGroups()){
@@ -188,24 +194,53 @@ public class StartWithDocumentController {
                     }
                 }
             }
-            else if(processInstanceIdOfPreviousOrder != null){
-                // get the collaboration group containing the process instance for the initiator party
-                CollaborationGroupDAO collaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroupDAO(processInstanceInputMessage.getVariables().getInitiatorID(),processInstanceIdOfPreviousOrder);
-                cgid = collaborationGroup.getHjid().toString();
-                // get the identifier of process instance group containing the process instance
-                for(ProcessInstanceGroupDAO processInstanceGroupDAO:collaborationGroup.getAssociatedProcessInstanceGroups()){
-                    if(processInstanceGroupDAO.getProcessInstanceIDs().contains(processInstanceIdOfPreviousOrder)){
-                        precedingGid = processInstanceGroupDAO.getID();
-                        break;
-                    }
+            else if(precedingOrderId != null){
+                try {
+                    // get group id tuple for preceding order
+                    HttpResponse<JsonNode> response = Unirest.get(SpringBridge.getInstance().getGenericConfig().getDelegateServiceUrl()+"/document/"+precedingOrderId+"/group-id-tuple")
+                            .header("Authorization", token)
+                            .header("federationId",initiatorFederationId)
+                            .queryString("partyId",processInstanceInputMessage.getVariables().getInitiatorID())
+                            .asJson();
+
+                    ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
+                    GroupIdTuple groupIdTuple = objectMapper.readValue(response.getBody().toString(),GroupIdTuple.class);
+
+                    // get the collaboration group containing the process instance for the initiator party
+                    cgid = groupIdTuple.getCollaborationGroupId();
+                    precedingGid = groupIdTuple.getProcessInstanceGroupId();
+                }
+                catch (Exception e){
+                    String msg = String.format("Failed to get group id tuple for document  : %s", precedingOrderId);
+                    logger.error(msg,e);
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
                 }
             }
-            processInstance = startController.startProcessInstance(bearerToken,processInstanceInputMessage,gid,precedingGid,cgid).getBody();
+            processInstance = startController.startProcessInstance(bearerToken,initiatorFederationId,responderFederationId,processInstanceInputMessage,gid,precedingGid,cgid).getBody();
 
             if(processInstance == null){
                 String msg = "Failed to start process for the given document";
                 logger.error(msg);
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+            }
+
+            if(precedingOrderId != null){
+                String collaborationGroupId = CollaborationGroupDAOUtility.getCollaborationGroupHjidByProcessInstanceIdAndPartyId(processInstance.getProcessInstanceID(),document.getBuyerPartyId(),initiatorFederationId).toString();
+                FederatedCollaborationGroupMetadata federatedCollaborationGroupMetadata = new FederatedCollaborationGroupMetadata();
+                federatedCollaborationGroupMetadata.setID(collaborationGroupId);
+                federatedCollaborationGroupMetadata.setFederationID(responderFederationId);
+                try {
+                    HttpResponse<JsonNode> response = Unirest.post(SpringBridge.getInstance().getGenericConfig().getDelegateServiceUrl()+"/collaboration-groups/document/"+precedingOrderId)
+                            .header("Authorization", token)
+                            .header("federationId",initiatorFederationId)
+                            .queryString("delegateId",initiatorFederationId)
+                            .queryString("partyId",processInstanceInputMessage.getVariables().getInitiatorID())
+                            .body(JsonSerializationUtility.getObjectMapper().writeValueAsString(federatedCollaborationGroupMetadata))
+                            .asJson();
+                } catch (Exception e) {
+                    logger.error("Failed to merge transport group to order group",e);
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+                }
             }
         }
         else{
@@ -232,7 +267,7 @@ public class StartWithDocumentController {
             }
 
             // get the collaboration group containing the process instance for the responder party
-            CollaborationGroupDAO collaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroupDAO(processInstanceInputMessage.getVariables().getResponderID(),processInstanceId);
+            CollaborationGroupDAO collaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroupDAO(processInstanceInputMessage.getVariables().getResponderID(),responderFederationId,processInstanceId);
 
             // get the identifier of process instance group containing the process instance
             String gid = null;
@@ -242,8 +277,7 @@ public class StartWithDocumentController {
                     break;
                 }
             }
-
-            processInstance = continueController.continueProcessInstance(processInstanceInputMessage,gid,collaborationGroup.getHjid().toString(),bearerToken).getBody();
+            processInstance = continueController.continueProcessInstance(processInstanceInputMessage,gid,collaborationGroup.getHjid().toString(),bearerToken,initiatorFederationId,responderFederationId).getBody();
             if(processInstance == null){
                 String msg = "Failed to complete process for the given document";
                 logger.error(msg);
@@ -264,20 +298,14 @@ public class StartWithDocumentController {
 
             // get the initiator party
             try {
-                CodeType communicationChannel = UBLUtility.getPartyCommunicationChannel(initiatorParty);
-                // send document to initiator party iff it's a Quotation
-                if(communicationChannel != null && document instanceof QuotationType){
-                    QuotationType quotation = (QuotationType) document;
-                    String msg = createRequestBody(quotation,communicationChannel.getListID(),communicationChannel.getURI());
-                    logger.info("Sending quotation {} to {}",msg, communicationChannel.getValue());
-                    HttpResponse<String> response = Unirest.post(communicationChannel.getValue())
-                            .header("Content-Type", "application/json")
-                            .header("accept", "*/*")
-                            .body(msg)
+                String endpoint = UBLUtility.getPartyRestEndpoint(initiatorParty);
+                if(endpoint != null){
+                    HttpResponse<String> response = Unirest.post(endpoint)
+                            .body(documentAsString)
                             .asString();
 
                     if(response.getStatus() != 200){
-                        logger.error("Failed send the document to the initiator party {}, endpoint: {} : {}",initiatorParty.getPartyIdentification().get(0).getID(), communicationChannel.getValue(), response.getBody());
+                        logger.error("Failed send the document to the initiator party {}, endpoint: {} : {}",initiatorParty.getPartyIdentification().get(0).getID(), endpoint, response.getBody());
                         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
                     }
                 }
@@ -319,14 +347,14 @@ public class StartWithDocumentController {
     /**
      * If the given document has a reference called {@literal previousOrder}, this method returns the identifier of process instance associated with that order.
      * */
-    private String getProcessInstanceIdOfPrecedingOrder(IDocument document){
+    private String getPrecedingOrderId(IDocument document){
         String documentId = null;
         for (DocumentReferenceType documentReferenceType : document.getAdditionalDocuments()) {
             if(documentReferenceType.getDocumentType() != null && documentReferenceType.getDocumentType().contentEquals("previousOrder")){
                 documentId = documentReferenceType.getID();
             }
         }
-        return documentId != null ? ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId).getProcessInstanceID() : null;
+        return documentId;
     }
 
     /**
@@ -335,43 +363,5 @@ public class StartWithDocumentController {
     private ItemType getItemType(String documentId, DocumentType documentType){
         IDocument iDocument =  DocumentPersistenceUtility.getUBLDocument(documentId, documentType);
         return iDocument.getItemType();
-    }
-
-    /**
-     * Prepare the json which has the following format:
-     * {
-     *   "messageName": "<message_name_here>",
-     *   "processInstanceId": "<process_instance_id_here>",
-     *   "processVariables": {
-     *          "quotationData": {
-     *              "type": "String",
-     *              "value": {
-     *                  "status ": "<status_of_quotation>",
-     *                  "netPrice": "<net_price_of_quotation>"
-     *              }
-     *          }
-     *   }
-     * }
-     * */
-    private String createRequestBody(QuotationType quotation, String messageName, String processInstanceId){
-        String price = quotation.getQuotationLine().get(0).getLineItem().getPrice().getPriceAmount().getValue().multiply(quotation.getQuotationLine().get(0).getLineItem().getQuantity().getValue()).toString()
-                + " " + quotation.getQuotationLine().get(0).getLineItem().getPrice().getPriceAmount().getCurrencyID();
-        String status = quotation.getDocumentStatusCode().getName();
-
-        JSONObject quotationDetails = new JSONObject();
-        quotationDetails.put("netPrice",price);
-        quotationDetails.put("status ",status);
-
-        JSONObject quotationData = new JSONObject();
-        quotationData.put("type","String");
-        quotationData.put("value",quotationDetails);
-
-        JSONObject processVariables = new JSONObject();
-        processVariables.put("quotationData",quotationData);
-        JSONObject json = new JSONObject();
-        json.put("processVariables",processVariables);
-        json.put("messageName",messageName);
-        json.put("processInstanceId",processInstanceId);
-        return json.toString();
     }
 }

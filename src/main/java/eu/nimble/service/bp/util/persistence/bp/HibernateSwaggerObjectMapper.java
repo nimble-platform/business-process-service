@@ -92,6 +92,8 @@ public class HibernateSwaggerObjectMapper {
         processDocument.setDocumentID(processDocumentDAO.getDocumentID());
         processDocument.setInitiatorID(processDocumentDAO.getInitiatorID());
         processDocument.setResponderID(processDocumentDAO.getResponderID());
+        processDocument.setInitiatorFederationId(processDocumentDAO.getInitiatorFederationID());
+        processDocument.setResponderFederationId(processDocumentDAO.getResponderFederationID());
         processDocument.setCreatorUserID(processDocumentDAO.getCreatorUserID());
         processDocument.setSubmissionDate(processDocumentDAO.getSubmissionDate());
         processDocument.setStatus(ProcessDocumentMetadata.StatusEnum.valueOf(processDocumentDAO.getStatus().value()));
@@ -99,6 +101,26 @@ public class HibernateSwaggerObjectMapper {
         processDocument.setRelatedProducts(processDocumentDAO.getRelatedProducts());
         processDocument.setRelatedProductCategories(processDocumentDAO.getRelatedProductCategories());
         return processDocument;
+    }
+
+    public static FederatedCollaborationGroupMetadataDAO createFederatedCollaborationGroupMetadata(FederatedCollaborationGroupMetadata federatedCollaborationGroupMetadata) {
+        if(federatedCollaborationGroupMetadata == null){
+            return null;
+        }
+        FederatedCollaborationGroupMetadataDAO federatedCollaborationGroupMetadataDAO = new FederatedCollaborationGroupMetadataDAO();
+        federatedCollaborationGroupMetadataDAO.setFederationID(federatedCollaborationGroupMetadata.getFederationID());
+        federatedCollaborationGroupMetadataDAO.setID(federatedCollaborationGroupMetadata.getID());
+        return federatedCollaborationGroupMetadataDAO;
+    }
+
+    public static FederatedCollaborationGroupMetadata convertFederatedCollaborationGroupMetadataDAO(FederatedCollaborationGroupMetadataDAO federatedCollaborationGroupMetadataDAO) {
+        if(federatedCollaborationGroupMetadataDAO == null){
+            return null;
+        }
+        FederatedCollaborationGroupMetadata federatedCollaborationGroupMetadata = new FederatedCollaborationGroupMetadata();
+        federatedCollaborationGroupMetadata.setFederationID(federatedCollaborationGroupMetadataDAO.getFederationID());
+        federatedCollaborationGroupMetadata.setID(federatedCollaborationGroupMetadataDAO.getID());
+        return federatedCollaborationGroupMetadata;
     }
 
     public static ProcessInstanceDAO createProcessInstance_DAO(ProcessInstance processInstance) {
@@ -138,6 +160,8 @@ public class HibernateSwaggerObjectMapper {
         processDocumentDAO.setProcessInstanceID(body.getProcessInstanceID());
         processDocumentDAO.setInitiatorID(body.getInitiatorID());
         processDocumentDAO.setResponderID(body.getResponderID());
+        processDocumentDAO.setInitiatorFederationID(body.getInitiatorFederationId());
+        processDocumentDAO.setResponderFederationID(body.getResponderFederationId());
         processDocumentDAO.setCreatorUserID(body.getCreatorUserID());
         if(body.getStatus() != null)
             processDocumentDAO.setStatus(ProcessDocumentStatus.fromValue(body.getStatus().toString()));
@@ -285,15 +309,13 @@ public class HibernateSwaggerObjectMapper {
         processInstanceGroupDAO.setID(processInstanceGroup.getID());
         processInstanceGroupDAO.setArchived(processInstanceGroup.getArchived());
         processInstanceGroupDAO.setPartyID(processInstanceGroup.getPartyID());
+        processInstanceGroupDAO.setFederationID(processInstanceGroup.getFederationID());
         processInstanceGroupDAO.setProcessInstanceIDs(processInstanceGroup.getProcessInstanceIDs());
         processInstanceGroupDAO.setName(processInstanceGroup.getName());
         processInstanceGroupDAO.setDataChannelId(processInstanceGroup.getDataChannelId());
-        if(processInstanceGroup.getPrecedingProcessInstanceGroup() != null){
-            processInstanceGroupDAO.setPrecedingProcessInstanceGroup(createProcessInstanceGroup_DAO(processInstanceGroup.getPrecedingProcessInstanceGroup()));
-        }
-        else {
-            processInstanceGroupDAO.setPrecedingProcessInstanceGroup(null);
-        }
+        processInstanceGroupDAO.setFirstActivityTime(processInstanceGroup.getFirstActivityTime());
+        processInstanceGroupDAO.setLastActivityTime(processInstanceGroup.getLastActivityTime());
+        processInstanceGroupDAO.setPrecedingProcessInstanceGroupMetadata(createFederatedCollaborationGroupMetadata(processInstanceGroup.getPrecedingProcessInstanceGroupMetadata()));
 
         processInstanceGroupDAO.setStatus(GroupStatus.INPROGRESS);
         return processInstanceGroupDAO;
@@ -308,18 +330,14 @@ public class HibernateSwaggerObjectMapper {
         processInstanceGroup.setID(processInstanceGroupDAO.getID());
         processInstanceGroup.setArchived(processInstanceGroupDAO.isArchived());
         processInstanceGroup.setPartyID(processInstanceGroupDAO.getPartyID());
+        processInstanceGroup.setFederationID(processInstanceGroupDAO.getFederationID());
         processInstanceGroup.setCollaborationRole(processInstanceGroupDAO.getCollaborationRole());
         processInstanceGroup.setProcessInstanceIDs(processInstanceGroupDAO.getProcessInstanceIDs());
         processInstanceGroup.setLastActivityTime(processInstanceGroupDAO.getLastActivityTime());
         processInstanceGroup.setFirstActivityTime(processInstanceGroupDAO.getFirstActivityTime());
         processInstanceGroup.setName(processInstanceGroupDAO.getName());
         processInstanceGroup.setDataChannelId(processInstanceGroupDAO.getDataChannelId());
-        if(processInstanceGroupDAO.getPrecedingProcessInstanceGroup() != null){
-            processInstanceGroup.setPrecedingProcessInstanceGroup(convertProcessInstanceGroupDAO(processInstanceGroupDAO.getPrecedingProcessInstanceGroup()));
-        }
-        else {
-            processInstanceGroup.setPrecedingProcessInstanceGroup(null);
-        }
+        processInstanceGroup.setPrecedingProcessInstanceGroupMetadata(convertFederatedCollaborationGroupMetadataDAO(processInstanceGroupDAO.getPrecedingProcessInstanceGroupMetadata()));
         return processInstanceGroup;
     }
 
@@ -330,6 +348,13 @@ public class HibernateSwaggerObjectMapper {
         collaborationGroup.setArchived(collaborationGroupDAO.isArchived());
         collaborationGroup.setID(collaborationGroupDAO.getHjid().toString());
         collaborationGroup.setIsProject(collaborationGroupDAO.isIsProject());
+
+        List<FederatedCollaborationGroupMetadata> federatedCollaborationGroupMetadata = new ArrayList<>();
+        for(FederatedCollaborationGroupMetadataDAO federatedCollaborationGroupMetadataDAO:collaborationGroupDAO.getFederatedCollaborationGroupMetadatas()){
+            federatedCollaborationGroupMetadata.add(convertFederatedCollaborationGroupMetadataDAO(federatedCollaborationGroupMetadataDAO));
+        }
+
+        collaborationGroup.setFederatedCollaborationGroupMetadatas(federatedCollaborationGroupMetadata);
 
         List<ProcessInstanceGroup> processInstanceGroups = new ArrayList<>();
         for(ProcessInstanceGroupDAO processInstanceGroupDAO: collaborationGroupDAO.getAssociatedProcessInstanceGroups()){

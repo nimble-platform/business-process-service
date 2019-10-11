@@ -4,8 +4,8 @@ http://java.sun.com/xml/ns/persistence/orm http://java.sun.com/xml/ns/persistenc
     <persistence-unit name="bp-data-model">
         <class>eu.nimble.service.bp.model.hyperjaxb.AssociatedProcessInstanceGroup</class>
         <class>eu.nimble.service.bp.model.hyperjaxb.CollaborationGroupDAO</class>
-        <class>eu.nimble.service.bp.model.hyperjaxb.CollaborationGroupDAO$CollaborationGroupDAOAssociatedCollaborationGroupsItem</class>
         <class>eu.nimble.service.bp.model.hyperjaxb.ExecutionConfigurationDAO</class>
+        <class>eu.nimble.service.bp.model.hyperjaxb.FederatedCollaborationGroupMetadataDAO</class>
         <class>eu.nimble.service.bp.model.hyperjaxb.ProcessConfigurationDAO</class>
         <class>eu.nimble.service.bp.model.hyperjaxb.ProcessDAO</class>
         <class>eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO</class>
@@ -13,7 +13,6 @@ http://java.sun.com/xml/ns/persistence/orm http://java.sun.com/xml/ns/persistenc
         <class>eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO$ProcessDocumentMetadataDAORelatedProductsItem</class>
         <class>eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceDAO</class>
         <class>eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceGroupDAO</class>
-        <class>eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceGroupDAO$ProcessInstanceGroupDAOAssociatedGroupsItem</class>
         <class>eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceGroupDAO$ProcessInstanceGroupDAOProcessInstanceIDsItem</class>
         <class>eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceInputMessageDAO</class>
         <class>eu.nimble.service.bp.model.hyperjaxb.ProcessPreferenceDAO</class>

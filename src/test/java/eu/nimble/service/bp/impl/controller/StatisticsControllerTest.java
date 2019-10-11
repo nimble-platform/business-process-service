@@ -38,7 +38,7 @@ public class StatisticsControllerTest {
     private final String statusTradingVolume = "WaitingResponse";
     private final String statusProcessCount = "Denied";
     private final double delta = 0.1;
-    private final double tradingVolumeExpected = 4230; // from orderJSON2
+    private final double tradingVolumeExpected = 1360; // from orderJSON3
     private final int expectedProcessCount = 1;
     private final int expectedCompanyCount = 1;
     private final String businessProcessType = "ORDER";
@@ -46,30 +46,20 @@ public class StatisticsControllerTest {
 
     /**
      * Test scenario:
-     * - Trading volume of processes in waiting response status (it should be 0 since the collaboration is not completed)
-     * - Trading volume of processes
+     * - Trading volume of processes in waiting response status
      * - Number of rejected processes
      * - Number of non-ordered products
      * - Test number of order processes via complete process break-down
      */
 
     @Test
-    public void getTradingVolumeZero() throws Exception {
+    public void getTradingVolume() throws Exception {
         MockHttpServletRequestBuilder request = get("/statistics/trading-volume")
                 .header("Authorization", TestConfig.responderPersonId)
+                .header("federationId",TestConfig.federationId)
                 .param("partyId", partyId)
                 .param("role", role)
                 .param("status", statusTradingVolume);
-        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
-
-        double tradingVolume = gson.fromJson(mvcResult.getResponse().getContentAsString(), double.class);
-        Assert.assertEquals(0, tradingVolume, delta);
-    }
-
-    @Test
-    public void getTradingVolume() throws Exception {
-        MockHttpServletRequestBuilder request = get("/statistics/trading-volume")
-                .header("Authorization", TestConfig.responderPersonId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         double tradingVolume = gson.fromJson(mvcResult.getResponse().getContentAsString(), double.class);
@@ -80,6 +70,7 @@ public class StatisticsControllerTest {
     public void getProcessCount() throws Exception {
         MockHttpServletRequestBuilder request = get("/statistics/total-number/business-process")
                 .header("Authorization", TestConfig.responderPersonId)
+                .header("federationId",TestConfig.federationId)
                 .param("status", statusProcessCount);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
@@ -106,7 +97,8 @@ public class StatisticsControllerTest {
                 .param("partyId", partyId)
                 .param("role", role)
                 .param("businessProcessType", businessProcessType)
-                .header("Authorization", TestConfig.responderPersonId);
+                .header("Authorization", TestConfig.responderPersonId)
+                .header("federationId",TestConfig.federationId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         BusinessProcessCount count = gson.fromJson(mvcResult.getResponse().getContentAsString(), BusinessProcessCount.class);

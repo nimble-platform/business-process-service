@@ -14,7 +14,21 @@ public class GenericConfig {
     @Value("${nimble.data-channel.url}")
     private String dataChannelServiceUrl;
 
+    @Value("${nimble.delegate-service.url}")
+    private String delegateServiceUrl;
+
+    @Value("${nimble.federation.id}")
+    private String federationId;
+
     public String getDataChannelServiceUrl() {
         return dataChannelServiceUrl;
+    }
+
+    public String getDelegateServiceUrl() {
+        return delegateServiceUrl;
+    }
+
+    public String getFederationId() {
+        return federationId;
     }
 }

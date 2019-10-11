@@ -24,10 +24,10 @@ import java.util.List;
 public class PartyPersistenceUtility {
     private static final Logger logger = LoggerFactory.getLogger(PartyPersistenceUtility.class);
 
-    private static final String QUERY_SELECT_BY_ID = "SELECT party FROM PartyType party JOIN party.partyIdentification partyIdentification WHERE partyIdentification.ID = :partyId";
+    private static final String QUERY_SELECT_BY_ID = "SELECT party FROM PartyType party JOIN party.partyIdentification partyIdentification WHERE partyIdentification.ID = :partyId AND party.federationInstanceID =:federationId";
     private static final String QUERY_SELECT_BY_IDS = "SELECT party FROM PartyType party JOIN party.partyIdentification partyIdentification WHERE partyIdentification.ID IN :partyIds";
     private static final String QUERY_SELECT_PERSON_BY_ID = "SELECT person FROM PersonType person WHERE person.ID = :id";
-    private static final String QUERY_GET_QUALIFIYING_PARTY = "SELECT qpt FROM QualifyingPartyType qpt JOIN qpt.party.partyIdentification partyIdentification WHERE partyIdentification.ID = :partyId";
+    private static final String QUERY_GET_QUALIFIYING_PARTY = "SELECT qpt FROM QualifyingPartyType qpt JOIN qpt.party.partyIdentification partyIdentification WHERE partyIdentification.ID = :partyId AND qpt.party.federationInstanceID = :federationId";
 
     private static PersonType getPersonByID(String personId){
         List<PersonType> personTypes = new JPARepositoryFactory().forCatalogueRepository(true).getEntities(QUERY_SELECT_PERSON_BY_ID, new String[]{"id"}, new Object[]{personId});
@@ -36,25 +36,29 @@ public class PartyPersistenceUtility {
         }
         return null;
     }
-
-    public static PartyType getPartyByID(String partyId,boolean lazyDisabled) {
-        return getPartyByID(partyId,new JPARepositoryFactory().forCatalogueRepository(lazyDisabled));
+    public static PartyType getPartyByID(String partyId,String federationId,boolean lazyDisabled) {
+        return new JPARepositoryFactory().forCatalogueRepository(lazyDisabled).getSingleEntity(QUERY_SELECT_BY_ID, new String[]{"partyId","federationId"}, new Object[]{partyId,federationId});
     }
 
-    public static PartyType getPartyByID(String partyId,GenericJPARepository repository) {
-        return repository.getSingleEntity(QUERY_SELECT_BY_ID, new String[]{"partyId"}, new Object[]{partyId});
+    public static PartyType getPartyByID(String partyId, String federationId) {
+        return getPartyByID(partyId,federationId,true);
     }
 
+    public static PartyType getPartyByID(String partyId, String federationId, GenericJPARepository repository) {
+        return repository.getSingleEntity(QUERY_SELECT_BY_ID, new String[]{"partyId","federationId"}, new Object[]{partyId,federationId});
+    }
+
+    // TODO: Bunu ve querysini değiştirelim mutlaka
     public static List<PartyType> getPartyByIDs(List<String> partyIds) {
         return new JPARepositoryFactory().forCatalogueRepository(true).getEntities(QUERY_SELECT_BY_IDS, new String[]{"partyIds"}, new Object[]{partyIds});
     }
 
-    public static QualifyingPartyType getQualifyingParty(String partyId, GenericJPARepository repository) {
-        return repository.getSingleEntity(QUERY_GET_QUALIFIYING_PARTY, new String[]{"partyId"}, new Object[]{partyId});
+    public static QualifyingPartyType getQualifyingParty(String partyId,String federationId) {
+        return new JPARepositoryFactory().forCatalogueRepository(true).getSingleEntity(QUERY_GET_QUALIFIYING_PARTY, new String[]{"partyId","federationId"}, new Object[]{partyId,federationId});
     }
 
-    public static QualifyingPartyType getQualifyingParty(String partyId) {
-        return getQualifyingParty(partyId, new JPARepositoryFactory().forCatalogueRepository(true));
+    public static QualifyingPartyType getQualifyingParty(String partyId,String federationId, GenericJPARepository repository) {
+        return repository.getSingleEntity(QUERY_GET_QUALIFIYING_PARTY, new String[]{"partyId","federationId"}, new Object[]{partyId,federationId});
     }
 
     public static PartyType getParty(PartyType party,String businessProcessContextId) {
@@ -73,17 +77,17 @@ public class PartyPersistenceUtility {
         PartyType catalogueParty;
         // For some cases (for example, carrier party in despatch advice), we have parties which do not have any identifiers
         // In such cases, we simply save the given party.
-        if(party.getPartyIdentification() == null || party.getPartyIdentification().size() == 0){
+        if(party.getPartyIdentification() == null || party.getPartyIdentification().size() == 0 || party.getFederationInstanceID() == null){
             catalogueParty = null;
         }
         else {
-            catalogueParty = PartyPersistenceUtility.getPartyByID(party.getPartyIdentification().get(0).getID(),repository);
+            catalogueParty = PartyPersistenceUtility.getPartyByID(party.getPartyIdentification().get(0).getID(),party.getFederationInstanceID(),repository);
         }
         if (catalogueParty != null) {
             return catalogueParty;
         } else {
             ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
-            ;
+
             objectMapper = objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
             try {
                 JSONObject object = new JSONObject(objectMapper.writeValueAsString(party));
@@ -104,22 +108,22 @@ public class PartyPersistenceUtility {
         return getParty(party,null);
     }
 
-    public static PartyType getParty(String partyId) {
-        return getParty(partyId, false);
+    public static PartyType getParty(String partyId, String federationId) {
+        return getParty(partyId, federationId,false);
     }
 
-    public static PartyType getParty(String partyId, boolean lazyDisabled) {
-        PartyType party = PartyPersistenceUtility.getPartyByID(partyId,lazyDisabled);
+    public static PartyType getParty(String partyId, String federationId, boolean lazyDisabled) {
+        PartyType party = PartyPersistenceUtility.getPartyByID(partyId,federationId,lazyDisabled);
         return party;
     }
 
-    public static QualifyingPartyType getQualifyingPartyType(String partyID, String bearerToken, String businessContextId) {
+    public static QualifyingPartyType getQualifyingPartyType(String partyID, String federationId, String bearerToken, String businessContextId) {
         QualifyingPartyType qualifyingParty;
         if(businessContextId != null){
-            qualifyingParty = PartyPersistenceUtility.getQualifyingParty(partyID,BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId).getCatalogRepository());
+            qualifyingParty = PartyPersistenceUtility.getQualifyingParty(partyID,federationId,BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId).getCatalogRepository());
         }
         else {
-            qualifyingParty = PartyPersistenceUtility.getQualifyingParty(partyID);
+            qualifyingParty = PartyPersistenceUtility.getQualifyingParty(partyID,federationId);
         }
         if (qualifyingParty == null) {
             qualifyingParty = new QualifyingPartyType();
@@ -137,8 +141,8 @@ public class PartyPersistenceUtility {
         return qualifyingParty;
     }
 
-    public static QualifyingPartyType getQualifyingPartyType(String partyID, String bearerToken) {
-        return getQualifyingPartyType(partyID, bearerToken,null);
+    public static QualifyingPartyType getQualifyingPartyType(String partyID, String federationId, String bearerToken) {
+        return getQualifyingPartyType(partyID, federationId,bearerToken,null);
     }
 
     /**

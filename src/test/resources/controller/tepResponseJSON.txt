@@ -18,7 +18,7 @@
     "listURI": ""
   },
   "transportUserParty": {
-    "federationInstanceID": null,
+    "federationInstanceID": "11",
     "nace": [],
     "description": [],
     "brandName": [],
@@ -1741,7 +1741,7 @@
     }
   },
   "transportServiceProviderParty": {
-    "federationInstanceID": null,
+    "federationInstanceID": "11",
     "nace": [],
     "description": [],
     "brandName": [],

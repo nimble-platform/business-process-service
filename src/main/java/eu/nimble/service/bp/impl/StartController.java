@@ -5,6 +5,7 @@ import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.model.billOfMaterial.BillOfMaterial;
 import eu.nimble.service.bp.model.billOfMaterial.BillOfMaterialItem;
 import eu.nimble.service.bp.model.hyperjaxb.*;
+import eu.nimble.service.bp.swagger.model.*;
 import eu.nimble.service.bp.util.BusinessProcessEvent;
 import eu.nimble.service.bp.util.HttpResponseUtil;
 import eu.nimble.service.bp.util.bp.BusinessProcessUtility;
@@ -12,8 +13,11 @@ import eu.nimble.service.bp.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.util.email.EmailSenderUtil;
 import eu.nimble.service.bp.util.persistence.bp.CollaborationGroupDAOUtility;
 import eu.nimble.service.bp.util.persistence.bp.HibernateSwaggerObjectMapper;
+import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceDAOUtility;
 import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceGroupDAOUtility;
+import eu.nimble.service.bp.util.persistence.catalogue.CataloguePersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
+import eu.nimble.service.bp.util.persistence.catalogue.PartyPersistenceUtility;
 import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
@@ -23,6 +27,7 @@ import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
 import eu.nimble.service.bp.swagger.model.ProcessVariables;
 import eu.nimble.service.bp.swagger.model.Transaction;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.CatalogueLineType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
 import eu.nimble.utility.JsonSerializationUtility;
@@ -84,28 +89,33 @@ public class StartController implements StartApi {
             // get buyer party
             PartyType buyerParty = SpringBridge.getInstance().getiIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
             String buyerPartyId = buyerParty.getPartyIdentification().get(0).getID();
+            String buyerFederationId = buyerParty.getFederationInstanceID();
 
             String hjidOfBaseGroup = null;
             List<String> hjidOfGroupsToBeMerged = new ArrayList<>();
 
             // for each product, create a RFQ
             for(BillOfMaterialItem billOfMaterialItem: billOfMaterial.getBillOfMaterialItems()){
+                // TODO: better solution here
+                String responderFederationId = CataloguePersistenceUtility.getCatalogueLine(billOfMaterialItem.getCatalogueUuid(),billOfMaterialItem.getlineId()).getGoodsItem().getItem().getManufacturerParty().getFederationInstanceID();
+
                 // create ProcessInstanceInputMessage for line item
-                ProcessInstanceInputMessage processInstanceInputMessage = BPMessageGenerator.createBPMessageForBOM(billOfMaterialItem, useFrameContract, buyerParty, person.getID(), bearerToken);
+                ProcessInstanceInputMessage processInstanceInputMessage = BPMessageGenerator.createBPMessageForBOM(billOfMaterialItem, useFrameContract, buyerParty, person.getID(),buyerFederationId,responderFederationId, bearerToken);
+
                 // start the process and get process instance id since we need this info to find collaboration group of process
-                String processInstanceId = startProcessInstance(bearerToken, processInstanceInputMessage, null, null, null).getBody().getProcessInstanceID();
+                String processInstanceId = startProcessInstance(bearerToken, buyerFederationId,responderFederationId,processInstanceInputMessage, null, null,  null).getBody().getProcessInstanceID();
 
                 if (hjidOfBaseGroup == null) {
-                    hjidOfBaseGroup = CollaborationGroupDAOUtility.getCollaborationGroupHjidByProcessInstanceIdAndPartyId(processInstanceId, buyerPartyId).toString();
+                    hjidOfBaseGroup = CollaborationGroupDAOUtility.getCollaborationGroupHjidByProcessInstanceIdAndPartyId(processInstanceId, buyerPartyId, buyerFederationId).toString();
                 } else {
-                    hjidOfGroupsToBeMerged.add(CollaborationGroupDAOUtility.getCollaborationGroupHjidByProcessInstanceIdAndPartyId(processInstanceId, buyerPartyId).toString());
+                    hjidOfGroupsToBeMerged.add(CollaborationGroupDAOUtility.getCollaborationGroupHjidByProcessInstanceIdAndPartyId(processInstanceId, buyerPartyId, buyerFederationId).toString());
                 }
             }
-
-            // merge groups to create a project
-            if (hjidOfGroupsToBeMerged.size() > 0) {
-                collaborationGroupsController.mergeCollaborationGroups(bearerToken, hjidOfBaseGroup, hjidOfGroupsToBeMerged);
-            }
+        // TODO: skip it for now
+//            // merge groups to create a project
+//            if (hjidOfGroupsToBeMerged.size() > 0) {
+//                collaborationGroupsController.mergeCollaborationGroups(bearerToken, hjidOfBaseGroup, hjidOfGroupsToBeMerged);
+//            }
         } catch (Exception e) {
             String msg = "Unexpected error while creating negotiations for bill of materials";
             logger.error(msg,e);
@@ -122,6 +132,8 @@ public class StartController implements StartApi {
     public ResponseEntity<ProcessInstance> startProcessInstance(
             @ApiParam(value = "The Bearer token provided by the identity service", required = true)
             @RequestHeader(value = "Authorization", required = true) String bearerToken,
+            @ApiParam(value = "" ,required=true ) @RequestHeader(value="initiatorFederationId", required=true) String initiatorFederationId,
+            @ApiParam(value = "" ,required=true ) @RequestHeader(value="responderFederationId", required=true) String responderFederationId,
             @ApiParam(value = "Serialized form of the ProcessInstanceInputMessage (piim). <br>" +
                     "The piim.processInstanceID would be empty while starting a new business process. <br>" +
                     "piim.variables should contain variables that are passed to the relevant tasks of the process instance execution.<br>" +
@@ -183,7 +195,7 @@ public class StartController implements StartApi {
         }
 
         // ensure that the the initiator and responder IDs are different
-        if(body.getVariables().getInitiatorID().equals(body.getVariables().getResponderID())) {
+        if(initiatorFederationId.contentEquals(responderFederationId) && body.getVariables().getInitiatorID().equals(body.getVariables().getResponderID())) {
             String msg = String.format("Initiator and responder party IDs are the same for the process.", JsonSerializationUtility.serializeEntitySilentlyWithMixin(body, ProcessInstanceInputMessage.class, MixInIgnoreProperties.class));
             logger.info(msg);
             throw new BadRequestException(msg);
@@ -201,13 +213,25 @@ public class StartController implements StartApi {
             ProcessInstanceInputMessageDAO processInstanceInputMessageDAO = HibernateSwaggerObjectMapper.createProcessInstanceInputMessage_DAO(body);
             repo.persistEntity(processInstanceInputMessageDAO);
 
-            processInstance = CamundaEngine.startProcessInstance(businessProcessContext.getId(),body);
+            processInstance = CamundaEngine.startProcessInstance(businessProcessContext.getId(),body,initiatorFederationId,responderFederationId);
 
             ProcessInstanceDAO processInstanceDAO = HibernateSwaggerObjectMapper.createProcessInstance_DAO(processInstance);
             processInstanceDAO = repo.updateEntity(processInstanceDAO);
 
             CollaborationGroupDAO initiatorCollaborationGroupDAO;
             CollaborationGroupDAO responderCollaborationGroupDAO;
+
+//            List<FederatedCollaborationGroupMetadataDAO> federatedCollaborationGroupMetadataDAOS = null;
+
+            if(precedingGid != null){
+//                FederatedCollaborationGroupMetadataDAO federatedCollaborationGroupMetadataDAO = new FederatedCollaborationGroupMetadataDAO();
+//                federatedCollaborationGroupMetadataDAO.setFederationID(initiatorFederationId);
+//                federatedCollaborationGroupMetadataDAO.setID(collaborationGID);
+//
+//                federatedCollaborationGroupMetadataDAOS = new LinkedList<>(Arrays.asList(federatedCollaborationGroupMetadataDAO));
+
+                collaborationGID = null;
+            }
 
             // create collaboration group if this is the first process initializing the collaboration group
             if(collaborationGID == null){
@@ -227,7 +251,7 @@ public class StartController implements StartApi {
                     processInstanceIds = CollaborationGroupDAOUtility.getProcessInstanceIds(initiatorCollaborationGroupDAO);
                 }
                 // get responder collaboration group
-                responderCollaborationGroupDAO = CollaborationGroupDAOUtility.getCollaborationGroup(body.getVariables().getResponderID(),processInstanceIds,repo);
+                responderCollaborationGroupDAO = CollaborationGroupDAOUtility.getCollaborationGroup(body.getVariables().getResponderID(),responderFederationId,processInstanceIds,repo);
                 // check whether the responder collaboration group is null or not
                 if(responderCollaborationGroupDAO == null){
                     responderCollaborationGroupDAO = CollaborationGroupDAOUtility.createCollaborationGroupDAO(repo);
@@ -236,11 +260,11 @@ public class StartController implements StartApi {
 
             // create process instance groups if this is the first process initializing the process group
             if (gid == null) {
-                createProcessInstanceGroups(businessProcessContext.getId(),body, processInstance,initiatorCollaborationGroupDAO,responderCollaborationGroupDAO,precedingGid);
+                createProcessInstanceGroups(businessProcessContext.getId(),body, processInstance,initiatorCollaborationGroupDAO,responderCollaborationGroupDAO,precedingGid,initiatorFederationId,responderFederationId);
                 // the group exists for the initiator but the trading partner is a new one
                 // so, a new group should be created for the new party
             } else {
-                addNewProcessInstanceToGroup(businessProcessContext.getId(),gid, processInstance.getProcessInstanceID(), body,responderCollaborationGroupDAO);
+                addNewProcessInstanceToGroup(businessProcessContext.getId(),gid, processInstance.getProcessInstanceID(), body,responderCollaborationGroupDAO,responderFederationId);
             }
             businessProcessContext.commitDbUpdates();
             emailSenderUtil.sendActionPendingEmail(bearerToken, body.getVariables().getContentUUID());
@@ -273,11 +297,12 @@ public class StartController implements StartApi {
         return new ResponseEntity<>(processInstance, HttpStatus.OK);
     }
 
-    private void createProcessInstanceGroups(String businessContextId, ProcessInstanceInputMessage body, ProcessInstance processInstance, CollaborationGroupDAO initiatorCollaborationGroupDAO, CollaborationGroupDAO responderCollaborationGroupDAO, String precedingGid) {
+    private void createProcessInstanceGroups(String businessContextId, ProcessInstanceInputMessage body, ProcessInstance processInstance, CollaborationGroupDAO initiatorCollaborationGroupDAO, CollaborationGroupDAO responderCollaborationGroupDAO, String precedingGid, String initiatorFederationId, String responderFederationId) {
         GenericJPARepository repo = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId).getBpRepository();
         // create group for initiating party
         ProcessInstanceGroupDAO processInstanceGroupDAO1 = ProcessInstanceGroupDAOUtility.createProcessInstanceGroupDAO(
                 body.getVariables().getInitiatorID(),
+                initiatorFederationId,
                 processInstance.getProcessInstanceID(),
                 CamundaEngine.getTransactions(body.getVariables().getProcessID()).get(0).getInitiatorRole().toString(),
                 body.getVariables().getRelatedProducts(),
@@ -286,6 +311,7 @@ public class StartController implements StartApi {
         // create group for responder party
         ProcessInstanceGroupDAO processInstanceGroupDAO2 = ProcessInstanceGroupDAOUtility.createProcessInstanceGroupDAO(
                 body.getVariables().getResponderID(),
+                responderFederationId,
                 processInstance.getProcessInstanceID(),
                 CamundaEngine.getTransactions(body.getVariables().getProcessID()).get(1).getInitiatorRole().toString(),
                 body.getVariables().getRelatedProducts(),
@@ -302,28 +328,32 @@ public class StartController implements StartApi {
         repo.updateEntity(responderCollaborationGroupDAO);
         // when a negotiation is started for a transport service after an order
         if(precedingGid != null){
-            processInstanceGroupDAO1.setPrecedingProcessInstanceGroup(ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(precedingGid));
+            FederatedCollaborationGroupMetadataDAO federatedCollaborationGroupMetadataDAO = new FederatedCollaborationGroupMetadataDAO();
+            federatedCollaborationGroupMetadataDAO.setFederationID(initiatorFederationId);
+            federatedCollaborationGroupMetadataDAO.setID(precedingGid);
+            processInstanceGroupDAO1.setPrecedingProcessInstanceGroupMetadata(federatedCollaborationGroupMetadataDAO);
             repo.updateEntity(processInstanceGroupDAO1);
         }
     }
 
-    private void addNewProcessInstanceToGroup(String businessContextId,String sourceGid, String processInstanceId, ProcessInstanceInputMessage body, CollaborationGroupDAO responderCollaborationGroupDAO) {
+    private void addNewProcessInstanceToGroup(String businessContextId,String sourceGid, String processInstanceId, ProcessInstanceInputMessage body, CollaborationGroupDAO responderCollaborationGroupDAO, String responderFederationId) {
         GenericJPARepository repo = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId).getBpRepository();
 
         ProcessInstanceGroupDAO sourceGroup;
         sourceGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(sourceGid,repo);
-        if(body.getVariables().getProcessID().equals("Fulfilment") && sourceGroup.getPrecedingProcessInstanceGroup() != null){
-            sourceGroup = sourceGroup.getPrecedingProcessInstanceGroup();
-        }
+//        if(body.getVariables().getProcessID().equals("Fulfilment") && sourceGroup.getPrecedingProcessInstanceGroup() != null){
+//            sourceGroup = sourceGroup.getPrecedingProcessInstanceGroup();
+//        }
         sourceGroup.getProcessInstanceIDs().add(processInstanceId);
         sourceGroup = repo.updateEntity(sourceGroup);
 
         // add the new process instance to the recipient's group
         // if such a group exists add into it otherwise create a new group
-        ProcessInstanceGroupDAO associatedGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(body.getVariables().getResponderID(), sourceGroup.getProcessInstanceIDs(),repo);
+        ProcessInstanceGroupDAO associatedGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(body.getVariables().getResponderID(),responderFederationId, sourceGroup.getProcessInstanceIDs(), repo);
         if (associatedGroup == null) {
             ProcessInstanceGroupDAO targetGroup = ProcessInstanceGroupDAOUtility.createProcessInstanceGroupDAO(
                     body.getVariables().getResponderID(),
+                    responderFederationId,
                     processInstanceId,
                     CamundaEngine.getTransactions(body.getVariables().getProcessID()).get(0).getResponderRole().toString(),
                     body.getVariables().getRelatedProducts(),

@@ -26,7 +26,7 @@
   },
   "buyerCustomerParty": {
     "party": {
-      "federationInstanceID": null,
+      "federationInstanceID": "11",
       "nace": [],
       "description": [],
       "brandName": [],
@@ -202,7 +202,7 @@
   },
   "sellerSupplierParty": {
     "party": {
-      "federationInstanceID": null,
+      "federationInstanceID": "11",
       "nace": [],
       "description": [],
       "brandName": [],
@@ -2268,7 +2268,7 @@
             }
           ],
           "manufacturerParty": {
-            "federationInstanceID": null,
+            "federationInstanceID": "11",
             "nace": [],
             "description": [],
             "brandName": [],

@@ -4,8 +4,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import eu.nimble.common.rest.identity.IIdentityClientTyped;
 import eu.nimble.common.rest.identity.IdentityClientTyped;
 import eu.nimble.service.bp.config.RoleConfig;
+import eu.nimble.service.bp.model.hyperjaxb.CollaborationGroupDAO;
 import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO;
+import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceGroupDAO;
+import eu.nimble.service.bp.swagger.model.GroupIdTuple;
+import eu.nimble.service.bp.util.persistence.bp.CollaborationGroupDAOUtility;
 import eu.nimble.service.bp.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
@@ -43,6 +47,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import javax.ws.rs.QueryParam;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -314,4 +319,46 @@ public class DocumentController {
         return new ResponseEntity<>(processDocuments, HttpStatus.OK);
     }
 
+    @ApiOperation(value = "",notes = "Retrieve group id tuple for the given document id")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Retrieved group id tuple for the given document id",response = GroupIdTuple.class),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 404, message = "There does not exist a process document metadata for the given document id")
+    })
+    @RequestMapping(value = "/document/{documentId}/group-id-tuple",
+            method = RequestMethod.GET)
+    public ResponseEntity getGroupIdTuple(@ApiParam(value = "The identifier of the process instance group to be checked",required = true) @PathVariable("documentId") String documentId,
+                                                             @ApiParam(value = "The identifier of the process instance group to be checked",required = true) @QueryParam("partyId") String partyId,
+                                                             @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
+                                          @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="federationId", required=true) String federationId) {
+        logger.info("Retrieving group id tuple for document: {} and party: {}",documentId,partyId);
+
+        // validate role
+        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+            return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+        }
+
+        ProcessDocumentMetadataDAO processDocumentMetadataDAO = ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId);
+        if(processDocumentMetadataDAO == null){
+            String msg = String.format("There does not exist a process document metadata for : %s", documentId);
+            logger.error(msg);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+        }
+
+        GroupIdTuple groupIdTuple = new GroupIdTuple();
+        // get the collaboration group containing the process instance for the party
+        CollaborationGroupDAO collaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroupDAO(partyId,federationId,processDocumentMetadataDAO.getProcessInstanceID());
+        // get the identifier of process instance group containing the process instance
+        for(ProcessInstanceGroupDAO processInstanceGroupDAO:collaborationGroup.getAssociatedProcessInstanceGroups()){
+            if(processInstanceGroupDAO.getProcessInstanceIDs().contains(processDocumentMetadataDAO.getProcessInstanceID())){
+                groupIdTuple.setProcessInstanceGroupId(processInstanceGroupDAO.getID());
+                break;
+            }
+        }
+
+        groupIdTuple.setCollaborationGroupId(collaborationGroup.getHjid().toString());
+
+        logger.info("Retrieved group id tuple for document: {} and party: {}",documentId,partyId);
+        return ResponseEntity.ok(groupIdTuple);
+    }
 }

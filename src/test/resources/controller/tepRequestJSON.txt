@@ -1861,7 +1861,7 @@
     ],
     "additionalItemProperty": [],
     "manufacturerParty": {
-      "federationInstanceID": null,
+      "federationInstanceID": "11",
       "nace": [],
       "description": [],
       "brandName": [],
@@ -2335,7 +2335,7 @@
           },
           "estimatedDeliveryDate": null,
           "carrierParty": {
-            "federationInstanceID": null,
+            "federationInstanceID": "11",
             "nace": [],
             "description": [],
             "brandName": [],
