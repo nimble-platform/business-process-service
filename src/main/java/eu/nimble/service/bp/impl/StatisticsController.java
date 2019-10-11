@@ -437,7 +437,7 @@ public class StatisticsController {
                 return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
-            statistics.setAverageCollaborationTime((double) getAverageCollaborationTime(partyId,bearerToken,role).getBody());
+            statistics.setAverageCollaborationTime((double) getAverageCollaborationTime(partyId,role,bearerToken).getBody());
             statistics.setAverageResponseTime((double)getAverageResponseTime(partyId,bearerToken).getBody());
             statistics.setTradingVolume((double) getTradingVolume(null,null,Integer.valueOf(partyId), role,null,bearerToken).getBody());
             statistics.setNumberOfTransactions((int)getProcessCount(null,null,null,Integer.valueOf(partyId),role,null,bearerToken).getBody());
