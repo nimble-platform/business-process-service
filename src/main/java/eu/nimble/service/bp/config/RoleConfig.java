@@ -33,4 +33,9 @@ public class RoleConfig {
             {NimbleRole.COMPANY_ADMIN,
                     NimbleRole.EXTERNAL_REPRESENTATIVE,
                     NimbleRole.LEGAL_REPRESENTATIVE};
+    public static final NimbleRole[] REQUIRED_ROLES_TO_EXPORT_PROCESS_INSTANCE_DATA =
+            {NimbleRole.COMPANY_ADMIN,
+                    NimbleRole.EXTERNAL_REPRESENTATIVE,
+                    NimbleRole.LEGAL_REPRESENTATIVE,
+                    NimbleRole.NIMBLE_DELETED_USER};
 }
