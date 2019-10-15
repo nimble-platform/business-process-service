@@ -313,6 +313,13 @@ persistence:
       bluemix:
         credentials_json: ${BLUEMIX_MODAML_DB_JSON:}
 
+identity-service:
+  ribbon:
+    eureka:
+      enabled: false
+    listOfServers: "http://identity-service:9096"
+    ServerListRefreshInterval: 15000
+
 
 ################################################################################################
 ################################### LOCAL DEV CONFIG ###########################################
