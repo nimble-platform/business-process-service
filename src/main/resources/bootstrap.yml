@@ -320,6 +320,13 @@ identity-service:
     listOfServers: "http://identity-service:9096"
     ServerListRefreshInterval: 15000
 
+business-process-service:
+  ribbon:
+    eureka:
+      enabled: false
+    listOfServers: business-process-service:8085
+    ServerListRefreshInterval: 15000
+
 
 ################################################################################################
 ################################### LOCAL DEV CONFIG ###########################################
