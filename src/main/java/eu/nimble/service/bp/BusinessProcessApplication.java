@@ -13,6 +13,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.circuitbreaker.EnableCircuitBreaker;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
 import org.springframework.cloud.netflix.feign.EnableFeignClients;
 import org.springframework.cloud.netflix.hystrix.EnableHystrix;
@@ -29,7 +30,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 @SpringBootApplication
-@EnableHystrix
+@EnableDiscoveryClient
 @Configuration
 @EnableCircuitBreaker
 @EnableAutoConfiguration
@@ -46,10 +47,10 @@ public class BusinessProcessApplication {
 
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-  @Bean
-  public HystrixCommandAspect hystrixAspect() {
-    return new HystrixCommandAspect();
-  }
+//  @Bean
+//  public HystrixCommandAspect hystrixAspect() {
+//    return new HystrixCommandAspect();
+//  }
 
   @EventListener({ContextRefreshedEvent.class})
   void contextRefreshedEvent() {
