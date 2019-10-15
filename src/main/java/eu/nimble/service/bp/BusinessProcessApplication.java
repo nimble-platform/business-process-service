@@ -36,7 +36,6 @@ import java.sql.Statement;
 @Configuration
 @EnableCircuitBreaker
 @EnableAutoConfiguration
-@EnableEurekaClient
 @EnableFeignClients(basePackages = {"eu.nimble.common.rest"})
 @RestController
 @EnableProcessApplication
