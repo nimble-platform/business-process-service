@@ -38,8 +38,8 @@ public class StatisticsControllerTest {
     private final String statusTradingVolume = "WaitingResponse";
     private final String statusProcessCount = "Denied";
     private final double delta = 0.1;
-    private final double tradingVolumeExpected = 4230; // from orderJSON2
-    private final int expectedProcessCount = 1;
+    private final double tradingVolumeExpected = 4231; // from orderJSON2 and orderRequestJSON
+    private final int expectedProcessCount = 2;
     private final int expectedCompanyCount = 1;
     private final String businessProcessType = "ORDER";
     private final int expectedProcessCountDown = 2;
