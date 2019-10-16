@@ -327,9 +327,6 @@ business-process-service:
     listOfServers: business-process-service:8085
     ServerListRefreshInterval: 15000
 
-feign:
-  hystrix:
-    enabled=false:
 
 
 ################################################################################################

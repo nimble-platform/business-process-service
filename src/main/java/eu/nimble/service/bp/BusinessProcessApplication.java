@@ -32,6 +32,7 @@ import java.sql.Statement;
 
 @SpringBootApplication
 @EnableZuulProxy
+@EnableHystrix
 @EnableDiscoveryClient
 @Configuration
 @EnableCircuitBreaker
@@ -48,10 +49,10 @@ public class BusinessProcessApplication {
 
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-//  @Bean
-//  public HystrixCommandAspect hystrixAspect() {
-//    return new HystrixCommandAspect();
-//  }
+  @Bean
+  public HystrixCommandAspect hystrixAspect() {
+    return new HystrixCommandAspect();
+  }
 
   @EventListener({ContextRefreshedEvent.class})
   void contextRefreshedEvent() {
