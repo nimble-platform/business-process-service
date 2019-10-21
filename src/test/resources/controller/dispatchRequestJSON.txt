@@ -1916,7 +1916,7 @@
   "despatchLine": [
     {
       "deliveredQuantity": {
-        "value": null,
+        "value": 12,
         "unitCode": "item(s)"
       },
       "item": {
