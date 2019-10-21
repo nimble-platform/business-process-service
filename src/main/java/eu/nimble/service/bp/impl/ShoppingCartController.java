@@ -88,7 +88,7 @@ public class ShoppingCartController {
             @ApiResponse(code = 200, message = "Created a shopping cart in the form of CatalogueType", response = CatalogueType.class),
             @ApiResponse(code = 401, message = "Invalid user or role")
     })
-    @RequestMapping(value = "/shopping-cart",
+    @RequestMapping(value = "/shopping-cart/new",
             produces = {"application/json"},
             method = RequestMethod.POST)
     public ResponseEntity createShoppingCart(@ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
@@ -143,7 +143,7 @@ public class ShoppingCartController {
             @ApiResponse(code = 401, message = "Invalid user or role"),
             @ApiResponse(code = 412, message = "The client user does not have an associated shopping cart")
     })
-    @RequestMapping(value = "/shopping-cart/add",
+    @RequestMapping(value = "/shopping-cart",
             produces = {"application/json"},
             method = RequestMethod.POST)
     public ResponseEntity addProductToShoppingCart(@ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
@@ -210,13 +210,13 @@ public class ShoppingCartController {
             @ApiResponse(code = 401, message = "Invalid user or role"),
             @ApiResponse(code = 412, message = "The client user does not have an associated shopping cart")
     })
-    @RequestMapping(value = "/shopping-cart/remove",
+    @RequestMapping(value = "/shopping-cart",
             produces = {"application/json"},
-            method = RequestMethod.POST)
+            method = RequestMethod.DELETE)
     public ResponseEntity removeProductFromShoppingCart(@ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
-                                                        @ApiParam(value = "Hjid of the product", required = true) @RequestParam(value = "productId", required = true) Long productId) {
+                                                        @ApiParam(value = "Hjid of the product to be deleted from the cart", required = true) @RequestParam(value = "productId", required = true) Long productId) {
         try {
-            logger.info("Incoming request to remove product from shopping cart: {}");
+            logger.info("Incoming request to remove product from shopping cart: {}", productId);
             // validate role
             if (!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
                 return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
@@ -239,17 +239,17 @@ public class ShoppingCartController {
             }
 
             // add the copy reduced product to the cart
-            if (cartCatalogue.getCatalogueLine() == null) {
+            if (cartCatalogue.getCatalogueLine() != null) {
                 for(CatalogueLineType product : cartCatalogue.getCatalogueLine()) {
-                    if(product.getHjid() == productId) {
+                    if(product.getHjid().equals(productId)) {
                         cartCatalogue.getCatalogueLine().remove(product);
                         break;
                     }
                 }
             }
-            cartCatalogue = new JPARepositoryFactory().forCatalogueRepository().updateEntity(cartCatalogue);
+            cartCatalogue = new JPARepositoryFactory().forCatalogueRepository(true).updateEntity(cartCatalogue);
 
-            logger.info("Completed request to remove product: {} from the create shopping cart");
+            logger.info("Completed request to remove product: {} from the create shopping cart", productId);
             return ResponseEntity.ok(JsonSerializationUtility.getObjectMapper().writeValueAsString(cartCatalogue));
 
         } catch (Exception e) {
