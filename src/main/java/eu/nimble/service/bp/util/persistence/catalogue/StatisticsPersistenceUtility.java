@@ -6,12 +6,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.model.hyperjaxb.CollaborationGroupDAO;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO;
-import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceDAO;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceGroupDAO;
+import eu.nimble.service.bp.model.statistics.FulfilmentStatistics;
 import eu.nimble.service.bp.model.statistics.NonOrderedProducts;
 import eu.nimble.service.bp.util.persistence.bp.CollaborationGroupDAOUtility;
 import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
-import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceDAOUtility;
 import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.commonbasiccomponents.TextType;
@@ -57,6 +56,46 @@ public class StatisticsPersistenceUtility {
         parameterValues.add(partyID);
         List<String> count = new JPARepositoryFactory().forBpRepository().getEntities(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
         return count.size();
+    }
+
+    public static FulfilmentStatistics getFulfilmentStatistics(String orderId){
+        // get requested quantity from the order
+        String query = "SELECT orderLine.lineItem.quantity.value " +
+                "FROM OrderType orderType join orderType.orderLine orderLine " +
+                "WHERE orderType.ID = :orderId";
+        List<String> parameterNames = Collections.singletonList("orderId");;
+        List<Object> parameterValues = Collections.singletonList(orderId);
+        BigDecimal requestedQuantity = new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
+
+        // get dispatch and receipt advice pairs for the specified order
+        query = "select despatchLine,receiptLine " +
+                "from DespatchAdviceType despatchAdvice join despatchAdvice.despatchLine despatchLine join despatchAdvice.orderReference orderReference," +
+                "ReceiptAdviceType receiptAdvice join receiptAdvice.receiptLine receiptLine join receiptAdvice.despatchDocumentReference despatchDocumentReference " +
+                "where despatchDocumentReference.ID = despatchAdvice.ID AND orderReference.documentReference.ID = :orderId";
+        List<Object[]> dispatchReceiptAdvicePairs = new JPARepositoryFactory().forCatalogueRepository(true).getEntities(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
+
+        BigDecimal dispatchedQuantity = BigDecimal.ZERO;
+        BigDecimal rejectedQuantity = BigDecimal.ZERO;
+
+        for (Object[] result : dispatchReceiptAdvicePairs) {
+            DespatchLineType despatchLineType = (DespatchLineType) result[0];
+            ReceiptLineType receiptLineType = (ReceiptLineType) result[1];
+
+            BigDecimal deliveredQuantity = despatchLineType.getDeliveredQuantity().getValue();
+            if(deliveredQuantity != null){
+                dispatchedQuantity = dispatchedQuantity.add(deliveredQuantity);
+            }
+            BigDecimal receiptLineRejectedQuantity = receiptLineType.getRejectedQuantity().getValue();
+            if(receiptLineRejectedQuantity != null){
+                rejectedQuantity = rejectedQuantity.add(receiptLineRejectedQuantity);
+            }
+        }
+
+        FulfilmentStatistics fulfilmentStatistics = new FulfilmentStatistics();
+        fulfilmentStatistics.setDispatchedQuantity(dispatchedQuantity);
+        fulfilmentStatistics.setRejectedQuantity(rejectedQuantity);
+        fulfilmentStatistics.setRequestedQuantity(requestedQuantity);
+        return fulfilmentStatistics;
     }
 
     public static double getTradingVolume(Integer partyId, String role, String startDate, String endDate, String status) {

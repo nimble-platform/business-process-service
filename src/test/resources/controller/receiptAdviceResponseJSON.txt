@@ -1926,7 +1926,7 @@
   "receiptLine": [
     {
       "rejectedQuantity": {
-        "value": 0,
+        "value": 3,
         "unitCode": "item(s)"
       },
       "rejectReason": [

@@ -2,7 +2,9 @@ package eu.nimble.service.bp.impl.controller;
 
 import com.google.gson.Gson;
 import eu.nimble.service.bp.model.statistics.BusinessProcessCount;
+import eu.nimble.service.bp.model.statistics.FulfilmentStatistics;
 import eu.nimble.service.bp.model.statistics.NonOrderedProducts;
+import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -16,6 +18,8 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+
+import java.math.BigDecimal;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -38,11 +42,14 @@ public class StatisticsControllerTest {
     private final String statusTradingVolume = "WaitingResponse";
     private final String statusProcessCount = "Denied";
     private final double delta = 0.1;
-    private final double tradingVolumeExpected = 4230; // from orderJSON2
-    private final int expectedProcessCount = 1;
+    private final double tradingVolumeExpected = 4231; // from orderJSON2 and orderRequestJSON
+    private final int expectedProcessCount = 2;
     private final int expectedCompanyCount = 1;
     private final String businessProcessType = "ORDER";
     private final int expectedProcessCountDown = 2;
+    private final BigDecimal expectedDispatchedQuantity = BigDecimal.valueOf(12); // from dispatchRequestJSON
+    private final BigDecimal expectedRejectedQuantity = BigDecimal.valueOf(3); // from receiptAdviceResponseJSON
+    private final BigDecimal expectedRequestedQuantity = BigDecimal.valueOf(20); // from orderRequestJSON
 
     /**
      * Test scenario:
@@ -51,6 +58,7 @@ public class StatisticsControllerTest {
      * - Number of rejected processes
      * - Number of non-ordered products
      * - Test number of order processes via complete process break-down
+     * - Fulfilment statistics for the order started in {@link BusinessProcessExecutionTest#test07_OrderRequest()}
      */
 
     @Test
@@ -112,5 +120,19 @@ public class StatisticsControllerTest {
         BusinessProcessCount count = gson.fromJson(mvcResult.getResponse().getContentAsString(), BusinessProcessCount.class);
 
         Assert.assertSame(expectedProcessCountDown, count.getCounts().size());
+    }
+
+    @Test
+    public void getFulfilmentStatistics() throws Exception {
+        MockHttpServletRequestBuilder request = get("/statistics/fulfilment")
+                .param("orderId", "146b213d-24a8-4645-a03f-193bc1a5d403")
+                .header("Authorization", TestConfig.responderPersonId);
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+
+        FulfilmentStatistics fulfilmentStatistics = gson.fromJson(mvcResult.getResponse().getContentAsString(), FulfilmentStatistics.class);
+
+        Assert.assertThat(expectedDispatchedQuantity, Matchers.comparesEqualTo(fulfilmentStatistics.getDispatchedQuantity()));
+        Assert.assertThat(expectedRejectedQuantity, Matchers.comparesEqualTo(fulfilmentStatistics.getRejectedQuantity()));
+        Assert.assertThat(expectedRequestedQuantity, Matchers.comparesEqualTo(fulfilmentStatistics.getRequestedQuantity()));
     }
 }

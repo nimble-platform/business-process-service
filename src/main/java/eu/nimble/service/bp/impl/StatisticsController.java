@@ -2,6 +2,7 @@ package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.model.statistics.BusinessProcessCount;
+import eu.nimble.service.bp.model.statistics.FulfilmentStatistics;
 import eu.nimble.service.bp.model.statistics.NonOrderedProducts;
 import eu.nimble.service.bp.model.statistics.OverallStatistics;
 import eu.nimble.service.bp.util.bp.BusinessProcessUtility;
@@ -447,5 +448,34 @@ public class StatisticsController {
         }
         logger.info("Retrieved statistics for the party with id: {}",partyId);
         return ResponseEntity.ok(statistics);
+    }
+
+    @ApiOperation(value = "Gets fulfilment statistics (dispatched quantity, rejected quantity and requested quantity) for the given order")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Retrieved fulfilment statistics for the order",response = FulfilmentStatistics.class),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 500, message = "Unexpected error while getting fulfilment statistics")
+    })
+    @RequestMapping(value = "/fulfilment",
+            produces = {"application/json"},
+            method = RequestMethod.GET)
+    public ResponseEntity getFulfilmentStatistics(@ApiParam(value = "Identifier of the order for which the fulfilment statistics will be retrieved",required = true) @RequestParam(value = "orderId",required = true) String orderId,
+                                        @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
+        logger.info("Getting fulfilment statistics for the order with id: {}",orderId);
+        String serializedResponse = null;
+        try {
+            // validate role
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+            }
+            FulfilmentStatistics statistics = StatisticsPersistenceUtility.getFulfilmentStatistics(orderId);
+            serializedResponse = JsonSerializationUtility.getObjectMapperForFilledFields().writeValueAsString(statistics);
+        }
+        catch (Exception e){
+            return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting fulfilment statistics for the order with id: %s", orderId), e, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        logger.info("Retrieved fulfilment statistics for the order with id: {}",orderId);
+        return ResponseEntity.ok(serializedResponse);
     }
 }
