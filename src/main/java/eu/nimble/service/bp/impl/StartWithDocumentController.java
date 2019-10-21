@@ -47,6 +47,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.io.IOException;
+import java.util.List;
 
 @Controller
 public class StartWithDocumentController {
@@ -161,7 +162,7 @@ public class StartWithDocumentController {
             // create ProcessInstanceInputMessage
             ProcessInstanceInputMessage processInstanceInputMessage;
             try {
-                processInstanceInputMessage = BPMessageGenerator.createProcessInstanceInputMessage(document,document.getItemType(),creatorUserId,"",bearerToken);
+                processInstanceInputMessage = BPMessageGenerator.createProcessInstanceInputMessage(document,document.getItemTypes(),creatorUserId,"",bearerToken);
             } catch (Exception e) {
                 String msg = "Failed to create process instance input message for the document";
                 logger.error(msg,e);
@@ -218,13 +219,13 @@ public class StartWithDocumentController {
             }
             String processInstanceId = processDocumentMetadataDAO.getProcessInstanceID();
 
-            // since some response documents do not have an item, we need to use the item of request document
-            ItemType item = document.getItemType() != null ? document.getItemType(): getItemType(processDocumentMetadataDAO.getDocumentID(),processDocumentMetadataDAO.getType());
+            // since some response documents do not have items, we need to use the items of request document
+            List<ItemType> items = document.getItemTypes() != null ? document.getItemTypes(): getItemTypes(processDocumentMetadataDAO.getDocumentID(),processDocumentMetadataDAO.getType());
 
             // create ProcessInstanceInputMessage
             ProcessInstanceInputMessage processInstanceInputMessage;
             try {
-                processInstanceInputMessage = BPMessageGenerator.createProcessInstanceInputMessage(document,item,creatorUserId,processInstanceId,bearerToken);
+                processInstanceInputMessage = BPMessageGenerator.createProcessInstanceInputMessage(document,items,creatorUserId,processInstanceId,bearerToken);
             } catch (Exception e) {
                 String msg = "Failed to create process instance input message for the document";
                 logger.error(msg,e);
@@ -332,9 +333,9 @@ public class StartWithDocumentController {
     /**
      * It retrieves the specified document and returns its {@link ItemType}
      * */
-    private ItemType getItemType(String documentId, DocumentType documentType){
+    private List<ItemType> getItemTypes(String documentId, DocumentType documentType){
         IDocument iDocument =  DocumentPersistenceUtility.getUBLDocument(documentId, documentType);
-        return iDocument.getItemType();
+        return iDocument.getItemTypes();
     }
 
     /**

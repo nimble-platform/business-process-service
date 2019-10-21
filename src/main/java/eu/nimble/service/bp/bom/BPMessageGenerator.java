@@ -58,17 +58,17 @@ public class BPMessageGenerator {
                     // create an order using the frame contract
                     OrderType order = createOrder(quotation, buyerParty, sellerNegotiationSettings.getCompany());
 
-                    return BPMessageGenerator.createProcessInstanceInputMessage(order, catalogueLine.getGoodsItem().getItem(), creatorUserId,"",bearerToken);
+                    return BPMessageGenerator.createProcessInstanceInputMessage(order, Arrays.asList(catalogueLine.getGoodsItem().getItem()), creatorUserId,"",bearerToken);
                 }
             }
         }
 
         RequestForQuotationType requestForQuotation = createRequestForQuotation(catalogueLine, billOfMaterialItem.getquantity(), sellerNegotiationSettings,buyerParty, bearerToken);
 
-        return BPMessageGenerator.createProcessInstanceInputMessage(requestForQuotation, catalogueLine.getGoodsItem().getItem(), creatorUserId,"",bearerToken);
+        return BPMessageGenerator.createProcessInstanceInputMessage(requestForQuotation, Arrays.asList(catalogueLine.getGoodsItem().getItem()), creatorUserId,"",bearerToken);
     }
 
-    public static ProcessInstanceInputMessage createProcessInstanceInputMessage(IDocument document, ItemType item, String creatorUserId,String processInstanceId,String bearerToken) throws Exception {
+    public static ProcessInstanceInputMessage createProcessInstanceInputMessage(IDocument document, List<ItemType> items, String creatorUserId,String processInstanceId,String bearerToken) throws Exception {
         // get corresponding process type
         String processId = ClassProcessTypeMap.getProcessType(document.getClass());
 
@@ -96,13 +96,22 @@ public class BPMessageGenerator {
                 creatorUserId = responderParty.getPerson().get(0).getID();
             }
         }
-        // get related product categories
+        // get related product categories for each product
         List<String> relatedProductCategories = new ArrayList<>();
-        for (CommodityClassificationType commodityClassificationType : item.getCommodityClassification()) {
-            if (!relatedProductCategories.contains(commodityClassificationType.getItemClassificationCode().getName())) {
-                relatedProductCategories.add(commodityClassificationType.getItemClassificationCode().getName());
+        for (ItemType item : items) {
+            for (CommodityClassificationType commodityClassificationType : item.getCommodityClassification()) {
+                if (!relatedProductCategories.contains(commodityClassificationType.getItemClassificationCode().getName())) {
+                    relatedProductCategories.add(commodityClassificationType.getItemClassificationCode().getName());
+                }
             }
         }
+
+        // get related products
+        List<String> relatedProducts = new ArrayList<>();
+        for (ItemType item : items) {
+            relatedProducts.add(item.getName().get(0).getValue());
+        }
+
         // serialize the document
         String documentAsString = JsonSerializationUtility.getObjectMapper().writeValueAsString(document);
 
@@ -120,7 +129,7 @@ public class BPMessageGenerator {
         processVariables.setCreatorUserID(creatorUserId);
         processVariables.setInitiatorID(initiatorParty.getPartyIdentification().get(0).getID());
         processVariables.setResponderID(responderParty.getPartyIdentification().get(0).getID());
-        processVariables.setRelatedProducts(Collections.singletonList(item.getName().get(0).getValue()));
+        processVariables.setRelatedProducts(relatedProducts);
         processVariables.setRelatedProductCategories(relatedProductCategories);
 
         // create Process instance input message
