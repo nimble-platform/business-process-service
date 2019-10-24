@@ -155,18 +155,21 @@ public class BPMessageGenerator {
         OrderLineType orderLine = new OrderLineType();
         orderLine.setLineItem(quotation.getQuotationLine().get(0).getLineItem());
 
-        ContractType contract = new ContractType();
-        contract.setID(UUID.randomUUID().toString());
-        contract.setClause(quotation.getTermOrCondition());
+        List<ContractType> contracts = new ArrayList<>();
+        for (QuotationLineType quotationLine : quotation.getQuotationLine()) {
+            ContractType contract = new ContractType();
+            contract.setID(UUID.randomUUID().toString());
+            contract.setClause(quotationLine.getLineItem().getClause());
+
+            contracts.add(contract);
+        }
 
         order.setID(UUID.randomUUID().toString());
         order.setBuyerCustomerParty(customerParty);
         order.setSellerSupplierParty(supplierParty);
         order.setOrderLine(Collections.singletonList(orderLine));
         order.getOrderLine().get(0).getLineItem().getDeliveryTerms().getDeliveryLocation().setAddress(requestForQuotation.getRequestForQuotationLine().get(0).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress());
-        order.setPaymentMeans(quotation.getPaymentMeans());
-        order.setPaymentTerms(quotation.getPaymentTerms());
-        order.setContract(Collections.singletonList(contract));
+        order.setContract(contracts);
 
         return order;
     }
