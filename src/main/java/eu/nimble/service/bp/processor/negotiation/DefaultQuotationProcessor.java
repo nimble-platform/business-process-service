@@ -8,6 +8,7 @@ import eu.nimble.service.bp.util.serialization.MixInIgnoreProperties;
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ItemType;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.QuotationLineType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.TradingTermType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.QuantityType;
 import eu.nimble.service.model.ubl.digitalagreement.DigitalAgreementType;
@@ -18,6 +19,7 @@ import org.camunda.bpm.engine.delegate.JavaDelegate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -78,29 +80,38 @@ public class DefaultQuotationProcessor  implements JavaDelegate {
      * Creates frame contract if the quotation includes a term related to frame contract duration and if the quotation
      * is accepted. If there exists a frame contract already update its duration if it's changed.
      */
-    private DigitalAgreementType createOrUpdateFrameContract(QuotationType quotation) {
-        TradingTermType frameContractDurationTerm = getFrameContractTerm(quotation);
+    private List<DigitalAgreementType> createOrUpdateFrameContract(QuotationType quotation) {
+        List<TradingTermType> frameContractDurationTerms = getFrameContractTerms(quotation);
         // there is no terms regarding the frame contract duration
-        if(frameContractDurationTerm == null) {
+        if(frameContractDurationTerms.size() == 0) {
             return null;
         }
 
-        String sellerId = quotation.getSellerSupplierParty().getParty().getPartyIdentification().get(0).getID();
-        String buyerId = quotation.getBuyerCustomerParty().getParty().getPartyIdentification().get(0).getID();
-        ItemType item = quotation.getQuotationLine().get(0).getLineItem().getItem();
-        QuantityType duration = frameContractDurationTerm.getValue().getValueQuantity().get(0);
+        List<DigitalAgreementType> frameContracts = new ArrayList<>();
+        for(TradingTermType tradingTerm : frameContractDurationTerms){
+            String sellerId = quotation.getSellerSupplierParty().getParty().getPartyIdentification().get(0).getID();
+            String buyerId = quotation.getBuyerCustomerParty().getParty().getPartyIdentification().get(0).getID();
+            ItemType item = quotation.getQuotationLine().get(0).getLineItem().getItem();
+            QuantityType duration = tradingTerm.getValue().getValueQuantity().get(0);
 
-        DigitalAgreementType frameContract = SpringBridge.getInstance().getFrameContractService().createOrUpdateFrameContract(sellerId, buyerId, item, duration, quotation.getID());
-        return frameContract;
+            DigitalAgreementType frameContract = SpringBridge.getInstance().getFrameContractService().createOrUpdateFrameContract(sellerId, buyerId, item, duration, quotation.getID());
+            frameContracts.add(frameContract);
+        }
+
+        return frameContracts;
     }
 
-    private TradingTermType getFrameContractTerm(QuotationType quotation) {
-        List<TradingTermType> tradingTerms = quotation.getTradingTerms();
-        for(TradingTermType term : tradingTerms) {
-            if (term.getID().contentEquals("FRAME_CONTRACT_DURATION")) {
-                return term;
+    private List<TradingTermType> getFrameContractTerms(QuotationType quotation) {
+        List<TradingTermType> tradingTerms = new ArrayList<>();
+        for (QuotationLineType quotationLine: quotation.getQuotationLine()) {
+            List<TradingTermType> tradingTermTypes = quotationLine.getLineItem().getTradingTerms();
+            for(TradingTermType term : tradingTermTypes) {
+                if (term.getID().contentEquals("FRAME_CONTRACT_DURATION")) {
+                    tradingTerms.add(term);
+                }
             }
         }
-        return null;
+
+        return tradingTerms;
     }
 }
