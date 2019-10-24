@@ -13,6 +13,7 @@ import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecut
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,7 +31,7 @@ public class ContractPersistenceUtility {
             "SELECT da FROM DigitalAgreementType da join da.participantParty pp join pp.partyIdentification pid join da.item item" +
                     " WHERE" +
                     " pid.ID in (:sellerId, :buyerId) AND" +
-                    " item.manufacturersItemIdentification.ID = :itemId" +
+                    " item.manufacturersItemIdentification.ID in :itemId" +
                     " GROUP BY da" +
                     " HAVING COUNT(da) = 2 ";
     private static final String QUERY_GET_FRAME_CONTRACTS_BY_PARTY_ID =
@@ -207,7 +208,12 @@ public class ContractPersistenceUtility {
 
     public static DigitalAgreementType getFrameContractAgreementById(String sellerId, String buyerId, String productId) {
         return new JPARepositoryFactory().forCatalogueRepository(true).getSingleEntity(QUERY_GET_FRAME_CONTRACT_BY_SELLER_BUYER_PRODUCT_IDS,
-                new String[]{"sellerId", "buyerId", "itemId"}, new Object[]{sellerId, buyerId, productId});
+                new String[]{"sellerId", "buyerId", "itemId"}, new Object[]{sellerId, buyerId, Arrays.asList(productId)});
+    }
+
+    public static List<DigitalAgreementType> getFrameContractAgreementByIds(String sellerId, String buyerId, List<String> productIds) {
+        return new JPARepositoryFactory().forCatalogueRepository(true).getEntities(QUERY_GET_FRAME_CONTRACT_BY_SELLER_BUYER_PRODUCT_IDS,
+                new String[]{"sellerId", "buyerId", "itemId"}, new Object[]{sellerId, buyerId, productIds});
     }
 
     public static List<DigitalAgreementType> getFrameContractsByPartyId(String partyId) {
