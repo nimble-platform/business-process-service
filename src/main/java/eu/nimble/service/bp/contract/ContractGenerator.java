@@ -86,128 +86,108 @@ public class ContractGenerator {
 
     }
 
-    public List<ClauseType> getTermsAndConditions(String orderId,String rfqId, String sellerPartyId, String buyerPartyId, String incoterms, String tradingTerm, String bearerToken) throws IOException {
+    public List<ClauseType> getTermsAndConditions(String sellerPartyId, String buyerPartyId, String incoterms, String tradingTerm, String bearerToken) throws IOException {
         List<ClauseType> clauses = new ArrayList<>();
 
-        OrderType order = null;
-        RequestForQuotationType requestForQuotation = null;
-
-        if(orderId != null){
-            order = (OrderType) DocumentPersistenceUtility.getUBLDocument(orderId,DocumentType.ORDER);
-        } else if(rfqId != null){
-            requestForQuotation = (RequestForQuotationType) DocumentPersistenceUtility.getUBLDocument(rfqId,DocumentType.REQUESTFORQUOTATION);
-        }
-
         try {
-            // use Order's terms and conditions
-            if(order != null){
-                clauses = getTermsAndConditionsContract(order).getClause();
-            }
-            // use Request for quotation's terms and conditions
-            else if(requestForQuotation != null){
-                clauses = requestForQuotation.getTermOrCondition();
-            }
-            // create clauses
-            else {
-                InputStream inputStream = null;
-                try {
-                    // read clauses from the json file
-                    inputStream = ContractGenerator.class.getResourceAsStream("/contract-bundle/order_terms_and_conditions.json");
+            InputStream inputStream = null;
+            try {
+                // read clauses from the json file
+                inputStream = ContractGenerator.class.getResourceAsStream("/contract-bundle/order_terms_and_conditions.json");
 
-                    String fileContent = IOUtils.toString(inputStream);
+                String fileContent = IOUtils.toString(inputStream);
 
-                    ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
+                ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
 
-                    // Clauses
-                    clauses = objectMapper.readValue(fileContent, new TypeReference<List<ClauseType>>() {});
+                // Clauses
+                clauses = objectMapper.readValue(fileContent, new TypeReference<List<ClauseType>>() {});
 
-                    // update some trading terms using the party info
-                    PartyType supplierParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,sellerPartyId);
-                    PartyType customerParty = null;
-                    if(buyerPartyId != null){
-                        customerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,buyerPartyId);
+                // update some trading terms using the party info
+                PartyType supplierParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,sellerPartyId);
+                PartyType customerParty = null;
+                if(buyerPartyId != null){
+                    customerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,buyerPartyId);
+                }
+
+                for(ClauseType clause : clauses){
+                    if(clause.getID().contentEquals("1_PURCHASE ORDER TERMS AND CONDITIONS")){
+                        for(TradingTermType tradingTermType : clause.getTradingTerms()){
+                            if(tradingTermType.getID().contentEquals("$seller_id")){
+                                TextType text = new TextType();
+                                text.setLanguageID("en");
+                                text.setValue(supplierParty.getPartyName().get(0).getName().getValue());
+                                tradingTermType.getValue().setValue(Collections.singletonList(text));
+                            }
+                            else if(tradingTermType.getID().contentEquals("$buyer_id") && customerParty != null){
+                                TextType text = new TextType();
+                                text.setLanguageID("en");
+                                text.setValue(customerParty.getPartyName().get(0).getName().getValue());
+                                tradingTermType.getValue().setValue(Collections.singletonList(text));
+                            }
+                        }
                     }
-
-                    for(ClauseType clause : clauses){
-                        if(clause.getID().contentEquals("1_PURCHASE ORDER TERMS AND CONDITIONS")){
-                            for(TradingTermType tradingTermType : clause.getTradingTerms()){
-                                if(tradingTermType.getID().contentEquals("$seller_id")){
+                    else if(clause.getID().contentEquals("5_INVOICES, PAYMENT, AND TAXES")){
+                        for(TradingTermType tradingTermType : clause.getTradingTerms()){
+                            if(tradingTermType.getID().contentEquals("$payment_id") && !StringUtils.isEmpty(tradingTerm)){
+                                CodeType code = new CodeType();
+                                code.setValue(tradingTerm);
+                                code.setListID(payment_means_list_id);
+                                tradingTermType.getValue().setValueCode(Collections.singletonList(code));
+                            }
+                        }
+                    }
+                    else if(clause.getID().contentEquals("19_MISCELLANEOUS")){
+                        for(TradingTermType tradingTermType : clause.getTradingTerms()){
+                            if(tradingTermType.getID().contentEquals("$notices_id") && customerParty != null){
+                                TextType text = new TextType();
+                                text.setLanguageID("en");
+                                text.setValue(constructAddress(customerParty.getPartyName().get(0).getName().getValue(),customerParty.getPostalAddress()));
+                                tradingTermType.getValue().setValue(Collections.singletonList(text));
+                            }
+                            else if(tradingTermType.getID().contentEquals("$incoterms_id") && !StringUtils.isEmpty(incoterms)){
+                                CodeType code = new CodeType();
+                                code.setValue(incoterms);
+                                code.setListID(incoterms_list_id);
+                                tradingTermType.getValue().setValueCode(Collections.singletonList(code));
+                            }
+                            else if(tradingTermType.getID().contentEquals("$seller_website") && !StringUtils.isEmpty(supplierParty.getWebsiteURI())){
+                                TextType text = new TextType();
+                                text.setLanguageID("en");
+                                text.setValue(supplierParty.getWebsiteURI());
+                                tradingTermType.getValue().setValue(Collections.singletonList(text));
+                            }
+                            else if(tradingTermType.getID().contentEquals("$seller_tel")){
+                                if(supplierParty.getPerson() == null || supplierParty.getPerson().size() == 0){
+                                    logger.info("There is no person info in the party:{}",supplierParty);
+                                }else if(!StringUtils.isEmpty(supplierParty.getPerson().get(0).getContact().getTelephone())){
                                     TextType text = new TextType();
                                     text.setLanguageID("en");
-                                    text.setValue(supplierParty.getPartyName().get(0).getName().getValue());
-                                    tradingTermType.getValue().setValue(Collections.singletonList(text));
-                                }
-                                else if(tradingTermType.getID().contentEquals("$buyer_id") && customerParty != null){
-                                    TextType text = new TextType();
-                                    text.setLanguageID("en");
-                                    text.setValue(customerParty.getPartyName().get(0).getName().getValue());
+                                    text.setValue(supplierParty.getPerson().get(0).getContact().getTelephone());
                                     tradingTermType.getValue().setValue(Collections.singletonList(text));
                                 }
                             }
-                        }
-                        else if(clause.getID().contentEquals("5_INVOICES, PAYMENT, AND TAXES")){
-                            for(TradingTermType tradingTermType : clause.getTradingTerms()){
-                                if(tradingTermType.getID().contentEquals("$payment_id") && !StringUtils.isEmpty(tradingTerm)){
-                                    CodeType code = new CodeType();
-                                    code.setValue(tradingTerm);
-                                    code.setListID(payment_means_list_id);
-                                    tradingTermType.getValue().setValueCode(Collections.singletonList(code));
-                                }
-                            }
-                        }
-                        else if(clause.getID().contentEquals("19_MISCELLANEOUS")){
-                            for(TradingTermType tradingTermType : clause.getTradingTerms()){
-                                if(tradingTermType.getID().contentEquals("$notices_id") && customerParty != null){
-                                    TextType text = new TextType();
-                                    text.setLanguageID("en");
-                                    text.setValue(constructAddress(customerParty.getPartyName().get(0).getName().getValue(),customerParty.getPostalAddress()));
-                                    tradingTermType.getValue().setValue(Collections.singletonList(text));
-                                }
-                                else if(tradingTermType.getID().contentEquals("$incoterms_id") && !StringUtils.isEmpty(incoterms)){
-                                    CodeType code = new CodeType();
-                                    code.setValue(incoterms);
-                                    code.setListID(incoterms_list_id);
-                                    tradingTermType.getValue().setValueCode(Collections.singletonList(code));
-                                }
-                                else if(tradingTermType.getID().contentEquals("$seller_website") && !StringUtils.isEmpty(supplierParty.getWebsiteURI())){
-                                    TextType text = new TextType();
-                                    text.setLanguageID("en");
-                                    text.setValue(supplierParty.getWebsiteURI());
-                                    tradingTermType.getValue().setValue(Collections.singletonList(text));
-                                }
-                                else if(tradingTermType.getID().contentEquals("$seller_tel")){
-                                    if(supplierParty.getPerson() == null || supplierParty.getPerson().size() == 0){
-                                        logger.info("There is no person info in the party:{}",supplierParty);
-                                    }else if(!StringUtils.isEmpty(supplierParty.getPerson().get(0).getContact().getTelephone())){
-                                        TextType text = new TextType();
-                                        text.setLanguageID("en");
-                                        text.setValue(supplierParty.getPerson().get(0).getContact().getTelephone());
-                                        tradingTermType.getValue().setValue(Collections.singletonList(text));
-                                    }
-                                }
-                                else if(tradingTermType.getID().contentEquals("$buyer_country") &&  customerParty != null && customerParty.getPostalAddress() != null && customerParty.getPostalAddress().getCountry() != null && customerParty.getPostalAddress().getCountry().getName() != null){
-                                    CodeType code = new CodeType();
-                                    code.setValue(customerParty.getPostalAddress().getCountry().getName().getValue());
-                                    code.setListID(country_list_id);
-                                    tradingTermType.getValue().setValueCode(Collections.singletonList(code));
-                                }
+                            else if(tradingTermType.getID().contentEquals("$buyer_country") &&  customerParty != null && customerParty.getPostalAddress() != null && customerParty.getPostalAddress().getCountry() != null && customerParty.getPostalAddress().getCountry().getName() != null){
+                                CodeType code = new CodeType();
+                                code.setValue(customerParty.getPostalAddress().getCountry().getName().getValue());
+                                code.setListID(country_list_id);
+                                tradingTermType.getValue().setValueCode(Collections.singletonList(code));
                             }
                         }
                     }
                 }
-                catch (Exception e){
-                    logger.error("Failed to create terms and conditions for orderId: {}, rfqId: {}, sellerPartyId: {}, buyerPartyId: {}, incoterms: {}, tradingTerm : {}", orderId, rfqId, sellerPartyId, buyerPartyId, incoterms, tradingTerm, e);
-                    throw e;
-                }
-                finally {
-                    if(inputStream != null){
-                        inputStream.close();
-                    }
+            }
+            catch (Exception e){
+                logger.error("Failed to create terms and conditions for sellerPartyId: {}, buyerPartyId: {}, incoterms: {}, tradingTerm : {}", sellerPartyId, buyerPartyId, incoterms, tradingTerm, e);
+                throw e;
+            }
+            finally {
+                if(inputStream != null){
+                    inputStream.close();
                 }
             }
         }
         catch (Exception e){
-            logger.error("Failed to create terms and conditions for orderId: {}, rfqId: {}, sellerPartyId: {}, buyerPartyId: {}, incoterms: {}, tradingTerm : {}", orderId, rfqId, sellerPartyId, buyerPartyId, incoterms, tradingTerm, e);
+            logger.error("Failed to create terms and conditions for sellerPartyId: {}, buyerPartyId: {}, incoterms: {}, tradingTerm : {}", sellerPartyId, buyerPartyId, incoterms, tradingTerm, e);
             throw e;
         }
 

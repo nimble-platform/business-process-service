@@ -220,7 +220,7 @@ public class BPMessageGenerator {
             requestForQuotation.setTermOrCondition(sellerParty.getPurchaseTerms().getTermOrCondition());
         } else {
             ContractGenerator contractGenerator = new ContractGenerator();
-            List<ClauseType> clauses = contractGenerator.getTermsAndConditions(null, null, sellerParty.getPartyIdentification().get(0).getID(), buyerParty.getPartyIdentification().get(0).getID(), sellerNegotiationSettings.getIncoterms().size() > 0 ? sellerNegotiationSettings.getIncoterms().get(0) : "", sellerNegotiationSettings.getPaymentTerms().size() > 0 ? sellerNegotiationSettings.getPaymentTerms().get(0) : "", bearerToken);
+            List<ClauseType> clauses = contractGenerator.getTermsAndConditions(sellerParty.getPartyIdentification().get(0).getID(), buyerParty.getPartyIdentification().get(0).getID(), sellerNegotiationSettings.getIncoterms().size() > 0 ? sellerNegotiationSettings.getIncoterms().get(0) : "", sellerNegotiationSettings.getPaymentTerms().size() > 0 ? sellerNegotiationSettings.getPaymentTerms().get(0) : "", bearerToken);
             requestForQuotation.setTermOrCondition(clauses);
         }
 
