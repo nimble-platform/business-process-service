@@ -71,7 +71,9 @@ public class StatisticsPersistenceUtility {
         query = "select despatchLine,receiptLine " +
                 "from DespatchAdviceType despatchAdvice join despatchAdvice.despatchLine despatchLine join despatchAdvice.orderReference orderReference," +
                 "ReceiptAdviceType receiptAdvice join receiptAdvice.receiptLine receiptLine join receiptAdvice.despatchDocumentReference despatchDocumentReference " +
-                "where despatchDocumentReference.ID = despatchAdvice.ID AND orderReference.documentReference.ID = :orderId";
+                "where despatchDocumentReference.ID = despatchAdvice.ID AND orderReference.documentReference.ID = :orderId AND " +
+                "despatchLine.item.catalogueDocumentReference.ID =  receiptLine.item.catalogueDocumentReference.ID AND " +
+                "despatchLine.item.manufacturersItemIdentification.ID = receiptLine.item.manufacturersItemIdentification.ID";
         List<Object[]> dispatchReceiptAdvicePairs = new JPARepositoryFactory().forCatalogueRepository(true).getEntities(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
 
         Map<ItemKey,FulfilmentStatistics> itemKeyFulfilmentStatisticsMap = new HashMap<>();
