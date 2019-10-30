@@ -180,23 +180,34 @@ public class BPMessageGenerator {
         // create request for quotation
         RequestForQuotationType requestForQuotation = new RequestForQuotationType();
 
+        CodeType paymentMeansCode = new CodeType();
+        paymentMeansCode.setValue(sellerNegotiationSettings.getPaymentMeans().size() > 0 ? sellerNegotiationSettings.getPaymentMeans().get(0) : "");
+
+        PaymentMeansType paymentMeansType = new PaymentMeansType();
+        paymentMeansType.setPaymentMeansCode(paymentMeansCode);
+
+        PaymentTermsType paymentTermsType = new PaymentTermsType();
+        paymentTermsType.setTradingTerms(getPaymentTerms(sellerNegotiationSettings.getPaymentTerms().size() > 0 ? sellerNegotiationSettings.getPaymentTerms().get(0) : ""));
+
         RequestForQuotationLineType requestForQuotationLine = new RequestForQuotationLineType();
         requestForQuotationLine.setLineItem(createLineItem(catalogueLine,quantity,sellerNegotiationSettings,buyerParty));
+        requestForQuotationLine.getLineItem().setDataMonitoringRequested(false);
+        requestForQuotationLine.getLineItem().setPaymentMeans(paymentMeansType);
+        requestForQuotationLine.getLineItem().setPaymentTerms(paymentTermsType);
+        // if seller has some T&Cs, use them, otherwise use the default T&Cs
+        if (sellerParty.getPurchaseTerms() != null && sellerParty.getPurchaseTerms().getTermOrCondition().size() > 0) {
+            requestForQuotationLine.getLineItem().setClause(sellerParty.getPurchaseTerms().getTermOrCondition());
+        } else {
+            ContractGenerator contractGenerator = new ContractGenerator();
+            List<ClauseType> clauses = contractGenerator.getTermsAndConditions(sellerParty.getPartyIdentification().get(0).getID(), buyerParty.getPartyIdentification().get(0).getID(), sellerNegotiationSettings.getIncoterms().size() > 0 ? sellerNegotiationSettings.getIncoterms().get(0) : "", sellerNegotiationSettings.getPaymentTerms().size() > 0 ? sellerNegotiationSettings.getPaymentTerms().get(0) : "", bearerToken);
+            requestForQuotationLine.getLineItem().setClause(clauses);
+        }
 
         CustomerPartyType customerParty = new CustomerPartyType();
         customerParty.setParty(PartyPersistenceUtility.getParty(buyerParty));
 
         SupplierPartyType supplierParty = new SupplierPartyType();
         supplierParty.setParty(PartyPersistenceUtility.getParty(sellerParty));
-
-        PaymentTermsType paymentTermsType = new PaymentTermsType();
-        paymentTermsType.setTradingTerms(getPaymentTerms(sellerNegotiationSettings.getPaymentTerms().size() > 0 ? sellerNegotiationSettings.getPaymentTerms().get(0) : ""));
-
-        CodeType paymentMeansCode = new CodeType();
-        paymentMeansCode.setValue(sellerNegotiationSettings.getPaymentMeans().size() > 0 ? sellerNegotiationSettings.getPaymentMeans().get(0) : "");
-
-        PaymentMeansType paymentMeansType = new PaymentMeansType();
-        paymentMeansType.setPaymentMeansCode(paymentMeansCode);
 
         PeriodType periodType = new PeriodType();
 
@@ -206,23 +217,10 @@ public class BPMessageGenerator {
         String uuid = UUID.randomUUID().toString();
         requestForQuotation.setID(uuid);
         requestForQuotation.setNote(Collections.singletonList(""));
-        requestForQuotation.setDataMonitoringRequested(false);
         requestForQuotation.setBuyerCustomerParty(customerParty);
         requestForQuotation.setSellerSupplierParty(supplierParty);
         requestForQuotation.setDelivery(deliveryType);
         requestForQuotation.setRequestForQuotationLine(Collections.singletonList(requestForQuotationLine));
-        requestForQuotation.setPaymentTerms(paymentTermsType);
-        requestForQuotation.setPaymentMeans(paymentMeansType);
-        requestForQuotation.setRequestForQuotationLine(Collections.singletonList(requestForQuotationLine));
-
-        // if seller has some T&Cs, use them, otherwise use the default T&Cs
-        if (sellerParty.getPurchaseTerms() != null && sellerParty.getPurchaseTerms().getTermOrCondition().size() > 0) {
-            requestForQuotation.setTermOrCondition(sellerParty.getPurchaseTerms().getTermOrCondition());
-        } else {
-            ContractGenerator contractGenerator = new ContractGenerator();
-            List<ClauseType> clauses = contractGenerator.getTermsAndConditions(sellerParty.getPartyIdentification().get(0).getID(), buyerParty.getPartyIdentification().get(0).getID(), sellerNegotiationSettings.getIncoterms().size() > 0 ? sellerNegotiationSettings.getIncoterms().get(0) : "", sellerNegotiationSettings.getPaymentTerms().size() > 0 ? sellerNegotiationSettings.getPaymentTerms().get(0) : "", bearerToken);
-            requestForQuotation.setTermOrCondition(clauses);
-        }
 
         return requestForQuotation;
     }
