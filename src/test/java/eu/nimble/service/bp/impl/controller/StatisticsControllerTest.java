@@ -1,9 +1,12 @@
 package eu.nimble.service.bp.impl.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import eu.nimble.service.bp.model.statistics.BusinessProcessCount;
 import eu.nimble.service.bp.model.statistics.FulfilmentStatistics;
 import eu.nimble.service.bp.model.statistics.NonOrderedProducts;
+import eu.nimble.utility.JsonSerializationUtility;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
@@ -20,6 +23,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -129,10 +133,12 @@ public class StatisticsControllerTest {
                 .header("Authorization", TestConfig.responderPersonId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
-        FulfilmentStatistics fulfilmentStatistics = gson.fromJson(mvcResult.getResponse().getContentAsString(), FulfilmentStatistics.class);
+        ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
+        List<FulfilmentStatistics> fulfilmentStatistics = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), new TypeReference<List<FulfilmentStatistics>>() {});
 
-        Assert.assertThat(expectedDispatchedQuantity, Matchers.comparesEqualTo(fulfilmentStatistics.getDispatchedQuantity()));
-        Assert.assertThat(expectedRejectedQuantity, Matchers.comparesEqualTo(fulfilmentStatistics.getRejectedQuantity()));
-        Assert.assertThat(expectedRequestedQuantity, Matchers.comparesEqualTo(fulfilmentStatistics.getRequestedQuantity()));
+        Assert.assertEquals(1,fulfilmentStatistics.size());
+        Assert.assertThat(expectedDispatchedQuantity, Matchers.comparesEqualTo(fulfilmentStatistics.get(0).getDispatchedQuantity()));
+        Assert.assertThat(expectedRejectedQuantity, Matchers.comparesEqualTo(fulfilmentStatistics.get(0).getRejectedQuantity()));
+        Assert.assertThat(expectedRequestedQuantity, Matchers.comparesEqualTo(fulfilmentStatistics.get(0).getRequestedQuantity()));
     }
 }
