@@ -17,6 +17,8 @@ import eu.nimble.service.model.ubl.commonbasiccomponents.TextType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.CompletedTaskType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.QualifyingPartyType;
+import eu.nimble.service.model.ubl.despatchadvice.DespatchAdviceType;
+import eu.nimble.service.model.ubl.receiptadvice.ReceiptAdviceType;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import org.slf4j.Logger;
@@ -59,58 +61,60 @@ public class StatisticsPersistenceUtility {
     }
 
     public static List<FulfilmentStatistics> getFulfilmentStatistics(String orderId){
-        // get requested quantity from the order
-        String query = "SELECT orderLine.lineItem " +
+        // get lines for the given order id
+        String query = "SELECT orderLine " +
                 "FROM OrderType orderType join orderType.orderLine orderLine " +
                 "WHERE orderType.ID = :orderId";
         List<String> parameterNames = Collections.singletonList("orderId");;
         List<Object> parameterValues = Collections.singletonList(orderId);
-        List<LineItemType> lineItems = new JPARepositoryFactory().forCatalogueRepository(true).getEntities(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
+        List<OrderLineType> orderLines = new JPARepositoryFactory().forCatalogueRepository(true).getEntities(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
 
         // get dispatch and receipt advice pairs for the specified order
-        query = "select despatchLine,receiptLine " +
+        query = "select distinct despatchAdvice,receiptAdvice " +
                 "from DespatchAdviceType despatchAdvice join despatchAdvice.despatchLine despatchLine join despatchAdvice.orderReference orderReference," +
                 "ReceiptAdviceType receiptAdvice join receiptAdvice.receiptLine receiptLine join receiptAdvice.despatchDocumentReference despatchDocumentReference " +
-                "where despatchDocumentReference.ID = despatchAdvice.ID AND orderReference.documentReference.ID = :orderId AND " +
-                "despatchLine.item.catalogueDocumentReference.ID =  receiptLine.item.catalogueDocumentReference.ID AND " +
-                "despatchLine.item.manufacturersItemIdentification.ID = receiptLine.item.manufacturersItemIdentification.ID";
+                "where despatchDocumentReference.ID = despatchAdvice.ID AND orderReference.documentReference.ID = :orderId";
         List<Object[]> dispatchReceiptAdvicePairs = new JPARepositoryFactory().forCatalogueRepository(true).getEntities(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
 
-        Map<ItemKey,FulfilmentStatistics> itemKeyFulfilmentStatisticsMap = new HashMap<>();
-        for (LineItemType lineItem : lineItems) {
-            ItemKey itemKey = new ItemKey(lineItem.getItem().getCatalogueDocumentReference().getID(),lineItem.getItem().getManufacturersItemIdentification().getID());
-            FulfilmentStatistics fulfilmentStatistics = new FulfilmentStatistics();
-            fulfilmentStatistics.setItem(lineItem.getItem());
-            fulfilmentStatistics.setRequestedQuantity(lineItem.getQuantity().getValue());
-            fulfilmentStatistics.setRejectedQuantity(BigDecimal.ZERO);
-            fulfilmentStatistics.setDispatchedQuantity(BigDecimal.ZERO);
-
-            itemKeyFulfilmentStatisticsMap.put(itemKey,fulfilmentStatistics);
+        // for each line item in the order, there should be a FulfilmentStatistics
+        // we use the SortedMap to keep the order of lines
+        SortedMap<Long,FulfilmentStatistics> lineHjidFulfilmentStatisticsMap = new TreeMap<>();
+        for (OrderLineType orderLine : orderLines) {
+            FulfilmentStatistics fulfilmentStatistic = new FulfilmentStatistics();
+            fulfilmentStatistic.setLineItemHjid(orderLine.getHjid());
+            fulfilmentStatistic.setRequestedQuantity(orderLine.getLineItem().getQuantity().getValue());
+            fulfilmentStatistic.setRejectedQuantity(BigDecimal.ZERO);
+            fulfilmentStatistic.setDispatchedQuantity(BigDecimal.ZERO);
+            lineHjidFulfilmentStatisticsMap.put(orderLine.getHjid(),fulfilmentStatistic);
         }
 
         for (Object[] result : dispatchReceiptAdvicePairs) {
-            DespatchLineType despatchLineType = (DespatchLineType) result[0];
-            ReceiptLineType receiptLineType = (ReceiptLineType) result[1];
+            DespatchAdviceType despatchAdvice = (DespatchAdviceType) result[0];
+            ReceiptAdviceType receiptAdvice = (ReceiptAdviceType) result[1];
 
-            BigDecimal dispatchedQuantity = BigDecimal.ZERO;
-            BigDecimal rejectedQuantity = BigDecimal.ZERO;
+            int numberOfItems = despatchAdvice.getDespatchLine().size();
+            for(int i = 0; i < numberOfItems; i++){
+                DespatchLineType despatchLineType = despatchAdvice.getDespatchLine().get(i);
+                ReceiptLineType receiptLineType = receiptAdvice.getReceiptLine().get(i);
 
-            BigDecimal deliveredQuantity = despatchLineType.getDeliveredQuantity().getValue();
-            if(deliveredQuantity != null){
-                dispatchedQuantity = dispatchedQuantity.add(deliveredQuantity);
+                Long lineHjid = Long.parseLong(despatchLineType.getOrderLineReference().getLineID());
+
+                BigDecimal dispatchedQuantity = BigDecimal.ZERO;
+                BigDecimal rejectedQuantity = BigDecimal.ZERO;
+                BigDecimal deliveredQuantity = despatchLineType.getDeliveredQuantity().getValue();
+                if(deliveredQuantity != null){
+                    dispatchedQuantity = dispatchedQuantity.add(deliveredQuantity);
+                }
+                BigDecimal receiptLineRejectedQuantity = receiptLineType.getRejectedQuantity().getValue();
+                if(receiptLineRejectedQuantity != null){
+                    rejectedQuantity = rejectedQuantity.add(receiptLineRejectedQuantity);
+                }
+                lineHjidFulfilmentStatisticsMap.get(lineHjid).setDispatchedQuantity(lineHjidFulfilmentStatisticsMap.get(lineHjid).getDispatchedQuantity().add(dispatchedQuantity));
+                lineHjidFulfilmentStatisticsMap.get(lineHjid).setRejectedQuantity(lineHjidFulfilmentStatisticsMap.get(lineHjid).getRejectedQuantity().add(rejectedQuantity));
             }
-            BigDecimal receiptLineRejectedQuantity = receiptLineType.getRejectedQuantity().getValue();
-            if(receiptLineRejectedQuantity != null){
-                rejectedQuantity = rejectedQuantity.add(receiptLineRejectedQuantity);
-            }
-
-            ItemKey itemKey = new ItemKey(despatchLineType.getItem().getCatalogueDocumentReference().getID(),despatchLineType.getItem().getManufacturersItemIdentification().getID());
-            FulfilmentStatistics fulfilmentStatistics = itemKeyFulfilmentStatisticsMap.get(itemKey);
-            fulfilmentStatistics.setDispatchedQuantity(fulfilmentStatistics.getDispatchedQuantity().add(dispatchedQuantity));
-            fulfilmentStatistics.setRejectedQuantity(fulfilmentStatistics.getRejectedQuantity().add(rejectedQuantity));
         }
 
-        return new ArrayList<FulfilmentStatistics>(itemKeyFulfilmentStatisticsMap.values());
+        return new ArrayList<FulfilmentStatistics>(lineHjidFulfilmentStatisticsMap.values());
     }
 
     public static double getTradingVolume(Integer partyId, String role, String startDate, String endDate, String status) {

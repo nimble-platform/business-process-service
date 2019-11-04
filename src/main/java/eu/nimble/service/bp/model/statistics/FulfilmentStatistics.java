@@ -1,12 +1,10 @@
 package eu.nimble.service.bp.model.statistics;
 
-import eu.nimble.service.model.ubl.commonaggregatecomponents.ItemType;
-
 import java.math.BigDecimal;
 
 public class FulfilmentStatistics {
 
-    private ItemType item;
+    private Long lineItemHjid;
     private BigDecimal dispatchedQuantity;
     private BigDecimal rejectedQuantity;
     private BigDecimal requestedQuantity;
@@ -35,11 +33,11 @@ public class FulfilmentStatistics {
         this.requestedQuantity = requestedQuantity;
     }
 
-    public ItemType getItem() {
-        return item;
+    public Long getLineItemHjid() {
+        return lineItemHjid;
     }
 
-    public void setItem(ItemType item) {
-        this.item = item;
+    public void setLineItemHjid(Long lineItemHjid) {
+        this.lineItemHjid = lineItemHjid;
     }
 }
