@@ -82,13 +82,22 @@ public class ContractGenerator {
         createOrderAdditionalDocuments(order, orderResponse, zos, purchaseDetails);
 
         int orderLineSize = order.getOrderLine().size();
+        // we use product names to create entries
+        // since there may be multiple products with the same name, we need the map below to get the count of product names
+        // then, we create entry names by combining the product name and count,i.e.,Product Name,Product Name_1,Product Name_2 etc.
+        Map<String,Integer> productNamesCountMap = new HashMap<>();
         for (int i = 0; i<orderLineSize;i++) {
             XWPFDocument orderTermsAndCondition = orderTermsAndConditions.get(i);
             XWPFDocument purchaseDetail = purchaseDetails.get(i);
             String productName = order.getOrderLine().get(i).getLineItem().getItem().getName().get(0).getValue();
-
-            addDocxToZipFile(productName+"/Standard Purchase Order Terms and Conditions.pdf",orderTermsAndCondition,zos);
-            addDocxToZipFile(productName+"/Company Purchase Details.pdf",purchaseDetail,zos);
+            // update the map
+            productNamesCountMap.merge(productName, 1, Integer::sum);
+            // create a name for the entry
+            int count = productNamesCountMap.get(productName);
+            String entryName = count > 1  ? productName+"_"+count: productName;
+            // create entries
+            addDocxToZipFile(entryName+"/Standard Purchase Order Terms and Conditions.pdf",orderTermsAndCondition,zos);
+            addDocxToZipFile(entryName+"/Company Purchase Details.pdf",purchaseDetail,zos);
         }
     }
 
