@@ -15,6 +15,7 @@ import eu.nimble.service.model.ubl.digitalagreement.DigitalAgreementType;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
 import eu.nimble.utility.JsonSerializationUtility;
+import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.persistence.resource.EntityIdAwareRepositoryWrapper;
 import eu.nimble.utility.validation.IValidationUtil;
@@ -599,6 +600,41 @@ public class ContractController {
 
         } catch (Exception e) {
             return createResponseEntityAndLog(String.format("Unexpected error while getting DigitalAgreement. hjid: %d", contractId), e, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @ApiOperation(value = "", notes = "Deletes the given DigitalAgreement")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Deleted the specified DigitalAgreement successfully"),
+            @ApiResponse(code = 400, message = "No DigitalAgreement found for the given id"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 500, message = "Unexpected error while deleting the passed DigitalAgreement")
+    })
+    @RequestMapping(value = "/contract/digital-agreement/{id}",
+            produces = {"application/json"},
+            method = RequestMethod.DELETE)
+    public ResponseEntity deleteDigitalAgreement(@ApiParam(value = "Identifier (digitalAgreement.hjid) of the DigitalAgreement", required = true) @PathVariable(value = "id") Long contractId,
+                                                 @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
+
+        try {
+            logger.info("Incoming request to delete a DigitalAgreement. hjid: {}", contractId);
+            // validate role
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+            }
+
+            GenericJPARepository catalogueRepository = new JPARepositoryFactory().forCatalogueRepository();
+            DigitalAgreementType digitalAgreement = catalogueRepository.getSingleEntityByHjid(DigitalAgreementType.class, contractId);
+            if(digitalAgreement == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(String.format("No DigitalAgreement found. hjid: %d", contractId));
+            }
+            catalogueRepository.deleteEntity(digitalAgreement);
+
+            logger.info("Deleted DigitalAgreement. hjid: {}", contractId);
+            return ResponseEntity.ok(null);
+
+        } catch (Exception e) {
+            return createResponseEntityAndLog(String.format("Unexpected error while deleting DigitalAgreement. hjid: %d", contractId), e, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
