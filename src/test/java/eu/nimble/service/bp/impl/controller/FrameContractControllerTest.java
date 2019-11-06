@@ -32,6 +32,7 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import java.math.BigDecimal;
 import java.util.List;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -61,6 +62,7 @@ public class FrameContractControllerTest {
      * 4) Retrieve an expired frame contract (response is supposed to be 404)
      * 5) Retrieve all frame contracts of a party (no available frame contract since the existing one expired)
      * 6) Update and existing expired frame contract and retrieve it (response is supposed to be not-null)
+     * 7) Delete the frame contract and then try to retrieve it (response is supposed to be 404)
      */
 
     @Test
@@ -153,5 +155,17 @@ public class FrameContractControllerTest {
         request = get("/contract/digital-agreement?buyerId=" + TestConfig.buyerPartyID + "&sellerId=" + TestConfig.sellerPartyID + "&productIds=" + itemId)
                 .header("Authorization", TestConfig.initiatorPersonId);
         this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+    }
+
+    @Test
+    public void test7_deleteFrameContract() throws Exception {
+        MockHttpServletRequestBuilder request = delete("/contract/digital-agreement/" + frameContract.getHjid())
+                .header("Authorization", TestConfig.initiatorPersonId);
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+
+        // retrieve contract
+        request = get("/contract/digital-agreement/" + frameContract.getHjid())
+                .header("Authorization", TestConfig.initiatorPersonId);
+        mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isNotFound()).andReturn();
     }
 }
