@@ -50,12 +50,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
+import java.util.*;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -288,7 +286,7 @@ public class ProcessInstanceController {
                 if(variableInstance.getName().contentEquals("initialDocumentID")){
                     String documentId =  variableInstance.getValue().toString();
                     // request document
-                    requestDocument = getRequestDocument(documentId, executorService);
+                    requestDocument = getRequestDocument(documentId,bearerToken, executorService);
                     // request metadata
                     requestMetadata = HibernateSwaggerObjectMapper.createProcessDocumentMetadata(ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId));
                 }
@@ -335,22 +333,47 @@ public class ProcessInstanceController {
         }
     }
 
-    private Future<String> getRequestDocument(String documentId, ExecutorService threadPool){
+    private Future<String> getRequestDocument(String documentId,String bearerToken, ExecutorService threadPool){
         return threadPool.submit(() -> {
             ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
             IDocument iDocument = (IDocument) DocumentPersistenceUtility.getUBLDocument(documentId);
             if(iDocument == null){
                 return null;
             }
+            List<PartyNameType> sellerPartyNames = null;
+            List<PartyNameType> buyerPartyNames = null;
+
+            try {
+                // seller and buyer party ids
+                List<String> partyIds = new ArrayList<>();
+                partyIds.add(iDocument.getSellerPartyId());
+                partyIds.add(iDocument.getBuyerPartyId());
+                // get parties
+                List<PartyType> parties = PartyPersistenceUtility.getParties(bearerToken, partyIds);
+                // get seller and buyer party names
+                for (PartyType party : parties) {
+                    if(party.getPartyIdentification().get(0).getID().contentEquals(iDocument.getSellerPartyId())){
+                        sellerPartyNames = party.getPartyName();
+                    }
+                    else if(party.getPartyIdentification().get(0).getID().contentEquals(iDocument.getBuyerPartyId())){
+                        buyerPartyNames = party.getPartyName();
+                    }
+                }
+            } catch (IOException e) {
+                String msg = String.format("Failed to get parties while retrieving document : %s", documentId);
+                logger.error(msg);
+                throw new RuntimeException(msg, e);
+            }
+
             ItemType item = iDocument.getItemType();
             // get catalogue line to check whether the product is deleted or not
             CatalogueLineType catalogueLine = CataloguePersistenceUtility.getCatalogueLine(item.getCatalogueDocumentReference().getID(), item.getManufacturersItemIdentification().getID(),false);
             return  "{\"item\":"+objectMapper.writeValueAsString(item) +
                     ",\"isProductDeleted\":" + (catalogueLine == null) +
                     ",\"buyerPartyId\":\""+ iDocument.getBuyerPartyId() +
-                    "\",\"buyerPartyName\":"+objectMapper.writeValueAsString(iDocument.getBuyerPartyName())+
+                    "\",\"buyerPartyName\":"+objectMapper.writeValueAsString(buyerPartyNames)+
                     ",\"sellerPartyId\":\""+ iDocument.getSellerPartyId()+
-                    "\",\"sellerPartyName\":"+objectMapper.writeValueAsString(iDocument.getSellerPartyName())+"}";
+                    "\",\"sellerPartyName\":"+objectMapper.writeValueAsString(sellerPartyNames)+"}";
         });
     }
 
