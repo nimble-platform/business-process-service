@@ -18,7 +18,6 @@
     "listURI": ""
   },
   "lineCountNumeric": 1,
-  "dataMonitoringPromised": true,
   "requestForQuotationDocumentReference": {
     "id": "8b9461be-eab6-456c-89c3-841950c9ee07",
     "documentType": null,
@@ -2075,6 +2074,7 @@
           "unitCode": "item(s)",
           "unitCodeListID": null
         },
+        "dataMonitoringRequested":true,
         "deliveryTerms": {
           "id": null,
           "incoterms": null,
