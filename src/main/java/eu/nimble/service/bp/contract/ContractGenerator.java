@@ -298,7 +298,7 @@ public class ContractGenerator {
                         value = new DecimalFormat("##").format(tradingTerm.getValue().getValueDecimal().get(0));
                     } else if(tradingTerm.getValue().getValueQualifier().contentEquals("QUANTITY") && tradingTerm.getValue().getValueQuantity().get(0).getValue() != null && tradingTerm.getValue().getValueQuantity().get(0).getUnitCode() != null){
                         value = new DecimalFormat("##").format(tradingTerm.getValue().getValueQuantity().get(0).getValue()) + " " + tradingTerm.getValue().getValueQuantity().get(0).getUnitCode();
-                    } else if(tradingTerm.getValue().getValueQualifier().contentEquals("CODE") && !tradingTerm.getValue().getValueCode().get(0).getValue().contentEquals("")){
+                    } else if(tradingTerm.getValue().getValueQualifier().contentEquals("CODE") && tradingTerm.getValue().getValueCode().get(0).getValue() != null && !tradingTerm.getValue().getValueCode().get(0).getValue().contentEquals("")){
                         value = tradingTerm.getValue().getValueCode().get(0).getValue();
                     }
                     // if no value is provided for the trading term, use its id
@@ -674,7 +674,7 @@ public class ContractGenerator {
                 // get the row for data monitoring info
                 XWPFTableRow dataMonitoringRow = table.getRow(1);
                 // get data monitoring text
-                boolean isPromised = isDataMonitoringPromised(order,orderResponse,order.getOrderLine().get(i).getLineItem().getItem());
+                boolean isPromised = isDataMonitoringPromised(order,orderResponse,i);
                 String dataMonitoringText = isPromised ? "\n\nYes" : "\n\nNo";
 
                 XWPFRun run = dataMonitoringRow.getCell(0).getParagraphArray(5).createRun();
@@ -705,8 +705,8 @@ public class ContractGenerator {
         return documents;
     }
 
-    // check whether the data monitoring is promised for the given item or not
-    private boolean isDataMonitoringPromised(OrderType order, OrderResponseSimpleType orderResponse,ItemType item) {
+    // check whether the data monitoring is promised for the item specified by the order line index
+    private boolean isDataMonitoringPromised(OrderType order, OrderResponseSimpleType orderResponse,int index) {
         boolean dataMonitoringDemanded = false;
         ContractType contract = ContractGenerator.getNonTermOrConditionContract(order);
         if(contract != null){
@@ -716,13 +716,9 @@ public class ContractGenerator {
                     DocumentClauseType docClause = (DocumentClauseType) clause;
                     if(docClause.getClauseDocumentRef().getDocumentType().contentEquals(DocumentType.QUOTATION.toString())) {
                         QuotationType quotation = (QuotationType) DocumentPersistenceUtility.getUBLDocument(docClause.getClauseDocumentRef().getID(), DocumentType.QUOTATION);
-                        for (QuotationLineType quotationLine : quotation.getQuotationLine()) {
-                            if(quotationLine.getLineItem().getItem().getCatalogueDocumentReference().getID().contentEquals(item.getCatalogueDocumentReference().getID()) &&
-                                    quotationLine.getLineItem().getItem().getManufacturersItemIdentification().getID().contentEquals(item.getManufacturersItemIdentification().getID()) &&
-                                    quotationLine.getLineItem().isDataMonitoringRequested()){
-                                dataMonitoringDemanded = true;
-                                break;
-                            }
+                        if(quotation.getQuotationLine().get(index).getLineItem().isDataMonitoringRequested()){
+                            dataMonitoringDemanded = true;
+                            break;
                         }
                     }
                 }
