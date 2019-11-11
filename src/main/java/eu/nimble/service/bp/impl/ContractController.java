@@ -640,7 +640,7 @@ public class ContractController {
 
     @ApiOperation(value = "", notes = "Gets the DigitalAgreement specified by the buyer, seller and product ids")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Retrieved the specified DigitalAgreement successfully", response = DigitalAgreementType.class),
+            @ApiResponse(code = 200, message = "Retrieved the specified DigitalAgreement successfully", response = DigitalAgreementType.class, responseContainer = "List"),
             @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
             @ApiResponse(code = 404, message = "No DigitalAgreement found for the given parameters"),
             @ApiResponse(code = 500, message = "Unexpected error while retriving the passed DigitalAgreement")
@@ -648,32 +648,38 @@ public class ContractController {
     @RequestMapping(value = "/contract/digital-agreement",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity getDigitalAgreementForPartiesAndProduct(@ApiParam(value = "Identifier of the buyer company participating in the DigitalAgreement", required = true) @RequestParam(value = "buyerId") String buyerId,
+    public ResponseEntity getDigitalAgreementForPartiesAndProducts(@ApiParam(value = "Identifier of the buyer company participating in the DigitalAgreement", required = true) @RequestParam(value = "buyerId") String buyerId,
                                                                   @ApiParam(value = "Identifier of the seller company participating in the DigitalAgreement", required = true) @RequestParam(value = "sellerId") String sellerId,
-                                                                  @ApiParam(value = "Manufacturer item identification of the product being the subject of the DigitalAgreement", required = true) @RequestParam(value = "productId") String manufacturersItemId,
+                                                                  @ApiParam(value = "Manufacturer item identification of the products being the subject of the DigitalAgreement", required = true) @RequestParam(value = "productIds") List<String> manufacturersItemIds,
                                                                   @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
 
         try {
-            logger.info("Incoming request to retrieve a DigitalAgreement. seller id: {}, buyer id: {}, product hjid: {}", sellerId, buyerId, manufacturersItemId);
+            logger.info("Incoming request to retrieve a DigitalAgreement. seller id: {}, buyer id: {}, product hjids: {}", sellerId, buyerId, manufacturersItemIds);
             // validate role
             if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
-            DigitalAgreementType digitalAgreement = ContractPersistenceUtility.getFrameContractAgreementById(sellerId, buyerId, manufacturersItemId);
-            if(digitalAgreement == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(String.format("No DigitalAgreement found. seller id: %s, buyer id: %s, product hjid: %s", sellerId, buyerId, manufacturersItemId));
+            List<DigitalAgreementType> digitalAgreements = ContractPersistenceUtility.getFrameContractAgreementByIds(sellerId, buyerId, manufacturersItemIds);
+            // removed the expired ones from the list
+            List<DigitalAgreementType> expiredDigitalAgreements = new ArrayList<>();
+            for (DigitalAgreementType digitalAgreement : digitalAgreements) {
+                if(isDigitalAgreementExpired(digitalAgreement)){
+                    expiredDigitalAgreements.add(digitalAgreement);
+                }
             }
 
-            if(isDigitalAgreementExpired(digitalAgreement)) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(String.format("DigitalAgreement expired. seller id: %s, buyer id: %s, product hjid: %s", sellerId, buyerId, manufacturersItemId));
+            digitalAgreements.removeAll(expiredDigitalAgreements);
+
+            if(digitalAgreements.size() == 0) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(String.format("No DigitalAgreement found. seller id: %s, buyer id: %s, product hjids: %s", sellerId, buyerId, manufacturersItemIds));
             }
 
-            logger.info("Retrieved DigitalAgreement. seller id: {}, buyer id: {}, product hjid: {}", sellerId, buyerId, manufacturersItemId);
-            return ResponseEntity.ok(JsonSerializationUtility.getObjectMapper().writeValueAsString(digitalAgreement));
+            logger.info("Retrieved DigitalAgreement. seller id: {}, buyer id: {}, product hjids: {}", sellerId, buyerId, manufacturersItemIds);
+            return ResponseEntity.ok(JsonSerializationUtility.getObjectMapper().writeValueAsString(digitalAgreements));
 
         } catch (Exception e) {
-            return createResponseEntityAndLog(String.format("Unexpected error while getting DigitalAgreement. seller id: %s, buyer id: %s, product hjid: %s", sellerId, buyerId, manufacturersItemId), e, HttpStatus.INTERNAL_SERVER_ERROR);
+            return createResponseEntityAndLog(String.format("Unexpected error while getting DigitalAgreement. seller id: %s, buyer id: %s, product hjids: %s", sellerId, buyerId, manufacturersItemIds), e, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

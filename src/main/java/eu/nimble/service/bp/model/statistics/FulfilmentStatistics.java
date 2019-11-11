@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 
 public class FulfilmentStatistics {
 
+    private Long lineItemHjid;
     private BigDecimal dispatchedQuantity;
     private BigDecimal rejectedQuantity;
     private BigDecimal requestedQuantity;
@@ -30,5 +31,13 @@ public class FulfilmentStatistics {
 
     public void setRequestedQuantity(BigDecimal requestedQuantity) {
         this.requestedQuantity = requestedQuantity;
+    }
+
+    public Long getLineItemHjid() {
+        return lineItemHjid;
+    }
+
+    public void setLineItemHjid(Long lineItemHjid) {
+        this.lineItemHjid = lineItemHjid;
     }
 }

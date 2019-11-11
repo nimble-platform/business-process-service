@@ -180,11 +180,14 @@ public class ProcessInstanceGroupDAOUtility {
         // 2) Find the corresponding Order id via the ProcessInstance associated to the OrderResponse
 
         // find order response
+
+        // get ProcessInstanceGroups including the specified process instance id
         List<ProcessInstanceGroupDAO> pigs = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAOs(processInstanceId);
         if(pigs == null || pigs.size() == 0) {
             return null;
         }
 
+        // collect the ProcessDocumentMetadata for the ProcessInstances included in the identified ProcessInstanceGroups
         List<ProcessDocumentMetadataDAO> docMetadatas = new ArrayList<>();
         for(ProcessInstanceGroupDAO pig : pigs) {
             List<ProcessDocumentMetadataDAO> docMetadata = getDocumentMetadataInProcessInstanceGroup(pig.getID());
@@ -193,6 +196,7 @@ public class ProcessInstanceGroupDAOUtility {
             }
         }
 
+        // traverse document ProcessDocumentMetadata. If they are of type IIR or RFQ, we check the associated documents in the actual document
         String orderResponseId = null;
         for(ProcessDocumentMetadataDAO docMetadata : docMetadatas) {
             List<Object> docRefs = null;

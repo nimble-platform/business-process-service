@@ -452,7 +452,7 @@ public class StatisticsController {
 
     @ApiOperation(value = "Gets fulfilment statistics (dispatched quantity, rejected quantity and requested quantity) for the given order")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Retrieved fulfilment statistics for the order",response = FulfilmentStatistics.class),
+            @ApiResponse(code = 200, message = "Retrieved fulfilment statistics for the order",response = FulfilmentStatistics.class,responseContainer = "List"),
             @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
             @ApiResponse(code = 500, message = "Unexpected error while getting fulfilment statistics")
     })
@@ -468,7 +468,7 @@ public class StatisticsController {
             if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
-            FulfilmentStatistics statistics = StatisticsPersistenceUtility.getFulfilmentStatistics(orderId);
+            List<FulfilmentStatistics> statistics = StatisticsPersistenceUtility.getFulfilmentStatistics(orderId);
             serializedResponse = JsonSerializationUtility.getObjectMapperForFilledFields().writeValueAsString(statistics);
         }
         catch (Exception e){

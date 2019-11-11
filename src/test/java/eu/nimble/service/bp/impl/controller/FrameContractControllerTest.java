@@ -94,10 +94,11 @@ public class FrameContractControllerTest {
                 .header("Authorization", TestConfig.initiatorPersonId)
                 .param("buyerId",TestConfig.buyerPartyID)
                 .param("sellerId",TestConfig.sellerPartyID)
-                .param("productId",itemId);
+                .param("productIds",itemId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
-        DigitalAgreementType fc =  objectMapper.readValue(mvcResult.getResponse().getContentAsString(), DigitalAgreementType.class);
-        Assert.assertEquals(frameContract.getHjid(),fc.getHjid());
+        List<DigitalAgreementType> fc = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), new TypeReference<List<DigitalAgreementType>>() {});
+        Assert.assertEquals(1,fc.size());
+        Assert.assertEquals(frameContract.getHjid(),fc.get(0).getHjid());
     }
 
     @Test
@@ -122,7 +123,7 @@ public class FrameContractControllerTest {
         frameContract.getDigitalAgreementTerms().getValidityPeriod().setEndDate(updatedDates[1]);
         frameContract = new JPARepositoryFactory().forCatalogueRepository().updateEntity(frameContract);
 
-        MockHttpServletRequestBuilder request = get("/contract/digital-agreement?buyerId=" + TestConfig.buyerPartyID + "&sellerId=" + TestConfig.sellerPartyID + "&productId=" + itemId)
+        MockHttpServletRequestBuilder request = get("/contract/digital-agreement?buyerId=" + TestConfig.buyerPartyID + "&sellerId=" + TestConfig.sellerPartyID + "&productIds=" + itemId)
                 .header("Authorization", TestConfig.initiatorPersonId);
         this.mockMvc.perform(request).andDo(print()).andExpect(status().isNotFound()).andReturn();
     }
@@ -151,7 +152,7 @@ public class FrameContractControllerTest {
 
         frameContractService.createOrUpdateFrameContract(TestConfig.sellerPartyID, TestConfig.buyerPartyID, frameContract.getItem(), duration, "quotationId2");
 
-        request = get("/contract/digital-agreement?buyerId=" + TestConfig.buyerPartyID + "&sellerId=" + TestConfig.sellerPartyID + "&productId=" + itemId)
+        request = get("/contract/digital-agreement?buyerId=" + TestConfig.buyerPartyID + "&sellerId=" + TestConfig.sellerPartyID + "&productIds=" + itemId)
                 .header("Authorization", TestConfig.initiatorPersonId);
         this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
     }

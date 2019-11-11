@@ -50,6 +50,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.*;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayOutputStream;
@@ -365,11 +367,16 @@ public class ProcessInstanceController {
                 throw new RuntimeException(msg, e);
             }
 
-            ItemType item = iDocument.getItemType();
+            List<ItemType> items = iDocument.getItemTypes();
+            List<Boolean> areProductsDeleted = new ArrayList<>();
             // get catalogue line to check whether the product is deleted or not
-            CatalogueLineType catalogueLine = CataloguePersistenceUtility.getCatalogueLine(item.getCatalogueDocumentReference().getID(), item.getManufacturersItemIdentification().getID(),false);
-            return  "{\"item\":"+objectMapper.writeValueAsString(item) +
-                    ",\"isProductDeleted\":" + (catalogueLine == null) +
+            for (ItemType item : items) {
+                CatalogueLineType catalogueLine = CataloguePersistenceUtility.getCatalogueLine(item.getCatalogueDocumentReference().getID(), item.getManufacturersItemIdentification().getID(),false);
+                areProductsDeleted.add(catalogueLine == null);
+            }
+
+            return  "{\"items\":"+objectMapper.writeValueAsString(items) +
+                    ",\"areProductsDeleted\":" + objectMapper.writeValueAsString(areProductsDeleted) +
                     ",\"buyerPartyId\":\""+ iDocument.getBuyerPartyId() +
                     "\",\"buyerPartyName\":"+objectMapper.writeValueAsString(buyerPartyNames)+
                     ",\"sellerPartyId\":\""+ iDocument.getSellerPartyId()+
