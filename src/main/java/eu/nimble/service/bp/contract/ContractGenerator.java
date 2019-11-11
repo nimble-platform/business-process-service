@@ -10,6 +10,7 @@ import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ClauseType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.CodeType;
+import eu.nimble.service.model.ubl.commonbasiccomponents.QuantityType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.TextType;
 import eu.nimble.service.model.ubl.iteminformationrequest.ItemInformationRequestType;
 import eu.nimble.service.model.ubl.iteminformationresponse.ItemInformationResponseType;
@@ -38,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
+import javax.xml.datatype.XMLGregorianCalendar;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -681,6 +683,18 @@ public class ContractGenerator {
 
                 dataMonitoringRow.getCell(0).getParagraphArray(5).createRun().setText(dataMonitoringText);
 
+                // add delivery dates to Purchase Order Comments section
+                run = dataMonitoringRow.getCell(0).getParagraphArray(5).createRun();
+                run.setUnderline(UnderlinePatterns.SINGLE);
+                run.setText("\n\nDelivery Dates");
+
+                for (DeliveryType delivery : orderLine.getLineItem().getDelivery()) {
+                    XMLGregorianCalendar endDate = delivery.getRequestedDeliveryPeriod().getEndDate();
+                    QuantityType quantity = delivery.getShipment().getGoodsItem().get(0).getQuantity();
+                    if(endDate != null && quantity != null){
+                        dataMonitoringRow.getCell(0).getParagraphArray(5).createRun().setText("\n\nDelivery Date : "+endDate.toString()+" - Quantity : "+new DecimalFormat(".00").format(quantity.getValue())+" "+ quantity.getUnitCode());
+                    }
+                }
                 documents.add(document);
             }
             catch (Exception e){
@@ -1395,6 +1409,29 @@ public class ContractGenerator {
             dataMonitoringRow.getCell(0).getCTTc().addNewTcPr().addNewTcBorders().addNewRight().setVal(STBorder.NIL);
             dataMonitoringRow.getCell(1).getCTTc().addNewTcPr().addNewTcBorders().addNewLeft().setVal(STBorder.NIL);
 
+            // create rows for delivery dates
+            int rowIndex = 20;
+            XWPFTableRow deliveryDateRow = table.insertNewTableRow(rowIndex++);
+            run = deliveryDateRow.createCell().getParagraphs().get(0).createRun();
+            run.setBold(true);
+            run.setText("Delivery Dates");
+            deliveryDateRow.createCell().getParagraphs().get(0).createRun().setText("");
+            // remove the border between columns
+            deliveryDateRow.getCell(0).getCTTc().addNewTcPr().addNewTcBorders().addNewRight().setVal(STBorder.NIL);
+            deliveryDateRow.getCell(1).getCTTc().addNewTcPr().addNewTcBorders().addNewLeft().setVal(STBorder.NIL);
+
+            for (DeliveryType delivery : quotation.getQuotationLine().get(itemIndex).getLineItem().getDelivery()) {
+                XMLGregorianCalendar endDate = delivery.getRequestedDeliveryPeriod().getEndDate();
+                QuantityType quantity = delivery.getShipment().getGoodsItem().get(0).getQuantity();
+                if(endDate != null && quantity != null){
+                    XWPFTableRow row = table.insertNewTableRow(rowIndex++);
+                    row.createCell().getParagraphs().get(0).createRun().setText("Delivery Date : "+endDate.toString());
+                    row.createCell().getParagraphs().get(0).createRun().setText("Quantity : "+new DecimalFormat(".00").format(quantity.getValue())+" "+ quantity.getUnitCode());
+                    // remove the border between columns
+                    row.getCell(0).getCTTc().addNewTcPr().addNewTcBorders().addNewRight().setVal(STBorder.NIL);
+                    row.getCell(1).getCTTc().addNewTcPr().addNewTcBorders().addNewLeft().setVal(STBorder.NIL);
+                }
+            }
             // negotiation table 'Notes and Additional Documents' part
             // additional documents
             table = getTable(document,"Negotiation Notes/Additional Documents");
