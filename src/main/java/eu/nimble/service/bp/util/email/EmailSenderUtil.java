@@ -15,6 +15,7 @@ import org.thymeleaf.context.Context;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -43,14 +44,26 @@ public class EmailSenderUtil {
         new Thread(() -> {
             // Collect the trading partner name
             String partyId = groupDAO.getPartyID();
-            PartyType tradingPartner;
+            // the party of the user finishing/cancelling the collaboration
+            PartyType party = null;
+            // trading partner of the party in this collaboration
+            PartyType tradingPartner = null;
+            // get parties
             String tradingPartnerId = ProcessDocumentMetadataDAOUtility.getTradingPartnerId(groupDAO.getProcessInstanceIDs().get(0), partyId);
+            List<String> partyIds = Arrays.asList(partyId,tradingPartnerId);
             try {
-                tradingPartner = iIdentityClientTyped.getParty(bearerToken, tradingPartnerId);
-
+                List<PartyType> parties = iIdentityClientTyped.getParties(bearerToken,partyIds);
+                for (PartyType partyType : parties) {
+                    if(partyType.getPartyIdentification().get(0).getID().contentEquals(partyId)){
+                        party = partyType;
+                    }
+                    else{
+                        tradingPartner = partyType;
+                    }
+                }
             } catch (IOException e) {
                 logger.error("Failed to send email for group: {} with status: {}", groupDAO.getID(), groupDAO.getStatus().toString());
-                logger.error("Failed to get party with id: {} from identity service", tradingPartnerId, e);
+                logger.error("Failed to get parties with ids: {} from identity service", partyIds, e);
                 return;
             }
 
@@ -100,12 +113,12 @@ public class EmailSenderUtil {
             }
             personName = new StringBuilder("").append(person.getFirstName()).append(" ").append(person.getFamilyName()).toString();
 
-            notifyPartyOnCollaborationStatus(toEmail, personName, productNames.toString(), tradingPartner.getPartyName().get(0).getName().getValue(),groupDAO.getStatus());
+            notifyPartyOnCollaborationStatus(toEmail, personName, productNames.toString(), party.getPartyName().get(0).getName().getValue(),groupDAO.getStatus());
             logger.info("Collaboration status mail sent to: {} for group: {} with status: {}", toEmail, groupDAO.getID(), groupDAO.getStatus().toString());
         }).start();
     }
 
-    public void notifyPartyOnCollaborationStatus(String toEmail, String tradingPartnerPersonName, String productName, String tradingPartnerName, GroupStatus status){
+    private void notifyPartyOnCollaborationStatus(String toEmail, String tradingPartnerPersonName, String productName, String tradingPartnerName, GroupStatus status){
         Context context = new Context();
         String subject;
         String template;
