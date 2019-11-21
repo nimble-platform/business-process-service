@@ -38,4 +38,6 @@ public class RoleConfig {
                     NimbleRole.EXTERNAL_REPRESENTATIVE,
                     NimbleRole.LEGAL_REPRESENTATIVE,
                     NimbleRole.NIMBLE_DELETED_USER};
+    public static final NimbleRole[] REQUIRED_ROLES_TO_LOG_PAYMENTS =
+            {NimbleRole.EFACTORY_USER};
 }
