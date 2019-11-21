@@ -4,10 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import eu.nimble.common.rest.identity.IIdentityClientTyped;
 import eu.nimble.service.bp.config.RoleConfig;
-import eu.nimble.service.bp.model.hyperjaxb.CollaborationGroupDAO;
-import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
-import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceDAO;
-import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceStatus;
+import eu.nimble.service.bp.model.hyperjaxb.*;
 import eu.nimble.service.bp.util.BusinessProcessEvent;
 import eu.nimble.service.bp.model.export.TransactionSummary;
 import eu.nimble.service.bp.util.camunda.CamundaEngine;
@@ -237,6 +234,40 @@ public class ProcessInstanceController {
 
         } catch (Exception e) {
             return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting the order content for process instance id: %s, party: %s", processInstanceId, partyId), e, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @ApiOperation(value = "",notes = "Gets process instance id for the given document")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Retrieved process instance id successfully"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 404, message = "There does not exist a document with the given id"),
+            @ApiResponse(code = 500, message = "Unexpected error while getting the process instance id")
+    })
+    @RequestMapping(value = "/processInstance/document/{documentId}",
+            produces = {MediaType.TEXT_PLAIN_VALUE},
+            method = RequestMethod.GET)
+    public ResponseEntity getProcessInstanceIdForDocument(@ApiParam(value = "Identifier of the document", required = true) @PathVariable(value = "documentId", required = true) String documentId,
+                                  @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
+        try {
+            logger.info("Getting process instance id for document: {}", documentId);
+            // validate role
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+            }
+
+            ProcessDocumentMetadataDAO processDocumentMetadataDAO = ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId);
+            if(processDocumentMetadataDAO == null){
+                String msg = String.format("There does not exist a document with the given id: %s",documentId);
+                logger.error(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            }
+
+            logger.info("Retrieved process instance id for document: {}", documentId);
+            return ResponseEntity.ok(processDocumentMetadataDAO.getProcessInstanceID());
+
+        } catch (Exception e) {
+            return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting process instance id for document: %s", documentId), e, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
