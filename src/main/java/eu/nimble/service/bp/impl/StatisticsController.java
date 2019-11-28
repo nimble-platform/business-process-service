@@ -2,6 +2,7 @@ package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.model.statistics.BusinessProcessCount;
+import eu.nimble.service.bp.model.statistics.FulfilmentStatistics;
 import eu.nimble.service.bp.model.statistics.NonOrderedProducts;
 import eu.nimble.service.bp.model.statistics.OverallStatistics;
 import eu.nimble.service.bp.util.bp.BusinessProcessUtility;
@@ -324,7 +325,7 @@ public class StatisticsController {
     @RequestMapping(value = "/response-time",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity getAverageResponseTime(@ApiParam(value = "Identifier of the party as specified by the identity service", required = true) @RequestParam(value = "partyId") String partyId,
+    public ResponseEntity getAverageResponseTime(@ApiParam(value = "Identifier of the party as specified by the identity service",required = false) @RequestParam(value = "partyId",required = false) String partyId,
                                                  @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         logger.info("Getting average response time for the party with id: {}",partyId);
         // validate role
@@ -333,12 +334,23 @@ public class StatisticsController {
         }
 
         double averageResponseTime;
-        try {
-            averageResponseTime = StatisticsPersistenceUtility.calculateAverageResponseTime(partyId);
+
+        if (partyId != null) {
+            try {
+                averageResponseTime = StatisticsPersistenceUtility.calculateAverageResponseTime(partyId);
+            }
+            catch (Exception e){
+                return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting average response time for the party with id: %s", partyId), e, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }else{
+            try {
+                averageResponseTime = StatisticsPersistenceUtility.calculateAverageResponseTime(null);
+            }
+            catch (Exception e){
+                return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting average response time for the party with id: %s", partyId), e, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
         }
-        catch (Exception e){
-            return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting average response time for the party with id: %s", partyId), e, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+
         logger.info("Retrieved average response time for the party with id: {}",partyId);
         return ResponseEntity.ok(averageResponseTime);
     }
@@ -346,7 +358,7 @@ public class StatisticsController {
     @RequestMapping(value = "/response-time-months",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity getAverageResponseTimeForMonths(@ApiParam(value = "Identifier of the party as specified by the identity service", required = true) @RequestParam(value = "partyId") String partyId,
+    public ResponseEntity getAverageResponseTimeForMonths(@ApiParam(value = "Identifier of the party as specified by the identity service", required = false) @RequestParam(value = "partyId",required = false) String partyId,
             @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         logger.info("Getting average response time for the party with id: {}",partyId);
         // validate role
@@ -355,12 +367,26 @@ public class StatisticsController {
         }
 
         Map<Integer,Double> averageResponseTime;
-        try {
-            averageResponseTime = StatisticsPersistenceUtility.calculateAverageResponseTimeInMonths(partyId);
+        if (partyId != null) {
+            try {
+                averageResponseTime = StatisticsPersistenceUtility.calculateAverageResponseTimeInMonths(partyId);
+            }
+            catch (Exception e) {
+                return HttpResponseUtil.createResponseEntityAndLog(
+                        String.format("Unexpected error while getting average response time for the party with id: %s",
+                                partyId), e, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }else {
+            try {
+                averageResponseTime = StatisticsPersistenceUtility.calculateAverageResponseTimeInMonths(null);
+            }
+            catch (Exception e) {
+                return HttpResponseUtil.createResponseEntityAndLog(
+                        String.format("Unexpected error while getting average response time for the party with id: %s",
+                                partyId), e, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
         }
-        catch (Exception e){
-            return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting average response time for the party with id: %s", partyId), e, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+
         logger.info("Retrieved average response time for the party with id: {}",partyId);
         return ResponseEntity.ok(averageResponseTime);
     }
@@ -374,7 +400,7 @@ public class StatisticsController {
     @RequestMapping(value = "/collaboration-time",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity getAverageCollaborationTime(@ApiParam(value = "Identifier of the party as specified by the identity service", required = true) @RequestParam(value = "partyId") String partyId,
+    public ResponseEntity getAverageCollaborationTime(@ApiParam(value = "Identifier of the party as specified by the identity service",required = false) @RequestParam(value = "partyId",required = false) String partyId,
             @ApiParam(value = "Role of the party in the business process.<br>Possible values:<ul><li>SELLER</li><li>BUYER</li></ul>", defaultValue = "SELLER", required = false) @RequestParam(value = "role", required = false, defaultValue = "SELLER") String role,
             @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
         logger.info("Getting average negotiation time for the party with id: {}",partyId);
@@ -382,8 +408,12 @@ public class StatisticsController {
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
             return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
         }
-
-        double averageNegotiationTime = StatisticsPersistenceUtility.calculateAverageCollaborationTime(partyId,bearerToken,role);
+        double averageNegotiationTime;
+        if (partyId != null) {
+            averageNegotiationTime = StatisticsPersistenceUtility.calculateAverageCollaborationTime(partyId,bearerToken,role);
+        }else{
+            averageNegotiationTime = StatisticsPersistenceUtility.calculateAverageCollaborationTimeForPlatform(bearerToken,role);
+        }
         logger.info("Retrieved average negotiation time for the party with id: {}",partyId);
         return ResponseEntity.ok(averageNegotiationTime);
     }
@@ -408,7 +438,7 @@ public class StatisticsController {
                 return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
-            statistics.setAverageCollaborationTime((double) getAverageCollaborationTime(partyId,bearerToken,role).getBody());
+            statistics.setAverageCollaborationTime((double) getAverageCollaborationTime(partyId,role,bearerToken).getBody());
             statistics.setAverageResponseTime((double)getAverageResponseTime(partyId,bearerToken).getBody());
             statistics.setTradingVolume((double) getTradingVolume(null,null,Integer.valueOf(partyId), role,null,bearerToken).getBody());
             statistics.setNumberOfTransactions((int)getProcessCount(null,null,null,Integer.valueOf(partyId),role,null,bearerToken).getBody());
@@ -418,5 +448,34 @@ public class StatisticsController {
         }
         logger.info("Retrieved statistics for the party with id: {}",partyId);
         return ResponseEntity.ok(statistics);
+    }
+
+    @ApiOperation(value = "Gets fulfilment statistics (dispatched quantity, rejected quantity and requested quantity) for the given order")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Retrieved fulfilment statistics for the order",response = FulfilmentStatistics.class,responseContainer = "List"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 500, message = "Unexpected error while getting fulfilment statistics")
+    })
+    @RequestMapping(value = "/fulfilment",
+            produces = {"application/json"},
+            method = RequestMethod.GET)
+    public ResponseEntity getFulfilmentStatistics(@ApiParam(value = "Identifier of the order for which the fulfilment statistics will be retrieved",required = true) @RequestParam(value = "orderId",required = true) String orderId,
+                                        @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
+        logger.info("Getting fulfilment statistics for the order with id: {}",orderId);
+        String serializedResponse = null;
+        try {
+            // validate role
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+            }
+            List<FulfilmentStatistics> statistics = StatisticsPersistenceUtility.getFulfilmentStatistics(orderId);
+            serializedResponse = JsonSerializationUtility.getObjectMapperForFilledFields().writeValueAsString(statistics);
+        }
+        catch (Exception e){
+            return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting fulfilment statistics for the order with id: %s", orderId), e, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        logger.info("Retrieved fulfilment statistics for the order with id: {}",orderId);
+        return ResponseEntity.ok(serializedResponse);
     }
 }

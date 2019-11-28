@@ -7,6 +7,7 @@ import eu.nimble.service.bp.model.billOfMaterial.BillOfMaterialItem;
 import eu.nimble.service.bp.model.hyperjaxb.*;
 import eu.nimble.service.bp.util.BusinessProcessEvent;
 import eu.nimble.service.bp.util.bp.BusinessProcessUtility;
+import eu.nimble.service.bp.util.bp.ClassProcessTypeMap;
 import eu.nimble.service.bp.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.util.email.EmailSenderUtil;
 import eu.nimble.service.bp.util.persistence.bp.CollaborationGroupDAOUtility;
@@ -153,7 +154,7 @@ public class StartController implements StartApi {
         // check whether the process is included in the workflow of seller company
         String processId = body.getVariables().getProcessID();
         // get the identifier of party whose workflow will be checked
-        String partyId = processId.contentEquals("Fulfilment") ? body.getVariables().getInitiatorID(): body.getVariables().getResponderID();
+        String partyId = processId.contentEquals(ClassProcessTypeMap.CAMUNDA_PROCESS_ID_FULFILMENT) ? body.getVariables().getInitiatorID(): body.getVariables().getResponderID();
         PartyType sellerParty;
         try {
             sellerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,partyId);
@@ -163,6 +164,7 @@ public class StartController implements StartApi {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
 
+        // check whether the started process is supported by the seller party
         if(sellerParty.getProcessID() != null && sellerParty.getProcessID().size() > 0 && !sellerParty.getProcessID().contains(processId)){
             String msg = String.format("%s is not included in the workflow of %s", processId,sellerParty.getPartyName().get(0).getName().getValue());
             logger.error(msg);
@@ -310,7 +312,7 @@ public class StartController implements StartApi {
 
         ProcessInstanceGroupDAO sourceGroup;
         sourceGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(sourceGid,repo);
-        if(body.getVariables().getProcessID().equals("Fulfilment") && sourceGroup.getPrecedingProcessInstanceGroup() != null){
+        if(body.getVariables().getProcessID().equals(ClassProcessTypeMap.CAMUNDA_PROCESS_ID_FULFILMENT) && sourceGroup.getPrecedingProcessInstanceGroup() != null){
             sourceGroup = sourceGroup.getPrecedingProcessInstanceGroup();
         }
         sourceGroup.getProcessInstanceIDs().add(processInstanceId);

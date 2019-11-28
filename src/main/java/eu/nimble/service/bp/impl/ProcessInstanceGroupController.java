@@ -1,5 +1,6 @@
 package eu.nimble.service.bp.impl;
 
+import eu.nimble.common.rest.identity.IIdentityClientTyped;
 import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.model.hyperjaxb.*;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
@@ -135,8 +136,9 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
             if (pi == null) {
                 return HttpResponseUtil.createResponseEntityAndLog(String.format("No process ID exists for the process id: %s", processInstanceId), null, HttpStatus.NOT_FOUND, LogLevel.INFO);
             }
+
             // get the order
-            String orderId = ProcessInstanceGroupDAOUtility.getOrderIdInGroup(processInstanceId);
+            String orderId = ProcessInstanceGroupDAOUtility.getSourceOrderResponseIdForTransportRelatedProcess(processInstanceId);
 
             // get the order content
             ResponseEntity response;

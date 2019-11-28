@@ -6,18 +6,19 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.model.hyperjaxb.CollaborationGroupDAO;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO;
-import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceDAO;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceGroupDAO;
+import eu.nimble.service.bp.model.statistics.FulfilmentStatistics;
 import eu.nimble.service.bp.model.statistics.NonOrderedProducts;
 import eu.nimble.service.bp.util.persistence.bp.CollaborationGroupDAOUtility;
 import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
-import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceDAOUtility;
 import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.commonbasiccomponents.TextType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.CompletedTaskType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.QualifyingPartyType;
+import eu.nimble.service.model.ubl.despatchadvice.DespatchAdviceType;
+import eu.nimble.service.model.ubl.receiptadvice.ReceiptAdviceType;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import org.slf4j.Logger;
@@ -57,6 +58,63 @@ public class StatisticsPersistenceUtility {
         parameterValues.add(partyID);
         List<String> count = new JPARepositoryFactory().forBpRepository().getEntities(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
         return count.size();
+    }
+
+    public static List<FulfilmentStatistics> getFulfilmentStatistics(String orderId){
+        // get lines for the given order id
+        String query = "SELECT orderLine " +
+                "FROM OrderType orderType join orderType.orderLine orderLine " +
+                "WHERE orderType.ID = :orderId";
+        List<String> parameterNames = Collections.singletonList("orderId");;
+        List<Object> parameterValues = Collections.singletonList(orderId);
+        List<OrderLineType> orderLines = new JPARepositoryFactory().forCatalogueRepository(true).getEntities(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
+
+        // get dispatch and receipt advice pairs for the specified order
+        query = "select distinct despatchAdvice,receiptAdvice " +
+                "from DespatchAdviceType despatchAdvice join despatchAdvice.despatchLine despatchLine join despatchAdvice.orderReference orderReference," +
+                "ReceiptAdviceType receiptAdvice join receiptAdvice.receiptLine receiptLine join receiptAdvice.despatchDocumentReference despatchDocumentReference " +
+                "where despatchDocumentReference.ID = despatchAdvice.ID AND orderReference.documentReference.ID = :orderId";
+        List<Object[]> dispatchReceiptAdvicePairs = new JPARepositoryFactory().forCatalogueRepository(true).getEntities(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
+
+        // for each line item in the order, there should be a FulfilmentStatistics
+        // we use the SortedMap to keep the order of lines
+        SortedMap<Long,FulfilmentStatistics> lineHjidFulfilmentStatisticsMap = new TreeMap<>();
+        for (OrderLineType orderLine : orderLines) {
+            FulfilmentStatistics fulfilmentStatistic = new FulfilmentStatistics();
+            fulfilmentStatistic.setLineItemHjid(orderLine.getHjid());
+            fulfilmentStatistic.setRequestedQuantity(orderLine.getLineItem().getQuantity().getValue());
+            fulfilmentStatistic.setRejectedQuantity(BigDecimal.ZERO);
+            fulfilmentStatistic.setDispatchedQuantity(BigDecimal.ZERO);
+            lineHjidFulfilmentStatisticsMap.put(orderLine.getHjid(),fulfilmentStatistic);
+        }
+
+        for (Object[] result : dispatchReceiptAdvicePairs) {
+            DespatchAdviceType despatchAdvice = (DespatchAdviceType) result[0];
+            ReceiptAdviceType receiptAdvice = (ReceiptAdviceType) result[1];
+
+            int numberOfItems = despatchAdvice.getDespatchLine().size();
+            for(int i = 0; i < numberOfItems; i++){
+                DespatchLineType despatchLineType = despatchAdvice.getDespatchLine().get(i);
+                ReceiptLineType receiptLineType = receiptAdvice.getReceiptLine().get(i);
+
+                Long lineHjid = Long.parseLong(despatchLineType.getOrderLineReference().getLineID());
+
+                BigDecimal dispatchedQuantity = BigDecimal.ZERO;
+                BigDecimal rejectedQuantity = BigDecimal.ZERO;
+                BigDecimal deliveredQuantity = despatchLineType.getDeliveredQuantity().getValue();
+                if(deliveredQuantity != null){
+                    dispatchedQuantity = dispatchedQuantity.add(deliveredQuantity);
+                }
+                BigDecimal receiptLineRejectedQuantity = receiptLineType.getRejectedQuantity().getValue();
+                if(receiptLineRejectedQuantity != null){
+                    rejectedQuantity = rejectedQuantity.add(receiptLineRejectedQuantity);
+                }
+                lineHjidFulfilmentStatisticsMap.get(lineHjid).setDispatchedQuantity(lineHjidFulfilmentStatisticsMap.get(lineHjid).getDispatchedQuantity().add(dispatchedQuantity));
+                lineHjidFulfilmentStatisticsMap.get(lineHjid).setRejectedQuantity(lineHjidFulfilmentStatisticsMap.get(lineHjid).getRejectedQuantity().add(rejectedQuantity));
+            }
+        }
+
+        return new ArrayList<FulfilmentStatistics>(lineHjidFulfilmentStatisticsMap.values());
     }
 
     public static double getTradingVolume(Integer partyId, String role, String startDate, String endDate, String status) {
@@ -213,28 +271,63 @@ public class StatisticsPersistenceUtility {
         return totalTime/numberOfCollaborations;
     }
 
+    public static double calculateAverageCollaborationTimeForPlatform(String bearerToken, String role){
+        int numberOfCollaborations = 0;
+        double totalTime = 0;
+        List<CompletedTaskType> completedtasks = PartyPersistenceUtility.getCompletedTasks();
+        List<String> processInstanceIds = CollaborationGroupDAOUtility.getProcessInstanceIdsByCollborationRole(role);
+        Set set = new HashSet(processInstanceIds);
+
+        for(CompletedTaskType completedtask : completedtasks){
+            if(completedtask.getPeriod().getEndDate() == null || completedtask.getPeriod().getEndTime() == null){
+                continue;
+            }
+
+            if(set.contains(completedtask.getAssociatedProcessInstanceID())){
+                Date startDate = completedtask.getPeriod().getStartDate().toGregorianCalendar().getTime();
+                Date endDate = completedtask.getPeriod().getEndDate().toGregorianCalendar().getTime();
+                Date startTime = completedtask.getPeriod().getStartTime().toGregorianCalendar().getTime();
+                Date endTime = completedtask.getPeriod().getEndTime().toGregorianCalendar().getTime();
+                numberOfCollaborations++;
+                totalTime += ((endDate.getTime()-startDate.getTime())+(endTime.getTime()-startTime.getTime()))/86400000.0;
+            }
+
+        }
+
+        if(numberOfCollaborations == 0){
+            return 0.0;
+        }
+        return totalTime/numberOfCollaborations;
+    }
+
     public static double calculateAverageResponseTime(String partyID) throws Exception{
 
         int numberOfResponses = 0;
         double totalTime = 0;
+        List<String> processInstanceIDs;
 
-        List<String> processInstanceIDs = ProcessDocumentMetadataDAOUtility.getProcessInstanceIds(partyID);
+        if(partyID != null){
+            processInstanceIDs = CollaborationGroupDAOUtility.getProcessInstanceIdsByParty(partyID);
+        }else {
+            processInstanceIDs =  CollaborationGroupDAOUtility.getProcessInstanceIds();
+        }
 
         for (String processInstanceID:processInstanceIDs){
-                List<ProcessDocumentMetadataDAO> processDocumentMetadataDAOS = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(processInstanceID);
-                if (processDocumentMetadataDAOS.size() != 2){
-                    continue;
-                }
+            List<ProcessDocumentMetadataDAO> processDocumentMetadataDAOS = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(processInstanceID);
+            if (processDocumentMetadataDAOS.size() != 2){
+                continue;
+            }
 
-                ProcessDocumentMetadataDAO docMetadata = processDocumentMetadataDAOS.get(1);
-                ProcessDocumentMetadataDAO reqMetadata = processDocumentMetadataDAOS.get(0);
+            ProcessDocumentMetadataDAO docMetadata = processDocumentMetadataDAOS.get(1);
+            ProcessDocumentMetadataDAO reqMetadata = processDocumentMetadataDAOS.get(0);
 
-                Date startDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(reqMetadata.getSubmissionDate()).toGregorianCalendar().getTime();
-                Date endDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(docMetadata.getSubmissionDate()).toGregorianCalendar().getTime();
+            Date startDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(reqMetadata.getSubmissionDate()).toGregorianCalendar().getTime();
+            Date endDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(docMetadata.getSubmissionDate()).toGregorianCalendar().getTime();
 
-                numberOfResponses++;
-                totalTime += (endDate.getTime()-startDate.getTime())/86400000.0;
+            numberOfResponses++;
+            totalTime += (endDate.getTime()-startDate.getTime())/86400000.0;
         }
+
         if(numberOfResponses == 0){
             return 0.0;
         }
@@ -248,8 +341,14 @@ public class StatisticsPersistenceUtility {
         int currentmonth = 0 ;
         int currentyear = 0;
 
+        List<String> processInstanceIDs;
 
-        List<String> processInstanceIDs = ProcessDocumentMetadataDAOUtility.getProcessInstanceIds(partyID);
+        if(partyID != null){
+            processInstanceIDs = CollaborationGroupDAOUtility.getProcessInstanceIdsByParty(partyID);
+
+        }else {
+            processInstanceIDs =  CollaborationGroupDAOUtility.getProcessInstanceIds();
+        }
 
         Set<Integer> monthList = new HashSet<>();
 
@@ -318,5 +417,45 @@ public class StatisticsPersistenceUtility {
         }
 
         return storeMonth;
+    }
+
+    private static class ItemKey{
+
+        private String catalogueId;
+        private String lineId;
+
+        public ItemKey(String catalogueId, String lineId) {
+            this.catalogueId = catalogueId;
+            this.lineId = lineId;
+        }
+
+        public String getCatalogueId() {
+            return catalogueId;
+        }
+
+        public void setCatalogueId(String catalogueId) {
+            this.catalogueId = catalogueId;
+        }
+
+        public String getLineId() {
+            return lineId;
+        }
+
+        public void setLineId(String lineId) {
+            this.lineId = lineId;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof ItemKey)) return false;
+            ItemKey key = (ItemKey) o;
+            return catalogueId.contentEquals(key.catalogueId) && lineId.contentEquals(key.lineId);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(catalogueId,lineId);
+        }
     }
 }

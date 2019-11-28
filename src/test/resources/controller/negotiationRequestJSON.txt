@@ -3,7 +3,6 @@
   "note": [
     ""
   ],
-  "dataMonitoringRequested": true,
   "buyerCustomerParty": {
     "party": {
       "nace": [],
@@ -1760,6 +1759,7 @@
           "value": 1,
           "unitCode": "item(s)"
         },
+        "dataMonitoringRequested": true,
         "warrantyInformation": [],
         "delivery": [
           {
@@ -3973,8 +3973,10 @@
       }
     ]
   },
-  "additionalDocumentReference": [{
-    "id":"ece63f2f-11e8-4f81-89de-7ea4effbc865",
-    "documentType":"previousDocument"
-  }]
+  "additionalDocumentReference": [
+    {
+      "id": "ece63f2f-11e8-4f81-89de-7ea4effbc865",
+      "documentType": "previousDocument"
+    }
+  ]
 }

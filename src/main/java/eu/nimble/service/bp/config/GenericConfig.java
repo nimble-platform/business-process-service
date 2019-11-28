@@ -14,7 +14,14 @@ public class GenericConfig {
     @Value("${nimble.data-channel.url}")
     private String dataChannelServiceUrl;
 
+    @Value("${efactory.logstash.url}")
+    private String efactoryLogstashUrl;
+
     public String getDataChannelServiceUrl() {
         return dataChannelServiceUrl;
+    }
+
+    public String getEfactoryLogstashUrl() {
+        return efactoryLogstashUrl;
     }
 }

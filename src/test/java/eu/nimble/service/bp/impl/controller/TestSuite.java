@@ -12,8 +12,8 @@ import org.junit.runners.Suite;
         BusinessProcessWorkflowTests.class,
         StartControllerTest.class,
         ContinueControllerTest.class,
-        StatisticsControllerTest.class,
         BusinessProcessExecutionTest.class,
+        StatisticsControllerTest.class,
         StartWithDocumentControllerTest.class,
         DocumentsControllerTest.class,
         TransactionSummaryTest.class,
@@ -31,7 +31,8 @@ import org.junit.runners.Suite;
         CollaborationGroupTest2_GroupDeletion.class,
         CollaborationGroupTest3_GroupDeletionAndMerge.class,
         DocumentTypesTest.class,
-        EPCControllerTest.class
+        EPCControllerTest.class,
+        PaymentControllerTest.class
 })
 public class TestSuite {
 }
