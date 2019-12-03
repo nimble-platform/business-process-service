@@ -203,9 +203,9 @@ public class ShoppingCartController {
         }
     }
 
-    @ApiOperation(value = "", notes = "Removes the specified product from the shopping cart")
+    @ApiOperation(value = "", notes = "Removes the specified products from the shopping cart")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Removed the product to the shopping cart", response = CatalogueType.class),
+            @ApiResponse(code = 200, message = "Removed the products to the shopping cart", response = CatalogueType.class),
             @ApiResponse(code = 400, message = "There is no product in the cart for the specified id"),
             @ApiResponse(code = 401, message = "Invalid user or role"),
             @ApiResponse(code = 412, message = "The client user does not have an associated shopping cart")
@@ -213,10 +213,10 @@ public class ShoppingCartController {
     @RequestMapping(value = "/shopping-cart",
             produces = {"application/json"},
             method = RequestMethod.DELETE)
-    public ResponseEntity removeProductFromShoppingCart(@ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
-                                                        @ApiParam(value = "Hjid of the product to be deleted from the cart", required = true) @RequestParam(value = "productId", required = true) Long productId) {
+    public ResponseEntity removeProductsFromShoppingCart(@ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
+                                                        @ApiParam(value = "Hjid of the products to be deleted from the cart", required = true) @RequestParam(value = "productIds", required = true) List<Long> productIds) {
         try {
-            logger.info("Incoming request to remove product from shopping cart: {}", productId);
+            logger.info("Incoming request to remove products from shopping cart: {}", productIds);
             // validate role
             if (!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
                 return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
@@ -240,20 +240,22 @@ public class ShoppingCartController {
 
             // add the copy reduced product to the cart
             if (cartCatalogue.getCatalogueLine() != null) {
+                List<CatalogueLineType> catalogueLinesToBeRemoved = new ArrayList<>();
                 for(CatalogueLineType product : cartCatalogue.getCatalogueLine()) {
-                    if(product.getHjid().equals(productId)) {
-                        cartCatalogue.getCatalogueLine().remove(product);
-                        break;
+                    if(productIds.contains(product.getHjid())){
+                        catalogueLinesToBeRemoved.add(product);
                     }
                 }
+                cartCatalogue.getCatalogueLine().removeAll(catalogueLinesToBeRemoved);
             }
+
             cartCatalogue = new JPARepositoryFactory().forCatalogueRepository(true).updateEntity(cartCatalogue);
 
-            logger.info("Completed request to remove product: {} from the create shopping cart", productId);
+            logger.info("Completed request to remove products: {} from the create shopping cart", productIds);
             return ResponseEntity.ok(JsonSerializationUtility.getObjectMapper().writeValueAsString(cartCatalogue));
 
         } catch (Exception e) {
-            return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while removing product: %d from the cart", productId), e, HttpStatus.INTERNAL_SERVER_ERROR);
+            return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while removing products: %s from the cart", productIds), e, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }
