@@ -235,8 +235,12 @@ public class BPMessageGenerator {
         PeriodType warranty = new PeriodType();
         warranty.setDurationMeasure(catalogueLine.getWarrantyValidityPeriod().getDurationMeasure());
 
+        ShipmentType shipment = new ShipmentType();
+        shipment.setGoodsItem(Arrays.asList(new GoodsItemType()));
+
         DeliveryType delivery = new DeliveryType();
         delivery.setRequestedDeliveryPeriod(requestedDeliveryPeriod);
+        delivery.setShipment(shipment);
 
         LocationType location = new LocationType();
 
