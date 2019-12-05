@@ -92,8 +92,29 @@ public class ProcessDocumentMetadataDAOUtility {
                     "FROM ProcessInstanceGroupDAO pig join pig.processInstanceIDsItems idItems " +
                     "WHERE metadata.processInstanceID = idItems.item AND pig.status != 'COMPLETED' " +
                     ")";
+    private static final String QUERY_GET_REQUEST_FOR_QUOTATION_IDS_FOR_UNSHIPPED_ORDERS =
+            "SELECT distinct rfq.ID " +
+                    "FROM RequestForQuotationType rfq join rfq.additionalDocumentReference rfqReference " +
+                    "WHERE rfqReference.documentType LIKE 'unShippedOrder' AND rfqReference.ID IN :orderIds ";
+    private static final String QUERY_GET_ORDER_IDS_FOR_UNSHIPPED_ORDERS =
+            "SELECT distinct ord.ID " +
+                    "FROM OrderType ord join ord.additionalDocumentReference orderReference " +
+                    "WHERE orderReference.documentType LIKE 'unShippedOrder' AND orderReference.ID IN :orderIds";
 
     private static final Logger logger = LoggerFactory.getLogger(ProcessDocumentMetadataDAOUtility.class);
+
+
+    // returns the identifiers of documents which are used to start an associated process,i.e Negotiation or Order, for the unshipped orders
+    public static List<String> getAssociatedDocumentIDsForUnShippedOrders(List<String> unShippedOrderIds) {
+        GenericJPARepository catalogueRepository = new JPARepositoryFactory().forCatalogueRepository();
+        // get rfq ids
+        List<String> rfqIds = catalogueRepository.getEntities(QUERY_GET_REQUEST_FOR_QUOTATION_IDS_FOR_UNSHIPPED_ORDERS,new String[]{"orderIds"}, new Object[]{unShippedOrderIds});
+        // get order ids
+        List<String> orderIds = catalogueRepository.getEntities(QUERY_GET_ORDER_IDS_FOR_UNSHIPPED_ORDERS,new String[]{"orderIds"}, new Object[]{unShippedOrderIds});
+        // returns all ids
+        rfqIds.addAll(orderIds);
+        return rfqIds;
+    }
 
     public static ProcessDocumentMetadataDAO findByDocumentID(String documentId) {
         return findByDocumentID(documentId, new JPARepositoryFactory().forBpRepository(true));
