@@ -70,7 +70,8 @@ public class R14MigrationController {
             for (RequestForQuotationType rfq : rfqs) {
                 logger.info("Updating the fields of rfq with id: {}",rfq.getID());
 
-                rfq.getRequestForQuotationLine().get(0).getLineItem().setDataMonitoringRequested(rfq.isDataMonitoringRequested());
+                boolean isDataMonitoringRequested = rfq.isDataMonitoringRequested() != null && rfq.isDataMonitoringRequested();
+                rfq.getRequestForQuotationLine().get(0).getLineItem().setDataMonitoringRequested(isDataMonitoringRequested);
                 rfq.getRequestForQuotationLine().get(0).getLineItem().setPaymentTerms(rfq.getPaymentTerms());
                 rfq.getRequestForQuotationLine().get(0).getLineItem().setPaymentMeans(rfq.getPaymentMeans());
 
@@ -99,7 +100,8 @@ public class R14MigrationController {
             for (QuotationType quotation : quotations) {
                 logger.info("Updating the quotation with id: {}",quotation.getID());
 
-                quotation.getQuotationLine().get(0).getLineItem().setDataMonitoringRequested(quotation.isDataMonitoringPromised());
+                boolean isDataMonitoringPromised = quotation.isDataMonitoringPromised() != null && quotation.isDataMonitoringPromised();
+                quotation.getQuotationLine().get(0).getLineItem().setDataMonitoringRequested(isDataMonitoringPromised);
                 quotation.getQuotationLine().get(0).getLineItem().setPaymentTerms(quotation.getPaymentTerms());
                 quotation.getQuotationLine().get(0).getLineItem().setPaymentMeans(quotation.getPaymentMeans());
 
