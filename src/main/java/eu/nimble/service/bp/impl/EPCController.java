@@ -6,6 +6,7 @@ import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
 import eu.nimble.service.bp.model.tt.OrderEPC;
 import eu.nimble.service.bp.util.HttpResponseUtil;
+import eu.nimble.service.bp.util.SchedulerService;
 import eu.nimble.service.bp.util.persistence.catalogue.CataloguePersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.util.spring.SpringBridge;
@@ -24,10 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -147,5 +145,31 @@ public class EPCController {
             logger.error(String.format(msg,publishedProductID),e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(String.format(msg,publishedProductID));
         }
+    }
+
+    @Autowired
+    private SchedulerService schedulerService;
+
+    @ApiOperation(value = "",notes = "Updates the cron expression of the scheduler")
+    @RequestMapping(value = "/t-t/cron-expression",
+            produces = {"application/json"},
+            method = RequestMethod.PUT)
+    public ResponseEntity setCronExpressionOfScheduler(@ApiParam(value = "The cron expression used to update execution time of scheduler" ,required=true ) @RequestBody String cronExpression,
+                                                       @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
+        logger.info("Request to set cron expression of scheduler");
+        schedulerService.setCronExpression(cronExpression);
+        logger.info("Completed the request to set cron expression of scheduler");
+        return ResponseEntity.ok(null);
+    }
+
+    @ApiOperation(value = "",notes = "Gets the cron expression of the scheduler")
+    @RequestMapping(value = "/t-t/cron-expression",
+            produces = {"application/json"},
+            method = RequestMethod.GET)
+    public ResponseEntity getCronExpressionOfScheduler(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
+        logger.info("Request to get cron expression of scheduler");
+        String cronExpression = schedulerService.getCronExpression();
+        logger.info("Completed the request to get cron expression of scheduler");
+        return ResponseEntity.ok(cronExpression);
     }
 }

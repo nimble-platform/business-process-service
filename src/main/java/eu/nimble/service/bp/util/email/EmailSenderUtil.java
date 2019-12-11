@@ -14,9 +14,9 @@ import org.springframework.stereotype.Component;
 import org.thymeleaf.context.Context;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * Created by suat on 16-Oct-18.
@@ -139,6 +139,61 @@ public class EmailSenderUtil {
         emailService.send(new String[]{toEmail}, subject, template, context);
     }
 
+    public void sendNewDeliveryDateEmail(String bearerToken, Date newDeliveryDate, String buyerPartyId, String processInstanceId) {
+        new Thread(() -> {
+            // get date as a string
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            String strDate = dateFormat.format(newDeliveryDate);
+
+            // trading partner of the party in this collaboration
+            PartyType tradingPartner = null;
+            try {
+                tradingPartner = iIdentityClientTyped.getParty(bearerToken,buyerPartyId);
+            } catch (IOException e) {
+                logger.error("Failed to send the new delivery date information to buyer party: {}", buyerPartyId);
+                logger.error("Failed to get party with id: {} from identity service", buyerPartyId, e);
+                return;
+            }
+
+            // get process document metadata daos
+            List<ProcessDocumentMetadataDAO> processDocumentMetadataDAOS = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(processInstanceId);
+            // collect product name
+            List<String> productNameList = processDocumentMetadataDAOS.get(0).getRelatedProducts();
+            StringBuilder productNames = new StringBuilder("");
+            for (int i = 0; i < productNameList.size() - 1; i++) {
+                productNames.append(productNameList.get(i)).append(", ");
+            }
+            productNames.append(productNameList.get(productNameList.size() - 1));
+
+
+            // get the recipient email
+            String toEmail = null;
+            for (ProcessDocumentMetadataDAO processDocumentMetadataDAO : processDocumentMetadataDAOS) {
+                if(processDocumentMetadataDAO.getInitiatorID().contentEquals(buyerPartyId)){
+                    PersonType person;
+                    try {
+                        person = iIdentityClientTyped.getPerson(bearerToken, processDocumentMetadataDAO.getCreatorUserID());
+                        toEmail = person.getContact().getElectronicMail();
+                    } catch (IOException e) {
+                        logger.error("Failed to send the new delivery date information to buyer party: {}", buyerPartyId);
+                        logger.error("Failed to get person with id: {} from identity service", processDocumentMetadataDAO.getCreatorUserID(), e);
+                        return;
+                    }
+                    break;
+                }
+            }
+
+            if(toEmail == null){
+                toEmail = tradingPartner.getPerson().get(0).getContact().getElectronicMail();
+            }
+
+            String url = getFrontendUrl(COLLABORATION_ROLE_BUYER);
+
+            notifyPartyOnNewDeliveryDate(toEmail,productNames.toString(),tradingPartner.getPartyName().get(0).getName().getValue(),strDate,url,bearerToken);
+            logger.info("New delivery date mail sent to: {} for process instance id: {}", toEmail, processInstanceId);
+        }).start();
+    }
+
     public void sendActionPendingEmail(String bearerToken, String documentId) {
         new Thread(() -> {
             // Get ProcessDocumentMetadataDAO for the given document id
@@ -226,15 +281,15 @@ public class EmailSenderUtil {
             if (showURL) {
                 if (processDocumentMetadataDAO.getResponderID().equals(String.valueOf(sellerParty.getPartyIdentification().get(0).getID()))) {
                     if (processDocumentStatus.equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
-                        url = getPendingActionURL(COLLABORATION_ROLE_SELLER);
+                        url = getFrontendUrl(COLLABORATION_ROLE_SELLER);
                     }else {
-                        url = getPendingActionURL(COLLABORATION_ROLE_BUYER);
+                        url = getFrontendUrl(COLLABORATION_ROLE_BUYER);
                     }
                 } else if (processDocumentMetadataDAO.getResponderID().equals(String.valueOf(buyerParty.getPartyIdentification().get(0).getID()))) {
                     if (processDocumentStatus.equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
-                        url = getPendingActionURL(COLLABORATION_ROLE_BUYER);
+                        url = getFrontendUrl(COLLABORATION_ROLE_BUYER);
                     }else {
-                        url = getPendingActionURL(COLLABORATION_ROLE_SELLER);
+                        url = getFrontendUrl(COLLABORATION_ROLE_SELLER);
                     }
                 }
             }
@@ -247,7 +302,7 @@ public class EmailSenderUtil {
         }).start();
     }
 
-    private String getPendingActionURL(String collaborationRole) {
+    private String getFrontendUrl(String collaborationRole) {
         if (COLLABORATION_ROLE_SELLER.equals(collaborationRole)) {
             return URL_TEXT + frontEndURL + "/#/dashboard?tab=SALES";
         } else if (COLLABORATION_ROLE_BUYER.equals(collaborationRole)) {
@@ -294,5 +349,16 @@ public class EmailSenderUtil {
         }
 
         emailService.send(toEmail, subject, "continue_colloboration", context);
+    }
+
+    public void notifyPartyOnNewDeliveryDate(String toEmail,String productName, String respondingPartyName, String expectedDeliveryDate, String url, String subject) {
+        Context context = new Context();
+
+        context.setVariable("respondingPartyName", respondingPartyName);
+        context.setVariable("expectedDeliveryDate", expectedDeliveryDate);
+        context.setVariable("product", productName);
+        context.setVariable("url", url);
+
+        emailService.send(new String[]{toEmail}, subject, "new_delivery_date", context);
     }
 }
