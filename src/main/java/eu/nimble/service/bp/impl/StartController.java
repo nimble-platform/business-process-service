@@ -7,8 +7,8 @@ import eu.nimble.service.bp.model.billOfMaterial.BillOfMaterialItem;
 import eu.nimble.service.bp.model.hyperjaxb.*;
 import eu.nimble.service.bp.swagger.model.*;
 import eu.nimble.service.bp.util.BusinessProcessEvent;
-import eu.nimble.service.bp.util.HttpResponseUtil;
 import eu.nimble.service.bp.util.bp.BusinessProcessUtility;
+import eu.nimble.service.bp.util.bp.ClassProcessTypeMap;
 import eu.nimble.service.bp.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.util.email.EmailSenderUtil;
 import eu.nimble.service.bp.util.persistence.bp.CollaborationGroupDAOUtility;
@@ -36,7 +36,6 @@ import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
 import eu.nimble.utility.validation.IValidationUtil;
-import eu.nimble.utility.validation.ValidationUtil;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
@@ -160,14 +159,14 @@ public class StartController implements StartApi {
         logger.debug(" $$$ Start Process with ProcessInstanceInputMessage {}", JsonSerializationUtility.serializeEntitySilentlyWithMixin(body, ProcessVariables.class, MixInIgnoreProperties.class));
 
         // validate role
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
             return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
         }
 
         // check whether the process is included in the workflow of seller company
         String processId = body.getVariables().getProcessID();
         // get the identifier of party whose workflow will be checked
-        String partyId = processId.contentEquals("Fulfilment") ? body.getVariables().getInitiatorID(): body.getVariables().getResponderID();
+        String partyId = processId.contentEquals(ClassProcessTypeMap.CAMUNDA_PROCESS_ID_FULFILMENT) ? body.getVariables().getInitiatorID(): body.getVariables().getResponderID();
         PartyType sellerParty;
         try {
             sellerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,partyId);
@@ -177,6 +176,7 @@ public class StartController implements StartApi {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
 
+        // check whether the started process is supported by the seller party
         if(sellerParty.getProcessID() != null && sellerParty.getProcessID().size() > 0 && !sellerParty.getProcessID().contains(processId)){
             String msg = String.format("%s is not included in the workflow of %s", processId,sellerParty.getPartyName().get(0).getName().getValue());
             logger.error(msg);
@@ -221,6 +221,7 @@ public class StartController implements StartApi {
             CollaborationGroupDAO initiatorCollaborationGroupDAO;
             CollaborationGroupDAO responderCollaborationGroupDAO;
 
+            // TODO: check precedingGid logic here
 //            List<FederatedCollaborationGroupMetadataDAO> federatedCollaborationGroupMetadataDAOS = null;
 
             if(precedingGid != null){
@@ -341,7 +342,8 @@ public class StartController implements StartApi {
 
         ProcessInstanceGroupDAO sourceGroup;
         sourceGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(sourceGid,repo);
-//        if(body.getVariables().getProcessID().equals("Fulfilment") && sourceGroup.getPrecedingProcessInstanceGroup() != null){
+        // TODO: check this if statement later
+//        if(body.getVariables().getProcessID().equals(ClassProcessTypeMap.CAMUNDA_PROCESS_ID_FULFILMENT) && sourceGroup.getPrecedingProcessInstanceGroup() != null){
 //            sourceGroup = sourceGroup.getPrecedingProcessInstanceGroup();
 //        }
         sourceGroup.getProcessInstanceIDs().add(processInstanceId);

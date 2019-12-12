@@ -1916,7 +1916,7 @@
   "despatchLine": [
     {
       "deliveredQuantity": {
-        "value": null,
+        "value": 12,
         "unitCode": "item(s)"
       },
       "item": {
@@ -1929,10 +1929,10 @@
         ],
         "productImage": [],
         "manufacturersItemIdentification": {
-          "id": "99eb200b-bb3b-4916-92ae-ff5564abc86b"
+          "id": "a24b6447-3cb2-495c-b643-6c590c78f25d"
         },
         "catalogueDocumentReference": {
-          "id": "a85df7a2-2800-4d78-8483-41eb9a53dff1",
+          "id": "2511e0ae-aa76-49cd-8d64-246d93f18f23",
           "uuid": null,
           "documentType": null,
           "attachment": null,
@@ -3729,6 +3729,9 @@
           "productionProcessTemplate": null
         }
       },
+      "orderLineReference": {
+        "lineID":1695
+      },
       "shipment": [
         {
           "handlingInstructions": [
@@ -3973,8 +3976,10 @@
       ]
     }
   ],
-  "additionalDocumentReference": [{
-    "id":"512e5814-aa18-4836-bedf-df26192606a6",
-    "documentType":"previousDocument"
-  }]
+  "additionalDocumentReference": [
+    {
+      "id": "512e5814-aa18-4836-bedf-df26192606a6",
+      "documentType": "previousDocument"
+    }
+  ]
 }

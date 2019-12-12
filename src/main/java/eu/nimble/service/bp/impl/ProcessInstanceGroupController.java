@@ -1,5 +1,6 @@
 package eu.nimble.service.bp.impl;
 
+import eu.nimble.common.rest.identity.IIdentityClientTyped;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.JsonNode;
@@ -61,7 +62,7 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
                                                            @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         logger.debug("Deleting ProcessInstanceGroup ID: {}", id);
         // validate role
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
             return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
         }
 
@@ -85,7 +86,7 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
                                                                         @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         logger.debug("Getting ProcessInstanceGroup: {}", id);
         // validate role
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
             return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
         }
 
@@ -113,7 +114,7 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
             @ApiParam(value = "Identify Project Or Not", defaultValue = "false") @RequestParam(value = "isProject", required = false, defaultValue = "false") Boolean isProject) {
 
         // validate role
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
             return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
         }
 
@@ -143,7 +144,7 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
                                                 @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
         try {
             // validate role
-            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
@@ -167,11 +168,13 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
                     orderJson = response.getBody().toString();
                 }
             } else {
-                String orderId = ProcessInstanceGroupDAOUtility.getOrderInGroup(processInstanceId);
+                // get the order
+                String orderId = ProcessInstanceGroupDAOUtility.getSourceOrderResponseIdForTransportRelatedProcess(processInstanceId);
                 if (orderId != null) {
                     orderJson = (String) documentController.getDocumentJsonContent(orderId,bearerToken).getBody();
                 }
             }
+
 
             // get the order content
             ResponseEntity response;
@@ -185,6 +188,62 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
 
         } catch (Exception e) {
             return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while getting the order content for process id: %s", processInstanceId), e, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @ApiOperation(value = "", notes = "Finishes the collaboration (negotiation) which is represented by the specified ProcessInstanceGroup")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Finished the collaboration for the given group id successfully."),
+            @ApiResponse(code = 400, message = "The specified group is already finished."),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 404, message = "There does not exist a process instance group with the given id"),
+            @ApiResponse(code = 500, message = "Unexpected error while finishing the collaboration")
+    })
+    @RequestMapping(value = "/process-instance-groups/{id}/finish",
+            method = RequestMethod.POST)
+    public ResponseEntity finishCollaboration(@ApiParam(value = "Identifier of the process instance group to be finished", required = true) @PathVariable(value = "id", required = true) String id,
+                                              @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
+        try {
+            logger.debug("Finishing the collaboration for the group id: {}", id);
+            // validate role
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+            }
+
+            ProcessInstanceGroupDAO groupDAO = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(id);
+            if (groupDAO == null) {
+                String msg = String.format("There does not exist a process instance group with the id: %s", id);
+                logger.warn(msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            }
+
+            // if there's a completed task for these processes, we could not finish that group
+            List<String> processInstanceIDs = groupDAO.getProcessInstanceIDs();
+            if(TrustPersistenceUtility.completedTaskExist(processInstanceIDs)){
+                logger.error("Collaboration represented by the process instance group with id:{} is already finished", id);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+            }
+
+            // create completed tasks for both parties
+            String processInstanceID = groupDAO.getProcessInstanceIDs().get(groupDAO.getProcessInstanceIDs().size() - 1);
+            TrustPersistenceUtility.createCompletedTasksForBothParties(processInstanceID, bearerToken, "Completed");
+
+            // update ProcessInstanceGroup status
+            GenericJPARepository bpRepo = new JPARepositoryFactory().forBpRepository(true);
+            List<ProcessInstanceGroupDAO> processInstanceGroupDAOS = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAOs(processInstanceID, bpRepo);
+            for(ProcessInstanceGroupDAO processInstanceGroupDAO: processInstanceGroupDAOS){
+                processInstanceGroupDAO.setStatus(GroupStatus.COMPLETED);
+                bpRepo.updateEntity(processInstanceGroupDAO);
+            }
+
+            // send email to the trading partner
+            emailSenderUtil.sendCollaborationStatusEmail(bearerToken, groupDAO);
+
+            logger.debug("Finished the collaboration for the group id: {} successfully", id);
+            return ResponseEntity.ok(null);
+
+        } catch (Exception e) {
+            return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while finishing the group: %s", id), e, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -203,7 +262,7 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
         try {
             logger.debug("Cancelling the collaboration for the group id: {}", id);
             // validate role
-            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
                 return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
@@ -221,16 +280,13 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(msg);
             }
 
-            // check whether the group consists of an approved order or an accepted transport execution plan
-            List<String> processInstanceIDs = groupDAO.getProcessInstanceIDs();
-            boolean isCancellableGroup = cancellableGroup(processInstanceIDs);
-            if (!isCancellableGroup) {
-                logger.error("Process instance group with id:{} can not be cancelled since the contractually-binding step is approved already.", id);
+            if (groupDAO.getStatus().equals(GroupStatus.COMPLETED)) {
+                logger.error("Process instance group with id:{} can not be cancelled since it's already completed.", id);
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
             }
 
             // update the group of the party initiating the cancel request
-            GenericJPARepository repo = repoFactory.forBpRepository();
+            GenericJPARepository repo = repoFactory.forBpRepository(true);
             groupDAO.setStatus(GroupStatus.CANCELLED);
             groupDAO = repo.updateEntity(groupDAO);
 
@@ -251,7 +307,7 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
             List<ProcessInstanceGroupDAO> associatedProcessInstanceGroups = ProcessInstanceGroupDAOUtility.getAssociatedProcessInstanceGroupDAOs(groupDAO.getPartyID(),groupDAO.getFederationID(),groupDAO.getProcessInstanceIDs());
             for (ProcessInstanceGroupDAO group : associatedProcessInstanceGroups) {
                 // check whether the associated group can be cancelled or not
-                isCancellableGroup = cancellableGroup(group.getProcessInstanceIDs());
+                boolean isCancellableGroup = group.getStatus().equals(GroupStatus.INPROGRESS);
                 // if it is ok, change status of the associated group
                 if (isCancellableGroup) {
                     group.setStatus(GroupStatus.CANCELLED);
@@ -264,7 +320,7 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
             TrustPersistenceUtility.createCompletedTasksForBothParties(processInstanceID, bearerToken, "Cancelled");
 
             // send email to the trading partner
-            emailSenderUtil.sendCancellationEmail(bearerToken, groupDAO);
+            emailSenderUtil.sendCollaborationStatusEmail(bearerToken, groupDAO);
 
             logger.debug("Cancelled the collaboration for the group id: {} successfully", id);
             return ResponseEntity.ok(null);
@@ -286,7 +342,7 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
         logger.info("Checking whether the collaboration represented by process instance group {} is finished",id);
 
         // validate role
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
             return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
         }
 
@@ -318,7 +374,7 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
 
         logger.debug("Retrieving process instances for the group id: {}", id);
         // validate role
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
             return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
         }
 
@@ -335,22 +391,5 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
         List<ProcessInstance> processInstances = HibernateSwaggerObjectMapper.createProcessInstances(processInstanceDAOS);
         logger.debug("Retrieving process instances for the group id: {} successfully", id);
         return ResponseEntity.ok(processInstances);
-    }
-
-    private boolean cancellableGroup(List<String> processInstanceIDs) {
-        // if there's a completed task for these processes, we could not cancel that group
-        if(TrustPersistenceUtility.completedTaskExist(processInstanceIDs)){
-            return false;
-        }
-        for (String instanceID : processInstanceIDs) {
-            List<ProcessDocumentMetadataDAO> metadataDAOS = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(instanceID);
-            for (ProcessDocumentMetadataDAO metadataDAO : metadataDAOS) {
-                if (metadataDAO.getType() == DocumentType.ORDERRESPONSESIMPLE && metadataDAO.getStatus() == ProcessDocumentStatus.APPROVED ||
-                        metadataDAO.getType() == DocumentType.TRANSPORTEXECUTIONPLAN && metadataDAO.getStatus() == ProcessDocumentStatus.APPROVED) {
-                    return false;
-                }
-            }
-        }
-        return true;
     }
 }

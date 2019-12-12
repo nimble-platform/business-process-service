@@ -171,6 +171,10 @@ camunda:
       id: kermit
       password: superSecret
 
+efactory:
+  logstash:
+    url: ${EFACTORY_LOGSTASH_URL:}
+
 nimble:
   binary-content:
       url: BusinessProcessBinaryContentUri
@@ -181,6 +185,8 @@ nimble:
     url: ${DATA_CHANNEL_SERVICE_URL:http://nimble-staging.salzburgresearch.at/data-channel}
   frontend:
     url: ${FRONTEND_URL:http://nimble-staging.salzburgresearch.at/frontend/}
+  tracking-analysis:
+    url: ${TRACKING_ANALYSIS_SERVICE_URL:http://nimble-dev.ikap.biba.uni-bremen.de/tracking-analysis}
   delegate-service:
     url: ${DELEGATE_SERVICE_URL:}
   federation:

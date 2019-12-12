@@ -1,10 +1,16 @@
 package eu.nimble.service.bp.util.persistence.bp;
 
 import eu.nimble.service.bp.model.hyperjaxb.*;
+import eu.nimble.service.bp.swagger.model.Process;
+import eu.nimble.service.bp.util.ExecutionContext;
+import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
+import eu.nimble.service.bp.model.hyperjaxb.*;
 import eu.nimble.service.bp.swagger.model.FederatedCollaborationGroupMetadata;
 import eu.nimble.utility.HibernateUtility;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
+import org.apache.tools.ant.taskdefs.Exec;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -60,6 +66,11 @@ public class ProcessInstanceGroupDAOUtility {
             "SELECT pig FROM ProcessInstanceGroupDAO pig join pig.processInstanceIDsItems pid WHERE pid.item = :processInstanceID";
 
     private static final String QUERY_GET_BY_PARTY_ID = "SELECT pig.ID FROM ProcessInstanceGroupDAO pig WHERE pig.partyID in :partyIds";
+    private static final String QUERY_GET_METADATAS_FOR_PROCESS_INSTANGE_GROUP =
+            "SELECT docMetadata " +
+                    " FROM ProcessDocumentMetadataDAO docMetadata, ProcessInstanceGroupDAO pig join pig.processInstanceIDsItems pid" +
+                    " WHERE docMetadata.processInstanceID = pid.item" +
+                    "   AND pig.ID = :pigId";
 
     public static List<String> getProcessInstanceGroupIdsForParty(List<String> partyIds){
         return new JPARepositoryFactory().forBpRepository().getEntities(QUERY_GET_BY_PARTY_ID, new String[]{"partyIds"}, new Object[]{partyIds});
@@ -80,6 +91,10 @@ public class ProcessInstanceGroupDAOUtility {
     /**
      * This method is used to retrieve process instance groups which contain the given process instance id.
      */
+    public static List<ProcessInstanceGroupDAO> getProcessInstanceGroupDAOs(String processInstanceId){
+        return getProcessInstanceGroupDAOs(processInstanceId, new JPARepositoryFactory().forBpRepository(true));
+    }
+
     public static List<ProcessInstanceGroupDAO> getProcessInstanceGroupDAOs(String processInstanceId, GenericJPARepository repository){
         return repository.getEntities(QUERY_GET_CONTAINING_THE_PROCESS, new String[]{"processInstanceID"}, new Object[]{processInstanceId});
     }
@@ -164,17 +179,61 @@ public class ProcessInstanceGroupDAOUtility {
         }
     }
 
-    public static String getOrderInGroup(String processInstanceId) {
-        return new JPARepositoryFactory().forBpRepository().getSingleEntity(QUERY_GET_ORDER_ID_IN_GROUP, new String[]{"processInstanceId"}, new Object[]{processInstanceId});
+    /**
+     * @param processInstanceId Identifier of a transport-related process instance
+     */
+    public static String getSourceOrderResponseIdForTransportRelatedProcess(String processInstanceId) {
+        // 1) First find the OrderResponse id by checking the ProcessInstanceGroups associated this ProcessInstance id
+        // 2) Find the corresponding Order id via the ProcessInstance associated to the OrderResponse
+
+        // find order response
+
+        // get ProcessInstanceGroups including the specified process instance id
+        List<ProcessInstanceGroupDAO> pigs = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAOs(processInstanceId);
+        if(pigs == null || pigs.size() == 0) {
+            return null;
+        }
+
+        // collect the ProcessDocumentMetadata for the ProcessInstances included in the identified ProcessInstanceGroups
+        List<ProcessDocumentMetadataDAO> docMetadatas = new ArrayList<>();
+        for(ProcessInstanceGroupDAO pig : pigs) {
+            List<ProcessDocumentMetadataDAO> docMetadata = getDocumentMetadataInProcessInstanceGroup(pig.getID());
+            if(docMetadata != null) {
+                docMetadatas.addAll(docMetadata);
+            }
+        }
+
+        // traverse document ProcessDocumentMetadata. If they are of type IIR or RFQ, we check the associated documents in the actual document
+        String orderResponseId = null;
+        for(ProcessDocumentMetadataDAO docMetadata : docMetadatas) {
+            List<Object> docRefs = null;
+            if(docMetadata.getType().toString().contentEquals(DocumentType.ITEMINFORMATIONREQUEST.toString())) {
+                docRefs = DocumentPersistenceUtility.getAdditionalDocumentTypesFromIir(docMetadata.getDocumentID());
+            } else if(docMetadata.getType().toString().contentEquals(DocumentType.REQUESTFORQUOTATION.toString())) {
+                docRefs = DocumentPersistenceUtility.getAdditionalDocumentTypesFromRfq(docMetadata.getDocumentID());
+            }
+
+            if(docRefs != null) {
+                for(Object docRefInfo : docRefs) {
+                    Object[] docRefInfoArray = (Object[]) docRefInfo;
+                    String docType = (String) docRefInfoArray[1];
+                    if(docType.contentEquals("previousOrder")) {
+                        orderResponseId = (String) docRefInfoArray[0];
+                    }
+                }
+            }
+        }
+
+        // find the order id
+        if(orderResponseId != null) {
+            ProcessDocumentMetadataDAO orderMetadata = ProcessDocumentMetadataDAOUtility.getMetadataForCorrespondingDocument(orderResponseId);
+            return orderMetadata.getDocumentID();
+        }
+
+        return null;
     }
 
-    private enum GroupQueryType {
-        GROUP, FILTER, SIZE
-    }
-
-    private static class QueryData {
-        private String query;
-        private List<String> parameterNames = new ArrayList<>();
-        private List<Object> parameterValues = new ArrayList<>();
+    public static List<ProcessDocumentMetadataDAO> getDocumentMetadataInProcessInstanceGroup(String pigId) {
+        return new JPARepositoryFactory().forBpRepository().getEntities(QUERY_GET_METADATAS_FOR_PROCESS_INSTANGE_GROUP, new String[]{"pigId"}, new Object[]{pigId});
     }
 }

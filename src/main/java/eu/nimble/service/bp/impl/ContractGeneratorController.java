@@ -3,14 +3,11 @@ package eu.nimble.service.bp.impl;
 import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.contract.ContractGenerator;
 import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
-import eu.nimble.service.bp.util.HttpResponseUtil;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
-import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ClauseType;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.validation.IValidationUtil;
-import eu.nimble.utility.validation.ValidationUtil;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -25,7 +22,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
 import java.util.List;
 import java.util.zip.ZipOutputStream;
 
@@ -52,7 +48,7 @@ public class ContractGeneratorController {
         try{
             logger.info("Generating contract for the order with id : {}",orderId);
             // validate role
-            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 eu.nimble.utility.HttpResponseUtil.writeMessageServletResponseAndLog(response, "Invalid role", HttpStatus.UNAUTHORIZED);
                 return;
             }
@@ -101,26 +97,24 @@ public class ContractGeneratorController {
     @RequestMapping(value = "/contracts/terms-and-conditions",
             produces = {MediaType.APPLICATION_JSON_VALUE},
             method = RequestMethod.GET)
-    public ResponseEntity getTermsAndConditions(@ApiParam(value = "Identifier of the order for which terms and conditions are generated", required = false) @RequestParam(value = "orderId", required = false) String orderId,
-                                                @ApiParam(value = "Identifier of the request for quotation for which terms and conditions are generated", required = false) @RequestParam(value = "rfqId", required = false) String rfqId,
-                                                @ApiParam(value = "Identifier of the seller party",required = true) @RequestParam(value = "sellerPartyId", required = true) String sellerPartyId,
+    public ResponseEntity getTermsAndConditions(@ApiParam(value = "Identifier of the seller party",required = true) @RequestParam(value = "sellerPartyId", required = true) String sellerPartyId,
                                                 @ApiParam(value = "Identifier of the buyer party") @RequestParam(value = "buyerPartyId", required = false) String buyerPartyId,
                                                 @ApiParam(value = "The selected incoterms while negotiating.<br>Example:DDP (Delivery Duty Paid)") @RequestParam(value = "incoterms", required = false) String incoterms,
                                                 @ApiParam(value = "The selected trading term while negotiating.<br>Example:Cash_on_delivery") @RequestParam(value = "tradingTerm", required = false) String tradingTerm,
                                                 @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken){
-        logger.info("Generating Order Terms and Conditions clauses for the order : {}, rfq: {}, seller party: {}, buyer party: {}",orderId,rfqId,sellerPartyId, buyerPartyId);
+        logger.info("Generating Order Terms and Conditions clauses for seller party: {}, buyer party: {}",sellerPartyId, buyerPartyId);
 
         try {
             // validate role
-            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
             ContractGenerator contractGenerator = new ContractGenerator();
 
-            List<ClauseType> clauses = contractGenerator.getTermsAndConditions(orderId,rfqId,sellerPartyId,buyerPartyId,incoterms,tradingTerm,bearerToken);
+            List<ClauseType> clauses = contractGenerator.getTermsAndConditions(sellerPartyId,buyerPartyId,incoterms,tradingTerm,bearerToken);
 
-            logger.info("Generated Order Terms and Conditions clauses for the order : {}, rfq: {}, seller party: {}, buyer party: {}",orderId,rfqId,sellerPartyId, buyerPartyId);
+            logger.info("Generated Order Terms and Conditions clauses for seller party: {}, buyer party: {}",sellerPartyId, buyerPartyId);
             return ResponseEntity.ok(JsonSerializationUtility.getObjectMapper().writeValueAsString(clauses));
         }
         catch (Exception e){

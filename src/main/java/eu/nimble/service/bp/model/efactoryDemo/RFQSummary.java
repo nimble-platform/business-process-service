@@ -1,15 +1,22 @@
 package eu.nimble.service.bp.model.efactoryDemo;
 
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 public class RFQSummary {
-
+    @NotNull
     private String productID;
+    @NotNull
     private BigDecimal numberOfProductsRequested;
+    @NotNull
     private String endpointOfTheBuyer;
+    @NotNull
     private String buyerPartyId;
+    @NotNull
     private String buyerPartyName;
+    @NotNull
     private String processInstanceId;
+    @NotNull
     private String messageName;
 
     public RFQSummary() {

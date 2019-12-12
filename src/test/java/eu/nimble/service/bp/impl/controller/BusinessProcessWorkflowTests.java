@@ -46,7 +46,7 @@ public class BusinessProcessWorkflowTests {
     private final String itemInformationResponseJSON = "/controller/itemInformationResponseJSON5.txt";
     private final String ppapRequestJSON = "/controller/PPAPRequestJSON3.txt";
 
-    private static String processInstanceID;
+    public static String processInstanceID;
     public static String sellerCollaborationGroupID;
     public static String sellerProcessInstanceGroupID;
 

@@ -271,4 +271,16 @@ public class CollaborationGroupTest {
                 .header("Authorization", TestConfig.initiatorPersonId);
         this.mockMvc.perform(request).andDo(print()).andExpect(status().isBadRequest()).andReturn();
     }
+
+    /**
+     * Retrieve the process instance id for the document used in {{@link BusinessProcessWorkflowTests#test1_startProcessInstance()}}
+     * */
+    @Test
+    public void test13_getProcessInstanceIdForDocument() throws Exception {
+        MockHttpServletRequestBuilder request = get("/processInstance/document/2892f360-763f-4e26-843d-c6347d9114ff")
+                .header("Authorization", TestConfig.initiatorPersonId);
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+        String processInstanceId = mvcResult.getResponse().getContentAsString();
+        Assert.assertEquals(processInstanceId,BusinessProcessWorkflowTests.processInstanceID);
+    }
 }

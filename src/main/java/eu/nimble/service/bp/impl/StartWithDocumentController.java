@@ -29,7 +29,9 @@ import eu.nimble.service.model.ubl.commonaggregatecomponents.DocumentReferenceTy
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ItemType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
+import eu.nimble.service.model.ubl.commonbasiccomponents.CodeType;
 import eu.nimble.service.model.ubl.document.IDocument;
+import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.serialization.IDocumentDeserializer;
 import eu.nimble.utility.validation.IValidationUtil;
@@ -37,6 +39,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -113,7 +116,7 @@ public class StartWithDocumentController {
         }
 
         // validate role
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
             return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
         }
 
@@ -167,7 +170,7 @@ public class StartWithDocumentController {
             // create ProcessInstanceInputMessage
             ProcessInstanceInputMessage processInstanceInputMessage;
             try {
-                processInstanceInputMessage = BPMessageGenerator.createProcessInstanceInputMessage(document,document.getItemType(),creatorUserId,"",bearerToken);
+                processInstanceInputMessage = BPMessageGenerator.createProcessInstanceInputMessage(document,document.getItemTypes(),creatorUserId,"",bearerToken);
             } catch (Exception e) {
                 String msg = "Failed to create process instance input message for the document";
                 logger.error(msg,e);
@@ -253,13 +256,13 @@ public class StartWithDocumentController {
             }
             String processInstanceId = processDocumentMetadataDAO.getProcessInstanceID();
 
-            // since some response documents do not have an item, we need to use the item of request document
-            ItemType item = document.getItemType() != null ? document.getItemType(): getItemType(processDocumentMetadataDAO.getDocumentID(),processDocumentMetadataDAO.getType());
+            // since some response documents do not have items, we need to use the items of request document
+            List<ItemType> items = document.getItemTypes() != null ? document.getItemTypes(): getItemTypes(processDocumentMetadataDAO.getDocumentID(),processDocumentMetadataDAO.getType());
 
             // create ProcessInstanceInputMessage
             ProcessInstanceInputMessage processInstanceInputMessage;
             try {
-                processInstanceInputMessage = BPMessageGenerator.createProcessInstanceInputMessage(document,item,creatorUserId,processInstanceId,bearerToken);
+                processInstanceInputMessage = BPMessageGenerator.createProcessInstanceInputMessage(document,items,creatorUserId,processInstanceId,bearerToken);
             } catch (Exception e) {
                 String msg = "Failed to create process instance input message for the document";
                 logger.error(msg,e);
@@ -292,20 +295,26 @@ public class StartWithDocumentController {
             // get the initiator party id
             PartyType initiatorParty = document.getBuyerParty();
             // for Fulfilment, it's vice versa
-            if(processId.contentEquals("Fulfilment")){
+            if(processId.contentEquals(ClassProcessTypeMap.CAMUNDA_PROCESS_ID_FULFILMENT)){
                 initiatorParty = document.getSellerParty();
             }
 
             // get the initiator party
             try {
-                String endpoint = UBLUtility.getPartyRestEndpoint(initiatorParty);
-                if(endpoint != null){
-                    HttpResponse<String> response = Unirest.post(endpoint)
-                            .body(documentAsString)
+                CodeType communicationChannel = UBLUtility.getPartyCommunicationChannel(initiatorParty);
+                // send document to initiator party iff it's a Quotation
+                if(communicationChannel != null && document instanceof QuotationType){
+                    QuotationType quotation = (QuotationType) document;
+                    String msg = createRequestBody(quotation,communicationChannel.getListID(),communicationChannel.getURI());
+                    logger.info("Sending quotation {} to {}",msg, communicationChannel.getValue());
+                    HttpResponse<String> response = Unirest.post(communicationChannel.getValue())
+                            .header("Content-Type", "application/json")
+                            .header("accept", "*/*")
+                            .body(msg)
                             .asString();
 
-                    if(response.getStatus() != 200){
-                        logger.error("Failed send the document to the initiator party {}, endpoint: {} : {}",initiatorParty.getPartyIdentification().get(0).getID(), endpoint, response.getBody());
+                    if(response.getStatus() != 200 && response.getStatus() != 204){
+                        logger.error("Failed send the document to the initiator party {}, endpoint: {} : {}",initiatorParty.getPartyIdentification().get(0).getID(), communicationChannel.getValue(), response.getBody());
                         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
                     }
                 }
@@ -360,8 +369,46 @@ public class StartWithDocumentController {
     /**
      * It retrieves the specified document and returns its {@link ItemType}
      * */
-    private ItemType getItemType(String documentId, DocumentType documentType){
+    private List<ItemType> getItemTypes(String documentId, DocumentType documentType){
         IDocument iDocument =  DocumentPersistenceUtility.getUBLDocument(documentId, documentType);
-        return iDocument.getItemType();
+        return iDocument.getItemTypes();
+    }
+
+    /**
+     * Prepare the json which has the following format:
+     * {
+     *   "messageName": "<message_name_here>",
+     *   "processInstanceId": "<process_instance_id_here>",
+     *   "processVariables": {
+     *          "quotationData": {
+     *              "type": "String",
+     *              "value": {
+     *                  "status ": "<status_of_quotation>",
+     *                  "netPrice": "<net_price_of_quotation>"
+     *              }
+     *          }
+     *   }
+     * }
+     * */
+    private String createRequestBody(QuotationType quotation, String messageName, String processInstanceId){
+        String price = quotation.getQuotationLine().get(0).getLineItem().getPrice().getPriceAmount().getValue().multiply(quotation.getQuotationLine().get(0).getLineItem().getQuantity().getValue()).toString()
+                + " " + quotation.getQuotationLine().get(0).getLineItem().getPrice().getPriceAmount().getCurrencyID();
+        String status = quotation.getDocumentStatusCode().getName();
+
+        JSONObject quotationDetails = new JSONObject();
+        quotationDetails.put("netPrice",price);
+        quotationDetails.put("status ",status);
+
+        JSONObject quotationData = new JSONObject();
+        quotationData.put("type","String");
+        quotationData.put("value",quotationDetails);
+
+        JSONObject processVariables = new JSONObject();
+        processVariables.put("quotationData",quotationData);
+        JSONObject json = new JSONObject();
+        json.put("processVariables",processVariables);
+        json.put("messageName",messageName);
+        json.put("processInstanceId",processInstanceId);
+        return json.toString();
     }
 }

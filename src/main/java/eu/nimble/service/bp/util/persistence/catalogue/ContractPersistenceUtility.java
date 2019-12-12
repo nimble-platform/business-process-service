@@ -13,6 +13,7 @@ import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecut
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,9 +30,8 @@ public class ContractPersistenceUtility {
     private static final String QUERY_GET_FRAME_CONTRACT_BY_SELLER_BUYER_PRODUCT_IDS =
             "SELECT da FROM DigitalAgreementType da join da.participantParty pp join pp.partyIdentification pid join da.item item" +
                     " WHERE" +
-//                    " pid.ID in (:sellerId, :buyerId) AND" +
                     " ((pid = :sellerId AND pp.federationInstanceID =:sellerFederationId) OR (pid = :buyerId AND pp.federationInstanceID = :buyerFederationId)) AND " +
-                    " item.manufacturersItemIdentification.ID = :itemId" +
+                    " item.manufacturersItemIdentification.ID in :itemId" +
                     " GROUP BY da" +
                     " HAVING COUNT(da) = 2 ";
     private static final String QUERY_GET_FRAME_CONTRACTS_BY_PARTY_ID =
@@ -208,7 +208,12 @@ public class ContractPersistenceUtility {
 
     public static DigitalAgreementType getFrameContractAgreementById(String sellerId,String sellerFederationId, String buyerId,String buyerFederationId, String productId) {
         return new JPARepositoryFactory().forCatalogueRepository(true).getSingleEntity(QUERY_GET_FRAME_CONTRACT_BY_SELLER_BUYER_PRODUCT_IDS,
-                new String[]{"sellerId","sellerFederationId", "buyerId","buyerFederationId", "itemId"}, new Object[]{sellerId, sellerFederationId, buyerId, buyerFederationId, productId});
+                new String[]{"sellerId","sellerFederationId", "buyerId","buyerFederationId", "itemId"}, new Object[]{sellerId, sellerFederationId, buyerId, buyerFederationId,Arrays.asList(productId)});
+    }
+
+    public static List<DigitalAgreementType> getFrameContractAgreementByIds(String sellerId,String sellerFederationId, String buyerId,String buyerFederationId, List<String> productIds) {
+        return new JPARepositoryFactory().forCatalogueRepository(true).getEntities(QUERY_GET_FRAME_CONTRACT_BY_SELLER_BUYER_PRODUCT_IDS,
+                new String[]{"sellerId","sellerFederationId", "buyerId","buyerFederationId", "itemId"}, new Object[]{sellerId,sellerFederationId, buyerId,buyerFederationId, productIds});
     }
 
     public static List<DigitalAgreementType> getFrameContractsByPartyId(String partyId, String federationId) {

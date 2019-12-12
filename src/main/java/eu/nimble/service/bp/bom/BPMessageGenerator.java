@@ -58,17 +58,17 @@ public class BPMessageGenerator {
                     // create an order using the frame contract
                     OrderType order = createOrder(quotation, buyerParty, sellerNegotiationSettings.getCompany());
 
-                    return BPMessageGenerator.createProcessInstanceInputMessage(order, catalogueLine.getGoodsItem().getItem(), creatorUserId,"",bearerToken);
+                    return BPMessageGenerator.createProcessInstanceInputMessage(order, Arrays.asList(catalogueLine.getGoodsItem().getItem()), creatorUserId,"",bearerToken);
                 }
             }
         }
 
         RequestForQuotationType requestForQuotation = createRequestForQuotation(catalogueLine, billOfMaterialItem.getquantity(), sellerNegotiationSettings,buyerParty, bearerToken);
 
-        return BPMessageGenerator.createProcessInstanceInputMessage(requestForQuotation, catalogueLine.getGoodsItem().getItem(), creatorUserId,"",bearerToken);
+        return BPMessageGenerator.createProcessInstanceInputMessage(requestForQuotation, Arrays.asList(catalogueLine.getGoodsItem().getItem()), creatorUserId,"",bearerToken);
     }
 
-    public static ProcessInstanceInputMessage createProcessInstanceInputMessage(IDocument document, ItemType item, String creatorUserId,String processInstanceId,String bearerToken) throws Exception {
+    public static ProcessInstanceInputMessage createProcessInstanceInputMessage(IDocument document, List<ItemType> items, String creatorUserId,String processInstanceId,String bearerToken) throws Exception {
         // get corresponding process type
         String processId = ClassProcessTypeMap.getProcessType(document.getClass());
 
@@ -76,7 +76,7 @@ public class BPMessageGenerator {
         PartyType responderParty;
         PartyType initiatorParty;
         // for Fulfilment, it's vice versa
-        if(processId.contentEquals("Fulfilment")){
+        if(processId.contentEquals(ClassProcessTypeMap.CAMUNDA_PROCESS_ID_FULFILMENT)){
             responderParty = PartyPersistenceUtility.getParty(bearerToken, document.getBuyerParty());
             initiatorParty = PartyPersistenceUtility.getParty(bearerToken, document.getSellerParty());
         }
@@ -96,13 +96,22 @@ public class BPMessageGenerator {
                 creatorUserId = responderParty.getPerson().get(0).getID();
             }
         }
-        // get related product categories
+        // get related product categories for each product
         List<String> relatedProductCategories = new ArrayList<>();
-        for (CommodityClassificationType commodityClassificationType : item.getCommodityClassification()) {
-            if (!relatedProductCategories.contains(commodityClassificationType.getItemClassificationCode().getName())) {
-                relatedProductCategories.add(commodityClassificationType.getItemClassificationCode().getName());
+        for (ItemType item : items) {
+            for (CommodityClassificationType commodityClassificationType : item.getCommodityClassification()) {
+                if (!relatedProductCategories.contains(commodityClassificationType.getItemClassificationCode().getName())) {
+                    relatedProductCategories.add(commodityClassificationType.getItemClassificationCode().getName());
+                }
             }
         }
+
+        // get related products
+        List<String> relatedProducts = new ArrayList<>();
+        for (ItemType item : items) {
+            relatedProducts.add(item.getName().get(0).getValue());
+        }
+
         // serialize the document
         String documentAsString = JsonSerializationUtility.getObjectMapper().writeValueAsString(document);
 
@@ -120,7 +129,7 @@ public class BPMessageGenerator {
         processVariables.setCreatorUserID(creatorUserId);
         processVariables.setInitiatorID(initiatorParty.getPartyIdentification().get(0).getID());
         processVariables.setResponderID(responderParty.getPartyIdentification().get(0).getID());
-        processVariables.setRelatedProducts(Collections.singletonList(item.getName().get(0).getValue()));
+        processVariables.setRelatedProducts(relatedProducts);
         processVariables.setRelatedProductCategories(relatedProductCategories);
 
         // create Process instance input message
@@ -146,18 +155,21 @@ public class BPMessageGenerator {
         OrderLineType orderLine = new OrderLineType();
         orderLine.setLineItem(quotation.getQuotationLine().get(0).getLineItem());
 
-        ContractType contract = new ContractType();
-        contract.setID(UUID.randomUUID().toString());
-        contract.setClause(quotation.getTermOrCondition());
+        List<ContractType> contracts = new ArrayList<>();
+        for (QuotationLineType quotationLine : quotation.getQuotationLine()) {
+            ContractType contract = new ContractType();
+            contract.setID(UUID.randomUUID().toString());
+            contract.setClause(quotationLine.getLineItem().getClause());
+
+            contracts.add(contract);
+        }
 
         order.setID(UUID.randomUUID().toString());
         order.setBuyerCustomerParty(customerParty);
         order.setSellerSupplierParty(supplierParty);
         order.setOrderLine(Collections.singletonList(orderLine));
         order.getOrderLine().get(0).getLineItem().getDeliveryTerms().getDeliveryLocation().setAddress(requestForQuotation.getRequestForQuotationLine().get(0).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress());
-        order.setPaymentMeans(quotation.getPaymentMeans());
-        order.setPaymentTerms(quotation.getPaymentTerms());
-        order.setContract(Collections.singletonList(contract));
+        order.setContract(contracts);
 
         return order;
     }
@@ -168,23 +180,34 @@ public class BPMessageGenerator {
         // create request for quotation
         RequestForQuotationType requestForQuotation = new RequestForQuotationType();
 
+        CodeType paymentMeansCode = new CodeType();
+        paymentMeansCode.setValue(sellerNegotiationSettings.getPaymentMeans().size() > 0 ? sellerNegotiationSettings.getPaymentMeans().get(0) : "");
+
+        PaymentMeansType paymentMeansType = new PaymentMeansType();
+        paymentMeansType.setPaymentMeansCode(paymentMeansCode);
+
+        PaymentTermsType paymentTermsType = new PaymentTermsType();
+        paymentTermsType.setTradingTerms(getPaymentTerms(sellerNegotiationSettings.getPaymentTerms().size() > 0 ? sellerNegotiationSettings.getPaymentTerms().get(0) : ""));
+
         RequestForQuotationLineType requestForQuotationLine = new RequestForQuotationLineType();
         requestForQuotationLine.setLineItem(createLineItem(catalogueLine,quantity,sellerNegotiationSettings,buyerParty));
+        requestForQuotationLine.getLineItem().setDataMonitoringRequested(false);
+        requestForQuotationLine.getLineItem().setPaymentMeans(paymentMeansType);
+        requestForQuotationLine.getLineItem().setPaymentTerms(paymentTermsType);
+        // if seller has some T&Cs, use them, otherwise use the default T&Cs
+        if (sellerParty.getPurchaseTerms() != null && sellerParty.getPurchaseTerms().getTermOrCondition().size() > 0) {
+            requestForQuotationLine.getLineItem().setClause(sellerParty.getPurchaseTerms().getTermOrCondition());
+        } else {
+            ContractGenerator contractGenerator = new ContractGenerator();
+            List<ClauseType> clauses = contractGenerator.getTermsAndConditions(sellerParty.getPartyIdentification().get(0).getID(), buyerParty.getPartyIdentification().get(0).getID(), sellerNegotiationSettings.getIncoterms().size() > 0 ? sellerNegotiationSettings.getIncoterms().get(0) : "", sellerNegotiationSettings.getPaymentTerms().size() > 0 ? sellerNegotiationSettings.getPaymentTerms().get(0) : "", bearerToken);
+            requestForQuotationLine.getLineItem().setClause(clauses);
+        }
 
         CustomerPartyType customerParty = new CustomerPartyType();
         customerParty.setParty(PartyPersistenceUtility.getParty(buyerParty));
 
         SupplierPartyType supplierParty = new SupplierPartyType();
         supplierParty.setParty(PartyPersistenceUtility.getParty(sellerParty));
-
-        PaymentTermsType paymentTermsType = new PaymentTermsType();
-        paymentTermsType.setTradingTerms(getPaymentTerms(sellerNegotiationSettings.getPaymentTerms().size() > 0 ? sellerNegotiationSettings.getPaymentTerms().get(0) : ""));
-
-        CodeType paymentMeansCode = new CodeType();
-        paymentMeansCode.setValue(sellerNegotiationSettings.getPaymentMeans().size() > 0 ? sellerNegotiationSettings.getPaymentMeans().get(0) : "");
-
-        PaymentMeansType paymentMeansType = new PaymentMeansType();
-        paymentMeansType.setPaymentMeansCode(paymentMeansCode);
 
         PeriodType periodType = new PeriodType();
 
@@ -194,23 +217,10 @@ public class BPMessageGenerator {
         String uuid = UUID.randomUUID().toString();
         requestForQuotation.setID(uuid);
         requestForQuotation.setNote(Collections.singletonList(""));
-        requestForQuotation.setDataMonitoringRequested(false);
         requestForQuotation.setBuyerCustomerParty(customerParty);
         requestForQuotation.setSellerSupplierParty(supplierParty);
         requestForQuotation.setDelivery(deliveryType);
         requestForQuotation.setRequestForQuotationLine(Collections.singletonList(requestForQuotationLine));
-        requestForQuotation.setPaymentTerms(paymentTermsType);
-        requestForQuotation.setPaymentMeans(paymentMeansType);
-        requestForQuotation.setRequestForQuotationLine(Collections.singletonList(requestForQuotationLine));
-
-        // if seller has some T&Cs, use them, otherwise use the default T&Cs
-        if (sellerParty.getPurchaseTerms() != null && sellerParty.getPurchaseTerms().getTermOrCondition().size() > 0) {
-            requestForQuotation.setTermOrCondition(sellerParty.getPurchaseTerms().getTermOrCondition());
-        } else {
-            ContractGenerator contractGenerator = new ContractGenerator();
-            List<ClauseType> clauses = contractGenerator.getTermsAndConditions(null, null, sellerParty.getPartyIdentification().get(0).getID(), buyerParty.getPartyIdentification().get(0).getID(), sellerNegotiationSettings.getIncoterms().size() > 0 ? sellerNegotiationSettings.getIncoterms().get(0) : "", sellerNegotiationSettings.getPaymentTerms().size() > 0 ? sellerNegotiationSettings.getPaymentTerms().get(0) : "", bearerToken);
-            requestForQuotation.setTermOrCondition(clauses);
-        }
 
         return requestForQuotation;
     }
@@ -225,8 +235,12 @@ public class BPMessageGenerator {
         PeriodType warranty = new PeriodType();
         warranty.setDurationMeasure(catalogueLine.getWarrantyValidityPeriod().getDurationMeasure());
 
+        ShipmentType shipment = new ShipmentType();
+        shipment.setGoodsItem(Arrays.asList(new GoodsItemType()));
+
         DeliveryType delivery = new DeliveryType();
         delivery.setRequestedDeliveryPeriod(requestedDeliveryPeriod);
+        delivery.setShipment(shipment);
 
         LocationType location = new LocationType();
 

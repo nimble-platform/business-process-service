@@ -21,6 +21,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.bind.annotation.RestController;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
@@ -36,6 +37,7 @@ import java.sql.Statement;
 @EnableEurekaClient
 @RestController
 @EnableProcessApplication
+@EnableScheduling
 @ComponentScan(basePackages = "eu")
 public class BusinessProcessApplication {
 

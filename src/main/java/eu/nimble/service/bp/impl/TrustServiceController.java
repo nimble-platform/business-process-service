@@ -14,7 +14,6 @@ import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.validation.IValidationUtil;
-import eu.nimble.utility.validation.ValidationUtil;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -69,10 +68,9 @@ public class TrustServiceController {
              * CHECKS
              */
 
-            // check token
-            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
-            if (tokenCheck != null) {
-                return tokenCheck;
+            // validate role
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
             // check party
@@ -116,9 +114,7 @@ public class TrustServiceController {
 
             boolean completedTaskExist = TrustPersistenceUtility.completedTaskExist(qualifyingParty, processInstanceID);
             if (!completedTaskExist) {
-                TrustPersistenceUtility.createCompletedTasksForBothParties(processDocumentMetadatas.get(0).getProcessInstanceID(), bearerToken, "Completed");
-                // get qualifyingParty (which contains the completed task) again
-                qualifyingParty = PartyPersistenceUtility.getQualifyingPartyType(partyId,federationId, bearerToken);
+                return HttpResponseUtil.createResponseEntityAndLog(String.format("No completed task exists for the given party id: %s and process instance id: %s", partyId, processInstanceID), HttpStatus.BAD_REQUEST);
             }
             CompletedTaskType completedTaskType = TrustPersistenceUtility.fillCompletedTask(qualifyingParty, ratings, reviews, processInstanceID);
             new JPARepositoryFactory().forCatalogueRepository().updateEntity(qualifyingParty);
@@ -149,7 +145,7 @@ public class TrustServiceController {
                                             @ApiParam(value = "" ,required=true ) @RequestHeader(value="federationId", required=true) String federationId){
         logger.info("Getting ratings summary for the party with id: {}",partyId);
         // validate role
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
             return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
         }
 
@@ -179,7 +175,7 @@ public class TrustServiceController {
         try {
             logger.info("Getting all individual ratings and review for the party with id: {}",partyId);
             // validate role
-            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
+            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
