@@ -382,8 +382,11 @@ public class ProcessInstanceController {
                 List<String> partyIds = new ArrayList<>();
                 partyIds.add(iDocument.getSellerPartyId());
                 partyIds.add(iDocument.getBuyerPartyId());
+                List<String> federationIds = new ArrayList<>();
+                federationIds.add(iDocument.getSellerParty().getFederationInstanceID());
+                federationIds.add(iDocument.getBuyerParty().getFederationInstanceID());
                 // get parties
-                List<PartyType> parties = PartyPersistenceUtility.getParties(bearerToken, partyIds);
+                List<PartyType> parties = PartyPersistenceUtility.getParties(bearerToken, partyIds,federationIds);
                 // get seller and buyer party names
                 for (PartyType party : parties) {
                     if(party.getPartyIdentification().get(0).getID().contentEquals(iDocument.getSellerPartyId())){

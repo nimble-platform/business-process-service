@@ -26,7 +26,7 @@ public class PartyPersistenceUtility {
     private static final Logger logger = LoggerFactory.getLogger(PartyPersistenceUtility.class);
 
     private static final String QUERY_SELECT_BY_ID = "SELECT party FROM PartyType party JOIN party.partyIdentification partyIdentification WHERE partyIdentification.ID = :partyId AND party.federationInstanceID =:federationId";
-    private static final String QUERY_SELECT_BY_IDS = "SELECT party FROM PartyType party JOIN party.partyIdentification partyIdentification WHERE partyIdentification.ID IN :partyIds";
+    private static final String QUERY_SELECT_BY_CONDITIONS = "SELECT party FROM PartyType party JOIN party.partyIdentification partyIdentification WHERE %s";
     private static final String QUERY_SELECT_PERSON_BY_ID = "SELECT person FROM PersonType person WHERE person.ID = :id";
     private static final String QUERY_GET_QUALIFIYING_PARTY = "SELECT qpt FROM QualifyingPartyType qpt JOIN qpt.party.partyIdentification partyIdentification WHERE partyIdentification.ID = :partyId AND qpt.party.federationInstanceID = :federationId";
     private static final String QUERY_GET_ALL_QUALIFIYING_PARTIES = "SELECT qpt.completedTask FROM QualifyingPartyType qpt where qpt.completedTask.size > 0 and qpt.party is not null";
@@ -51,9 +51,17 @@ public class PartyPersistenceUtility {
         return repository.getSingleEntity(QUERY_SELECT_BY_ID, new String[]{"partyId","federationId"}, new Object[]{partyId,federationId});
     }
 
-    // TODO: Bunu ve querysini değiştirelim mutlaka
-    public static List<PartyType> getPartyByIDs(List<String> partyIds) {
-        return new JPARepositoryFactory().forCatalogueRepository(true).getEntities(QUERY_SELECT_BY_IDS, new String[]{"partyIds"}, new Object[]{partyIds});
+    public static List<PartyType> getPartyByIDs(List<String> partyIds, List<String> federationIds) {
+        StringBuilder conditions = new StringBuilder();
+        int size = partyIds.size();
+        for (int i = 0; i < size; i++) {
+            conditions.append(String.format("(partyIdentification.ID = %s AND party.federationInstanceID = %s)",partyIds.get(i),federationIds.get(i)));
+            if(i != size-1){
+                conditions.append(" OR ");
+            }
+        }
+        String query = String.format(QUERY_SELECT_BY_CONDITIONS,conditions.toString());
+        return new JPARepositoryFactory().forCatalogueRepository(true).getEntities(query);
     }
 
     public static QualifyingPartyType getQualifyingParty(String partyId,String federationId) {
@@ -175,7 +183,7 @@ public class PartyPersistenceUtility {
      * Retrieve the parties with the given ids. The party info is taken from the identity-service if it exists
      * or database directly.
      * */
-    public static List<PartyType> getParties(String bearerToken, List<String> partyIds) throws IOException {
+    public static List<PartyType> getParties(String bearerToken, List<String> partyIds, List<String> federationIds) throws IOException {
         List<PartyType> parties = new ArrayList<>();
 
         List<PartyType> identityParties = SpringBridge.getInstance().getiIdentityClientTyped().getParties(bearerToken,partyIds);
@@ -190,7 +198,7 @@ public class PartyPersistenceUtility {
         }
         // if there are parties which are not in the identity-service, retrieve them from the ubldb database
         if(partyIds.size() > 0){
-            parties.addAll(getPartyByIDs(partyIds));
+            parties.addAll(getPartyByIDs(partyIds,federationIds));
         }
 
         return parties;

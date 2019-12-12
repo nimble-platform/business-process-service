@@ -1300,6 +1300,10 @@ definitions:
         type: array
         items:
           type: string
+      tradingPartnerFederationIds:
+        type: array
+        items:
+          type: string
       tradingPartnerNames:
         type: array
         items:

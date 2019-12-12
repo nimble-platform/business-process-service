@@ -346,17 +346,20 @@ public class CollaborationGroupDAOUtility {
             // partner ids
             // Don't know if the current party is initiator or responder. So, should find the trading partner's id
             resultColumn = (String) returnedColumns.get(2);
+            String federationIdColumn = (String) returnedColumns.get(3);
             if (resultColumn.contentEquals(partyId)) {
-                resultColumn = (String) returnedColumns.get(3);
+                resultColumn = (String) returnedColumns.get(4);
+                federationIdColumn = (String) returnedColumns.get(5);
             }
             if (!filter.getTradingPartnerIDs().contains(resultColumn)) {
                 filter.getTradingPartnerIDs().add(resultColumn);
+                filter.getTradingPartnerFederationIds().add(federationIdColumn);
             }
 
 
 
             // status
-            ProcessInstanceStatus processInstanceStatus = (ProcessInstanceStatus) returnedColumns.get(4);
+            ProcessInstanceStatus processInstanceStatus = (ProcessInstanceStatus) returnedColumns.get(6);
             if (!filter.getStatus().contains(ProcessInstanceGroupFilter.StatusEnum.valueOf(processInstanceStatus.value()))) {
                 filter.getStatus().add(ProcessInstanceGroupFilter.StatusEnum.valueOf(processInstanceStatus.value()));
             }
@@ -365,7 +368,7 @@ public class CollaborationGroupDAOUtility {
         List<PartyType> parties = null;
         try {
             if(filter.getTradingPartnerIDs().size() > 0){
-                parties = PartyPersistenceUtility.getParties(bearerToken, new ArrayList<>(filter.getTradingPartnerIDs()));
+                parties = PartyPersistenceUtility.getParties(bearerToken, new ArrayList<>(filter.getTradingPartnerIDs()),new ArrayList<>(filter.getTradingPartnerFederationIds()));
             }
         } catch (IOException e) {
             String msg = String.format("Failed to get parties while getting categories for party: %s, collaboration role: %s, archived: %B", partyId, collaborationRole, archived);
@@ -418,7 +421,7 @@ public class CollaborationGroupDAOUtility {
 
         String query = "";
         if (queryType == GroupQueryType.FILTER || queryType == GroupQueryType.PROJECTFILTER) {
-            query += "select distinct new list(relProd.item, relCat.item, doc.initiatorID, doc.responderID, pi.status)";
+            query += "select distinct new list(relProd.item, relCat.item, doc.initiatorID, doc.initiatorFederationID, doc.responderID, doc.responderFederationID, pi.status)";
         } else if (queryType == GroupQueryType.SIZE || queryType == GroupQueryType.PROJECTSIZE) {
             query += "select count(distinct cg)";
         } else if (queryType == GroupQueryType.GROUP || queryType == GroupQueryType.PROJECT) {
