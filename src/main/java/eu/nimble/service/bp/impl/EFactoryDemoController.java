@@ -12,6 +12,7 @@ import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.commonbasiccomponents.CodeType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.QuantityType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.TextType;
+import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
@@ -96,7 +97,7 @@ public class EFactoryDemoController {
         // create RequestForQuotationLine
         RequestForQuotationType requestForQuotationType = null;
         try {
-            requestForQuotationType = BPMessageGenerator.createRequestForQuotation(catalogueLine,quantity,sellerNegotiationSettings,buyerParty,StartWithDocumentController.token);
+            requestForQuotationType = BPMessageGenerator.createRequestForQuotation(catalogueLine,quantity,sellerNegotiationSettings,buyerParty,rfqSummary.getPreviousDocumentId(),StartWithDocumentController.token);
         } catch (Exception e) {
             String msg = String.format("Unexpected error while creating request for quotation for product: %s",rfqSummary.getProductID());
             logger.error(msg,e);
@@ -115,6 +116,83 @@ public class EFactoryDemoController {
         // start the process
         ProcessInstance processInstance = (ProcessInstance) startWithDocumentController.startProcessWithDocument(serializedRFQ, null).getBody();
         logger.info("Completed the request to start request for quotation process");
+        return ResponseEntity.ok(processInstance);
+    }
+
+    @ApiOperation(value = "",notes = "Creates an Order for the given product and buyer party. Then, it starts the process using the created Order document.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Started order successfully", response = ProcessInstance.class),
+            @ApiResponse(code = 404, message = "There does not exist a product for the given id"),
+            @ApiResponse(code = 500, message = "Unexpected error while creating order for the given product")
+    })
+    @RequestMapping(value = "/start-order",
+            produces = {"application/json"},
+            method = RequestMethod.POST)
+    public ResponseEntity startOrderProcess(@RequestBody @Valid RFQSummary rfqSummary) {
+        logger.info("Getting request to start order process");
+        try {
+            logger.info("RFQSummary: {}",JsonSerializationUtility.getObjectMapper().writeValueAsString(rfqSummary));
+        } catch (JsonProcessingException e) {
+            String msg = "Unexpected error while serializing the RFQSummary";
+            logger.error(msg,e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+        }
+
+        // retrieve the product details
+        CatalogueLineType catalogueLine = CataloguePersistenceUtility.getCatalogueLine(rfqSummary.getProductID());
+        // check the existence of catalogue line
+        if(catalogueLine == null){
+            String msg = String.format("There does not exist a product for the given id: %s",rfqSummary.getProductID());
+            logger.error(msg);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+        }
+        // get seller negotiation settings
+        NegotiationSettings sellerNegotiationSettings;
+        try {
+            sellerNegotiationSettings = SpringBridge.getInstance().getiIdentityClientTyped().getNegotiationSettings(catalogueLine.getGoodsItem().getItem().getManufacturerParty().getPartyIdentification().get(0).getID());
+        } catch (IOException e) {
+            String msg = String.format("Unexpected error while getting negotiation settings for the party: %s",catalogueLine.getGoodsItem().getItem().getManufacturerParty().getPartyIdentification().get(0).getID());
+            logger.error(msg,e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+        }
+        // create quantity
+        QuantityType quantity = new QuantityType();
+        quantity.setValue(rfqSummary.getNumberOfProductsRequested());
+        quantity.setUnitCode(catalogueLine.getRequiredItemLocationQuantity().getPrice().getBaseQuantity().getUnitCode());
+
+        // create buyer party
+        PartyType buyerParty;
+        try {
+            buyerParty = getBuyerParty(rfqSummary);
+        } catch (IOException e) {
+            String msg = String.format("Unexpected error while creating order for product: %s",catalogueLine.getGoodsItem().getItem().getManufacturerParty().getPartyIdentification().get(0).getID());
+            logger.error(msg,e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+        }
+
+
+        // create OrderLine
+        OrderType order = null;
+        try {
+            order = BPMessageGenerator.createOrder(catalogueLine,quantity,sellerNegotiationSettings,buyerParty,rfqSummary.getPreviousDocumentId(),StartWithDocumentController.token);
+        } catch (Exception e) {
+            String msg = String.format("Unexpected error while creating order for product: %s",rfqSummary.getProductID());
+            logger.error(msg,e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+        }
+
+        // serialize Order
+        String serializedOrder;
+        try {
+            serializedOrder = JsonSerializationUtility.getObjectMapper().writeValueAsString(order);
+        } catch (JsonProcessingException e) {
+            String msg = "Unexpected error while serializing the order";
+            logger.error(msg,e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+        }
+        // start the process
+        ProcessInstance processInstance = (ProcessInstance) startWithDocumentController.startProcessWithDocument(serializedOrder, null).getBody();
+        logger.info("Completed the request to start order process");
         return ResponseEntity.ok(processInstance);
     }
 

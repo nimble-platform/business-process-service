@@ -25,6 +25,8 @@ import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.CodeType;
 import eu.nimble.service.model.ubl.document.IDocument;
+import eu.nimble.service.model.ubl.order.OrderType;
+import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.serialization.IDocumentDeserializer;
@@ -47,6 +49,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.List;
 
 @Controller
@@ -266,11 +269,10 @@ public class StartWithDocumentController {
             // get the initiator party
             try {
                 CodeType communicationChannel = UBLUtility.getPartyCommunicationChannel(initiatorParty);
-                // send document to initiator party iff it's a Quotation
-                if(communicationChannel != null && document instanceof QuotationType){
-                    QuotationType quotation = (QuotationType) document;
-                    String msg = createRequestBody(quotation,communicationChannel.getListID(),communicationChannel.getURI());
-                    logger.info("Sending quotation {} to {}",msg, communicationChannel.getValue());
+                // send document to initiator party iff it's a Quotation or Order response
+                if(communicationChannel != null && (document instanceof QuotationType || document instanceof OrderResponseSimpleType)){
+                    String msg = createRequestBody(document,communicationChannel.getListID(),communicationChannel.getURI());
+                    logger.info("Sending document {} to {}",msg, communicationChannel.getValue());
                     HttpResponse<String> response = Unirest.post(communicationChannel.getValue())
                             .header("Content-Type", "application/json")
                             .header("accept", "*/*")
@@ -344,31 +346,55 @@ public class StartWithDocumentController {
      *   "messageName": "<message_name_here>",
      *   "processInstanceId": "<process_instance_id_here>",
      *   "processVariables": {
-     *          "quotationData": {
+     *          "quotationData/orderData": {
+     *              "id": "<id_of_document>"
      *              "type": "String",
      *              "value": {
-     *                  "status ": "<status_of_quotation>",
-     *                  "netPrice": "<net_price_of_quotation>"
+     *                  "status ": "<status_of_document>",
+     *                  "netPrice": "<net_price_of_document>"
      *              }
      *          }
      *   }
      * }
      * */
-    private String createRequestBody(QuotationType quotation, String messageName, String processInstanceId){
-        String price = quotation.getQuotationLine().get(0).getLineItem().getPrice().getPriceAmount().getValue().multiply(quotation.getQuotationLine().get(0).getLineItem().getQuantity().getValue()).toString()
-                + " " + quotation.getQuotationLine().get(0).getLineItem().getPrice().getPriceAmount().getCurrencyID();
-        String status = quotation.getDocumentStatusCode().getName();
+    private String createRequestBody(IDocument document, String messageName, String processInstanceId){
+        // whether the document is quotation or not
+        boolean isQuotation = document instanceof QuotationType;
+        // info taken from the document
+        String documentId = null;
+        String price = null;
+        String status = null;
+        // Document is a Quotation
+        if(isQuotation){
+            QuotationType quotation = (QuotationType) document;
+            price = new DecimalFormat(".00").format(quotation.getQuotationLine().get(0).getLineItem().getPrice().getPriceAmount().getValue().multiply(quotation.getQuotationLine().get(0).getLineItem().getQuantity().getValue()))
+                    + " " + quotation.getQuotationLine().get(0).getLineItem().getPrice().getPriceAmount().getCurrencyID();
+            status = quotation.getDocumentStatusCode().getName();
+            documentId = quotation.getID();
+        }
+        // Document is an Order Response
+        else{
+            OrderResponseSimpleType orderResponse = (OrderResponseSimpleType) document;
+            OrderType order = (OrderType) DocumentPersistenceUtility.getUBLDocument(orderResponse.getOrderReference().getDocumentReference().getID(),DocumentType.ORDER);
 
-        JSONObject quotationDetails = new JSONObject();
-        quotationDetails.put("netPrice",price);
-        quotationDetails.put("status ",status);
+            price = new DecimalFormat(".00").format(order.getOrderLine().get(0).getLineItem().getPrice().getPriceAmount().getValue().multiply(order.getOrderLine().get(0).getLineItem().getQuantity().getValue()))
+                    + " " + order.getOrderLine().get(0).getLineItem().getPrice().getPriceAmount().getCurrencyID();
+            status = orderResponse.isAcceptedIndicator() ? "Accepted": "Rejected";
+            documentId = orderResponse.getID();
+        }
 
-        JSONObject quotationData = new JSONObject();
-        quotationData.put("type","String");
-        quotationData.put("value",quotationDetails);
+        JSONObject documentDetails = new JSONObject();
+        documentDetails.put("netPrice",price);
+        documentDetails.put("status ",status);
+
+        JSONObject documentData = new JSONObject();
+        documentData.put("id",documentId);
+        documentData.put("type","String");
+        documentData.put("value",documentDetails);
 
         JSONObject processVariables = new JSONObject();
-        processVariables.put("quotationData",quotationData);
+        processVariables.put(isQuotation ? "quotationData" :"orderData",documentData);
+
         JSONObject json = new JSONObject();
         json.put("processVariables",processVariables);
         json.put("messageName",messageName);

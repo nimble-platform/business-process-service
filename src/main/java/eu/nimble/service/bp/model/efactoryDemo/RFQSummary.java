@@ -18,11 +18,12 @@ public class RFQSummary {
     private String processInstanceId;
     @NotNull
     private String messageName;
+    private String previousDocumentId;
 
     public RFQSummary() {
     }
 
-    public RFQSummary(String productID, BigDecimal numberOfProductsRequested, String endpointOfTheBuyer, String buyerPartyId, String buyerPartyName, String processInstanceId, String messageName) {
+    public RFQSummary(String productID, BigDecimal numberOfProductsRequested, String endpointOfTheBuyer, String buyerPartyId, String buyerPartyName, String processInstanceId, String messageName, String previousDocumentId) {
         this.productID = productID;
         this.numberOfProductsRequested = numberOfProductsRequested;
         this.endpointOfTheBuyer = endpointOfTheBuyer;
@@ -30,6 +31,7 @@ public class RFQSummary {
         this.buyerPartyName = buyerPartyName;
         this.processInstanceId = processInstanceId;
         this.messageName = messageName;
+        this.previousDocumentId = previousDocumentId;
     }
 
     public String getProductID() {
@@ -86,5 +88,13 @@ public class RFQSummary {
 
     public void setMessageName(String messageName) {
         this.messageName = messageName;
+    }
+
+    public String getPreviousDocumentId() {
+        return previousDocumentId;
+    }
+
+    public void setPreviousDocumentId(String previousDocumentId) {
+        this.previousDocumentId = previousDocumentId;
     }
 }

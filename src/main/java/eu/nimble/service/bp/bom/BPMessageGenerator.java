@@ -175,6 +175,10 @@ public class BPMessageGenerator {
     }
 
     public static RequestForQuotationType createRequestForQuotation(CatalogueLineType catalogueLine, QuantityType quantity, NegotiationSettings sellerNegotiationSettings,PartyType buyerParty, String bearerToken) throws IOException {
+        return createRequestForQuotation(catalogueLine,quantity,sellerNegotiationSettings,buyerParty,null,bearerToken);
+    }
+
+    public static RequestForQuotationType createRequestForQuotation(CatalogueLineType catalogueLine, QuantityType quantity, NegotiationSettings sellerNegotiationSettings,PartyType buyerParty,String precedingDocumentId, String bearerToken) throws IOException {
         PartyType sellerParty = sellerNegotiationSettings.getCompany();
 
         // create request for quotation
@@ -221,8 +225,74 @@ public class BPMessageGenerator {
         requestForQuotation.setSellerSupplierParty(supplierParty);
         requestForQuotation.setDelivery(deliveryType);
         requestForQuotation.setRequestForQuotationLine(Collections.singletonList(requestForQuotationLine));
+        if(precedingDocumentId != null){
+            DocumentReferenceType documentReference = new DocumentReferenceType();
+            documentReference.setDocumentType("previousDocument");
+            documentReference.setID(precedingDocumentId);
+            requestForQuotation.setAdditionalDocumentReference(Collections.singletonList(documentReference));
+        }
 
         return requestForQuotation;
+    }
+
+    public static OrderType createOrder(CatalogueLineType catalogueLine, QuantityType quantity, NegotiationSettings sellerNegotiationSettings,PartyType buyerParty,String precedingDocumentId, String bearerToken) throws IOException {
+        PartyType sellerParty = sellerNegotiationSettings.getCompany();
+
+        // create order
+        OrderType order = new OrderType();
+
+        CodeType paymentMeansCode = new CodeType();
+        paymentMeansCode.setValue(sellerNegotiationSettings.getPaymentMeans().size() > 0 ? sellerNegotiationSettings.getPaymentMeans().get(0) : "");
+
+        PaymentMeansType paymentMeansType = new PaymentMeansType();
+        paymentMeansType.setPaymentMeansCode(paymentMeansCode);
+
+        PaymentTermsType paymentTermsType = new PaymentTermsType();
+        paymentTermsType.setTradingTerms(getPaymentTerms(sellerNegotiationSettings.getPaymentTerms().size() > 0 ? sellerNegotiationSettings.getPaymentTerms().get(0) : ""));
+
+        OrderLineType orderLine = new OrderLineType();
+        orderLine.setLineItem(createLineItem(catalogueLine,quantity,sellerNegotiationSettings,buyerParty));
+        orderLine.getLineItem().setDataMonitoringRequested(false);
+        orderLine.getLineItem().setPaymentMeans(paymentMeansType);
+        orderLine.getLineItem().setPaymentTerms(paymentTermsType);
+
+        ContractType contract = new ContractType();
+        contract.setID(UUID.randomUUID().toString());
+        // if seller has some T&Cs, use them, otherwise use the default T&Cs
+        if (sellerParty.getPurchaseTerms() != null && sellerParty.getPurchaseTerms().getTermOrCondition().size() > 0) {
+            contract.setClause(sellerParty.getPurchaseTerms().getTermOrCondition());
+        } else {
+            ContractGenerator contractGenerator = new ContractGenerator();
+            List<ClauseType> clauses = contractGenerator.getTermsAndConditions(sellerParty.getPartyIdentification().get(0).getID(), buyerParty.getPartyIdentification().get(0).getID(), sellerNegotiationSettings.getIncoterms().size() > 0 ? sellerNegotiationSettings.getIncoterms().get(0) : "", sellerNegotiationSettings.getPaymentTerms().size() > 0 ? sellerNegotiationSettings.getPaymentTerms().get(0) : "", bearerToken);
+            contract.setClause(clauses);
+        }
+        order.setContract(Collections.singletonList(contract));
+
+        CustomerPartyType customerParty = new CustomerPartyType();
+        customerParty.setParty(PartyPersistenceUtility.getParty(buyerParty));
+
+        SupplierPartyType supplierParty = new SupplierPartyType();
+        supplierParty.setParty(PartyPersistenceUtility.getParty(sellerParty));
+
+        PeriodType periodType = new PeriodType();
+
+        DeliveryType deliveryType = new DeliveryType();
+        deliveryType.setRequestedDeliveryPeriod(periodType);
+
+        String uuid = UUID.randomUUID().toString();
+        order.setID(uuid);
+        order.setNote(Collections.singletonList(""));
+        order.setBuyerCustomerParty(customerParty);
+        order.setSellerSupplierParty(supplierParty);
+        order.setOrderLine(Collections.singletonList(orderLine));
+        if(precedingDocumentId != null){
+            DocumentReferenceType documentReference = new DocumentReferenceType();
+            documentReference.setDocumentType("previousDocument");
+            documentReference.setID(precedingDocumentId);
+            order.setAdditionalDocumentReference(Collections.singletonList(documentReference));
+        }
+
+        return order;
     }
 
     private static LineItemType createLineItem(CatalogueLineType catalogueLine,QuantityType quantity,NegotiationSettings sellerNegotiationSettings, PartyType buyerParty){
