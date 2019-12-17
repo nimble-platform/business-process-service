@@ -19,11 +19,12 @@ public class RFQSummary {
     @NotNull
     private String messageName;
     private String previousDocumentId;
+    private BigDecimal pricePerProduct;
 
     public RFQSummary() {
     }
 
-    public RFQSummary(String productID, BigDecimal numberOfProductsRequested, String endpointOfTheBuyer, String buyerPartyId, String buyerPartyName, String processInstanceId, String messageName, String previousDocumentId) {
+    public RFQSummary(String productID, BigDecimal numberOfProductsRequested, String endpointOfTheBuyer, String buyerPartyId, String buyerPartyName, String processInstanceId, String messageName, String previousDocumentId, BigDecimal pricePerProduct) {
         this.productID = productID;
         this.numberOfProductsRequested = numberOfProductsRequested;
         this.endpointOfTheBuyer = endpointOfTheBuyer;
@@ -32,6 +33,7 @@ public class RFQSummary {
         this.processInstanceId = processInstanceId;
         this.messageName = messageName;
         this.previousDocumentId = previousDocumentId;
+        this.pricePerProduct = pricePerProduct;
     }
 
     public String getProductID() {
@@ -96,5 +98,13 @@ public class RFQSummary {
 
     public void setPreviousDocumentId(String previousDocumentId) {
         this.previousDocumentId = previousDocumentId;
+    }
+
+    public BigDecimal getPricePerProduct() {
+        return pricePerProduct;
+    }
+
+    public void setPricePerProduct(BigDecimal pricePerProduct) {
+        this.pricePerProduct = pricePerProduct;
     }
 }

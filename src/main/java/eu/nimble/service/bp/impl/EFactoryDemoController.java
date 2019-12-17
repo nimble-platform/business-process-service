@@ -97,7 +97,7 @@ public class EFactoryDemoController {
         // create RequestForQuotationLine
         RequestForQuotationType requestForQuotationType = null;
         try {
-            requestForQuotationType = BPMessageGenerator.createRequestForQuotation(catalogueLine,quantity,sellerNegotiationSettings,buyerParty,rfqSummary.getPreviousDocumentId(),StartWithDocumentController.token);
+            requestForQuotationType = BPMessageGenerator.createRequestForQuotation(catalogueLine,quantity,sellerNegotiationSettings,buyerParty,rfqSummary.getPreviousDocumentId(), rfqSummary.getPricePerProduct(),StartWithDocumentController.token);
         } catch (Exception e) {
             String msg = String.format("Unexpected error while creating request for quotation for product: %s",rfqSummary.getProductID());
             logger.error(msg,e);
@@ -174,7 +174,7 @@ public class EFactoryDemoController {
         // create OrderLine
         OrderType order = null;
         try {
-            order = BPMessageGenerator.createOrder(catalogueLine,quantity,sellerNegotiationSettings,buyerParty,rfqSummary.getPreviousDocumentId(),StartWithDocumentController.token);
+            order = BPMessageGenerator.createOrder(catalogueLine,quantity,sellerNegotiationSettings,buyerParty,rfqSummary.getPreviousDocumentId(),rfqSummary.getPricePerProduct(),StartWithDocumentController.token);
         } catch (Exception e) {
             String msg = String.format("Unexpected error while creating order for product: %s",rfqSummary.getProductID());
             logger.error(msg,e);
