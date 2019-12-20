@@ -189,7 +189,7 @@ public class EmailSenderUtil {
 
             String url = getFrontendUrl(COLLABORATION_ROLE_BUYER);
 
-            notifyPartyOnNewDeliveryDate(toEmail,productNames.toString(),tradingPartner.getPartyName().get(0).getName().getValue(),strDate,url,bearerToken);
+            notifyPartyOnNewDeliveryDate(toEmail,productNames.toString(),tradingPartner.getPartyName().get(0).getName().getValue(),strDate,url);
             logger.info("New delivery date mail sent to: {} for process instance id: {}", toEmail, processInstanceId);
         }).start();
     }
@@ -351,7 +351,7 @@ public class EmailSenderUtil {
         emailService.send(toEmail, subject, "continue_colloboration", context);
     }
 
-    public void notifyPartyOnNewDeliveryDate(String toEmail,String productName, String respondingPartyName, String expectedDeliveryDate, String url, String subject) {
+    public void notifyPartyOnNewDeliveryDate(String toEmail,String productName, String respondingPartyName, String expectedDeliveryDate, String url) {
         Context context = new Context();
 
         context.setVariable("respondingPartyName", respondingPartyName);
@@ -359,6 +359,6 @@ public class EmailSenderUtil {
         context.setVariable("product", productName);
         context.setVariable("url", url);
 
-        emailService.send(new String[]{toEmail}, subject, "new_delivery_date", context);
+        emailService.send(new String[]{toEmail}, "NIMBLE: New Delivery Date", "new_delivery_date", context);
     }
 }
