@@ -119,7 +119,7 @@ public class PartyPersistenceUtility {
                 throw new RuntimeException(msg, e);
             }
 
-            repository.persistEntity(party);
+            repository.updateEntity(party);
             return party;
         }
     }
