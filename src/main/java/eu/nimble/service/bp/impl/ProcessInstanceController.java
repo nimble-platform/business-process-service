@@ -413,8 +413,10 @@ public class ProcessInstanceController {
             return  "{\"items\":"+objectMapper.writeValueAsString(items) +
                     ",\"areProductsDeleted\":" + objectMapper.writeValueAsString(areProductsDeleted) +
                     ",\"buyerPartyId\":\""+ iDocument.getBuyerPartyId() +
+                    "\",\"buyerPartyFederationId\":\""+ iDocument.getBuyerParty().getFederationInstanceID() +
                     "\",\"buyerPartyName\":"+objectMapper.writeValueAsString(buyerPartyNames)+
                     ",\"sellerPartyId\":\""+ iDocument.getSellerPartyId()+
+                    "\",\"sellerPartyFederationId\":\""+ iDocument.getSellerParty().getFederationInstanceID() +
                     "\",\"sellerPartyName\":"+objectMapper.writeValueAsString(sellerPartyNames)+"}";
         });
     }
