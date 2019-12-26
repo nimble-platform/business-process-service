@@ -316,6 +316,7 @@ public class HibernateSwaggerObjectMapper {
         processInstanceGroupDAO.setFirstActivityTime(processInstanceGroup.getFirstActivityTime());
         processInstanceGroupDAO.setLastActivityTime(processInstanceGroup.getLastActivityTime());
         processInstanceGroupDAO.setPrecedingProcessInstanceGroupMetadata(createFederatedCollaborationGroupMetadata(processInstanceGroup.getPrecedingProcessInstanceGroupMetadata()));
+        processInstanceGroupDAO.setCollaborationRole(processInstanceGroup.getCollaborationRole());
 
         processInstanceGroupDAO.setStatus(GroupStatus.INPROGRESS);
         return processInstanceGroupDAO;
