@@ -30,7 +30,7 @@ public class ContractPersistenceUtility {
     private static final String QUERY_GET_FRAME_CONTRACT_BY_SELLER_BUYER_PRODUCT_IDS =
             "SELECT da FROM DigitalAgreementType da join da.participantParty pp join pp.partyIdentification pid join da.item item" +
                     " WHERE" +
-                    " ((pid = :sellerId AND pp.federationInstanceID =:sellerFederationId) OR (pid = :buyerId AND pp.federationInstanceID = :buyerFederationId)) AND " +
+                    " ((pid.ID = :sellerId AND pp.federationInstanceID =:sellerFederationId) OR (pid.ID = :buyerId AND pp.federationInstanceID = :buyerFederationId)) AND " +
                     " item.manufacturersItemIdentification.ID in :itemId" +
                     " GROUP BY da" +
                     " HAVING COUNT(da) = 2 ";
