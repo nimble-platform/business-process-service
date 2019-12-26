@@ -397,7 +397,7 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
                 try {
                     HttpResponse<JsonNode> response = Unirest.get(SpringBridge.getInstance().getGenericConfig().getDelegateServiceUrl()+"/collaboration-groups/unmerge")
                             .header("Authorization", bearerToken)
-                            .queryString("id",cgid.getID())
+                            .queryString("groupId",cgid.getID())
                             .queryString("delegateId",cgid.getFederationID())
                             .asJson();
                 } catch (Exception e) {
@@ -552,7 +552,7 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
     })
     @RequestMapping(value = "/collaboration-groups/unmerge",
             method = RequestMethod.GET)
-    public ResponseEntity unMergeCollaborationGroup(@ApiParam(value = "The identifier of party", required = true) @RequestParam(value = "id",required = true) String groupId,
+    public ResponseEntity unMergeCollaborationGroup(@ApiParam(value = "The identifier of party", required = true) @RequestParam(value = "groupId",required = true) String groupId,
                                                          @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
         logger.info("Unmerging collaboration group");
 
