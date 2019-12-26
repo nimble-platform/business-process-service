@@ -83,9 +83,7 @@ public class StartWithDocumentController {
             method = RequestMethod.POST)
     public ResponseEntity startProcessWithDocument(@ApiParam(value = "Serialized form of the document", required = true) @RequestBody String documentAsString,
                                           @ApiParam(value = "The Bearer token provided by the identity service", required = false)
-                                          @RequestHeader(value = "Authorization", required = false) String bearerToken,
-                                       @ApiParam(value = "" ,required=true ) @RequestHeader(value="initiatorFederationId", required=true) String initiatorFederationId,
-                                       @ApiParam(value = "" ,required=true ) @RequestHeader(value="responderFederationId", required=true) String responderFederationId) {
+                                          @RequestHeader(value = "Authorization", required = false) String bearerToken) {
         logger.info("Getting request to start process with document");
 
         /**
@@ -164,6 +162,10 @@ public class StartWithDocumentController {
          * */
         // check whether it is a request or response document
         boolean isInitialDocument = BusinessProcessUtility.isInitialDocument(document.getClass());
+
+        // retrieve initiator and responder federation id from the given document
+        String initiatorFederationId = document.getBuyerParty().getFederationInstanceID();
+        String responderFederationId = document.getSellerParty().getFederationInstanceID();
 
         ProcessInstance processInstance;
         if(isInitialDocument){

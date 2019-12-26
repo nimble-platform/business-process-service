@@ -121,7 +121,7 @@ public class EFactoryDemoController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
         }
         // start the process
-        ProcessInstance processInstance = (ProcessInstance) startWithDocumentController.startProcessWithDocument(serializedRFQ, null, initiatorFederationId, responderFederationId).getBody();
+        ProcessInstance processInstance = (ProcessInstance) startWithDocumentController.startProcessWithDocument(serializedRFQ, null ).getBody();
         logger.info("Completed the request to start request for quotation process");
         return ResponseEntity.ok(processInstance);
     }
