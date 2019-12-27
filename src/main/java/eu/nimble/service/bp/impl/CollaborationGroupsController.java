@@ -136,17 +136,19 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
             associatedProcessInstanceGroup.setLastActivityTime(processInstanceGroupDAO.getLastActivityTime());
         }
 
-        if(collaborationGroupDAO.getFederatedCollaborationGroupMetadatas() != null){
-            for (FederatedCollaborationGroupMetadataDAO federatedCollaborationGroupMetadata : collaborationGroupDAO.getFederatedCollaborationGroupMetadatas()) {
+        CollaborationGroup collaborationGroup = HibernateSwaggerObjectMapper.convertCollaborationGroupDAO(collaborationGroupDAO);
+
+        if(collaborationGroup.getFederatedCollaborationGroupMetadatas() != null){
+            for (FederatedCollaborationGroupMetadata federatedCollaborationGroupMetadata : collaborationGroup.getFederatedCollaborationGroupMetadatas()) {
                 try {
                     HttpResponse<JsonNode> response = Unirest.get(SpringBridge.getInstance().getGenericConfig().getDelegateServiceUrl()+"/collaboration-groups/"+federatedCollaborationGroupMetadata.getID())
                             .header("Authorization", bearerToken)
                             .queryString("delegateId",federatedCollaborationGroupMetadata.getFederationID())
                             .asJson();
                     ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
-                    CollaborationGroup collaborationGroup = objectMapper.readValue(response.getBody().toString(),CollaborationGroup.class);
-                    for (ProcessInstanceGroup associatedProcessInstanceGroup : collaborationGroup.getAssociatedProcessInstanceGroups()) {
-                        collaborationGroupDAO.getAssociatedProcessInstanceGroups().add(HibernateSwaggerObjectMapper.createProcessInstanceGroup_DAO(associatedProcessInstanceGroup));
+                    CollaborationGroup federatedCollaborationGroup = objectMapper.readValue(response.getBody().toString(),CollaborationGroup.class);
+                    for (ProcessInstanceGroup associatedProcessInstanceGroup : federatedCollaborationGroup.getAssociatedProcessInstanceGroups()) {
+                        collaborationGroup.getAssociatedProcessInstanceGroups().add(associatedProcessInstanceGroup);
                     }
 
                 } catch (Exception e) {
@@ -156,7 +158,6 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
             }
         }
 
-        CollaborationGroup collaborationGroup = HibernateSwaggerObjectMapper.convertCollaborationGroupDAO(collaborationGroupDAO);
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(collaborationGroup);
         logger.debug("Retrieved CollaborationGroup: {}", id);
         return response;
@@ -476,17 +477,19 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
                     associatedProcessInstanceGroup.setLastActivityTime(processInstanceGroupDAO.getLastActivityTime());
                 }
 
-                if(collaborationGroupDAO.getFederatedCollaborationGroupMetadatas() != null){
-                    for (FederatedCollaborationGroupMetadataDAO federatedCollaborationGroupMetadata : collaborationGroupDAO.getFederatedCollaborationGroupMetadatas()) {
+                CollaborationGroup collaborationGroup = HibernateSwaggerObjectMapper.convertCollaborationGroupDAO(collaborationGroupDAO);
+
+                if(collaborationGroup.getFederatedCollaborationGroupMetadatas() != null){
+                    for (FederatedCollaborationGroupMetadata federatedCollaborationGroupMetadata : collaborationGroup.getFederatedCollaborationGroupMetadatas()) {
                         try {
                             HttpResponse<JsonNode> response = Unirest.get(SpringBridge.getInstance().getGenericConfig().getDelegateServiceUrl()+"/collaboration-groups/"+federatedCollaborationGroupMetadata.getID())
                                     .header("Authorization", bearerToken)
                                     .queryString("delegateId",federatedCollaborationGroupMetadata.getFederationID())
                                     .asJson();
                             ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
-                            CollaborationGroup collaborationGroup = objectMapper.readValue(response.getBody().toString(),CollaborationGroup.class);
-                            for (ProcessInstanceGroup associatedProcessInstanceGroup : collaborationGroup.getAssociatedProcessInstanceGroups()) {
-                                collaborationGroupDAO.getAssociatedProcessInstanceGroups().add(HibernateSwaggerObjectMapper.createProcessInstanceGroup_DAO(associatedProcessInstanceGroup));
+                            CollaborationGroup federatedCollaborationGroup = objectMapper.readValue(response.getBody().toString(),CollaborationGroup.class);
+                            for (ProcessInstanceGroup associatedProcessInstanceGroup : federatedCollaborationGroup.getAssociatedProcessInstanceGroups()) {
+                                collaborationGroup.getAssociatedProcessInstanceGroups().add(associatedProcessInstanceGroup);
                             }
 
                         } catch (Exception e) {
@@ -495,7 +498,7 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
                         }
                     }
                 }
-                CollaborationGroup collaborationGroup = HibernateSwaggerObjectMapper.convertCollaborationGroupDAO(collaborationGroupDAO);
+
                 collaborationGroups.add(collaborationGroup);
             }
         }

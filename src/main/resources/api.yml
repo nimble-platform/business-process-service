@@ -1213,6 +1213,8 @@ definitions:
         type: string
       federationID:
         type: string
+      sellerFederationId:
+        type: string
       processInstanceIDs:
         type: array
         items:
@@ -1232,8 +1234,9 @@ definitions:
       status:
         type: string
         enum:
-        - INPROGRESS
-        - CANCELLED
+          - INPROGRESS
+          - CANCELLED
+          - COMPLETED
 
   CollaborationGroup:
     title: Collaboration Group
@@ -1253,6 +1256,8 @@ definitions:
         - INPROGRESS
       isProject:
         type: boolean
+      federationId:
+        type: string
       federatedCollaborationGroupMetadatas:
         type: array
         items:
