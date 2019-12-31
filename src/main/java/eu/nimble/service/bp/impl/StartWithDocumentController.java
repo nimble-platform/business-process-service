@@ -163,9 +163,16 @@ public class StartWithDocumentController {
         // check whether it is a request or response document
         boolean isInitialDocument = BusinessProcessUtility.isInitialDocument(document.getClass());
 
+        // get corresponding process type
+        String processId = ClassProcessTypeMap.getProcessType(document.getClass());
         // retrieve initiator and responder federation id from the given document
         String initiatorFederationId = document.getBuyerParty().getFederationInstanceID();
         String responderFederationId = document.getSellerParty().getFederationInstanceID();
+        // for Fulfilment, it's vice versa
+        if(processId.contentEquals(ClassProcessTypeMap.CAMUNDA_PROCESS_ID_FULFILMENT)){
+            initiatorFederationId = document.getSellerParty().getFederationInstanceID();
+            responderFederationId = document.getBuyerParty().getFederationInstanceID();
+        }
 
         ProcessInstance processInstance;
         if(isInitialDocument){
@@ -292,8 +299,6 @@ public class StartWithDocumentController {
             /**
              * Send response document to the initiator party
              * */
-            // get corresponding process type
-            String processId = ClassProcessTypeMap.getProcessType(document.getClass());
             // get the initiator party id
             PartyType initiatorParty = document.getBuyerParty();
             // for Fulfilment, it's vice versa
