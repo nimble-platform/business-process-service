@@ -2,6 +2,9 @@ package eu.nimble.service.bp.contract;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mashape.unirest.http.HttpResponse;
+import com.mashape.unirest.http.JsonNode;
+import com.mashape.unirest.http.Unirest;
 import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
 import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
@@ -103,7 +106,7 @@ public class ContractGenerator {
         }
     }
 
-    public List<ClauseType> getTermsAndConditions(String sellerPartyId, String buyerPartyId, String incoterms, String tradingTerm, String bearerToken) throws IOException {
+    public List<ClauseType> getTermsAndConditions(String sellerPartyId,String buyerPartyId,String buyerFederationId, String incoterms, String tradingTerm, String bearerToken) throws Exception {
         List<ClauseType> clauses = new ArrayList<>();
 
         try {
@@ -123,7 +126,16 @@ public class ContractGenerator {
                 PartyType supplierParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,sellerPartyId);
                 PartyType customerParty = null;
                 if(buyerPartyId != null){
-                    customerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,buyerPartyId);
+                    if(!buyerFederationId.contentEquals(SpringBridge.getInstance().getGenericConfig().getFederationId())){
+                        HttpResponse<JsonNode> response = Unirest.get(SpringBridge.getInstance().getGenericConfig().getDelegateServiceUrl()+"/party/"+buyerPartyId)
+                                .header("Authorization", bearerToken)
+                                .queryString("delegateId",buyerFederationId)
+                                .asJson();
+                        customerParty = objectMapper.readValue(response.getBody().toString(),PartyType.class);
+                    }
+                    else {
+                        customerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,buyerPartyId);
+                    }
                 }
 
                 for(ClauseType clause : clauses){

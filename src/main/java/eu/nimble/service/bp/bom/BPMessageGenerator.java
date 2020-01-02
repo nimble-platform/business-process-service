@@ -174,7 +174,7 @@ public class BPMessageGenerator {
         return order;
     }
 
-    public static RequestForQuotationType createRequestForQuotation(CatalogueLineType catalogueLine, QuantityType quantity, NegotiationSettings sellerNegotiationSettings,PartyType buyerParty, String bearerToken) throws IOException {
+    public static RequestForQuotationType createRequestForQuotation(CatalogueLineType catalogueLine, QuantityType quantity, NegotiationSettings sellerNegotiationSettings,PartyType buyerParty, String bearerToken) throws Exception {
         PartyType sellerParty = sellerNegotiationSettings.getCompany();
 
         // create request for quotation
@@ -199,7 +199,7 @@ public class BPMessageGenerator {
             requestForQuotationLine.getLineItem().setClause(sellerParty.getPurchaseTerms().getTermOrCondition());
         } else {
             ContractGenerator contractGenerator = new ContractGenerator();
-            List<ClauseType> clauses = contractGenerator.getTermsAndConditions(sellerParty.getPartyIdentification().get(0).getID(), buyerParty.getPartyIdentification().get(0).getID(), sellerNegotiationSettings.getIncoterms().size() > 0 ? sellerNegotiationSettings.getIncoterms().get(0) : "", sellerNegotiationSettings.getPaymentTerms().size() > 0 ? sellerNegotiationSettings.getPaymentTerms().get(0) : "", bearerToken);
+            List<ClauseType> clauses = contractGenerator.getTermsAndConditions(sellerParty.getPartyIdentification().get(0).getID(),buyerParty.getPartyIdentification().get(0).getID(),buyerParty.getFederationInstanceID(), sellerNegotiationSettings.getIncoterms().size() > 0 ? sellerNegotiationSettings.getIncoterms().get(0) : "", sellerNegotiationSettings.getPaymentTerms().size() > 0 ? sellerNegotiationSettings.getPaymentTerms().get(0) : "", bearerToken);
             requestForQuotationLine.getLineItem().setClause(clauses);
         }
 
