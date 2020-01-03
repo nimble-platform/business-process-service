@@ -22,6 +22,7 @@ import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.validation.IValidationUtil;
 import eu.nimble.utility.validation.ValidationUtil;
+import feign.Response;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -139,8 +140,9 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
     }
 
     @Override
-    @ApiOperation(value = "", notes = "Gets the order document included in a business process group")
-    public ResponseEntity<Void> getOrderDocument(@ApiParam(value = "Identifier of a process instance included in the group", required = true) @RequestParam(value = "processInstanceId", required = true) String processInstanceId,
+    @ApiOperation(value = "", notes = "Gets the order document included in a business process group. If order response id is provided, it simply returns the corresponding order")
+    public ResponseEntity<Void> getOrderDocument(@ApiParam(value = "Identifier of a process instance included in the group", required = false) @RequestParam(value = "processInstanceId", required = false) String processInstanceId,
+                                                 @ApiParam(value = "Identifier of the order response", required = false) @RequestParam(value = "orderResponseId", required = false) String orderResponseId,
                                                 @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
         try {
             // validate role
@@ -148,33 +150,34 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
                 return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
-            // check whether the process instance id exists
-            ProcessInstanceDAO pi = ProcessInstanceDAOUtility.getById(processInstanceId);
-            if (pi == null) {
-                return HttpResponseUtil.createResponseEntityAndLog(String.format("No process ID exists for the process id: %s", processInstanceId), null, HttpStatus.NOT_FOUND, LogLevel.INFO);
-            }
-
-            // get the preceding process instance group if there is any
-            FederatedCollaborationGroupMetadataDAO federatedCollaborationGroupMetadataDAO = ProcessInstanceGroupDAOUtility.getPrecedingProcessInstanceGroup(processInstanceId);
             String orderJson = null;
-            if (federatedCollaborationGroupMetadataDAO != null) {
-                // TODO: we need to get process instance group using the delegate service here
-                HttpResponse<JsonNode> response = Unirest.get(SpringBridge.getInstance().getGenericConfig().getDelegateServiceUrl()+"/collaboration-groups/process-instance-groups/order-document")
-                        .header("Authorization", bearerToken)
-                        .queryString("processInstanceId",processInstanceId)
-                        .queryString("delegateId",federatedCollaborationGroupMetadataDAO.getFederationID())
-                        .asJson();
-                if(response.getStatus() == 200){
-                    orderJson = response.getBody().toString();
+
+            if(orderResponseId != null) {
+                ProcessDocumentMetadataDAO orderMetadata = ProcessDocumentMetadataDAOUtility.getMetadataForCorrespondingDocument(orderResponseId);
+                if(orderMetadata == null){
+                    return HttpResponseUtil.createResponseEntityAndLog(String.format("No metadata exists for the order response: %s", orderResponseId), null, HttpStatus.NOT_FOUND, LogLevel.INFO);
                 }
-            } else {
-                // get the order
-                String orderId = ProcessInstanceGroupDAOUtility.getSourceOrderResponseIdForTransportRelatedProcess(processInstanceId);
-                if (orderId != null) {
-                    orderJson = (String) documentController.getDocumentJsonContent(orderId,bearerToken).getBody();
+                orderJson = (String) documentController.getDocumentJsonContent(orderMetadata.getDocumentID(),bearerToken).getBody();
+            }
+            else{
+                // check whether the process instance id exists
+                ProcessInstanceDAO pi = ProcessInstanceDAOUtility.getById(processInstanceId);
+                if (pi == null) {
+                    return HttpResponseUtil.createResponseEntityAndLog(String.format("No process ID exists for the process id: %s", processInstanceId), null, HttpStatus.NOT_FOUND, LogLevel.INFO);
+                }
+
+                String sourceOrderResponseId = ProcessInstanceGroupDAOUtility.getSourceOrderResponseIdForTransportRelatedProcess(processInstanceId);
+                // get the preceding process instance group
+                FederatedCollaborationGroupMetadataDAO federatedCollaborationGroupMetadataDAO = ProcessInstanceGroupDAOUtility.getPrecedingProcessInstanceGroup(processInstanceId);
+                if (federatedCollaborationGroupMetadataDAO != null) {
+                    Response response = SpringBridge.getInstance().getDelegateClient().getOrderDocument(bearerToken,processInstanceId,sourceOrderResponseId,federatedCollaborationGroupMetadataDAO.getFederationID());
+                    if(response.status() == 200){
+                        orderJson = eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response);
+                    }
+                } else {
+                    orderJson = (String) documentController.getDocumentJsonContent(sourceOrderResponseId,bearerToken).getBody();
                 }
             }
-
 
             // get the order content
             ResponseEntity response;

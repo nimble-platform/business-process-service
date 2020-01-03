@@ -35,6 +35,7 @@ import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
 import eu.nimble.utility.serialization.JsonSerializer;
 import eu.nimble.utility.serialization.MixInIgnoreType;
 import eu.nimble.utility.validation.IValidationUtil;
+import feign.Response;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -403,11 +404,8 @@ public class ProcessInstanceController {
                 // seller and buyer are in different instances
                 else{
                     PartyType sellerParty = PartyPersistenceUtility.getParties(bearerToken, partyIds,federationIds).get(0);
-                    HttpResponse<JsonNode> response = Unirest.get(SpringBridge.getInstance().getGenericConfig().getDelegateServiceUrl()+"/party/"+iDocument.getBuyerPartyId())
-                            .header("Authorization", bearerToken)
-                            .queryString("delegateId",iDocument.getBuyerParty().getFederationInstanceID())
-                            .asJson();
-                    PartyType buyerParty = objectMapper.readValue(response.getBody().toString(),PartyType.class);
+                    Response response = SpringBridge.getInstance().getDelegateClient().getParty(bearerToken,Long.parseLong(iDocument.getBuyerPartyId()),false,iDocument.getBuyerParty().getFederationInstanceID());
+                    PartyType buyerParty = objectMapper.readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),PartyType.class);
 
                     parties = Arrays.asList(sellerParty,buyerParty);
                 }

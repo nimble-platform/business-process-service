@@ -25,6 +25,7 @@ import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.binary.BinaryContentService;
+import feign.Response;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -127,11 +128,8 @@ public class ContractGenerator {
                 PartyType customerParty = null;
                 if(buyerPartyId != null){
                     if(!buyerFederationId.contentEquals(SpringBridge.getInstance().getGenericConfig().getFederationId())){
-                        HttpResponse<JsonNode> response = Unirest.get(SpringBridge.getInstance().getGenericConfig().getDelegateServiceUrl()+"/party/"+buyerPartyId)
-                                .header("Authorization", bearerToken)
-                                .queryString("delegateId",buyerFederationId)
-                                .asJson();
-                        customerParty = objectMapper.readValue(response.getBody().toString(),PartyType.class);
+                        Response response = SpringBridge.getInstance().getDelegateClient().getParty(bearerToken,Long.parseLong(buyerPartyId),false,buyerFederationId);
+                        customerParty = objectMapper.readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),PartyType.class);
                     }
                     else {
                         customerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,buyerPartyId);

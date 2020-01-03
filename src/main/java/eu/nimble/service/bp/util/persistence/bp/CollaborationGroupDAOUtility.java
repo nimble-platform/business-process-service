@@ -100,6 +100,10 @@ public class CollaborationGroupDAOUtility {
         return repository.getSingleEntity(QUERY_GET_ASSOCIATED_GROUP, new String[]{"partyId","pids"}, new Object[]{partyId, processInstanceIds});
     }
 
+    public static Long getCollaborationGroupHjidByProcessInstanceIdAndPartyId(GenericJPARepository genericJPARepository,String processInstanceId, String partyId, String federationId){
+        return genericJPARepository.getSingleEntity(QUERY_GET_HJID_BY_PROCESS_INSTANCE_ID_AND_PARTY_ID, new String[]{"partyID", "processInstanceId","federationId"}, new Object[]{partyId, processInstanceId,federationId});
+    }
+
     public static Long getCollaborationGroupHjidByProcessInstanceIdAndPartyId(String processInstanceId, String partyId, String federationId){
         return new JPARepositoryFactory().forBpRepository().getSingleEntity(QUERY_GET_HJID_BY_PROCESS_INSTANCE_ID_AND_PARTY_ID, new String[]{"partyID", "processInstanceId","federationId"}, new Object[]{partyId, processInstanceId,federationId});
     }

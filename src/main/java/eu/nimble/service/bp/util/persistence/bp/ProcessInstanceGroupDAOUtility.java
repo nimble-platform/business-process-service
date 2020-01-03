@@ -224,13 +224,7 @@ public class ProcessInstanceGroupDAOUtility {
             }
         }
 
-        // find the order id
-        if(orderResponseId != null) {
-            ProcessDocumentMetadataDAO orderMetadata = ProcessDocumentMetadataDAOUtility.getMetadataForCorrespondingDocument(orderResponseId);
-            return orderMetadata.getDocumentID();
-        }
-
-        return null;
+        return orderResponseId;
     }
 
     public static List<ProcessDocumentMetadataDAO> getDocumentMetadataInProcessInstanceGroup(String pigId) {

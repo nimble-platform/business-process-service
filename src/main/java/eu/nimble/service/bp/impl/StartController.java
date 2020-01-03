@@ -36,6 +36,7 @@ import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
 import eu.nimble.utility.validation.IValidationUtil;
+import feign.Response;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
@@ -102,7 +103,7 @@ public class StartController implements StartApi {
                 ProcessInstanceInputMessage processInstanceInputMessage = BPMessageGenerator.createBPMessageForBOM(billOfMaterialItem, useFrameContract, buyerParty, person.getID(),buyerFederationId,responderFederationId, bearerToken);
 
                 // start the process and get process instance id since we need this info to find collaboration group of process
-                String processInstanceId = startProcessInstance(bearerToken, buyerFederationId,responderFederationId,processInstanceInputMessage, null, null,  null).getBody().getProcessInstanceID();
+                String processInstanceId = startProcessInstance(bearerToken, buyerFederationId,responderFederationId,processInstanceInputMessage, null, null,  null,null).getBody().getProcessInstanceID();
 
                 if (hjidOfBaseGroup == null) {
                     hjidOfBaseGroup = CollaborationGroupDAOUtility.getCollaborationGroupHjidByProcessInstanceIdAndPartyId(processInstanceId, buyerPartyId, buyerFederationId).toString();
@@ -153,6 +154,10 @@ public class StartController implements StartApi {
                     "continuation relation between two ProcessInstanceGroups. For example, a transport related ProcessInstanceGroup " +
                     "needs to know the preceding ProcessInstanceGroup in order to find the corresponding Order inside the previous group.")
             @RequestParam(value = "precedingGid", required = false) String precedingGid,
+            @ApiParam(value = "Identifier of the preceding Order. This parameter should be set when a " +
+                    "continuation relation between two ProcessInstanceGroups. For example, a transport related ProcessInstanceGroup " +
+                    "needs to know the preceding order in order to find the corresponding Order inside the previous group.")
+            @RequestParam(value = "precedingOrderId", required = false) String precedingOrderId,
             @ApiParam(value = "Identifier of the Collaboration (i.e. collaborationGroup.hjid) which the ProcessInstanceGroup belongs to")
             @RequestParam(value = "collaborationGID", required = false) String collaborationGID) {
 
@@ -267,6 +272,21 @@ public class StartController implements StartApi {
             } else {
                 addNewProcessInstanceToGroup(businessProcessContext.getId(),gid, processInstance.getProcessInstanceID(), body,responderCollaborationGroupDAO,responderFederationId);
             }
+
+            if(precedingOrderId != null){
+                String collaborationGroupId = CollaborationGroupDAOUtility.getCollaborationGroupHjidByProcessInstanceIdAndPartyId(repo,processInstance.getProcessInstanceID(),body.getVariables().getInitiatorID(),initiatorFederationId).toString();
+                FederatedCollaborationGroupMetadata federatedCollaborationGroupMetadata = new FederatedCollaborationGroupMetadata();
+                federatedCollaborationGroupMetadata.setID(collaborationGroupId);
+                federatedCollaborationGroupMetadata.setFederationID(responderFederationId);
+                try {
+                    String requestBody = JsonSerializationUtility.getObjectMapper().writeValueAsString(federatedCollaborationGroupMetadata);
+                    Response response = SpringBridge.getInstance().getDelegateClient().addFederatedMetadataToCollaborationGroup(bearerToken,initiatorFederationId,precedingOrderId,requestBody,body.getVariables().getInitiatorID(),initiatorFederationId);
+                } catch (Exception e) {
+                    logger.error("Failed to merge transport group to order group",e);
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+                }
+            }
+
             businessProcessContext.commitDbUpdates();
             emailSenderUtil.sendActionPendingEmail(bearerToken, body.getVariables().getContentUUID());
             //mdc logging

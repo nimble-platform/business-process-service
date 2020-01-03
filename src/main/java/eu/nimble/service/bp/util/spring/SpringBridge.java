@@ -1,6 +1,7 @@
 package eu.nimble.service.bp.util.spring;
 
 import eu.nimble.common.rest.datachannel.IDataChannelClient;
+import eu.nimble.common.rest.delegate.IDelegateClient;
 import eu.nimble.common.rest.identity.IIdentityClientTyped;
 import eu.nimble.service.bp.config.BusinessProcessPersistenceConfig;
 import eu.nimble.service.bp.config.GenericConfig;
@@ -32,6 +33,8 @@ public class SpringBridge implements ApplicationContextAware {
     private FrameContractService frameContractService;
     @Autowired
     private IDataChannelClient dataChannelClient;
+    @Autowired
+    private IDelegateClient delegateClient;
 
     public static SpringBridge getInstance() {
         return applicationContext.getBean(SpringBridge.class);
@@ -65,5 +68,9 @@ public class SpringBridge implements ApplicationContextAware {
 
     public IDataChannelClient getDataChannelClient() {
         return dataChannelClient;
+    }
+
+    public IDelegateClient getDelegateClient() {
+        return delegateClient;
     }
 }

@@ -18,6 +18,7 @@ import eu.nimble.service.bp.swagger.model.FederatedCollaborationGroupMetadata;
 import eu.nimble.service.bp.swagger.model.GroupIdTuple;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
+import eu.nimble.service.bp.util.HttpResponseUtil;
 import eu.nimble.service.bp.util.UBLUtility;
 import eu.nimble.service.bp.util.bp.BusinessProcessUtility;
 import eu.nimble.service.bp.util.bp.ClassProcessTypeMap;
@@ -35,6 +36,7 @@ import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.serialization.IDocumentDeserializer;
 import eu.nimble.utility.validation.IValidationUtil;
+import feign.Response;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -209,14 +211,11 @@ public class StartWithDocumentController {
             else if(precedingOrderId != null){
                 try {
                     // get group id tuple for preceding order
-                    HttpResponse<JsonNode> response = Unirest.get(SpringBridge.getInstance().getGenericConfig().getDelegateServiceUrl()+"/document/"+precedingOrderId+"/group-id-tuple")
-                            .header("Authorization", token)
-                            .header("federationId",initiatorFederationId)
-                            .queryString("partyId",processInstanceInputMessage.getVariables().getInitiatorID())
-                            .asJson();
+                    Response response = SpringBridge.getInstance().getDelegateClient().getGroupIdTuple(bearerToken,initiatorFederationId,precedingOrderId,processInstanceInputMessage.getVariables().getInitiatorID(),initiatorFederationId);
+                    String responseBody = HttpResponseUtil.extractBodyFromFeignClientResponse(response);
 
                     ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
-                    GroupIdTuple groupIdTuple = objectMapper.readValue(response.getBody().toString(),GroupIdTuple.class);
+                    GroupIdTuple groupIdTuple = objectMapper.readValue(responseBody,GroupIdTuple.class);
 
                     // get the collaboration group containing the process instance for the initiator party
                     cgid = groupIdTuple.getCollaborationGroupId();
@@ -228,7 +227,7 @@ public class StartWithDocumentController {
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
                 }
             }
-            processInstance = startController.startProcessInstance(bearerToken,initiatorFederationId,responderFederationId,processInstanceInputMessage,gid,precedingGid,cgid).getBody();
+            processInstance = startController.startProcessInstance(bearerToken,initiatorFederationId,responderFederationId,processInstanceInputMessage,gid,precedingGid,precedingOrderId,cgid).getBody();
 
             if(processInstance == null){
                 String msg = "Failed to start process for the given document";
@@ -236,24 +235,6 @@ public class StartWithDocumentController {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
             }
 
-            if(precedingOrderId != null){
-                String collaborationGroupId = CollaborationGroupDAOUtility.getCollaborationGroupHjidByProcessInstanceIdAndPartyId(processInstance.getProcessInstanceID(),document.getBuyerPartyId(),initiatorFederationId).toString();
-                FederatedCollaborationGroupMetadata federatedCollaborationGroupMetadata = new FederatedCollaborationGroupMetadata();
-                federatedCollaborationGroupMetadata.setID(collaborationGroupId);
-                federatedCollaborationGroupMetadata.setFederationID(responderFederationId);
-                try {
-                    HttpResponse<JsonNode> response = Unirest.post(SpringBridge.getInstance().getGenericConfig().getDelegateServiceUrl()+"/collaboration-groups/document/"+precedingOrderId)
-                            .header("Authorization", token)
-                            .header("federationId",initiatorFederationId)
-                            .queryString("delegateId",initiatorFederationId)
-                            .queryString("partyId",processInstanceInputMessage.getVariables().getInitiatorID())
-                            .body(JsonSerializationUtility.getObjectMapper().writeValueAsString(federatedCollaborationGroupMetadata))
-                            .asJson();
-                } catch (Exception e) {
-                    logger.error("Failed to merge transport group to order group",e);
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-                }
-            }
         }
         else{
             // to complete the process, we need to know process instance id

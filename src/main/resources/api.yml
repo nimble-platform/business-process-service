@@ -373,6 +373,11 @@ paths:
         required: false
         type: string
       - in: query
+        name: precedingOrderId
+        description: The UUID of the preceding order
+        required: false
+        type: string
+      - in: query
         name: collaborationGID
         description: The id of the collaboration group which the process instance group belongs to
         required: false
@@ -866,6 +871,11 @@ paths:
         type: string
         required: true
         description: Identifier of a process instance included in the group
+      - in: query
+        name: orderResponseId
+        type: string
+        required: true
+        description: Identifier of the order response
       - name: Authorization
         in: header
         type: string
