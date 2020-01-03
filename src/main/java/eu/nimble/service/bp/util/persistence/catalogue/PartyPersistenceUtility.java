@@ -53,15 +53,23 @@ public class PartyPersistenceUtility {
 
     public static List<PartyType> getPartyByIDs(List<String> partyIds, List<String> federationIds) {
         StringBuilder conditions = new StringBuilder();
+
+        List<String> parameters = new ArrayList<>();
+        List<Object> values = new ArrayList<>();
+
         int size = partyIds.size();
         for (int i = 0; i < size; i++) {
-            conditions.append(String.format("(partyIdentification.ID = %s AND party.federationInstanceID = %s)",partyIds.get(i),federationIds.get(i)));
+            conditions.append("(partyIdentification.ID = :partyId").append(i).append(" AND party.federationInstanceID = :federationId").append(i).append(")");
+            parameters.add("partyId"+i);
+            parameters.add("federationId"+i);
+            values.add(partyIds.get(i));
+            values.add(federationIds.get(i));
             if(i != size-1){
                 conditions.append(" OR ");
             }
         }
         String query = String.format(QUERY_SELECT_BY_CONDITIONS,conditions.toString());
-        return new JPARepositoryFactory().forCatalogueRepository(true).getEntities(query);
+        return new JPARepositoryFactory().forCatalogueRepository(true).getEntities(query,parameters.toArray(new String[0]),values.toArray());
     }
 
     public static QualifyingPartyType getQualifyingParty(String partyId,String federationId) {
