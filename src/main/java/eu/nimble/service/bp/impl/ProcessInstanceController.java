@@ -2,6 +2,9 @@ package eu.nimble.service.bp.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.mashape.unirest.http.HttpResponse;
+import com.mashape.unirest.http.JsonNode;
+import com.mashape.unirest.http.Unirest;
 import eu.nimble.common.rest.identity.IIdentityClientTyped;
 import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.model.hyperjaxb.*;
@@ -19,6 +22,7 @@ import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
+import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.commonbasiccomponents.BinaryObjectType;
 import eu.nimble.service.model.ubl.document.IDocument;
@@ -378,15 +382,35 @@ public class ProcessInstanceController {
             List<PartyNameType> buyerPartyNames = null;
 
             try {
-                // seller and buyer party ids
+                // get parties
+                List<PartyType> parties = new ArrayList<>();
                 List<String> partyIds = new ArrayList<>();
                 partyIds.add(iDocument.getSellerPartyId());
-                partyIds.add(iDocument.getBuyerPartyId());
+
                 List<String> federationIds = new ArrayList<>();
                 federationIds.add(iDocument.getSellerParty().getFederationInstanceID());
-                federationIds.add(iDocument.getBuyerParty().getFederationInstanceID());
-                // get parties
-                List<PartyType> parties = PartyPersistenceUtility.getParties(bearerToken, partyIds,federationIds);
+
+                // seller and buyer are in the same instance
+                if(iDocument.getBuyerParty().getFederationInstanceID().contentEquals(SpringBridge.getInstance().getGenericConfig().getFederationId())){
+                    partyIds.add(iDocument.getBuyerPartyId());
+                    federationIds.add(iDocument.getBuyerParty().getFederationInstanceID());
+
+                    federationIds.add(iDocument.getSellerParty().getFederationInstanceID());
+                    federationIds.add(iDocument.getBuyerParty().getFederationInstanceID());
+                    // get parties
+                    parties = PartyPersistenceUtility.getParties(bearerToken, partyIds,federationIds);
+                }
+                // seller and buyer are in different instances
+                else{
+                    PartyType sellerParty = PartyPersistenceUtility.getParties(bearerToken, partyIds,federationIds).get(0);
+                    HttpResponse<JsonNode> response = Unirest.get(SpringBridge.getInstance().getGenericConfig().getDelegateServiceUrl()+"/party/"+iDocument.getBuyerPartyId())
+                            .header("Authorization", bearerToken)
+                            .queryString("delegateId",iDocument.getBuyerParty().getFederationInstanceID())
+                            .asJson();
+                    PartyType buyerParty = objectMapper.readValue(response.getBody().toString(),PartyType.class);
+
+                    parties = Arrays.asList(sellerParty,buyerParty);
+                }
                 // get seller and buyer party names
                 for (PartyType party : parties) {
                     if(party.getPartyIdentification().get(0).getID().contentEquals(iDocument.getSellerPartyId())){
