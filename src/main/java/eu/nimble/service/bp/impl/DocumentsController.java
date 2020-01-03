@@ -62,8 +62,7 @@ public class DocumentsController {
             method = RequestMethod.GET)
     public ResponseEntity<Object> getExpectedOrders(
             @ApiParam(value = "Flag indicating whether the expected orders will be retrieved for a specific party or all parties", required = false) @RequestParam(value = "forAll", required = false, defaultValue = "false") Boolean forAll,
-            @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
-            @ApiParam(value = "" ,required=true ) @RequestHeader(value="federationId", required=true) String federationId
+            @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken
     ) {
         try {
             logger.info("Getting expected orders");
@@ -77,11 +76,13 @@ public class DocumentsController {
             if(!forAll) {
                 // get person using the given bearer token
                 String partyId;
+                String federationId;
                 try {
                     PersonType person = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken);
                     // get party for the person
                     PartyType party = SpringBridge.getInstance().getiIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
                     partyId = party.getPartyIdentification().get(0).getID();
+                    federationId = party.getFederationInstanceID();
                 } catch (IOException e) {
                     return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog(String.format("Failed to extract party if from token: %s", bearerToken), e, HttpStatus.INTERNAL_SERVER_ERROR);
                 }
