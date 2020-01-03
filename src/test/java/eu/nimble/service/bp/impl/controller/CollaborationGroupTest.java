@@ -74,7 +74,7 @@ public class CollaborationGroupTest {
      * - Delete a collaboration group
      *
      * - Retrieve the order document of an order process given a process instance id such that the
-            corresponding process would be included in the same process instance group with the order process
+     corresponding process would be included in the same process instance group with the order process
      * - Cancel a completed process
      * - Cancel an already cancelled process (bad request expected)
      */
@@ -92,16 +92,19 @@ public class CollaborationGroupTest {
 
         CollaborationGroupResponse collaborationGroupResponse = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), CollaborationGroupResponse.class);
 
-        // there should be one collaboration group which contains two process instance group (one group containing the order, the other one containing the tep)
+        // there should be one collaboration group
         Assert.assertSame(test1_expectedCollaborationGroupNumber, collaborationGroupResponse.getSize());
         Assert.assertSame(test1_expectedProcessInstanceGroupNumber,collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().size());
-        Assert.assertSame(1,collaborationGroupResponse.getCollaborationGroups().get(0).getFederatedCollaborationGroupMetadatas().size());
 
 //        collaborationGroupID = collaborationGroupResponse.getCollaborationGroups().get(0).getID();
-        CollaborationGroupDAO collaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroupDAO(Long.parseLong(collaborationGroupResponse.getCollaborationGroups().get(0).getFederatedCollaborationGroupMetadatas().get(0).getID()));
-        int sizeOfProcessInstances = collaborationGroup.getAssociatedProcessInstanceGroups().get(0).getProcessInstanceIDs().size();
-        idOfTheLastProcessInstance = collaborationGroup.getAssociatedProcessInstanceGroups().get(0).getProcessInstanceIDs().get(sizeOfProcessInstances - 1);
-        collaborationGroupID = collaborationGroup.getHjid().toString();
+//        CollaborationGroupDAO collaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroupDAO(Long.parseLong(collaborationGroupResponse.getCollaborationGroups().get(0).getFederatedCollaborationGroupMetadatas().get(0).getID()));
+//        int sizeOfProcessInstances = collaborationGroup.getAssociatedProcessInstanceGroups().get(0).getProcessInstanceIDs().size();
+//        idOfTheLastProcessInstance = collaborationGroup.getAssociatedProcessInstanceGroups().get(0).getProcessInstanceIDs().get(sizeOfProcessInstances - 1);
+//        collaborationGroupID = collaborationGroup.getHjid().toString();
+
+        collaborationGroupID = collaborationGroupResponse.getCollaborationGroups().get(0).getID();
+        int sizeOfProcessInstances = collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().get(0).getProcessInstanceIDs().size();
+        idOfTheLastProcessInstance = collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().get(0).getProcessInstanceIDs().get(sizeOfProcessInstances - 1);
     }
 
     @Test
@@ -177,7 +180,7 @@ public class CollaborationGroupTest {
         MockHttpServletRequestBuilder request = patch("/collaboration-groups/"+collaborationGroupID)
                 .header("Authorization", TestConfig.initiatorPersonId)
                 .param("groupName",groupName);
-         this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+        this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         request = get("/collaboration-groups/"+ CollaborationGroupTest.collaborationGroupID)
                 .header("Authorization", TestConfig.initiatorPersonId);

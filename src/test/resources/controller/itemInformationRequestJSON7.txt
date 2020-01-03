@@ -5,6 +5,7 @@
   ],
   "buyerCustomerParty": {
     "party": {
+    "federationInstanceID": "11",
       "nace": [],
       "description": [],
       "brandName": [],
@@ -134,6 +135,7 @@
   },
   "sellerSupplierParty": {
     "party": {
+    "federationInstanceID": "11",
       "nace": [],
       "description": [],
       "brandName": [],

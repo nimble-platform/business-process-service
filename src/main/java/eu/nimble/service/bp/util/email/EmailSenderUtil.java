@@ -187,9 +187,9 @@ public class EmailSenderUtil {
                 toEmail = tradingPartner.getPerson().get(0).getContact().getElectronicMail();
             }
 
-            String url = getFrontendUrl(COLLABORATION_ROLE_BUYER);
+            String url = getProcessUrl(processInstanceId);
 
-            notifyPartyOnNewDeliveryDate(toEmail,productNames.toString(),tradingPartner.getPartyName().get(0).getName().getValue(),strDate,url,bearerToken);
+            notifyPartyOnNewDeliveryDate(toEmail,productNames.toString(),tradingPartner.getPartyName().get(0).getName().getValue(),strDate,url);
             logger.info("New delivery date mail sent to: {} for process instance id: {}", toEmail, processInstanceId);
         }).start();
     }
@@ -281,15 +281,15 @@ public class EmailSenderUtil {
             if (showURL) {
                 if (processDocumentMetadataDAO.getResponderID().equals(String.valueOf(sellerParty.getPartyIdentification().get(0).getID()))) {
                     if (processDocumentStatus.equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
-                        url = getFrontendUrl(COLLABORATION_ROLE_SELLER);
+                        url = getDashboardUrl(COLLABORATION_ROLE_SELLER);
                     }else {
-                        url = getFrontendUrl(COLLABORATION_ROLE_BUYER);
+                        url = getDashboardUrl(COLLABORATION_ROLE_BUYER);
                     }
                 } else if (processDocumentMetadataDAO.getResponderID().equals(String.valueOf(buyerParty.getPartyIdentification().get(0).getID()))) {
                     if (processDocumentStatus.equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
-                        url = getFrontendUrl(COLLABORATION_ROLE_BUYER);
+                        url = getDashboardUrl(COLLABORATION_ROLE_BUYER);
                     }else {
-                        url = getFrontendUrl(COLLABORATION_ROLE_SELLER);
+                        url = getDashboardUrl(COLLABORATION_ROLE_SELLER);
                     }
                 }
             }
@@ -302,13 +302,17 @@ public class EmailSenderUtil {
         }).start();
     }
 
-    private String getFrontendUrl(String collaborationRole) {
+    private String getDashboardUrl(String collaborationRole) {
         if (COLLABORATION_ROLE_SELLER.equals(collaborationRole)) {
             return URL_TEXT + frontEndURL + "/#/dashboard?tab=SALES";
         } else if (COLLABORATION_ROLE_BUYER.equals(collaborationRole)) {
             return URL_TEXT + frontEndURL + "/#/dashboard?tab=PUCHASES";
         }
         return EMPTY_TEXT;
+    }
+
+    private String getProcessUrl(String processInstanceId) {
+        return URL_TEXT + frontEndURL + "/#/bpe/bpe-exec/" + processInstanceId;
     }
 
     public void notifyPartyOnPendingCollaboration(String[] toEmail, String initiatingPersonName, String productName,
@@ -351,7 +355,7 @@ public class EmailSenderUtil {
         emailService.send(toEmail, subject, "continue_colloboration", context);
     }
 
-    public void notifyPartyOnNewDeliveryDate(String toEmail,String productName, String respondingPartyName, String expectedDeliveryDate, String url, String subject) {
+    public void notifyPartyOnNewDeliveryDate(String toEmail,String productName, String respondingPartyName, String expectedDeliveryDate, String url) {
         Context context = new Context();
 
         context.setVariable("respondingPartyName", respondingPartyName);
@@ -359,6 +363,6 @@ public class EmailSenderUtil {
         context.setVariable("product", productName);
         context.setVariable("url", url);
 
-        emailService.send(new String[]{toEmail}, subject, "new_delivery_date", context);
+        emailService.send(new String[]{toEmail}, "NIMBLE: New Delivery Date", "new_delivery_date", context);
     }
 }

@@ -398,6 +398,8 @@ nimble:
     url: ${FRONTEND_URL:http://nimble-staging.salzburgresearch.at/frontend/}
   delegate-service:
     url: ${DELEGATE_SERVICE_URL:http://localhost:8081}
+  federation:
+    id: 11
   kafka:
       topics:
         businessProcessUpdates: ${KAFKA_TOPIC_BUSINESS_PROCESS_UPDATES:business-process-updates-staging}

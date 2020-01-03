@@ -2,7 +2,7 @@ Dear [(${respondingPartyName})],
 
 Delivery date of the process for [(${product})] has changed. The new expected delivery date is [(${expectedDeliveryDate})].
 
-You can see the status of your collaboration via the NIMBLE dashboard.
+You can see the process details via the following link:
 [(${url})]
 
 Sincerely,

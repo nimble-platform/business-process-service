@@ -6,6 +6,7 @@
   "dataMonitoringRequested": false,
   "buyerCustomerParty": {
     "party": {
+      "federationInstanceID": "11",
       "nace": [],
       "description": [],
       "brandName": [],
@@ -1452,6 +1453,7 @@
   },
   "sellerSupplierParty": {
     "party": {
+      "federationInstanceID": "11",
       "nace": [],
       "description": [],
       "brandName": [],
@@ -3018,8 +3020,10 @@
       }
     ]
   },
-  "additionalDocumentReference": [{
-    "id":"89f57113-48cb-4126-904f-da0c121243ca",
-    "documentType":"previousDocument"
-  }]
+  "additionalDocumentReference": [
+    {
+      "id": "89f57113-48cb-4126-904f-da0c121243ca",
+      "documentType": "previousDocument"
+    }
+  ]
 }

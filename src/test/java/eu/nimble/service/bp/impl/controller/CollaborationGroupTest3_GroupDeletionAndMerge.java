@@ -205,8 +205,7 @@ public class CollaborationGroupTest3_GroupDeletionAndMerge {
                 .header("Authorization", TestConfig.responderPersonId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body)
-                .param("bcid", buyerCollaborationGroupID)
-                .param("currentInstanceFederationId",TestConfig.federationId);
+                .param("bcid", buyerCollaborationGroupID);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         // try to get the old group which is merged to the new one

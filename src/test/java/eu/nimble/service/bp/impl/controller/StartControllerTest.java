@@ -1,9 +1,13 @@
 package eu.nimble.service.bp.impl.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import eu.nimble.service.bp.model.billOfMaterial.BillOfMaterial;
 import eu.nimble.service.bp.model.billOfMaterial.BillOfMaterialItem;
+import eu.nimble.service.bp.model.dashboard.CollaborationGroupResponse;
+import eu.nimble.service.bp.swagger.model.CollaborationGroup;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
+import eu.nimble.service.bp.swagger.model.ProcessInstanceGroup;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
 import eu.nimble.service.bp.util.persistence.DataIntegratorUtil;
 import eu.nimble.service.model.ubl.catalogue.CatalogueType;
@@ -31,6 +35,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Arrays;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -55,7 +60,11 @@ public class StartControllerTest {
     public final static String iirId1 = "07ed85d2-3319-4dec-87f0-792d46a7c9a5";
 
     public static String processInstanceIdOrder1;
+    public static String sellerCollaborationGroupIdContainingOrder1;
+    public static String sellerProcessInstanceGroupIdContainingOrder1;
     public static String processInstanceIdOrder2;
+    public static String sellerCollaborationGroupIdContainingOrder2;
+    public static String sellerProcessInstanceGroupIdContainingOrder2;
     public static String processInstanceIdOrder3;
     public static String processInstanceIdIIR1;
 
@@ -77,7 +86,7 @@ public class StartControllerTest {
 
     @Test
     public void test1_startProcessInstance() throws Exception {
-        Gson gson = new Gson();
+        ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(orderJSON1));
 
         MockHttpServletRequestBuilder request = post("/start")
@@ -88,15 +97,33 @@ public class StartControllerTest {
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
-        ProcessInstance processInstance = gson.fromJson(mvcResult.getResponse().getContentAsString(), ProcessInstance.class);
+        ProcessInstance processInstance = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ProcessInstance.class);
         Assert.assertEquals(processInstance.getStatus(), ProcessInstance.StatusEnum.STARTED);
 
         processInstanceIdOrder1 = processInstance.getProcessInstanceID();
+        // get collaboration group and process instance group ids for seller
+        request = get("/collaboration-groups")
+                .header("Authorization", TestConfig.initiatorPersonId)
+                .param("partyID","706")
+                .param("collaborationRole","SELLER")
+                .param("offset", "0")
+                .param("limit", "10");
+        mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+        CollaborationGroupResponse collaborationGroupResponse = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), CollaborationGroupResponse.class);
+        for (CollaborationGroup collaborationGroup : collaborationGroupResponse.getCollaborationGroups()) {
+            for (ProcessInstanceGroup associatedProcessInstanceGroup : collaborationGroup.getAssociatedProcessInstanceGroups()) {
+                if(associatedProcessInstanceGroup.getProcessInstanceIDs().contains(processInstanceIdOrder1)){
+                    sellerCollaborationGroupIdContainingOrder1 = collaborationGroup.getID();
+                    sellerProcessInstanceGroupIdContainingOrder1 = associatedProcessInstanceGroup.getID();
+                    break;
+                }
+            }
+        }
     }
 
     @Test
     public void test2_startProcessInstance() throws Exception {
-        Gson gson = new Gson();
+        ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(orderJSON2));
 
         MockHttpServletRequestBuilder request = post("/start")
@@ -107,10 +134,28 @@ public class StartControllerTest {
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
-        ProcessInstance processInstance = gson.fromJson(mvcResult.getResponse().getContentAsString(), ProcessInstance.class);
+        ProcessInstance processInstance = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ProcessInstance.class);
         Assert.assertEquals(processInstance.getStatus(), ProcessInstance.StatusEnum.STARTED);
 
         processInstanceIdOrder2 = processInstance.getProcessInstanceID();
+        // get collaboration group and process instance group ids for seller
+        request = get("/collaboration-groups")
+                .header("Authorization", TestConfig.initiatorPersonId)
+                .param("partyID","706")
+                .param("collaborationRole","SELLER")
+                .param("offset", "0")
+                .param("limit", "10");
+        mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+        CollaborationGroupResponse collaborationGroupResponse = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), CollaborationGroupResponse.class);
+        for (CollaborationGroup collaborationGroup : collaborationGroupResponse.getCollaborationGroups()) {
+            for (ProcessInstanceGroup associatedProcessInstanceGroup : collaborationGroup.getAssociatedProcessInstanceGroups()) {
+                if(associatedProcessInstanceGroup.getProcessInstanceIDs().contains(processInstanceIdOrder2)){
+                    sellerCollaborationGroupIdContainingOrder2 = collaborationGroup.getID();
+                    sellerProcessInstanceGroupIdContainingOrder2 = associatedProcessInstanceGroup.getID();
+                    break;
+                }
+            }
+        }
     }
 
     @Test
