@@ -3,6 +3,7 @@ package eu.nimble.service.bp.impl.mock;
 import eu.nimble.common.rest.delegate.IDelegateClient;
 import eu.nimble.service.bp.impl.CollaborationGroupsController;
 import eu.nimble.service.bp.impl.DocumentController;
+import eu.nimble.service.bp.impl.DocumentsController;
 import eu.nimble.service.bp.impl.ProcessInstanceGroupController;
 import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.CatalogueLineType;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.HashMap;
+import java.util.List;
 
 @Profile("test")
 @Component
@@ -28,6 +30,8 @@ public class DelegateServiceClientMock implements IDelegateClient {
     private CollaborationGroupsController collaborationGroupsController;
     @Autowired
     private DocumentController documentController;
+    @Autowired
+    private DocumentsController documentsController;
     @Autowired
     private ProcessInstanceGroupController processInstanceGroupController;
 
@@ -107,6 +111,12 @@ public class DelegateServiceClientMock implements IDelegateClient {
             response = null;
         }
         return Response.builder().headers(new HashMap<>()).status(HttpStatus.OK.value()).body(response,Charset.defaultCharset()).build();
+    }
+
+    @Override
+    public Response getExpectedOrders(String bearerToken,Boolean forAll, List<String> unShippedOrderIds) {
+        ResponseEntity responseEntity = documentsController.getExpectedOrders(forAll,bearerToken,unShippedOrderIds);
+        return Response.builder().headers(new HashMap<>()).status(responseEntity.getStatusCodeValue()).body(responseEntity.getBody().toString(),Charset.defaultCharset()).build();
     }
 
 }
