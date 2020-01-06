@@ -12,6 +12,7 @@ import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.validation.IValidationUtil;
+import feign.Response;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -148,7 +149,8 @@ public class ShoppingCartController {
             method = RequestMethod.POST)
     public ResponseEntity addProductToShoppingCart(@ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
                                                    @ApiParam(value = "Hjid of the product", required = true) @RequestParam(value = "productId", required = true) Long productId,
-                                                   @ApiParam(value = "Quantity of the product in the shopping cart", required = false, defaultValue = "1") @RequestParam(value = "quantity", required = false, defaultValue = "1") Integer quantity) {
+                                                   @ApiParam(value = "Quantity of the product in the shopping cart", required = false, defaultValue = "1") @RequestParam(value = "quantity", required = false, defaultValue = "1") Integer quantity,
+                                                   @ApiParam(value = "Identifier of the instance which the product belongs to", required = true) @RequestHeader(value = "federationId", required = false) String federationId) {
         try {
             logger.info("Incoming request to add product: {}, in {} quantity to the create shopping cart", productId, quantity);
             // validate role
@@ -167,7 +169,15 @@ public class ShoppingCartController {
             }
 
             // retrieve the product to be added to the shopping cart
-            CatalogueLineType originalProduct = new JPARepositoryFactory().forCatalogueRepository(true).getSingleEntityByHjid(CatalogueLineType.class, productId);
+            CatalogueLineType originalProduct = null;
+            if(federationId != null && !federationId.contentEquals(SpringBridge.getInstance().getGenericConfig().getFederationId())){
+                Response response = SpringBridge.getInstance().getDelegateClient().getCatalogLineByHjid(bearerToken,productId);
+                originalProduct = JsonSerializationUtility.getObjectMapper().readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),CatalogueLineType.class);
+            }
+            else {
+                originalProduct = new JPARepositoryFactory().forCatalogueRepository(true).getSingleEntityByHjid(CatalogueLineType.class, productId);
+            }
+
             if (originalProduct == null) {
                 return HttpResponseUtil.createResponseEntityAndLog(String.format("There is no product for the given id: %d", productId), HttpStatus.BAD_REQUEST);
             }

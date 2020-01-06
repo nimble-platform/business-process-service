@@ -5,8 +5,10 @@ import eu.nimble.service.bp.impl.CollaborationGroupsController;
 import eu.nimble.service.bp.impl.DocumentController;
 import eu.nimble.service.bp.impl.ProcessInstanceGroupController;
 import eu.nimble.service.bp.util.spring.SpringBridge;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.CatalogueLineType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.utility.JsonSerializationUtility;
+import eu.nimble.utility.persistence.JPARepositoryFactory;
 import feign.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
@@ -93,6 +95,18 @@ public class DelegateServiceClientMock implements IDelegateClient {
             response = null;
         }
         return Response.builder().headers(new HashMap<>()).status(responseEntity.getStatusCodeValue()).body(response,Charset.defaultCharset()).build();
+    }
+
+    @Override
+    public Response getCatalogLineByHjid(String bearerToken,Long hjid) {
+        CatalogueLineType originalProduct = new JPARepositoryFactory().forCatalogueRepository(true).getSingleEntityByHjid(CatalogueLineType.class, hjid);
+        String response;
+        try {
+            response = JsonSerializationUtility.getObjectMapper().writeValueAsString(originalProduct);
+        } catch (IOException e) {
+            response = null;
+        }
+        return Response.builder().headers(new HashMap<>()).status(HttpStatus.OK.value()).body(response,Charset.defaultCharset()).build();
     }
 
 }
