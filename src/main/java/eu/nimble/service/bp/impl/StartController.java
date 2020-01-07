@@ -92,11 +92,10 @@ public class StartController implements StartApi {
             String buyerFederationId = buyerParty.getFederationInstanceID();
 
             String hjidOfBaseGroup = null;
-            List<String> hjidOfGroupsToBeMerged = new ArrayList<>();
+            List<FederatedCollaborationGroupMetadataDAO> federatedCollaborationGroupMetadataDAOS = new ArrayList<>();
 
             // for each product, create a RFQ
             for(BillOfMaterialItem billOfMaterialItem: billOfMaterial.getBillOfMaterialItems()){
-                // TODO: better solution here
                 String responderFederationId = CataloguePersistenceUtility.getCatalogueLine(billOfMaterialItem.getCatalogueUuid(),billOfMaterialItem.getlineId()).getGoodsItem().getItem().getManufacturerParty().getFederationInstanceID();
 
                 // create ProcessInstanceInputMessage for line item
@@ -108,14 +107,16 @@ public class StartController implements StartApi {
                 if (hjidOfBaseGroup == null) {
                     hjidOfBaseGroup = CollaborationGroupDAOUtility.getCollaborationGroupHjidByProcessInstanceIdAndPartyId(processInstanceId, buyerPartyId, buyerFederationId).toString();
                 } else {
-                    hjidOfGroupsToBeMerged.add(CollaborationGroupDAOUtility.getCollaborationGroupHjidByProcessInstanceIdAndPartyId(processInstanceId, buyerPartyId, buyerFederationId).toString());
+                    FederatedCollaborationGroupMetadataDAO federatedCollaborationGroupMetadataDAO = new FederatedCollaborationGroupMetadataDAO();
+                    federatedCollaborationGroupMetadataDAO.setFederationID(SpringBridge.getInstance().getGenericConfig().getFederationId());
+                    federatedCollaborationGroupMetadataDAO.setID(CollaborationGroupDAOUtility.getCollaborationGroupHjidByProcessInstanceIdAndPartyId(processInstanceId, buyerPartyId, buyerFederationId).toString());
+                    federatedCollaborationGroupMetadataDAOS.add(federatedCollaborationGroupMetadataDAO);
                 }
             }
-        // TODO: skip it for now
-//            // merge groups to create a project
-//            if (hjidOfGroupsToBeMerged.size() > 0) {
-//                collaborationGroupsController.mergeCollaborationGroups(bearerToken, hjidOfBaseGroup, hjidOfGroupsToBeMerged);
-//            }
+            // merge groups to create a project
+            if (federatedCollaborationGroupMetadataDAOS.size() > 0) {
+                collaborationGroupsController.mergeCollaborationGroups(bearerToken, hjidOfBaseGroup, JsonSerializationUtility.getObjectMapper().writeValueAsString(federatedCollaborationGroupMetadataDAOS));
+            }
         } catch (Exception e) {
             String msg = "Unexpected error while creating negotiations for bill of materials";
             logger.error(msg,e);
@@ -226,16 +227,8 @@ public class StartController implements StartApi {
             CollaborationGroupDAO initiatorCollaborationGroupDAO;
             CollaborationGroupDAO responderCollaborationGroupDAO;
 
-            // TODO: check precedingGid logic here
-//            List<FederatedCollaborationGroupMetadataDAO> federatedCollaborationGroupMetadataDAOS = null;
 
             if(precedingGid != null){
-//                FederatedCollaborationGroupMetadataDAO federatedCollaborationGroupMetadataDAO = new FederatedCollaborationGroupMetadataDAO();
-//                federatedCollaborationGroupMetadataDAO.setFederationID(initiatorFederationId);
-//                federatedCollaborationGroupMetadataDAO.setID(collaborationGID);
-//
-//                federatedCollaborationGroupMetadataDAOS = new LinkedList<>(Arrays.asList(federatedCollaborationGroupMetadataDAO));
-
                 collaborationGID = null;
             }
 
@@ -362,10 +355,6 @@ public class StartController implements StartApi {
 
         ProcessInstanceGroupDAO sourceGroup;
         sourceGroup = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(sourceGid,repo);
-        // TODO: check this if statement later
-//        if(body.getVariables().getProcessID().equals(ClassProcessTypeMap.CAMUNDA_PROCESS_ID_FULFILMENT) && sourceGroup.getPrecedingProcessInstanceGroup() != null){
-//            sourceGroup = sourceGroup.getPrecedingProcessInstanceGroup();
-//        }
         sourceGroup.getProcessInstanceIDs().add(processInstanceId);
         sourceGroup = repo.updateEntity(sourceGroup);
 
