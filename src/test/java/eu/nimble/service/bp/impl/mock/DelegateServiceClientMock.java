@@ -8,6 +8,7 @@ import eu.nimble.service.bp.impl.ProcessInstanceGroupController;
 import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.CatalogueLineType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import feign.Response;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -71,6 +73,30 @@ public class DelegateServiceClientMock implements IDelegateClient {
         try {
             PartyType partyType = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,partyId.toString(),includeRoles);
             response = JsonSerializationUtility.getObjectMapper().writeValueAsString(partyType);
+        } catch (IOException e) {
+            response = null;
+        }
+        return Response.builder().headers(new HashMap<>()).status(HttpStatus.OK.value()).body(response,Charset.defaultCharset()).build();
+    }
+
+    @Override
+    public Response getParty(String bearerToken, String partyIds,boolean includeRoles,List<String> delegateIds) {
+        String response;
+        try {
+            List<PartyType> parties = SpringBridge.getInstance().getiIdentityClientTyped().getParties(bearerToken, Arrays.asList(partyIds.split(",")));
+            response = JsonSerializationUtility.getObjectMapper().writeValueAsString(parties);
+        } catch (IOException e) {
+            response = null;
+        }
+        return Response.builder().headers(new HashMap<>()).status(HttpStatus.OK.value()).body(response,Charset.defaultCharset()).build();
+    }
+
+    @Override
+    public Response getPerson(String bearerToken, String personId, String delegateId) {
+        String response;
+        try {
+            PersonType personType = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken,personId);
+            response = JsonSerializationUtility.getObjectMapper().writeValueAsString(personType);
         } catch (IOException e) {
             response = null;
         }

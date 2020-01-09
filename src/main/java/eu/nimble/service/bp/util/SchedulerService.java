@@ -149,10 +149,7 @@ public class SchedulerService implements SchedulingConfigurer {
 
                                 // send an email to buyer if the seller misses the promised delivery date
                                 if(minPromisedDeliveryDate != null && maxEstimatedDeliveryDate.compareTo(minPromisedDeliveryDate) > 0){
-                                    String processInstanceId = processDocumentMetadata.getProcessInstanceID();
-                                    String buyerPartyId = order.getBuyerPartyId();
-
-                                    emailSenderUtil.sendNewDeliveryDateEmail(StartWithDocumentController.token,maxEstimatedDeliveryDate,buyerPartyId,processInstanceId);
+                                    emailSenderUtil.sendNewDeliveryDateEmail(StartWithDocumentController.token,maxEstimatedDeliveryDate,order.getBuyerPartyId(),order.getBuyerParty().getFederationInstanceID(),order.getSellerParty().getFederationInstanceID(),processDocumentMetadata.getProcessInstanceID());
                                 }
                             }
 

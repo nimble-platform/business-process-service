@@ -1,11 +1,15 @@
 package eu.nimble.service.bp.util.email;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import eu.nimble.common.rest.identity.IIdentityClientTyped;
 import eu.nimble.service.bp.model.hyperjaxb.*;
 import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
+import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
+import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.email.EmailService;
+import feign.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,11 +54,15 @@ public class EmailSenderUtil {
             PartyType tradingPartner = null;
             // get parties
             String tradingPartnerId = ProcessDocumentMetadataDAOUtility.getTradingPartnerId(groupDAO.getProcessInstanceIDs().get(0), partyId);
-            List<String> partyIds = Arrays.asList(partyId,tradingPartnerId);
+            String tradingPartnerFederationID = ProcessDocumentMetadataDAOUtility.getTradingPartnerFederationId(groupDAO.getProcessInstanceIDs().get(0),partyId);
+            String partyIds = partyId +","+tradingPartnerId;
+            List<String> federationIds = Arrays.asList(groupDAO.getFederationID(),tradingPartnerFederationID);
             try {
-                List<PartyType> parties = iIdentityClientTyped.getParties(bearerToken,partyIds);
+                Response response = SpringBridge.getInstance().getDelegateClient().getParty(bearerToken,partyIds,false,federationIds);
+                List<PartyType> parties = JsonSerializationUtility.getObjectMapper().readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),new TypeReference<List<PartyType>>() {
+                });
                 for (PartyType partyType : parties) {
-                    if(partyType.getPartyIdentification().get(0).getID().contentEquals(partyId)){
+                    if(partyType.getPartyIdentification().get(0).getID().contentEquals(partyId) && partyType.getFederationInstanceID().contentEquals(groupDAO.getFederationID())){
                         party = partyType;
                     }
                     else{
@@ -139,7 +147,7 @@ public class EmailSenderUtil {
         emailService.send(new String[]{toEmail}, subject, template, context);
     }
 
-    public void sendNewDeliveryDateEmail(String bearerToken, Date newDeliveryDate, String buyerPartyId, String processInstanceId) {
+    public void sendNewDeliveryDateEmail(String bearerToken, Date newDeliveryDate, String buyerPartyId,String buyerPartyFederationId,String sellerFederationId, String processInstanceId) {
         new Thread(() -> {
             // get date as a string
             DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -148,7 +156,7 @@ public class EmailSenderUtil {
             // trading partner of the party in this collaboration
             PartyType tradingPartner = null;
             try {
-                tradingPartner = iIdentityClientTyped.getParty(bearerToken,buyerPartyId);
+                tradingPartner = getParty(buyerPartyId,buyerPartyFederationId,bearerToken);
             } catch (IOException e) {
                 logger.error("Failed to send the new delivery date information to buyer party: {}", buyerPartyId);
                 logger.error("Failed to get party with id: {} from identity service", buyerPartyId, e);
@@ -172,7 +180,7 @@ public class EmailSenderUtil {
                 if(processDocumentMetadataDAO.getInitiatorID().contentEquals(buyerPartyId)){
                     PersonType person;
                     try {
-                        person = iIdentityClientTyped.getPerson(bearerToken, processDocumentMetadataDAO.getCreatorUserID());
+                        person = getPerson(processDocumentMetadataDAO.getCreatorUserID(),processDocumentMetadataDAO.getInitiatorFederationID(),bearerToken);
                         toEmail = person.getContact().getElectronicMail();
                     } catch (IOException e) {
                         logger.error("Failed to send the new delivery date information to buyer party: {}", buyerPartyId);
@@ -187,7 +195,7 @@ public class EmailSenderUtil {
                 toEmail = tradingPartner.getPerson().get(0).getContact().getElectronicMail();
             }
 
-            String url = getProcessUrl(processInstanceId);
+            String url = getProcessUrl(processInstanceId,sellerFederationId);
 
             notifyPartyOnNewDeliveryDate(toEmail,productNames.toString(),tradingPartner.getPartyName().get(0).getName().getValue(),strDate,url);
             logger.info("New delivery date mail sent to: {} for process instance id: {}", toEmail, processInstanceId);
@@ -214,11 +222,11 @@ public class EmailSenderUtil {
 
             try {
                 if (processDocumentStatus.equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
-                    respondingParty = iIdentityClientTyped.getParty(bearerToken, processDocumentMetadataDAO.getResponderID());
-                    initiatingParty = iIdentityClientTyped.getParty(bearerToken, processDocumentMetadataDAO.getInitiatorID());
+                    respondingParty = getParty(processDocumentMetadataDAO.getResponderID(),processDocumentMetadataDAO.getResponderFederationID(),bearerToken);
+                    initiatingParty = getParty(processDocumentMetadataDAO.getInitiatorID(),processDocumentMetadataDAO.getInitiatorFederationID(),bearerToken);
                 }else {
-                    respondingParty = iIdentityClientTyped.getParty(bearerToken, processDocumentMetadataDAO.getInitiatorID());
-                    initiatingParty = iIdentityClientTyped.getParty(bearerToken, processDocumentMetadataDAO.getResponderID());
+                    respondingParty = getParty(processDocumentMetadataDAO.getInitiatorID(),processDocumentMetadataDAO.getInitiatorFederationID(),bearerToken);
+                    initiatingParty = getParty(processDocumentMetadataDAO.getResponderID(),processDocumentMetadataDAO.getResponderFederationID(),bearerToken);
                 }
 
             } catch (IOException e) {
@@ -311,8 +319,8 @@ public class EmailSenderUtil {
         return EMPTY_TEXT;
     }
 
-    private String getProcessUrl(String processInstanceId) {
-        return URL_TEXT + frontEndURL + "/#/bpe/bpe-exec/" + processInstanceId;
+    private String getProcessUrl(String processInstanceId,String sellerFederationId) {
+        return URL_TEXT + frontEndURL + "/#/bpe/bpe-exec/" + processInstanceId + "/" + sellerFederationId;
     }
 
     public void notifyPartyOnPendingCollaboration(String[] toEmail, String initiatingPersonName, String productName,
@@ -364,5 +372,29 @@ public class EmailSenderUtil {
         context.setVariable("url", url);
 
         emailService.send(new String[]{toEmail}, "NIMBLE: New Delivery Date", "new_delivery_date", context);
+    }
+
+    private PartyType getParty(String partyId,String federationId,String bearerToken) throws IOException {
+        PartyType party = null;
+        if(federationId.contentEquals(SpringBridge.getInstance().getGenericConfig().getFederationId())){
+            party = iIdentityClientTyped.getParty(bearerToken, partyId);
+        }
+        else {
+            Response response = SpringBridge.getInstance().getDelegateClient().getParty(bearerToken, Long.valueOf(partyId),false,federationId);
+            party = JsonSerializationUtility.getObjectMapper().readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),PartyType.class);
+        }
+        return party;
+    }
+
+    private PersonType getPerson(String personId,String federationId,String bearerToken) throws IOException {
+        PersonType person = null;
+        if(federationId.contentEquals(SpringBridge.getInstance().getGenericConfig().getFederationId())){
+            person = iIdentityClientTyped.getPerson(bearerToken, personId);
+        }
+        else {
+            Response response = SpringBridge.getInstance().getDelegateClient().getPerson(bearerToken, personId,federationId);
+            person = JsonSerializationUtility.getObjectMapper().readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),PersonType.class);
+        }
+        return person;
     }
 }

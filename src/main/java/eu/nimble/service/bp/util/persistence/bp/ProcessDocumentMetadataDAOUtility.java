@@ -191,6 +191,11 @@ public class ProcessDocumentMetadataDAOUtility {
         }
     }
 
+    public static String getTradingPartnerFederationId(String processInstanceId, String thisPartyId) {
+        ProcessDocumentMetadataDAO firstDocumentMetadataDAO = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(processInstanceId).get(0);
+        return getTradingPartnerFederationId(firstDocumentMetadataDAO, thisPartyId);
+    }
+
     public static String getTradingPartnerFederationId(ProcessDocumentMetadataDAO documentMetadata, String thisPartyId) {
         if(documentMetadata.getInitiatorID().contentEquals(thisPartyId)) {
             return documentMetadata.getResponderFederationID();
