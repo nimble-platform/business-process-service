@@ -358,6 +358,16 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
             collaborationGroupDAO.setIsProject(true);
             collaborationGroupDAO = repo.updateEntity(collaborationGroupDAO);
 
+            // unmerge collaboration groups for federated ones
+            for (String id : collaborationGroupsBelongingToThisInstance) {
+                try {
+                    ResponseEntity responseEntity = unMergeCollaborationGroup(id,bearerToken);
+                } catch (Exception e) {
+                    logger.error("failed to unmerge group",e);
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+                }
+            }
+
             for(String cgid : collaborationGroupsBelongingToThisInstance){
                 CollaborationGroupDAOUtility.deleteCollaborationGroupDAOsByID(Collections.singletonList(Long.parseLong(cgid)));
             }
@@ -367,17 +377,23 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
             List<FederatedCollaborationGroupMetadataDAO> newFeds = new ArrayList<>(collaborationGroupDAO.getFederatedCollaborationGroupMetadatas());
 
             for (FederatedCollaborationGroupMetadataDAO federatedCollaborationGroupMetadataDAO : collaborationGroupsBelongingToDifferentInstance) {
-                newFeds.add(federatedCollaborationGroupMetadataDAO);
-                try {
-                    Response response = SpringBridge.getInstance().getDelegateClient().getCollaborationGroup(bearerToken,federatedCollaborationGroupMetadataDAO.getID(),federatedCollaborationGroupMetadataDAO.getFederationID());
-                    CollaborationGroup collaborationGroup = objectMapper.readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),CollaborationGroup.class);
+                if(!federatedMetadataExists(newFeds,federatedCollaborationGroupMetadataDAO)){
+                    newFeds.add(federatedCollaborationGroupMetadataDAO);
+                    try {
+                        Response response = SpringBridge.getInstance().getDelegateClient().getCollaborationGroup(bearerToken,federatedCollaborationGroupMetadataDAO.getID(),federatedCollaborationGroupMetadataDAO.getFederationID());
+                        CollaborationGroup collaborationGroup = objectMapper.readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),CollaborationGroup.class);
 
-                    for (FederatedCollaborationGroupMetadata federatedCollaborationGroupMetadata : collaborationGroup.getFederatedCollaborationGroupMetadatas()) {
-                        newFeds.add(HibernateSwaggerObjectMapper.createFederatedCollaborationGroupMetadata(federatedCollaborationGroupMetadata));
+                        for (FederatedCollaborationGroupMetadata federatedCollaborationGroupMetadata : collaborationGroup.getFederatedCollaborationGroupMetadatas()) {
+                            FederatedCollaborationGroupMetadataDAO federatedCollaborationGroupMetadataDAO1 = HibernateSwaggerObjectMapper.createFederatedCollaborationGroupMetadata(federatedCollaborationGroupMetadata);
+                            if(!federatedMetadataExists(newFeds,federatedCollaborationGroupMetadataDAO1)){
+                                newFeds.add(federatedCollaborationGroupMetadataDAO1);
+                            }
+
+                        }
+                    } catch (Exception e) {
+                        logger.error("failed to get collaboration group",e);
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
                     }
-                } catch (Exception e) {
-                    logger.error("failed to get collaboration group",e);
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
                 }
             }
 
@@ -386,7 +402,7 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
             collaborationGroupDAO = repo.updateEntity(collaborationGroupDAO);
 
             // unmerge collaboration groups for federated ones
-            for (FederatedCollaborationGroupMetadata cgid : cgids) {
+            for (FederatedCollaborationGroupMetadataDAO cgid : collaborationGroupsBelongingToDifferentInstance) {
                 try {
                     Response response = SpringBridge.getInstance().getDelegateClient().unMergeCollaborationGroup(bearerToken,cgid.getID(),cgid.getFederationID());
                 } catch (Exception e) {
@@ -526,7 +542,10 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
             collaborationGroupDAO.setFederatedCollaborationGroupMetadatas(federatedCollaborationGroupMetadataDAOS);
         }
         else {
-            collaborationGroupDAO.getFederatedCollaborationGroupMetadatas().add(HibernateSwaggerObjectMapper.createFederatedCollaborationGroupMetadata(federatedCollaborationGroupMetadata));
+            FederatedCollaborationGroupMetadataDAO federatedCollaborationGroupMetadataDAO = HibernateSwaggerObjectMapper.createFederatedCollaborationGroupMetadata(federatedCollaborationGroupMetadata);
+            if(!federatedMetadataExists(collaborationGroupDAO.getFederatedCollaborationGroupMetadatas(),federatedCollaborationGroupMetadataDAO)){
+                collaborationGroupDAO.getFederatedCollaborationGroupMetadatas().add(federatedCollaborationGroupMetadataDAO);
+            }
         }
         new JPARepositoryFactory().forBpRepository().updateEntity(collaborationGroupDAO);
         logger.info("Added federated metadata to collaboration group for document {}",documentId);
@@ -542,7 +561,7 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
             method = RequestMethod.GET)
     public ResponseEntity unMergeCollaborationGroup(@ApiParam(value = "The identifier of party", required = true) @RequestParam(value = "groupId",required = true) String groupId,
                                                          @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
-        logger.info("Unmerging collaboration group");
+        logger.info("Unmerging collaboration group {}",groupId);
 
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
@@ -574,5 +593,14 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
             }
         }
         return collaborationFinished;
+    }
+
+    private boolean federatedMetadataExists(List<FederatedCollaborationGroupMetadataDAO> federatedCollaborationGroupMetadataDAOS, FederatedCollaborationGroupMetadataDAO federatedCollaborationGroupMetadataDAO){
+        for (FederatedCollaborationGroupMetadataDAO collaborationGroupMetadataDAO : federatedCollaborationGroupMetadataDAOS) {
+            if(collaborationGroupMetadataDAO.getID().contentEquals(federatedCollaborationGroupMetadataDAO.getID()) && collaborationGroupMetadataDAO.getFederationID().contentEquals(federatedCollaborationGroupMetadataDAO.getFederationID())){
+                return true;
+            }
+        }
+        return false;
     }
 }
