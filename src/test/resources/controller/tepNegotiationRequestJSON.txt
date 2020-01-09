@@ -6,7 +6,7 @@
   "dataMonitoringRequested": false,
   "buyerCustomerParty": {
     "party": {
-      "federationInstanceID": "11",
+      "federationInstanceID": "TEST_INSTANCE",
       "nace": [],
       "description": [],
       "brandName": [],
@@ -1453,7 +1453,7 @@
   },
   "sellerSupplierParty": {
     "party": {
-      "federationInstanceID": "11",
+      "federationInstanceID": "TEST_INSTANCE",
       "nace": [],
       "description": [],
       "brandName": [],
@@ -2261,7 +2261,7 @@
           ],
           "additionalItemProperty": [],
           "manufacturerParty": {
-            "federationInstanceID": "11",
+            "federationInstanceID": "TEST_INSTANCE",
             "nace": [],
             "description": [],
             "brandName": [],
@@ -2735,7 +2735,7 @@
                 },
                 "estimatedDeliveryDate": null,
                 "carrierParty": {
-                  "federationInstanceID": "11",
+                  "federationInstanceID": "TEST_INSTANCE",
                   "nace": [],
                   "description": [],
                   "brandName": [],

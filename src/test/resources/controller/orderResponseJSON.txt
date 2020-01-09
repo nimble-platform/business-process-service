@@ -14,7 +14,7 @@
   },
   "sellerSupplierParty": {
     "party": {
-      "federationInstanceID": "11",
+      "federationInstanceID": "TEST_INSTANCE",
       "nace": [],
       "description": [],
       "brandName": [],
@@ -1739,7 +1739,7 @@
   },
   "buyerCustomerParty": {
     "party": {
-      "federationInstanceID": "11",
+      "federationInstanceID": "TEST_INSTANCE",
       "nace": [],
       "description": [],
       "brandName": [],

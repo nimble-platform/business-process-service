@@ -14,7 +14,7 @@
   ],
   "deliveryCustomerParty": {
     "party": {
-      "federationInstanceID": "11",
+      "federationInstanceID": "TEST_INSTANCE",
       "nace": [],
       "description": [],
       "brandName": [],
@@ -190,7 +190,7 @@
   },
   "despatchSupplierParty": {
     "party": {
-      "federationInstanceID": "11",
+      "federationInstanceID": "TEST_INSTANCE",
       "nace": [],
       "description": [],
       "brandName": [],
@@ -1998,7 +1998,7 @@
           }
         ],
         "manufacturerParty": {
-          "federationInstanceID": "11",
+          "federationInstanceID": "TEST_INSTANCE",
           "nace": [],
           "description": [],
           "brandName": [],
@@ -3730,7 +3730,7 @@
         }
       },
       "orderLineReference": {
-        "lineID":2834
+        "lineID":3374
       },
       "shipment": [
         {

@@ -469,7 +469,7 @@ public class ContractGenerator {
                                             }
                                         }
                                         if(text.contains("$phone_id")){
-                                            if(!order.getBuyerCustomerParty().getParty().getPerson().get(0).getContact().getTelephone().contentEquals("")){
+                                            if(order.getBuyerCustomerParty().getParty().getPerson().get(0).getContact() != null && !order.getBuyerCustomerParty().getParty().getPerson().get(0).getContact().getTelephone().contentEquals("")){
                                                 text = text.replace("$phone_id",order.getBuyerCustomerParty().getParty().getPerson().get(0).getContact().getTelephone());
                                                 r.setText(text,0);
                                             }

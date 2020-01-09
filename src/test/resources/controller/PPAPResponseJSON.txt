@@ -7,7 +7,7 @@
   "acceptedIndicator": true,
   "buyerCustomerParty": {
     "party": {
-      "federationInstanceID": "11",
+      "federationInstanceID": "TEST_INSTANCE",
       "nace": [],
       "description": [],
       "brandName": [],
@@ -183,7 +183,7 @@
   },
   "sellerSupplierParty": {
     "party": {
-      "federationInstanceID": "11",
+      "federationInstanceID": "TEST_INSTANCE",
       "nace": [],
       "description": [],
       "brandName": [],

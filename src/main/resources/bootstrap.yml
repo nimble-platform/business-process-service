@@ -399,7 +399,7 @@ nimble:
   delegate-service:
     url: ${DELEGATE_SERVICE_URL:http://localhost:8081}
   federation:
-    id: 11
+    id: TEST_INSTANCE
   kafka:
       topics:
         businessProcessUpdates: ${KAFKA_TOPIC_BUSINESS_PROCESS_UPDATES:business-process-updates-staging}
