@@ -392,7 +392,7 @@ public class ProcessInstanceController {
                 federationIds.add(iDocument.getSellerParty().getFederationInstanceID());
 
                 // seller and buyer are in the same instance
-                if(iDocument.getBuyerParty().getFederationInstanceID().contentEquals(SpringBridge.getInstance().getGenericConfig().getFederationId())){
+                if(iDocument.getBuyerParty().getFederationInstanceID().contentEquals(SpringBridge.getInstance().getFederationId())){
                     partyIds.add(iDocument.getBuyerPartyId());
                     federationIds.add(iDocument.getBuyerParty().getFederationInstanceID());
 

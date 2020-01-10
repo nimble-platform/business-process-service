@@ -7,6 +7,7 @@ import eu.nimble.service.bp.config.BusinessProcessPersistenceConfig;
 import eu.nimble.service.bp.config.GenericConfig;
 import eu.nimble.service.bp.contract.FrameContractService;
 import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
+import feign.Response;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -35,6 +36,8 @@ public class SpringBridge implements ApplicationContextAware {
     private IDataChannelClient dataChannelClient;
     @Autowired
     private IDelegateClient delegateClient;
+
+    private String federationId = null;
 
     public static SpringBridge getInstance() {
         return applicationContext.getBean(SpringBridge.class);
@@ -72,5 +75,13 @@ public class SpringBridge implements ApplicationContextAware {
 
     public IDelegateClient getDelegateClient() {
         return delegateClient;
+    }
+
+    public String getFederationId() {
+        if(federationId == null){
+            Response response = delegateClient.getFederationId();
+            federationId = response.body().toString();
+        }
+        return federationId;
     }
 }

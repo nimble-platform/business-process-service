@@ -145,4 +145,9 @@ public class DelegateServiceClientMock implements IDelegateClient {
         return Response.builder().headers(new HashMap<>()).status(responseEntity.getStatusCodeValue()).body(responseEntity.getBody().toString(),Charset.defaultCharset()).build();
     }
 
+    @Override
+    public Response getFederationId() {
+        return Response.builder().headers(new HashMap<>()).status(200).body("TEST_INSTANCE",Charset.defaultCharset()).build();
+    }
+
 }

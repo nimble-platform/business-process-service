@@ -170,7 +170,7 @@ public class ShoppingCartController {
 
             // retrieve the product to be added to the shopping cart
             CatalogueLineType originalProduct = null;
-            if(federationId != null && !federationId.contentEquals(SpringBridge.getInstance().getGenericConfig().getFederationId())){
+            if(federationId != null && !federationId.contentEquals(SpringBridge.getInstance().getFederationId())){
                 Response response = SpringBridge.getInstance().getDelegateClient().getCatalogLineByHjid(bearerToken,productId);
                 originalProduct = JsonSerializationUtility.getObjectMapper().readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),CatalogueLineType.class);
             }

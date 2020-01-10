@@ -108,7 +108,7 @@ public class StartController implements StartApi {
                     hjidOfBaseGroup = CollaborationGroupDAOUtility.getCollaborationGroupHjidByProcessInstanceIdAndPartyId(processInstanceId, buyerPartyId, buyerFederationId).toString();
                 } else {
                     FederatedCollaborationGroupMetadataDAO federatedCollaborationGroupMetadataDAO = new FederatedCollaborationGroupMetadataDAO();
-                    federatedCollaborationGroupMetadataDAO.setFederationID(SpringBridge.getInstance().getGenericConfig().getFederationId());
+                    federatedCollaborationGroupMetadataDAO.setFederationID(SpringBridge.getInstance().getFederationId());
                     federatedCollaborationGroupMetadataDAO.setID(CollaborationGroupDAOUtility.getCollaborationGroupHjidByProcessInstanceIdAndPartyId(processInstanceId, buyerPartyId, buyerFederationId).toString());
                     federatedCollaborationGroupMetadataDAOS.add(federatedCollaborationGroupMetadataDAO);
                 }

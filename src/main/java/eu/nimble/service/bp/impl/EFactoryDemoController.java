@@ -219,7 +219,7 @@ public class EFactoryDemoController {
         // create the party if it does not exist
         if(buyerParty == null){
             // retrieve the party info from the database
-            buyerParty = PartyPersistenceUtility.getParty(rfqSummary.getBuyerPartyId(),SpringBridge.getInstance().getGenericConfig().getFederationId(), true);
+            buyerParty = PartyPersistenceUtility.getParty(rfqSummary.getBuyerPartyId(),SpringBridge.getInstance().getFederationId(), true);
             boolean buyerPartyExists = buyerParty != null;
             // create the party
             if(!buyerPartyExists){

@@ -340,7 +340,7 @@ public class HibernateSwaggerObjectMapper {
         processInstanceGroup.setName(processInstanceGroupDAO.getName());
         processInstanceGroup.setDataChannelId(processInstanceGroupDAO.getDataChannelId());
         processInstanceGroup.setPrecedingProcessInstanceGroupMetadata(convertFederatedCollaborationGroupMetadataDAO(processInstanceGroupDAO.getPrecedingProcessInstanceGroupMetadata()));
-        processInstanceGroup.setSellerFederationId(SpringBridge.getInstance().getGenericConfig().getFederationId());
+        processInstanceGroup.setSellerFederationId(SpringBridge.getInstance().getFederationId());
         return processInstanceGroup;
     }
 
@@ -365,7 +365,7 @@ public class HibernateSwaggerObjectMapper {
         }
 
         collaborationGroup.setAssociatedProcessInstanceGroups(processInstanceGroups);
-        collaborationGroup.setFederationId(SpringBridge.getInstance().getGenericConfig().getFederationId());
+        collaborationGroup.setFederationId(SpringBridge.getInstance().getFederationId());
         return collaborationGroup;
     }
 }

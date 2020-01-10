@@ -127,7 +127,7 @@ public class ContractGenerator {
                 PartyType supplierParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,sellerPartyId);
                 PartyType customerParty = null;
                 if(buyerPartyId != null){
-                    if(!buyerFederationId.contentEquals(SpringBridge.getInstance().getGenericConfig().getFederationId())){
+                    if(!buyerFederationId.contentEquals(SpringBridge.getInstance().getFederationId())){
                         Response response = SpringBridge.getInstance().getDelegateClient().getParty(bearerToken,Long.parseLong(buyerPartyId),false,buyerFederationId);
                         customerParty = objectMapper.readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),PartyType.class);
                     }

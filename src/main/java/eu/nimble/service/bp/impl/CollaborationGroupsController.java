@@ -334,7 +334,7 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
         List<FederatedCollaborationGroupMetadataDAO> collaborationGroupsBelongingToDifferentInstance = new ArrayList<>();
 
         for(FederatedCollaborationGroupMetadata federatedCollaborationGroupMetadata: cgids){
-            if (federatedCollaborationGroupMetadata.getFederationID().contentEquals(SpringBridge.getInstance().getGenericConfig().getFederationId())) {
+            if (federatedCollaborationGroupMetadata.getFederationID().contentEquals(SpringBridge.getInstance().getFederationId())) {
                 collaborationGroupsBelongingToThisInstance.add(federatedCollaborationGroupMetadata.getID());
             }
             else{

@@ -376,7 +376,7 @@ public class EmailSenderUtil {
 
     private PartyType getParty(String partyId,String federationId,String bearerToken) throws IOException {
         PartyType party = null;
-        if(federationId.contentEquals(SpringBridge.getInstance().getGenericConfig().getFederationId())){
+        if(federationId.contentEquals(SpringBridge.getInstance().getFederationId())){
             party = iIdentityClientTyped.getParty(bearerToken, partyId);
         }
         else {
@@ -388,7 +388,7 @@ public class EmailSenderUtil {
 
     private PersonType getPerson(String personId,String federationId,String bearerToken) throws IOException {
         PersonType person = null;
-        if(federationId.contentEquals(SpringBridge.getInstance().getGenericConfig().getFederationId())){
+        if(federationId.contentEquals(SpringBridge.getInstance().getFederationId())){
             person = iIdentityClientTyped.getPerson(bearerToken, personId);
         }
         else {
