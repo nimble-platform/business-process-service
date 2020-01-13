@@ -77,7 +77,7 @@ public class FrameContractControllerTest {
         duration.setValue(new BigDecimal(3));
         duration.setUnitCode("month(s)");
 
-        DigitalAgreementType frameContract = frameContractService.createDigitalAgreement(TestConfig.sellerPartyID, TestConfig.buyerPartyID, item, duration, "quotationId");
+        DigitalAgreementType frameContract = frameContractService.createDigitalAgreement(TestConfig.sellerPartyID, TestConfig.buyerPartyID,TestConfig.federationId,TestConfig.federationId, item, duration, "quotationId");
 
         // retrieve contract
         MockHttpServletRequestBuilder request = get("/contract/digital-agreement/" + frameContract.getHjid())
@@ -94,6 +94,8 @@ public class FrameContractControllerTest {
                 .header("Authorization", TestConfig.initiatorPersonId)
                 .param("buyerId",TestConfig.buyerPartyID)
                 .param("sellerId",TestConfig.sellerPartyID)
+                .header("initiatorFederationId",TestConfig.federationId)
+                .header("responderFederationId",TestConfig.federationId)
                 .param("productIds",itemId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
         List<DigitalAgreementType> fc = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), new TypeReference<List<DigitalAgreementType>>() {});
@@ -105,6 +107,7 @@ public class FrameContractControllerTest {
     public void test3_getDigitalAgreementsForParty() throws Exception {
         MockHttpServletRequestBuilder request = get("/contract/digital-agreement/all")
                 .header("Authorization", TestConfig.initiatorPersonId)
+                .header("federationId",TestConfig.federationId)
                 .param("partyId",TestConfig.sellerPartyID);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
         List<DigitalAgreementType> frameContracts = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),new TypeReference<List<DigitalAgreementType>>(){});
@@ -124,7 +127,9 @@ public class FrameContractControllerTest {
         frameContract = new JPARepositoryFactory().forCatalogueRepository().updateEntity(frameContract);
 
         MockHttpServletRequestBuilder request = get("/contract/digital-agreement?buyerId=" + TestConfig.buyerPartyID + "&sellerId=" + TestConfig.sellerPartyID + "&productIds=" + itemId)
-                .header("Authorization", TestConfig.initiatorPersonId);
+                .header("Authorization", TestConfig.initiatorPersonId)
+                .header("initiatorFederationId",TestConfig.federationId)
+                .header("responderFederationId",TestConfig.federationId);
         this.mockMvc.perform(request).andDo(print()).andExpect(status().isNotFound()).andReturn();
     }
 
@@ -132,7 +137,8 @@ public class FrameContractControllerTest {
     public void test5_getDigitalAgreementsForParty() throws Exception {
         MockHttpServletRequestBuilder request = get("/contract/digital-agreement/all")
                 .header("Authorization", TestConfig.initiatorPersonId)
-                .param("partyId",TestConfig.sellerPartyID);
+                .param("partyId",TestConfig.sellerPartyID)
+                .header("federationId",TestConfig.federationId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
         List<DigitalAgreementType> frameContracts = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),new TypeReference<List<DigitalAgreementType>>(){});
         Assert.assertEquals(0,frameContracts.size());
@@ -142,7 +148,8 @@ public class FrameContractControllerTest {
     public void test6_updateExpiredContractNotFoundTest() throws Exception {
         // retrieve contract
         MockHttpServletRequestBuilder request = get("/contract/digital-agreement/" + frameContract.getHjid())
-                .header("Authorization", TestConfig.initiatorPersonId);
+                .header("Authorization", TestConfig.initiatorPersonId)
+                .header("initiatorFederationId",TestConfig.federationId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
         frameContract = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), DigitalAgreementType.class);
 
@@ -150,10 +157,12 @@ public class FrameContractControllerTest {
         duration.setValue(new BigDecimal(3));
         duration.setUnitCode("month(s)");
 
-        frameContractService.createOrUpdateFrameContract(TestConfig.sellerPartyID, TestConfig.buyerPartyID, frameContract.getItem(), duration, "quotationId2");
+        frameContractService.createOrUpdateFrameContract(TestConfig.sellerPartyID, TestConfig.buyerPartyID, TestConfig.federationId, TestConfig.federationId,frameContract.getItem(), duration, "quotationId2");
 
         request = get("/contract/digital-agreement?buyerId=" + TestConfig.buyerPartyID + "&sellerId=" + TestConfig.sellerPartyID + "&productIds=" + itemId)
-                .header("Authorization", TestConfig.initiatorPersonId);
+                .header("Authorization", TestConfig.initiatorPersonId)
+                .header("responderFederationId",TestConfig.federationId)
+                .header("initiatorFederationId",TestConfig.federationId);
         this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
     }
 

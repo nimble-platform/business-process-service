@@ -2,6 +2,9 @@ package eu.nimble.service.bp.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.mashape.unirest.http.HttpResponse;
+import com.mashape.unirest.http.JsonNode;
+import com.mashape.unirest.http.Unirest;
 import eu.nimble.common.rest.identity.IIdentityClientTyped;
 import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.model.hyperjaxb.*;
@@ -19,6 +22,7 @@ import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
+import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.commonbasiccomponents.BinaryObjectType;
 import eu.nimble.service.model.ubl.document.IDocument;
@@ -31,6 +35,7 @@ import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
 import eu.nimble.utility.serialization.JsonSerializer;
 import eu.nimble.utility.serialization.MixInIgnoreType;
 import eu.nimble.utility.validation.IValidationUtil;
+import feign.Response;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -219,6 +224,7 @@ public class ProcessInstanceController {
             method = RequestMethod.GET)
     public ResponseEntity isRated(@ApiParam(value = "Identifier of the process instance", required = true) @PathVariable(value = "processInstanceId", required = true) String processInstanceId,
                                   @ApiParam(value = "Identifier of the party (the rated) for which the existence of a rating to be checked", required = true) @RequestParam(value = "partyId", required = true) String partyId,
+                                  @ApiParam(value = "", required = true) @RequestHeader(value = "federationId", required = true) String federationId,
                                   @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
         try {
             logger.info("Getting rating status for process instance: {}, party: {}", processInstanceId, partyId);
@@ -227,7 +233,7 @@ public class ProcessInstanceController {
                 return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
-            Boolean rated = TrustPersistenceUtility.processInstanceIsRated(partyId,processInstanceId);
+            Boolean rated = TrustPersistenceUtility.processInstanceIsRated(partyId,federationId,processInstanceId);
 
             logger.info("Retrieved rating status for process instance: {}, party: {}", processInstanceId, partyId);
             return ResponseEntity.ok(rated.toString());
@@ -377,12 +383,32 @@ public class ProcessInstanceController {
             List<PartyNameType> buyerPartyNames = null;
 
             try {
-                // seller and buyer party ids
+                // get parties
+                List<PartyType> parties = new ArrayList<>();
                 List<String> partyIds = new ArrayList<>();
                 partyIds.add(iDocument.getSellerPartyId());
-                partyIds.add(iDocument.getBuyerPartyId());
-                // get parties
-                List<PartyType> parties = PartyPersistenceUtility.getParties(bearerToken, partyIds);
+
+                List<String> federationIds = new ArrayList<>();
+                federationIds.add(iDocument.getSellerParty().getFederationInstanceID());
+
+                // seller and buyer are in the same instance
+                if(iDocument.getBuyerParty().getFederationInstanceID().contentEquals(SpringBridge.getInstance().getFederationId())){
+                    partyIds.add(iDocument.getBuyerPartyId());
+                    federationIds.add(iDocument.getBuyerParty().getFederationInstanceID());
+
+                    federationIds.add(iDocument.getSellerParty().getFederationInstanceID());
+                    federationIds.add(iDocument.getBuyerParty().getFederationInstanceID());
+                    // get parties
+                    parties = PartyPersistenceUtility.getParties(bearerToken, partyIds,federationIds);
+                }
+                // seller and buyer are in different instances
+                else{
+                    PartyType sellerParty = PartyPersistenceUtility.getParties(bearerToken, partyIds,federationIds).get(0);
+                    Response response = SpringBridge.getInstance().getDelegateClient().getParty(bearerToken,Long.parseLong(iDocument.getBuyerPartyId()),false,iDocument.getBuyerParty().getFederationInstanceID());
+                    PartyType buyerParty = objectMapper.readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),PartyType.class);
+
+                    parties = Arrays.asList(sellerParty,buyerParty);
+                }
                 // get seller and buyer party names
                 for (PartyType party : parties) {
                     if(party.getPartyIdentification().get(0).getID().contentEquals(iDocument.getSellerPartyId())){
@@ -409,8 +435,10 @@ public class ProcessInstanceController {
             return  "{\"items\":"+objectMapper.writeValueAsString(items) +
                     ",\"areProductsDeleted\":" + objectMapper.writeValueAsString(areProductsDeleted) +
                     ",\"buyerPartyId\":\""+ iDocument.getBuyerPartyId() +
+                    "\",\"buyerPartyFederationId\":\""+ iDocument.getBuyerParty().getFederationInstanceID() +
                     "\",\"buyerPartyName\":"+objectMapper.writeValueAsString(buyerPartyNames)+
                     ",\"sellerPartyId\":\""+ iDocument.getSellerPartyId()+
+                    "\",\"sellerPartyFederationId\":\""+ iDocument.getSellerParty().getFederationInstanceID() +
                     "\",\"sellerPartyName\":"+objectMapper.writeValueAsString(sellerPartyNames)+"}";
         });
     }
@@ -468,7 +496,7 @@ public class ProcessInstanceController {
                 return HttpResponseUtil.createResponseEntityAndLog(String.format("Failed to retrieve party for the token: %s", bearerToken), e, HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
-            CollaborationGroupDAO collaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroupByProcessInstanceIdAndPartyId(processInstanceId, party.getPartyIdentification().get(0).getID());
+            CollaborationGroupDAO collaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroupByProcessInstanceIdAndPartyId(processInstanceId, party.getPartyIdentification().get(0).getID(), party.getFederationInstanceID());
             if(collaborationGroup == null) {
                 return HttpResponseUtil.createResponseEntityAndLog(String.format("No CollaborationGroup for the process instance id: %s", processInstanceId), null, HttpStatus.NOT_FOUND, LogLevel.INFO);
             }
@@ -494,6 +522,7 @@ public class ProcessInstanceController {
                                           @ApiParam(value = "Direction of the transaction. It can be incoming/outgoing. If not provided, all transactions are considered.", required = false) @RequestParam(value = "direction", required = false) String direction,
                                           @ApiParam(value = "Archived status of the CollaborationGroup including the transaction.", required = false) @RequestParam(value = "archived", required = false) Boolean archived,
                                           @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
+                                          @ApiParam(value = "", required = true) @RequestHeader(value = "federationId", required = true) String federationId,
                                           HttpServletResponse response) {
 
         ZipOutputStream zos = null;
@@ -508,7 +537,7 @@ public class ProcessInstanceController {
 
 
             logger.info("Incoming request to export transactions. party id: {}, user id: {}, direction: {}", partyId, userId, direction);
-            List<TransactionSummary> transactions = ProcessDocumentMetadataDAOUtility.getTransactionSummaries(partyId, userId, direction, archived, bearerToken);
+            List<TransactionSummary> transactions = ProcessDocumentMetadataDAOUtility.getTransactionSummaries(partyId, federationId,userId, direction, archived, bearerToken);
             ZipEntry zipEntry;
             tempOutputStream = null;
             try {

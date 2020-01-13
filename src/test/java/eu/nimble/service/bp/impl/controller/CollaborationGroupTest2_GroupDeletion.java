@@ -68,6 +68,8 @@ public class CollaborationGroupTest2_GroupDeletion {
 
         MockHttpServletRequestBuilder request = post("/start")
                 .header("Authorization",TestConfig.initiatorPersonId)
+                .header("initiatorFederationId",TestConfig.federationId)
+                .header("responderFederationId",TestConfig.federationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -84,9 +86,9 @@ public class CollaborationGroupTest2_GroupDeletion {
 
         // set collaboration group and process instance groups ids
         sellerCollaborationGroupID = collaborationGroupResponse.getCollaborationGroups().get(0).getID();
-        buyerCollaborationGroupID = CollaborationGroupDAOUtility.getCollaborationGroup(TestConfig.buyerPartyID, Arrays.asList(processInstanceIdIIR)).getHjid().toString();
+        buyerCollaborationGroupID = CollaborationGroupDAOUtility.getCollaborationGroup(TestConfig.buyerPartyID, TestConfig.federationId,Arrays.asList(processInstanceIdIIR)).getHjid().toString();
         sellerProcessInstanceGroupID = collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().get(0).getID();
-        buyerProcessInstanceGroupID = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(TestConfig.buyerPartyID, Arrays.asList(processInstanceIdIIR)).getID();
+        buyerProcessInstanceGroupID = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(TestConfig.buyerPartyID, TestConfig.federationId,Arrays.asList(processInstanceIdIIR)).getID();
     }
 
     /*
@@ -107,6 +109,8 @@ public class CollaborationGroupTest2_GroupDeletion {
 
         MockHttpServletRequestBuilder request = post("/continue")
                 .header("Authorization", TestConfig.responderPersonId)
+                .header("initiatorFederationId",TestConfig.federationId)
+                .header("responderFederationId",TestConfig.federationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString)
                 .param("gid", sellerProcessInstanceGroupID)
@@ -138,6 +142,8 @@ public class CollaborationGroupTest2_GroupDeletion {
 
         MockHttpServletRequestBuilder request = post("/start")
                 .header("Authorization",TestConfig.initiatorPersonId)
+                .header("initiatorFederationId",TestConfig.federationId)
+                .header("responderFederationId",TestConfig.federationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString)
                 .param("gid", buyerProcessInstanceGroupID)
@@ -161,6 +167,7 @@ public class CollaborationGroupTest2_GroupDeletion {
     private CollaborationGroupResponse getCollaborationGroupResponse() throws Exception{
         MockHttpServletRequestBuilder request = get("/collaboration-groups")
                 .header("Authorization", TestConfig.initiatorPersonId)
+                .header("federationId",TestConfig.federationId)
                 .param("partyId", sellerPartyId)
                 .param("relatedProducts", relatedProduct)
                 .param("collaborationRole", "SELLER")

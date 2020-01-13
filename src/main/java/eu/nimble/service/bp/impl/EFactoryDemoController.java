@@ -23,6 +23,8 @@ import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
@@ -31,9 +33,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import springfox.documentation.annotations.ApiIgnore;
 
 import java.io.IOException;
@@ -123,7 +128,7 @@ public class EFactoryDemoController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
         }
         // start the process
-        ProcessInstance processInstance = (ProcessInstance) startWithDocumentController.startProcessWithDocument(serializedRFQ, null).getBody();
+        ProcessInstance processInstance = (ProcessInstance) startWithDocumentController.startProcessWithDocument(serializedRFQ, null ).getBody();
         logger.info("Completed the request to start request for quotation process");
         return ResponseEntity.ok(processInstance);
     }
@@ -214,7 +219,7 @@ public class EFactoryDemoController {
         // create the party if it does not exist
         if(buyerParty == null){
             // retrieve the party info from the database
-            buyerParty = PartyPersistenceUtility.getParty(rfqSummary.getBuyerPartyId(), true);
+            buyerParty = PartyPersistenceUtility.getParty(rfqSummary.getBuyerPartyId(),SpringBridge.getInstance().getFederationId(), true);
             boolean buyerPartyExists = buyerParty != null;
             // create the party
             if(!buyerPartyExists){

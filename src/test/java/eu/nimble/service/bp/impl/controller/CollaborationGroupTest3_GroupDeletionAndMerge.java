@@ -2,7 +2,9 @@ package eu.nimble.service.bp.impl.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.model.dashboard.CollaborationGroupResponse;
+import eu.nimble.service.bp.model.hyperjaxb.FederatedCollaborationGroupMetadataDAO;
 import eu.nimble.service.bp.swagger.model.CollaborationGroup;
+import eu.nimble.service.bp.swagger.model.FederatedCollaborationGroupMetadata;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
 import eu.nimble.service.bp.util.persistence.bp.CollaborationGroupDAOUtility;
@@ -75,6 +77,8 @@ public class CollaborationGroupTest3_GroupDeletionAndMerge {
 
         MockHttpServletRequestBuilder request = post("/start")
                 .header("Authorization",TestConfig.initiatorPersonId)
+                .header("initiatorFederationId",TestConfig.federationId)
+                .header("responderFederationId",TestConfig.federationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -86,9 +90,9 @@ public class CollaborationGroupTest3_GroupDeletionAndMerge {
         CollaborationGroupResponse collaborationGroupResponse = getCollaborationGroupResponse();
         // set collaboration group and process instance groups ids
         buyerCollaborationGroupID = collaborationGroupResponse.getCollaborationGroups().get(0).getID();
-        sellerCollaborationGroupID = CollaborationGroupDAOUtility.getCollaborationGroup(TestConfig.sellerPartyID, Arrays.asList(processInstanceIdIIR)).getHjid().toString();
+        sellerCollaborationGroupID = CollaborationGroupDAOUtility.getCollaborationGroup(TestConfig.sellerPartyID, TestConfig.federationId,Arrays.asList(processInstanceIdIIR)).getHjid().toString();
         buyerProcessInstanceGroupID = collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().get(0).getID();
-        sellerProcessInstanceGroupID = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(TestConfig.sellerPartyID,Arrays.asList(processInstanceIdIIR)).getID();
+        sellerProcessInstanceGroupID = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(TestConfig.sellerPartyID,TestConfig.federationId,Arrays.asList(processInstanceIdIIR)).getID();
 
     }
 
@@ -99,6 +103,8 @@ public class CollaborationGroupTest3_GroupDeletionAndMerge {
 
         MockHttpServletRequestBuilder request = post("/continue")
                 .header("Authorization", TestConfig.responderPersonId)
+                .header("initiatorFederationId",TestConfig.federationId)
+                .header("responderFederationId",TestConfig.federationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString)
                 .param("gid", sellerProcessInstanceGroupID)
@@ -117,6 +123,8 @@ public class CollaborationGroupTest3_GroupDeletionAndMerge {
 
         MockHttpServletRequestBuilder request = post("/start")
                 .header("Authorization",TestConfig.initiatorPersonId)
+                .header("initiatorFederationId",TestConfig.federationId)
+                .header("responderFederationId",TestConfig.federationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString)
                 .param("gid", buyerProcessInstanceGroupID)
@@ -160,6 +168,8 @@ public class CollaborationGroupTest3_GroupDeletionAndMerge {
 
         MockHttpServletRequestBuilder request = post("/continue")
                 .header("Authorization", TestConfig.responderPersonId)
+                .header("initiatorFederationId",TestConfig.federationId)
+                .header("responderFederationId",TestConfig.federationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString)
                 .param("gid", sellerProcessInstanceGroupID)
@@ -187,10 +197,15 @@ public class CollaborationGroupTest3_GroupDeletionAndMerge {
      */
     @Test
     public void test7_mergeCollaborationGroups() throws Exception{
-        MockHttpServletRequestBuilder request = get("/collaboration-groups/merge")
+        FederatedCollaborationGroupMetadata federatedCollaborationGroupMetadata = new FederatedCollaborationGroupMetadata();
+        federatedCollaborationGroupMetadata.setID(CollaborationGroupTest2_GroupDeletion.buyerCollaborationGroupID);
+        federatedCollaborationGroupMetadata.setFederationID(TestConfig.federationId);
+        String body = mapper.writeValueAsString(Arrays.asList(federatedCollaborationGroupMetadata));
+        MockHttpServletRequestBuilder request = post("/collaboration-groups/merge")
                 .header("Authorization", TestConfig.responderPersonId)
-                .param("bcid", buyerCollaborationGroupID)
-                .param("cgids", CollaborationGroupTest2_GroupDeletion.buyerCollaborationGroupID);
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body)
+                .param("bcid", buyerCollaborationGroupID);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         // try to get the old group which is merged to the new one
@@ -212,6 +227,7 @@ public class CollaborationGroupTest3_GroupDeletionAndMerge {
     public void test8_getCollaborationGroups() throws Exception{
         MockHttpServletRequestBuilder request = get("/collaboration-groups")
                 .header("Authorization", TestConfig.initiatorPersonId)
+                .header("federationId",TestConfig.federationId)
                 .param("partyId", TestConfig.buyerPartyID)
                 .param("isProject","true");
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -233,6 +249,8 @@ public class CollaborationGroupTest3_GroupDeletionAndMerge {
         // start business process
         MockHttpServletRequestBuilder request = post("/start")
                 .header("Authorization", TestConfig.initiatorPersonId)
+                .header("initiatorFederationId",TestConfig.federationId)
+                .header("responderFederationId",TestConfig.federationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString)
                 .param("gid", buyerProcessInstanceGroupID)
@@ -244,6 +262,7 @@ public class CollaborationGroupTest3_GroupDeletionAndMerge {
     private CollaborationGroupResponse getCollaborationGroupResponse() throws Exception{
         MockHttpServletRequestBuilder request = get("/collaboration-groups")
                 .header("Authorization", TestConfig.initiatorPersonId)
+                .header("federationId",TestConfig.federationId)
                 .param("collaborationRole", "BUYER")
                 .param("relatedProducts",relatedProduct)
                 .param("partyId", buyerPartyId);

@@ -5,6 +5,7 @@ import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceDAO;
 import eu.nimble.service.bp.model.trust.NegotiationRatings;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
+import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceDAOUtility;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceDAOUtility;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
@@ -25,11 +26,11 @@ public class TrustPersistenceUtility {
 
     private static final String QUERY_GET_COMPLETED_TASK_BY_PROCESS_IDS = "SELECT completedTask.hjid FROM CompletedTaskType completedTask WHERE completedTask.associatedProcessInstanceID in :processInstanceIds";
     private static final String QUERY_PROCESS_INSTANCE_IS_RATED = "SELECT count(completedTask) FROM QualifyingPartyType qParty JOIN qParty.party.partyIdentification partyIdentification JOIN qParty.completedTask completedTask " +
-            "WHERE partyIdentification.ID = :partyId AND completedTask.associatedProcessInstanceID = :processInstanceId and (size(completedTask.evidenceSupplied) > 0 or size(completedTask.comment) > 0) ";
+            "WHERE partyIdentification.ID = :partyId AND qParty.party.federationInstanceID = :federationId AND completedTask.associatedProcessInstanceID = :processInstanceId and (size(completedTask.evidenceSupplied) > 0 or size(completedTask.comment) > 0) ";
 
-    public static boolean processInstanceIsRated(String partyId, String processInstanceId) {
+    public static boolean processInstanceIsRated(String partyId,String federationId, String processInstanceId) {
         int sizeOfCompletedTasks =  ((Long)new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(QUERY_PROCESS_INSTANCE_IS_RATED,
-                new String[]{"partyId", "processInstanceId"}, new Object[]{partyId, processInstanceId})).intValue();
+                new String[]{"partyId","federationId", "processInstanceId"}, new Object[]{partyId, federationId, processInstanceId})).intValue();
         return sizeOfCompletedTasks > 0;
     }
 
@@ -69,12 +70,12 @@ public class TrustPersistenceUtility {
         }
     }
 
-    public static void createCompletedTask(String partyID,String processInstanceID,String bearerToken,String status, String businessContextId) {
+    public static void createCompletedTask(String partyID,String federationId,String processInstanceID,String bearerToken,String status, String businessContextId) {
         /**
          * IMPORTANT:
          * {@link QualifyingPartyType}ies should be existing when a {@link CompletedTaskType} is about to be associated to it
          */
-        QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingPartyType(partyID,bearerToken,businessContextId);
+        QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingPartyType(partyID,federationId,bearerToken,businessContextId);
         CompletedTaskType completedTask = new CompletedTaskType();
         completedTask.setAssociatedProcessInstanceID(processInstanceID);
         TextType textType = new TextType();
@@ -139,10 +140,13 @@ public class TrustPersistenceUtility {
     public static void createCompletedTasksForBothParties(ProcessDocumentMetadataDAO processDocumentMetadata,String bearerToken,String status, String businessContextId) {
         String initiatorID = processDocumentMetadata.getInitiatorID();
         String responderID = processDocumentMetadata.getResponderID();
+        String initiatorFederationId = processDocumentMetadata.getInitiatorFederationID();
+        String responderFederationId = processDocumentMetadata.getResponderFederationID();
 
-        TrustPersistenceUtility.createCompletedTask(initiatorID,processDocumentMetadata.getProcessInstanceID(),bearerToken,status,businessContextId);
-        TrustPersistenceUtility.createCompletedTask(responderID,processDocumentMetadata.getProcessInstanceID(),bearerToken,status,businessContextId);
+        TrustPersistenceUtility.createCompletedTask(initiatorID,initiatorFederationId,processDocumentMetadata.getProcessInstanceID(),bearerToken,status,businessContextId);
+        TrustPersistenceUtility.createCompletedTask(responderID,responderFederationId,processDocumentMetadata.getProcessInstanceID(),bearerToken,status,businessContextId);
     }
+
 
     public static List<NegotiationRatings> createNegotiationRatings(List<CompletedTaskType> completedTasks){
         List<NegotiationRatings> negotiationRatings = new ArrayList<>();

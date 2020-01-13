@@ -2,6 +2,9 @@ package eu.nimble.service.bp.contract;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mashape.unirest.http.HttpResponse;
+import com.mashape.unirest.http.JsonNode;
+import com.mashape.unirest.http.Unirest;
 import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
 import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
@@ -22,6 +25,7 @@ import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.binary.BinaryContentService;
+import feign.Response;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -103,7 +107,7 @@ public class ContractGenerator {
         }
     }
 
-    public List<ClauseType> getTermsAndConditions(String sellerPartyId, String buyerPartyId, String incoterms, String tradingTerm, String bearerToken) throws IOException {
+    public List<ClauseType> getTermsAndConditions(String sellerPartyId,String buyerPartyId,String buyerFederationId, String incoterms, String tradingTerm, String bearerToken) throws Exception {
         List<ClauseType> clauses = new ArrayList<>();
 
         try {
@@ -123,7 +127,13 @@ public class ContractGenerator {
                 PartyType supplierParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,sellerPartyId);
                 PartyType customerParty = null;
                 if(buyerPartyId != null){
-                    customerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,buyerPartyId);
+                    if(!buyerFederationId.contentEquals(SpringBridge.getInstance().getFederationId())){
+                        Response response = SpringBridge.getInstance().getDelegateClient().getParty(bearerToken,Long.parseLong(buyerPartyId),false,buyerFederationId);
+                        customerParty = objectMapper.readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),PartyType.class);
+                    }
+                    else {
+                        customerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,buyerPartyId);
+                    }
                 }
 
                 for(ClauseType clause : clauses){
@@ -459,7 +469,7 @@ public class ContractGenerator {
                                             }
                                         }
                                         if(text.contains("$phone_id")){
-                                            if(!order.getBuyerCustomerParty().getParty().getPerson().get(0).getContact().getTelephone().contentEquals("")){
+                                            if(order.getBuyerCustomerParty().getParty().getPerson().get(0).getContact() != null && !order.getBuyerCustomerParty().getParty().getPerson().get(0).getContact().getTelephone().contentEquals("")){
                                                 text = text.replace("$phone_id",order.getBuyerCustomerParty().getParty().getPerson().get(0).getContact().getTelephone());
                                                 r.setText(text,0);
                                             }

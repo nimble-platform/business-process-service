@@ -38,6 +38,8 @@ public class DefaultOrderProcessor implements JavaDelegate {
         String buyer = variables.get("initiatorID").toString();
         String seller = variables.get("responderID").toString();
         String creatorUserID = variables.get("creatorUserID").toString();
+        String initiatorFederationId = variables.get("initiatorFederationId").toString();
+        String responderFederationId = variables.get("responderFederationId").toString();
         List<String> relatedProducts = (List<String>) variables.get("relatedProducts");
         List<String> relatedProductCategories = (List<String>) variables.get("relatedProductCategories");
         String processContextId = variables.get("processContextId").toString();
@@ -56,7 +58,7 @@ public class DefaultOrderProcessor implements JavaDelegate {
 
             IBusinessProcessApplication businessProcessApplication = (IBusinessProcessApplication) instance;
 
-            businessProcessApplication.saveDocument(processContextId,processInstanceId, buyer, seller, creatorUserID,order, relatedProducts, relatedProductCategories);
+            businessProcessApplication.saveDocument(processContextId,processInstanceId, buyer, seller, creatorUserID,order, relatedProducts, relatedProductCategories, initiatorFederationId, responderFederationId);
         } else if(executionType == ExecutionConfiguration.ExecutionTypeEnum.MICROSERVICE) {
             // TODO: How to call a microservice
         } else {

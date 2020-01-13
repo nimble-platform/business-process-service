@@ -70,12 +70,13 @@ public class TrustControllerTest {
 
         CollaborationGroupResponse collaborationGroupResponse = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), CollaborationGroupResponse.class);
 
-        int size = collaborationGroupResponse.getCollaborationGroups().get(1).getAssociatedProcessInstanceGroups().get(0).getProcessInstanceIDs().size();
-        processInstanceId = collaborationGroupResponse.getCollaborationGroups().get(1).getAssociatedProcessInstanceGroups().get(0).getProcessInstanceIDs().get(size - 1);
+        int size = collaborationGroupResponse.getCollaborationGroups().get(2).getAssociatedProcessInstanceGroups().get(0).getProcessInstanceIDs().size();
+        processInstanceId = collaborationGroupResponse.getCollaborationGroups().get(2).getAssociatedProcessInstanceGroups().get(0).getProcessInstanceIDs().get(size - 1);
 
         // create ratings and reviews
         request = post("/ratingsAndReviews")
                 .header("Authorization",TestConfig.responderPersonId)
+                .header("federationId",TestConfig.federationId)
                 .param("processInstanceID",processInstanceId)
                 .param("reviews", reviews)
                 .param("ratings",ratings)
@@ -88,6 +89,7 @@ public class TrustControllerTest {
     public void test2_isRated() throws Exception{
         MockHttpServletRequestBuilder request = get("/processInstance/"+processInstanceId+"/isRated")
                 .header("Authorization", TestConfig.responderPersonId)
+                .header("federationId",TestConfig.federationId)
                 .param("partyId","706");
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
         Assert.assertEquals("true",mvcResult.getResponse().getContentAsString());
@@ -97,6 +99,7 @@ public class TrustControllerTest {
     public void test3_getRatingsSummary() throws Exception {
         MockHttpServletRequestBuilder request = get("/ratingsSummary")
                 .header("Authorization", TestConfig.responderPersonId)
+                .header("federationId",TestConfig.federationId)
                 .param("partyId",partyID);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
     }
@@ -105,6 +108,7 @@ public class TrustControllerTest {
     public void test4_listAllIndividualRatingsAndReviews() throws Exception {
         MockHttpServletRequestBuilder request = get("/ratingsAndReviews")
                 .header("Authorization", TestConfig.responderPersonId)
+                .header("federationId",TestConfig.federationId)
                 .param("partyId",partyID);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 

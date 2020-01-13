@@ -39,6 +39,8 @@ public class DefaultOrderResponseProcessor  implements JavaDelegate {
         String seller = variables.get("initiatorID").toString();
         String creatorUserID = variables.get("creatorUserID").toString();
         String processContextId = variables.get("processContextId").toString();
+        String initiatorFederationId = variables.get("initiatorFederationId").toString();
+        String responderFederationId = variables.get("responderFederationId").toString();
         List<String> relatedProducts = (List<String>) variables.get("relatedProducts");
         List<String> relatedProductCategories = (List<String>) variables.get("relatedProductCategories");
         OrderResponseSimpleType orderResponse = (OrderResponseSimpleType) variables.get("orderResponse");
@@ -58,7 +60,7 @@ public class DefaultOrderResponseProcessor  implements JavaDelegate {
             IBusinessProcessApplication businessProcessApplication = (IBusinessProcessApplication) instance;
 
             // NOTE: Pay attention to the direction of the document. Here it is from seller to buyer
-            businessProcessApplication.saveDocument(processContextId,processInstanceId, seller, buyer,creatorUserID, orderResponse, relatedProducts, relatedProductCategories);
+            businessProcessApplication.saveDocument(processContextId,processInstanceId, seller, buyer,creatorUserID, orderResponse, relatedProducts, relatedProductCategories, initiatorFederationId, responderFederationId);
         } else if(executionType == ExecutionConfiguration.ExecutionTypeEnum.MICROSERVICE) {
             // TODO: How to call a microservice
         } else {

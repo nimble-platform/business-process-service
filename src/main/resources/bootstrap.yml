@@ -187,6 +187,8 @@ nimble:
     url: ${FRONTEND_URL:http://nimble-staging.salzburgresearch.at/frontend/}
   tracking-analysis:
     url: ${TRACKING_ANALYSIS_SERVICE_URL:http://nimble-dev.ikap.biba.uni-bremen.de/tracking-analysis}
+  delegate-service:
+    url: ${DELEGATE_SERVICE_URL:}
   kafka:
       topics:
         businessProcessUpdates: ${KAFKA_TOPIC_BUSINESS_PROCESS_UPDATES:business-process-updates-staging}
@@ -392,6 +394,8 @@ nimble:
     url: ${DATA_CHANNEL_SERVICE_URL:http://nimble-staging.salzburgresearch.at/data-channel}
   frontend:
     url: ${FRONTEND_URL:http://nimble-staging.salzburgresearch.at/frontend/}
+  delegate-service:
+    url: ${DELEGATE_SERVICE_URL:}
   kafka:
       topics:
         businessProcessUpdates: ${KAFKA_TOPIC_BUSINESS_PROCESS_UPDATES:business-process-updates-staging}

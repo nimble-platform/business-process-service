@@ -37,6 +37,8 @@ public class DefaultPpapProcessor implements JavaDelegate {
         String seller = variables.get("responderID").toString();
         String creatorUserID = variables.get("creatorUserID").toString();
         String processContextId = variables.get("processContextId").toString();
+        String initiatorFederationId = variables.get("initiatorFederationId").toString();
+        String responderFederationId = variables.get("responderFederationId").toString();
         List<String> relatedProducts = (List<String>) variables.get("relatedProducts");
         List<String> relatedProductCategories = (List<String>) variables.get("relatedProductCategories");
         PpapRequestType ppapRequestType = (PpapRequestType) variables.get("ppapRequest");
@@ -54,7 +56,7 @@ public class DefaultPpapProcessor implements JavaDelegate {
 
             IBusinessProcessApplication businessProcessApplication = (IBusinessProcessApplication) instance;
 
-            businessProcessApplication.saveDocument(processContextId,processInstanceId, buyer, seller,creatorUserID, ppapRequestType, relatedProducts, relatedProductCategories);
+            businessProcessApplication.saveDocument(processContextId,processInstanceId, buyer, seller,creatorUserID, ppapRequestType, relatedProducts, relatedProductCategories, initiatorFederationId, responderFederationId);
         } else if(executionType == ExecutionConfiguration.ExecutionTypeEnum.MICROSERVICE) {
             // TODO: How to call a microservice
         } else {

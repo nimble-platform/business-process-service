@@ -20,6 +20,9 @@ public class GenericConfig {
     @Value("${efactory.logstash.url}")
     private String efactoryLogstashUrl;
 
+    @Value("${nimble.delegate-service.url}")
+    private String delegateServiceUrl;
+
     public String getDataChannelServiceUrl() {
         return dataChannelServiceUrl;
     }
@@ -30,5 +33,9 @@ public class GenericConfig {
 
     public String getTrackingAnalysisServiceUrl() {
         return trackingAnalysisServiceUrl;
+    }
+
+    public String getDelegateServiceUrl() {
+        return delegateServiceUrl;
     }
 }

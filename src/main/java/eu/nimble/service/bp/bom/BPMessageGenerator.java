@@ -40,7 +40,7 @@ public class BPMessageGenerator {
 
     private final static Logger logger = LoggerFactory.getLogger(BPMessageGenerator.class);
 
-    public static ProcessInstanceInputMessage createBPMessageForBOM(BillOfMaterialItem billOfMaterialItem, Boolean useFrameContract, PartyType buyerParty, String creatorUserId, String bearerToken) throws Exception {
+    public static ProcessInstanceInputMessage createBPMessageForBOM(BillOfMaterialItem billOfMaterialItem, Boolean useFrameContract, PartyType buyerParty, String creatorUserId,String initiatorFederationId, String responderFederationId, String bearerToken) throws Exception {
         // get catalogue line
         CatalogueLineType catalogueLine = CataloguePersistenceUtility.getCatalogueLine(billOfMaterialItem.getCatalogueUuid(),billOfMaterialItem.getlineId());
         // get seller negotiation settings
@@ -49,7 +49,7 @@ public class BPMessageGenerator {
         // if there is a valid frame contract and useFrameContract is True, then create an order for the line item using the details of frame contract
         // otherwise, start a negotiation process for the item
         if (useFrameContract) {
-            DigitalAgreementType digitalAgreement = ContractPersistenceUtility.getFrameContractAgreementById(catalogueLine.getGoodsItem().getItem().getManufacturerParty().getPartyIdentification().get(0).getID(), buyerParty.getPartyIdentification().get(0).getID(), billOfMaterialItem.getlineId());
+            DigitalAgreementType digitalAgreement = ContractPersistenceUtility.getFrameContractAgreementById(catalogueLine.getGoodsItem().getItem().getManufacturerParty().getPartyIdentification().get(0).getID(),responderFederationId, buyerParty.getPartyIdentification().get(0).getID(),initiatorFederationId, billOfMaterialItem.getlineId());
 
             if (digitalAgreement != null) {
                 // check whether frame contract is valid or not
@@ -176,11 +176,11 @@ public class BPMessageGenerator {
         return order;
     }
 
-    public static RequestForQuotationType createRequestForQuotation(CatalogueLineType catalogueLine, QuantityType quantity, NegotiationSettings sellerNegotiationSettings,PartyType buyerParty, String bearerToken) throws IOException {
+    public static RequestForQuotationType createRequestForQuotation(CatalogueLineType catalogueLine, QuantityType quantity, NegotiationSettings sellerNegotiationSettings,PartyType buyerParty, String bearerToken) throws Exception {
         return createRequestForQuotation(catalogueLine,quantity,sellerNegotiationSettings,buyerParty,null,null,bearerToken);
     }
 
-    public static RequestForQuotationType createRequestForQuotation(CatalogueLineType catalogueLine, QuantityType quantity, NegotiationSettings sellerNegotiationSettings,PartyType buyerParty,String precedingDocumentId,BigDecimal pricePerProduct, String bearerToken) throws IOException {
+    public static RequestForQuotationType createRequestForQuotation(CatalogueLineType catalogueLine, QuantityType quantity, NegotiationSettings sellerNegotiationSettings,PartyType buyerParty,String precedingDocumentId,BigDecimal pricePerProduct, String bearerToken) throws Exception {
         PartyType sellerParty = sellerNegotiationSettings.getCompany();
 
         // create request for quotation
@@ -205,7 +205,7 @@ public class BPMessageGenerator {
             requestForQuotationLine.getLineItem().setClause(sellerParty.getPurchaseTerms().getTermOrCondition());
         } else {
             ContractGenerator contractGenerator = new ContractGenerator();
-            List<ClauseType> clauses = contractGenerator.getTermsAndConditions(sellerParty.getPartyIdentification().get(0).getID(), buyerParty.getPartyIdentification().get(0).getID(), sellerNegotiationSettings.getIncoterms().size() > 0 ? sellerNegotiationSettings.getIncoterms().get(0) : "", sellerNegotiationSettings.getPaymentTerms().size() > 0 ? sellerNegotiationSettings.getPaymentTerms().get(0) : "", bearerToken);
+            List<ClauseType> clauses = contractGenerator.getTermsAndConditions(sellerParty.getPartyIdentification().get(0).getID(),buyerParty.getPartyIdentification().get(0).getID(),buyerParty.getFederationInstanceID(), sellerNegotiationSettings.getIncoterms().size() > 0 ? sellerNegotiationSettings.getIncoterms().get(0) : "", sellerNegotiationSettings.getPaymentTerms().size() > 0 ? sellerNegotiationSettings.getPaymentTerms().get(0) : "", bearerToken);
             requestForQuotationLine.getLineItem().setClause(clauses);
         }
 
@@ -237,7 +237,7 @@ public class BPMessageGenerator {
         return requestForQuotation;
     }
 
-    public static OrderType createOrder(CatalogueLineType catalogueLine, QuantityType quantity, NegotiationSettings sellerNegotiationSettings,PartyType buyerParty,String precedingDocumentId,BigDecimal pricePerProduct, String bearerToken) throws IOException {
+    public static OrderType createOrder(CatalogueLineType catalogueLine, QuantityType quantity, NegotiationSettings sellerNegotiationSettings,PartyType buyerParty,String precedingDocumentId,BigDecimal pricePerProduct, String bearerToken) throws Exception {
         PartyType sellerParty = sellerNegotiationSettings.getCompany();
 
         // create order
@@ -265,7 +265,7 @@ public class BPMessageGenerator {
             contract.setClause(sellerParty.getPurchaseTerms().getTermOrCondition());
         } else {
             ContractGenerator contractGenerator = new ContractGenerator();
-            List<ClauseType> clauses = contractGenerator.getTermsAndConditions(sellerParty.getPartyIdentification().get(0).getID(), buyerParty.getPartyIdentification().get(0).getID(), sellerNegotiationSettings.getIncoterms().size() > 0 ? sellerNegotiationSettings.getIncoterms().get(0) : "", sellerNegotiationSettings.getPaymentTerms().size() > 0 ? sellerNegotiationSettings.getPaymentTerms().get(0) : "", bearerToken);
+            List<ClauseType> clauses = contractGenerator.getTermsAndConditions(sellerParty.getPartyIdentification().get(0).getID(), buyerParty.getPartyIdentification().get(0).getID(),buyerParty.getFederationInstanceID(), sellerNegotiationSettings.getIncoterms().size() > 0 ? sellerNegotiationSettings.getIncoterms().get(0) : "", sellerNegotiationSettings.getPaymentTerms().size() > 0 ? sellerNegotiationSettings.getPaymentTerms().get(0) : "", bearerToken);
             contract.setClause(clauses);
         }
         order.setContract(Collections.singletonList(contract));

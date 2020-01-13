@@ -1,8 +1,13 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.common.rest.identity.IIdentityClientTyped;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mashape.unirest.http.HttpResponse;
+import com.mashape.unirest.http.JsonNode;
+import com.mashape.unirest.http.Unirest;
 import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.model.hyperjaxb.*;
+import eu.nimble.service.bp.swagger.model.CollaborationGroup;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.util.email.EmailSenderUtil;
 import eu.nimble.service.bp.util.persistence.bp.*;
@@ -10,10 +15,14 @@ import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
 import eu.nimble.service.bp.swagger.api.ProcessInstanceGroupsApi;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroup;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupFilter;
+import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.utility.HttpResponseUtil;
+import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.validation.IValidationUtil;
+import eu.nimble.utility.validation.ValidationUtil;
+import feign.Response;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -27,6 +36,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import javax.ws.rs.QueryParam;
 import java.util.List;
 
 /**
@@ -101,6 +111,7 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
             @ApiParam(value = "Whether the collaboration group is archived or not", defaultValue = "false") @RequestParam(value = "archived", required = false, defaultValue = "false") Boolean archived,
             @ApiParam(value = "Role of the party in the collaboration.<br>Possible values: <ul><li>SELLER</li><li>BUYER</li></ul>") @RequestParam(value = "collaborationRole", required = false) String collaborationRole,
             @ApiParam(value = "Status of the process instance included in the group.<br>Possible values: <ul><li>STARTED</li><li>WAITING</li><li>CANCELLED</li><li>COMPLETED</li></ul>") @RequestParam(value = "status", required = false) List<String> status,
+            @ApiParam(value = "", required = true) @RequestHeader(value = "federationId", required = true) String federationId,
             @ApiParam(value = "Identify Project Or Not", defaultValue = "false") @RequestParam(value = "isProject", required = false, defaultValue = "false") Boolean isProject) {
 
         // validate role
@@ -112,7 +123,14 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
                 relatedProducts != null ? relatedProducts.toString() : "[]",
                 relatedProductCategories != null ? relatedProductCategories.toString() : "[]",
                 tradingPartnerIDs != null ? tradingPartnerIDs.toString() : "[]");
-        ProcessInstanceGroupFilter filters = CollaborationGroupDAOUtility.getFilterDetails(partyId, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, status, null, null, bearerToken,isProject);
+        ProcessInstanceGroupFilter filters = null;
+        try{
+            filters = CollaborationGroupDAOUtility.getFilterDetails(partyId, federationId,collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, status, null, null, bearerToken,isProject);
+        }
+        catch (Exception e){
+            logger.error("Failed to retrieve process instance group filters:",e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
         ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(filters);
         logger.debug("Filters retrieved for partyId: {}, archived: {}, products: {}, categories: {}, parties: {}", partyId, archived,
                 relatedProducts != null ? relatedProducts.toString() : "[]",
@@ -122,8 +140,9 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
     }
 
     @Override
-    @ApiOperation(value = "", notes = "Gets the order document included in a business process group")
-    public ResponseEntity<Void> getOrderDocument(@ApiParam(value = "Identifier of a process instance included in the group", required = true) @RequestParam(value = "processInstanceId", required = true) String processInstanceId,
+    @ApiOperation(value = "", notes = "Gets the order document included in a business process group. If order response id is provided, it simply returns the corresponding order")
+    public ResponseEntity<Void> getOrderDocument(@ApiParam(value = "Identifier of a process instance included in the group", required = false) @RequestParam(value = "processInstanceId", required = false) String processInstanceId,
+                                                 @ApiParam(value = "Identifier of the order response", required = false) @RequestParam(value = "orderResponseId", required = false) String orderResponseId,
                                                 @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
         try {
             // validate role
@@ -131,19 +150,38 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
                 return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
-            // check whether the process instance id exists
-            ProcessInstanceDAO pi = ProcessInstanceDAOUtility.getById(processInstanceId);
-            if (pi == null) {
-                return HttpResponseUtil.createResponseEntityAndLog(String.format("No process ID exists for the process id: %s", processInstanceId), null, HttpStatus.NOT_FOUND, LogLevel.INFO);
-            }
+            String orderJson = null;
 
-            // get the order
-            String orderId = ProcessInstanceGroupDAOUtility.getSourceOrderResponseIdForTransportRelatedProcess(processInstanceId);
+            if(orderResponseId != null) {
+                ProcessDocumentMetadataDAO orderMetadata = ProcessDocumentMetadataDAOUtility.getMetadataForCorrespondingDocument(orderResponseId);
+                if(orderMetadata == null){
+                    return HttpResponseUtil.createResponseEntityAndLog(String.format("No metadata exists for the order response: %s", orderResponseId), null, HttpStatus.NOT_FOUND, LogLevel.INFO);
+                }
+                orderJson = (String) documentController.getDocumentJsonContent(orderMetadata.getDocumentID(),bearerToken).getBody();
+            }
+            else{
+                // check whether the process instance id exists
+                ProcessInstanceDAO pi = ProcessInstanceDAOUtility.getById(processInstanceId);
+                if (pi == null) {
+                    return HttpResponseUtil.createResponseEntityAndLog(String.format("No process ID exists for the process id: %s", processInstanceId), null, HttpStatus.NOT_FOUND, LogLevel.INFO);
+                }
+
+                String sourceOrderResponseId = ProcessInstanceGroupDAOUtility.getSourceOrderResponseIdForTransportRelatedProcess(processInstanceId);
+                // get the preceding process instance group
+                FederatedCollaborationGroupMetadataDAO federatedCollaborationGroupMetadataDAO = ProcessInstanceGroupDAOUtility.getPrecedingProcessInstanceGroup(processInstanceId);
+                if (federatedCollaborationGroupMetadataDAO != null) {
+                    Response response = SpringBridge.getInstance().getDelegateClient().getOrderDocument(bearerToken,processInstanceId,sourceOrderResponseId,federatedCollaborationGroupMetadataDAO.getFederationID());
+                    if(response.status() == 200){
+                        orderJson = eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response);
+                    }
+                } else {
+                    orderJson = (String) documentController.getDocumentJsonContent(sourceOrderResponseId,bearerToken).getBody();
+                }
+            }
 
             // get the order content
             ResponseEntity response;
-            if (orderId != null) {
-                String orderJson = (String) documentController.getDocumentJsonContent(orderId,bearerToken).getBody();
+            if (orderJson != null) {
                 response = ResponseEntity.status(HttpStatus.OK).body(orderJson);
 
             } else {
@@ -269,7 +307,7 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
             }
 
             // update the groups associated with the first group
-            List<ProcessInstanceGroupDAO> associatedProcessInstanceGroups = ProcessInstanceGroupDAOUtility.getAssociatedProcessInstanceGroupDAOs(groupDAO.getPartyID(),groupDAO.getProcessInstanceIDs());
+            List<ProcessInstanceGroupDAO> associatedProcessInstanceGroups = ProcessInstanceGroupDAOUtility.getAssociatedProcessInstanceGroupDAOs(groupDAO.getPartyID(),groupDAO.getFederationID(),groupDAO.getProcessInstanceIDs());
             for (ProcessInstanceGroupDAO group : associatedProcessInstanceGroups) {
                 // check whether the associated group can be cancelled or not
                 boolean isCancellableGroup = group.getStatus().equals(GroupStatus.INPROGRESS);

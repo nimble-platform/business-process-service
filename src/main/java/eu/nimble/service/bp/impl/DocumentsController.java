@@ -1,5 +1,6 @@
 package eu.nimble.service.bp.impl;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.model.dashboard.ExpectedOrder;
 import eu.nimble.service.bp.model.hyperjaxb.GroupStatus;
@@ -17,6 +18,7 @@ import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.document.IDocument;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.validation.IValidationUtil;
+import feign.Response;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -51,7 +53,8 @@ public class DocumentsController {
 
     @ApiOperation(value = "", notes = "Retrieves the expected orders for a specific party or for all parties. " +
             "When an order contains some associated products, the seller should make orders for those products to complete the original order." +
-            "Such orders are called expected orders. This service returns the expected orders belonging to unshipped orders,i.e an order is not followed by a fulfillment process.")
+            "Such orders are called expected orders. This service returns the expected orders belonging to unshipped orders,i.e an order is not followed by a fulfillment process." +
+            "If the unshipped orders are provided to the service, it simply creates ExpectedOrders for the given ones.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Retrieved expected orders"),
             @ApiResponse(code = 401, message = "Invalid token or role"),
@@ -62,7 +65,8 @@ public class DocumentsController {
             method = RequestMethod.GET)
     public ResponseEntity<Object> getExpectedOrders(
             @ApiParam(value = "Flag indicating whether the expected orders will be retrieved for a specific party or all parties", required = false) @RequestParam(value = "forAll", required = false, defaultValue = "false") Boolean forAll,
-            @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken
+            @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
+            @ApiParam(value = "Identifier of the unshipped orders for which the associated documents will be retrieved", required = false) @RequestParam(value = "unShippedOrderIds", required = false) List<String> unShippedOrderIds
     ) {
         try {
             logger.info("Getting expected orders");
@@ -70,22 +74,36 @@ public class DocumentsController {
             if (!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
+            // unShippedOrderIds are given, so create expected orders for them
+            if(unShippedOrderIds != null && unShippedOrderIds.size() > 0){
+                List<ExpectedOrder> expectedOrders = new ArrayList<>();
+                List<String> documentIds = ProcessDocumentMetadataDAOUtility.getAssociatedDocumentIDsForUnShippedOrders(unShippedOrderIds);
+                for (String documentId : documentIds) {
+                    ExpectedOrder expectedOrder = createExpectedOrderForDocument(documentId);
+                    expectedOrders.add(expectedOrder);
+                }
+                logger.info("Retrieved expected orders for unshipped orders:{}",unShippedOrderIds);
+
+                return ResponseEntity.ok(JsonSerializationUtility.getObjectMapper().writeValueAsString(expectedOrders));
+            }
 
             // get unshipped order ids
             List<String> unshippedOrderIds = null;
             if(!forAll) {
                 // get person using the given bearer token
                 String partyId;
+                String federationId;
                 try {
                     PersonType person = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken);
                     // get party for the person
                     PartyType party = SpringBridge.getInstance().getiIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
                     partyId = party.getPartyIdentification().get(0).getID();
+                    federationId = party.getFederationInstanceID();
                 } catch (IOException e) {
                     return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog(String.format("Failed to extract party if from token: %s", bearerToken), e, HttpStatus.INTERNAL_SERVER_ERROR);
                 }
 
-                unshippedOrderIds = ProcessDocumentMetadataDAOUtility.getUnshippedOrderIds(partyId);
+                unshippedOrderIds = ProcessDocumentMetadataDAOUtility.getUnshippedOrderIds(partyId,federationId);
 
             } else {
                 unshippedOrderIds = ProcessDocumentMetadataDAOUtility.getUnshippedOrderIds();
@@ -100,52 +118,15 @@ public class DocumentsController {
                 // key of the inner map is the set of unshipped order ids and the value of that is the corresponding ExpectedOrder
                 Map<BigDecimal,Map<Set<String>, ExpectedOrder>> expectedOrdersHavingProcessMap = new HashMap<>();
 
-                // get associated negotiation/order ids
-                List<String> associatedDocumentIds = ProcessDocumentMetadataDAOUtility.getAssociatedDocumentIDsForUnShippedOrders(unshippedOrderIds);
-
+                // get Expected Orders for the unshippedOrderIds
+                Response response = SpringBridge.getInstance().getDelegateClient().getExpectedOrders(bearerToken,false,unshippedOrderIds);
+                String responseBody = eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response);
+                List<ExpectedOrder> expectedOrdersForUnshippedOrder = JsonSerializationUtility.getObjectMapper().readValue(responseBody,new TypeReference<List<ExpectedOrder>>(){});
                 // first, create ExpectedOrders for the ones having an associated process
-                for (String documentId : associatedDocumentIds) {
-                    // get document
-                    IDocument iDocument = DocumentPersistenceUtility.getUBLDocument(documentId);
-                    // get unshipped order references
-                    List<String> unShippedOrderIdsHavingCorrespondingNegotiation = getUnShippedOrderReferences(iDocument.getAdditionalDocuments());
-                    // get the corresponding process document metadata
-                    ProcessDocumentMetadataDAO processDocumentMetadataDAO = ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId);
-                    // get the process instance group containing the process
-                    List<ProcessInstanceGroupDAO> groups = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAOs(processDocumentMetadataDAO.getProcessInstanceID());
-                    // get the latest process instance in the group
-                    String latestProcessInstanceID = groups.get(0).getProcessInstanceIDs().get(groups.get(0).getProcessInstanceIDs().size()-1);
-                    // get the response DocumentMetadata if exists
-                    ProcessDocumentMetadata responseDocumentMetadata = null;
-                    List<ProcessDocumentMetadataDAO> processDocumentMetadataDAOS = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(latestProcessInstanceID);
-                    if(processDocumentMetadataDAOS.size() > 1){
-                        for (ProcessDocumentMetadataDAO documentMetadataDAO : processDocumentMetadataDAOS) {
-                            if(!documentMetadataDAO.getDocumentID().contentEquals(documentId)){
-                                responseDocumentMetadata = HibernateSwaggerObjectMapper.createProcessDocumentMetadata(documentMetadataDAO);
-                            }
-                        }
-                    }
-                    // if the collaboration is cancelled, state should be 'CANCELLED'
-                    // otherwise, we can simply use the state of process coming from the Camunda
-                    String state = null;
-                    HistoricProcessInstance historicProcessInstance = CamundaEngine.getProcessInstance(latestProcessInstanceID);
-                    if(groups.get(0).getStatus().equals(GroupStatus.CANCELLED) && groups.get(1).getStatus().equals(GroupStatus.CANCELLED)){
-                        state = "CANCELLED";
-                    }
-                    else{
-                        state = historicProcessInstance.getState();
-                    }
-                    // product id
-                    BigDecimal lineHjid = BigDecimal.valueOf(CataloguePersistenceUtility.getCatalogueLineHjid(iDocument.getItemTypes().get(0).getCatalogueDocumentReference().getID(),iDocument.getItemTypes().get(0).getManufacturersItemIdentification().getID())).stripTrailingZeros();
-
-                    // create ExpectedOrder
-                    ExpectedOrder expectedOrder = new ExpectedOrder();
-                    expectedOrder.setProcessType(historicProcessInstance.getProcessDefinitionKey());
-                    expectedOrder.setResponseMetadata(responseDocumentMetadata);
-                    expectedOrder.setState(state);
-                    expectedOrder.setUnShippedOrderIds(unShippedOrderIdsHavingCorrespondingNegotiation);
-                    expectedOrder.setProcessInstanceId(latestProcessInstanceID);
-                    expectedOrder.setLineHjid(lineHjid);
+                for (ExpectedOrder expectedOrder : expectedOrdersForUnshippedOrder) {
+                    BigDecimal lineHjid = expectedOrder.getLineHjid();
+                    List<String> unShippedOrderIdsHavingCorrespondingNegotiation = expectedOrder.getUnShippedOrderIds();
+                    String state = expectedOrder.getState();
 
                     // for some unshipped orders, we might have more than one associated process
                     // in this case,all processes are cancelled expect for the last one and we create a single ExpectedOrder for the last one
@@ -230,6 +211,51 @@ public class DocumentsController {
         } catch (Exception e) {
             return createResponseEntityAndLog(String.format("Unexpected error while getting the expected orders"), e, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private ExpectedOrder createExpectedOrderForDocument(String documentId){
+        IDocument iDocument = DocumentPersistenceUtility.getUBLDocument(documentId);
+        // get unshipped order references
+        List<String> unShippedOrderIdsHavingCorrespondingNegotiation = getUnShippedOrderReferences(iDocument.getAdditionalDocuments());
+        // get the corresponding process document metadata
+        ProcessDocumentMetadataDAO processDocumentMetadataDAO = ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId);
+        // get the process instance group containing the process
+        List<ProcessInstanceGroupDAO> groups = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAOs(processDocumentMetadataDAO.getProcessInstanceID());
+        // get the latest process instance in the group
+        String latestProcessInstanceID = groups.get(0).getProcessInstanceIDs().get(groups.get(0).getProcessInstanceIDs().size()-1);
+        // get the response DocumentMetadata if exists
+        ProcessDocumentMetadata responseDocumentMetadata = null;
+        List<ProcessDocumentMetadataDAO> processDocumentMetadataDAOS = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(latestProcessInstanceID);
+        if(processDocumentMetadataDAOS.size() > 1){
+            for (ProcessDocumentMetadataDAO documentMetadataDAO : processDocumentMetadataDAOS) {
+                if(!documentMetadataDAO.getDocumentID().contentEquals(documentId)){
+                    responseDocumentMetadata = HibernateSwaggerObjectMapper.createProcessDocumentMetadata(documentMetadataDAO);
+                }
+            }
+        }
+        // if the collaboration is cancelled, state should be 'CANCELLED'
+        // otherwise, we can simply use the state of process coming from the Camunda
+        String state = null;
+        HistoricProcessInstance historicProcessInstance = CamundaEngine.getProcessInstance(latestProcessInstanceID);
+        if(groups.get(0).getStatus().equals(GroupStatus.CANCELLED) && groups.get(1).getStatus().equals(GroupStatus.CANCELLED)){
+            state = "CANCELLED";
+        }
+        else{
+            state = historicProcessInstance.getState();
+        }
+        // product id
+        BigDecimal lineHjid = BigDecimal.valueOf(CataloguePersistenceUtility.getCatalogueLineHjid(iDocument.getItemTypes().get(0).getCatalogueDocumentReference().getID(),iDocument.getItemTypes().get(0).getManufacturersItemIdentification().getID())).stripTrailingZeros();
+
+        // create ExpectedOrder
+        ExpectedOrder expectedOrder = new ExpectedOrder();
+        expectedOrder.setProcessType(historicProcessInstance.getProcessDefinitionKey());
+        expectedOrder.setResponseMetadata(responseDocumentMetadata);
+        expectedOrder.setState(state);
+        expectedOrder.setUnShippedOrderIds(unShippedOrderIdsHavingCorrespondingNegotiation);
+        expectedOrder.setProcessInstanceId(latestProcessInstanceID);
+        expectedOrder.setLineHjid(lineHjid);
+
+        return expectedOrder;
     }
 
     private List<String> getUnShippedOrderReferences(List<DocumentReferenceType> documentReferences){

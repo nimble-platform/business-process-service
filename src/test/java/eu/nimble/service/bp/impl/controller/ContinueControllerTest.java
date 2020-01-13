@@ -55,6 +55,8 @@ public class ContinueControllerTest {
         // continue the process
         MockHttpServletRequestBuilder request = post("/continue")
                 .header("Authorization", TestConfig.responderPersonId)
+                .header("initiatorFederationId",TestConfig.federationId)
+                .header("responderFederationId",TestConfig.federationId)
                 .param("gid", StartControllerTest.sellerProcessInstanceGroupIdContainingOrder1)
                 .param("collaborationGID", StartControllerTest.sellerCollaborationGroupIdContainingOrder1)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -75,6 +77,8 @@ public class ContinueControllerTest {
         // continue the process
         MockHttpServletRequestBuilder request = post("/continue")
                 .header("Authorization", TestConfig.responderPersonId)
+                .header("initiatorFederationId",TestConfig.federationId)
+                .header("responderFederationId",TestConfig.federationId)
                 .param("gid", StartControllerTest.sellerProcessInstanceGroupIdContainingOrder2)
                 .param("collaborationGID", StartControllerTest.sellerCollaborationGroupIdContainingOrder2)
                 .contentType(MediaType.APPLICATION_JSON)

@@ -651,7 +651,9 @@ public class ContractController {
     public ResponseEntity getDigitalAgreementForPartiesAndProducts(@ApiParam(value = "Identifier of the buyer company participating in the DigitalAgreement", required = true) @RequestParam(value = "buyerId") String buyerId,
                                                                   @ApiParam(value = "Identifier of the seller company participating in the DigitalAgreement", required = true) @RequestParam(value = "sellerId") String sellerId,
                                                                   @ApiParam(value = "Manufacturer item identification of the products being the subject of the DigitalAgreement", required = true) @RequestParam(value = "productIds") List<String> manufacturersItemIds,
-                                                                  @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
+                                                                  @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
+                                                                   @ApiParam(value = "" ,required=true ) @RequestHeader(value="initiatorFederationId", required=true) String initiatorFederationId,
+                                                                   @ApiParam(value = "" ,required=true ) @RequestHeader(value="responderFederationId", required=true) String responderFederationId) {
 
         try {
             logger.info("Incoming request to retrieve a DigitalAgreement. seller id: {}, buyer id: {}, product hjids: {}", sellerId, buyerId, manufacturersItemIds);
@@ -660,7 +662,7 @@ public class ContractController {
                 return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
-            List<DigitalAgreementType> digitalAgreements = ContractPersistenceUtility.getFrameContractAgreementByIds(sellerId, buyerId, manufacturersItemIds);
+            List<DigitalAgreementType> digitalAgreements = ContractPersistenceUtility.getFrameContractAgreementByIds(sellerId,responderFederationId, buyerId,initiatorFederationId, manufacturersItemIds);
             // removed the expired ones from the list
             List<DigitalAgreementType> expiredDigitalAgreements = new ArrayList<>();
             for (DigitalAgreementType digitalAgreement : digitalAgreements) {
@@ -693,7 +695,8 @@ public class ContractController {
             produces = {"application/json"},
             method = RequestMethod.GET)
     public ResponseEntity getDigitalAgreementForPartiesAndProduct(@ApiParam(value = "Identifier of the company participating in the DigitalAgreement", required = true) @RequestParam(value = "partyId") String partyId,
-                                                                  @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
+                                                                  @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
+                                                                  @ApiParam(value = "", required = true) @RequestHeader(value = "federationId", required = true) String federationId) {
 
         try {
             logger.info("Incoming request to retrieve a DigitalAgreements for party: {}", partyId);
@@ -702,7 +705,7 @@ public class ContractController {
                 return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
             }
 
-            List<DigitalAgreementType> digitalAgreements = ContractPersistenceUtility.getFrameContractsByPartyId(partyId);
+            List<DigitalAgreementType> digitalAgreements = ContractPersistenceUtility.getFrameContractsByPartyId(partyId,federationId);
             // remove expired digital agreements
             List<DigitalAgreementType> expiredDigitalAgreements = new ArrayList<>();
             for (DigitalAgreementType digitalAgreement : digitalAgreements) {
