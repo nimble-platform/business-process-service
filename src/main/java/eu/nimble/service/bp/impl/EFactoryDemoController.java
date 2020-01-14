@@ -227,6 +227,7 @@ public class EFactoryDemoController {
                 PartyIdentificationType partyIdentification = new PartyIdentificationType();
                 partyIdentification.setID(rfqSummary.getBuyerPartyId());
                 buyerParty.setPartyIdentification(Arrays.asList(partyIdentification));
+                buyerParty.setFederationInstanceID(SpringBridge.getInstance().getFederationId());
 
                 PersonType person = new PersonType();
                 person.setID("213");
