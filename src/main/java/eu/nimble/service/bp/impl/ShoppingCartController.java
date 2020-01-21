@@ -8,8 +8,9 @@ import eu.nimble.service.model.ubl.commonaggregatecomponents.CatalogueLineType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.QuantityType;
-import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.JsonSerializationUtility;
+import eu.nimble.utility.exception.NimbleException;
+import eu.nimble.utility.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.validation.IValidationUtil;
 import feign.Response;
@@ -30,9 +31,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Created by suat on 11-Oct-19.
@@ -53,12 +52,12 @@ public class ShoppingCartController {
     @RequestMapping(value = "/shopping-cart",
             produces = {"application/json"},
             method = RequestMethod.GET)
-    public ResponseEntity getShoppingCart(@ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
+    public ResponseEntity getShoppingCart(@ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) throws Exception{
         logger.info("Incoming request to get shopping cart");
         try {
             // validate role
             if (!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
-                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+                throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
             // get person via the given bearer token
@@ -67,8 +66,8 @@ public class ShoppingCartController {
                 person = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken);
 
             } catch (IOException e) {
-                logger.error("Failed to retrieve for the token: {}", bearerToken);
-                return HttpResponseUtil.createResponseEntityAndLog("Failed to create shopping cart instance", e, HttpStatus.UNAUTHORIZED);
+                logger.error("Failed to retrieve person for the token: {}", bearerToken);
+                throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_FAILED_TO_CREATE_SHOPPING_CART.toString(),e);
             }
 
             CatalogueType cartCatalogue = CataloguePersistenceUtility.getShoppingCartWithPersonId(person.getID());
@@ -80,7 +79,7 @@ public class ShoppingCartController {
                 return ResponseEntity.ok(JsonSerializationUtility.getObjectMapper().writeValueAsString(cartCatalogue));
             }
         } catch (Exception e) {
-            return HttpResponseUtil.createResponseEntityAndLog(String.format("Failed to get shopping cart for the token: %s", bearerToken), e, HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_FAILED_TO_GET_SHOPPING_CART.toString(), Arrays.asList(bearerToken),e);
         }
     }
 
@@ -92,13 +91,13 @@ public class ShoppingCartController {
     @RequestMapping(value = "/shopping-cart/new",
             produces = {"application/json"},
             method = RequestMethod.POST)
-    public ResponseEntity createShoppingCart(@ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
+    public ResponseEntity createShoppingCart(@ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) throws Exception{
         logger.info("Incoming request to create shopping cart");
         CatalogueType cartCatalogue;
         try {
             // validate role
             if (!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
-                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+                throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
             cartCatalogue = new CatalogueType();
@@ -112,8 +111,8 @@ public class ShoppingCartController {
                 person = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken);
 
             } catch (IOException e) {
-                logger.error("Failed to retrieve for the token: {}", bearerToken);
-                return HttpResponseUtil.createResponseEntityAndLog("Failed to create shopping cart instance", e, HttpStatus.UNAUTHORIZED);
+                logger.error("Failed to retrieve person for the token: {}", bearerToken);
+                throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_FAILED_TO_CREATE_SHOPPING_CART.toString(),e);
             }
 
             List<PersonType> personList = new ArrayList<>();
@@ -133,7 +132,7 @@ public class ShoppingCartController {
             return ResponseEntity.ok(JsonSerializationUtility.getObjectMapper().writeValueAsString(cartCatalogue));
 
         } catch (Exception e) {
-            return HttpResponseUtil.createResponseEntityAndLog(String.format("Failed to create a shopping cart for the token: %s", bearerToken), e, HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_FAILED_TO_CREATE_SHOPPING_CART.toString(),Arrays.asList(bearerToken),e);
         }
     }
 
@@ -150,12 +149,12 @@ public class ShoppingCartController {
     public ResponseEntity addProductToShoppingCart(@ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
                                                    @ApiParam(value = "Hjid of the product", required = true) @RequestParam(value = "productId", required = true) Long productId,
                                                    @ApiParam(value = "Quantity of the product in the shopping cart", required = false, defaultValue = "1") @RequestParam(value = "quantity", required = false, defaultValue = "1") Integer quantity,
-                                                   @ApiParam(value = "Identifier of the instance which the product belongs to", required = true) @RequestHeader(value = "federationId", required = false) String federationId) {
+                                                   @ApiParam(value = "Identifier of the instance which the product belongs to", required = true) @RequestHeader(value = "federationId", required = false) String federationId) throws Exception {
         try {
             logger.info("Incoming request to add product: {}, in {} quantity to the create shopping cart", productId, quantity);
             // validate role
             if (!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
-                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+                throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
             // get person via the given bearer token
@@ -164,8 +163,8 @@ public class ShoppingCartController {
                 person = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken);
 
             } catch (IOException e) {
-                logger.error("Failed to retrieve for the token: {}", bearerToken);
-                return HttpResponseUtil.createResponseEntityAndLog("Failed to create shopping cart instance", e, HttpStatus.UNAUTHORIZED);
+                logger.error("Failed to retrieve person for the token: {}", bearerToken);
+                throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_FAILED_TO_CREATE_SHOPPING_CART.toString(),e);
             }
 
             // retrieve the product to be added to the shopping cart
@@ -179,13 +178,13 @@ public class ShoppingCartController {
             }
 
             if (originalProduct == null) {
-                return HttpResponseUtil.createResponseEntityAndLog(String.format("There is no product for the given id: %d", productId), HttpStatus.BAD_REQUEST);
+                throw new NimbleException(NimbleExceptionMessageCode.BAD_REQUEST_NO_PRODUCT.toString(),Arrays.asList(productId.toString()));
             }
 
             // retrieve the shopping cart instance
             CatalogueType cartCatalogue = CataloguePersistenceUtility.getShoppingCartWithPersonId(person.getID());
             if (cartCatalogue == null) {
-                return HttpResponseUtil.createResponseEntityAndLog(String.format("There is no shopping cart for the user: %s", person.getID()), HttpStatus.PRECONDITION_FAILED);
+                throw new NimbleException(NimbleExceptionMessageCode.PRECONDITION_FAILED_NO_SHOPPING_CART.toString(),Arrays.asList(person.getID()));
             }
 
             // select only the first values from the dimensions and properties
@@ -209,7 +208,7 @@ public class ShoppingCartController {
             return ResponseEntity.ok(JsonSerializationUtility.getObjectMapper().writeValueAsString(cartCatalogue));
 
         } catch (Exception e) {
-            return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while adding product: %d to the cart", productId), e, HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_ADD_PRODUCT_TO_SHOPPING_CART.toString(),Arrays.asList(productId.toString()),e);
         }
     }
 
@@ -224,12 +223,12 @@ public class ShoppingCartController {
             produces = {"application/json"},
             method = RequestMethod.DELETE)
     public ResponseEntity removeProductsFromShoppingCart(@ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
-                                                        @ApiParam(value = "Hjid of the products to be deleted from the cart", required = true) @RequestParam(value = "productIds", required = true) List<Long> productIds) {
+                                                        @ApiParam(value = "Hjid of the products to be deleted from the cart", required = true) @RequestParam(value = "productIds", required = true) List<Long> productIds) throws Exception {
         try {
             logger.info("Incoming request to remove products from shopping cart: {}", productIds);
             // validate role
             if (!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
-                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+                throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
             // get person via the given bearer token
@@ -238,14 +237,14 @@ public class ShoppingCartController {
                 person = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken);
 
             } catch (IOException e) {
-                logger.error("Failed to retrieve for the token: {}", bearerToken);
-                return HttpResponseUtil.createResponseEntityAndLog("Failed to create shopping cart instance", e, HttpStatus.UNAUTHORIZED);
+                logger.error("Failed to retrieve person for the token: {}", bearerToken);
+                throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_FAILED_TO_CREATE_SHOPPING_CART.toString(),e);
             }
 
             // retrieve the shopping cart instance
             CatalogueType cartCatalogue = CataloguePersistenceUtility.getShoppingCartWithPersonId(person.getID());
             if (cartCatalogue == null) {
-                return HttpResponseUtil.createResponseEntityAndLog(String.format("There is no shopping cart for the user: %s", person.getID()), HttpStatus.PRECONDITION_FAILED);
+                throw new NimbleException(NimbleExceptionMessageCode.PRECONDITION_FAILED_NO_SHOPPING_CART.toString(),Arrays.asList(person.getID()));
             }
 
             // add the copy reduced product to the cart
@@ -265,7 +264,7 @@ public class ShoppingCartController {
             return ResponseEntity.ok(JsonSerializationUtility.getObjectMapper().writeValueAsString(cartCatalogue));
 
         } catch (Exception e) {
-            return HttpResponseUtil.createResponseEntityAndLog(String.format("Unexpected error while removing products: %s from the cart", productIds), e, HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_REMOVE_PRODUCTS_FROM_SHOPPING_CART.toString(), Collections.singletonList(productIds.toString()),e);
         }
     }
 }

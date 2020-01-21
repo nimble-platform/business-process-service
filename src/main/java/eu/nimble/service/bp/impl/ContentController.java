@@ -10,6 +10,7 @@ import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.bp.swagger.api.ContentApi;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
 import eu.nimble.service.bp.swagger.model.Process;
+import eu.nimble.utility.exception.NimbleException;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -45,10 +46,7 @@ public class ContentController implements ContentApi {
         logger.info(" $$$ Adding business process definition: ");
         logger.debug(" $$$ {}", body.toString());
 
-        ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
-        if (tokenCheck != null) {
-            return tokenCheck;
-        }
+        HttpResponseUtil.checkToken(bearerToken);
 
         String bpmnContent = body.getBpmnContent();
         if (bpmnContent == null || bpmnContent.trim().equals("")) {
@@ -70,12 +68,10 @@ public class ContentController implements ContentApi {
     @Override
     @ApiOperation(value = "",notes = "Delete a business process definition")
     public ResponseEntity<ModelApiResponse> deleteProcessDefinition(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
-                                                                    @PathVariable("processID") String processID) {
+                                                                    @PathVariable("processID") String processID) throws NimbleException {
         logger.info(" $$$ Deleting business process definition for ... {}", processID);
-        ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
-        if (tokenCheck != null) {
-            return tokenCheck;
-        }
+        HttpResponseUtil.checkToken(bearerToken);
+
         CamundaEngine.deleteProcessDefinition(processID);
 
         ProcessDAO processDAO = ProcessDAOUtility.findByProcessID(processID);
@@ -90,10 +86,8 @@ public class ContentController implements ContentApi {
     public ResponseEntity<Process> getProcessDefinition(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
                                                         @PathVariable("processID") String processID) {
         logger.info(" $$$ Getting business process definition for ... {}", processID);
-        ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
-        if (tokenCheck != null) {
-            return tokenCheck;
-        }
+        HttpResponseUtil.checkToken(bearerToken);
+
         ProcessDAO processDAO = ProcessDAOUtility.findByProcessID(processID);
         // The process definition is not in the database...
         Process process = null;
@@ -111,10 +105,7 @@ public class ContentController implements ContentApi {
     public ResponseEntity<List<Process>> getProcessDefinitions(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
     ) {
         logger.info(" $$$ Getting business process definitions");
-        ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
-        if (tokenCheck != null) {
-            return tokenCheck;
-        }
+        HttpResponseUtil.checkToken(bearerToken);
 
         // first get the ones in the database
         List<ProcessDAO> processDAOs = ProcessDAOUtility.getProcessDAOs();
@@ -148,11 +139,7 @@ public class ContentController implements ContentApi {
         logger.info(" $$$ Updating business process definition: ");
         logger.debug(" $$$ {}", body.toString());
 
-        ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
-        if (tokenCheck != null) {
-            return tokenCheck;
-        }
-
+        HttpResponseUtil.checkToken(bearerToken);
         String bpmnContent = body.getBpmnContent();
         if (bpmnContent == null || bpmnContent.trim().equals("")) {
             logger.info(" $$$ BPMN Content is empty. Hence BPMN is created from the text content...");

@@ -2,15 +2,11 @@ package eu.nimble.service.bp.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mashape.unirest.http.HttpResponse;
-import com.mashape.unirest.http.JsonNode;
-import com.mashape.unirest.http.Unirest;
 import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.model.hyperjaxb.*;
 import eu.nimble.service.bp.model.dashboard.CollaborationGroupResponse;
 import eu.nimble.service.bp.swagger.model.FederatedCollaborationGroupMetadata;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroup;
-import eu.nimble.service.bp.util.HttpResponseUtil;
 import eu.nimble.service.bp.util.persistence.bp.CollaborationGroupDAOUtility;
 import eu.nimble.service.bp.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.swagger.api.CollaborationGroupsApi;
@@ -20,6 +16,8 @@ import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceGroupDAOUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
 import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.utility.JsonSerializationUtility;
+import eu.nimble.utility.exception.NimbleException;
+import eu.nimble.utility.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.validation.IValidationUtil;
@@ -58,28 +56,24 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
     @ApiOperation(value = "", notes = "Archives the collaboration group by setting the archive field of the specified CollaborationGroup and the included ProcessInstanceGroups.")
     public ResponseEntity archiveCollaborationGroup(@ApiParam(value = "Identifier of the collaboration group to be archived (collaborationGroup.hjid)", required = true) @PathVariable("id") String id,
                                                                         @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
-    ) {
+    ) throws NimbleException {
         logger.debug("Archiving CollaborationGroup: {}", id);
         try {
             // validate role
             if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
-                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+                throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
             // check whether the collaboration group exists or not
             CollaborationGroupDAO collaborationGroupDAO = CollaborationGroupDAOUtility.getCollaborationGroupDAO(Long.parseLong(id));
             if(collaborationGroupDAO == null){
-                String msg = String.format("CollaborationGroup with id %s does not exist", id);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+                throw new NimbleException(NimbleExceptionMessageCode.NOT_FOUND_NO_COLLABORATION_GROUP.toString(),Arrays.asList(id));
             }
 
             // check whether the group is archiable or not
             boolean isArchivable = CollaborationGroupDAOUtility.isCollaborationGroupArchivable(collaborationGroupDAO.getHjid());
             if (!isArchivable) {
-                String msg = String.format("CollaborationGroup with id %s is not archivable", id);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(msg);
+                throw new NimbleException(NimbleExceptionMessageCode.NOT_ACCEPTABLE_NOT_ARCHIVABLE.toString(),Arrays.asList(id));
             }
 
             collaborationGroupDAO = CollaborationGroupDAOUtility.archiveCollaborationGroup(collaborationGroupDAO);
@@ -90,20 +84,19 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
             return response;
 
         } catch (Exception e) {
-            String msg = String.format("Unexpected error while archiving CollaborationGroup with id: %s", id);
-            logger.error(msg, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);        }
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_ARCHIVE_COLLABORATION_GROUP.toString(), Arrays.asList(id), e);
+        }
     }
 
     @Override
     @ApiOperation(value = "", notes = "Deletes the specified CollaborationGroup permanently.")
     public ResponseEntity<Void> deleteCollaborationGroup(@ApiParam(value = "Identifier of the collaboration group to be deleted (collaborationGroup.hjid)", required = true) @PathVariable("id") String id,
                                                          @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
-    ) {
+    ) throws NimbleException {
         logger.debug("Deleting CollaborationGroup ID: {}", id);
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
-            return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+            throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 
 
@@ -118,17 +111,16 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
     @ApiOperation(value = "", notes = "Retrieves the specified CollaborationGroup.")
     public ResponseEntity getCollaborationGroup(@ApiParam(value = "Identifier of the collaboration group to be received (collaborationGroup.hjid)", required = true) @PathVariable("id") String id,
                                                 @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
-    ) {
+    ) throws NimbleException {
         logger.debug("Getting CollaborationGroup: {}", id);
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
-            return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+            throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 
         CollaborationGroupDAO collaborationGroupDAO = repoFactory.forBpRepository(true).getSingleEntityByHjid(CollaborationGroupDAO.class, Long.parseLong(id));
         if (collaborationGroupDAO == null) {
-            logger.error("There does not exist a collaboration group with id: {}", id);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            throw new NimbleException(NimbleExceptionMessageCode.NOT_FOUND_NO_COLLABORATION_GROUP.toString(),Arrays.asList(id));
         }
 
         for (ProcessInstanceGroupDAO associatedProcessInstanceGroup : collaborationGroupDAO.getAssociatedProcessInstanceGroups()) {
@@ -150,8 +142,7 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
                     }
 
                 } catch (Exception e) {
-                    logger.error("Failed to get collaboration group",e);
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+                    throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_GET_COLLABORATION_GROUP.toString(),e);
                 }
             }
         }
@@ -174,18 +165,16 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
                                                  @ApiParam(value = "Status of the process instance included in the group.<br>Possible values:<ul><li>STARTED</li><li>WAITING</li><li>CANCELLED</li><li>COMPLETED</li></ul>") @RequestParam(value = "status", required = false) List<String> status,
                                                  @ApiParam(value = "Role of the party in the collaboration.<br>Possible values:<ul><li>SELLER</li><li>BUYER</li></ul>") @RequestParam(value = "collaborationRole", required = false) String collaborationRole,
                                                  @ApiParam(value = "Identify Project Or Not", defaultValue = "false") @RequestParam(value = "isProject", required = false, defaultValue = "false") Boolean isProject,
-                                                 @ApiParam(value = ""  ) @RequestHeader(value="federationId", required=false) String federationId) {
+                                                 @ApiParam(value = ""  ) @RequestHeader(value="federationId", required=false) String federationId) throws NimbleException {
         logger.debug("Getting collaboration groups for party: {}", partyId);
         try {
             // validate role
             if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
-                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+                throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
             if(partyId != null && federationId == null){
-                String msg = "Both party and federation id should be provided";
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(msg);
+                throw new NimbleException(NimbleExceptionMessageCode.BAD_REQUEST_MISSING_PARTY_PARAMETERS.toString());
             }
 
             List<CollaborationGroupDAO> results = CollaborationGroupDAOUtility.getCollaborationGroupDAOs(partyId,federationId, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, status, null, null, limit, offset,isProject);
@@ -210,8 +199,7 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
                             }
 
                         } catch (Exception e) {
-                            logger.error("Failed to get collaboration group",e);
-                            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+                            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_GET_COLLABORATION_GROUP.toString(),e);
                         }
                     }
                 }
@@ -236,9 +224,7 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
             return response;
 
         } catch (Exception e) {
-            String msg = String.format("Unexpected error while getting CollaborationGroups for party: %s", partyId);
-            logger.error(msg, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_GET_COLLABORATION_GROUPS.toString(),Arrays.asList(partyId),e);
         }
     }
 
@@ -246,19 +232,17 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
     @ApiOperation(value = "", notes = "Restores the specified, archived CollaborationGroup.")
     public ResponseEntity<CollaborationGroup> restoreCollaborationGroup(@ApiParam(value = "Identifier of the collaboration group to be restored (collaborationGroup.hjid)", required = true) @PathVariable("id") String id,
                                                                         @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
-    ) {
+    ) throws NimbleException {
         logger.debug("Restoring CollaborationGroup: {}", id);
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
-            return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+            throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 
         // check the existence of collaboration group
         CollaborationGroupDAO collaborationGroupDAO = CollaborationGroupDAOUtility.getCollaborationGroupDAO(Long.parseLong(id));
         if(collaborationGroupDAO == null){
-            String msg = String.format("CollaborationGroup with id %s does not exist", id);
-            logger.error(msg);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            throw new NimbleException(NimbleExceptionMessageCode.NOT_FOUND_NO_COLLABORATION_GROUP.toString(),Arrays.asList(id));
         }
         collaborationGroupDAO = CollaborationGroupDAOUtility.restoreCollaborationGroup(collaborationGroupDAO);
 
@@ -273,20 +257,17 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
     public ResponseEntity<Void> updateCollaborationGroupName(@ApiParam(value = "Identifier of the collaboration group", required = true) @PathVariable("id") String id,
                                                              @ApiParam(value = "Value to be set as name of the collaboration group", required = true) @RequestParam(value = "groupName", required = true) String groupName,
                                                              @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
-    ) {
+    ) throws NimbleException {
         logger.debug("Updating name of the collaboration group :" + id);
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
-            return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+            throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 
         GenericJPARepository repo = repoFactory.forBpRepository();
         CollaborationGroupDAO collaborationGroupDAO = repo.getSingleEntityByHjid(CollaborationGroupDAO.class, Long.parseLong(id));
         if (collaborationGroupDAO == null) {
-            String msg = String.format("There does not exist a collaboration group with id: %s", id);
-            logger.error(msg);
-            ResponseEntity response = ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
-            return response;
+            throw new NimbleException(NimbleExceptionMessageCode.NOT_FOUND_NO_COLLABORATION_GROUP.toString(),Arrays.asList(id));
         }
         collaborationGroupDAO.setName(groupName);
         repo.updateEntity(collaborationGroupDAO);
@@ -303,30 +284,24 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
             @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
             @ApiParam(value = "Identifier of the base collaboration group ", required = true) @RequestParam("bcid") String bcid,
             @ApiParam(value = "", required = true) @RequestBody String cgidsAsString
-    ) {
+    ) throws NimbleException {
         logger.debug("Merging the collaboration groups {} to the base collaboration group {}",cgidsAsString,bcid);
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
-            return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+            throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 
         GenericJPARepository repo = repoFactory.forBpRepository(true);
         CollaborationGroupDAO collaborationGroupDAO = repo.getSingleEntityByHjid(CollaborationGroupDAO.class, Long.parseLong(bcid));
         if (collaborationGroupDAO == null) {
-            String msg = String.format("There does not exist a collaboration group with id: %s", bcid);
-            logger.error(msg);
-            ResponseEntity response = ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
-            return response;
+            throw new NimbleException(NimbleExceptionMessageCode.NOT_FOUND_NO_COLLABORATION_GROUP.toString(),Arrays.asList(bcid));
         }
         ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
         List<FederatedCollaborationGroupMetadata> cgids;
         try {
             cgids = objectMapper.readValue(cgidsAsString,new TypeReference<List<FederatedCollaborationGroupMetadata>>(){});
         } catch (IOException e) {
-            String msg = String.format("Failed to read Federated Collaboration Group Metadata: %s",cgidsAsString);
-            logger.error(msg,e);
-            ResponseEntity response = ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
-            return response;
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_GET_FEDERATED_METADATA.toString(),Arrays.asList(cgidsAsString),e);
         }
 
         // get collaboration groups' ids which will be merged to the base one
@@ -363,8 +338,7 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
                 try {
                     ResponseEntity responseEntity = unMergeCollaborationGroup(id,bearerToken);
                 } catch (Exception e) {
-                    logger.error("failed to unmerge group",e);
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+                    throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_UNMERGE_GROUPS.toString(),e);
                 }
             }
 
@@ -391,8 +365,7 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
 
                         }
                     } catch (Exception e) {
-                        logger.error("failed to get collaboration group",e);
-                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+                        throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_GET_COLLABORATION_GROUP.toString(),e);
                     }
                 }
             }
@@ -406,8 +379,7 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
                 try {
                     Response response = SpringBridge.getInstance().getDelegateClient().unMergeCollaborationGroup(bearerToken,cgid.getID(),cgid.getFederationID());
                 } catch (Exception e) {
-                    logger.error("failed to unmerge group",e);
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+                    throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_UNMERGE_GROUPS.toString(),e);
                 }
             }
         }
@@ -427,11 +399,11 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
     public ResponseEntity checkAllCollaborationsFinished(@ApiParam(value = "The identifier of party", required = true) @RequestParam(value = "partyId",required = true) String partyId,
                                                          @ApiParam(value = ""  ) @RequestHeader(value="federationId", required=true) String federationId,
                                                          @ApiParam(value = "Role of the party in the collaboration.<br>Possible values: <ul><li>SELLER</li><li>BUYER</li></ul>") @RequestParam(value = "collaborationRole", required = true,defaultValue = "SELLER") String collaborationRole,
-                                                         @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
+                                                         @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) throws NimbleException {
         logger.info("Checking whether all collaborations are finished for party {} and role {}",partyId,collaborationRole);
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
-            return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+            throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 
         // whether all collaborations are finished or not
@@ -460,12 +432,12 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
             method = RequestMethod.GET)
     public ResponseEntity getFederatedCollaborationGroup(@ApiParam(value = "The identifier of party", required = true) @RequestParam(value = "id",required = true) List<String> groupId,
                                                          @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestParam(value="federationId", required=true) List<String> federationId,
-                                                         @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
+                                                         @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) throws NimbleException {
         logger.info("Retrieving federated collaboration group");
 
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
-            return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+            throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 
         int size = groupId.size();
@@ -494,8 +466,7 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
                             }
 
                         } catch (Exception e) {
-                            logger.error("Failed to get collaboration group",e);
-                            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+                            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_GET_COLLABORATION_GROUP.toString(),e);
                         }
                     }
                 }
@@ -519,19 +490,19 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
                                                                   @RequestBody String body,
                                                                   @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestParam(value="partyId", required=true) String partyId,
                                                                    @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="federationId", required=true) String federationId,
-                                                                  @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
+                                                                  @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) throws NimbleException {
         logger.info("Adding federated metadata to collaboration group for document {}",documentId);
+
+        // validate role
+        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+            throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
+        }
 
         FederatedCollaborationGroupMetadata federatedCollaborationGroupMetadata;
         try {
             federatedCollaborationGroupMetadata = JsonSerializationUtility.getObjectMapper().readValue(body,FederatedCollaborationGroupMetadata.class);
         } catch (Exception e) {
-            logger.error("Failed to deserialize federatedCollaborationGroupMetadata",e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
-        // validate role
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
-            return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_FAILED_TO_DESERIALIZE_FEDERATED_METADATA.toString(),e);
         }
 
         String processInstanceId = ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId).getProcessInstanceID();
@@ -560,19 +531,18 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
     @RequestMapping(value = "/collaboration-groups/unmerge",
             method = RequestMethod.GET)
     public ResponseEntity unMergeCollaborationGroup(@ApiParam(value = "The identifier of party", required = true) @RequestParam(value = "groupId",required = true) String groupId,
-                                                         @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
+                                                         @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) throws NimbleException {
         logger.info("Unmerging collaboration group {}",groupId);
 
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
-            return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+            throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 
         CollaborationGroupDAO collaborationGroupDAO = CollaborationGroupDAOUtility.getCollaborationGroupDAO(Long.parseLong(groupId));
 
         if (collaborationGroupDAO == null) {
-            logger.error("There does not exist a collaboration group for id: {}", groupId);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            throw new NimbleException(NimbleExceptionMessageCode.NOT_FOUND_NO_COLLABORATION_GROUP.toString(),Arrays.asList(groupId));
         }
 
         if(collaborationGroupDAO.getFederatedCollaborationGroupMetadatas() != null){

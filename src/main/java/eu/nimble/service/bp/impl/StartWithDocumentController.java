@@ -1,20 +1,15 @@
 package eu.nimble.service.bp.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.mashape.unirest.http.HttpResponse;
-import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
-import com.mashape.unirest.http.exceptions.UnirestException;
 import eu.nimble.service.bp.bom.BPMessageGenerator;
 import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.model.hyperjaxb.CollaborationGroupDAO;
 import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceGroupDAO;
-import eu.nimble.service.bp.swagger.model.FederatedCollaborationGroupMetadata;
 import eu.nimble.service.bp.swagger.model.GroupIdTuple;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
@@ -36,6 +31,8 @@ import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.utility.JsonSerializationUtility;
+import eu.nimble.utility.exception.NimbleException;
+import eu.nimble.utility.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.serialization.IDocumentDeserializer;
 import eu.nimble.utility.validation.IValidationUtil;
 import feign.Response;
@@ -47,7 +44,6 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.logging.LogLevel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -58,6 +54,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.util.Arrays;
 import java.util.List;
 
 @Controller
@@ -102,14 +99,12 @@ public class StartWithDocumentController {
             try {
                 PersonType creatorUser = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken);
                 if(creatorUser == null){
-                    String msg = String.format("No user exists for the given token : %s", bearerToken);
-                    return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog(msg, null, HttpStatus.UNAUTHORIZED, LogLevel.INFO);
+                    throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_NO_USER_FOR_TOKEN.toString(), Arrays.asList(bearerToken));
                 }
                 // set creator user id
                 creatorUserId = creatorUser.getID();
-            } catch (IOException e) {
-                logger.error("Failed to get person",e);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to get person");
+            } catch (IOException | NimbleException e) {
+                throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_FAILED_TO_GET_PERSON.toString(),e);
             }
         }
 
@@ -120,7 +115,7 @@ public class StartWithDocumentController {
 
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
-            return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+            throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 
         /**
@@ -138,8 +133,7 @@ public class StartWithDocumentController {
         try {
             document = mapper.readValue(documentAsString,IDocument.class);
         } catch (IOException e) {
-            logger.error("Failed to deserialize document",e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to deserialize document");
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_FAILED_TO_DESERIALIZE_DOCUMENT.toString(),e);
         }
 
         /**
@@ -150,14 +144,10 @@ public class StartWithDocumentController {
             PartyType sellerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,sellerPartyId);
 
             if(sellerParty == null){
-                String msg = String.format("There does not exist a party for : %s", sellerPartyId);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+                throw new NimbleException(NimbleExceptionMessageCode.BAD_REQUEST_NO_PARTY.toString(),Arrays.asList(sellerPartyId));
             }
         } catch (IOException e) {
-            String msg = String.format("Failed to retrieve party information for : %s", sellerPartyId);
-            logger.error(msg,e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_FAILED_TO_GET_PARTY_INFO.toString(),Arrays.asList(sellerPartyId));
         }
 
         /**
@@ -186,9 +176,7 @@ public class StartWithDocumentController {
             try {
                 processInstanceInputMessage = BPMessageGenerator.createProcessInstanceInputMessage(document,document.getItemTypes(),creatorUserId,"",bearerToken);
             } catch (Exception e) {
-                String msg = "Failed to create process instance input message for the document";
-                logger.error(msg,e);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+                throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_FAILED_TO_CREATE_PROCESS_INSTANCE_INPUT_MESSAGE.toString(),e);
             }
 
             // to start the process, we need to know the details of preceding process instance so that we can place the process instance to correct group
@@ -225,17 +213,13 @@ public class StartWithDocumentController {
                     precedingGid = groupIdTuple.getProcessInstanceGroupId();
                 }
                 catch (Exception e){
-                    String msg = String.format("Failed to get group id tuple for document  : %s", precedingOrderId);
-                    logger.error(msg,e);
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+                    throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_FAILED_TO_GET_GROUP_ID_TUPLE.toString(),Arrays.asList(precedingOrderId),e);
                 }
             }
             processInstance = startController.startProcessInstance(bearerToken,initiatorFederationId,responderFederationId,processInstanceInputMessage,gid,precedingGid,precedingOrderId,cgid).getBody();
 
             if(processInstance == null){
-                String msg = "Failed to start process for the given document";
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+                throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_START_PROCESS_WITH_DOCUMENT.toString());
             }
 
         }
@@ -243,9 +227,7 @@ public class StartWithDocumentController {
             // to complete the process, we need to know process instance id
             ProcessDocumentMetadataDAO processDocumentMetadataDAO = getProcessDocumentMetadataDAO(document, true);
             if(processDocumentMetadataDAO == null){
-                String msg = "Each response document should have a valid reference to the request document";
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(msg);
+                throw new NimbleException(NimbleExceptionMessageCode.BAD_REQUEST_NO_VALID_REFERENCE.toString());
             }
             String processInstanceId = processDocumentMetadataDAO.getProcessInstanceID();
 
@@ -257,9 +239,7 @@ public class StartWithDocumentController {
             try {
                 processInstanceInputMessage = BPMessageGenerator.createProcessInstanceInputMessage(document,items,creatorUserId,processInstanceId,bearerToken);
             } catch (Exception e) {
-                String msg = "Failed to create process instance input message for the document";
-                logger.error(msg,e);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+                throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_FAILED_TO_CREATE_PROCESS_INSTANCE_INPUT_MESSAGE.toString(),e);
             }
 
             // get the collaboration group containing the process instance for the responder party
@@ -275,9 +255,7 @@ public class StartWithDocumentController {
             }
             processInstance = continueController.continueProcessInstance(processInstanceInputMessage,gid,collaborationGroup.getHjid().toString(),bearerToken,initiatorFederationId,responderFederationId).getBody();
             if(processInstance == null){
-                String msg = "Failed to complete process for the given document";
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+                throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_COMPLETE_PROCESS.toString());
             }
 
             /**
@@ -304,14 +282,11 @@ public class StartWithDocumentController {
                             .asString();
 
                     if(response.getStatus() != 200 && response.getStatus() != 204){
-                        logger.error("Failed send the document to the initiator party {}, endpoint: {} : {}",initiatorParty.getPartyIdentification().get(0).getID(), communicationChannel.getValue(), response.getBody());
-                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+                        throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_FAILED_TO_SEND_DOCUMENT_TO_INITIATOR_PARTY.toString(),Arrays.asList(initiatorParty.getPartyIdentification().get(0).getID(), communicationChannel.getValue(), response.getBody()));
                     }
                 }
             } catch (Exception e) {
-                String msg = String.format("Failed to send the document to the initiator party : %s", initiatorParty.getPartyIdentification().get(0).getID());
-                logger.error(msg,e);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+                throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_FAILED_TO_SEND_DOCUMENT_TO_INITIATOR_PARTY.toString(),Arrays.asList(initiatorParty.getPartyIdentification().get(0).getID(), "", ""),e);
             }
         }
 

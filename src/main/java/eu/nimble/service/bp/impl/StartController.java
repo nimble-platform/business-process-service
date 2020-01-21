@@ -13,11 +13,9 @@ import eu.nimble.service.bp.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.util.email.EmailSenderUtil;
 import eu.nimble.service.bp.util.persistence.bp.CollaborationGroupDAOUtility;
 import eu.nimble.service.bp.util.persistence.bp.HibernateSwaggerObjectMapper;
-import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceDAOUtility;
 import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceGroupDAOUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.CataloguePersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
-import eu.nimble.service.bp.util.persistence.catalogue.PartyPersistenceUtility;
 import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
@@ -27,11 +25,12 @@ import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
 import eu.nimble.service.bp.swagger.model.ProcessVariables;
 import eu.nimble.service.bp.swagger.model.Transaction;
-import eu.nimble.service.model.ubl.commonaggregatecomponents.CatalogueLineType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.LoggerUtils;
+import eu.nimble.utility.exception.NimbleException;
+import eu.nimble.utility.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
@@ -48,7 +47,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
-import javax.ws.rs.BadRequestException;
 import java.io.IOException;
 import java.util.*;
 
@@ -80,7 +78,7 @@ public class StartController implements StartApi {
         logger.info("Creating negotiations for bill of materials , useFrameContract: {}", useFrameContract);
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES)) {
-            return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+            throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 
         try {
@@ -118,9 +116,7 @@ public class StartController implements StartApi {
                 collaborationGroupsController.mergeCollaborationGroups(bearerToken, hjidOfBaseGroup, JsonSerializationUtility.getObjectMapper().writeValueAsString(federatedCollaborationGroupMetadataDAOS));
             }
         } catch (Exception e) {
-            String msg = "Unexpected error while creating negotiations for bill of materials";
-            logger.error(msg,e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_CREATE_NEGOTIATIONS_FOR_BOM.toString(),e);
         }
 
         logger.info("Created negotiations for bill of materials, useFrameContract: {}", useFrameContract);
@@ -160,13 +156,13 @@ public class StartController implements StartApi {
                     "needs to know the preceding order in order to find the corresponding Order inside the previous group.")
             @RequestParam(value = "precedingOrderId", required = false) String precedingOrderId,
             @ApiParam(value = "Identifier of the Collaboration (i.e. collaborationGroup.hjid) which the ProcessInstanceGroup belongs to")
-            @RequestParam(value = "collaborationGID", required = false) String collaborationGID) {
+            @RequestParam(value = "collaborationGID", required = false) String collaborationGID) throws NimbleException {
 
         logger.debug(" $$$ Start Process with ProcessInstanceInputMessage {}", JsonSerializationUtility.serializeEntitySilentlyWithMixin(body, ProcessVariables.class, MixInIgnoreProperties.class));
 
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
-            return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+            throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 
         // check whether the process is included in the workflow of seller company
@@ -177,16 +173,12 @@ public class StartController implements StartApi {
         try {
             sellerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,partyId);
         } catch (IOException e) {
-            String msg = String.format("Failed to retrieve party information for : %s", partyId);
-            logger.warn(msg);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_FAILED_TO_GET_PARTY_INFO.toString(),Arrays.asList(partyId),e);
         }
 
         // check whether the started process is supported by the seller party
         if(sellerParty.getProcessID() != null && sellerParty.getProcessID().size() > 0 && !sellerParty.getProcessID().contains(processId)){
-            String msg = String.format("%s is not included in the workflow of %s", processId,sellerParty.getPartyName().get(0).getName().getValue());
-            logger.error(msg);
-            throw new BadRequestException(msg);
+            throw new NimbleException(NimbleExceptionMessageCode.BAD_REQUEST_NOT_INCLUDED_IN_WORKFLOW.toString(),Arrays.asList(processId,sellerParty.getPartyName().get(0).getName().getValue()));
         }
 
         // check the entity ids in the passed document
@@ -195,16 +187,12 @@ public class StartController implements StartApi {
 
         boolean hjidsExists = resourceValidationUtil.hjidsExit(document);
         if(hjidsExists) {
-            String msg = String.format("Entity IDs (hjid fields) found in the passed document. document type: %s, content: %s", documentType.toString(), body.getVariables().getContent());
-            logger.warn(msg);
-            throw new BadRequestException(msg);
+            throw new NimbleException(NimbleExceptionMessageCode.BAD_REQUEST_HJID_FIELDS_FOUND.toString(),Arrays.asList(documentType.toString(), body.getVariables().getContent()));
         }
 
         // ensure that the the initiator and responder IDs are different
         if(initiatorFederationId.contentEquals(responderFederationId) && body.getVariables().getInitiatorID().equals(body.getVariables().getResponderID())) {
-            String msg = String.format("Initiator and responder party IDs are the same for the process.", JsonSerializationUtility.serializeEntitySilentlyWithMixin(body, ProcessInstanceInputMessage.class, MixInIgnoreProperties.class));
-            logger.info(msg);
-            throw new BadRequestException(msg);
+            throw new NimbleException(NimbleExceptionMessageCode.BAD_REQUEST_SAME_PARTIES_TO_START_PROCESS.toString(),Arrays.asList(JsonSerializationUtility.serializeEntitySilentlyWithMixin(body, ProcessInstanceInputMessage.class, MixInIgnoreProperties.class)));
         }
 
         // get BusinessProcessContext
@@ -275,8 +263,7 @@ public class StartController implements StartApi {
                     String requestBody = JsonSerializationUtility.getObjectMapper().writeValueAsString(federatedCollaborationGroupMetadata);
                     Response response = SpringBridge.getInstance().getDelegateClient().addFederatedMetadataToCollaborationGroup(bearerToken,initiatorFederationId,precedingOrderId,requestBody,body.getVariables().getInitiatorID(),initiatorFederationId);
                 } catch (Exception e) {
-                    logger.error("Failed to merge transport group to order group",e);
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+                    throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_FAILED_TO_MERGE_TRANSPORT_GROUP_TO_ORDER_GROUP.toString(),e);
                 }
             }
 
@@ -298,12 +285,11 @@ public class StartController implements StartApi {
                     processInstance.getProcessInstanceID(), processInstance.getProcessID());
         }
         catch (Exception e){
-            logger.error(" $$$ Failed to start process with ProcessInstanceInputMessage {}", body.toString(),e);
             if(processInstance != null){
                 businessProcessContext.setProcessInstanceId(processInstance.getProcessInstanceID());
             }
             businessProcessContext.rollbackDbUpdates();
-            throw e;
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_START_PROCESS.toString(),Arrays.asList(body.toString()),e);
         }
         finally {
             BusinessProcessContextHandler.getBusinessProcessContextHandler().deleteBusinessProcessContext(businessProcessContext.getId());

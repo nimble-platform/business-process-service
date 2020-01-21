@@ -2,6 +2,8 @@ package eu.nimble.service.bp.config.interceptor;
 
 import eu.nimble.service.bp.util.ExecutionContext;
 import eu.nimble.utility.exception.AuthenticationException;
+import eu.nimble.utility.exception.NimbleException;
+import eu.nimble.utility.exception.NimbleExceptionMessageCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +13,7 @@ import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Arrays;
 
 /**
  * This interceptor injects the bearer token into the {@link ExecutionContext} for each Rest call
@@ -28,7 +31,7 @@ public class RestServiceInterceptor extends HandlerInterceptorAdapter {
     private final String swaggerPath = "swagger-resources";
     private final String apiDocsPath = "api-docs";
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws AuthenticationException {
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
 
         String bearerToken = request.getHeader(HttpHeaders.AUTHORIZATION);
 
@@ -39,7 +42,7 @@ public class RestServiceInterceptor extends HandlerInterceptorAdapter {
                 eu.nimble.service.bp.util.HttpResponseUtil.validateToken(bearerToken);
             } catch (AuthenticationException e) {
                 logger.error("RestServiceInterceptor.preHandle failed ",e);
-                throw e;
+                throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_NO_USER_FOR_TOKEN.toString(), Arrays.asList(bearerToken),e);
             }
         }
 

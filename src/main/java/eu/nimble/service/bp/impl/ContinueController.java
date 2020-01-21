@@ -22,6 +22,8 @@ import eu.nimble.service.bp.swagger.model.ProcessVariables;
 import eu.nimble.service.bp.swagger.model.Transaction;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.LoggerUtils;
+import eu.nimble.utility.exception.NimbleException;
+import eu.nimble.utility.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
 import eu.nimble.utility.validation.IValidationUtil;
@@ -80,7 +82,7 @@ public class ContinueController implements ContinueApi {
             @ApiParam(value = "The Bearer token provided by the identity service", required = true)
             @RequestHeader(value = "Authorization", required = true) String bearerToken,
             @ApiParam(value = "" ,required=true ) @RequestHeader(value="initiatorFederationId", required=true) String initiatorFederationId,
-            @ApiParam(value = "" ,required=true ) @RequestHeader(value="responderFederationId", required=true) String responderFederationId) {
+            @ApiParam(value = "" ,required=true ) @RequestHeader(value="responderFederationId", required=true) String responderFederationId) throws NimbleException {
         try {
             logger.debug(" $$$ Continue Process with ProcessInstanceInputMessage {}", JsonSerializationUtility.getObjectMapperWithMixIn(ProcessVariables.class, MixInIgnoreProperties.class).writeValueAsString(body));
         } catch (JsonProcessingException e) {
@@ -95,7 +97,7 @@ public class ContinueController implements ContinueApi {
         try {
             // validate role
             if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_SALES)) {
-                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+                throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
             String processId = body.getVariables().getProcessID();
@@ -105,9 +107,7 @@ public class ContinueController implements ContinueApi {
 
             boolean hjidsExists = resourceValidationUtil.hjidsExit(document);
             if (hjidsExists) {
-                String msg = String.format("Entity IDs (hjid fields) found in the passed document. document type: %s, content: %s", documentType.toString(), body.getVariables().getContent());
-                logger.warn(msg);
-                throw new RuntimeException(msg);
+                throw new NimbleException(NimbleExceptionMessageCode.BAD_REQUEST_HJID_FIELDS_FOUND.toString(),Arrays.asList(documentType.toString(), body.getVariables().getContent()));
             }
 
             ProcessInstanceInputMessageDAO processInstanceInputMessageDAO = HibernateSwaggerObjectMapper.createProcessInstanceInputMessage_DAO(body);
@@ -136,9 +136,8 @@ public class ContinueController implements ContinueApi {
             LoggerUtils.logWithMDC(logger, logParamMap, LoggerUtils.LogLevel.INFO, "Completed a business process instance with id: {}, process type: {}",
                     storedInstance.getProcessInstanceID(), storedInstance.getProcessID());
         } catch (Exception e) {
-            logger.error(" $$$ Failed to continue process with ProcessInstanceInputMessage {}", body.toString(), e);
             businessProcessContext.rollbackDbUpdates();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_CONTINUE_PROCESS.toString(),Arrays.asList(body.toString()),e);
         } finally {
             BusinessProcessContextHandler.getBusinessProcessContextHandler().deleteBusinessProcessContext(businessProcessContext.getId());
         }

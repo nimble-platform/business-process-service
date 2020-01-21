@@ -13,6 +13,8 @@ import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.CatalogueLineType;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.utility.JsonSerializationUtility;
+import eu.nimble.utility.exception.NimbleException;
+import eu.nimble.utility.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.validation.IValidationUtil;
 import feign.Response;
 import io.swagger.annotations.ApiOperation;
@@ -29,6 +31,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -61,7 +64,7 @@ public class EPCController {
         try {
             // validate role
             if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
-                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+                throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
             Response response = SpringBridge.getInstance().getDataChannelClient().getEPCCodesForOrder(bearerToken, epc);
@@ -69,16 +72,14 @@ public class EPCController {
             try {
                 responseBody = HttpResponseUtil.extractBodyFromFeignClientResponse(response);
             } catch (IOException e) {
-                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog(String.format("Failed to retrieve epc codes for code: %s", epc), e, HttpStatus.INTERNAL_SERVER_ERROR);
+                throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_FAILED_TO_RETRIEVE_EPC.toString(), Arrays.asList(epc),e);
             }
 
             ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
             List<OrderEPC> epcCodesList = objectMapper.readValue(responseBody.toString(),new TypeReference<List<OrderEPC>>(){});
 
             if(epcCodesList.size() <= 0){
-                String msg = "The epc: %s is not used in any orders.";
-                logger.error(String.format(msg, epc));
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(String.format(msg, epc));
+                throw new NimbleException(NimbleExceptionMessageCode.BAD_REQUEST_NOT_USED_IN_ANY_ORDER.toString(), Arrays.asList(epc));
             }
 
             // get order id
@@ -93,9 +94,7 @@ public class EPCController {
             return ResponseEntity.ok(JsonSerializationUtility.getObjectMapper().writeValueAsString(line));
 
         } catch (Exception e) {
-            String msg = "Unexpected error while getting CatalogueLine for the epc: %s";
-            logger.error(String.format(msg, epc),e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(String.format(msg, epc));
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_GET_CATALOGUE_LINE_FOR_EPC.toString(),Arrays.asList(epc),e);
         }
     }
 
@@ -110,19 +109,17 @@ public class EPCController {
             produces = {"application/json"},
             method = RequestMethod.GET)
     public ResponseEntity getEPCCodesBelongsToProduct(@ApiParam(value = "The identifier of the published product (catalogueLine.hjid)", required = true) @RequestParam(value = "productId", required = true) Long publishedProductID,
-                                                      @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
+                                                      @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) throws Exception {
         logger.info("Getting epc codes for productId: {}", publishedProductID);
         try {
             // validate role
             if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
-                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+                throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
             Object[] partyIdAndManufacturerItemId = CataloguePersistenceUtility.getCatalogueLinePartyIdAndManufacturersItemIdentification(publishedProductID);
             if(partyIdAndManufacturerItemId == null){
-                String msg = "There is no catalogue line for hjid : %d";
-                logger.error(String.format(msg,publishedProductID));
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(String.format(msg,publishedProductID));
+                throw new NimbleException(NimbleExceptionMessageCode.NOT_FOUND_NO_CATALOGUE_LINE_FOR_HJID.toString(),Arrays.asList(publishedProductID.toString()));
             }
 
             List<String> epcCodes = new ArrayList<>();
@@ -141,9 +138,7 @@ public class EPCController {
             return ResponseEntity.status(HttpStatus.OK).body(epcCodes);
         }
         catch (Exception e){
-            String msg = "Unexpected error while getting the epc codes for productId: %d";
-            logger.error(String.format(msg,publishedProductID),e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(String.format(msg,publishedProductID));
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_GET_EPC_BELONGS_TO_PRODUCT.toString(),Arrays.asList(publishedProductID.toString()),e);
         }
     }
 

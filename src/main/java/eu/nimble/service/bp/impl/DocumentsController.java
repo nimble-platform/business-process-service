@@ -17,6 +17,8 @@ import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.document.IDocument;
 import eu.nimble.utility.JsonSerializationUtility;
+import eu.nimble.utility.exception.NimbleException;
+import eu.nimble.utility.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.validation.IValidationUtil;
 import feign.Response;
 import io.swagger.annotations.ApiOperation;
@@ -67,12 +69,12 @@ public class DocumentsController {
             @ApiParam(value = "Flag indicating whether the expected orders will be retrieved for a specific party or all parties", required = false) @RequestParam(value = "forAll", required = false, defaultValue = "false") Boolean forAll,
             @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
             @ApiParam(value = "Identifier of the unshipped orders for which the associated documents will be retrieved", required = false) @RequestParam(value = "unShippedOrderIds", required = false) List<String> unShippedOrderIds
-    ) {
+    ) throws Exception{
         try {
             logger.info("Getting expected orders");
             // validate role
             if (!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
-                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+                throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
             // unShippedOrderIds are given, so create expected orders for them
             if(unShippedOrderIds != null && unShippedOrderIds.size() > 0){
@@ -100,7 +102,7 @@ public class DocumentsController {
                     partyId = party.getPartyIdentification().get(0).getID();
                     federationId = party.getFederationInstanceID();
                 } catch (IOException e) {
-                    return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog(String.format("Failed to extract party if from token: %s", bearerToken), e, HttpStatus.INTERNAL_SERVER_ERROR);
+                    throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_FAILED_TO_EXTRACT_PARTY_INFO.toString(),Arrays.asList(bearerToken),e);
                 }
 
                 unshippedOrderIds = ProcessDocumentMetadataDAOUtility.getUnshippedOrderIds(partyId,federationId);
@@ -209,7 +211,7 @@ public class DocumentsController {
             return ResponseEntity.ok(JsonSerializationUtility.getObjectMapper().writeValueAsString(expectedOrders));
 
         } catch (Exception e) {
-            return createResponseEntityAndLog(String.format("Unexpected error while getting the expected orders"), e, HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_GET_EXPECTED_ORDERS.toString(),e);
         }
     }
 

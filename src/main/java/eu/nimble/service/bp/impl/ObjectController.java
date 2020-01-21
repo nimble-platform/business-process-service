@@ -1,5 +1,7 @@
 package eu.nimble.service.bp.impl;
 
+import eu.nimble.utility.exception.NimbleException;
+import eu.nimble.utility.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -12,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
+
+import java.util.Arrays;
 
 @ApiIgnore
 @Controller
@@ -35,17 +39,13 @@ public class ObjectController {
         logger.info("Deleting the object with hjid: {}, className: {}",hjid,className);
 
         // check token
-        ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
-        if (tokenCheck != null) {
-            return tokenCheck;
-        }
+        eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
+
         Class objectClass = null;
         try {
             objectClass = Class.forName(className);
         } catch (ClassNotFoundException e) {
-            String msg = "There does not exist a class for the given class name: %s";
-            logger.error(String.format(msg, className));
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(String.format(msg, className));
+            throw new NimbleException(NimbleExceptionMessageCode.NOT_FOUND_NO_CLASS.toString(), Arrays.asList(className),e);
         }
 
         // delete the object

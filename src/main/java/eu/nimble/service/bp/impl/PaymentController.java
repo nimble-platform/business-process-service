@@ -8,6 +8,8 @@ import eu.nimble.service.bp.util.persistence.catalogue.PaymentPersistenceUtility
 import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.invoice.InvoiceType;
 import eu.nimble.service.model.ubl.order.OrderType;
+import eu.nimble.utility.exception.NimbleException;
+import eu.nimble.utility.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.validation.IValidationUtil;
@@ -26,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import java.util.Arrays;
 
 @Controller
 public class PaymentController {
@@ -48,14 +51,12 @@ public class PaymentController {
         logger.info("Incoming request to check whether the payment is done or not for order: {}", orderId);
 
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
-            return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+            throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 
         OrderType order = (OrderType) DocumentPersistenceUtility.getUBLDocument(orderId);
         if(order == null){
-            String msg = String.format("The order with id: %s does not exist",orderId);
-            logger.error(msg);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            throw new NimbleException(NimbleExceptionMessageCode.NOT_FOUND_ORDER.toString(), Arrays.asList(orderId));
         }
 
         boolean isPaymentDone = PaymentPersistenceUtility.isPaymentDoneForOrder(orderId);
@@ -77,21 +78,17 @@ public class PaymentController {
         logger.info("Creating an Invoice for order: {}", orderId);
 
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
-            return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+            throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 
         OrderType order = (OrderType) DocumentPersistenceUtility.getUBLDocument(orderId);
         if(order == null){
-            String msg = String.format("The order with id: %s does not exist",orderId);
-            logger.error(msg);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            throw new NimbleException(NimbleExceptionMessageCode.NOT_FOUND_ORDER.toString(), Arrays.asList(orderId));
         }
 
         boolean isPaymentDoneBefore = PaymentPersistenceUtility.isPaymentDoneForOrder(orderId);
         if(isPaymentDoneBefore){
-            String msg = String.format("The payment is already done for the order: %s",orderId);
-            logger.error(msg);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(msg);
+            throw new NimbleException(NimbleExceptionMessageCode.BAD_REQUEST_PAYMENT_DONE.toString(), Arrays.asList(orderId));
         }
 
         GenericJPARepository catalogueRepository = new JPARepositoryFactory().forCatalogueRepository();
@@ -114,12 +111,10 @@ public class PaymentController {
                             .body(body)
                             .asString();
                     if(response.getStatus() != 200 && response.getStatus() != 204){
-                        logger.error("Failed send payment log to url {} for order {}",logstashUrl,orderId);
-                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+                        throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_SEND_PAYMENT_LOG.toString(),Arrays.asList(logstashUrl,orderId));
                     }
                 } catch (Exception e) {
-                    logger.error("Failed send payment log to url {} for order {}",logstashUrl,orderId);
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+                    throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_SEND_PAYMENT_LOG.toString(),Arrays.asList(logstashUrl,orderId),e);
                 }
             }
         }

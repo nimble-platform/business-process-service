@@ -7,6 +7,8 @@ import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtilit
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ClauseType;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.utility.JsonSerializationUtility;
+import eu.nimble.utility.exception.NimbleException;
+import eu.nimble.utility.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.validation.IValidationUtil;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -22,6 +24,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.Arrays;
 import java.util.List;
 import java.util.zip.ZipOutputStream;
 
@@ -44,27 +47,18 @@ public class ContractGeneratorController {
             method = RequestMethod.GET,
             produces = {"application/zip"})
     public void generateContract(@ApiParam(value = "Identifier of the order for which the contract will be generated", required = true) @RequestParam(value = "orderId", required = true) String orderId,
-                                 @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,HttpServletResponse response){
+                                 @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,HttpServletResponse response) throws Exception {
         try{
             logger.info("Generating contract for the order with id : {}",orderId);
             // validate role
             if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
-                eu.nimble.utility.HttpResponseUtil.writeMessageServletResponseAndLog(response, "Invalid role", HttpStatus.UNAUTHORIZED);
-                return;
+                throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString(),true);
             }
 
             // check existence of Order
             OrderType order = (OrderType) DocumentPersistenceUtility.getUBLDocument(orderId, DocumentType.ORDER);
             if(order == null){
-                String msg = String.format("No order exists for the given id : %s",orderId);
-                logger.error(msg);
-                response.setStatus(HttpStatus.NOT_FOUND.value());
-                try{
-                    response.getOutputStream().write(msg.getBytes());
-                }
-                catch (Exception e1){
-                    logger.error("Failed to write the error message to the output stream",e1);
-                }
+                throw new NimbleException(NimbleExceptionMessageCode.NOT_FOUND_ORDER.toString(),Arrays.asList(orderId),true);
             }
             else{
                 ZipOutputStream zos = new ZipOutputStream(response.getOutputStream());
@@ -80,15 +74,7 @@ public class ContractGeneratorController {
             }
         }
         catch (Exception e){
-            logger.error("Failed to generate contract for the order with id : {}",orderId,e);
-
-            response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
-            try{
-                response.getOutputStream().write("Failed to generate contract".getBytes());
-            }
-            catch (Exception e1){
-                logger.error("Failed to write the error message to the output stream",e1);
-            }
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_GENERATE_CONTRACT.toString(),Arrays.asList(orderId),e,true);
         }
 
     }
@@ -102,13 +88,13 @@ public class ContractGeneratorController {
                                                 @ApiParam(value = "The selected incoterms while negotiating.<br>Example:DDP (Delivery Duty Paid)") @RequestParam(value = "incoterms", required = false) String incoterms,
                                                 @ApiParam(value = "The selected trading term while negotiating.<br>Example:Cash_on_delivery") @RequestParam(value = "tradingTerm", required = false) String tradingTerm,
                                                 @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
-                                                @ApiParam(value = "" ,required=true ) @RequestHeader(value="initiatorFederationId", required=true) String initiatorFederationId){
+                                                @ApiParam(value = "" ,required=true ) @RequestHeader(value="initiatorFederationId", required=true) String initiatorFederationId) throws NimbleException {
         logger.info("Generating Order Terms and Conditions clauses for seller party: {}, buyer party: {}",sellerPartyId, buyerPartyId);
 
         try {
             // validate role
             if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
-                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+                throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
             ContractGenerator contractGenerator = new ContractGenerator();
@@ -119,8 +105,7 @@ public class ContractGeneratorController {
             return ResponseEntity.ok(JsonSerializationUtility.getObjectMapper().writeValueAsString(clauses));
         }
         catch (Exception e){
-            logger.error("Failed to generate Order Terms and Conditions clauses",e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to generate Order Terms and Conditions clauses");
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_FAILED_TO_GENERATE_ORDER_TERMS.toString(),e);
         }
     }
 

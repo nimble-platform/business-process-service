@@ -21,10 +21,10 @@ import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
 import eu.nimble.utility.JsonSerializationUtility;
+import eu.nimble.utility.exception.NimbleException;
+import eu.nimble.utility.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
@@ -33,12 +33,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 import springfox.documentation.annotations.ApiIgnore;
 
 import java.io.IOException;
@@ -62,14 +59,12 @@ public class EFactoryDemoController {
     @RequestMapping(value = "/start-rfq",
             produces = {"application/json"},
             method = RequestMethod.POST)
-    public ResponseEntity startRFQProcess(@RequestBody RFQSummary rfqSummary) {
+    public ResponseEntity startRFQProcess(@RequestBody RFQSummary rfqSummary) throws Exception {
         logger.info("Getting request to start request for quotation process");
         try {
             logger.info("RFQSummary: {}",JsonSerializationUtility.getObjectMapper().writeValueAsString(rfqSummary));
         } catch (JsonProcessingException e) {
-            String msg = "Unexpected error while serializing the RFQSummary";
-            logger.error(msg,e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_FAILED_TO_SERIALIZE_RFQ_SUMMARY.toString(),e);
         }
 
         // fill missing fields of RFQSummary
@@ -79,18 +74,14 @@ public class EFactoryDemoController {
         CatalogueLineType catalogueLine = CataloguePersistenceUtility.getCatalogueLine(rfqSummary.getProductID());
         // check the existence of catalogue line
         if(catalogueLine == null){
-            String msg = String.format("There does not exist a product for the given id: %s",rfqSummary.getProductID());
-            logger.error(msg);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            throw new NimbleException(NimbleExceptionMessageCode.NOT_FOUND_NO_PRODUCT.toString(),Arrays.asList(rfqSummary.getProductID()));
         }
         // get seller negotiation settings
         NegotiationSettings sellerNegotiationSettings;
         try {
             sellerNegotiationSettings = SpringBridge.getInstance().getiIdentityClientTyped().getNegotiationSettings(catalogueLine.getGoodsItem().getItem().getManufacturerParty().getPartyIdentification().get(0).getID());
         } catch (IOException e) {
-            String msg = String.format("Unexpected error while getting negotiation settings for the party: %s",catalogueLine.getGoodsItem().getItem().getManufacturerParty().getPartyIdentification().get(0).getID());
-            logger.error(msg,e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_GET_NEGOTIATION_SETTINGS.toString(),Arrays.asList(catalogueLine.getGoodsItem().getItem().getManufacturerParty().getPartyIdentification().get(0).getID()),e);
         }
         // create quantity
         QuantityType quantity = new QuantityType();
@@ -102,9 +93,7 @@ public class EFactoryDemoController {
         try {
             buyerParty = getBuyerParty(rfqSummary);
         } catch (IOException e) {
-            String msg = String.format("Unexpected error while creating request for quotation for product: %s",catalogueLine.getGoodsItem().getItem().getManufacturerParty().getPartyIdentification().get(0).getID());
-            logger.error(msg,e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_CREATE_RFQ.toString(),Arrays.asList(rfqSummary.getProductID()),e);
         }
 
 
@@ -113,9 +102,7 @@ public class EFactoryDemoController {
         try {
             requestForQuotationType = BPMessageGenerator.createRequestForQuotation(catalogueLine,quantity,sellerNegotiationSettings,buyerParty,rfqSummary.getPreviousDocumentId(), rfqSummary.getPricePerProduct(),StartWithDocumentController.token);
         } catch (Exception e) {
-            String msg = String.format("Unexpected error while creating request for quotation for product: %s",rfqSummary.getProductID());
-            logger.error(msg,e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_CREATE_RFQ.toString(),Arrays.asList(rfqSummary.getProductID()),e);
         }
 
         // serialize RFQ
@@ -123,9 +110,7 @@ public class EFactoryDemoController {
         try {
             serializedRFQ = JsonSerializationUtility.getObjectMapper().writeValueAsString(requestForQuotationType);
         } catch (JsonProcessingException e) {
-            String msg = "Unexpected error while serializing the request for quotation";
-            logger.error(msg,e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_SERIALIZE_RFQ.toString(),e);
         }
         // start the process
         ProcessInstance processInstance = (ProcessInstance) startWithDocumentController.startProcessWithDocument(serializedRFQ, null ).getBody();
@@ -142,14 +127,12 @@ public class EFactoryDemoController {
     @RequestMapping(value = "/start-order",
             produces = {"application/json"},
             method = RequestMethod.POST)
-    public ResponseEntity startOrderProcess(@RequestBody RFQSummary rfqSummary) {
+    public ResponseEntity startOrderProcess(@RequestBody RFQSummary rfqSummary) throws Exception {
         logger.info("Getting request to start order process");
         try {
             logger.info("RFQSummary: {}",JsonSerializationUtility.getObjectMapper().writeValueAsString(rfqSummary));
         } catch (JsonProcessingException e) {
-            String msg = "Unexpected error while serializing the RFQSummary";
-            logger.error(msg,e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_FAILED_TO_SERIALIZE_RFQ_SUMMARY.toString(),e);
         }
 
         // fill missing fields of RFQSummary
@@ -159,18 +142,14 @@ public class EFactoryDemoController {
         CatalogueLineType catalogueLine = CataloguePersistenceUtility.getCatalogueLine(rfqSummary.getProductID());
         // check the existence of catalogue line
         if(catalogueLine == null){
-            String msg = String.format("There does not exist a product for the given id: %s",rfqSummary.getProductID());
-            logger.error(msg);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            throw new NimbleException(NimbleExceptionMessageCode.NOT_FOUND_NO_PRODUCT.toString(),Arrays.asList(rfqSummary.getProductID()));
         }
         // get seller negotiation settings
         NegotiationSettings sellerNegotiationSettings;
         try {
             sellerNegotiationSettings = SpringBridge.getInstance().getiIdentityClientTyped().getNegotiationSettings(catalogueLine.getGoodsItem().getItem().getManufacturerParty().getPartyIdentification().get(0).getID());
         } catch (IOException e) {
-            String msg = String.format("Unexpected error while getting negotiation settings for the party: %s",catalogueLine.getGoodsItem().getItem().getManufacturerParty().getPartyIdentification().get(0).getID());
-            logger.error(msg,e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_GET_NEGOTIATION_SETTINGS.toString(),Arrays.asList(catalogueLine.getGoodsItem().getItem().getManufacturerParty().getPartyIdentification().get(0).getID()),e);
         }
         // create quantity
         QuantityType quantity = new QuantityType();
@@ -182,9 +161,7 @@ public class EFactoryDemoController {
         try {
             buyerParty = getBuyerParty(rfqSummary);
         } catch (IOException e) {
-            String msg = String.format("Unexpected error while creating order for product: %s",catalogueLine.getGoodsItem().getItem().getManufacturerParty().getPartyIdentification().get(0).getID());
-            logger.error(msg,e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_CREATE_ORDER.toString(),Arrays.asList(rfqSummary.getProductID()),e);
         }
 
 
@@ -193,9 +170,7 @@ public class EFactoryDemoController {
         try {
             order = BPMessageGenerator.createOrder(catalogueLine,quantity,sellerNegotiationSettings,buyerParty,rfqSummary.getPreviousDocumentId(),rfqSummary.getPricePerProduct(),StartWithDocumentController.token);
         } catch (Exception e) {
-            String msg = String.format("Unexpected error while creating order for product: %s",rfqSummary.getProductID());
-            logger.error(msg,e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_CREATE_ORDER.toString(),Arrays.asList(rfqSummary.getProductID()),e);
         }
 
         // serialize Order
@@ -203,9 +178,7 @@ public class EFactoryDemoController {
         try {
             serializedOrder = JsonSerializationUtility.getObjectMapper().writeValueAsString(order);
         } catch (JsonProcessingException e) {
-            String msg = "Unexpected error while serializing the order";
-            logger.error(msg,e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_SERIALIZE_ORDER.toString(),e);
         }
         // start the process
         ProcessInstance processInstance = (ProcessInstance) startWithDocumentController.startProcessWithDocument(serializedOrder, null).getBody();

@@ -39,32 +39,35 @@ public class DelegateServiceClientMock implements IDelegateClient {
 
     @Override
     public Response addFederatedMetadataToCollaborationGroup(String bearerToken,String federationId, String documentId,String body,String partyId,String delegateId) {
-        ResponseEntity responseEntity = collaborationGroupsController.addFederatedMetadataToCollaborationGroup(documentId,body,partyId,federationId,bearerToken);
-        String response;
         try {
-            response = JsonSerializationUtility.getObjectMapper().writeValueAsString(responseEntity.getBody());
-        } catch (IOException e) {
-            response = null;
+            ResponseEntity responseEntity = collaborationGroupsController.addFederatedMetadataToCollaborationGroup(documentId,body,partyId,federationId,bearerToken);
+            String response = JsonSerializationUtility.getObjectMapper().writeValueAsString(responseEntity.getBody());
+            return Response.builder().headers(new HashMap<>()).status(responseEntity.getStatusCodeValue()).body(response,Charset.defaultCharset()).build();
+        } catch (Exception e) {
+            return Response.builder().headers(new HashMap<>()).status(HttpStatus.INTERNAL_SERVER_ERROR.value()).body(null,Charset.defaultCharset()).build();
         }
-        return Response.builder().headers(new HashMap<>()).status(responseEntity.getStatusCodeValue()).body(response,Charset.defaultCharset()).build();
+
     }
 
     @Override
     public Response getGroupIdTuple(String bearerToken, String federationId, String documentId,String partyId,String delegateId) {
-        ResponseEntity responseEntity = documentController.getGroupIdTuple(documentId,partyId,bearerToken,federationId);
-        String response;
         try {
-            response = JsonSerializationUtility.getObjectMapper().writeValueAsString(responseEntity.getBody());
-        } catch (IOException e) {
-            response = null;
+            ResponseEntity responseEntity = documentController.getGroupIdTuple(documentId,partyId,bearerToken,federationId);
+            String response = JsonSerializationUtility.getObjectMapper().writeValueAsString(responseEntity.getBody());
+            return Response.builder().headers(new HashMap<>()).status(responseEntity.getStatusCodeValue()).body(response,Charset.defaultCharset()).build();
+        } catch (Exception e) {
+            return Response.builder().headers(new HashMap<>()).status(HttpStatus.INTERNAL_SERVER_ERROR.value()).body(null,Charset.defaultCharset()).build();
         }
-        return Response.builder().headers(new HashMap<>()).status(responseEntity.getStatusCodeValue()).body(response,Charset.defaultCharset()).build();
     }
 
     @Override
     public Response getOrderDocument(String bearerToken, String processInstanceId, String orderResponseId, String delegateId) {
-        ResponseEntity responseEntity = processInstanceGroupController.getOrderDocument(processInstanceId,orderResponseId,bearerToken);
-        return Response.builder().headers(new HashMap<>()).status(responseEntity.getStatusCodeValue()).body(responseEntity.getBody().toString(),Charset.defaultCharset()).build();
+        try {
+            ResponseEntity responseEntity = processInstanceGroupController.getOrderDocument(processInstanceId,orderResponseId,bearerToken);
+            return Response.builder().headers(new HashMap<>()).status(responseEntity.getStatusCodeValue()).body(responseEntity.getBody().toString(),Charset.defaultCharset()).build();
+        } catch (Exception e) {
+            return Response.builder().headers(new HashMap<>()).status(HttpStatus.INTERNAL_SERVER_ERROR.value()).body(null,Charset.defaultCharset()).build();
+        }
     }
 
     @Override
@@ -105,26 +108,24 @@ public class DelegateServiceClientMock implements IDelegateClient {
 
     @Override
     public Response getCollaborationGroup(String bearerToken,String id, String delegateId) {
-        ResponseEntity responseEntity = collaborationGroupsController.getCollaborationGroup(id,bearerToken);
-        String response;
         try {
-            response = JsonSerializationUtility.getObjectMapper().writeValueAsString(responseEntity.getBody());
-        } catch (IOException e) {
-            response = null;
+            ResponseEntity responseEntity = collaborationGroupsController.getCollaborationGroup(id,bearerToken);
+            String response = JsonSerializationUtility.getObjectMapper().writeValueAsString(responseEntity.getBody());
+            return Response.builder().headers(new HashMap<>()).status(responseEntity.getStatusCodeValue()).body(response,Charset.defaultCharset()).build();
+        } catch (Exception e) {
+            return Response.builder().headers(new HashMap<>()).status(HttpStatus.INTERNAL_SERVER_ERROR.value()).body(null,Charset.defaultCharset()).build();
         }
-        return Response.builder().headers(new HashMap<>()).status(responseEntity.getStatusCodeValue()).body(response,Charset.defaultCharset()).build();
     }
 
     @Override
     public Response unMergeCollaborationGroup(String bearerToken, String groupId, String delegateId) {
-        ResponseEntity responseEntity = collaborationGroupsController.unMergeCollaborationGroup(groupId,bearerToken);
-        String response;
         try {
-            response = JsonSerializationUtility.getObjectMapper().writeValueAsString(responseEntity.getBody());
-        } catch (IOException e) {
-            response = null;
+            ResponseEntity responseEntity = collaborationGroupsController.unMergeCollaborationGroup(groupId,bearerToken);
+            String response = JsonSerializationUtility.getObjectMapper().writeValueAsString(responseEntity.getBody());
+            return Response.builder().headers(new HashMap<>()).status(responseEntity.getStatusCodeValue()).body(response,Charset.defaultCharset()).build();
+        } catch (Exception e) {
+            return Response.builder().headers(new HashMap<>()).status(HttpStatus.INTERNAL_SERVER_ERROR.value()).body(null,Charset.defaultCharset()).build();
         }
-        return Response.builder().headers(new HashMap<>()).status(responseEntity.getStatusCodeValue()).body(response,Charset.defaultCharset()).build();
     }
 
     @Override
@@ -141,8 +142,12 @@ public class DelegateServiceClientMock implements IDelegateClient {
 
     @Override
     public Response getExpectedOrders(String bearerToken,Boolean forAll, List<String> unShippedOrderIds) {
-        ResponseEntity responseEntity = documentsController.getExpectedOrders(forAll,bearerToken,unShippedOrderIds);
-        return Response.builder().headers(new HashMap<>()).status(responseEntity.getStatusCodeValue()).body(responseEntity.getBody().toString(),Charset.defaultCharset()).build();
+        try {
+            ResponseEntity responseEntity = documentsController.getExpectedOrders(forAll,bearerToken,unShippedOrderIds);
+            return Response.builder().headers(new HashMap<>()).status(responseEntity.getStatusCodeValue()).body(responseEntity.getBody().toString(),Charset.defaultCharset()).build();
+        } catch (Exception e) {
+            return Response.builder().headers(new HashMap<>()).status(HttpStatus.INTERNAL_SERVER_ERROR.value()).body(null,Charset.defaultCharset()).build();
+        }
     }
 
     @Override
