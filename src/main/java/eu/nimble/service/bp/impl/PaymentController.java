@@ -96,7 +96,7 @@ public class PaymentController {
 
         catalogueRepository.persistEntity(invoice);
 
-        if(validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_TO_LOG_PAYMENTS)){
+//        if(validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_TO_LOG_PAYMENTS)){
             String logstashUrl = SpringBridge.getInstance().getGenericConfig().getEfactoryLogstashUrl();
             if(logstashUrl.contentEquals("")){
                 logger.info("Could not send payment log since no url set for efactory logstash");
@@ -117,7 +117,7 @@ public class PaymentController {
                     throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_SEND_PAYMENT_LOG.toString(),Arrays.asList(logstashUrl,orderId),e);
                 }
             }
-        }
+//        }
 
         logger.info("Created an Invoice for order: {}", orderId);
         return ResponseEntity.ok(null);
