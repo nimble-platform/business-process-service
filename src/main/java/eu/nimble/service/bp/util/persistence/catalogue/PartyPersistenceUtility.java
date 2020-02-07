@@ -145,14 +145,9 @@ public class PartyPersistenceUtility {
         return party;
     }
 
-    public static QualifyingPartyType getQualifyingPartyType(String partyID, String federationId, String bearerToken, String businessContextId) {
+    public static QualifyingPartyType getQualifyingPartyType(String partyID, String federationId, String bearerToken) {
         QualifyingPartyType qualifyingParty;
-        if(businessContextId != null){
-            qualifyingParty = PartyPersistenceUtility.getQualifyingParty(partyID,federationId,BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId).getCatalogRepository());
-        }
-        else {
-            qualifyingParty = PartyPersistenceUtility.getQualifyingParty(partyID,federationId);
-        }
+        qualifyingParty = PartyPersistenceUtility.getQualifyingParty(partyID,federationId);
         if (qualifyingParty == null) {
             qualifyingParty = new QualifyingPartyType();
             // get party using identity service
@@ -164,13 +159,9 @@ public class PartyPersistenceUtility {
                 logger.error(msg);
                 throw new RuntimeException(msg, e);
             }
-            qualifyingParty.setParty(getParty(partyType,businessContextId));
+            qualifyingParty.setParty(getParty(partyType, null));
         }
         return qualifyingParty;
-    }
-
-    public static QualifyingPartyType getQualifyingPartyType(String partyID, String federationId, String bearerToken) {
-        return getQualifyingPartyType(partyID, federationId,bearerToken,null);
     }
 
     /**

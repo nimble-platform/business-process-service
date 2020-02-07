@@ -70,12 +70,12 @@ public class TrustPersistenceUtility {
         }
     }
 
-    public static void createCompletedTask(String partyID,String federationId,String processInstanceID,String bearerToken,String status, String businessContextId) {
+    private static void createCompletedTask(String partyID, String federationId, String processInstanceID, String bearerToken, String status) {
         /**
          * IMPORTANT:
          * {@link QualifyingPartyType}ies should be existing when a {@link CompletedTaskType} is about to be associated to it
          */
-        QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingPartyType(partyID,federationId,bearerToken,businessContextId);
+        QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingPartyType(partyID,federationId,bearerToken);
         CompletedTaskType completedTask = new CompletedTaskType();
         completedTask.setAssociatedProcessInstanceID(processInstanceID);
         TextType textType = new TextType();
@@ -84,7 +84,7 @@ public class TrustPersistenceUtility {
         completedTask.setDescription(Arrays.asList(textType));
         PeriodType periodType = new PeriodType();
 
-        ProcessDocumentMetadata responseMetadata = businessContextId != null ? ProcessDocumentMetadataDAOUtility.getResponseMetadata(processInstanceID,BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId).getBpRepository()) : ProcessDocumentMetadataDAOUtility.getResponseMetadata(processInstanceID);
+        ProcessDocumentMetadata responseMetadata = ProcessDocumentMetadataDAOUtility.getResponseMetadata(processInstanceID);
         // TODO: End time and date are NULL for cancelled process for now
         try {
             if (responseMetadata != null) {
@@ -93,15 +93,9 @@ public class TrustPersistenceUtility {
             }
             List<ProcessInstanceDAO> processInstanceDAOS;
             ProcessDocumentMetadata requestMetadata;
-            if(businessContextId != null){
-                processInstanceDAOS = ProcessInstanceDAOUtility.getAllProcessInstancesInCollaborationHistory(processInstanceID,BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId).getBpRepository()) ;
-                requestMetadata = ProcessDocumentMetadataDAOUtility.getRequestMetadata(processInstanceDAOS.get(0).getProcessInstanceID(),BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId).getBpRepository());
-            }
-            else{
-                processInstanceDAOS = ProcessInstanceDAOUtility.getAllProcessInstancesInCollaborationHistory(processInstanceID);
-                requestMetadata = ProcessDocumentMetadataDAOUtility.getRequestMetadata(processInstanceDAOS.get(0).getProcessInstanceID());
+            processInstanceDAOS = ProcessInstanceDAOUtility.getAllProcessInstancesInCollaborationHistory(processInstanceID);
+            requestMetadata = ProcessDocumentMetadataDAOUtility.getRequestMetadata(processInstanceDAOS.get(0).getProcessInstanceID());
 
-            }
             periodType.setStartDate(DatatypeFactory.newInstance().newXMLGregorianCalendar(requestMetadata.getSubmissionDate()));
             periodType.setStartTime(DatatypeFactory.newInstance().newXMLGregorianCalendar(requestMetadata.getSubmissionDate()));
             completedTask.setPeriod(periodType);
@@ -113,40 +107,20 @@ public class TrustPersistenceUtility {
         }
 
         qualifyingParty.getCompletedTask().add(completedTask);
-        if(businessContextId == null){
-            new JPARepositoryFactory().forCatalogueRepository().updateEntity(qualifyingParty);
-        }
-        else {
-            BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId).getCatalogRepository().updateEntity(qualifyingParty);
-        }
-    }
-
-    public static void createCompletedTasksForBothParties(String processInstanceID,String bearerToken,String status, String businessContextId) {
-        List<ProcessDocumentMetadataDAO> processDocumentMetadatas;
-        if(businessContextId != null){
-            processDocumentMetadatas = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(processInstanceID, BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId).getBpRepository());
-        }
-        else{
-            processDocumentMetadatas = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(processInstanceID);
-        }
-
-        createCompletedTasksForBothParties(processDocumentMetadatas.get(0), bearerToken, status,businessContextId);
+        new JPARepositoryFactory().forCatalogueRepository().updateEntity(qualifyingParty);
     }
 
     public static void createCompletedTasksForBothParties(String processInstanceID,String bearerToken,String status) {
-        createCompletedTasksForBothParties(processInstanceID,bearerToken,status,null);
-    }
-
-    public static void createCompletedTasksForBothParties(ProcessDocumentMetadataDAO processDocumentMetadata,String bearerToken,String status, String businessContextId) {
+        List<ProcessDocumentMetadataDAO> processDocumentMetadatas = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(processInstanceID);
+        ProcessDocumentMetadataDAO processDocumentMetadata = processDocumentMetadatas.get(0);
         String initiatorID = processDocumentMetadata.getInitiatorID();
         String responderID = processDocumentMetadata.getResponderID();
         String initiatorFederationId = processDocumentMetadata.getInitiatorFederationID();
         String responderFederationId = processDocumentMetadata.getResponderFederationID();
 
-        TrustPersistenceUtility.createCompletedTask(initiatorID,initiatorFederationId,processDocumentMetadata.getProcessInstanceID(),bearerToken,status,businessContextId);
-        TrustPersistenceUtility.createCompletedTask(responderID,responderFederationId,processDocumentMetadata.getProcessInstanceID(),bearerToken,status,businessContextId);
+        TrustPersistenceUtility.createCompletedTask(initiatorID,initiatorFederationId,processDocumentMetadata.getProcessInstanceID(),bearerToken,status);
+        TrustPersistenceUtility.createCompletedTask(responderID,responderFederationId,processDocumentMetadata.getProcessInstanceID(),bearerToken,status);
     }
-
 
     public static List<NegotiationRatings> createNegotiationRatings(List<CompletedTaskType> completedTasks){
         List<NegotiationRatings> negotiationRatings = new ArrayList<>();
