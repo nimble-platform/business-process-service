@@ -215,7 +215,7 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
 
             // create completed tasks for both parties
             String processInstanceID = groupDAO.getProcessInstanceIDs().get(groupDAO.getProcessInstanceIDs().size() - 1);
-            TrustPersistenceUtility.createCompletedTasksForBothParties(processInstanceID, bearerToken, "Completed");
+            TrustPersistenceUtility.createCompletedTasksForBothParties(processInstanceID, bearerToken, "Completed",null);
 
             // update ProcessInstanceGroup status
             GenericJPARepository bpRepo = new JPARepositoryFactory().forBpRepository(true);
@@ -247,6 +247,7 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
     @RequestMapping(value = "/process-instance-groups/{id}/cancel",
             method = RequestMethod.POST)
     public ResponseEntity cancelCollaboration(@ApiParam(value = "Identifier of the process instance group to be cancelled", required = true) @PathVariable(value = "id", required = true) String id,
+                                              @ApiParam(value = "The cancellation reason", required = false, defaultValue = "") @RequestBody(required = false) String cancellationReason,
                                               @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) throws NimbleException {
         try {
             logger.debug("Cancelling the collaboration for the group id: {}", id);
@@ -301,7 +302,7 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
 
             // create completed tasks for both parties
             String processInstanceID = groupDAO.getProcessInstanceIDs().get(groupDAO.getProcessInstanceIDs().size() - 1);
-            TrustPersistenceUtility.createCompletedTasksForBothParties(processInstanceID, bearerToken, "Cancelled");
+            TrustPersistenceUtility.createCompletedTasksForBothParties(processInstanceID, bearerToken, "Cancelled",cancellationReason);
 
             // send email to the trading partner
             emailSenderUtil.sendCollaborationStatusEmail(bearerToken, groupDAO);

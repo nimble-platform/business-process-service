@@ -325,6 +325,9 @@ public class ProcessInstanceController {
                     responseMetadata = HibernateSwaggerObjectMapper.createProcessDocumentMetadata(ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId));
                 }
             }
+
+            // get cancellation reason for the collaboration
+            Future<String> cancellationReasonFuture = getCancellationReason(processInstanceId,executorService);
             // get request creator and response creator user info
             Future<String> requestCreatorUser = null;
             Future<String> responseCreatorUser = null;
@@ -337,6 +340,8 @@ public class ProcessInstanceController {
 
             ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
 
+            String cancellationReason = cancellationReasonFuture.get();
+
             JsonSerializer jsonSerializer = new JsonSerializer();
             jsonSerializer.put("requestDocument",requestDocument == null ? null: requestDocument.get());
             jsonSerializer.put("responseDocumentStatus",responseDocumentStatus == null ? null : responseDocumentStatus.get());
@@ -347,6 +352,7 @@ public class ProcessInstanceController {
             jsonSerializer.put("processInstance",processInstance.get());
             jsonSerializer.put("requestCreatorUser",requestCreatorUser == null ? null : requestCreatorUser.get());
             jsonSerializer.put("responseCreatorUser",responseCreatorUser == null ? null : responseCreatorUser.get());
+            jsonSerializer.put("cancellationReason",cancellationReason == null ? null : "\""+cancellationReason+"\"");
 
             logger.info("Retrieved the details for process instance: {}", processInstanceId);
             return ResponseEntity.ok(jsonSerializer.toString());
@@ -446,6 +452,10 @@ public class ProcessInstanceController {
         return threadPool.submit(() -> JsonSerializationUtility.getObjectMapper().writeValueAsString(
                 PartyPersistenceUtility.getPerson(bearerToken,userId)
         ));
+    }
+
+    private Future<String> getCancellationReason(String processInstanceId, ExecutorService threadPool){
+        return threadPool.submit(() -> TrustPersistenceUtility.getCancellationReasonForCollaboration(processInstanceId));
     }
 
     private Future<String> serializeObject(Object object, ExecutorService threadPool){
