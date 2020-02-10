@@ -37,8 +37,6 @@ public class SpringBridge implements ApplicationContextAware {
     @Autowired
     private IDelegateClient delegateClient;
 
-    private String federationId = null;
-
     public static SpringBridge getInstance() {
         return applicationContext.getBean(SpringBridge.class);
     }
@@ -78,10 +76,19 @@ public class SpringBridge implements ApplicationContextAware {
     }
 
     public String getFederationId() {
-        if(federationId == null){
+        return getGenericConfig().getFederationInstanceId();
+    }
+
+    public boolean isDelegateServiceRunning(){
+        try {
             Response response = delegateClient.getFederationId();
-            federationId = response.body().toString();
+            if(response != null && response.status() == 200){
+                return true;
+            }
         }
-        return federationId;
+        catch (Exception e){
+            return false;
+        }
+        return false;
     }
 }

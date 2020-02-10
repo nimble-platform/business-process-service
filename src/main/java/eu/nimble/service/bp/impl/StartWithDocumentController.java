@@ -66,6 +66,8 @@ public class StartWithDocumentController {
     @Autowired
     private ContinueController continueController;
     @Autowired
+    private DocumentController documentController;
+    @Autowired
     private IValidationUtil validationUtil;
 
     // TODO: we need to get a token for business-process service
@@ -202,11 +204,18 @@ public class StartWithDocumentController {
             else if(precedingOrderId != null){
                 try {
                     // get group id tuple for preceding order
-                    Response response = SpringBridge.getInstance().getDelegateClient().getGroupIdTuple(bearerToken,initiatorFederationId,precedingOrderId,processInstanceInputMessage.getVariables().getInitiatorID(),initiatorFederationId);
-                    String responseBody = HttpResponseUtil.extractBodyFromFeignClientResponse(response);
-
-                    ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
-                    GroupIdTuple groupIdTuple = objectMapper.readValue(responseBody,GroupIdTuple.class);
+                    GroupIdTuple groupIdTuple;
+                    // initiator party is in this instance
+                    if(initiatorFederationId.contentEquals(SpringBridge.getInstance().getFederationId())){
+                        ResponseEntity responseEntity = documentController.getGroupIdTuple(precedingOrderId,processInstanceInputMessage.getVariables().getInitiatorID(),token,initiatorFederationId);
+                        groupIdTuple = (GroupIdTuple) responseEntity.getBody();
+                    }
+                    // initiator party is in a different instance
+                    else{
+                        Response response = SpringBridge.getInstance().getDelegateClient().getGroupIdTuple(bearerToken,initiatorFederationId,precedingOrderId,processInstanceInputMessage.getVariables().getInitiatorID(),initiatorFederationId);
+                        String responseBody = HttpResponseUtil.extractBodyFromFeignClientResponse(response);
+                        groupIdTuple =  JsonSerializationUtility.getObjectMapper().readValue(responseBody,GroupIdTuple.class);
+                    }
 
                     // get the collaboration group containing the process instance for the initiator party
                     cgid = groupIdTuple.getCollaborationGroupId();

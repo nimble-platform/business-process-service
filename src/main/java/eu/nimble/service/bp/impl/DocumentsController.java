@@ -121,9 +121,17 @@ public class DocumentsController {
                 Map<BigDecimal,Map<Set<String>, ExpectedOrder>> expectedOrdersHavingProcessMap = new HashMap<>();
 
                 // get Expected Orders for the unshippedOrderIds
-                Response response = SpringBridge.getInstance().getDelegateClient().getExpectedOrders(bearerToken,false,unshippedOrderIds);
-                String responseBody = eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response);
-                List<ExpectedOrder> expectedOrdersForUnshippedOrder = JsonSerializationUtility.getObjectMapper().readValue(responseBody,new TypeReference<List<ExpectedOrder>>(){});
+                List<ExpectedOrder> expectedOrdersForUnshippedOrder;
+                // if delegate service is running, use it to get ExpectedOrders
+                if(SpringBridge.getInstance().isDelegateServiceRunning()){
+                    Response response = SpringBridge.getInstance().getDelegateClient().getExpectedOrders(bearerToken,forAll,unshippedOrderIds);
+                    String responseBody = eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response);
+                    expectedOrdersForUnshippedOrder = JsonSerializationUtility.getObjectMapper().readValue(responseBody,new TypeReference<List<ExpectedOrder>>(){});
+                }
+                else {
+                    ResponseEntity responseEntity = getExpectedOrders(forAll,bearerToken,unShippedOrderIds);
+                    expectedOrdersForUnshippedOrder = (List<ExpectedOrder>) responseEntity.getBody();
+                }
                 // first, create ExpectedOrders for the ones having an associated process
                 for (ExpectedOrder expectedOrder : expectedOrdersForUnshippedOrder) {
                     BigDecimal lineHjid = expectedOrder.getLineHjid();

@@ -134,9 +134,18 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
         if(collaborationGroup.getFederatedCollaborationGroupMetadatas() != null){
             for (FederatedCollaborationGroupMetadata federatedCollaborationGroupMetadata : collaborationGroup.getFederatedCollaborationGroupMetadatas()) {
                 try {
-                    ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
-                    Response response = SpringBridge.getInstance().getDelegateClient().getCollaborationGroup(bearerToken,federatedCollaborationGroupMetadata.getID(),federatedCollaborationGroupMetadata.getFederationID());
-                    CollaborationGroup federatedCollaborationGroup = objectMapper.readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),CollaborationGroup.class);
+                    CollaborationGroup federatedCollaborationGroup;
+                    // collaboration group is in this instance
+                    if(federatedCollaborationGroupMetadata.getFederationID().contentEquals(SpringBridge.getInstance().getFederationId())){
+                        ResponseEntity responseEntity = getCollaborationGroup(federatedCollaborationGroupMetadata.getID(),bearerToken);
+                        federatedCollaborationGroup = (CollaborationGroup) responseEntity.getBody();
+                    }
+                    else{
+                        ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
+                        Response response = SpringBridge.getInstance().getDelegateClient().getCollaborationGroup(bearerToken,federatedCollaborationGroupMetadata.getID(),federatedCollaborationGroupMetadata.getFederationID());
+                        federatedCollaborationGroup = objectMapper.readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),CollaborationGroup.class);
+                    }
+
                     for (ProcessInstanceGroup associatedProcessInstanceGroup : federatedCollaborationGroup.getAssociatedProcessInstanceGroups()) {
                         collaborationGroup.getAssociatedProcessInstanceGroups().add(associatedProcessInstanceGroup);
                     }
@@ -191,9 +200,18 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
                 if(collaborationGroup.getFederatedCollaborationGroupMetadatas() != null){
                     for (FederatedCollaborationGroupMetadata federatedCollaborationGroupMetadata : collaborationGroup.getFederatedCollaborationGroupMetadatas()) {
                         try {
-                            ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
-                            Response response = SpringBridge.getInstance().getDelegateClient().getCollaborationGroup(bearerToken,federatedCollaborationGroupMetadata.getID(),federatedCollaborationGroupMetadata.getFederationID());
-                            CollaborationGroup cp = objectMapper.readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),CollaborationGroup.class);
+                            CollaborationGroup cp;
+                            // collaboration group is in this instance
+                            if(federatedCollaborationGroupMetadata.getFederationID().contentEquals(SpringBridge.getInstance().getFederationId())){
+                                ResponseEntity responseEntity = getCollaborationGroup(federatedCollaborationGroupMetadata.getID(),bearerToken);
+                                cp = (CollaborationGroup) responseEntity.getBody();
+                            }
+                            else{
+                                ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
+                                Response response = SpringBridge.getInstance().getDelegateClient().getCollaborationGroup(bearerToken,federatedCollaborationGroupMetadata.getID(),federatedCollaborationGroupMetadata.getFederationID());
+                                cp = objectMapper.readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),CollaborationGroup.class);
+                            }
+
                             for (ProcessInstanceGroup associatedProcessInstanceGroup : cp.getAssociatedProcessInstanceGroups()) {
                                 collaborationGroup.getAssociatedProcessInstanceGroups().add(associatedProcessInstanceGroup);
                             }
@@ -354,8 +372,16 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
                 if(!federatedMetadataExists(newFeds,federatedCollaborationGroupMetadataDAO)){
                     newFeds.add(federatedCollaborationGroupMetadataDAO);
                     try {
-                        Response response = SpringBridge.getInstance().getDelegateClient().getCollaborationGroup(bearerToken,federatedCollaborationGroupMetadataDAO.getID(),federatedCollaborationGroupMetadataDAO.getFederationID());
-                        CollaborationGroup collaborationGroup = objectMapper.readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),CollaborationGroup.class);
+                        CollaborationGroup collaborationGroup;
+                        // collaboration group is in this instance
+                        if(federatedCollaborationGroupMetadataDAO.getFederationID().contentEquals(SpringBridge.getInstance().getFederationId())){
+                            ResponseEntity responseEntity = getCollaborationGroup(federatedCollaborationGroupMetadataDAO.getFederationID(),bearerToken);
+                            collaborationGroup = (CollaborationGroup) responseEntity.getBody();
+                        }
+                        else{
+                            Response response = SpringBridge.getInstance().getDelegateClient().getCollaborationGroup(bearerToken,federatedCollaborationGroupMetadataDAO.getID(),federatedCollaborationGroupMetadataDAO.getFederationID());
+                            collaborationGroup = objectMapper.readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),CollaborationGroup.class);
+                        }
 
                         for (FederatedCollaborationGroupMetadata federatedCollaborationGroupMetadata : collaborationGroup.getFederatedCollaborationGroupMetadatas()) {
                             FederatedCollaborationGroupMetadataDAO federatedCollaborationGroupMetadataDAO1 = HibernateSwaggerObjectMapper.createFederatedCollaborationGroupMetadata(federatedCollaborationGroupMetadata);
@@ -458,9 +484,18 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
                 if(collaborationGroup.getFederatedCollaborationGroupMetadatas() != null){
                     for (FederatedCollaborationGroupMetadata federatedCollaborationGroupMetadata : collaborationGroup.getFederatedCollaborationGroupMetadatas()) {
                         try {
-                            ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
-                            Response response = SpringBridge.getInstance().getDelegateClient().getCollaborationGroup(bearerToken,federatedCollaborationGroupMetadata.getID(),federatedCollaborationGroupMetadata.getFederationID());
-                            CollaborationGroup federatedCollaborationGroup = objectMapper.readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),CollaborationGroup.class);
+                            CollaborationGroup federatedCollaborationGroup;
+                            // collaboration group is in this instance
+                            if(federatedCollaborationGroupMetadata.getFederationID().contentEquals(SpringBridge.getInstance().getFederationId())){
+                                ResponseEntity responseEntity = getCollaborationGroup(federatedCollaborationGroupMetadata.getID(),bearerToken);
+                                federatedCollaborationGroup = (CollaborationGroup) responseEntity.getBody();
+                            }
+                            else{
+                                ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
+                                Response response = SpringBridge.getInstance().getDelegateClient().getCollaborationGroup(bearerToken,federatedCollaborationGroupMetadata.getID(),federatedCollaborationGroupMetadata.getFederationID());
+                                federatedCollaborationGroup = objectMapper.readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),CollaborationGroup.class);
+                            }
+
                             for (ProcessInstanceGroup associatedProcessInstanceGroup : federatedCollaborationGroup.getAssociatedProcessInstanceGroups()) {
                                 collaborationGroup.getAssociatedProcessInstanceGroups().add(associatedProcessInstanceGroup);
                             }

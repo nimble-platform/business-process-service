@@ -159,9 +159,19 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
                 // get the preceding process instance group
                 FederatedCollaborationGroupMetadataDAO federatedCollaborationGroupMetadataDAO = ProcessInstanceGroupDAOUtility.getPrecedingProcessInstanceGroup(processInstanceId);
                 if (federatedCollaborationGroupMetadataDAO != null) {
-                    Response response = SpringBridge.getInstance().getDelegateClient().getOrderDocument(bearerToken,processInstanceId,sourceOrderResponseId,federatedCollaborationGroupMetadataDAO.getFederationID());
-                    if(response.status() == 200){
-                        orderJson = eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response);
+                    // preceding group is in this instance
+                    if(federatedCollaborationGroupMetadataDAO.getFederationID().contentEquals(SpringBridge.getInstance().getFederationId())){
+                        ResponseEntity responseEntity = getOrderDocument(processInstanceId,sourceOrderResponseId,bearerToken);
+                        if(responseEntity.getStatusCodeValue() == 200){
+                            orderJson = (String) responseEntity.getBody();
+                        }
+                    }
+                    // preceding group is in a different instance
+                    else{
+                        Response response = SpringBridge.getInstance().getDelegateClient().getOrderDocument(bearerToken,processInstanceId,sourceOrderResponseId,federatedCollaborationGroupMetadataDAO.getFederationID());
+                        if(response.status() == 200){
+                            orderJson = eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response);
+                        }
                     }
                 } else {
                     orderJson = (String) documentController.getDocumentJsonContent(sourceOrderResponseId,bearerToken).getBody();

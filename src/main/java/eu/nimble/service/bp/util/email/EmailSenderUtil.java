@@ -58,9 +58,16 @@ public class EmailSenderUtil {
             String partyIds = partyId +","+tradingPartnerId;
             List<String> federationIds = Arrays.asList(groupDAO.getFederationID(),tradingPartnerFederationID);
             try {
-                Response response = SpringBridge.getInstance().getDelegateClient().getParty(bearerToken,partyIds,false,federationIds);
-                List<PartyType> parties = JsonSerializationUtility.getObjectMapper().readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),new TypeReference<List<PartyType>>() {
-                });
+                List<PartyType> parties;
+                // parties in this instance
+                if(groupDAO.getFederationID().contentEquals(SpringBridge.getInstance().getFederationId()) && tradingPartnerFederationID.contentEquals(SpringBridge.getInstance().getFederationId())){
+                    parties = SpringBridge.getInstance().getiIdentityClientTyped().getParties(bearerToken,Arrays.asList(groupDAO.getFederationID(),tradingPartnerFederationID));
+                }
+                else{
+                    Response response = SpringBridge.getInstance().getDelegateClient().getParty(bearerToken,partyIds,false,federationIds);
+                    parties = JsonSerializationUtility.getObjectMapper().readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),new TypeReference<List<PartyType>>() {
+                    });
+                }
                 for (PartyType partyType : parties) {
                     if(partyType.getPartyIdentification().get(0).getID().contentEquals(partyId) && partyType.getFederationInstanceID().contentEquals(groupDAO.getFederationID())){
                         party = partyType;

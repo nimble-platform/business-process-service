@@ -261,7 +261,14 @@ public class StartController implements StartApi {
                 federatedCollaborationGroupMetadata.setFederationID(responderFederationId);
                 try {
                     String requestBody = JsonSerializationUtility.getObjectMapper().writeValueAsString(federatedCollaborationGroupMetadata);
-                    Response response = SpringBridge.getInstance().getDelegateClient().addFederatedMetadataToCollaborationGroup(bearerToken,initiatorFederationId,precedingOrderId,requestBody,body.getVariables().getInitiatorID(),initiatorFederationId);
+                    // initiator party is in this instance
+                    if(initiatorFederationId.contentEquals(SpringBridge.getInstance().getFederationId())){
+                        ResponseEntity responseEntity = collaborationGroupsController.addFederatedMetadataToCollaborationGroup(precedingOrderId,requestBody,body.getVariables().getInitiatorID(),initiatorFederationId,bearerToken);
+                    }
+                    // initiator party is in a different instance
+                    else{
+                        Response response = SpringBridge.getInstance().getDelegateClient().addFederatedMetadataToCollaborationGroup(bearerToken,initiatorFederationId,precedingOrderId,requestBody,body.getVariables().getInitiatorID(),initiatorFederationId);
+                    }
                 } catch (Exception e) {
                     throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_FAILED_TO_MERGE_TRANSPORT_GROUP_TO_ORDER_GROUP.toString(),e);
                 }
