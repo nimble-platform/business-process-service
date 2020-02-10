@@ -203,7 +203,7 @@ hystrix:
             timeoutInMilliseconds: 50000
   threadpool:
     default:
-      coreSize: 200
+      coreSize: 300
       maxQueueSize: -1
 
 build:
