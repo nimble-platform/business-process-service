@@ -10,8 +10,9 @@ import eu.nimble.service.bp.util.persistence.catalogue.PartyPersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
 import eu.nimble.service.bp.messaging.KafkaSender;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
-import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.JsonSerializationUtility;
+import eu.nimble.utility.exception.NimbleException;
+import eu.nimble.utility.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.validation.IValidationUtil;
 import io.swagger.annotations.ApiOperation;
@@ -31,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -60,7 +62,8 @@ public class TrustServiceController {
                                                 @ApiParam(value = "JSON string representing an array of Comment instances.<br>Example:<br>[{\"comment\":\"Awesome trading partner\",\"typeCode\":{\"value\":\"\",\"name\":\"\",\"uri\":\"\",\"listID\":\"\",\"listURI\":\"\"}},{\"comment\":\"Perfect collaboration\",\"typeCode\":{\"value\":\"\",\"name\":\"\",\"uri\":\"\",\"listID\":\"\",\"listURI\":\"\"}}]") @RequestParam(value = "reviews", required = false) String reviewsString,
                                                 @ApiParam(value = "Identifier of the party for which a rating and reviews will be created", required = true) @RequestParam(value = "partyId") String partyId,
                                                 @ApiParam(value = "Identifier of the process instance associated with the ratings and reviews.Usually,it is the identifier of the last process instance which concludes the collaboration", required = true) @RequestParam(value = "processInstanceID") String processInstanceID,
-                                                @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
+                                                @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
+                                                @ApiParam(value = "", required = true) @RequestHeader(value = "federationId", required = true) String federationId) {
         try {
             logger.info("Creating rating and reviews for the party with id: {} and process instance with id: {}", partyId, processInstanceID);
             /**
@@ -69,35 +72,36 @@ public class TrustServiceController {
 
             // validate role
             if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
-                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+                throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
             // check party
-            QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingParty(partyId);
+            QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingParty(partyId,federationId);
             if (qualifyingParty == null) {
-                return HttpResponseUtil.createResponseEntityAndLog(String.format("No qualifying party exists for the given party id: %s", partyId), HttpStatus.BAD_REQUEST);
+                throw new NimbleException(NimbleExceptionMessageCode.BAD_REQUEST_NO_QUALIFYING_PARTY.toString(), Arrays.asList(partyId));
             }
             // check process instance id
             List<ProcessDocumentMetadataDAO> processDocumentMetadatas = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(processInstanceID);
             if (processDocumentMetadatas.size() == 0) {
-                return HttpResponseUtil.createResponseEntityAndLog(String.format("No process document metadata for the given process instance id: %s", processInstanceID), HttpStatus.BAD_REQUEST);
+                throw new NimbleException(NimbleExceptionMessageCode.BAD_REQUEST_NO_PROCESS_DOCUMENT_METADATA.toString(), Arrays.asList(processInstanceID));
             }
             // check the trading partner existence
             String tradingPartnerId = ProcessDocumentMetadataDAOUtility.getTradingPartnerId(processDocumentMetadatas.get(0), partyId);
-            PartyType tradingParty = PartyPersistenceUtility.getParty(tradingPartnerId);
+            String tradingPartnerFederationId = ProcessDocumentMetadataDAOUtility.getTradingPartnerFederationId(processDocumentMetadatas.get(0),partyId);
+            PartyType tradingParty = PartyPersistenceUtility.getParty(tradingPartnerId,tradingPartnerFederationId);
             if(tradingParty == null) {
-                return HttpResponseUtil.createResponseEntityAndLog(String.format("No party exists for the given party id: %s", tradingPartnerId), HttpStatus.BAD_REQUEST);
+                throw new NimbleException(NimbleExceptionMessageCode.BAD_REQUEST_NO_PARTY.toString(), Arrays.asList(tradingPartnerId));
             }
             // check whether the party is included in the process
-            if(!(processDocumentMetadatas.get(0).getInitiatorID().contentEquals(partyId) || processDocumentMetadatas.get(0).getResponderID().contentEquals(partyId))) {
-                return HttpResponseUtil.createResponseEntityAndLog(String.format("Party: %s is not included in the process instance: %s", tradingPartnerId, processInstanceID), HttpStatus.BAD_REQUEST);
+            if(!((processDocumentMetadatas.get(0).getInitiatorID().contentEquals(partyId) && processDocumentMetadatas.get(0).getInitiatorFederationID().contentEquals(federationId)) || (processDocumentMetadatas.get(0).getResponderID().contentEquals(partyId) && processDocumentMetadatas.get(0).getResponderFederationID().contentEquals(federationId)))) {
+                throw new NimbleException(NimbleExceptionMessageCode.BAD_REQUEST_PARTY_NOT_INCLUDED_IN_PROCESS.toString(), Arrays.asList(tradingPartnerId, processInstanceID));
             }
             // check the values
             ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
             List<EvidenceSuppliedType> ratings = null;
             List<CommentType> reviews = null;
             if(ratingsString == null && reviewsString == null) {
-                return HttpResponseUtil.createResponseEntityAndLog(String.format("One of the ratings or reviews parameters must be given for party: %s, process instance: %s", tradingPartnerId, processInstanceID), HttpStatus.BAD_REQUEST);
+                throw new NimbleException(NimbleExceptionMessageCode.BAD_REQUEST_MISSING_RATING_PARAMETER.toString(), Arrays.asList(tradingPartnerId, processInstanceID));
             }
             if(ratingsString != null) {
                 ratings = objectMapper.readValue(ratingsString, new TypeReference<List<EvidenceSuppliedType>>() {});
@@ -112,7 +116,7 @@ public class TrustServiceController {
 
             boolean completedTaskExist = TrustPersistenceUtility.completedTaskExist(qualifyingParty, processInstanceID);
             if (!completedTaskExist) {
-                return HttpResponseUtil.createResponseEntityAndLog(String.format("No completed task exists for the given party id: %s and process instance id: %s", partyId, processInstanceID), HttpStatus.BAD_REQUEST);
+                throw new NimbleException(NimbleExceptionMessageCode.BAD_REQUEST_NO_COMPLETED_TASK.toString(), Arrays.asList(partyId, processInstanceID));
             }
             CompletedTaskType completedTaskType = TrustPersistenceUtility.fillCompletedTask(qualifyingParty, ratings, reviews, processInstanceID);
             new JPARepositoryFactory().forCatalogueRepository().updateEntity(qualifyingParty);
@@ -124,8 +128,7 @@ public class TrustServiceController {
             return ResponseEntity.ok(completedTaskType);
 
         } catch (Exception e) {
-            logger.error("Failed to create rating and reviews for the party with id: {} and process instance with id: {}", partyId, processInstanceID, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_CREATE_RATING_AND_REVIEW.toString(),Arrays.asList(partyId, processInstanceID),e);
         }
     }
 
@@ -139,17 +142,18 @@ public class TrustServiceController {
             produces = {"application/json"},
             method = RequestMethod.GET)
     public ResponseEntity getRatingsSummary(@ApiParam(value = "Identifier of the party whose ratings will be received", required = true) @RequestParam(value = "partyId") String partyId,
-                                            @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
+                                            @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
+                                            @ApiParam(value = "" ,required=true ) @RequestHeader(value="federationId", required=true) String federationId){
         logger.info("Getting ratings summary for the party with id: {}",partyId);
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
-            return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+            throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 
         // check party
-        QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingParty(partyId);
+        QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingParty(partyId,federationId);
         if (qualifyingParty == null) {
-            return HttpResponseUtil.createResponseEntityAndLog(String.format("No qualifying party exists for the given party id: %s", partyId), HttpStatus.BAD_REQUEST);
+            throw new NimbleException(NimbleExceptionMessageCode.BAD_REQUEST_NO_QUALIFYING_PARTY.toString(), Arrays.asList(partyId));
         }
         JSONObject jsonResponse = createJSONResponse(qualifyingParty.getCompletedTask());
         logger.info("Retrieved ratings summary for the party with id: {}",partyId);
@@ -167,18 +171,19 @@ public class TrustServiceController {
             produces = {"application/json"},
             method = RequestMethod.GET)
     public ResponseEntity listAllIndividualRatingsAndReviews(@ApiParam(value = "Identifier of the party whose individual ratings and reviews will be received", required = true) @RequestParam(value = "partyId") String partyId,
-                                                             @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
+                                                             @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
+                                                             @ApiParam(value = "" ,required=true ) @RequestHeader(value="federationId", required=true) String federationId) throws Exception{
         try {
             logger.info("Getting all individual ratings and review for the party with id: {}",partyId);
             // validate role
             if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
-                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+                throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
             // check party
-            QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingParty(partyId);
+            QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingParty(partyId,federationId);
             if (qualifyingParty == null) {
-                return HttpResponseUtil.createResponseEntityAndLog(String.format("No qualifying party exists for the given party id: %s", partyId), HttpStatus.BAD_REQUEST);
+                throw new NimbleException(NimbleExceptionMessageCode.BAD_REQUEST_NO_QUALIFYING_PARTY.toString(), Arrays.asList(partyId));
             }
             List<NegotiationRatings> negotiationRatings = TrustPersistenceUtility.createNegotiationRatings(qualifyingParty.getCompletedTask());
             String ratingsAndReviews = JsonSerializationUtility.getObjectMapper().writeValueAsString(negotiationRatings);
@@ -186,8 +191,7 @@ public class TrustServiceController {
             return ResponseEntity.ok(ratingsAndReviews);
         }
         catch (Exception e){
-            logger.error("Unexpected error while getting negotiation ratings and reviews for the party: {}",partyId,e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_LIST_ALL_INDIVIDUAL_RATINGS_AND_REVIEWS.toString(), Arrays.asList(partyId),e);
         }
     }
 

@@ -1,28 +1,22 @@
 package eu.nimble.service.bp.model.efactoryDemo;
 
-import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 public class RFQSummary {
-    @NotNull
     private String productID;
-    @NotNull
     private BigDecimal numberOfProductsRequested;
-    @NotNull
     private String endpointOfTheBuyer;
-    @NotNull
     private String buyerPartyId;
-    @NotNull
     private String buyerPartyName;
-    @NotNull
     private String processInstanceId;
-    @NotNull
     private String messageName;
+    private String previousDocumentId;
+    private BigDecimal pricePerProduct;
 
     public RFQSummary() {
     }
 
-    public RFQSummary(String productID, BigDecimal numberOfProductsRequested, String endpointOfTheBuyer, String buyerPartyId, String buyerPartyName, String processInstanceId, String messageName) {
+    public RFQSummary(String productID, BigDecimal numberOfProductsRequested, String endpointOfTheBuyer, String buyerPartyId, String buyerPartyName, String processInstanceId, String messageName, String previousDocumentId, BigDecimal pricePerProduct) {
         this.productID = productID;
         this.numberOfProductsRequested = numberOfProductsRequested;
         this.endpointOfTheBuyer = endpointOfTheBuyer;
@@ -30,6 +24,8 @@ public class RFQSummary {
         this.buyerPartyName = buyerPartyName;
         this.processInstanceId = processInstanceId;
         this.messageName = messageName;
+        this.previousDocumentId = previousDocumentId;
+        this.pricePerProduct = pricePerProduct;
     }
 
     public String getProductID() {
@@ -86,5 +82,21 @@ public class RFQSummary {
 
     public void setMessageName(String messageName) {
         this.messageName = messageName;
+    }
+
+    public String getPreviousDocumentId() {
+        return previousDocumentId;
+    }
+
+    public void setPreviousDocumentId(String previousDocumentId) {
+        this.previousDocumentId = previousDocumentId;
+    }
+
+    public BigDecimal getPricePerProduct() {
+        return pricePerProduct;
+    }
+
+    public void setPricePerProduct(BigDecimal pricePerProduct) {
+        this.pricePerProduct = pricePerProduct;
     }
 }

@@ -46,7 +46,7 @@ public class BusinessProcessWorkflowTests {
     private final String itemInformationResponseJSON = "/controller/itemInformationResponseJSON5.txt";
     private final String ppapRequestJSON = "/controller/PPAPRequestJSON3.txt";
 
-    private static String processInstanceID;
+    public static String processInstanceID;
     public static String sellerCollaborationGroupID;
     public static String sellerProcessInstanceGroupID;
 
@@ -67,6 +67,8 @@ public class BusinessProcessWorkflowTests {
         // start business process
         MockHttpServletRequestBuilder request = post("/start")
                 .header("Authorization", "745")
+                .header("initiatorFederationId",TestConfig.federationId)
+                .header("responderFederationId",TestConfig.federationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -78,6 +80,7 @@ public class BusinessProcessWorkflowTests {
         // get collaboration group information for seller
         request = get("/collaboration-groups")
                 .header("Authorization", "1337")
+                .header("initiatorFederationId",TestConfig.federationId)
                 .param("partyID","1339")
                 .param("relatedProducts","QExample local")
                 .param("collaborationRole","SELLER")
@@ -102,6 +105,8 @@ public class BusinessProcessWorkflowTests {
 
         MockHttpServletRequestBuilder request = post("/continue")
                 .header("Authorization", "1337")
+                .header("initiatorFederationId",TestConfig.federationId)
+                .header("responderFederationId",TestConfig.federationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString)
                 .param("gid", sellerProcessInstanceGroupID)
@@ -109,7 +114,7 @@ public class BusinessProcessWorkflowTests {
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         // get QualifyingParty of seller
-        QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingPartyType("747", "745");
+        QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingPartyType("747", TestConfig.federationId,"745");
         // although the seller's workflow is completed, CompletedTask should not be created for this collaboration automatically
         Assert.assertEquals(false, TrustPersistenceUtility.completedTaskExist(qualifyingParty,processInstanceID));
     }
@@ -123,6 +128,7 @@ public class BusinessProcessWorkflowTests {
 
         MockHttpServletRequestBuilder request = post("/start")
                 .header("Authorization", "745")
+                .header("initiatorFederationId",TestConfig.federationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isBadRequest()).andReturn();

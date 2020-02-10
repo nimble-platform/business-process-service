@@ -38,11 +38,11 @@ public class CamundaEngine {
 
     private static Logger logger = LoggerFactory.getLogger(CamundaEngine.class);
 
-    public static void continueProcessInstance(String processContextId,ProcessInstanceInputMessage body, String bearerToken) {
+    public static void continueProcessInstance(String processContextId,ProcessInstanceInputMessage body,String initiatorFederationId,String responderFederationId, String bearerToken) {
         String processInstanceID = body.getProcessInstanceID();
         Task task = taskService.createTaskQuery().processInstanceId(processInstanceID).list().get(0);
 
-        Map<String, Object> data = getVariablesData(body);
+        Map<String, Object> data = getVariablesData(body, initiatorFederationId, responderFederationId);
         // add processContextId
         data.put("processContextId",processContextId);
         data.put("bearer_token", bearerToken);
@@ -56,8 +56,8 @@ public class CamundaEngine {
         logger.info(" Completed business process instance {}", processInstanceID);
     }
 
-    public static ProcessInstance startProcessInstance(String processContextId,ProcessInstanceInputMessage body) {
-        Map<String, Object> data = getVariablesData(body);
+    public static ProcessInstance startProcessInstance(String processContextId,ProcessInstanceInputMessage body, String initiatorFederationId,String responderFederationId) {
+        Map<String, Object> data = getVariablesData(body, initiatorFederationId, responderFederationId);
         // add processContextId
         data.put("processContextId",processContextId);
         String processID = body.getVariables().getProcessID();
@@ -117,7 +117,7 @@ public class CamundaEngine {
         return process;
     }
 
-    private static Map<String, Object> getVariablesData(ProcessInstanceInputMessage body) {
+    private static Map<String, Object> getVariablesData(ProcessInstanceInputMessage body,String initiatorFederationId,String responderFederationId) {
         ProcessVariables variables = body.getVariables();
         String content = variables.getContent();
         String initiatorID = variables.getInitiatorID();
@@ -131,6 +131,8 @@ public class CamundaEngine {
         data.put("content", content);
         data.put("relatedProducts", variables.getRelatedProducts());
         data.put("relatedProductCategories", variables.getRelatedProductCategories());
+        data.put("initiatorFederationId",initiatorFederationId);
+        data.put("responderFederationId",responderFederationId);
         return data;
     }
 

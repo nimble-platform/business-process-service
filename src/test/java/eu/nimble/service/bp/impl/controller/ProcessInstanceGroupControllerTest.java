@@ -8,6 +8,7 @@ import eu.nimble.service.bp.swagger.model.CollaborationGroup;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroup;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupFilter;
+import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.utility.JsonSerializationUtility;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
@@ -25,7 +26,9 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 
 import java.util.List;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -45,7 +48,7 @@ public class ProcessInstanceGroupControllerTest {
     private final String partyId = "706";
     private static String processInstanceGroupId1;
     private static String processInstanceGroupIIR1;
-    private final int test1_expectedValue = 8;
+    private final int test1_expectedValue = 9;
     private final int test2_expectedValue = 1;
 
     /**
@@ -67,6 +70,7 @@ public class ProcessInstanceGroupControllerTest {
     public void test01_getCollaborationGroups() throws Exception {
         MockHttpServletRequestBuilder request = get("/collaboration-groups")
                 .header("Authorization", TestConfig.initiatorPersonId)
+                .header("federationId",TestConfig.federationId)
                 .param("partyId", partyId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
@@ -128,6 +132,7 @@ public class ProcessInstanceGroupControllerTest {
     public void test06_getProcessInstanceGroupFilters() throws Exception {
         MockHttpServletRequestBuilder request = get("/process-instance-groups/filters")
                 .header("Authorization", TestConfig.responderPersonId)
+                .header("federationId",TestConfig.federationId)
                 .param("collaborationRole", "SELLER")
                 .param("partyId", "706");
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();

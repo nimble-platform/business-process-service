@@ -2,6 +2,9 @@ package eu.nimble.service.bp.contract;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mashape.unirest.http.HttpResponse;
+import com.mashape.unirest.http.JsonNode;
+import com.mashape.unirest.http.Unirest;
 import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
 import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
@@ -22,6 +25,7 @@ import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.binary.BinaryContentService;
+import feign.Response;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -103,7 +107,7 @@ public class ContractGenerator {
         }
     }
 
-    public List<ClauseType> getTermsAndConditions(String sellerPartyId, String buyerPartyId, String incoterms, String tradingTerm, String bearerToken) throws IOException {
+    public List<ClauseType> getTermsAndConditions(String sellerPartyId,String buyerPartyId,String buyerFederationId, String incoterms, String tradingTerm, String bearerToken) throws Exception {
         List<ClauseType> clauses = new ArrayList<>();
 
         try {
@@ -123,7 +127,13 @@ public class ContractGenerator {
                 PartyType supplierParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,sellerPartyId);
                 PartyType customerParty = null;
                 if(buyerPartyId != null){
-                    customerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,buyerPartyId);
+                    if(!buyerFederationId.contentEquals(SpringBridge.getInstance().getFederationId())){
+                        Response response = SpringBridge.getInstance().getDelegateClient().getParty(bearerToken,Long.parseLong(buyerPartyId),false,buyerFederationId);
+                        customerParty = objectMapper.readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),PartyType.class);
+                    }
+                    else {
+                        customerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,buyerPartyId);
+                    }
                 }
 
                 for(ClauseType clause : clauses){
@@ -278,18 +288,21 @@ public class ContractGenerator {
     }
 
     private void setClauseContent(String sectionText, XWPFParagraph paragraph, List<TradingTermType> tradingTerms){
-        int indexOfParameter = sectionText.indexOf("$");
-        while (indexOfParameter != -1){
-            paragraph.createRun().setText(sectionText.substring(0,indexOfParameter),0);
-            sectionText = sectionText.substring(indexOfParameter);
+        // get the identifiers of all trading terms
+        List<String> tradingTermIds = new ArrayList<>();
+        for (TradingTermType tradingTerm : tradingTerms) {
+            tradingTermIds.add(tradingTerm.getID());
+        }
+        // get the details of first trading term in the given section text
+        TradingTermIndex nextTradingTerm = getFirstTradingTermInText(sectionText,tradingTermIds);
 
-            // find the parameter
-            int spaceIndex = sectionText.indexOf(" ");
-            String parameter = sectionText.substring(0,spaceIndex);
+        while (nextTradingTerm != null){
+            paragraph.createRun().setText(sectionText.substring(0,nextTradingTerm.getIndex()),0);
+            sectionText = sectionText.substring(nextTradingTerm.getIndex()+nextTradingTerm.getTradingTermId().length());
 
             XWPFRun run = paragraph.createRun();
             for(TradingTermType tradingTerm : tradingTerms){
-                if(tradingTerm.getID().contentEquals(parameter)){
+                if(tradingTerm.getID().contentEquals(nextTradingTerm.getTradingTermId())){
                     // find the value of parameter
                     String value = "";
                     if(tradingTerm.getValue().getValueQualifier().contentEquals("STRING") && tradingTerm.getValue().getValue().get(0).getValue() != null && !tradingTerm.getValue().getValue().get(0).getValue().contentEquals("")){
@@ -314,12 +327,32 @@ public class ContractGenerator {
                 }
             }
 
-            sectionText = sectionText.substring(spaceIndex);
-
-            indexOfParameter = sectionText.indexOf("$");
+            nextTradingTerm = getFirstTradingTermInText(sectionText,tradingTermIds);
         }
 
         paragraph.createRun().setText(sectionText,0);
+    }
+
+    // returns the details (id and the index) of the first trading term in the given text if exists
+    private TradingTermIndex getFirstTradingTermInText(String text, List<String> tradingTermId){
+        if(tradingTermId.size() == 0){
+            return null;
+        }
+        String firstTradingTerm = null;
+        int tradingTermIndex = text.length();
+
+        for (String s : tradingTermId) {
+            int index = text.indexOf(s);
+            if (index != -1 && index < tradingTermIndex) {
+                firstTradingTerm = s;
+                tradingTermIndex = index;
+            }
+        }
+
+        if(firstTradingTerm == null){
+            return null;
+        }
+        return new TradingTermIndex(tradingTermIndex, firstTradingTerm);
     }
 
     // returns the contract storing Terms and Conditions details for the item specified by the item index
@@ -436,7 +469,7 @@ public class ContractGenerator {
                                             }
                                         }
                                         if(text.contains("$phone_id")){
-                                            if(!order.getBuyerCustomerParty().getParty().getPerson().get(0).getContact().getTelephone().contentEquals("")){
+                                            if(order.getBuyerCustomerParty().getParty().getPerson().get(0).getContact() != null && !order.getBuyerCustomerParty().getParty().getPerson().get(0).getContact().getTelephone().contentEquals("")){
                                                 text = text.replace("$phone_id",order.getBuyerCustomerParty().getParty().getPerson().get(0).getContact().getTelephone());
                                                 r.setText(text,0);
                                             }
@@ -1722,6 +1755,24 @@ public class ContractGenerator {
         }
         return date;
 
+    }
+
+    private static class TradingTermIndex{
+        private int index;
+        private String tradingTermId;
+
+        TradingTermIndex(int index, String tradingTermId) {
+            this.index = index;
+            this.tradingTermId = tradingTermId;
+        }
+
+        int getIndex() {
+            return index;
+        }
+
+        String getTradingTermId() {
+            return tradingTermId;
+        }
     }
 
 }

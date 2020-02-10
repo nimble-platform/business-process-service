@@ -69,6 +69,7 @@ public class StatisticsControllerTest {
     public void getTradingVolumeZero() throws Exception {
         MockHttpServletRequestBuilder request = get("/statistics/trading-volume")
                 .header("Authorization", TestConfig.responderPersonId)
+                .header("federationId",TestConfig.federationId)
                 .param("partyId", partyId)
                 .param("role", role)
                 .param("status", statusTradingVolume);
@@ -81,7 +82,8 @@ public class StatisticsControllerTest {
     @Test
     public void getTradingVolume() throws Exception {
         MockHttpServletRequestBuilder request = get("/statistics/trading-volume")
-                .header("Authorization", TestConfig.responderPersonId);
+                .header("Authorization", TestConfig.responderPersonId)
+                .header("federationId",TestConfig.federationId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         double tradingVolume = gson.fromJson(mvcResult.getResponse().getContentAsString(), double.class);
@@ -92,6 +94,7 @@ public class StatisticsControllerTest {
     public void getProcessCount() throws Exception {
         MockHttpServletRequestBuilder request = get("/statistics/total-number/business-process")
                 .header("Authorization", TestConfig.responderPersonId)
+                .header("federationId",TestConfig.federationId)
                 .param("status", statusProcessCount);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
@@ -118,7 +121,8 @@ public class StatisticsControllerTest {
                 .param("partyId", partyId)
                 .param("role", role)
                 .param("businessProcessType", businessProcessType)
-                .header("Authorization", TestConfig.responderPersonId);
+                .header("Authorization", TestConfig.responderPersonId)
+                .header("federationId",TestConfig.federationId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         BusinessProcessCount count = gson.fromJson(mvcResult.getResponse().getContentAsString(), BusinessProcessCount.class);

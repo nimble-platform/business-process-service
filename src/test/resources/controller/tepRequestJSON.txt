@@ -4,6 +4,7 @@
     ""
   ],
   "transportUserParty": {
+    "federationInstanceID": "TEST_INSTANCE",
     "nace": [],
     "description": [],
     "brandName": [],
@@ -1477,6 +1478,7 @@
     ]
   },
   "transportServiceProviderParty": {
+    "federationInstanceID": "TEST_INSTANCE",
     "nace": [],
     "description": [],
     "brandName": [],
@@ -1861,7 +1863,7 @@
     ],
     "additionalItemProperty": [],
     "manufacturerParty": {
-      "federationInstanceID": null,
+      "federationInstanceID": "TEST_INSTANCE",
       "nace": [],
       "description": [],
       "brandName": [],
@@ -2335,7 +2337,7 @@
           },
           "estimatedDeliveryDate": null,
           "carrierParty": {
-            "federationInstanceID": null,
+            "federationInstanceID": "TEST_INSTANCE",
             "nace": [],
             "description": [],
             "brandName": [],
@@ -2663,8 +2665,10 @@
       ]
     }
   ],
-  "additionalDocumentReference": [{
-    "id":"9d5cd4e2-f37a-4451-8cde-b07a73c98012",
-    "documentType":"previousDocument"
-  }]
+  "additionalDocumentReference": [
+    {
+      "id": "9d5cd4e2-f37a-4451-8cde-b07a73c98012",
+      "documentType": "previousDocument"
+    }
+  ]
 }

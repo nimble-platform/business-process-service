@@ -8,6 +8,7 @@ import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.bp.swagger.api.ApplicationApi;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
+import eu.nimble.utility.exception.NimbleException;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -39,14 +40,12 @@ public class ApplicationController implements ApplicationApi {
     @ApiOperation(value = "",notes = "Add a new partner business process application preference")
     public ResponseEntity<ModelApiResponse> addProcessConfiguration(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,@RequestBody ProcessConfiguration body
 
-    ) {
+    ) throws NimbleException {
         logger.info(" $$$ Adding ProcessApplicationConfigurations: ");
         logger.debug(" $$$ {}", body.toString());
 
-        ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
-        if (tokenCheck != null) {
-            return tokenCheck;
-        }
+        HttpResponseUtil.checkToken(bearerToken);
+
         ProcessConfigurationDAO processConfigurationDAO = HibernateSwaggerObjectMapper.createProcessConfiguration_DAO(body);
         repositoryFactory.forBpRepository().persistEntity(processConfigurationDAO);
         return HibernateSwaggerObjectMapper.getApiResponse();
@@ -56,12 +55,10 @@ public class ApplicationController implements ApplicationApi {
     @ApiOperation(value = "",notes = "Delete the business process application preference of a partner for a process")
     public ResponseEntity<ModelApiResponse> deleteProcessConfiguration(@PathVariable("partnerID") String partnerID, @PathVariable("processID") String processID, @PathVariable("roleType") String roleType,
                                                                        @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
-    ) {
+    ) throws NimbleException {
         logger.info(" $$$ Deleting ProcessApplicationConfigurations for ... {}", partnerID);
-        ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
-        if (tokenCheck != null) {
-            return tokenCheck;
-        }
+        HttpResponseUtil.checkToken(bearerToken);
+
         ProcessConfigurationDAO processConfigurationDAO = ProcessConfigurationDAOUtility.getProcessConfiguration(partnerID, processID, ProcessConfiguration.RoleTypeEnum.valueOf(roleType));
         repositoryFactory.forBpRepository().deleteEntityByHjid(ProcessConfigurationDAO.class, processConfigurationDAO.getHjid());
         return HibernateSwaggerObjectMapper.getApiResponse();
@@ -71,12 +68,10 @@ public class ApplicationController implements ApplicationApi {
     @ApiOperation(value = "",notes = "Get the business process application preferences of a partner for all processes")
     public ResponseEntity<List<ProcessConfiguration>> getProcessConfiguration(@PathVariable("partnerID") String partnerID,
                                                                               @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
-    ) {
+    ) throws NimbleException {
         logger.info(" $$$ Getting ProcessApplicationConfigurations for ... {}", partnerID);
-        ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
-        if (tokenCheck != null) {
-            return tokenCheck;
-        }
+        HttpResponseUtil.checkToken(bearerToken);
+
         List<ProcessConfigurationDAO> processApplicationConfigurationsDAO = ProcessConfigurationDAOUtility.getProcessConfigurations(partnerID);
 
         List<ProcessConfiguration> processApplicationConfigurations = new ArrayList<>();
@@ -93,12 +88,10 @@ public class ApplicationController implements ApplicationApi {
     @ApiOperation(value = "",notes = "Get the business process application preferences of a partner for a specific process")
     public ResponseEntity<ProcessConfiguration> getProcessConfigurationByProcessID(@PathVariable("partnerID") String partnerID, @PathVariable("processID") String processID, @PathVariable("roleType") String roleType,
                                                                                    @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
-    ) {
+    ) throws NimbleException {
         logger.info(" $$$ Deleting ProcessApplicationConfigurations for ... {}", partnerID);
-        ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
-        if (tokenCheck != null) {
-            return tokenCheck;
-        }
+        HttpResponseUtil.checkToken(bearerToken);
+
         ProcessConfigurationDAO processConfigurationDAO = ProcessConfigurationDAOUtility.getProcessConfiguration(partnerID, processID, ProcessConfiguration.RoleTypeEnum.valueOf(roleType));
         ProcessConfiguration processConfiguration = null;
         if(processConfigurationDAO != null)
@@ -110,13 +103,11 @@ public class ApplicationController implements ApplicationApi {
     @ApiOperation(value = "",notes = "Update the business process application preference of a partner")
     public ResponseEntity<ModelApiResponse> updateProcessConfiguration(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,@RequestBody ProcessConfiguration body
 
-    ) {
+    ) throws NimbleException {
         logger.info(" $$$ Updating ProcessApplicationConfigurations: ");
         logger.debug(" $$$ {}", body.toString());
-        ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
-        if (tokenCheck != null) {
-            return tokenCheck;
-        }
+        HttpResponseUtil.checkToken(bearerToken);
+
         ProcessConfigurationDAO processApplicationConfigurationsDAO = ProcessConfigurationDAOUtility.getProcessConfiguration(body.getPartnerID(), body.getProcessID(), body.getRoleType());
         ProcessConfigurationDAO processApplicationConfigurationsDAONew = HibernateSwaggerObjectMapper.createProcessConfiguration_DAO(body);
 

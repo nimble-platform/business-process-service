@@ -5,9 +5,11 @@ import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceDAO;
 import eu.nimble.service.bp.model.trust.NegotiationRatings;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
-import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceDAOUtility;
+import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
+import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
+import eu.nimble.service.model.ubl.commonbasiccomponents.CodeType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.TextType;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
@@ -16,6 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -25,12 +28,21 @@ public class TrustPersistenceUtility {
 
     private static final String QUERY_GET_COMPLETED_TASK_BY_PROCESS_IDS = "SELECT completedTask.hjid FROM CompletedTaskType completedTask WHERE completedTask.associatedProcessInstanceID in :processInstanceIds";
     private static final String QUERY_PROCESS_INSTANCE_IS_RATED = "SELECT count(completedTask) FROM QualifyingPartyType qParty JOIN qParty.party.partyIdentification partyIdentification JOIN qParty.completedTask completedTask " +
-            "WHERE partyIdentification.ID = :partyId AND completedTask.associatedProcessInstanceID = :processInstanceId and (size(completedTask.evidenceSupplied) > 0 or size(completedTask.comment) > 0) ";
-
-    public static boolean processInstanceIsRated(String partyId, String processInstanceId) {
+            "WHERE partyIdentification.ID = :partyId AND qParty.party.federationInstanceID = :federationId AND completedTask.associatedProcessInstanceID = :processInstanceId and " +
+            "(size(completedTask.evidenceSupplied) > 0 or (" +
+            "SELECT count(comment) FROM completedTask.comment comment WHERE comment.typeCode.listID <> 'CANCELLATION_REASON'" +
+            ") > 0) ";
+    private static final String QUERY_GET_CANCELLATION_REASON_FOR_COLLABORATION = "SELECT comment.typeCode.value FROM CompletedTaskType completedTask JOIN completedTask.comment comment " +
+            "WHERE completedTask.associatedProcessInstanceID = :processInstanceId AND comment.typeCode.listID = 'CANCELLATION_REASON'";
+    public static boolean processInstanceIsRated(String partyId,String federationId, String processInstanceId) {
         int sizeOfCompletedTasks =  ((Long)new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(QUERY_PROCESS_INSTANCE_IS_RATED,
-                new String[]{"partyId", "processInstanceId"}, new Object[]{partyId, processInstanceId})).intValue();
+                new String[]{"partyId","federationId", "processInstanceId"}, new Object[]{partyId, federationId, processInstanceId})).intValue();
         return sizeOfCompletedTasks > 0;
+    }
+
+    public static String getCancellationReasonForCollaboration(String processInstanceId) {
+        return new JPARepositoryFactory().forCatalogueRepository(true).getSingleEntity(QUERY_GET_CANCELLATION_REASON_FOR_COLLABORATION,
+                new String[]{"processInstanceId"}, new Object[]{processInstanceId});
     }
 
     public static boolean completedTaskExist(List<String> processInstanceIDs){
@@ -69,12 +81,15 @@ public class TrustPersistenceUtility {
         }
     }
 
-    public static void createCompletedTask(String partyID,String processInstanceID,String bearerToken,String status, String businessContextId) {
+    /**
+     * @param comment the cancellation reason for the cancelled collaborations
+     * */
+    private static void createCompletedTask(String partyID, String federationId, String processInstanceID, String bearerToken, String status, String comment) {
         /**
          * IMPORTANT:
          * {@link QualifyingPartyType}ies should be existing when a {@link CompletedTaskType} is about to be associated to it
          */
-        QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingPartyType(partyID,bearerToken,businessContextId);
+        QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingPartyType(partyID,federationId,bearerToken);
         CompletedTaskType completedTask = new CompletedTaskType();
         completedTask.setAssociatedProcessInstanceID(processInstanceID);
         TextType textType = new TextType();
@@ -83,7 +98,7 @@ public class TrustPersistenceUtility {
         completedTask.setDescription(Arrays.asList(textType));
         PeriodType periodType = new PeriodType();
 
-        ProcessDocumentMetadata responseMetadata = businessContextId != null ? ProcessDocumentMetadataDAOUtility.getResponseMetadata(processInstanceID,BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId).getBpRepository()) : ProcessDocumentMetadataDAOUtility.getResponseMetadata(processInstanceID);
+        ProcessDocumentMetadata responseMetadata = ProcessDocumentMetadataDAOUtility.getResponseMetadata(processInstanceID);
         // TODO: End time and date are NULL for cancelled process for now
         try {
             if (responseMetadata != null) {
@@ -92,15 +107,9 @@ public class TrustPersistenceUtility {
             }
             List<ProcessInstanceDAO> processInstanceDAOS;
             ProcessDocumentMetadata requestMetadata;
-            if(businessContextId != null){
-                processInstanceDAOS = ProcessInstanceDAOUtility.getAllProcessInstancesInCollaborationHistory(processInstanceID,BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId).getBpRepository()) ;
-                requestMetadata = ProcessDocumentMetadataDAOUtility.getRequestMetadata(processInstanceDAOS.get(0).getProcessInstanceID(),BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId).getBpRepository());
-            }
-            else{
-                processInstanceDAOS = ProcessInstanceDAOUtility.getAllProcessInstancesInCollaborationHistory(processInstanceID);
-                requestMetadata = ProcessDocumentMetadataDAOUtility.getRequestMetadata(processInstanceDAOS.get(0).getProcessInstanceID());
+            processInstanceDAOS = ProcessInstanceDAOUtility.getAllProcessInstancesInCollaborationHistory(processInstanceID);
+            requestMetadata = ProcessDocumentMetadataDAOUtility.getRequestMetadata(processInstanceDAOS.get(0).getProcessInstanceID());
 
-            }
             periodType.setStartDate(DatatypeFactory.newInstance().newXMLGregorianCalendar(requestMetadata.getSubmissionDate()));
             periodType.setStartTime(DatatypeFactory.newInstance().newXMLGregorianCalendar(requestMetadata.getSubmissionDate()));
             completedTask.setPeriod(periodType);
@@ -111,37 +120,52 @@ public class TrustPersistenceUtility {
             throw new RuntimeException(msg, e);
         }
 
+        // for the cancelled collaborations, cancellation reason is provided as comment.
+        // for the finished collaborations, no comment available
+        if(comment != null){
+            CommentType commentType = new CommentType();
+            CodeType code = new CodeType();
+            code.setValue(comment);
+            code.setListID("CANCELLATION_REASON");
+
+            commentType.setTypeCode(code);
+
+            completedTask.getComment().add(commentType);
+        }
+
         qualifyingParty.getCompletedTask().add(completedTask);
-        if(businessContextId == null){
-            new JPARepositoryFactory().forCatalogueRepository().updateEntity(qualifyingParty);
-        }
-        else {
-            BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId).getCatalogRepository().updateEntity(qualifyingParty);
-        }
+        new JPARepositoryFactory().forCatalogueRepository().updateEntity(qualifyingParty);
     }
 
-    public static void createCompletedTasksForBothParties(String processInstanceID,String bearerToken,String status, String businessContextId) {
-        List<ProcessDocumentMetadataDAO> processDocumentMetadatas;
-        if(businessContextId != null){
-            processDocumentMetadatas = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(processInstanceID, BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(businessContextId).getBpRepository());
-        }
-        else{
-            processDocumentMetadatas = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(processInstanceID);
-        }
-
-        createCompletedTasksForBothParties(processDocumentMetadatas.get(0), bearerToken, status,businessContextId);
-    }
-
-    public static void createCompletedTasksForBothParties(String processInstanceID,String bearerToken,String status) {
-        createCompletedTasksForBothParties(processInstanceID,bearerToken,status,null);
-    }
-
-    public static void createCompletedTasksForBothParties(ProcessDocumentMetadataDAO processDocumentMetadata,String bearerToken,String status, String businessContextId) {
+    public static void createCompletedTasksForBothParties(String processInstanceID,String bearerToken,String status, String comment) throws IOException {
+        List<ProcessDocumentMetadataDAO> processDocumentMetadatas = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(processInstanceID);
+        ProcessDocumentMetadataDAO processDocumentMetadata = processDocumentMetadatas.get(0);
         String initiatorID = processDocumentMetadata.getInitiatorID();
         String responderID = processDocumentMetadata.getResponderID();
+        String initiatorFederationId = processDocumentMetadata.getInitiatorFederationID();
+        String responderFederationId = processDocumentMetadata.getResponderFederationID();
 
-        TrustPersistenceUtility.createCompletedTask(initiatorID,processDocumentMetadata.getProcessInstanceID(),bearerToken,status,businessContextId);
-        TrustPersistenceUtility.createCompletedTask(responderID,processDocumentMetadata.getProcessInstanceID(),bearerToken,status,businessContextId);
+        if(status.contentEquals("Cancelled")){
+            // we need to add the provided comment (cancellation reason) to the completed task of party who have not cancelled the collaboration
+            PersonType personCancelledTheProcess = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken);
+            // get the party which cancelled the collaboration
+            PartyType partyCancelledTheProcess = SpringBridge.getInstance().getiIdentityClientTyped().getPartyByPersonID(personCancelledTheProcess.getID()).get(0);
+
+            // initiator party cancelled the collaboration
+            if(partyCancelledTheProcess.getPartyIdentification().get(0).getID().contentEquals(initiatorID) && partyCancelledTheProcess.getFederationInstanceID().contentEquals(initiatorFederationId)){
+                TrustPersistenceUtility.createCompletedTask(initiatorID,initiatorFederationId,processDocumentMetadata.getProcessInstanceID(),bearerToken,status,null);
+                TrustPersistenceUtility.createCompletedTask(responderID,responderFederationId,processDocumentMetadata.getProcessInstanceID(),bearerToken,status,comment);
+            }
+            // responder party cancelled the collaboration
+            else{
+                TrustPersistenceUtility.createCompletedTask(initiatorID,initiatorFederationId,processDocumentMetadata.getProcessInstanceID(),bearerToken,status,comment);
+                TrustPersistenceUtility.createCompletedTask(responderID,responderFederationId,processDocumentMetadata.getProcessInstanceID(),bearerToken,status,null);
+            }
+        }
+        else{
+            TrustPersistenceUtility.createCompletedTask(initiatorID,initiatorFederationId,processDocumentMetadata.getProcessInstanceID(),bearerToken,status,null);
+            TrustPersistenceUtility.createCompletedTask(responderID,responderFederationId,processDocumentMetadata.getProcessInstanceID(),bearerToken,status,null);
+        }
     }
 
     public static List<NegotiationRatings> createNegotiationRatings(List<CompletedTaskType> completedTasks){

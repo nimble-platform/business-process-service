@@ -48,6 +48,9 @@ Generated on: 2019.05.29 at 02:01:18 PM MSK
     <jaxb:bindings if-exists="true" scd="~CollaborationGroupDAO">
       <jaxb:class ref="eu.nimble.service.bp.model.hyperjaxb.CollaborationGroupDAO"/>
     </jaxb:bindings>
+    <jaxb:bindings if-exists="true" scd="~FederatedCollaborationGroupMetadataDAO">
+      <jaxb:class ref="eu.nimble.service.bp.model.hyperjaxb.FederatedCollaborationGroupMetadataDAO"/>
+    </jaxb:bindings>
     <jaxb:bindings if-exists="true" scd="~AssociatedProcessInstanceGroup">
       <jaxb:class ref="eu.nimble.service.bp.model.hyperjaxb.AssociatedProcessInstanceGroup"/>
     </jaxb:bindings>

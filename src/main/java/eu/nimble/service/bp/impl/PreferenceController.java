@@ -39,10 +39,8 @@ public class PreferenceController implements PreferenceApi {
                                                                         @RequestBody ProcessPreferences body) {
         logger.info(" $$$ Adding ProcessPreferences: ");
         logger.debug(" $$$ {}", body.toString());
-        ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
-        if (tokenCheck != null) {
-            return tokenCheck;
-        }
+        HttpResponseUtil.checkToken(bearerToken);
+
         ProcessPreferencesDAO processPreferencesDAO = HibernateSwaggerObjectMapper.createProcessPreferences_DAO(body);
         repositoryFactory.forBpRepository().persistEntity(processPreferencesDAO);
         return HibernateSwaggerObjectMapper.getApiResponse();
@@ -53,10 +51,8 @@ public class PreferenceController implements PreferenceApi {
     public ResponseEntity<ModelApiResponse> deleteProcessPartnerPreference(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
                                                                            @PathVariable("partnerID") String partnerID) {
         logger.info(" $$$ Deleting ProcessPreferences for ... {}", partnerID);
-        ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
-        if (tokenCheck != null) {
-            return tokenCheck;
-        }
+        HttpResponseUtil.checkToken(bearerToken);
+
         ProcessPreferencesDAO processPreferencesDAO = ProcessPreferencesDAOUtility.getProcessPreferences(partnerID,false);
         repositoryFactory.forBpRepository().deleteEntityByHjid(ProcessPreferencesDAO.class, processPreferencesDAO.getHjid());
         return HibernateSwaggerObjectMapper.getApiResponse();
@@ -67,10 +63,8 @@ public class PreferenceController implements PreferenceApi {
     public ResponseEntity<ProcessPreferences> getProcessPartnerPreference(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
                                                                           @PathVariable("partnerID") String partnerID) {
         logger.info(" $$$ Getting ProcessPreferences for ... {}", partnerID);
-        ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
-        if (tokenCheck != null) {
-            return tokenCheck;
-        }
+        HttpResponseUtil.checkToken(bearerToken);
+
         ProcessPreferencesDAO businessProcessPreferencesDAO = ProcessPreferencesDAOUtility.getProcessPreferences(partnerID);
         ProcessPreferences businessProcessPreferences = null;
         if(businessProcessPreferencesDAO == null) {
@@ -88,10 +82,8 @@ public class PreferenceController implements PreferenceApi {
                                                                            @RequestBody ProcessPreferences body) {
         logger.info(" $$$ Updating ProcessPreferences: ");
         logger.debug(" $$$ {}", body.toString());
-        ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
-        if (tokenCheck != null) {
-            return tokenCheck;
-        }
+        HttpResponseUtil.checkToken(bearerToken);
+
         ProcessPreferencesDAO processPreferencesDAO = ProcessPreferencesDAOUtility.getProcessPreferences(body.getPartnerID(),false);
         ProcessPreferencesDAO processPreferencesDAONew = HibernateSwaggerObjectMapper.createProcessPreferences_DAO(body);
         processPreferencesDAONew.setHjid(processPreferencesDAO.getHjid());

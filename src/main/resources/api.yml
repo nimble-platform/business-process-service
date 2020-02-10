@@ -349,6 +349,14 @@ paths:
         in: header
         type: string
         required: true
+      - name: initiatorFederationId
+        in: header
+        type: string
+        required: true
+      - name: responderFederationId
+        in: header
+        type: string
+        required: true
       - in: body
         name: body
         required: true
@@ -362,6 +370,11 @@ paths:
       - in: query
         name: preceding_gid
         description: The UUID of the preceding process instance group
+        required: false
+        type: string
+      - in: query
+        name: precedingOrderId
+        description: The UUID of the preceding order
         required: false
         type: string
       - in: query
@@ -435,6 +448,14 @@ paths:
         required: false
         type: string
       - name: Authorization
+        in: header
+        type: string
+        required: true
+      - name: initiatorFederationId
+        in: header
+        type: string
+        required: true
+      - name: responderFederationId
         in: header
         type: string
         required: true
@@ -717,7 +738,7 @@ paths:
           404:
             description: The collaboration group does not exist for the given id
   /collaboration-groups/merge:
-    get:
+    post:
       operationId: mergeCollaborationGroups
       parameters:
         - name: Authorization
@@ -729,11 +750,12 @@ paths:
           type: string
           description: Identifier of the base collaboration group
           required: true
-        - in: query
+        - in: body
           name: cgids
-          type: array
-          description: List of collaboration group id's to be merged.
-          required: true
+          schema:
+            type: string
+#            items:
+#              $ref: '#/definitions/FederatedCollaborationGroupMetadata'
       responses:
         200:
           description: Merged the collaboration group successfully
@@ -748,6 +770,10 @@ paths:
         operationId: checkAllCollaborationsFinished
         parameters:
           - name: Authorization
+            in: header
+            type: string
+            required: true
+          - name: federationId
             in: header
             type: string
             required: true
@@ -824,6 +850,10 @@ paths:
         in: header
         type: string
         required: true
+      - name: federationId
+        in: header
+        type: string
+        required: false
       produces:
       - application/json
       responses:
@@ -841,6 +871,11 @@ paths:
         type: string
         required: true
         description: Identifier of a process instance included in the group
+      - in: query
+        name: orderResponseId
+        type: string
+        required: true
+        description: Identifier of the order response
       - name: Authorization
         in: header
         type: string
@@ -899,6 +934,10 @@ paths:
         in: header
         type: string
         required: true
+      - name: federationId
+        in: header
+        type: string
+        required: false
       - in: query
         name: isProject
         type: boolean
@@ -1182,6 +1221,10 @@ definitions:
         type: string
       dataChannelId:
         type: string
+      federationID:
+        type: string
+      sellerFederationId:
+        type: string
       processInstanceIDs:
         type: array
         items:
@@ -1194,8 +1237,10 @@ definitions:
         type: string
       lastActivityTime:
         type: string
-      precedingProcessInstanceGroup:
-        $ref: '#/definitions/ProcessInstanceGroup'
+      precedingProcessInstanceGroupMetadata:
+        $ref: '#/definitions/FederatedCollaborationGroupMetadata'
+      precedingProcess:
+        $ref: '#/definitions/ProcessInstance'
       status:
         type: string
         enum:
@@ -1221,15 +1266,38 @@ definitions:
         - INPROGRESS
       isProject:
         type: boolean
+      federationId:
+        type: string
+      federatedCollaborationGroupMetadatas:
+        type: array
+        items:
+          $ref: '#/definitions/FederatedCollaborationGroupMetadata'
       associatedProcessInstanceGroups:
         type: array
         items:
           $ref: '#/definitions/ProcessInstanceGroup'
 
+  FederatedCollaborationGroupMetadata:
+    title: Federated Collaboration Group Metadata
+    type: object
+    properties:
+      ID:
+        type: string
+      federationID:
+        type: string
+
   CollaborationGroupResponse:
     title: Process Instance Group Response
     type: object
 
+  GroupIdTuple:
+    title: Group Id Tuple
+    type: object
+    properties:
+      processInstanceGroupId:
+        type: string
+      collaborationGroupId:
+        type: string
   BillOfMaterial:
     title: Bill of Material Object
     type: object
@@ -1244,6 +1312,10 @@ definitions:
       endDate:
         type: string
       tradingPartnerIDs:
+        type: array
+        items:
+          type: string
+      tradingPartnerFederationIds:
         type: array
         items:
           type: string
@@ -1319,6 +1391,10 @@ definitions:
       responderID:
         type: string
       creatorUserID:
+        type: string
+      initiatorFederationId:
+        type: string
+      responderFederationId:
         type: string
 
   ApiResponse:

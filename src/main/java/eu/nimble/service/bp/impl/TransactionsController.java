@@ -2,14 +2,13 @@ package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO;
-import eu.nimble.service.bp.util.HttpResponseUtil;
 import eu.nimble.service.bp.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.util.persistence.bp.*;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
-import eu.nimble.service.bp.util.spring.SpringBridge;
+import eu.nimble.utility.exception.NimbleException;
+import eu.nimble.utility.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.validation.IValidationUtil;
-import eu.nimble.utility.validation.ValidationUtil;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -55,7 +54,7 @@ public class TransactionsController {
 
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_ADMIN)) {
-            return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+            throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 
         deleteTransactionsForParty(partyId);

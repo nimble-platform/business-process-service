@@ -56,10 +56,7 @@ public class MigrationController {
         logger.info("Incoming request to update binary content uris");
 
         // check token
-        ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
-        if (tokenCheck != null) {
-            return tokenCheck;
-        }
+        eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
 
         GenericJPARepository repo = new JPARepositoryFactory().forCatalogueRepository(true);
         // get catalogues

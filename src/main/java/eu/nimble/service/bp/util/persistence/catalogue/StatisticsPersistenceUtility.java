@@ -19,6 +19,7 @@ import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.QualifyingPartyType;
 import eu.nimble.service.model.ubl.despatchadvice.DespatchAdviceType;
 import eu.nimble.service.model.ubl.receiptadvice.ReceiptAdviceType;
+import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import org.slf4j.Logger;
@@ -36,26 +37,28 @@ import java.util.*;
 public class StatisticsPersistenceUtility {
     private static final Logger logger = LoggerFactory.getLogger(StatisticsPersistenceUtility.class);
 
-    public static long getActionRequiredProcessCount(String partyID,String role,Boolean archived){
+    public static long getActionRequiredProcessCount(String partyID,String federationId,String role,Boolean archived){
         List<String> parameterNames = new ArrayList<>();
         List<Object> parameterValues = new ArrayList<>();
         String query = "SELECT metadataDAO.processInstanceID FROM " +
                 "ProcessDocumentMetadataDAO metadataDAO,ProcessInstanceDAO instanceDAO,ProcessInstanceGroupDAO groupDAO join groupDAO.processInstanceIDsItems ids " +
                 "WHERE groupDAO.archived = :archived AND " +
-                "groupDAO.partyID = :partyId AND " +
+                "groupDAO.partyID = :partyId AND groupDAO.federationID = :federationId AND " +
                 "metadataDAO.processInstanceID = ids.item AND " +
                 "metadataDAO.processInstanceID = instanceDAO.processInstanceID AND " +
                 "instanceDAO.status <> 'CANCELLED' AND instanceDAO.processID ";
         if(role.equals("seller")){
-            query += " <> 'Fulfilment' AND metadataDAO.responderID = :partyId GROUP BY metadataDAO.processInstanceID HAVING count(*) = 1";
+            query += " <> 'Fulfilment' AND metadataDAO.responderID = :partyId AND metadataDAO.responderFederationID = :federationId GROUP BY metadataDAO.processInstanceID HAVING count(*) = 1";
         }
         else{
-            query += " = 'Fulfilment' AND metadataDAO.responderID = :partyId AND instanceDAO.status = 'STARTED' GROUP BY metadataDAO.processInstanceID HAVING count(*) = 1";
+            query += " = 'Fulfilment' AND metadataDAO.responderID = :partyId AND metadataDAO.responderFederationID = :federationId AND instanceDAO.status = 'STARTED' GROUP BY metadataDAO.processInstanceID HAVING count(*) = 1";
         }
         parameterNames.add("archived");
         parameterNames.add("partyId");
+        parameterNames.add("federationId");
         parameterValues.add(archived);
         parameterValues.add(partyID);
+        parameterValues.add(federationId);
         List<String> count = new JPARepositoryFactory().forBpRepository().getEntities(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
         return count.size();
     }
@@ -117,14 +120,15 @@ public class StatisticsPersistenceUtility {
         return new ArrayList<FulfilmentStatistics>(lineHjidFulfilmentStatisticsMap.values());
     }
 
-    public static double getTradingVolume(Integer partyId, String role, String startDate, String endDate, String status) {
-        String query = "select sum(order_.anticipatedMonetaryTotal.payableAmount.value) from OrderType order_ where order_.anticipatedMonetaryTotal.payableAmount.value is not null";
+    public static double getTradingVolume(Integer partyId, String federationId, String role, String startDate, String endDate, String status) {
+        String query = "select sum(order_.anticipatedMonetaryTotal.payableAmount.value) from OrderType order_ where " +
+                "order_.anticipatedMonetaryTotal.payableAmount.value is not null";
         List<String> parameterNames = new ArrayList<>();
         List<Object> parameterValues = new ArrayList<>();
 
         List<String> documentTypes = new ArrayList<>();
         documentTypes.add("ORDER");
-        List<String> orderIds = ProcessDocumentMetadataDAOUtility.getDocumentIds(partyId, documentTypes, role, startDate, endDate, status, true);
+        List<String> orderIds = ProcessDocumentMetadataDAOUtility.getDocumentIds(partyId,federationId, documentTypes, role, startDate, endDate, status, true);
 
         // no orders for the specified criteria
         if (orderIds.size() == 0) {
@@ -232,10 +236,10 @@ public class StatisticsPersistenceUtility {
         return inactiveParties;
     }
 
-    public static double calculateAverageCollaborationTime(String partyID, String bearerToken, String role){
+    public static double calculateAverageCollaborationTime(String partyID,String federationId, String bearerToken, String role){
         int numberOfCollaborations = 0;
         double totalTime = 0;
-        QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingPartyType(partyID,bearerToken);
+        QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingPartyType(partyID,federationId,bearerToken);
         PartyType part =  qualifyingParty.getParty();
 
         for (CompletedTaskType completedTask:qualifyingParty.getCompletedTask()){
@@ -245,7 +249,7 @@ public class StatisticsPersistenceUtility {
 
             String processInstanceId = completedTask.getAssociatedProcessInstanceID();
             CollaborationGroupDAO collaborationGroup = CollaborationGroupDAOUtility
-                    .getCollaborationGroupByProcessInstanceIdAndPartyId(processInstanceId, partyID);
+                    .getCollaborationGroupByProcessInstanceIdAndPartyId(processInstanceId, partyID,federationId);
 
             if(collaborationGroup != null){
                 List<ProcessInstanceGroupDAO> processInstanceGroups =   collaborationGroup.getAssociatedProcessInstanceGroups();
@@ -300,14 +304,14 @@ public class StatisticsPersistenceUtility {
         return totalTime/numberOfCollaborations;
     }
 
-    public static double calculateAverageResponseTime(String partyID) throws Exception{
+    public static double calculateAverageResponseTime(String partyID,String federationId) throws Exception{
 
         int numberOfResponses = 0;
         double totalTime = 0;
         List<String> processInstanceIDs;
 
         if(partyID != null){
-            processInstanceIDs = CollaborationGroupDAOUtility.getProcessInstanceIdsByParty(partyID);
+            processInstanceIDs = CollaborationGroupDAOUtility.getProcessInstanceIdsByParty(partyID,federationId);
         }else {
             processInstanceIDs =  CollaborationGroupDAOUtility.getProcessInstanceIds();
         }
@@ -334,7 +338,7 @@ public class StatisticsPersistenceUtility {
         return totalTime/numberOfResponses;
     }
 
-    public static Map<Integer,Double> calculateAverageResponseTimeInMonths(String partyID) throws Exception{
+    public static Map<Integer,Double> calculateAverageResponseTimeInMonths(String partyID,String federationId) throws Exception{
 
         int numberOfResponses = 0;
         double totalTime = 0;
@@ -344,7 +348,7 @@ public class StatisticsPersistenceUtility {
         List<String> processInstanceIDs;
 
         if(partyID != null){
-            processInstanceIDs = CollaborationGroupDAOUtility.getProcessInstanceIdsByParty(partyID);
+            processInstanceIDs = CollaborationGroupDAOUtility.getProcessInstanceIdsByParty(partyID,federationId);
 
         }else {
             processInstanceIDs =  CollaborationGroupDAOUtility.getProcessInstanceIds();

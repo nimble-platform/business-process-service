@@ -10,8 +10,10 @@ import eu.nimble.service.bp.model.hyperjaxb.CollaborationGroupDAO;
 import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceGroupDAO;
+import eu.nimble.service.bp.swagger.model.GroupIdTuple;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
+import eu.nimble.service.bp.util.HttpResponseUtil;
 import eu.nimble.service.bp.util.UBLUtility;
 import eu.nimble.service.bp.util.bp.BusinessProcessUtility;
 import eu.nimble.service.bp.util.bp.ClassProcessTypeMap;
@@ -25,10 +27,15 @@ import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.CodeType;
 import eu.nimble.service.model.ubl.document.IDocument;
+import eu.nimble.service.model.ubl.order.OrderType;
+import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.utility.JsonSerializationUtility;
+import eu.nimble.utility.exception.NimbleException;
+import eu.nimble.utility.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.serialization.IDocumentDeserializer;
 import eu.nimble.utility.validation.IValidationUtil;
+import feign.Response;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -37,7 +44,6 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.logging.LogLevel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -47,6 +53,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.io.IOException;
+import java.text.DecimalFormat;
+import java.util.Arrays;
 import java.util.List;
 
 @Controller
@@ -91,14 +99,12 @@ public class StartWithDocumentController {
             try {
                 PersonType creatorUser = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken);
                 if(creatorUser == null){
-                    String msg = String.format("No user exists for the given token : %s", bearerToken);
-                    return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog(msg, null, HttpStatus.UNAUTHORIZED, LogLevel.INFO);
+                    throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_NO_USER_FOR_TOKEN.toString(), Arrays.asList(bearerToken));
                 }
                 // set creator user id
                 creatorUserId = creatorUser.getID();
-            } catch (IOException e) {
-                logger.error("Failed to get person",e);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to get person");
+            } catch (IOException | NimbleException e) {
+                throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_FAILED_TO_GET_PERSON.toString(),e);
             }
         }
 
@@ -109,7 +115,7 @@ public class StartWithDocumentController {
 
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
-            return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+            throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 
         /**
@@ -127,8 +133,7 @@ public class StartWithDocumentController {
         try {
             document = mapper.readValue(documentAsString,IDocument.class);
         } catch (IOException e) {
-            logger.error("Failed to deserialize document",e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to deserialize document");
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_FAILED_TO_DESERIALIZE_DOCUMENT.toString(),e);
         }
 
         /**
@@ -139,14 +144,10 @@ public class StartWithDocumentController {
             PartyType sellerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,sellerPartyId);
 
             if(sellerParty == null){
-                String msg = String.format("There does not exist a party for : %s", sellerPartyId);
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+                throw new NimbleException(NimbleExceptionMessageCode.BAD_REQUEST_NO_PARTY.toString(),Arrays.asList(sellerPartyId));
             }
         } catch (IOException e) {
-            String msg = String.format("Failed to retrieve party information for : %s", sellerPartyId);
-            logger.error(msg,e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_FAILED_TO_GET_PARTY_INFO.toString(),Arrays.asList(sellerPartyId));
         }
 
         /**
@@ -157,6 +158,17 @@ public class StartWithDocumentController {
         // check whether it is a request or response document
         boolean isInitialDocument = BusinessProcessUtility.isInitialDocument(document.getClass());
 
+        // get corresponding process type
+        String processId = ClassProcessTypeMap.getProcessType(document.getClass());
+        // retrieve initiator and responder federation id from the given document
+        String initiatorFederationId = document.getBuyerParty().getFederationInstanceID();
+        String responderFederationId = document.getSellerParty().getFederationInstanceID();
+        // for Fulfilment, it's vice versa
+        if(processId.contentEquals(ClassProcessTypeMap.CAMUNDA_PROCESS_ID_FULFILMENT)){
+            initiatorFederationId = document.getSellerParty().getFederationInstanceID();
+            responderFederationId = document.getBuyerParty().getFederationInstanceID();
+        }
+
         ProcessInstance processInstance;
         if(isInitialDocument){
             // create ProcessInstanceInputMessage
@@ -164,22 +176,20 @@ public class StartWithDocumentController {
             try {
                 processInstanceInputMessage = BPMessageGenerator.createProcessInstanceInputMessage(document,document.getItemTypes(),creatorUserId,"",bearerToken);
             } catch (Exception e) {
-                String msg = "Failed to create process instance input message for the document";
-                logger.error(msg,e);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+                throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_FAILED_TO_CREATE_PROCESS_INSTANCE_INPUT_MESSAGE.toString(),e);
             }
 
             // to start the process, we need to know the details of preceding process instance so that we can place the process instance to correct group
             ProcessDocumentMetadataDAO processDocumentMetadataDAO = getProcessDocumentMetadataDAO(document, false);
             String processInstanceId = processDocumentMetadataDAO != null ? processDocumentMetadataDAO.getProcessInstanceID(): null ;
-            String processInstanceIdOfPreviousOrder = getProcessInstanceIdOfPrecedingOrder(document);
+            String precedingOrderId = getPrecedingOrderId(document);
 
             String cgid = null;
             String gid = null;
             String precedingGid = null;
             if(processInstanceId != null){
                 // get the collaboration group containing the process instance for the initiator party
-                CollaborationGroupDAO collaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroupDAO(processInstanceInputMessage.getVariables().getInitiatorID(),processInstanceId);
+                CollaborationGroupDAO collaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroupDAO(processInstanceInputMessage.getVariables().getInitiatorID(),initiatorFederationId,processInstanceId);
                 cgid = collaborationGroup.getHjid().toString();
                 // get the identifier of process instance group containing the process instance
                 for(ProcessInstanceGroupDAO processInstanceGroupDAO:collaborationGroup.getAssociatedProcessInstanceGroups()){
@@ -189,33 +199,35 @@ public class StartWithDocumentController {
                     }
                 }
             }
-            else if(processInstanceIdOfPreviousOrder != null){
-                // get the collaboration group containing the process instance for the initiator party
-                CollaborationGroupDAO collaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroupDAO(processInstanceInputMessage.getVariables().getInitiatorID(),processInstanceIdOfPreviousOrder);
-                cgid = collaborationGroup.getHjid().toString();
-                // get the identifier of process instance group containing the process instance
-                for(ProcessInstanceGroupDAO processInstanceGroupDAO:collaborationGroup.getAssociatedProcessInstanceGroups()){
-                    if(processInstanceGroupDAO.getProcessInstanceIDs().contains(processInstanceIdOfPreviousOrder)){
-                        precedingGid = processInstanceGroupDAO.getID();
-                        break;
-                    }
+            else if(precedingOrderId != null){
+                try {
+                    // get group id tuple for preceding order
+                    Response response = SpringBridge.getInstance().getDelegateClient().getGroupIdTuple(bearerToken,initiatorFederationId,precedingOrderId,processInstanceInputMessage.getVariables().getInitiatorID(),initiatorFederationId);
+                    String responseBody = HttpResponseUtil.extractBodyFromFeignClientResponse(response);
+
+                    ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
+                    GroupIdTuple groupIdTuple = objectMapper.readValue(responseBody,GroupIdTuple.class);
+
+                    // get the collaboration group containing the process instance for the initiator party
+                    cgid = groupIdTuple.getCollaborationGroupId();
+                    precedingGid = groupIdTuple.getProcessInstanceGroupId();
+                }
+                catch (Exception e){
+                    throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_FAILED_TO_GET_GROUP_ID_TUPLE.toString(),Arrays.asList(precedingOrderId),e);
                 }
             }
-            processInstance = startController.startProcessInstance(bearerToken,processInstanceInputMessage,gid,precedingGid,cgid).getBody();
+            processInstance = startController.startProcessInstance(bearerToken,initiatorFederationId,responderFederationId,processInstanceInputMessage,gid,precedingGid,precedingOrderId,cgid).getBody();
 
             if(processInstance == null){
-                String msg = "Failed to start process for the given document";
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+                throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_START_PROCESS_WITH_DOCUMENT.toString());
             }
+
         }
         else{
             // to complete the process, we need to know process instance id
             ProcessDocumentMetadataDAO processDocumentMetadataDAO = getProcessDocumentMetadataDAO(document, true);
             if(processDocumentMetadataDAO == null){
-                String msg = "Each response document should have a valid reference to the request document";
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(msg);
+                throw new NimbleException(NimbleExceptionMessageCode.BAD_REQUEST_NO_VALID_REFERENCE.toString());
             }
             String processInstanceId = processDocumentMetadataDAO.getProcessInstanceID();
 
@@ -227,13 +239,11 @@ public class StartWithDocumentController {
             try {
                 processInstanceInputMessage = BPMessageGenerator.createProcessInstanceInputMessage(document,items,creatorUserId,processInstanceId,bearerToken);
             } catch (Exception e) {
-                String msg = "Failed to create process instance input message for the document";
-                logger.error(msg,e);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+                throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_FAILED_TO_CREATE_PROCESS_INSTANCE_INPUT_MESSAGE.toString(),e);
             }
 
             // get the collaboration group containing the process instance for the responder party
-            CollaborationGroupDAO collaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroupDAO(processInstanceInputMessage.getVariables().getResponderID(),processInstanceId);
+            CollaborationGroupDAO collaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroupDAO(processInstanceInputMessage.getVariables().getResponderID(),responderFederationId,processInstanceId);
 
             // get the identifier of process instance group containing the process instance
             String gid = null;
@@ -243,19 +253,14 @@ public class StartWithDocumentController {
                     break;
                 }
             }
-
-            processInstance = continueController.continueProcessInstance(processInstanceInputMessage,gid,collaborationGroup.getHjid().toString(),bearerToken).getBody();
+            processInstance = continueController.continueProcessInstance(processInstanceInputMessage,gid,collaborationGroup.getHjid().toString(),bearerToken,initiatorFederationId,responderFederationId).getBody();
             if(processInstance == null){
-                String msg = "Failed to complete process for the given document";
-                logger.error(msg);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+                throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_COMPLETE_PROCESS.toString());
             }
 
             /**
              * Send response document to the initiator party
              * */
-            // get corresponding process type
-            String processId = ClassProcessTypeMap.getProcessType(document.getClass());
             // get the initiator party id
             PartyType initiatorParty = document.getBuyerParty();
             // for Fulfilment, it's vice versa
@@ -266,11 +271,10 @@ public class StartWithDocumentController {
             // get the initiator party
             try {
                 CodeType communicationChannel = UBLUtility.getPartyCommunicationChannel(initiatorParty);
-                // send document to initiator party iff it's a Quotation
-                if(communicationChannel != null && document instanceof QuotationType){
-                    QuotationType quotation = (QuotationType) document;
-                    String msg = createRequestBody(quotation,communicationChannel.getListID(),communicationChannel.getURI());
-                    logger.info("Sending quotation {} to {}",msg, communicationChannel.getValue());
+                // send document to initiator party iff it's a Quotation or Order response
+                if(communicationChannel != null && (document instanceof QuotationType || document instanceof OrderResponseSimpleType)){
+                    String msg = createRequestBody(document,communicationChannel.getListID(),communicationChannel.getURI());
+                    logger.info("Sending document {} to {}",msg, communicationChannel.getValue());
                     HttpResponse<String> response = Unirest.post(communicationChannel.getValue())
                             .header("Content-Type", "application/json")
                             .header("accept", "*/*")
@@ -278,14 +282,11 @@ public class StartWithDocumentController {
                             .asString();
 
                     if(response.getStatus() != 200 && response.getStatus() != 204){
-                        logger.error("Failed send the document to the initiator party {}, endpoint: {} : {}",initiatorParty.getPartyIdentification().get(0).getID(), communicationChannel.getValue(), response.getBody());
-                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+                        throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_FAILED_TO_SEND_DOCUMENT_TO_INITIATOR_PARTY.toString(),Arrays.asList(initiatorParty.getPartyIdentification().get(0).getID(), communicationChannel.getValue(), response.getBody()));
                     }
                 }
             } catch (Exception e) {
-                String msg = String.format("Failed to send the document to the initiator party : %s", initiatorParty.getPartyIdentification().get(0).getID());
-                logger.error(msg,e);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+                throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_FAILED_TO_SEND_DOCUMENT_TO_INITIATOR_PARTY.toString(),Arrays.asList(initiatorParty.getPartyIdentification().get(0).getID(), "", ""),e);
             }
         }
 
@@ -320,14 +321,14 @@ public class StartWithDocumentController {
     /**
      * If the given document has a reference called {@literal previousOrder}, this method returns the identifier of process instance associated with that order.
      * */
-    private String getProcessInstanceIdOfPrecedingOrder(IDocument document){
+    private String getPrecedingOrderId(IDocument document){
         String documentId = null;
         for (DocumentReferenceType documentReferenceType : document.getAdditionalDocuments()) {
             if(documentReferenceType.getDocumentType() != null && documentReferenceType.getDocumentType().contentEquals("previousOrder")){
                 documentId = documentReferenceType.getID();
             }
         }
-        return documentId != null ? ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId).getProcessInstanceID() : null;
+        return documentId;
     }
 
     /**
@@ -344,31 +345,55 @@ public class StartWithDocumentController {
      *   "messageName": "<message_name_here>",
      *   "processInstanceId": "<process_instance_id_here>",
      *   "processVariables": {
-     *          "quotationData": {
+     *          "quotationData/orderData": {
+     *              "id": "<id_of_document>"
      *              "type": "String",
      *              "value": {
-     *                  "status ": "<status_of_quotation>",
-     *                  "netPrice": "<net_price_of_quotation>"
+     *                  "status ": "<status_of_document>",
+     *                  "netPrice": "<net_price_of_document>"
      *              }
      *          }
      *   }
      * }
      * */
-    private String createRequestBody(QuotationType quotation, String messageName, String processInstanceId){
-        String price = quotation.getQuotationLine().get(0).getLineItem().getPrice().getPriceAmount().getValue().multiply(quotation.getQuotationLine().get(0).getLineItem().getQuantity().getValue()).toString()
-                + " " + quotation.getQuotationLine().get(0).getLineItem().getPrice().getPriceAmount().getCurrencyID();
-        String status = quotation.getDocumentStatusCode().getName();
+    private String createRequestBody(IDocument document, String messageName, String processInstanceId){
+        // whether the document is quotation or not
+        boolean isQuotation = document instanceof QuotationType;
+        // info taken from the document
+        String documentId = null;
+        String price = null;
+        String status = null;
+        // Document is a Quotation
+        if(isQuotation){
+            QuotationType quotation = (QuotationType) document;
+            price = new DecimalFormat(".00").format(quotation.getQuotationLine().get(0).getLineItem().getPrice().getPriceAmount().getValue().multiply(quotation.getQuotationLine().get(0).getLineItem().getQuantity().getValue()))
+                    + " " + quotation.getQuotationLine().get(0).getLineItem().getPrice().getPriceAmount().getCurrencyID();
+            status = quotation.getDocumentStatusCode().getName();
+            documentId = quotation.getID();
+        }
+        // Document is an Order Response
+        else{
+            OrderResponseSimpleType orderResponse = (OrderResponseSimpleType) document;
+            OrderType order = (OrderType) DocumentPersistenceUtility.getUBLDocument(orderResponse.getOrderReference().getDocumentReference().getID(),DocumentType.ORDER);
 
-        JSONObject quotationDetails = new JSONObject();
-        quotationDetails.put("netPrice",price);
-        quotationDetails.put("status ",status);
+            price = new DecimalFormat(".00").format(order.getOrderLine().get(0).getLineItem().getPrice().getPriceAmount().getValue().multiply(order.getOrderLine().get(0).getLineItem().getQuantity().getValue()))
+                    + " " + order.getOrderLine().get(0).getLineItem().getPrice().getPriceAmount().getCurrencyID();
+            status = orderResponse.isAcceptedIndicator() ? "Accepted": "Rejected";
+            documentId = orderResponse.getID();
+        }
 
-        JSONObject quotationData = new JSONObject();
-        quotationData.put("type","String");
-        quotationData.put("value",quotationDetails);
+        JSONObject documentDetails = new JSONObject();
+        documentDetails.put("netPrice",price);
+        documentDetails.put("status ",status);
+
+        JSONObject documentData = new JSONObject();
+        documentData.put("id",documentId);
+        documentData.put("type","String");
+        documentData.put("value",documentDetails);
 
         JSONObject processVariables = new JSONObject();
-        processVariables.put("quotationData",quotationData);
+        processVariables.put(isQuotation ? "quotationData" :"orderData",documentData);
+
         JSONObject json = new JSONObject();
         json.put("processVariables",processVariables);
         json.put("messageName",messageName);

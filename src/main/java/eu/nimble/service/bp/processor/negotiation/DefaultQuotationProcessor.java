@@ -43,6 +43,8 @@ public class DefaultQuotationProcessor  implements JavaDelegate {
         String seller = variables.get("initiatorID").toString();
         String creatorUserID = variables.get("creatorUserID").toString();
         String processContextId = variables.get("processContextId").toString();
+        String initiatorFederationId = variables.get("initiatorFederationId").toString();
+        String responderFederationId = variables.get("responderFederationId").toString();
         List<String> relatedProducts = (List<String>) variables.get("relatedProducts");
         List<String> relatedProductCategories = (List<String>) variables.get("relatedProductCategories");
         QuotationType quotation = (QuotationType) variables.get("quotation");
@@ -62,7 +64,7 @@ public class DefaultQuotationProcessor  implements JavaDelegate {
             IBusinessProcessApplication businessProcessApplication = (IBusinessProcessApplication) instance;
 
             // NOTE: Pay attention to the direction of the document. Here it is from seller to buyer
-            businessProcessApplication.saveDocument(processContextId,processInstanceId, seller, buyer,creatorUserID, quotation, relatedProducts, relatedProductCategories);
+            businessProcessApplication.saveDocument(processContextId,processInstanceId, seller, buyer,creatorUserID, quotation, relatedProducts, relatedProductCategories, initiatorFederationId, responderFederationId);
 
             // check the conditions related to frame contracts
             createOrUpdateFrameContract(quotation);
@@ -86,7 +88,9 @@ public class DefaultQuotationProcessor  implements JavaDelegate {
         }
 
         String sellerId = quotation.getSellerSupplierParty().getParty().getPartyIdentification().get(0).getID();
+        String sellerFederationId = quotation.getSellerSupplierParty().getParty().getFederationInstanceID();
         String buyerId = quotation.getBuyerCustomerParty().getParty().getPartyIdentification().get(0).getID();
+        String buyerFederationId = quotation.getBuyerCustomerParty().getParty().getFederationInstanceID();
 
         for (QuotationLineType quotationLine: quotation.getQuotationLine()) {
             List<TradingTermType> tradingTermTypes = quotationLine.getLineItem().getTradingTerms();
@@ -95,7 +99,7 @@ public class DefaultQuotationProcessor  implements JavaDelegate {
                     ItemType item = quotationLine.getLineItem().getItem();
                     QuantityType duration = term.getValue().getValueQuantity().get(0);
 
-                    SpringBridge.getInstance().getFrameContractService().createOrUpdateFrameContract(sellerId, buyerId, item, duration, quotation.getID());
+                    SpringBridge.getInstance().getFrameContractService().createOrUpdateFrameContract(sellerId, buyerId,sellerFederationId,buyerFederationId, item, duration, quotation.getID());
                     break;
                 }
             }
