@@ -173,8 +173,6 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
                             orderJson = eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response);
                         }
                     }
-                } else {
-                    orderJson = (String) documentController.getDocumentJsonContent(sourceOrderResponseId,bearerToken).getBody();
                 }
             }
 
