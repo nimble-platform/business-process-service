@@ -1,17 +1,18 @@
 package eu.nimble.service.bp.impl;
 
+import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessDAO;
-import eu.nimble.service.bp.util.HttpResponseUtil;
 import eu.nimble.service.bp.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.util.jssequence.JSSequenceDiagramParser;
 import eu.nimble.service.bp.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.util.persistence.bp.ProcessDAOUtility;
-import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.bp.swagger.api.ContentApi;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
 import eu.nimble.service.bp.swagger.model.Process;
 import eu.nimble.utility.exception.NimbleException;
+import eu.nimble.utility.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
+import eu.nimble.utility.validation.IValidationUtil;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
@@ -37,6 +38,8 @@ public class ContentController implements ContentApi {
 
     @Autowired
     private JPARepositoryFactory repoFactory;
+    @Autowired
+    private IValidationUtil validationUtil;
 
     @Override
     @ApiOperation(value = "",notes = "Add a new business process")
@@ -46,7 +49,10 @@ public class ContentController implements ContentApi {
         logger.info(" $$$ Adding business process definition: ");
         logger.debug(" $$$ {}", body.toString());
 
-        HttpResponseUtil.checkToken(bearerToken);
+        // validate role
+        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+            throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
+        }
 
         String bpmnContent = body.getBpmnContent();
         if (bpmnContent == null || bpmnContent.trim().equals("")) {
@@ -70,7 +76,10 @@ public class ContentController implements ContentApi {
     public ResponseEntity<ModelApiResponse> deleteProcessDefinition(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
                                                                     @PathVariable("processID") String processID) throws NimbleException {
         logger.info(" $$$ Deleting business process definition for ... {}", processID);
-        HttpResponseUtil.checkToken(bearerToken);
+        // validate role
+        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+            throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
+        }
 
         CamundaEngine.deleteProcessDefinition(processID);
 
@@ -86,7 +95,10 @@ public class ContentController implements ContentApi {
     public ResponseEntity<Process> getProcessDefinition(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
                                                         @PathVariable("processID") String processID) {
         logger.info(" $$$ Getting business process definition for ... {}", processID);
-        HttpResponseUtil.checkToken(bearerToken);
+        // validate role
+        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+            throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
+        }
 
         ProcessDAO processDAO = ProcessDAOUtility.findByProcessID(processID);
         // The process definition is not in the database...
@@ -105,7 +117,10 @@ public class ContentController implements ContentApi {
     public ResponseEntity<List<Process>> getProcessDefinitions(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
     ) {
         logger.info(" $$$ Getting business process definitions");
-        HttpResponseUtil.checkToken(bearerToken);
+        // validate role
+        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+            throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
+        }
 
         // first get the ones in the database
         List<ProcessDAO> processDAOs = ProcessDAOUtility.getProcessDAOs();
@@ -139,7 +154,10 @@ public class ContentController implements ContentApi {
         logger.info(" $$$ Updating business process definition: ");
         logger.debug(" $$$ {}", body.toString());
 
-        HttpResponseUtil.checkToken(bearerToken);
+        // validate role
+        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+            throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
+        }
         String bpmnContent = body.getBpmnContent();
         if (bpmnContent == null || bpmnContent.trim().equals("")) {
             logger.info(" $$$ BPMN Content is empty. Hence BPMN is created from the text content...");

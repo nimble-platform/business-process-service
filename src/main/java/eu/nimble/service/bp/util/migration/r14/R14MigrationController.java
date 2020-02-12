@@ -1,17 +1,22 @@
 package eu.nimble.service.bp.util.migration.r14;
 
+import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
 import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
+import eu.nimble.utility.exception.NimbleException;
+import eu.nimble.utility.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
+import eu.nimble.utility.validation.IValidationUtil;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -28,6 +33,9 @@ public class R14MigrationController {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    @Autowired
+    private IValidationUtil validationUtil;
+
     @ApiOperation(value = "", notes = "Updates business process documents (Request for Quotation, Quotation, Order and Transport Execution Plan) to handle the changes on LineItemType model.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Updated documents to handle line item updates successfully"),
@@ -41,8 +49,10 @@ public class R14MigrationController {
     ) {
         logger.info("Incoming request to adapt documents to handle line item updates");
 
-        // check token
-        eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
+        // validate role
+        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+            throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
+        }
 
         GenericJPARepository catalogueRepository = new JPARepositoryFactory().forCatalogueRepositoryMultiTransaction(true);
         try{
