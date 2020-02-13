@@ -14,7 +14,7 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 @EnableSwagger2
 public class SwaggerConfig {
 
-    @Value("${nimble.platformHost}")
+    @Value("${spring.application.url}")
     private String platformHost;
 
     @Bean
