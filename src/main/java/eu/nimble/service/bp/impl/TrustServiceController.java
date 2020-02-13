@@ -3,12 +3,12 @@ package eu.nimble.service.bp.impl;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.config.RoleConfig;
+import eu.nimble.service.bp.messaging.IKafkaSender;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.model.trust.NegotiationRatings;
 import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.PartyPersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
-import eu.nimble.service.bp.messaging.KafkaSender;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.exception.NimbleException;
@@ -23,7 +23,6 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -43,7 +42,7 @@ public class TrustServiceController {
     private final Logger logger = LoggerFactory.getLogger(TrustServiceController.class);
 
     @Autowired
-    private KafkaSender kafkaSender;
+    private IKafkaSender kafkaSender;
     @Autowired
     private IValidationUtil validationUtil;
 
