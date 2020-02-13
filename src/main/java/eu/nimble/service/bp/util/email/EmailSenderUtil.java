@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.thymeleaf.context.Context;
 
@@ -26,7 +27,8 @@ import java.util.*;
  * Created by suat on 16-Oct-18.
  */
 @Component
-public class EmailSenderUtil {
+@Profile("!test")
+public class EmailSenderUtil implements IEmailSenderUtil {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final static String COLLABORATION_ROLE_BUYER = "BUYER";
