@@ -11,6 +11,7 @@ import eu.nimble.service.bp.util.controller.ValidationResponse;
 import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.StatisticsPersistenceUtility;
 import eu.nimble.service.bp.swagger.model.Transaction;
+import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.exception.NimbleException;
@@ -86,9 +87,11 @@ public class StatisticsController {
                                           @ApiParam(value = "Role of the party in the business process.<br>Possible values:<ul><li>seller</li><li>buyer</li></ul>", defaultValue = "seller", required = false) @RequestParam(value = "role", required = false, defaultValue = "seller") String role,
                                           @ApiParam(value = "State of the transaction.<br>Possible values: <ul><li>WaitingResponse</li><li>Approved</li><li>Denied</li></ul>", required = false) @RequestParam(value = "status", required = false) String status,
                                           @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
-                                          @ApiParam(value = "" ,required=true ) @RequestHeader(value="federationId", required=true) String federationId
+                                          @ApiParam(value = "" ,required=false ) @RequestHeader(value="federationId", required=false) String federationId
     ) throws NimbleException {
 
+        // validate federation id header
+        federationId = validateFederationIdHeader(federationId);
         try {
             logger.info("Getting total number of documents for start date: {}, end date: {}, type: {}, party id: {}, role: {}, state: {}", startDateStr, endDateStr, businessProcessType, partyId, role, status);
             // validate role
@@ -224,8 +227,10 @@ public class StatisticsController {
                                            @ApiParam(value = "Role of the party in the business process.<br>Possible values:<ul><li>seller</li><li>buyer</li></ul>", required = false) @RequestParam(value = "role", required = false, defaultValue = "SELLER") String role,
                                            @ApiParam(value = "State of the transaction.<br>Possible values: <ul><li>WaitingResponse</li><li>Approved</li><li>Denied</li></ul>", required = false) @RequestParam(value = "status", required = false) String status,
                                            @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
-                                           @ApiParam(value = "" ,required=true ) @RequestHeader(value="federationId", required=true) String federationId
+                                           @ApiParam(value = "" ,required=false ) @RequestHeader(value="federationId", required=false) String federationId
     ) throws NimbleException {
+        // validate federation id header
+        federationId = validateFederationIdHeader(federationId);
         try {
             logger.info("Getting total number of documents for start date: {}, end date: {}, party id: {}, role: {}, state: {}", startDateStr, endDateStr, partyId, role, status);
             // validate role
@@ -297,8 +302,12 @@ public class StatisticsController {
             method = RequestMethod.GET)
     public ResponseEntity getAverageResponseTime(@ApiParam(value = "Identifier of the party as specified by the identity service",required = false) @RequestParam(value = "partyId",required = false) String partyId,
                                                  @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
-                                                 @ApiParam(value = "" ,required=true ) @RequestHeader(value="federationId", required=true) String federationId) throws NimbleException {
+                                                 @ApiParam(value = "" ,required=false ) @RequestHeader(value="federationId", required=false) String federationId) throws NimbleException {
         logger.info("Getting average response time for the party with id: {}",partyId);
+
+        // validate federation id header
+        federationId = validateFederationIdHeader(federationId);
+
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
@@ -331,8 +340,10 @@ public class StatisticsController {
             method = RequestMethod.GET)
     public ResponseEntity getAverageResponseTimeForMonths(@ApiParam(value = "Identifier of the party as specified by the identity service", required = false) @RequestParam(value = "partyId",required = false) String partyId,
             @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
-                                                          @ApiParam(value = "" ,required=true ) @RequestHeader(value="federationId", required=true) String federationId) throws NimbleException {
+                                                          @ApiParam(value = "" ,required=false ) @RequestHeader(value="federationId", required=false) String federationId) throws NimbleException {
         logger.info("Getting average response time for the party with id: {}",partyId);
+        // validate federation id header
+        federationId = validateFederationIdHeader(federationId);
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
@@ -371,8 +382,12 @@ public class StatisticsController {
     public ResponseEntity getAverageCollaborationTime(@ApiParam(value = "Identifier of the party as specified by the identity service",required = false) @RequestParam(value = "partyId",required = false) String partyId,
             @ApiParam(value = "Role of the party in the business process.<br>Possible values:<ul><li>SELLER</li><li>BUYER</li></ul>", defaultValue = "SELLER", required = false) @RequestParam(value = "role", required = false, defaultValue = "SELLER") String role,
             @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
-                                                      @ApiParam(value = "" ,required=true ) @RequestHeader(value="federationId", required=true) String federationId) throws NimbleException {
+                                                      @ApiParam(value = "" ,required=false ) @RequestHeader(value="federationId", required=false) String federationId) throws NimbleException {
         logger.info("Getting average negotiation time for the party with id: {}",partyId);
+
+        // validate federation id header
+        federationId = validateFederationIdHeader(federationId);
+
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
@@ -447,5 +462,13 @@ public class StatisticsController {
 
         logger.info("Retrieved fulfilment statistics for the order with id: {}",orderId);
         return ResponseEntity.ok(serializedResponse);
+    }
+
+
+    private String validateFederationIdHeader(String federationIdHeader){
+        if(federationIdHeader == null){
+            federationIdHeader = SpringBridge.getInstance().getFederationId();
+        }
+        return federationIdHeader;
     }
 }
