@@ -4,6 +4,7 @@ spring:
   application:
     # the name of the application represents the global identifier of this microservice.
     name: business-process-service
+    url: ${BUSINESS_PROCESS_SERVICE_URL}
   cloud:
     config:
       uri: ${CONFIG_SERVER_URI:http://localhost:8888}
@@ -18,24 +19,24 @@ spring:
       enabled: ${discovery.enabled:${DISCOVERY_ENABLED:false}}
   datasource:
     camunda:
-      url: jdbc:postgresql://${CAMUNDA_DB_HOST:localhost}:${CAMUNDA_DB_PORT:5432}/${CAMUNDA_DB_NAME:camunda}?currentSchema=public&ApplicationName=business-process-service-camundadb${APPLICATION_NAME_SUFFIX:}
+      url: jdbc:postgresql://${CAMUNDA_DB_HOST}:${CAMUNDA_DB_PORT}/${CAMUNDA_DB_NAME}?currentSchema=public&ApplicationName=business-process-service-camundadb$
       username: ${CAMUNDA_DB_USERNAME:postgres}
       password: ${CAMUNDA_DB_PASSWORD:nimble}
       driver-class: org.postgresql.Driver
     bpdb:
-      url: jdbc:postgresql://${BUSINESS_PROCESS_DB_HOST:localhost}:${BUSINESS_PROCESS_DB_PORT:5432}/${BUSINESS_PROCESS_DB_NAME:businessprocessengine}?currentSchema=public&ApplicationName=business-process-service-businessprocessenginedb${APPLICATION_NAME_SUFFIX:}
+      url: jdbc:postgresql://${BUSINESS_PROCESS_DB_HOST}:${BUSINESS_PROCESS_DB_PORT}/${BUSINESS_PROCESS_DB_NAME}?currentSchema=public&ApplicationName=business-process-service-businessprocessenginedb$
       username: ${BUSINESS_PROCESS_DB_USERNAME:postgres}
       password: ${BUSINESS_PROCESS_DB_PASSWORD:nimble}
       driver-class: org.postgresql.Driver
     ubldb:
-      url: jdbc:postgresql://${UBL_DB_HOST:localhost}:${UBL_DB_HOST_PORT:5432}/${UBL_DB_NAME:ubldb}?currentSchema=public&ApplicationName=business-process-service-ubldb${APPLICATION_NAME_SUFFIX:}
-      username: ${UBL_DB_USERNAME:postgres}
-      password: ${UBL_DB_PASSWORD:nimble}
+      url: jdbc:postgresql://${UBL_DB_HOST}:${UBL_DB_HOST_PORT}/${UBL_DB_NAME}?currentSchema=public&ApplicationName=business-process-service-ubldb
+      username: ${UBL_DB_USERNAME}
+      password: ${UBL_DB_PASSWORD}
       driver-class: org.postgresql.Driver
     binarycontentdb:
-      url: jdbc:postgresql://${BINARY_CONTENT_DB_HOST:localhost}:${BINARY_CONTENT_DB_PORT:5432}/${BINARY_CONTENT_DB_NAME:binarycontentdb}?currentSchema=public&ApplicationName=business-process-service-binarycontentdb${APPLICATION_NAME_SUFFIX:}
-      username: ${BINARY_CONTENT_DB_USERNAME:postgres}
-      password: ${BINARY_CONTENT_DB_PASSWORD:nimble}
+      url: jdbc:postgresql://${BINARY_CONTENT_DB_HOST}:${BINARY_CONTENT_DB_PORT}/${BINARY_CONTENT_DB_NAME}?currentSchema=public&ApplicationName=business-process-service-binarycontentdb$
+      username: ${BINARY_CONTENT_DB_USERNAME}
+      password: ${BINARY_CONTENT_DB_PASSWORD}
       driver-class: org.postgresql.Driver
     test-on-borrow: true
     test-while-idle: true
@@ -50,13 +51,13 @@ spring:
     min-evictable-idle-time-millis: 60000
     validation-query: "SELECT 1;" # Validation query must be set in order to test connections
   kafka:
-      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
-      consumer:
-        group-id: business-process-service${KAFKA_CONSUMER_GROUP_ID_SUFFIX:}
-      properties:
-        sasl:
-          jaas:
-            config: ${KAFKA_JAAS_CONFIG}
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    consumer:
+      group-id: business-process-service${KAFKA_CONSUMER_GROUP_ID_SUFFIX:}
+    properties:
+      sasl:
+        jaas:
+          config: ${KAFKA_JAAS_CONFIG}
   mail:
     debug: false  # disable printing email to log output
     host: ${SMTP_HOST:localhost}
@@ -180,11 +181,11 @@ nimble:
       url: BusinessProcessBinaryContentUri
   cors_enabled: false
   identity:
-    url: ${IDENTITY_SERVICE_URL:http://nimble-staging.salzburgresearch.at/identity}
+    url: ${IDENTITY_SERVICE_URL}
   data-channel:
-    url: ${DATA_CHANNEL_SERVICE_URL:http://nimble-staging.salzburgresearch.at/data-channel}
+    url: ${DATA_CHANNEL_SERVICE_URL}
   frontend:
-    url: ${FRONTEND_URL:http://nimble-staging.salzburgresearch.at/frontend/}
+    url: ${FRONTEND_URL}
   tracking-analysis:
     url: ${TRACKING_ANALYSIS_SERVICE_URL:http://nimble-dev.ikap.biba.uni-bremen.de/tracking-analysis}
   delegate-service:
@@ -192,9 +193,8 @@ nimble:
   federation-instance-id: ${FEDERATION_INSTANCE_ID}
   kafka:
       topics:
-        businessProcessUpdates: ${KAFKA_TOPIC_BUSINESS_PROCESS_UPDATES:business-process-updates-staging}
+        businessProcessUpdates: ${KAFKA_TOPIC_BUSINESS_PROCESS_UPDATES}
   check-entity-ids: ${CHECK_ENTITY_IDS:false}
-  platformHost: ${BUSINESS_PROCESS_SERVICE_URL:http://localhost:8081}
 hystrix:
   command:
     default:
@@ -324,12 +324,14 @@ persistence:
 
 
 ################################################################################################
-################################### LOCAL DEV CONFIG ###########################################
+################################### TEST CONFIG ###########################################
 ################################################################################################
 
 ---
 
 spring:
+  application:
+    url: http://localhost:8081
   profiles: test
   # Local h2 database
   datasource:
@@ -354,13 +356,13 @@ spring:
       password:
       driver-class: org.h2.Driver
   kafka:
-      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+      bootstrap-servers:
       consumer:
-        group-id: business-process-service${KAFKA_CONSUMER_GROUP_ID_SUFFIX:}
+        group-id:
       properties:
         sasl:
           jaas:
-            config: ${KAFKA_JAAS_CONFIG}
+            config:
   h2:
     console:
       enabled: true
@@ -390,16 +392,13 @@ camunda:
 nimble:
   cors_enabled: true
   identity:
-    url: ${IDENTITY_SERVICE_URL:http://nimble-staging.salzburgresearch.at/identity}
+    url:
   data-channel:
-    url: ${DATA_CHANNEL_SERVICE_URL:http://nimble-staging.salzburgresearch.at/data-channel}
+    url:
   frontend:
-    url: ${FRONTEND_URL:http://nimble-staging.salzburgresearch.at/frontend/}
+    url:
   delegate-service:
-    url: ${DELEGATE_SERVICE_URL:}
-  federation-instance-id: ${FEDERATION_INSTANCE_ID:TEST_INSTANCE}
-  kafka:
-      topics:
-        businessProcessUpdates: ${KAFKA_TOPIC_BUSINESS_PROCESS_UPDATES:business-process-updates-staging}
+    url:
+  federation-instance-id: TEST_INSTANCE
 build:
   version: 5.0.0-Staging

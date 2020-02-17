@@ -6,7 +6,7 @@ import eu.nimble.service.bp.model.hyperjaxb.*;
 import eu.nimble.service.bp.util.BusinessProcessEvent;
 import eu.nimble.service.bp.util.bp.BusinessProcessUtility;
 import eu.nimble.service.bp.util.camunda.CamundaEngine;
-import eu.nimble.service.bp.util.email.EmailSenderUtil;
+import eu.nimble.service.bp.util.email.IEmailSenderUtil;
 import eu.nimble.service.bp.util.persistence.bp.CollaborationGroupDAOUtility;
 import eu.nimble.service.bp.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceDAOUtility;
@@ -56,7 +56,7 @@ public class ContinueController implements ContinueApi {
     @Autowired
     private JPARepositoryFactory repoFactory;
     @Autowired
-    private EmailSenderUtil emailSenderUtil;
+    private IEmailSenderUtil emailSenderUtil;
     @Autowired
     private IValidationUtil validationUtil;
 

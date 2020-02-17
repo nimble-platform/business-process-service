@@ -3,7 +3,7 @@ package eu.nimble.service.bp.impl;
 import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.model.hyperjaxb.*;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
-import eu.nimble.service.bp.util.email.EmailSenderUtil;
+import eu.nimble.service.bp.util.email.IEmailSenderUtil;
 import eu.nimble.service.bp.util.persistence.bp.*;
 import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
 import eu.nimble.service.bp.swagger.api.ProcessInstanceGroupsApi;
@@ -43,7 +43,7 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
     @Autowired
     private DocumentController documentController;
     @Autowired
-    private EmailSenderUtil emailSenderUtil;
+    private IEmailSenderUtil emailSenderUtil;
     @Autowired
     private JPARepositoryFactory repoFactory;
     @Autowired
