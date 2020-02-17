@@ -20,13 +20,13 @@ spring:
   datasource:
     camunda:
       url: jdbc:postgresql://${CAMUNDA_DB_HOST}:${CAMUNDA_DB_PORT}/${CAMUNDA_DB_NAME}?currentSchema=public&ApplicationName=business-process-service-camundadb$
-      username: ${CAMUNDA_DB_USERNAME:postgres}
-      password: ${CAMUNDA_DB_PASSWORD:nimble}
+      username: ${CAMUNDA_DB_USERNAME}
+      password: ${CAMUNDA_DB_PASSWORD}
       driver-class: org.postgresql.Driver
     bpdb:
       url: jdbc:postgresql://${BUSINESS_PROCESS_DB_HOST}:${BUSINESS_PROCESS_DB_PORT}/${BUSINESS_PROCESS_DB_NAME}?currentSchema=public&ApplicationName=business-process-service-businessprocessenginedb$
-      username: ${BUSINESS_PROCESS_DB_USERNAME:postgres}
-      password: ${BUSINESS_PROCESS_DB_PASSWORD:nimble}
+      username: ${BUSINESS_PROCESS_DB_USERNAME}
+      password: ${BUSINESS_PROCESS_DB_PASSWORD}
       driver-class: org.postgresql.Driver
     ubldb:
       url: jdbc:postgresql://${UBL_DB_HOST}:${UBL_DB_HOST_PORT}/${UBL_DB_NAME}?currentSchema=public&ApplicationName=business-process-service-ubldb
