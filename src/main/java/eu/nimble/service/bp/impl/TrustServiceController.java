@@ -9,6 +9,7 @@ import eu.nimble.service.bp.model.trust.NegotiationRatings;
 import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.PartyPersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
+import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.exception.NimbleException;
@@ -142,8 +143,12 @@ public class TrustServiceController {
             method = RequestMethod.GET)
     public ResponseEntity getRatingsSummary(@ApiParam(value = "Identifier of the party whose ratings will be received", required = true) @RequestParam(value = "partyId") String partyId,
                                             @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
-                                            @ApiParam(value = "" ,required=true ) @RequestHeader(value="federationId", required=true) String federationId){
+                                            @ApiParam(value = "" ,required=false ) @RequestHeader(value="federationId", required=false) String federationId){
         logger.info("Getting ratings summary for the party with id: {}",partyId);
+
+        // validate federation id header
+        federationId = validateFederationIdHeader(federationId);
+
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
@@ -171,8 +176,11 @@ public class TrustServiceController {
             method = RequestMethod.GET)
     public ResponseEntity listAllIndividualRatingsAndReviews(@ApiParam(value = "Identifier of the party whose individual ratings and reviews will be received", required = true) @RequestParam(value = "partyId") String partyId,
                                                              @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
-                                                             @ApiParam(value = "" ,required=true ) @RequestHeader(value="federationId", required=true) String federationId) throws Exception{
+                                                             @ApiParam(value = "" ,required=false ) @RequestHeader(value="federationId", required=false) String federationId) throws Exception{
         try {
+            // validate federation id header
+            federationId = validateFederationIdHeader(federationId);
+
             logger.info("Getting all individual ratings and review for the party with id: {}",partyId);
             // validate role
             if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
@@ -244,6 +252,11 @@ public class TrustServiceController {
         return jsonResponse;
     }
 
-
+    private String validateFederationIdHeader(String federationIdHeader){
+        if(federationIdHeader == null){
+            federationIdHeader = SpringBridge.getInstance().getFederationId();
+        }
+        return federationIdHeader;
+    }
 
 }

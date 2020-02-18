@@ -155,9 +155,12 @@ public class StatisticsController {
                                                    @ApiParam(value = "Identifier of the party as specified by the identity service", required = false) @RequestParam(value = "partyId", required = false) Integer partyId,
                                                    @ApiParam(value = "Role of the party in the business process.<br>Possible values:<ul><li>seller</li><li>buyer</li></ul>", defaultValue = "seller", required = false) @RequestParam(value = "role",required = false, defaultValue = "seller") String role,
                                                    @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
-                                                   @ApiParam(value = "" ,required=true ) @RequestHeader(value="federationId", required=true) String federationId) throws NimbleException {
+                                                   @ApiParam(value = "" ,required=false ) @RequestHeader(value="federationId", required=false) String federationId) throws NimbleException {
 
         try {
+            // validate federation id header
+            federationId = validateFederationIdHeader(federationId);
+
             logger.info("Getting total number of documents for start date: {}, end date: {}, party id: {}, role: {}", startDateStr, endDateStr, partyId, role);
             // validate role
             if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
@@ -414,8 +417,12 @@ public class StatisticsController {
     public ResponseEntity getStatistics(@ApiParam(value = "Identifier of the party as specified by the identity service",required = true) @RequestParam(value = "partyId",required = true) String partyId,
                                         @ApiParam(value = "Role of the party in the business process.<br>Possible values:<ul><li>SELLER</li><li>BUYER</li></ul>", defaultValue = "SELLER", required = false) @RequestParam(value = "role", required = false, defaultValue = "SELLER") String role,
                                         @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
-                                        @ApiParam(value = "" ,required=true ) @RequestHeader(value="federationId", required=true) String federationId) throws NimbleException {
+                                        @ApiParam(value = "" ,required=false ) @RequestHeader(value="federationId", required=false) String federationId) throws NimbleException {
         logger.info("Getting statistics for the party with id: {}",partyId);
+
+        // validate federation id header
+        federationId = validateFederationIdHeader(federationId);
+
         OverallStatistics statistics = new OverallStatistics();
         try {
             // validate role
