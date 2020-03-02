@@ -326,8 +326,13 @@ public class ProcessInstanceController {
                 }
             }
 
+            // get the date of request and response
+            Future<String> requestDateFuture = getRequestDate(processInstanceId,executorService);
+            Future<String> responseDateFuture = getResponseDate(processInstanceId,executorService);;
             // get cancellation reason for the collaboration
             Future<String> cancellationReasonFuture = getCancellationReason(processInstanceId,executorService);
+            // get completion date for the collaboration
+            Future<String> completionDateFuture = getCompletionDate(processInstanceId,executorService);
             // get request creator and response creator user info
             Future<String> requestCreatorUser = null;
             Future<String> responseCreatorUser = null;
@@ -341,6 +346,9 @@ public class ProcessInstanceController {
             ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
 
             String cancellationReason = cancellationReasonFuture.get();
+            String completionDate = completionDateFuture.get();
+            String requestDate = requestDateFuture.get();
+            String responseDate = responseDateFuture.get();
 
             JsonSerializer jsonSerializer = new JsonSerializer();
             jsonSerializer.put("requestDocument",requestDocument == null ? null: requestDocument.get());
@@ -353,7 +361,9 @@ public class ProcessInstanceController {
             jsonSerializer.put("requestCreatorUser",requestCreatorUser == null ? null : requestCreatorUser.get());
             jsonSerializer.put("responseCreatorUser",responseCreatorUser == null ? null : responseCreatorUser.get());
             jsonSerializer.put("cancellationReason",cancellationReason == null ? null : "\""+cancellationReason+"\"");
-
+            jsonSerializer.put("completionDate",completionDate == null ? null : "\""+completionDate+"\"");
+            jsonSerializer.put("requestDate",requestDate == null ? null : "\""+requestDate+"\"");
+            jsonSerializer.put("responseDate",responseDate == null ? null : "\""+responseDate+"\"");
             logger.info("Retrieved the details for process instance: {}", processInstanceId);
             return ResponseEntity.ok(jsonSerializer.toString());
         } catch (Exception e) {
@@ -456,6 +466,24 @@ public class ProcessInstanceController {
 
     private Future<String> getCancellationReason(String processInstanceId, ExecutorService threadPool){
         return threadPool.submit(() -> TrustPersistenceUtility.getCancellationReasonForCollaboration(processInstanceId));
+    }
+
+    private Future<String> getCompletionDate(String processInstanceId, ExecutorService threadPool){
+        return threadPool.submit(() -> TrustPersistenceUtility.getCompletionDateForCollaboration(processInstanceId));
+    }
+
+    private Future<String> getRequestDate(String processInstanceId, ExecutorService threadPool){
+        return threadPool.submit(() -> {
+            ProcessDocumentMetadata processDocumentMetadata = ProcessDocumentMetadataDAOUtility.getRequestMetadata(processInstanceId);
+            return processDocumentMetadata == null ? null : processDocumentMetadata.getSubmissionDate();
+        });
+    }
+
+    private Future<String> getResponseDate(String processInstanceId, ExecutorService threadPool){
+        return threadPool.submit(() -> {
+            ProcessDocumentMetadata processDocumentMetadata = ProcessDocumentMetadataDAOUtility.getResponseMetadata(processInstanceId);
+            return processDocumentMetadata == null ? null : processDocumentMetadata.getSubmissionDate();
+        });
     }
 
     private Future<String> serializeObject(Object object, ExecutorService threadPool){
