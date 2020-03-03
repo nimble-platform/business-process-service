@@ -297,8 +297,8 @@ public class ProcessInstanceController {
             List<HistoricVariableInstance> variableInstanceList = CamundaEngine.getVariableInstances(processInstanceId);
 
             Future<String> variableInstances = serializeObject(variableInstanceList, executorService);
-            Future<String> processInstance = serializeObject(CamundaEngine.getProcessInstance(processInstanceId), executorService);
-            Future<String> lastActivityInstance = serializeObject(CamundaEngine.getLastActivityInstance(processInstanceId), executorService);
+            Future<String> processInstanceState = serializeObject(CamundaEngine.getProcessInstance(processInstanceId).getState(), executorService);
+            Future<String> lastActivityInstanceStartTime = serializeObject(CamundaEngine.getLastActivityInstance(processInstanceId).getStartTime(), executorService);
 
 
             // get request and response document
@@ -343,8 +343,6 @@ public class ProcessInstanceController {
                 responseCreatorUser = getCreatorUser(bearerToken,responseMetadata.getCreatorUserID(), executorService);
             }
 
-            ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
-
             String cancellationReason = cancellationReasonFuture.get();
             String completionDate = completionDateFuture.get();
             String requestDate = requestDateFuture.get();
@@ -353,13 +351,11 @@ public class ProcessInstanceController {
             JsonSerializer jsonSerializer = new JsonSerializer();
             jsonSerializer.put("requestDocument",requestDocument == null ? null: requestDocument.get());
             jsonSerializer.put("responseDocumentStatus",responseDocumentStatus == null ? null : responseDocumentStatus.get());
-            jsonSerializer.put("requestMetadata",objectMapper.writeValueAsString(requestMetadata));
-            jsonSerializer.put("responseMetadata",objectMapper.writeValueAsString(responseMetadata));
             jsonSerializer.put("variableInstance",variableInstances.get());
-            jsonSerializer.put("lastActivityInstance",lastActivityInstance.get());
-            jsonSerializer.put("processInstance",processInstance.get());
-            jsonSerializer.put("requestCreatorUser",requestCreatorUser == null ? null : requestCreatorUser.get());
-            jsonSerializer.put("responseCreatorUser",responseCreatorUser == null ? null : responseCreatorUser.get());
+            jsonSerializer.put("lastActivityInstanceStartTime","\""+lastActivityInstanceStartTime.get()+"\"");
+            jsonSerializer.put("processInstanceState",processInstanceState.get());
+            jsonSerializer.put("requestCreatorUser",requestCreatorUser == null ? null : "\""+requestCreatorUser.get()+"\"");
+            jsonSerializer.put("responseCreatorUser",responseCreatorUser == null ? null : "\""+ responseCreatorUser.get()+"\"");
             jsonSerializer.put("cancellationReason",cancellationReason == null ? null : "\""+cancellationReason+"\"");
             jsonSerializer.put("completionDate",completionDate == null ? null : "\""+completionDate+"\"");
             jsonSerializer.put("requestDate",requestDate == null ? null : "\""+requestDate+"\"");
@@ -459,9 +455,13 @@ public class ProcessInstanceController {
     }
 
     private Future<String> getCreatorUser(String bearerToken,String userId, ExecutorService threadPool){
-        return threadPool.submit(() -> JsonSerializationUtility.getObjectMapper().writeValueAsString(
-                PartyPersistenceUtility.getPerson(bearerToken,userId)
-        ));
+        return threadPool.submit(() -> {
+            PersonType person = PartyPersistenceUtility.getPerson(bearerToken,userId);
+            if(person != null){
+                return person.getFirstName() +" "+ person.getFamilyName();
+            }
+            return null;
+        });
     }
 
     private Future<String> getCancellationReason(String processInstanceId, ExecutorService threadPool){
