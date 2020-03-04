@@ -7,7 +7,6 @@ import eu.nimble.service.bp.model.hyperjaxb.*;
 import eu.nimble.service.bp.model.dashboard.CollaborationGroupResponse;
 import eu.nimble.service.bp.swagger.model.FederatedCollaborationGroupMetadata;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroup;
-import eu.nimble.service.bp.util.ExecutionContext;
 import eu.nimble.service.bp.util.persistence.bp.CollaborationGroupDAOUtility;
 import eu.nimble.service.bp.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.swagger.api.CollaborationGroupsApi;
@@ -16,6 +15,7 @@ import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtilit
 import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceGroupDAOUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
 import eu.nimble.service.bp.util.spring.SpringBridge;
+import eu.nimble.utility.ExecutionContext;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.exception.NimbleException;
 import eu.nimble.utility.exception.NimbleExceptionMessageCode;

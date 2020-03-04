@@ -5,7 +5,6 @@ import eu.nimble.service.bp.model.statistics.BusinessProcessCount;
 import eu.nimble.service.bp.model.statistics.FulfilmentStatistics;
 import eu.nimble.service.bp.model.statistics.NonOrderedProducts;
 import eu.nimble.service.bp.model.statistics.OverallStatistics;
-import eu.nimble.service.bp.util.ExecutionContext;
 import eu.nimble.service.bp.util.bp.BusinessProcessUtility;
 import eu.nimble.service.bp.util.controller.InputValidatorUtil;
 import eu.nimble.service.bp.util.controller.ValidationResponse;
@@ -14,6 +13,7 @@ import eu.nimble.service.bp.util.persistence.catalogue.StatisticsPersistenceUtil
 import eu.nimble.service.bp.swagger.model.Transaction;
 import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
+import eu.nimble.utility.ExecutionContext;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.exception.NimbleException;
 import eu.nimble.utility.exception.NimbleExceptionMessageCode;

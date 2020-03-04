@@ -1,7 +1,7 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.config.RoleConfig;
-import eu.nimble.service.bp.util.ExecutionContext;
+import eu.nimble.utility.ExecutionContext;
 import eu.nimble.utility.exception.NimbleException;
 import eu.nimble.utility.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.persistence.JPARepositoryFactory;

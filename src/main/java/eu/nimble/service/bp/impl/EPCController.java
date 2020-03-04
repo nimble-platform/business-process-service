@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
 import eu.nimble.service.bp.model.tt.OrderEPC;
-import eu.nimble.service.bp.util.ExecutionContext;
 import eu.nimble.service.bp.util.HttpResponseUtil;
 import eu.nimble.service.bp.util.SchedulerService;
 import eu.nimble.service.bp.util.persistence.catalogue.CataloguePersistenceUtility;
@@ -13,6 +12,7 @@ import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtilit
 import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.CatalogueLineType;
 import eu.nimble.service.model.ubl.order.OrderType;
+import eu.nimble.utility.ExecutionContext;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.exception.NimbleException;
 import eu.nimble.utility.exception.NimbleExceptionMessageCode;
