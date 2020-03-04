@@ -14,6 +14,7 @@ import org.springframework.web.context.annotation.RequestScope;
 @RequestScope
 public class ExecutionContext {
     private String bearerToken;
+    private String requestLog;
 
     public void setBearerToken(String bearerToken) {
         this.bearerToken = bearerToken;
@@ -21,5 +22,13 @@ public class ExecutionContext {
 
     public String getBearerToken() {
         return this.bearerToken;
+    }
+
+    public String getRequestLog() {
+        return requestLog;
+    }
+
+    public void setRequestLog(String requestLog) {
+        this.requestLog = requestLog;
     }
 }

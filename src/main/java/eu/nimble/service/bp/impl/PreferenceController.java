@@ -2,10 +2,9 @@ package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessPreferencesDAO;
-import eu.nimble.service.bp.util.HttpResponseUtil;
+import eu.nimble.service.bp.util.ExecutionContext;
 import eu.nimble.service.bp.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.util.persistence.bp.ProcessPreferencesDAOUtility;
-import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.bp.swagger.api.PreferenceApi;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
 import eu.nimble.service.bp.swagger.model.ProcessPreferences;
@@ -25,8 +24,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import springfox.documentation.annotations.ApiIgnore;
 
-import java.io.IOException;
-
 /**
  * Created by yildiray on 5/25/2017.
  */
@@ -38,12 +35,18 @@ public class PreferenceController implements PreferenceApi {
     private JPARepositoryFactory repositoryFactory;
     @Autowired
     private IValidationUtil validationUtil;
+    @Autowired
+    private ExecutionContext executionContext;
 
     @Override
     @ApiOperation(value = "",notes = "Add a new partner business process sequence preference")
     public ResponseEntity<ModelApiResponse> addProcessPartnerPreference(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
                                                                         @RequestBody ProcessPreferences body) {
-        logger.info(" $$$ Adding ProcessPreferences: ");
+        // set request log of ExecutionContext
+        String requestLog = " $$$ Adding ProcessPreferences: ";
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
         logger.debug(" $$$ {}", body.toString());
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
@@ -59,7 +62,11 @@ public class PreferenceController implements PreferenceApi {
     @ApiOperation(value = "",notes = "Deletes the business process preference of a partner")
     public ResponseEntity<ModelApiResponse> deleteProcessPartnerPreference(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
                                                                            @PathVariable("partnerID") String partnerID) {
-        logger.info(" $$$ Deleting ProcessPreferences for ... {}", partnerID);
+        // set request log of ExecutionContext
+        String requestLog = String.format(" $$$ Deleting ProcessPreferences for ... %s", partnerID);
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
@@ -74,7 +81,11 @@ public class PreferenceController implements PreferenceApi {
     @ApiOperation(value = "",notes = "Get the business process preference of a partner")
     public ResponseEntity<ProcessPreferences> getProcessPartnerPreference(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
                                                                           @PathVariable("partnerID") String partnerID) {
-        logger.info(" $$$ Getting ProcessPreferences for ... {}", partnerID);
+        // set request log of ExecutionContext
+        String requestLog = String.format(" $$$ Getting ProcessPreferences for ... %s", partnerID);
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
@@ -95,7 +106,11 @@ public class PreferenceController implements PreferenceApi {
     @ApiOperation(value = "",notes = "Update the business process preference of a partner")
     public ResponseEntity<ModelApiResponse> updateProcessPartnerPreference(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
                                                                            @RequestBody ProcessPreferences body) {
-        logger.info(" $$$ Updating ProcessPreferences: ");
+        // set request log of ExecutionContext
+        String requestLog = " $$$ Updating ProcessPreferences: ";
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
         logger.debug(" $$$ {}", body.toString());
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {

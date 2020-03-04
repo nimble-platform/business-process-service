@@ -6,6 +6,7 @@ import eu.nimble.service.bp.bom.BPMessageGenerator;
 import eu.nimble.service.bp.model.efactoryDemo.RFQSummary;
 import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
+import eu.nimble.service.bp.util.ExecutionContext;
 import eu.nimble.service.bp.util.UBLUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.CataloguePersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
@@ -30,7 +31,6 @@ import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -49,6 +49,8 @@ public class EFactoryDemoController {
     private final Logger logger = LoggerFactory.getLogger(StartWithDocumentController.class);
     @Autowired
     private StartWithDocumentController startWithDocumentController;
+    @Autowired
+    private ExecutionContext executionContext;
 
     @ApiOperation(value = "",notes = "Creates a RFQ for the given product and buyer party. Then, it starts the process using the created RFQ document.")
     @ApiResponses(value = {
@@ -60,7 +62,11 @@ public class EFactoryDemoController {
             produces = {"application/json"},
             method = RequestMethod.POST)
     public ResponseEntity startRFQProcess(@RequestBody RFQSummary rfqSummary) throws Exception {
-        logger.info("Getting request to start request for quotation process");
+        // set request log of ExecutionContext
+        String requestLog = "Getting request to start request for quotation process";
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
         try {
             logger.info("RFQSummary: {}",JsonSerializationUtility.getObjectMapper().writeValueAsString(rfqSummary));
         } catch (JsonProcessingException e) {
@@ -128,7 +134,11 @@ public class EFactoryDemoController {
             produces = {"application/json"},
             method = RequestMethod.POST)
     public ResponseEntity startOrderProcess(@RequestBody RFQSummary rfqSummary) throws Exception {
-        logger.info("Getting request to start order process");
+        // set request log of ExecutionContext
+        String requestLog = "Getting request to start order process";
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
         try {
             logger.info("RFQSummary: {}",JsonSerializationUtility.getObjectMapper().writeValueAsString(rfqSummary));
         } catch (JsonProcessingException e) {

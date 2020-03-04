@@ -7,6 +7,7 @@ import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.model.hyperjaxb.*;
 import eu.nimble.service.bp.util.BusinessProcessEvent;
 import eu.nimble.service.bp.model.export.TransactionSummary;
+import eu.nimble.service.bp.util.ExecutionContext;
 import eu.nimble.service.bp.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.util.persistence.bp.CollaborationGroupDAOUtility;
 import eu.nimble.service.bp.util.persistence.bp.HibernateSwaggerObjectMapper;
@@ -74,6 +75,9 @@ public class ProcessInstanceController {
     private IIdentityClientTyped iIdentityClientTyped;
     @Autowired
     private IValidationUtil validationUtil;
+    @Autowired
+    private ExecutionContext executionContext;
+
 
     @ApiOperation(value = "",notes = "Cancels the process instance with the given id")
     @ApiResponses(value = {
@@ -87,7 +91,11 @@ public class ProcessInstanceController {
             method = RequestMethod.POST)
     public ResponseEntity cancelProcessInstance(@ApiParam(value = "The identifier of the process instance to be cancelled", required = true) @PathVariable(value = "processInstanceId", required = true) String processInstanceId,
                                                 @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) throws NimbleException {
-        logger.debug("Cancelling process instance with id: {}",processInstanceId);
+        // set request log of ExecutionContext
+        String requestLog = String.format("Cancelling process instance with id: %s",processInstanceId);
+        executionContext.setRequestLog(requestLog);
+
+        logger.debug(requestLog);
 
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
@@ -148,9 +156,11 @@ public class ProcessInstanceController {
                                                 @ApiParam(value = "Identifier of the process instance to be updated", required = true) @RequestParam(value = "processInstanceID") String processInstanceID,
                                                 @ApiParam(value = "Identifier of the user who updated the process instance", required = true) @RequestParam(value = "creatorUserID") String creatorUserID,
                                                 @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) throws NimbleException {
+        // set request log of ExecutionContext
+        String requestLog = String.format("Updating process instance with id: %s",processInstanceID);
+        executionContext.setRequestLog(requestLog);
 
-
-        logger.debug("Updating process instance with id: {}",processInstanceID);
+        logger.debug(requestLog);
 
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
 
@@ -218,7 +228,11 @@ public class ProcessInstanceController {
                                   @ApiParam(value = "", required = true) @RequestHeader(value = "federationId", required = true) String federationId,
                                   @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) throws NimbleException {
         try {
-            logger.info("Getting rating status for process instance: {}, party: {}", processInstanceId, partyId);
+            // set request log of ExecutionContext
+            String requestLog = String.format("Getting rating status for process instance: %s, party: %s", processInstanceId, partyId);
+            executionContext.setRequestLog(requestLog);
+
+            logger.info(requestLog);
             // validate role
             if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
@@ -247,7 +261,11 @@ public class ProcessInstanceController {
     public ResponseEntity getProcessInstanceIdForDocument(@ApiParam(value = "Identifier of the document", required = true) @PathVariable(value = "documentId", required = true) String documentId,
                                   @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) throws NimbleException {
         try {
-            logger.info("Getting process instance id for document: {}", documentId);
+            // set request log of ExecutionContext
+            String requestLog = String.format("Getting process instance id for document: %s", documentId);
+            executionContext.setRequestLog(requestLog);
+
+            logger.info(requestLog);
             // validate role
             if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
@@ -280,7 +298,11 @@ public class ProcessInstanceController {
                                                              @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) throws NimbleException {
         ExecutorService executorService = null;
         try {
-            logger.info("Getting the details for process instance: {}", processInstanceId);
+            // set request log of ExecutionContext
+            String requestLog = String.format("Getting the details for process instance: %s", processInstanceId);
+            executionContext.setRequestLog(requestLog);
+
+            logger.info(requestLog);
             executorService = Executors.newCachedThreadPool();
 
             // validate role
@@ -505,6 +527,11 @@ public class ProcessInstanceController {
                                                           @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) throws NimbleException {
 
         try {
+            // set request log of ExecutionContext
+            String requestLog = String.format("Incoming request to get associated collaboration groups for process instance id:%s",processInstanceId);
+            executionContext.setRequestLog(requestLog);
+
+            logger.info(requestLog);
             // validate role
             if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
@@ -526,6 +553,7 @@ public class ProcessInstanceController {
                 throw new NimbleException(NimbleExceptionMessageCode.NOT_FOUND_NO_COLLABORATION_GROUP_FOR_PROCESS.toString(),Arrays.asList(processInstanceId));
             }
 
+            logger.info("Completed the request to get associated collaboration groups for process instance id:{}",processInstanceId);
             return ResponseEntity.status(HttpStatus.OK).body(HibernateSwaggerObjectMapper.convertCollaborationGroupDAO(collaborationGroup));
 
         } catch (Exception e) {
@@ -554,13 +582,16 @@ public class ProcessInstanceController {
         ByteArrayOutputStream tempOutputStream;
         
         try {
+            // set request log of ExecutionContext
+            String requestLog = String.format("Incoming request to export transactions. party id: %s, user id: %s, direction: %s", partyId, userId, direction);
+            executionContext.setRequestLog(requestLog);
             // validate role
             if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_TO_EXPORT_PROCESS_INSTANCE_DATA)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString(),true);
             }
 
 
-            logger.info("Incoming request to export transactions. party id: {}, user id: {}, direction: {}", partyId, userId, direction);
+            logger.info(requestLog);
             List<TransactionSummary> transactions = ProcessDocumentMetadataDAOUtility.getTransactionSummaries(partyId, federationId,userId, direction, archived, bearerToken);
             ZipEntry zipEntry;
             tempOutputStream = null;

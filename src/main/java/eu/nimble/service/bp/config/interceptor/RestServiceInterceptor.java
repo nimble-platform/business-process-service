@@ -1,7 +1,6 @@
 package eu.nimble.service.bp.config.interceptor;
 
 import eu.nimble.service.bp.util.ExecutionContext;
-import eu.nimble.utility.exception.AuthenticationException;
 import eu.nimble.utility.exception.NimbleException;
 import eu.nimble.utility.exception.NimbleExceptionMessageCode;
 import org.slf4j.Logger;
@@ -48,7 +47,22 @@ public class RestServiceInterceptor extends HandlerInterceptorAdapter {
 
         // set token to the execution context
         executionContext.setBearerToken(bearerToken);
+        // save the time as an Http attribute
+        request.setAttribute("startTime", System.currentTimeMillis());
 
         return true;
+    }
+
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
+        // calculate and log the execution time for the request
+        long startTime = (Long)request.getAttribute("startTime");
+
+        long endTime = System.currentTimeMillis();
+
+        long executionTime = endTime - startTime;
+        if(executionContext.getRequestLog() != null){
+            logger.info("Duration for '{}' is {} millisecond",executionContext.getRequestLog(),executionTime);
+        }
     }
 }

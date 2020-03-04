@@ -8,6 +8,7 @@ import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceGroupDAO;
 import eu.nimble.service.bp.swagger.model.GroupIdTuple;
+import eu.nimble.service.bp.util.ExecutionContext;
 import eu.nimble.service.bp.util.persistence.bp.CollaborationGroupDAOUtility;
 import eu.nimble.service.bp.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
@@ -66,6 +67,8 @@ public class DocumentController {
     private IIdentityClientTyped identityClient;
     @Autowired
     private IValidationUtil validationUtil;
+    @Autowired
+    private ExecutionContext executionContext;
 
     @ApiOperation(value = "",notes = "Retrieve Json content of the document with the given id")
     @ApiResponses(value = {
@@ -81,7 +84,11 @@ public class DocumentController {
                                                          @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
     ) throws NimbleException {
         try {
-            logger.info("Getting content of document: {}", documentID);
+            // set request log of ExecutionContext
+            String requestLog = String.format("Getting content of document: %s", documentID);
+            executionContext.setRequestLog(requestLog);
+
+            logger.info(requestLog);
             // validate role
             if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
@@ -117,6 +124,9 @@ public class DocumentController {
             method = RequestMethod.GET)
     ResponseEntity<String> getDocumentXMLContent(@ApiParam(value = "The identifier of the document to be received", required = true) @PathVariable("documentID") String documentID,
                                                  @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) throws NimbleException {
+        // set request log of ExecutionContext
+        String requestLog = String.format("Incoming request to get xml content for document id: %s",documentID);
+        executionContext.setRequestLog(requestLog);
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
@@ -166,6 +176,9 @@ public class DocumentController {
                                          @ApiParam(value = "Type of the process instance document to be updated", required = true) @RequestParam(value = "documentType") DocumentType documentType,
                                          @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) throws NimbleException, JsonProcessingException {
         try {
+            // set request log of ExecutionContext
+            String requestLog = String.format("Incoming request to update document for id: %s",documentID);
+            executionContext.setRequestLog(requestLog);
             // validate role
             if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
@@ -330,7 +343,11 @@ public class DocumentController {
                                                              @ApiParam(value = "The identifier of the process instance group to be checked",required = true) @QueryParam("partyId") String partyId,
                                                              @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
                                           @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="federationId", required=true) String federationId) throws NimbleException {
-        logger.info("Retrieving group id tuple for document: {} and party: {}",documentId,partyId);
+        // set request log of ExecutionContext
+        String requestLog = String.format("Retrieving group id tuple for document: %s and party: %s",documentId,partyId);
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
 
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {

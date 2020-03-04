@@ -1,6 +1,7 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.config.RoleConfig;
+import eu.nimble.service.bp.util.ExecutionContext;
 import eu.nimble.utility.exception.NimbleException;
 import eu.nimble.utility.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
@@ -12,7 +13,6 @@ import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -28,6 +28,8 @@ public class ObjectController {
 
     @Autowired
     private IValidationUtil validationUtil;
+    @Autowired
+    private ExecutionContext executionContext;
 
     @ApiOperation(value = "",notes = "Deletes object with the given hjid and class name")
     @ApiResponses(value = {
@@ -42,7 +44,11 @@ public class ObjectController {
                                                  @ApiParam(value = "Class name of the object to be deleted. Some examples are eu.nimble.service.model.ubl.quotation.QuotationType and eu.nimble.service.model.ubl.order.OrderType",required = true) @RequestParam(value = "className",required = true) String className,
                                                  @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
     ) {
-        logger.info("Deleting the object with hjid: {}, className: {}",hjid,className);
+        // set request log of ExecutionContext
+        String requestLog = String.format("Deleting the object with hjid: %s, className: %s",hjid,className);
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
 
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {

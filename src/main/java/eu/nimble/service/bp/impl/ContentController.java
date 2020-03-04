@@ -2,6 +2,7 @@ package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessDAO;
+import eu.nimble.service.bp.util.ExecutionContext;
 import eu.nimble.service.bp.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.util.jssequence.JSSequenceDiagramParser;
 import eu.nimble.service.bp.util.persistence.bp.HibernateSwaggerObjectMapper;
@@ -25,7 +26,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import springfox.documentation.annotations.ApiIgnore;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,13 +40,19 @@ public class ContentController implements ContentApi {
     private JPARepositoryFactory repoFactory;
     @Autowired
     private IValidationUtil validationUtil;
+    @Autowired
+    private ExecutionContext executionContext;
 
     @Override
     @ApiOperation(value = "",notes = "Add a new business process")
     public ResponseEntity<ModelApiResponse> addProcessDefinition(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
                                                                  @RequestBody Process body
     ) {
-        logger.info(" $$$ Adding business process definition: ");
+        // set request log of ExecutionContext
+        String requestLog = " $$$ Adding business process definition: ";
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
         logger.debug(" $$$ {}", body.toString());
 
         // validate role
@@ -75,7 +81,11 @@ public class ContentController implements ContentApi {
     @ApiOperation(value = "",notes = "Delete a business process definition")
     public ResponseEntity<ModelApiResponse> deleteProcessDefinition(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
                                                                     @PathVariable("processID") String processID) throws NimbleException {
-        logger.info(" $$$ Deleting business process definition for ... {}", processID);
+        // set request log of ExecutionContext
+        String requestLog = String.format(" $$$ Deleting business process definition for ... %s", processID);
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
@@ -94,7 +104,11 @@ public class ContentController implements ContentApi {
     @ApiOperation(value = "",notes = "Get the business process definitions")
     public ResponseEntity<Process> getProcessDefinition(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
                                                         @PathVariable("processID") String processID) {
-        logger.info(" $$$ Getting business process definition for ... {}", processID);
+        // set request log of ExecutionContext
+        String requestLog = String.format(" $$$ Getting business process definition for ... %s", processID);
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
@@ -116,7 +130,11 @@ public class ContentController implements ContentApi {
     @ApiOperation(value = "",notes = "Get the business process definitions")
     public ResponseEntity<List<Process>> getProcessDefinitions(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
     ) {
-        logger.info(" $$$ Getting business process definitions");
+        // set request log of ExecutionContext
+        String requestLog = " $$$ Getting business process definitions";
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
@@ -151,7 +169,11 @@ public class ContentController implements ContentApi {
     @ApiOperation(value = "",notes = "Update a business process")
     public ResponseEntity<ModelApiResponse> updateProcessDefinition(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
                                                                     @RequestBody Process body) {
-        logger.info(" $$$ Updating business process definition: ");
+        // set request log of ExecutionContext
+        String requestLog = " $$$ Updating business process definition: ";
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
         logger.debug(" $$$ {}", body.toString());
 
         // validate role

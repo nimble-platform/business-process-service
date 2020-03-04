@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.model.hyperjaxb.*;
 import eu.nimble.service.bp.util.BusinessProcessEvent;
+import eu.nimble.service.bp.util.ExecutionContext;
 import eu.nimble.service.bp.util.bp.BusinessProcessUtility;
 import eu.nimble.service.bp.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.util.email.IEmailSenderUtil;
@@ -59,6 +60,8 @@ public class ContinueController implements ContinueApi {
     private IEmailSenderUtil emailSenderUtil;
     @Autowired
     private IValidationUtil validationUtil;
+    @Autowired
+    private ExecutionContext executionContext;
 
     @ApiIgnore
     @Override
@@ -83,6 +86,8 @@ public class ContinueController implements ContinueApi {
             @RequestHeader(value = "Authorization", required = true) String bearerToken,
             @ApiParam(value = "" ,required=true ) @RequestHeader(value="initiatorFederationId", required=true) String initiatorFederationId,
             @ApiParam(value = "" ,required=true ) @RequestHeader(value="responderFederationId", required=true) String responderFederationId) throws NimbleException {
+        // set request log of ExecutionContext
+        executionContext.setRequestLog(" $$$ Continue Process with ProcessInstanceInputMessage");
         try {
             logger.debug(" $$$ Continue Process with ProcessInstanceInputMessage {}", JsonSerializationUtility.getObjectMapperWithMixIn(ProcessVariables.class, MixInIgnoreProperties.class).writeValueAsString(body));
         } catch (JsonProcessingException e) {

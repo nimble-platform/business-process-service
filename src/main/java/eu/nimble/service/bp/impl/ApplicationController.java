@@ -2,6 +2,7 @@ package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessConfigurationDAO;
+import eu.nimble.service.bp.util.ExecutionContext;
 import eu.nimble.service.bp.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.util.persistence.bp.ProcessConfigurationDAOUtility;
 import eu.nimble.service.bp.swagger.api.ApplicationApi;
@@ -23,7 +24,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import springfox.documentation.annotations.ApiIgnore;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,13 +38,19 @@ public class ApplicationController implements ApplicationApi {
     private JPARepositoryFactory repositoryFactory;
     @Autowired
     private IValidationUtil validationUtil;
+    @Autowired
+    private ExecutionContext executionContext;
 
     @Override
     @ApiOperation(value = "",notes = "Add a new partner business process application preference")
     public ResponseEntity<ModelApiResponse> addProcessConfiguration(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,@RequestBody ProcessConfiguration body
 
     ) throws NimbleException {
-        logger.info(" $$$ Adding ProcessApplicationConfigurations: ");
+        // set request log of ExecutionContext
+        String requestLog = "Adding ProcessApplicationConfigurations: ";
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
         logger.debug(" $$$ {}", body.toString());
 
         // validate role
@@ -62,7 +68,11 @@ public class ApplicationController implements ApplicationApi {
     public ResponseEntity<ModelApiResponse> deleteProcessConfiguration(@PathVariable("partnerID") String partnerID, @PathVariable("processID") String processID, @PathVariable("roleType") String roleType,
                                                                        @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
     ) throws NimbleException {
-        logger.info(" $$$ Deleting ProcessApplicationConfigurations for ... {}", partnerID);
+        // set request log of ExecutionContext
+        String requestLog = String.format(" $$$ Deleting ProcessApplicationConfigurations for ... %s", partnerID);
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
@@ -78,7 +88,11 @@ public class ApplicationController implements ApplicationApi {
     public ResponseEntity<List<ProcessConfiguration>> getProcessConfiguration(@PathVariable("partnerID") String partnerID,
                                                                               @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
     ) throws NimbleException {
-        logger.info(" $$$ Getting ProcessApplicationConfigurations for ... {}", partnerID);
+        // set request log of ExecutionContext
+        String requestLog = String.format(" $$$ Getting ProcessApplicationConfigurations for ... %s", partnerID);
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
@@ -101,7 +115,11 @@ public class ApplicationController implements ApplicationApi {
     public ResponseEntity<ProcessConfiguration> getProcessConfigurationByProcessID(@PathVariable("partnerID") String partnerID, @PathVariable("processID") String processID, @PathVariable("roleType") String roleType,
                                                                                    @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
     ) throws NimbleException {
-        logger.info(" $$$ Deleting ProcessApplicationConfigurations for ... {}", partnerID);
+        // set request log of ExecutionContext
+        String requestLog = String.format(" $$$ Deleting ProcessApplicationConfigurations for ... %s", partnerID);
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
@@ -119,7 +137,11 @@ public class ApplicationController implements ApplicationApi {
     public ResponseEntity<ModelApiResponse> updateProcessConfiguration(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,@RequestBody ProcessConfiguration body
 
     ) throws NimbleException {
-        logger.info(" $$$ Updating ProcessApplicationConfigurations: ");
+        // set request log of ExecutionContext
+        String requestLog = " $$$ Updating ProcessApplicationConfigurations: ";
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
         logger.debug(" $$$ {}", body.toString());
         // validate role
         if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {

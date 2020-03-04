@@ -7,6 +7,7 @@ import eu.nimble.service.bp.model.hyperjaxb.GroupStatus;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceGroupDAO;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
+import eu.nimble.service.bp.util.ExecutionContext;
 import eu.nimble.service.bp.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
@@ -29,7 +30,6 @@ import org.camunda.bpm.engine.history.HistoricProcessInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -52,6 +52,8 @@ public class DocumentsController {
 
     @Autowired
     private IValidationUtil validationUtil;
+    @Autowired
+    private ExecutionContext executionContext;
 
     @ApiOperation(value = "", notes = "Retrieves the expected orders for a specific party or for all parties. " +
             "When an order contains some associated products, the seller should make orders for those products to complete the original order." +
@@ -71,7 +73,11 @@ public class DocumentsController {
             @ApiParam(value = "Identifier of the unshipped orders for which the associated documents will be retrieved", required = false) @RequestParam(value = "unShippedOrderIds", required = false) List<String> unShippedOrderIds
     ) throws Exception{
         try {
-            logger.info("Getting expected orders");
+            // set request log of ExecutionContext
+            String requestLog = "Getting expected orders";
+            executionContext.setRequestLog(requestLog);
+
+            logger.info(requestLog);
             // validate role
             if (!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
