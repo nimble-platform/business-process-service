@@ -1,7 +1,5 @@
 package eu.nimble.service.bp.util;
 
-import eu.nimble.service.bp.util.spring.SpringBridge;
-import eu.nimble.utility.exception.AuthenticationException;
 import feign.Response;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -15,19 +13,6 @@ import java.io.IOException;
  */
 public class HttpResponseUtil {
     private static final Logger logger = LoggerFactory.getLogger(HttpResponseUtil.class);
-
-    public static void validateToken(String token) throws AuthenticationException {
-        try {
-            // check token
-            boolean isValid = SpringBridge.getInstance().getiIdentityClientTyped().getUserInfo(token);
-            if (!isValid) {
-                String msg = String.format("No user exists for the given token : %s", token);
-                throw new AuthenticationException(msg);
-            }
-        } catch (IOException e) {
-            throw new AuthenticationException(String.format("Failed to check user authorization for token: %s", token), e);
-        }
-    }
 
     public static String extractBodyFromFeignClientResponse(Response feignResponse) throws IOException {
         try {

@@ -101,7 +101,7 @@ public class ContinueController implements ContinueApi {
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
         try {
             // validate role
-            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_SALES)) {
+            if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_SALES)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 

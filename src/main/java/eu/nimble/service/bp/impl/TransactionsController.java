@@ -59,7 +59,7 @@ public class TransactionsController {
         logger.debug(requestLog);
 
         // validate role
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_ADMIN)) {
+        if(!validationUtil.validateRole(bearerToken, executionContext.getUserRoles(),RoleConfig.REQUIRED_ROLES_ADMIN)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 

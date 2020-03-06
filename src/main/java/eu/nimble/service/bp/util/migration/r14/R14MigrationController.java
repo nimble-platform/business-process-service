@@ -5,6 +5,7 @@ import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
 import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
+import eu.nimble.utility.ExecutionContext;
 import eu.nimble.utility.exception.NimbleException;
 import eu.nimble.utility.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.persistence.GenericJPARepository;
@@ -35,6 +36,8 @@ public class R14MigrationController {
 
     @Autowired
     private IValidationUtil validationUtil;
+    @Autowired
+    private ExecutionContext executionContext;
 
     @ApiOperation(value = "", notes = "Updates business process documents (Request for Quotation, Quotation, Order and Transport Execution Plan) to handle the changes on LineItemType model.")
     @ApiResponses(value = {
@@ -47,10 +50,14 @@ public class R14MigrationController {
             method = RequestMethod.PATCH)
     public ResponseEntity adaptDocumentsForLineItemUpdates(@ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken
     ) {
-        logger.info("Incoming request to adapt documents to handle line item updates");
+        // set request log of ExecutionContext
+        String requestLog = "Incoming request to adapt documents to handle line item updates";
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
 
         // validate role
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+        if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 

@@ -7,6 +7,7 @@ import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.util.migration.r11.serialization.BinaryObjectSerializerGetBinaryObjects;
 import eu.nimble.service.model.ubl.catalogue.CatalogueType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.BinaryObjectType;
+import eu.nimble.utility.ExecutionContext;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.exception.NimbleException;
 import eu.nimble.utility.exception.NimbleExceptionMessageCode;
@@ -46,6 +47,9 @@ public class MigrationController {
 
     @Autowired
     private IValidationUtil validationUtil;
+    @Autowired
+    private ExecutionContext executionContext;
+
 
     @ApiOperation(value = "",notes = "Updates the uri of binary objects whose uris start with the given uri.The given uri should be the value of BINARY_CONTENT_URL environment variable." +
             " Firstly, it retrieves such binary objects belonging to the catalogues and updates their uris to CatalogBinaryContentUri:UUID. For the rest of them, it updates their uris" +
@@ -61,10 +65,14 @@ public class MigrationController {
     public ResponseEntity updateBinaryContents(@ApiParam(value = "Value of BINARY_CONTENT_URL environment variable.",required = true) @RequestParam(value = "previousUri",required = true) String previousUri,
                                                @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
     ) {
-        logger.info("Incoming request to update binary content uris");
+        // set request log of ExecutionContext
+        String requestLog = "Incoming request to update binary content uris for user: %s";
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
 
         // validate role
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+        if(!validationUtil.validateRole(bearerToken, executionContext.getUserRoles(),RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 

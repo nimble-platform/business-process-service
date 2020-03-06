@@ -182,6 +182,8 @@ nimble:
   cors_enabled: false
   identity:
     url: ${IDENTITY_SERVICE_URL}
+  keycloak:
+    public-key: ${KEYCLOAK_PUBLIC_KEY}
   data-channel:
     url: ${DATA_CHANNEL_SERVICE_URL}
   frontend:

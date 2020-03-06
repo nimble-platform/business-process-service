@@ -84,7 +84,7 @@ public class StartController implements StartApi {
 
         logger.info(requestLog);
         // validate role
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES)) {
+        if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 
@@ -170,7 +170,7 @@ public class StartController implements StartApi {
         logger.debug(" $$$ Start Process with ProcessInstanceInputMessage {}", JsonSerializationUtility.serializeEntitySilentlyWithMixin(body, ProcessVariables.class, MixInIgnoreProperties.class));
 
         // validate role
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+        if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 

@@ -79,7 +79,7 @@ public class DocumentsController {
 
             logger.info(requestLog);
             // validate role
-            if (!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+            if (!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
             // unShippedOrderIds are given, so create expected orders for them

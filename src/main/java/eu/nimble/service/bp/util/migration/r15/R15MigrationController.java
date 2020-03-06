@@ -5,6 +5,7 @@ import eu.nimble.service.bp.model.hyperjaxb.FederatedCollaborationGroupMetadataD
 import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceGroupDAO;
 import eu.nimble.service.bp.util.spring.SpringBridge;
+import eu.nimble.utility.ExecutionContext;
 import eu.nimble.utility.exception.NimbleException;
 import eu.nimble.utility.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.persistence.GenericJPARepository;
@@ -36,6 +37,8 @@ public class R15MigrationController {
 
     @Autowired
     private IValidationUtil validationUtil;
+    @Autowired
+    private ExecutionContext executionContext;
 
     private final String QUERY_GET_PRECEDING_GROUP_ID = "SELECT group.ID FROM ProcessInstanceGroupDAO group WHERE group.hjid = :hjid";
     // native query
@@ -52,10 +55,14 @@ public class R15MigrationController {
             method = RequestMethod.PATCH)
     public ResponseEntity federateBpDataModels(@ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken
     ) {
-        logger.info("Incoming request to federate bp data models");
+        // set request log of ExecutionContext
+        String requestLog = "Incoming request to federate bp data models";
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
 
         // validate role
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+        if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 

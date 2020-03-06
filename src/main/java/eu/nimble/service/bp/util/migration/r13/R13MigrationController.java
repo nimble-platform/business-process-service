@@ -1,6 +1,7 @@
 package eu.nimble.service.bp.util.migration.r13;
 
 import eu.nimble.service.bp.config.RoleConfig;
+import eu.nimble.utility.ExecutionContext;
 import eu.nimble.utility.exception.NimbleException;
 import eu.nimble.utility.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.persistence.GenericJPARepository;
@@ -37,6 +38,8 @@ public class R13MigrationController {
 
     @Autowired
     private IValidationUtil validationUtil;
+    @Autowired
+    private ExecutionContext executionContext;
 
     @ApiOperation(value = "", notes = "This script makes sure that each document has a unique identifier. It deletes the duplicate documents.")
     @ApiResponses(value = {
@@ -48,10 +51,14 @@ public class R13MigrationController {
             method = RequestMethod.DELETE)
     public ResponseEntity deleteDuplicateDocuments(@ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken
     ) {
-        logger.info("Incoming request to delete duplicate documents");
+        // set request log of ExecutionContext
+        String requestLog = "Incoming request to delete duplicate documents";
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
 
         // validate role
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+        if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 
