@@ -40,9 +40,15 @@ public class RestServiceInterceptor extends HandlerInterceptorAdapter {
     private final String CLAIMS_FIELD_REALM_ACCESS = "realm_access";
     private final String CLAIMS_FIELD_ROLES = "roles";
     private final String CLAIMS_FIELD_EMAIL = "email";
+    private final int MEGABYTE = 1024*1024;
 
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+    public boolean preHandle (HttpServletRequest request, HttpServletResponse response, Object handler) {
+        // log JVM memory stats
+        logJVMMemoryStats(request.getRequestURI(),request.getMethod());
+
+        // save the time as an Http attribute
+        request.setAttribute("startTime", System.currentTimeMillis());
 
         String bearerToken = request.getHeader(HttpHeaders.AUTHORIZATION);
 
@@ -72,21 +78,27 @@ public class RestServiceInterceptor extends HandlerInterceptorAdapter {
             // to append user email to the exception logs, we do not clear MDC since ExceptionHandler is invoked after afterCompletion method.
             MDC.put("userEmail",email);
         }
-        // save the time as an Http attribute
-        request.setAttribute("startTime", System.currentTimeMillis());
         return true;
     }
 
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
         // calculate and log the execution time for the request
-        long startTime = (Long)request.getAttribute("startTime");
-
         long endTime = System.currentTimeMillis();
+
+        long startTime = (Long)request.getAttribute("startTime");
 
         long executionTime = endTime - startTime;
         if(executionContext.getRequestLog() != null){
             logger.info("Duration for '{}' is {} millisecond",executionContext.getRequestLog(),executionTime);
         }
+    }
+
+    private void logJVMMemoryStats(String uri, String method){
+        Runtime runtime = Runtime.getRuntime();
+        long totalMemory = runtime.totalMemory() / MEGABYTE;
+        long freeMemory = runtime.freeMemory() / MEGABYTE;
+
+        logger.info("Incoming request to {} {} : Total Memory: {} MB, Used Memory: {} MB, Free Memory: {} MB",method,uri,totalMemory,totalMemory - freeMemory,freeMemory);
     }
 }
