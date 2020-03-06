@@ -4,6 +4,7 @@
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
     <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
     ​
+    <property name="LOG_PATTERN" value="%clr(%d{yyyy-MM-dd HH:mm:ss}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %clr(%X{userEmail}){faint} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
     <springProperty scope="context" name="springAppName" source="spring.application.name"/>
     <springProperty name="logstash-uri" source="logstash.uri"/>
     <springProperty name="build-version" source="build.version"/>
@@ -46,12 +47,18 @@
         </encoder>
     </appender>
 
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
     <logger name="eu.nimble.service.bp" level="DEBUG"/>
     <logger name="eu.nimble.utility" level="INFO"/>
 
     <root level="INFO">
         <appender-ref ref="logstash"/>
-        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="console"/>
     </root>
 
     <logger name="org.springframework.cloud.config.client" level="warn"/>

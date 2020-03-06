@@ -7,6 +7,7 @@ import eu.nimble.utility.validation.IValidationUtil;
 import io.jsonwebtoken.Claims;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
@@ -38,6 +39,8 @@ public class RestServiceInterceptor extends HandlerInterceptorAdapter {
     private final String apiDocsPath = "api-docs";
     private final String CLAIMS_FIELD_REALM_ACCESS = "realm_access";
     private final String CLAIMS_FIELD_ROLES = "roles";
+    private final String CLAIMS_FIELD_EMAIL = "email";
+
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
 
@@ -57,15 +60,20 @@ public class RestServiceInterceptor extends HandlerInterceptorAdapter {
 
         // set token to the execution context
         executionContext.setBearerToken(bearerToken);
+        // set user email and available roles to the execution context
         if(claims != null){
+            String email = (String) claims.get(CLAIMS_FIELD_EMAIL);
             LinkedHashMap realmAccess = (LinkedHashMap) claims.get(CLAIMS_FIELD_REALM_ACCESS);
             List<String> roles = (List<String>) realmAccess.get(CLAIMS_FIELD_ROLES);
 
+            executionContext.setUserEmail(email);
             executionContext.setUserRoles(roles);
+
+            // to append user email to the exception logs, we do not clear MDC since ExceptionHandler is invoked after afterCompletion method.
+            MDC.put("userEmail",email);
         }
         // save the time as an Http attribute
         request.setAttribute("startTime", System.currentTimeMillis());
-
         return true;
     }
 
