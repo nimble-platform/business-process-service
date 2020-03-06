@@ -23,10 +23,7 @@ import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.commonbasiccomponents.BinaryObjectType;
 import eu.nimble.service.model.ubl.document.IDocument;
-import eu.nimble.utility.Configuration;
-import eu.nimble.utility.ExecutionContext;
-import eu.nimble.utility.JsonSerializationUtility;
-import eu.nimble.utility.LoggerUtils;
+import eu.nimble.utility.*;
 import eu.nimble.utility.exception.NimbleException;
 import eu.nimble.utility.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
@@ -426,7 +423,7 @@ public class ProcessInstanceController {
                 else{
                     PartyType sellerParty = PartyPersistenceUtility.getParties(bearerToken, partyIds,federationIds).get(0);
                     Response response = SpringBridge.getInstance().getDelegateClient().getParty(bearerToken,Long.parseLong(iDocument.getBuyerPartyId()),false,iDocument.getBuyerParty().getFederationInstanceID());
-                    PartyType buyerParty = objectMapper.readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),PartyType.class);
+                    PartyType buyerParty = objectMapper.readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),PartyType.class);
 
                     parties = Arrays.asList(sellerParty,buyerParty);
                 }

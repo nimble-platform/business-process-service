@@ -67,7 +67,7 @@ public class ContractController {
 //        try {
 //            logger.info("Getting clause with id: {}", clauseId);
 //            // check token
-//            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
+//            ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
 //            if (tokenCheck != null) {
 //                return tokenCheck;
 //            }
@@ -100,7 +100,7 @@ public class ContractController {
 //        try {
 //            logger.info("Updating clause with id: {}", clauseId);
 //            // check token
-//            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
+//            ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
 //            if (tokenCheck != null) {
 //                return tokenCheck;
 //            }
@@ -255,7 +255,7 @@ public class ContractController {
 //            PartyType party = SpringBridge.getInstance().getiIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
 //
 //            // check token
-//            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
+//            ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
 //            if (tokenCheck != null) {
 //                return tokenCheck;
 //            }
@@ -506,7 +506,7 @@ public class ContractController {
 //        try {
 //            logger.info("Incoming request to save a DigitalAgreement instance");
 //            // check token
-//            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
+//            ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
 //            if (tokenCheck != null) {
 //                return tokenCheck;
 //            }
@@ -555,7 +555,7 @@ public class ContractController {
 //        try {
 //            logger.info("Incoming request to update a DigitalAgreement.");
 //            // check token
-//            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
+//            ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
 //            if (tokenCheck != null) {
 //                return tokenCheck;
 //            }

@@ -16,6 +16,7 @@ import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceGroupDAOUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
 import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.utility.ExecutionContext;
+import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.exception.NimbleException;
 import eu.nimble.utility.exception.NimbleExceptionMessageCode;
@@ -158,7 +159,7 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
                     else{
                         ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
                         Response response = SpringBridge.getInstance().getDelegateClient().getCollaborationGroup(bearerToken,federatedCollaborationGroupMetadata.getID(),federatedCollaborationGroupMetadata.getFederationID());
-                        federatedCollaborationGroup = objectMapper.readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),CollaborationGroup.class);
+                        federatedCollaborationGroup = objectMapper.readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),CollaborationGroup.class);
                     }
 
                     for (ProcessInstanceGroup associatedProcessInstanceGroup : federatedCollaborationGroup.getAssociatedProcessInstanceGroups()) {
@@ -228,7 +229,7 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
                             else{
                                 ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
                                 Response response = SpringBridge.getInstance().getDelegateClient().getCollaborationGroup(bearerToken,federatedCollaborationGroupMetadata.getID(),federatedCollaborationGroupMetadata.getFederationID());
-                                cp = objectMapper.readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),CollaborationGroup.class);
+                                cp = objectMapper.readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),CollaborationGroup.class);
                             }
 
                             for (ProcessInstanceGroup associatedProcessInstanceGroup : cp.getAssociatedProcessInstanceGroups()) {
@@ -411,7 +412,7 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
                         }
                         else{
                             Response response = SpringBridge.getInstance().getDelegateClient().getCollaborationGroup(bearerToken,federatedCollaborationGroupMetadataDAO.getID(),federatedCollaborationGroupMetadataDAO.getFederationID());
-                            collaborationGroup = objectMapper.readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),CollaborationGroup.class);
+                            collaborationGroup = objectMapper.readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),CollaborationGroup.class);
                         }
 
                         for (FederatedCollaborationGroupMetadata federatedCollaborationGroupMetadata : collaborationGroup.getFederatedCollaborationGroupMetadatas()) {
@@ -532,7 +533,7 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
                             else{
                                 ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
                                 Response response = SpringBridge.getInstance().getDelegateClient().getCollaborationGroup(bearerToken,federatedCollaborationGroupMetadata.getID(),federatedCollaborationGroupMetadata.getFederationID());
-                                federatedCollaborationGroup = objectMapper.readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),CollaborationGroup.class);
+                                federatedCollaborationGroup = objectMapper.readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),CollaborationGroup.class);
                             }
 
                             for (ProcessInstanceGroup associatedProcessInstanceGroup : federatedCollaborationGroup.getAssociatedProcessInstanceGroups()) {

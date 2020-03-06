@@ -17,6 +17,7 @@ import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.document.IDocument;
 import eu.nimble.utility.ExecutionContext;
+import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.exception.NimbleException;
 import eu.nimble.utility.exception.NimbleExceptionMessageCode;
@@ -131,7 +132,7 @@ public class DocumentsController {
                 // if delegate service is running, use it to get ExpectedOrders
                 if(SpringBridge.getInstance().isDelegateServiceRunning()){
                     Response response = SpringBridge.getInstance().getDelegateClient().getExpectedOrders(bearerToken,forAll,unshippedOrderIds);
-                    String responseBody = eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response);
+                    String responseBody = HttpResponseUtil.extractBodyFromFeignClientResponse(response);
                     expectedOrdersForUnshippedOrder = JsonSerializationUtility.getObjectMapper().readValue(responseBody,new TypeReference<List<ExpectedOrder>>(){});
                 }
                 else {

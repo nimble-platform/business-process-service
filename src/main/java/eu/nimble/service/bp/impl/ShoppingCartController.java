@@ -9,6 +9,7 @@ import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.QuantityType;
 import eu.nimble.utility.ExecutionContext;
+import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.exception.NimbleException;
 import eu.nimble.utility.exception.NimbleExceptionMessageCode;
@@ -185,7 +186,7 @@ public class ShoppingCartController {
             CatalogueLineType originalProduct = null;
             if(federationId != null && !federationId.contentEquals(SpringBridge.getInstance().getFederationId())){
                 Response response = SpringBridge.getInstance().getDelegateClient().getCatalogLineByHjid(bearerToken,productId);
-                originalProduct = JsonSerializationUtility.getObjectMapper().readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),CatalogueLineType.class);
+                originalProduct = JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),CatalogueLineType.class);
             }
             else {
                 originalProduct = new JPARepositoryFactory().forCatalogueRepository(true).getSingleEntityByHjid(CatalogueLineType.class, productId);
