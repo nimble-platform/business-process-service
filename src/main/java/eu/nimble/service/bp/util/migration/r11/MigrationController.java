@@ -3,19 +3,25 @@ package eu.nimble.service.bp.util.migration.r11;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.util.migration.r11.serialization.BinaryObjectSerializerGetBinaryObjects;
 import eu.nimble.service.model.ubl.catalogue.CatalogueType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.BinaryObjectType;
+import eu.nimble.utility.ExecutionContext;
 import eu.nimble.utility.JsonSerializationUtility;
+import eu.nimble.utility.exception.NimbleException;
+import eu.nimble.utility.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.persistence.binary.BinaryContentService;
+import eu.nimble.utility.validation.IValidationUtil;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -39,6 +45,12 @@ public class MigrationController {
     private final String CATALOG_BINARY_CONTENT_URI = "CatalogBinaryContentUri:";
     private final String BUSINESS_PROCESS_BINARY_CONTENT_URI = "BusinessProcessBinaryContentUri:";
 
+    @Autowired
+    private IValidationUtil validationUtil;
+    @Autowired
+    private ExecutionContext executionContext;
+
+
     @ApiOperation(value = "",notes = "Updates the uri of binary objects whose uris start with the given uri.The given uri should be the value of BINARY_CONTENT_URL environment variable." +
             " Firstly, it retrieves such binary objects belonging to the catalogues and updates their uris to CatalogBinaryContentUri:UUID. For the rest of them, it updates their uris" +
             " to BusinessProcessBinaryContentUri:UUID.")
@@ -53,12 +65,15 @@ public class MigrationController {
     public ResponseEntity updateBinaryContents(@ApiParam(value = "Value of BINARY_CONTENT_URL environment variable.",required = true) @RequestParam(value = "previousUri",required = true) String previousUri,
                                                @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
     ) {
-        logger.info("Incoming request to update binary content uris");
+        // set request log of ExecutionContext
+        String requestLog = "Incoming request to update binary content uris for user: %s";
+        executionContext.setRequestLog(requestLog);
 
-        // check token
-        ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
-        if (tokenCheck != null) {
-            return tokenCheck;
+        logger.info(requestLog);
+
+        // validate role
+        if(!validationUtil.validateRole(bearerToken, executionContext.getUserRoles(),RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+            throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 
         GenericJPARepository repo = new JPARepositoryFactory().forCatalogueRepository(true);

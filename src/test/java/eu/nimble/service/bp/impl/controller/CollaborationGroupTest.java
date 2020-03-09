@@ -2,8 +2,11 @@ package eu.nimble.service.bp.impl.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.model.dashboard.CollaborationGroupResponse;
+import eu.nimble.service.bp.model.hyperjaxb.CollaborationGroupDAO;
+import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceGroupDAO;
 import eu.nimble.service.bp.swagger.model.CollaborationGroup;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroup;
+import eu.nimble.service.bp.util.persistence.bp.CollaborationGroupDAOUtility;
 import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceGroupDAOUtility;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.utility.JsonSerializationUtility;
@@ -43,7 +46,7 @@ public class CollaborationGroupTest {
     private final String collaborationRoleSeller = "SELLER";
     private final String collaborationRoleBuyer = "BUYER";
     private int test1_expectedCollaborationGroupNumber = 1;
-    private int test1_expectedProcessInstanceGroupNumber = 2;
+    private int test1_expectedProcessInstanceGroupNumber = 1;
     private final String test5_productName = "QDeneme";
 
 
@@ -71,7 +74,7 @@ public class CollaborationGroupTest {
      * - Delete a collaboration group
      *
      * - Retrieve the order document of an order process given a process instance id such that the
-            corresponding process would be included in the same process instance group with the order process
+     corresponding process would be included in the same process instance group with the order process
      * - Cancel a completed process
      * - Cancel an already cancelled process (bad request expected)
      */
@@ -81,6 +84,7 @@ public class CollaborationGroupTest {
         // get the collaboration group
         MockHttpServletRequestBuilder request = get("/collaboration-groups")
                 .header("Authorization", TestConfig.initiatorPersonId)
+                .header("federationId",TestConfig.federationId)
                 .param("collaborationRole", collaborationRoleBuyer)
                 .param("relatedProducts",serviceName)
                 .param("partyId", partyID);
@@ -88,12 +92,19 @@ public class CollaborationGroupTest {
 
         CollaborationGroupResponse collaborationGroupResponse = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), CollaborationGroupResponse.class);
 
+        // there should be one collaboration group
         Assert.assertSame(test1_expectedCollaborationGroupNumber, collaborationGroupResponse.getSize());
         Assert.assertSame(test1_expectedProcessInstanceGroupNumber,collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().size());
 
+//        collaborationGroupID = collaborationGroupResponse.getCollaborationGroups().get(0).getID();
+//        CollaborationGroupDAO collaborationGroup = CollaborationGroupDAOUtility.getCollaborationGroupDAO(Long.parseLong(collaborationGroupResponse.getCollaborationGroups().get(0).getFederatedCollaborationGroupMetadatas().get(0).getID()));
+//        int sizeOfProcessInstances = collaborationGroup.getAssociatedProcessInstanceGroups().get(0).getProcessInstanceIDs().size();
+//        idOfTheLastProcessInstance = collaborationGroup.getAssociatedProcessInstanceGroups().get(0).getProcessInstanceIDs().get(sizeOfProcessInstances - 1);
+//        collaborationGroupID = collaborationGroup.getHjid().toString();
+
         collaborationGroupID = collaborationGroupResponse.getCollaborationGroups().get(0).getID();
-        int sizeOfProcessInstances = collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().get(1).getProcessInstanceIDs().size();
-        idOfTheLastProcessInstance = collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().get(1).getProcessInstanceIDs().get(sizeOfProcessInstances - 1);
+        int sizeOfProcessInstances = collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().get(0).getProcessInstanceIDs().size();
+        idOfTheLastProcessInstance = collaborationGroupResponse.getCollaborationGroups().get(0).getAssociatedProcessInstanceGroups().get(0).getProcessInstanceIDs().get(sizeOfProcessInstances - 1);
     }
 
     @Test
@@ -108,6 +119,7 @@ public class CollaborationGroupTest {
         // get the collaboration group
         MockHttpServletRequestBuilder request = get("/collaboration-groups")
                 .header("Authorization", TestConfig.initiatorPersonId)
+                .header("federationId", TestConfig.federationId)
                 .param("collaborationRole", collaborationRoleSeller)
                 .param("relatedProducts",productName)
                 .param("partyId", partyID);
@@ -168,7 +180,7 @@ public class CollaborationGroupTest {
         MockHttpServletRequestBuilder request = patch("/collaboration-groups/"+collaborationGroupID)
                 .header("Authorization", TestConfig.initiatorPersonId)
                 .param("groupName",groupName);
-         this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+        this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         request = get("/collaboration-groups/"+ CollaborationGroupTest.collaborationGroupID)
                 .header("Authorization", TestConfig.initiatorPersonId);
@@ -230,7 +242,7 @@ public class CollaborationGroupTest {
         // get process instance id
         processInstanceId = processInstanceGroup.getProcessInstanceIDs().get(0);
         // get id of associated process instance group
-        String associatedProcessInstanceGroupId = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(TestConfig.sellerPartyID,processInstanceGroup.getProcessInstanceIDs()).getID();
+        String associatedProcessInstanceGroupId = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAO(TestConfig.sellerPartyID,TestConfig.federationId,processInstanceGroup.getProcessInstanceIDs()).getID();
         // delete the group
         request = delete("/process-instance-groups/" + BusinessProcessExecutionTest.transportProviderProcessInstanceGroupID)
                 .header("Authorization", TestConfig.initiatorPersonId);
@@ -261,5 +273,17 @@ public class CollaborationGroupTest {
         MockHttpServletRequestBuilder request = post("/processInstance/"+ CollaborationGroupTest.cancelledProcessInstanceId+"/cancel")
                 .header("Authorization", TestConfig.initiatorPersonId);
         this.mockMvc.perform(request).andDo(print()).andExpect(status().isBadRequest()).andReturn();
+    }
+
+    /**
+     * Retrieve the process instance id for the document used in {{@link BusinessProcessWorkflowTests#test1_startProcessInstance()}}
+     * */
+    @Test
+    public void test13_getProcessInstanceIdForDocument() throws Exception {
+        MockHttpServletRequestBuilder request = get("/processInstance/document/2892f360-763f-4e26-843d-c6347d9114ff")
+                .header("Authorization", TestConfig.initiatorPersonId);
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+        String processInstanceId = mvcResult.getResponse().getContentAsString();
+        Assert.assertEquals(processInstanceId,BusinessProcessWorkflowTests.processInstanceID);
     }
 }

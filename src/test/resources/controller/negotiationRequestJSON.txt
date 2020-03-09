@@ -3,9 +3,9 @@
   "note": [
     ""
   ],
-  "dataMonitoringRequested": true,
   "buyerCustomerParty": {
     "party": {
+      "federationInstanceID": "TEST_INSTANCE",
       "nace": [],
       "description": [],
       "brandName": [],
@@ -135,6 +135,7 @@
   },
   "sellerSupplierParty": {
     "party": {
+      "federationInstanceID": "TEST_INSTANCE",
       "nace": [],
       "description": [],
       "brandName": [],
@@ -1760,6 +1761,7 @@
           "value": 1,
           "unitCode": "item(s)"
         },
+        "dataMonitoringRequested": true,
         "warrantyInformation": [],
         "delivery": [
           {
@@ -2075,7 +2077,7 @@
             }
           ],
           "manufacturerParty": {
-            "federationInstanceID": null,
+            "federationInstanceID": "TEST_INSTANCE",
             "nace": [],
             "description": [],
             "brandName": [],
@@ -3973,8 +3975,10 @@
       }
     ]
   },
-  "additionalDocumentReference": [{
-    "id":"ece63f2f-11e8-4f81-89de-7ea4effbc865",
-    "documentType":"previousDocument"
-  }]
+  "additionalDocumentReference": [
+    {
+      "id": "ece63f2f-11e8-4f81-89de-7ea4effbc865",
+      "documentType": "previousDocument"
+    }
+  ]
 }

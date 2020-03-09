@@ -2,6 +2,9 @@ package eu.nimble.service.bp.contract;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mashape.unirest.http.HttpResponse;
+import com.mashape.unirest.http.JsonNode;
+import com.mashape.unirest.http.Unirest;
 import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
 import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
@@ -10,6 +13,7 @@ import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ClauseType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.CodeType;
+import eu.nimble.service.model.ubl.commonbasiccomponents.QuantityType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.TextType;
 import eu.nimble.service.model.ubl.iteminformationrequest.ItemInformationRequestType;
 import eu.nimble.service.model.ubl.iteminformationresponse.ItemInformationResponseType;
@@ -19,8 +23,10 @@ import eu.nimble.service.model.ubl.ppaprequest.PpapRequestType;
 import eu.nimble.service.model.ubl.ppapresponse.PpapResponseType;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
+import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.binary.BinaryContentService;
+import feign.Response;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -38,6 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
+import javax.xml.datatype.XMLGregorianCalendar;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -74,218 +81,229 @@ public class ContractGenerator {
         // get the order response
         OrderResponseSimpleType orderResponse = DocumentPersistenceUtility.getOrderResponseDocumentByOrderId(order.getID());
 
-        XWPFDocument orderTermsAndConditions = fillOrderTermsAndConditions(order);
-        XWPFDocument purchaseDetails = fillPurchaseDetails(order,orderResponse);
+        List<XWPFDocument> orderTermsAndConditions = fillOrderTermsAndConditions(order);
+        List<XWPFDocument> purchaseDetails = fillPurchaseDetails(order,orderResponse);
 
         getAndPopulateClauses(order,zos,purchaseDetails);
         // additional documents of order
-        purchaseDetails = createOrderAdditionalDocuments(order,orderResponse,zos,purchaseDetails);
+        createOrderAdditionalDocuments(order, orderResponse, zos, purchaseDetails);
 
-        addDocxToZipFile("Standard Purchase Order Terms and Conditions.pdf",orderTermsAndConditions,zos);
-        addDocxToZipFile("Company Purchase Details.pdf",purchaseDetails,zos);
-
+        int orderLineSize = order.getOrderLine().size();
+        // we use product names to create entries
+        // since there may be multiple products with the same name, we need the map below to get the count of product names
+        // then, we create entry names by combining the product name and count,i.e.,Product Name,Product Name_1,Product Name_2 etc.
+        Map<String,Integer> productNamesCountMap = new HashMap<>();
+        for (int i = 0; i<orderLineSize;i++) {
+            XWPFDocument orderTermsAndCondition = orderTermsAndConditions.get(i);
+            XWPFDocument purchaseDetail = purchaseDetails.get(i);
+            String productName = order.getOrderLine().get(i).getLineItem().getItem().getName().get(0).getValue();
+            // update the map
+            productNamesCountMap.merge(productName, 1, Integer::sum);
+            // create a name for the entry
+            int count = productNamesCountMap.get(productName);
+            String entryName = count > 1  ? productName+"_"+count: productName;
+            // create entries
+            addDocxToZipFile(entryName+"/Standard Purchase Order Terms and Conditions.pdf",orderTermsAndCondition,zos);
+            addDocxToZipFile(entryName+"/Company Purchase Details.pdf",purchaseDetail,zos);
+        }
     }
 
-    public List<ClauseType> getTermsAndConditions(String orderId,String rfqId, String sellerPartyId, String buyerPartyId, String incoterms, String tradingTerm, String bearerToken) throws IOException {
+    public List<ClauseType> getTermsAndConditions(String sellerPartyId,String buyerPartyId,String buyerFederationId, String incoterms, String tradingTerm, String bearerToken) throws Exception {
         List<ClauseType> clauses = new ArrayList<>();
 
-        OrderType order = null;
-        RequestForQuotationType requestForQuotation = null;
-
-        if(orderId != null){
-            order = (OrderType) DocumentPersistenceUtility.getUBLDocument(orderId,DocumentType.ORDER);
-        } else if(rfqId != null){
-            requestForQuotation = (RequestForQuotationType) DocumentPersistenceUtility.getUBLDocument(rfqId,DocumentType.REQUESTFORQUOTATION);
-        }
-
         try {
-            // use Order's terms and conditions
-            if(order != null){
-                clauses = getTermsAndConditionsContract(order).getClause();
-            }
-            // use Request for quotation's terms and conditions
-            else if(requestForQuotation != null){
-                clauses = requestForQuotation.getTermOrCondition();
-            }
-            // create clauses
-            else {
-                InputStream inputStream = null;
-                try {
-                    // read clauses from the json file
-                    inputStream = ContractGenerator.class.getResourceAsStream("/contract-bundle/order_terms_and_conditions.json");
+            InputStream inputStream = null;
+            try {
+                // read clauses from the json file
+                inputStream = ContractGenerator.class.getResourceAsStream("/contract-bundle/order_terms_and_conditions.json");
 
-                    String fileContent = IOUtils.toString(inputStream);
+                String fileContent = IOUtils.toString(inputStream);
 
-                    ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
+                ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
 
-                    // Clauses
-                    clauses = objectMapper.readValue(fileContent, new TypeReference<List<ClauseType>>() {});
+                // Clauses
+                clauses = objectMapper.readValue(fileContent, new TypeReference<List<ClauseType>>() {});
 
-                    // update some trading terms using the party info
-                    PartyType supplierParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,sellerPartyId);
-                    PartyType customerParty = null;
-                    if(buyerPartyId != null){
+                // update some trading terms using the party info
+                PartyType supplierParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,sellerPartyId);
+                PartyType customerParty = null;
+                if(buyerPartyId != null){
+                    if(!buyerFederationId.contentEquals(SpringBridge.getInstance().getFederationId())){
+                        Response response = SpringBridge.getInstance().getDelegateClient().getParty(bearerToken,Long.parseLong(buyerPartyId),false,buyerFederationId);
+                        customerParty = objectMapper.readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),PartyType.class);
+                    }
+                    else {
                         customerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,buyerPartyId);
                     }
+                }
 
-                    for(ClauseType clause : clauses){
-                        if(clause.getID().contentEquals("1_PURCHASE ORDER TERMS AND CONDITIONS")){
-                            for(TradingTermType tradingTermType : clause.getTradingTerms()){
-                                if(tradingTermType.getID().contentEquals("$seller_id")){
+                for(ClauseType clause : clauses){
+                    if(clause.getID().contentEquals("1_PURCHASE ORDER TERMS AND CONDITIONS")){
+                        for(TradingTermType tradingTermType : clause.getTradingTerms()){
+                            if(tradingTermType.getID().contentEquals("$seller_id")){
+                                TextType text = new TextType();
+                                text.setLanguageID("en");
+                                text.setValue(supplierParty.getPartyName().get(0).getName().getValue());
+                                tradingTermType.getValue().setValue(Collections.singletonList(text));
+                            }
+                            else if(tradingTermType.getID().contentEquals("$buyer_id") && customerParty != null){
+                                TextType text = new TextType();
+                                text.setLanguageID("en");
+                                text.setValue(customerParty.getPartyName().get(0).getName().getValue());
+                                tradingTermType.getValue().setValue(Collections.singletonList(text));
+                            }
+                        }
+                    }
+                    else if(clause.getID().contentEquals("5_INVOICES, PAYMENT, AND TAXES")){
+                        for(TradingTermType tradingTermType : clause.getTradingTerms()){
+                            if(tradingTermType.getID().contentEquals("$payment_id") && !StringUtils.isEmpty(tradingTerm)){
+                                CodeType code = new CodeType();
+                                code.setValue(tradingTerm);
+                                code.setListID(payment_means_list_id);
+                                tradingTermType.getValue().setValueCode(Collections.singletonList(code));
+                            }
+                        }
+                    }
+                    else if(clause.getID().contentEquals("19_MISCELLANEOUS")){
+                        for(TradingTermType tradingTermType : clause.getTradingTerms()){
+                            if(tradingTermType.getID().contentEquals("$notices_id") && customerParty != null){
+                                TextType text = new TextType();
+                                text.setLanguageID("en");
+                                text.setValue(constructAddress(customerParty.getPartyName().get(0).getName().getValue(),customerParty.getPostalAddress()));
+                                tradingTermType.getValue().setValue(Collections.singletonList(text));
+                            }
+                            else if(tradingTermType.getID().contentEquals("$incoterms_id") && !StringUtils.isEmpty(incoterms)){
+                                CodeType code = new CodeType();
+                                code.setValue(incoterms);
+                                code.setListID(incoterms_list_id);
+                                tradingTermType.getValue().setValueCode(Collections.singletonList(code));
+                            }
+                            else if(tradingTermType.getID().contentEquals("$seller_website") && !StringUtils.isEmpty(supplierParty.getWebsiteURI())){
+                                TextType text = new TextType();
+                                text.setLanguageID("en");
+                                text.setValue(supplierParty.getWebsiteURI());
+                                tradingTermType.getValue().setValue(Collections.singletonList(text));
+                            }
+                            else if(tradingTermType.getID().contentEquals("$seller_tel")){
+                                if(supplierParty.getPerson() == null || supplierParty.getPerson().size() == 0){
+                                    logger.info("There is no person info in the party:{}",supplierParty);
+                                }else if(!StringUtils.isEmpty(supplierParty.getPerson().get(0).getContact().getTelephone())){
                                     TextType text = new TextType();
                                     text.setLanguageID("en");
-                                    text.setValue(supplierParty.getPartyName().get(0).getName().getValue());
-                                    tradingTermType.getValue().setValue(Collections.singletonList(text));
-                                }
-                                else if(tradingTermType.getID().contentEquals("$buyer_id") && customerParty != null){
-                                    TextType text = new TextType();
-                                    text.setLanguageID("en");
-                                    text.setValue(customerParty.getPartyName().get(0).getName().getValue());
+                                    text.setValue(supplierParty.getPerson().get(0).getContact().getTelephone());
                                     tradingTermType.getValue().setValue(Collections.singletonList(text));
                                 }
                             }
-                        }
-                        else if(clause.getID().contentEquals("5_INVOICES, PAYMENT, AND TAXES")){
-                            for(TradingTermType tradingTermType : clause.getTradingTerms()){
-                                if(tradingTermType.getID().contentEquals("$payment_id") && !StringUtils.isEmpty(tradingTerm)){
-                                    CodeType code = new CodeType();
-                                    code.setValue(tradingTerm);
-                                    code.setListID(payment_means_list_id);
-                                    tradingTermType.getValue().setValueCode(Collections.singletonList(code));
-                                }
-                            }
-                        }
-                        else if(clause.getID().contentEquals("19_MISCELLANEOUS")){
-                            for(TradingTermType tradingTermType : clause.getTradingTerms()){
-                                if(tradingTermType.getID().contentEquals("$notices_id") && customerParty != null){
-                                    TextType text = new TextType();
-                                    text.setLanguageID("en");
-                                    text.setValue(constructAddress(customerParty.getPartyName().get(0).getName().getValue(),customerParty.getPostalAddress()));
-                                    tradingTermType.getValue().setValue(Collections.singletonList(text));
-                                }
-                                else if(tradingTermType.getID().contentEquals("$incoterms_id") && !StringUtils.isEmpty(incoterms)){
-                                    CodeType code = new CodeType();
-                                    code.setValue(incoterms);
-                                    code.setListID(incoterms_list_id);
-                                    tradingTermType.getValue().setValueCode(Collections.singletonList(code));
-                                }
-                                else if(tradingTermType.getID().contentEquals("$seller_website") && !StringUtils.isEmpty(supplierParty.getWebsiteURI())){
-                                    TextType text = new TextType();
-                                    text.setLanguageID("en");
-                                    text.setValue(supplierParty.getWebsiteURI());
-                                    tradingTermType.getValue().setValue(Collections.singletonList(text));
-                                }
-                                else if(tradingTermType.getID().contentEquals("$seller_tel")){
-                                    if(supplierParty.getPerson() == null || supplierParty.getPerson().size() == 0){
-                                        logger.info("There is no person info in the party:{}",supplierParty);
-                                    }else if(!StringUtils.isEmpty(supplierParty.getPerson().get(0).getContact().getTelephone())){
-                                        TextType text = new TextType();
-                                        text.setLanguageID("en");
-                                        text.setValue(supplierParty.getPerson().get(0).getContact().getTelephone());
-                                        tradingTermType.getValue().setValue(Collections.singletonList(text));
-                                    }
-                                }
-                                else if(tradingTermType.getID().contentEquals("$buyer_country") &&  customerParty != null && customerParty.getPostalAddress() != null && customerParty.getPostalAddress().getCountry() != null && customerParty.getPostalAddress().getCountry().getName() != null){
-                                    CodeType code = new CodeType();
-                                    code.setValue(customerParty.getPostalAddress().getCountry().getName().getValue());
-                                    code.setListID(country_list_id);
-                                    tradingTermType.getValue().setValueCode(Collections.singletonList(code));
-                                }
+                            else if(tradingTermType.getID().contentEquals("$buyer_country") &&  customerParty != null && customerParty.getPostalAddress() != null && customerParty.getPostalAddress().getCountry() != null && customerParty.getPostalAddress().getCountry().getName() != null){
+                                CodeType code = new CodeType();
+                                code.setValue(customerParty.getPostalAddress().getCountry().getName().getValue());
+                                code.setListID(country_list_id);
+                                tradingTermType.getValue().setValueCode(Collections.singletonList(code));
                             }
                         }
                     }
                 }
-                catch (Exception e){
-                    logger.error("Failed to create terms and conditions for orderId: {}, rfqId: {}, sellerPartyId: {}, buyerPartyId: {}, incoterms: {}, tradingTerm : {}", orderId, rfqId, sellerPartyId, buyerPartyId, incoterms, tradingTerm, e);
-                    throw e;
-                }
-                finally {
-                    if(inputStream != null){
-                        inputStream.close();
-                    }
+            }
+            catch (Exception e){
+                logger.error("Failed to create terms and conditions for sellerPartyId: {}, buyerPartyId: {}, incoterms: {}, tradingTerm : {}", sellerPartyId, buyerPartyId, incoterms, tradingTerm, e);
+                throw e;
+            }
+            finally {
+                if(inputStream != null){
+                    inputStream.close();
                 }
             }
         }
         catch (Exception e){
-            logger.error("Failed to create terms and conditions for orderId: {}, rfqId: {}, sellerPartyId: {}, buyerPartyId: {}, incoterms: {}, tradingTerm : {}", orderId, rfqId, sellerPartyId, buyerPartyId, incoterms, tradingTerm, e);
+            logger.error("Failed to create terms and conditions for sellerPartyId: {}, buyerPartyId: {}, incoterms: {}, tradingTerm : {}", sellerPartyId, buyerPartyId, incoterms, tradingTerm, e);
             throw e;
         }
 
         return clauses;
     }
 
-    private XWPFDocument fillOrderTermsAndConditions(OrderType order) throws Exception{
+    private List<XWPFDocument> fillOrderTermsAndConditions(OrderType order) throws Exception{
 
-        XWPFDocument document = null;
-        try {
-            InputStream file = ContractGenerator.class.getResourceAsStream("/contract-bundle/Standard_Purchase_Order_Terms_and_Conditions.docx");
+        List<XWPFDocument> documents = new ArrayList<>();
 
-            document = new XWPFDocument(file);
+        for(OrderLineType orderLine :order.getOrderLine()){
+            XWPFDocument document = null;
+            try {
+                InputStream file = ContractGenerator.class.getResourceAsStream("/contract-bundle/Standard_Purchase_Order_Terms_and_Conditions.docx");
 
-            // image
-            for(XWPFParagraph paragraph : document.getParagraphs()){
-                for(XWPFRun run : paragraph.getRuns()){
-                    String text = run.getText(0);
-                    if(text != null && text.contains("$logo_id")){
-                        text = text.replace("$logo_id","");
+                document = new XWPFDocument(file);
 
-                        setSpace(paragraph,logo_space);
+                // image
+                for(XWPFParagraph paragraph : document.getParagraphs()){
+                    for(XWPFRun run : paragraph.getRuns()){
+                        String text = run.getText(0);
+                        if(text != null && text.contains("$logo_id")){
+                            text = text.replace("$logo_id","");
 
-                        run.setText(text,0);
+                            setSpace(paragraph,logo_space);
 
-                        BufferedImage bufferedImage = ImageIO.read(getClass().getResourceAsStream("/contract-bundle/nimble_logo.png"));
-                        ByteArrayOutputStream os = new ByteArrayOutputStream();
-                        ImageIO.write(bufferedImage, "png", os);
-                        int scaledWidth = (int)(bufferedImage.getWidth() * (termsScale/bufferedImage.getHeight()));
+                            run.setText(text,0);
 
-                        run.addPicture(new ByteArrayInputStream(os.toByteArray()),XWPFDocument.PICTURE_TYPE_PNG,"nimble_logo.png",Units.toEMU(scaledWidth),Units.toEMU(100));
-                    }
-                    else if(text != null && text.contains("$document_name")){
-                        text = text.replace("$document_name","Purchase Order Terms and Conditions");
+                            BufferedImage bufferedImage = ImageIO.read(getClass().getResourceAsStream("/contract-bundle/nimble_logo.png"));
+                            ByteArrayOutputStream os = new ByteArrayOutputStream();
+                            ImageIO.write(bufferedImage, "png", os);
+                            int scaledWidth = (int)(bufferedImage.getWidth() * (termsScale/bufferedImage.getHeight()));
 
-                        paragraph.setAlignment(ParagraphAlignment.CENTER);
-                        run.setText(text,0);
-                        run.setBold(true);
-                        setColor(run,cyan_hex);
+                            run.addPicture(new ByteArrayInputStream(os.toByteArray()),XWPFDocument.PICTURE_TYPE_PNG,"nimble_logo.png",Units.toEMU(scaledWidth),Units.toEMU(100));
+                        }
+                        else if(text != null && text.contains("$document_name")){
+                            text = text.replace("$document_name","Purchase Order Terms and Conditions");
+
+                            paragraph.setAlignment(ParagraphAlignment.CENTER);
+                            run.setText(text,0);
+                            run.setBold(true);
+                            setColor(run,cyan_hex);
+                        }
                     }
                 }
+
+                // get T&Cs clauses
+                List<ClauseType> clauses = getTermsAndConditionsContract(order,order.getOrderLine().indexOf(orderLine)).getClause();
+
+                int rowIndex = 0;
+                for(ClauseType clause: clauses){
+                    XWPFParagraph paragraph = document.createParagraph();
+                    // set the clause title
+                    paragraph.createRun();
+                    paragraph.getRuns().get(0).setText(rowIndex+1+"."+clause.getID()+":\n");
+                    paragraph.getRuns().get(0).setBold(true);
+                    // set the content of clause
+                    setClauseContent(clause.getContent().get(0).getValue(),paragraph,clause.getTradingTerms());
+                    rowIndex++;
+                }
+
+                documents.add(document);
             }
-
-            // get T&Cs clauses
-            List<ClauseType> clauses = getTermsAndConditionsContract(order).getClause();
-
-            int rowIndex = 0;
-            for(ClauseType clause: clauses){
-                XWPFParagraph paragraph = document.createParagraph();
-                // set the clause title
-                paragraph.createRun();
-                paragraph.getRuns().get(0).setText(rowIndex+1+"."+clause.getID()+":\n");
-                paragraph.getRuns().get(0).setBold(true);
-                // set the content of clause
-                setClauseContent(clause.getContent().get(0).getValue(),paragraph,clause.getTradingTerms());
-                rowIndex++;
+            catch (Exception e){
+                logger.error("Failed to fill in 'Standard Purchase Order Terms and Conditions.pdf' for the order with id : {}",order.getID(),e);
+                throw e;
             }
         }
-        catch (Exception e){
-            logger.error("Failed to fill in 'Standard Purchase Order Terms and Conditions.pdf' for the order with id : {}",order.getID(),e);
-            throw e;
-        }
-        return document;
+
+        return documents;
     }
 
     private void setClauseContent(String sectionText, XWPFParagraph paragraph, List<TradingTermType> tradingTerms){
-        int indexOfParameter = sectionText.indexOf("$");
-        while (indexOfParameter != -1){
-            paragraph.createRun().setText(sectionText.substring(0,indexOfParameter),0);
-            sectionText = sectionText.substring(indexOfParameter);
+        // get the identifiers of all trading terms
+        List<String> tradingTermIds = new ArrayList<>();
+        for (TradingTermType tradingTerm : tradingTerms) {
+            tradingTermIds.add(tradingTerm.getID());
+        }
+        // get the details of first trading term in the given section text
+        TradingTermIndex nextTradingTerm = getFirstTradingTermInText(sectionText,tradingTermIds);
 
-            // find the parameter
-            int spaceIndex = sectionText.indexOf(" ");
-            String parameter = sectionText.substring(0,spaceIndex);
+        while (nextTradingTerm != null){
+            paragraph.createRun().setText(sectionText.substring(0,nextTradingTerm.getIndex()),0);
+            sectionText = sectionText.substring(nextTradingTerm.getIndex()+nextTradingTerm.getTradingTermId().length());
 
             XWPFRun run = paragraph.createRun();
             for(TradingTermType tradingTerm : tradingTerms){
-                if(tradingTerm.getID().contentEquals(parameter)){
+                if(tradingTerm.getID().contentEquals(nextTradingTerm.getTradingTermId())){
                     // find the value of parameter
                     String value = "";
                     if(tradingTerm.getValue().getValueQualifier().contentEquals("STRING") && tradingTerm.getValue().getValue().get(0).getValue() != null && !tradingTerm.getValue().getValue().get(0).getValue().contentEquals("")){
@@ -294,7 +312,7 @@ public class ContractGenerator {
                         value = new DecimalFormat("##").format(tradingTerm.getValue().getValueDecimal().get(0));
                     } else if(tradingTerm.getValue().getValueQualifier().contentEquals("QUANTITY") && tradingTerm.getValue().getValueQuantity().get(0).getValue() != null && tradingTerm.getValue().getValueQuantity().get(0).getUnitCode() != null){
                         value = new DecimalFormat("##").format(tradingTerm.getValue().getValueQuantity().get(0).getValue()) + " " + tradingTerm.getValue().getValueQuantity().get(0).getUnitCode();
-                    } else if(tradingTerm.getValue().getValueQualifier().contentEquals("CODE") && !tradingTerm.getValue().getValueCode().get(0).getValue().contentEquals("")){
+                    } else if(tradingTerm.getValue().getValueQualifier().contentEquals("CODE") && tradingTerm.getValue().getValueCode().get(0).getValue() != null && !tradingTerm.getValue().getValueCode().get(0).getValue().contentEquals("")){
                         value = tradingTerm.getValue().getValueCode().get(0).getValue();
                     }
                     // if no value is provided for the trading term, use its id
@@ -310,27 +328,48 @@ public class ContractGenerator {
                 }
             }
 
-            sectionText = sectionText.substring(spaceIndex);
-
-            indexOfParameter = sectionText.indexOf("$");
+            nextTradingTerm = getFirstTradingTermInText(sectionText,tradingTermIds);
         }
 
         paragraph.createRun().setText(sectionText,0);
     }
 
-    // returns the contract storing Terms and Conditions details
-    private ContractType getTermsAndConditionsContract(OrderType order){
+    // returns the details (id and the index) of the first trading term in the given text if exists
+    private TradingTermIndex getFirstTradingTermInText(String text, List<String> tradingTermId){
+        if(tradingTermId.size() == 0){
+            return null;
+        }
+        String firstTradingTerm = null;
+        int tradingTermIndex = text.length();
+
+        for (String s : tradingTermId) {
+            int index = text.indexOf(s);
+            if (index != -1 && index < tradingTermIndex) {
+                firstTradingTerm = s;
+                tradingTermIndex = index;
+            }
+        }
+
+        if(firstTradingTerm == null){
+            return null;
+        }
+        return new TradingTermIndex(tradingTermIndex, firstTradingTerm);
+    }
+
+    // returns the contract storing Terms and Conditions details for the item specified by the item index
+    private ContractType getTermsAndConditionsContract(OrderType order,int itemIndex){
+        List<ContractType> contractTypes = new ArrayList<>();
         if(order.getContract().size() > 0){
             for(ContractType contract : order.getContract()){
                 for(ClauseType clause : contract.getClause()){
                     if(clause.getType() == null){
-                        return contract;
+                        contractTypes.add(contract);
                     }
                 }
             }
         }
 
-        return null;
+        return contractTypes.get(itemIndex);
     }
 
     public static ContractType getNonTermOrConditionContract(OrderType order){
@@ -346,343 +385,362 @@ public class ContractGenerator {
         return null;
     }
 
-    private XWPFDocument fillPurchaseDetails(OrderType order,OrderResponseSimpleType orderResponse) throws Exception{
+    private List<XWPFDocument> fillPurchaseDetails(OrderType order,OrderResponseSimpleType orderResponse) throws Exception{
 
-        XWPFDocument document = null;
-        try {
-            InputStream file = ContractGenerator.class.getResourceAsStream("/contract-bundle/Purchase Details.docx");
+        List<XWPFDocument> documents = new ArrayList<>();
+        int orderLineSize = order.getOrderLine().size();
+        for(int i = 0; i < orderLineSize;i++){
+            OrderLineType orderLine = order.getOrderLine().get(i);
+            XWPFDocument document = null;
+            try {
+                InputStream file = ContractGenerator.class.getResourceAsStream("/contract-bundle/Purchase Details.docx");
 
-            document = new XWPFDocument(file);
+                document = new XWPFDocument(file);
 
-            boolean totalPriceExists = checkTotalPriceExistsInOrder(order);
+                boolean totalPriceExists = checkTotalPriceExistsInOrder(orderLine);
 
-            // Read the table
-            for (XWPFTable tbl : document.getTables() ) {
-                for (XWPFTableRow row : tbl.getRows()) {
-                    for (XWPFTableCell cell : row.getTableCells()) {
-                        for (XWPFParagraph p : cell.getParagraphs()) {
-                            for (XWPFRun r : p.getRuns()) {
-                                String text = r.getText(0);
-                                if(text != null){
-                                    if(text.contains("$logo_id")){
-                                        text = text.replace("$logo_id","");
-                                        r.setText(text,0);
+                // Read the table
+                for (XWPFTable tbl : document.getTables() ) {
+                    for (XWPFTableRow row : tbl.getRows()) {
+                        for (XWPFTableCell cell : row.getTableCells()) {
+                            for (XWPFParagraph p : cell.getParagraphs()) {
+                                for (XWPFRun r : p.getRuns()) {
+                                    String text = r.getText(0);
+                                    if(text != null){
+                                        if(text.contains("$logo_id")){
+                                            text = text.replace("$logo_id","");
+                                            r.setText(text,0);
 
-                                        BufferedImage bufferedImage = ImageIO.read(getClass().getResourceAsStream("/contract-bundle/nimble_logo.png"));
-                                        ByteArrayOutputStream os = new ByteArrayOutputStream();
-                                        ImageIO.write(bufferedImage, "png", os);
-                                        int width = bufferedImage.getWidth();
-                                        int height = bufferedImage.getHeight();
+                                            BufferedImage bufferedImage = ImageIO.read(getClass().getResourceAsStream("/contract-bundle/nimble_logo.png"));
+                                            ByteArrayOutputStream os = new ByteArrayOutputStream();
+                                            ImageIO.write(bufferedImage, "png", os);
+                                            int width = bufferedImage.getWidth();
+                                            int height = bufferedImage.getHeight();
 
-                                        int scaledWidth = (int)(width * (purchaseDetailsScale/height));
+                                            int scaledWidth = (int)(width * (purchaseDetailsScale/height));
 
-                                        r.addPicture(new ByteArrayInputStream(os.toByteArray()),XWPFDocument.PICTURE_TYPE_PNG,"nimble_logo.png",Units.toEMU(scaledWidth),Units.toEMU(60));
-                                    }
-                                    if(text.contains("$order_id")){
-                                        text = text.replace("$order_id",order.getID());
-                                        r.setText(text,0);
-                                    }
-                                    if(text.contains("$company_id")){
-                                        text = text.replace("$company_id",order.getBuyerCustomerParty().getParty().getPartyName().get(0).getName().getValue());
-                                        r.setText(text,0);
-                                    }
-                                    if(text.contains("$country_invoice_id")){
-                                        if(order.getBuyerCustomerParty().getParty().getPostalAddress().getCountry().getName() != null){
-                                            text = text.replace("$country_invoice_id",order.getBuyerCustomerParty().getParty().getPostalAddress().getCountry().getName().getValue());
+                                            r.addPicture(new ByteArrayInputStream(os.toByteArray()),XWPFDocument.PICTURE_TYPE_PNG,"nimble_logo.png",Units.toEMU(scaledWidth),Units.toEMU(60));
+                                        }
+                                        if(text.contains("$order_id")){
+                                            text = text.replace("$order_id",order.getID());
                                             r.setText(text,0);
                                         }
-                                        else {
-                                            text = text.replace("$country_invoice_id","");
+                                        if(text.contains("$company_id")){
+                                            text = text.replace("$company_id",order.getBuyerCustomerParty().getParty().getPartyName().get(0).getName().getValue());
                                             r.setText(text,0);
                                         }
-                                    }
-                                    if(text.contains("$street_invoice_id")){
-                                        if(order.getBuyerCustomerParty().getParty().getPostalAddress().getStreetName()!= null){
-                                            text = text.replace("$street_invoice_id",order.getBuyerCustomerParty().getParty().getPostalAddress().getStreetName());
+                                        if(text.contains("$country_invoice_id")){
+                                            if(order.getBuyerCustomerParty().getParty().getPostalAddress().getCountry().getName() != null){
+                                                text = text.replace("$country_invoice_id",order.getBuyerCustomerParty().getParty().getPostalAddress().getCountry().getName().getValue());
+                                                r.setText(text,0);
+                                            }
+                                            else {
+                                                text = text.replace("$country_invoice_id","");
+                                                r.setText(text,0);
+                                            }
+                                        }
+                                        if(text.contains("$street_invoice_id")){
+                                            if(order.getBuyerCustomerParty().getParty().getPostalAddress().getStreetName()!= null){
+                                                text = text.replace("$street_invoice_id",order.getBuyerCustomerParty().getParty().getPostalAddress().getStreetName());
+                                                r.setText(text,0);
+                                            }
+                                            else {
+                                                text = text.replace("$street_invoice_id","");
+                                                r.setText(text,0);
+                                            }
+                                        }
+                                        if(text.contains("$building_invoice_id")){
+                                            if(order.getBuyerCustomerParty().getParty().getPostalAddress().getBuildingNumber()!= null){
+                                                text = text.replace("$building_invoice_id",order.getBuyerCustomerParty().getParty().getPostalAddress().getBuildingNumber());
+                                                r.setText(text,0);
+                                            }
+                                            else {
+                                                text = text.replace("$building_invoice_id","");
+                                                r.setText(text,0);
+                                            }
+                                        }
+                                        if(text.contains("$country_id")){
+                                            if(orderLine.getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCountry().getName() != null && orderLine.getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCountry().getName().getValue() != null){
+                                                text = text.replace("$country_id",orderLine.getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCountry().getName().getValue());
+                                                r.setText(text,0);
+                                            }
+                                            else {
+                                                text = text.replace("$country_id","");
+                                                r.setText(text,0);
+                                            }
+                                        }
+                                        if(text.contains("$phone_id")){
+                                            if(order.getBuyerCustomerParty().getParty().getPerson().get(0).getContact() != null && !order.getBuyerCustomerParty().getParty().getPerson().get(0).getContact().getTelephone().contentEquals("")){
+                                                text = text.replace("$phone_id",order.getBuyerCustomerParty().getParty().getPerson().get(0).getContact().getTelephone());
+                                                r.setText(text,0);
+                                            }
+                                            else{
+                                                text = text.replace("$phone_id","");
+                                                r.setText(text,0);
+                                            }
+                                        }
+                                        if(text.contains("$fax_supplier")){
+                                            if(order.getSellerSupplierParty().getParty().getContact() != null && order.getSellerSupplierParty().getParty().getContact().getTelefax() != null){
+                                                text = text.replace("$fax_supplier",order.getSellerSupplierParty().getParty().getContact().getTelefax());
+                                                r.setText(text,0);
+                                            }
+                                            else {
+                                                text = text.replace("$fax_supplier","");
+                                                r.setText(text,0);
+                                            }
+                                        }
+                                        if(text.contains("$phone_supplier")){
+                                            if(!CollectionUtils.isEmpty(order.getSellerSupplierParty().getParty().getPerson()) && order.getSellerSupplierParty().getParty().getPerson().get(0).getContact().getTelephone() != null && !order.getSellerSupplierParty().getParty().getPerson().get(0).getContact().getTelephone().contentEquals("")){
+                                                text = text.replace("$phone_supplier",order.getSellerSupplierParty().getParty().getPerson().get(0).getContact().getTelephone());
+                                                r.setText(text,0);
+                                            }
+                                            else {
+                                                text = text.replace("$phone_supplier","");
+                                                r.setText(text,0);
+                                            }
+                                        }
+                                        if(text.contains("$street_id")){
+                                            if(orderLine.getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getStreetName() != null){
+                                                text = text.replace("$street_id",orderLine.getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getStreetName());
+                                                r.setText(text,0);
+                                            }
+                                            else {
+                                                text = text.replace("$street_id","");
+                                                r.setText(text,0);
+                                            }
+                                        }
+                                        if(text.contains("$building_id")){
+                                            text = text.replace("$building_id",orderLine.getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getBuildingNumber());
                                             r.setText(text,0);
                                         }
-                                        else {
-                                            text = text.replace("$street_invoice_id","");
+                                        if(text.contains("$country_supplier")){
+                                            if(order.getSellerSupplierParty().getParty().getPostalAddress().getCountry().getName() != null){
+                                                text = text.replace("$country_supplier",order.getSellerSupplierParty().getParty().getPostalAddress().getCountry().getName().getValue());
+                                                r.setText(text,0);
+                                            }
+                                            else {
+                                                text = text.replace("$country_supplier","");
+                                                r.setText(text,0);
+                                            }
+                                        }
+                                        if(text.contains("$building_supplier")){
+                                            text = text.replace("$building_supplier",order.getSellerSupplierParty().getParty().getPostalAddress().getBuildingNumber());
                                             r.setText(text,0);
                                         }
-                                    }
-                                    if(text.contains("$building_invoice_id")){
-                                        if(order.getBuyerCustomerParty().getParty().getPostalAddress().getBuildingNumber()!= null){
-                                            text = text.replace("$building_invoice_id",order.getBuyerCustomerParty().getParty().getPostalAddress().getBuildingNumber());
+                                        if(text.contains("$street_supplier")){
+                                            if(order.getSellerSupplierParty().getParty().getPostalAddress().getStreetName() != null){
+                                                text = text.replace("$street_supplier",order.getSellerSupplierParty().getParty().getPostalAddress().getStreetName());
+                                                r.setText(text,0);
+                                            }
+                                            else {
+                                                text = text.replace("$street_supplier","");
+                                                r.setText(text,0);
+                                            }
+                                        }
+                                        if(text.contains("$supplier_id")){
+                                            text = text.replace("$supplier_id",order.getSellerSupplierParty().getParty().getPartyName().get(0).getName().getValue());
+                                            r.setFontSize(14);
                                             r.setText(text,0);
                                         }
-                                        else {
-                                            text = text.replace("$building_invoice_id","");
+                                        if(text.contains("$name_id")){
+                                            text = text.replace("$name_id",order.getBuyerCustomerParty().getParty().getPerson().get(0).getFirstName()+" "+order.getBuyerCustomerParty().getParty().getPerson().get(0).getFamilyName());
+                                            r.setItalic(true);
+                                            r.setBold(true);
                                             r.setText(text,0);
                                         }
-                                    }
-                                    if(text.contains("$country_id")){
-                                        if(order.getOrderLine().get(0).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCountry().getName() != null){
-                                            text = text.replace("$country_id",order.getOrderLine().get(0).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCountry().getName().getValue());
+                                        if(text.contains("$title_id")){
+                                            if(order.getBuyerCustomerParty().getParty().getPerson().get(0).getRole().size() > 0){
+                                                text = text.replace("$title_id",order.getBuyerCustomerParty().getParty().getPerson().get(0).getRole().get(0));
+                                                r.setText(text,0);
+                                            }
+                                            else {
+                                                text = text.replace("$title_id","");
+                                                r.setText(text,0);
+                                            }
+                                        }
+                                        if(text.contains("$item_id")){
+                                            text = text.replace("$item_id",orderLine.getLineItem().getItem().getName().get(0).getValue());
                                             r.setText(text,0);
                                         }
-                                        else {
-                                            text = text.replace("$country_id","");
+                                        if(text.contains("$product_id")){
+                                            text = text.replace("$product_id",orderLine.getLineItem().getItem().getManufacturersItemIdentification().getID());
                                             r.setText(text,0);
                                         }
-                                    }
-                                    if(text.contains("$phone_id")){
-                                        if(!order.getBuyerCustomerParty().getParty().getPerson().get(0).getContact().getTelephone().contentEquals("")){
-                                            text = text.replace("$phone_id",order.getBuyerCustomerParty().getParty().getPerson().get(0).getContact().getTelephone());
+                                        if(text.contains("$quantity_id")){
+                                            if(totalPriceExists){
+                                                text = text.replace("$quantity_id",new DecimalFormat(".00").format(orderLine.getLineItem().getQuantity().getValue())+" "+orderLine.getLineItem().getQuantity().getUnitCode());
+                                                r.setText(text,0);
+                                            }
+                                            else{
+                                                text = text.replace("$quantity_id","");
+                                                r.setText(text,0);
+                                            }
+                                        }
+                                        if(text.contains("$price_id")){
+                                            if(totalPriceExists){
+                                                text = text.replace("$price_id",new DecimalFormat(".00").format((orderLine.getLineItem().getPrice().getPriceAmount().getValue().divide(orderLine.getLineItem().getPrice().getBaseQuantity().getValue(),2)))+" "+orderLine.getLineItem().getPrice().getPriceAmount().getCurrencyID());
+                                                r.setText(text,0);
+                                            }
+                                            else{
+                                                text = text.replace("$price_id","");
+                                                r.setText(text,0);
+                                            }
+                                        }
+                                        if(text.contains("$total_id")){
+                                            if(totalPriceExists){
+                                                text = text.replace("$total_id",new DecimalFormat(".00").format((orderLine.getLineItem().getPrice().getPriceAmount().getValue().divide(orderLine.getLineItem().getPrice().getBaseQuantity().getValue(),2)).multiply(orderLine.getLineItem().getQuantity().getValue()))+
+                                                        " "+orderLine.getLineItem().getPrice().getPriceAmount().getCurrencyID());
+                                                r.setText(text,0);
+                                            }
+                                            else if(orderLine.getLineItem().getPrice().getPriceAmount().getValue() != null){
+                                                text = text.replace("$total_id",new DecimalFormat(".00").format(orderLine.getLineItem().getPrice().getPriceAmount().getValue())+
+                                                        " "+orderLine.getLineItem().getPrice().getPriceAmount().getCurrencyID());
+                                                r.setText(text,0);
+                                            }
+                                            else {
+                                                text = text.replace("$total_id","");
+                                                r.setText(text,0);
+                                            }
+                                        }
+                                        if(text.contains("$city_id")){
+                                            if(orderLine.getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCityName() != null){
+                                                text = text.replace("$city_id",orderLine.getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCityName());
+                                                r.setText(text,0);
+                                            }
+                                            else{
+                                                text = text.replace("$city_id","");
+                                                r.setText(text,0);
+                                            }
+                                        }
+                                        if(text.contains("$zip_id")){
+                                            if(orderLine.getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getPostalZone() != null){
+                                                text = text.replace("$zip_id",orderLine.getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getPostalZone());
+                                                r.setText(text,0);
+                                            }
+                                            else{
+                                                text = text.replace("$zip_id","");
+                                                r.setText(text,0);
+                                            }
+                                        }
+                                        if(text.contains("$city_invoice_id")){
+                                            if(order.getBuyerCustomerParty().getParty().getPostalAddress().getCityName() != null){
+                                                text = text.replace("$city_invoice_id",order.getBuyerCustomerParty().getParty().getPostalAddress().getCityName());
+                                                r.setText(text,0);
+                                            }
+                                            else{
+                                                text = text.replace("$city_invoice_id","");
+                                                r.setText(text,0);
+                                            }
+                                        }
+                                        if(text.contains("$zip_invoice_id")){
+                                            if(order.getBuyerCustomerParty().getParty().getPostalAddress().getPostalZone() != null){
+                                                text = text.replace("$zip_invoice_id",order.getBuyerCustomerParty().getParty().getPostalAddress().getPostalZone());
+                                                r.setText(text,0);
+                                            }
+                                            else{
+                                                text = text.replace("$zip_invoice_id","");
+                                                r.setText(text,0);
+                                            }
+                                        }
+                                        if(text.contains("$city_supplier")){
+                                            if(order.getSellerSupplierParty().getParty().getPostalAddress().getCityName() != null){
+                                                text = text.replace("$city_supplier",order.getSellerSupplierParty().getParty().getPostalAddress().getCityName());
+                                                r.setText(text,0);
+                                            }
+                                            else{
+                                                text = text.replace("$city_supplier","");
+                                                r.setText(text,0);
+                                            }
+                                        }
+                                        if(text.contains("$zip_supplier")){
+                                            if(order.getSellerSupplierParty().getParty().getPostalAddress().getPostalZone() != null){
+                                                text = text.replace("$zip_supplier",order.getSellerSupplierParty().getParty().getPostalAddress().getPostalZone());
+                                                r.setText(text,0);
+                                            }
+                                            else{
+                                                text = text.replace("$zip_supplier","");
+                                                r.setText(text,0);
+                                            }
+                                        }
+                                        if(text.contains("$order_delPer")){
+                                            BigDecimal value = orderLine.getLineItem().getDelivery().get(0).getRequestedDeliveryPeriod().getDurationMeasure().getValue();
+                                            if(value != null){
+                                                text = text.replace("$order_delPer",new DecimalFormat("##").format(value)+" "
+                                                        +orderLine.getLineItem().getDelivery().get(0).getRequestedDeliveryPeriod().getDurationMeasure().getUnitCode());
+                                                r.setText(text,0);
+                                            }
+                                            else {
+                                                text = text.replace("$order_delPer","");
+                                                r.setText(text,0);
+                                            }
+                                        }
+                                        if(text.contains("$order_paymentMeans")){
+                                            text = text.replace("$order_paymentMeans",orderLine.getLineItem().getPaymentMeans().getPaymentMeansCode().getValue());
                                             r.setText(text,0);
                                         }
-                                        else{
-                                            text = text.replace("$phone_id","");
+                                        if(text.contains("$payment_id")){
+                                            if(orderLine.getLineItem().getPaymentTerms().getTradingTerms().size() > 0){
+                                                text = text.replace("$payment_id",getTradingTerms(orderLine.getLineItem().getPaymentTerms().getTradingTerms()));
+                                                r.setText(text,0);
+                                            }
+                                            else {
+                                                text = text.replace("$payment_id","");
+                                                r.setText(text,0);
+                                            }
+                                        }
+                                        if(text.contains("$issue_id")){
+                                            text = text.replace("$issue_id",getDate("issue",order.getID()));
                                             r.setText(text,0);
                                         }
-                                    }
-                                    if(text.contains("$fax_supplier")){
-                                        if(order.getSellerSupplierParty().getParty().getContact() != null && order.getSellerSupplierParty().getParty().getContact().getTelefax() != null){
-                                            text = text.replace("$fax_supplier",order.getSellerSupplierParty().getParty().getContact().getTelefax());
+                                        if(text.contains("$conf_id")){
+                                            text = text.replace("$conf_id",getDate("confirmation",order.getID()));
                                             r.setText(text,0);
                                         }
-                                        else {
-                                            text = text.replace("$fax_supplier","");
-                                            r.setText(text,0);
-                                        }
-                                    }
-                                    if(text.contains("$phone_supplier")){
-                                        if(!CollectionUtils.isEmpty(order.getSellerSupplierParty().getParty().getPerson()) && !order.getSellerSupplierParty().getParty().getPerson().get(0).getContact().getTelephone().contentEquals("")){
-                                            text = text.replace("$phone_supplier",order.getSellerSupplierParty().getParty().getPerson().get(0).getContact().getTelephone());
-                                            r.setText(text,0);
-                                        }
-                                        else {
-                                            text = text.replace("$phone_supplier","");
-                                            r.setText(text,0);
-                                        }
-                                    }
-                                    if(text.contains("$street_id")){
-                                        if(order.getOrderLine().get(0).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getStreetName() != null){
-                                            text = text.replace("$street_id",order.getOrderLine().get(0).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getStreetName());
-                                            r.setText(text,0);
-                                        }
-                                        else {
-                                            text = text.replace("$street_id","");
-                                            r.setText(text,0);
-                                        }
-                                    }
-                                    if(text.contains("$building_id")){
-                                        text = text.replace("$building_id",order.getOrderLine().get(0).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getBuildingNumber());
-                                        r.setText(text,0);
-                                    }
-                                    if(text.contains("$country_supplier")){
-                                        if(order.getSellerSupplierParty().getParty().getPostalAddress().getCountry().getName() != null){
-                                            text = text.replace("$country_supplier",order.getSellerSupplierParty().getParty().getPostalAddress().getCountry().getName().getValue());
-                                            r.setText(text,0);
-                                        }
-                                        else {
-                                            text = text.replace("$country_supplier","");
-                                            r.setText(text,0);
-                                        }
-                                    }
-                                    if(text.contains("$building_supplier")){
-                                        text = text.replace("$building_supplier",order.getSellerSupplierParty().getParty().getPostalAddress().getBuildingNumber());
-                                        r.setText(text,0);
-                                    }
-                                    if(text.contains("$street_supplier")){
-                                        if(order.getSellerSupplierParty().getParty().getPostalAddress().getStreetName() != null){
-                                            text = text.replace("$street_supplier",order.getSellerSupplierParty().getParty().getPostalAddress().getStreetName());
-                                            r.setText(text,0);
-                                        }
-                                        else {
-                                            text = text.replace("$street_supplier","");
-                                            r.setText(text,0);
-                                        }
-                                    }
-                                    if(text.contains("$supplier_id")){
-                                        text = text.replace("$supplier_id",order.getSellerSupplierParty().getParty().getPartyName().get(0).getName().getValue());
-                                        r.setFontSize(14);
-                                        r.setText(text,0);
-                                    }
-                                    if(text.contains("$name_id")){
-                                        text = text.replace("$name_id",order.getBuyerCustomerParty().getParty().getPerson().get(0).getFirstName()+" "+order.getBuyerCustomerParty().getParty().getPerson().get(0).getFamilyName());
-                                        r.setItalic(true);
-                                        r.setBold(true);
-                                        r.setText(text,0);
-                                    }
-                                    if(text.contains("$title_id")){
-                                        if(order.getBuyerCustomerParty().getParty().getPerson().get(0).getRole().size() > 0){
-                                            text = text.replace("$title_id",order.getBuyerCustomerParty().getParty().getPerson().get(0).getRole().get(0));
-                                            r.setText(text,0);
-                                        }
-                                        else {
-                                            text = text.replace("$title_id","");
-                                            r.setText(text,0);
-                                        }
-                                    }
-                                    if(text.contains("$item_id")){
-                                        text = text.replace("$item_id",order.getOrderLine().get(0).getLineItem().getItem().getName().get(0).getValue());
-                                        r.setText(text,0);
-                                    }
-                                    if(text.contains("$product_id")){
-                                        text = text.replace("$product_id",order.getOrderLine().get(0).getLineItem().getItem().getManufacturersItemIdentification().getID());
-                                        r.setText(text,0);
-                                    }
-                                    if(text.contains("$quantity_id")){
-                                        if(totalPriceExists){
-                                            text = text.replace("$quantity_id",new DecimalFormat(".00").format(order.getOrderLine().get(0).getLineItem().getQuantity().getValue())+" "+order.getOrderLine().get(0).getLineItem().getQuantity().getUnitCode());
-                                            r.setText(text,0);
-                                        }
-                                        else{
-                                            text = text.replace("$quantity_id","");
-                                            r.setText(text,0);
-                                        }
-                                    }
-                                    if(text.contains("$price_id")){
-                                        if(totalPriceExists){
-                                            text = text.replace("$price_id",new DecimalFormat(".00").format((order.getOrderLine().get(0).getLineItem().getPrice().getPriceAmount().getValue().divide(order.getOrderLine().get(0).getLineItem().getPrice().getBaseQuantity().getValue(),2)))+" "+order.getOrderLine().get(0).getLineItem().getPrice().getPriceAmount().getCurrencyID());
-                                            r.setText(text,0);
-                                        }
-                                        else{
-                                            text = text.replace("$price_id","");
-                                            r.setText(text,0);
-                                        }
-                                    }
-                                    if(text.contains("$total_id")){
-                                        if(totalPriceExists){
-                                            text = text.replace("$total_id",new DecimalFormat(".00").format((order.getOrderLine().get(0).getLineItem().getPrice().getPriceAmount().getValue().divide(order.getOrderLine().get(0).getLineItem().getPrice().getBaseQuantity().getValue(),2)).multiply(order.getOrderLine().get(0).getLineItem().getQuantity().getValue()))+
-                                                    " "+order.getOrderLine().get(0).getLineItem().getPrice().getPriceAmount().getCurrencyID());
-                                            r.setText(text,0);
-                                        }
-                                        else if(order.getOrderLine().get(0).getLineItem().getPrice().getPriceAmount().getValue() != null){
-                                            text = text.replace("$total_id",new DecimalFormat(".00").format(order.getOrderLine().get(0).getLineItem().getPrice().getPriceAmount().getValue())+
-                                                    " "+order.getOrderLine().get(0).getLineItem().getPrice().getPriceAmount().getCurrencyID());
-                                            r.setText(text,0);
-                                        }
-                                        else {
-                                            text = text.replace("$total_id","");
-                                            r.setText(text,0);
-                                        }
-                                    }
-                                    if(text.contains("$city_id")){
-                                        if(order.getOrderLine().get(0).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCityName() != null){
-                                            text = text.replace("$city_id",order.getOrderLine().get(0).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCityName());
-                                            r.setText(text,0);
-                                        }
-                                        else{
-                                            text = text.replace("$city_id","");
-                                            r.setText(text,0);
-                                        }
-                                    }
-                                    if(text.contains("$zip_id")){
-                                        if(order.getOrderLine().get(0).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getPostalZone() != null){
-                                            text = text.replace("$zip_id",order.getOrderLine().get(0).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getPostalZone());
-                                            r.setText(text,0);
-                                        }
-                                        else{
-                                            text = text.replace("$zip_id","");
-                                            r.setText(text,0);
-                                        }
-                                    }
-                                    if(text.contains("$city_invoice_id")){
-                                        if(order.getBuyerCustomerParty().getParty().getPostalAddress().getCityName() != null){
-                                            text = text.replace("$city_invoice_id",order.getBuyerCustomerParty().getParty().getPostalAddress().getCityName());
-                                            r.setText(text,0);
-                                        }
-                                        else{
-                                            text = text.replace("$city_invoice_id","");
-                                            r.setText(text,0);
-                                        }
-                                    }
-                                    if(text.contains("$zip_invoice_id")){
-                                        if(order.getBuyerCustomerParty().getParty().getPostalAddress().getPostalZone() != null){
-                                            text = text.replace("$zip_invoice_id",order.getBuyerCustomerParty().getParty().getPostalAddress().getPostalZone());
-                                            r.setText(text,0);
-                                        }
-                                        else{
-                                            text = text.replace("$zip_invoice_id","");
-                                            r.setText(text,0);
-                                        }
-                                    }
-                                    if(text.contains("$city_supplier")){
-                                        if(order.getSellerSupplierParty().getParty().getPostalAddress().getCityName() != null){
-                                            text = text.replace("$city_supplier",order.getSellerSupplierParty().getParty().getPostalAddress().getCityName());
-                                            r.setText(text,0);
-                                        }
-                                        else{
-                                            text = text.replace("$city_supplier","");
-                                            r.setText(text,0);
-                                        }
-                                    }
-                                    if(text.contains("$zip_supplier")){
-                                        if(order.getSellerSupplierParty().getParty().getPostalAddress().getPostalZone() != null){
-                                            text = text.replace("$zip_supplier",order.getSellerSupplierParty().getParty().getPostalAddress().getPostalZone());
-                                            r.setText(text,0);
-                                        }
-                                        else{
-                                            text = text.replace("$zip_supplier","");
-                                            r.setText(text,0);
-                                        }
-                                    }
-                                    if(text.contains("$order_delPer")){
-                                        BigDecimal value = order.getOrderLine().get(0).getLineItem().getDelivery().get(0).getRequestedDeliveryPeriod().getDurationMeasure().getValue();
-                                        if(value != null){
-                                            text = text.replace("$order_delPer",new DecimalFormat("##").format(value)+" "
-                                                    +order.getOrderLine().get(0).getLineItem().getDelivery().get(0).getRequestedDeliveryPeriod().getDurationMeasure().getUnitCode());
-                                            r.setText(text,0);
-                                        }
-                                        else {
-                                            text = text.replace("$order_delPer","");
-                                            r.setText(text,0);
-                                        }
-                                    }
-                                    if(text.contains("$order_paymentMeans")){
-                                        text = text.replace("$order_paymentMeans",order.getPaymentMeans().getPaymentMeansCode().getValue());
-                                        r.setText(text,0);
-                                    }
-                                    if(text.contains("$payment_id")){
-                                        if(order.getPaymentTerms().getTradingTerms().size() > 0){
-                                            text = text.replace("$payment_id",getTradingTerms(order.getPaymentTerms().getTradingTerms()));
-                                            r.setText(text,0);
-                                        }
-                                        else {
-                                            text = text.replace("$payment_id","");
-                                            r.setText(text,0);
-                                        }
-                                    }
-                                    if(text.contains("$issue_id")){
-                                        text = text.replace("$issue_id",getDate("issue",order.getID()));
-                                        r.setText(text,0);
-                                    }
-                                    if(text.contains("$conf_id")){
-                                        text = text.replace("$conf_id",getDate("confirmation",order.getID()));
-                                        r.setText(text,0);
                                     }
                                 }
                             }
                         }
                     }
                 }
+
+                // add data monitoring info to Purchase Order Comments section
+                XWPFTable table = getTable(document,"Purchase Order Comments");
+                // get the row for data monitoring info
+                XWPFTableRow dataMonitoringRow = table.getRow(1);
+                // get data monitoring text
+                boolean isPromised = isDataMonitoringPromised(order,orderResponse,i);
+                String dataMonitoringText = isPromised ? "\n\nYes" : "\n\nNo";
+
+                XWPFRun run = dataMonitoringRow.getCell(0).getParagraphArray(5).createRun();
+                run.setUnderline(UnderlinePatterns.SINGLE);
+                run.setText("\n\nData Monitoring Service");
+
+                dataMonitoringRow.getCell(0).getParagraphArray(5).createRun().setText(dataMonitoringText);
+
+                // add delivery dates to Purchase Order Comments section
+                run = dataMonitoringRow.getCell(0).getParagraphArray(5).createRun();
+                run.setUnderline(UnderlinePatterns.SINGLE);
+                run.setText("\n\nDelivery Dates");
+
+                for (DeliveryType delivery : orderLine.getLineItem().getDelivery()) {
+                    XMLGregorianCalendar endDate = delivery.getRequestedDeliveryPeriod().getEndDate();
+                    QuantityType quantity = delivery.getShipment().getGoodsItem().get(0).getQuantity();
+                    if(endDate != null && quantity != null){
+                        dataMonitoringRow.getCell(0).getParagraphArray(5).createRun().setText("\n\nDelivery Date : "+endDate.toString()+" - Quantity : "+new DecimalFormat(".00").format(quantity.getValue())+" "+ quantity.getUnitCode());
+                    }
+                }
+                documents.add(document);
             }
-
-            // add data monitoring info to Purchase Order Comments section
-            XWPFTable table = getTable(document,"Purchase Order Comments");
-            // get the row for data monitoring info
-            XWPFTableRow dataMonitoringRow = table.getRow(1);
-            // get data monitoring text
-            boolean isPromised = isDataMonitoringPromised(order,orderResponse);
-            String dataMonitoringText = isPromised ? "\n\nYes" : "\n\nNo";
-
-            XWPFRun run = dataMonitoringRow.getCell(0).getParagraphArray(5).createRun();
-            run.setUnderline(UnderlinePatterns.SINGLE);
-            run.setText("\n\nData Monitoring Service");
-
-            dataMonitoringRow.getCell(0).getParagraphArray(5).createRun().setText(dataMonitoringText);
+            catch (Exception e){
+                logger.error("Failed to fill in 'Company Purchase Details.pdf' for the order with id : {}",order.getID(),e);
+                throw e;
+            }
         }
-        catch (Exception e){
-            logger.error("Failed to fill in 'Company Purchase Details.pdf' for the order with id : {}",order.getID(),e);
-            throw e;
-        }
-        return document;
+        return documents;
     }
 
-
-    private boolean isDataMonitoringPromised(OrderType order, OrderResponseSimpleType orderResponse) {
+    // check whether the data monitoring is promised for the item specified by the order line index
+    private boolean isDataMonitoringPromised(OrderType order, OrderResponseSimpleType orderResponse,int index) {
         boolean dataMonitoringDemanded = false;
         ContractType contract = ContractGenerator.getNonTermOrConditionContract(order);
         if(contract != null){
@@ -692,7 +750,7 @@ public class ContractGenerator {
                     DocumentClauseType docClause = (DocumentClauseType) clause;
                     if(docClause.getClauseDocumentRef().getDocumentType().contentEquals(DocumentType.QUOTATION.toString())) {
                         QuotationType quotation = (QuotationType) DocumentPersistenceUtility.getUBLDocument(docClause.getClauseDocumentRef().getID(), DocumentType.QUOTATION);
-                        if (quotation.isDataMonitoringPromised()) {
+                        if(quotation.getQuotationLine().get(index).getLineItem().isDataMonitoringRequested()){
                             dataMonitoringDemanded = true;
                             break;
                         }
@@ -723,10 +781,10 @@ public class ContractGenerator {
         }
     }
 
-    private void getAndPopulateClauses(OrderType order,ZipOutputStream zos,XWPFDocument document) throws Exception{
-        try{
-            // if there is no contract, simple remove the tables and return
-            if(order.getContract().size() <= 0){
+    private void getAndPopulateClauses(OrderType order,ZipOutputStream zos,List<XWPFDocument> documents) throws Exception{
+        // if there is no contract, simple remove the tables and return
+        if(order.getContract().size() <= 0){
+            for (XWPFDocument document : documents) {
                 // Negotiation
                 XWPFTable table = document.getTableArray(document.getTables().size()-1);
                 document.removeBodyElement(document.getPosOfTable(table));
@@ -742,52 +800,104 @@ public class ContractGenerator {
                 document.removeBodyElement(document.getPosOfTable(table));
                 return;
             }
+        }
 
-            // get clauses
-            Map<DocumentType,List<ClauseType>> clauses = getClauses(order);
+        // get clauses
+        Map<DocumentType,List<ClauseType>> clauses = getClauses(order);
 
-            // create PPAP entry
-            for(ClauseType clause : clauses.get(DocumentType.PPAPRESPONSE)){
-                ZipEntry zipEntry = new ZipEntry("PPAP/PPAPDocuments/");
-                zos.putNextEntry(zipEntry);
+        if(clauses.get(DocumentType.ITEMINFORMATIONRESPONSE).size() > 0){
+            // create directories
+            ZipEntry zipEntry = new ZipEntry("ItemInformation/TechnicalDataSheetResponses/");
+            zos.putNextEntry(zipEntry);
+            zipEntry = new ZipEntry("ItemInformation/TechnicalDataSheets/");
+            zos.putNextEntry(zipEntry);
+        }
 
-                createPPAPEntry(document, zos, clause);
+        // Item Information Clauses (there can be multiple Item Information clauses in a contract)
+        List<ClauseType> itemInformationClauses = clauses.get(DocumentType.ITEMINFORMATIONRESPONSE);
+        List<ItemInformationResponseType> itemInformationResponses = new ArrayList<>();
+        List<ItemInformationRequestType> itemInformationRequests = new ArrayList<>();
+        // PPAP Clause (there can be one PPAP clause in a contract)
+        List<ClauseType> ppapClauses = clauses.get(DocumentType.PPAPRESPONSE);
+        PpapResponseType ppapResponse = null;
+        PpapRequestType ppapRequest = null;
+        // Negotiation Clause (there can be one Negotiation clause in a contract)
+        List<ClauseType> negotiationClauses = clauses.get(DocumentType.QUOTATION);
+        QuotationType quotation = null;
+        RequestForQuotationType requestForQuotation = null;
+
+        // create PPAP entry
+        if(ppapClauses.size() == 1){
+            ZipEntry zipEntry = new ZipEntry("PPAP/PPAPDocuments/");
+            zos.putNextEntry(zipEntry);
+
+            ppapResponse = (PpapResponseType) DocumentPersistenceUtility.getUBLDocument(((DocumentClauseType) ppapClauses.get(0)).getClauseDocumentRef().getID(), DocumentType.PPAPRESPONSE);
+            ppapRequest = (PpapRequestType) DocumentPersistenceUtility.getUBLDocument(ppapResponse.getPpapDocumentReference().getID(),DocumentType.PPAPREQUEST);
+
+            createPPAPAuxiliaryFiles(zos, ppapRequest,ppapResponse);
+        }
+
+        // create Negotiation entry
+        if(negotiationClauses.size() == 1){
+            quotation = (QuotationType) DocumentPersistenceUtility.getUBLDocument(((DocumentClauseType) negotiationClauses.get(0)).getClauseDocumentRef().getID(), DocumentType.QUOTATION);
+            requestForQuotation = (RequestForQuotationType) DocumentPersistenceUtility.getUBLDocument(quotation.getRequestForQuotationDocumentReference().getID(),DocumentType.REQUESTFORQUOTATION);
+
+            createNegotiationAuxiliaryFiles(zos,requestForQuotation,quotation);
+        }
+        // create Item information entries
+        int numberOfItemInformationRequest = itemInformationClauses.size();
+        if(numberOfItemInformationRequest > 0){
+            for(ClauseType clause : itemInformationClauses){
+                ItemInformationResponseType itemDetails = (ItemInformationResponseType) DocumentPersistenceUtility.getUBLDocument(((DocumentClauseType) clause).getClauseDocumentRef().getID(), DocumentType.ITEMINFORMATIONRESPONSE);
+
+                ItemInformationRequestType itemInformationRequest = (ItemInformationRequestType) DocumentPersistenceUtility
+                        .getUBLDocument(itemDetails.getItemInformationRequestDocumentReference().getID(),DocumentType.ITEMINFORMATIONREQUEST);
+
+                itemInformationRequests.add(itemInformationRequest);
+                itemInformationResponses.add(itemDetails);
+
+                createItemDetailsAuxiliaryFiles(zos, itemInformationRequest,itemDetails, numberOfItemInformationRequest);
+                numberOfItemInformationRequest--;
             }
-            // create Negotiation entry
-            for(ClauseType clause : clauses.get(DocumentType.QUOTATION)){
-                createNegotiationEntry(document, clause, zos);
-            }
-            // create Item information entries
-            int numberOfItemInformationRequest = clauses.get(DocumentType.ITEMINFORMATIONRESPONSE).size();
-            if(numberOfItemInformationRequest > 0){
-                // create directories
-                ZipEntry zipEntry = new ZipEntry("ItemInformation/TechnicalDataSheetResponses/");
-                zos.putNextEntry(zipEntry);
-                zipEntry = new ZipEntry("ItemInformation/TechnicalDataSheets/");
-                zos.putNextEntry(zipEntry);
-                for(ClauseType clause : clauses.get(DocumentType.ITEMINFORMATIONRESPONSE)){
-                    createItemDetailsEntry(document, zos, clause, numberOfItemInformationRequest);
-                    numberOfItemInformationRequest--;
+        }
+
+        int numberOfOrderLines = order.getOrderLine().size();
+        for (int i = 0; i < numberOfOrderLines; i++) {
+            XWPFDocument document = documents.get(i);
+            try{
+                // create PPAP entry
+                if(ppapClauses.size() == 1){
+                    fillPPAPTable(document, ppapRequest,ppapResponse);
+                }
+                // create Negotiation entry
+                if(negotiationClauses.size() == 1){
+                    fillNegotiationTable(document, i,requestForQuotation,quotation);
+                }
+                // create Item information entries
+                numberOfItemInformationRequest = itemInformationClauses.size();
+                if(numberOfItemInformationRequest > 0){
+                    for(int j = 0; j < numberOfItemInformationRequest;j++){
+                        fillOrGenerateItemDetailsTable(document,itemInformationRequests.get(j),itemInformationResponses.get(j));
+                    }
+                }
+                if (negotiationClauses.size() == 0) {
+                    document.removeBodyElement(document.getPosOfTable(getTable(document, "Negotiation")));
+                    document.removeBodyElement(document.getPosOfTable(getTable(document, "Negotiation Notes/Additional Documents")));
+                }
+                if (ppapClauses.size() == 0) {
+                    document.removeBodyElement(document.getPosOfTable(getTable(document, "PPAP")));
+                    document.removeBodyElement(document.getPosOfTable(getTable(document, "PPAP Notes/Additional Documents")));
+                }
+                if (itemInformationClauses.size() == 0) {
+                    document.removeBodyElement(document.getPosOfTable(getTable(document, "Item Information Request")));
+                    document.removeBodyElement(document.getPosOfTable(getTable(document, "Item Information Request Notes/Additional Documents")));
                 }
             }
-            if (clauses.get(DocumentType.QUOTATION).size() == 0) {
-                document.removeBodyElement(document.getPosOfTable(getTable(document, "Negotiation")));
-                document.removeBodyElement(document.getPosOfTable(getTable(document, "Negotiation Notes/Additional Documents")));
-            }
-            if (clauses.get(DocumentType.PPAPRESPONSE).size() == 0) {
-                document.removeBodyElement(document.getPosOfTable(getTable(document, "PPAP")));
-                document.removeBodyElement(document.getPosOfTable(getTable(document, "PPAP Notes/Additional Documents")));
-            }
-            if (clauses.get(DocumentType.ITEMINFORMATIONRESPONSE).size() == 0) {
-                document.removeBodyElement(document.getPosOfTable(getTable(document, "Item Information Request")));
-                document.removeBodyElement(document.getPosOfTable(getTable(document, "Item Information Request Notes/Additional Documents")));
+            catch (Exception e){
+                logger.error("Failed to create entries for clauses",e);
+                throw e;
             }
         }
-        catch (Exception e){
-            logger.error("Failed to create entries for clauses",e);
-            throw e;
-        }
-
     }
 
     private Map<DocumentType,List<ClauseType>> getClauses(OrderType order){
@@ -818,32 +928,25 @@ public class ContractGenerator {
         return map;
     }
 
-    private XWPFDocument createOrderAdditionalDocuments(OrderType order,OrderResponseSimpleType orderResponse,ZipOutputStream zos,XWPFDocument document) throws Exception{
+    private void createOrderAdditionalDocuments(OrderType order,OrderResponseSimpleType orderResponse,ZipOutputStream zos,List<XWPFDocument> documents) throws Exception{
+        try {
+            for (XWPFDocument document : documents) {
+                createOrderAuxiliaryFiles(order,orderResponse,zos,document);
+                fillOrderAdditionalDocumentsTable(order,orderResponse,zos,document);
+            }
+        }
+        catch (Exception e){
+            logger.error("Failed to create Order additional documents entry",e);
+            throw e;
+        }
+    }
+
+    private XWPFDocument fillOrderAdditionalDocumentsTable(OrderType order,OrderResponseSimpleType orderResponse,ZipOutputStream zos,XWPFDocument document){
         try {
             List<DocumentReferenceType> orderAuxiliaryFiles = ProcessDocumentMetadataDAOUtility.getAuxiliaryFiles(order.getAdditionalDocumentReference());
             List<DocumentReferenceType> orderResponseAuxiliaryFiles = null;
-            // request
-            for(DocumentReferenceType documentReference : orderAuxiliaryFiles){
-                byte[] bytes = binaryContentService.retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
-                ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
-                bos.write(bytes,0,bytes.length);
-
-                ZipEntry zipEntry2 = new ZipEntry("Order/BuyerDocuments/"+documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
-                zos.putNextEntry(zipEntry2);
-                bos.writeTo(zos);
-            }
-            // response
             if(orderResponse != null){
                 orderResponseAuxiliaryFiles = ProcessDocumentMetadataDAOUtility.getAuxiliaryFiles(orderResponse.getAdditionalDocumentReference());
-                for(DocumentReferenceType documentReference : orderResponseAuxiliaryFiles){
-                    byte[] bytes = binaryContentService.retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
-                    ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
-                    bos.write(bytes,0,bytes.length);
-
-                    ZipEntry zipEntry2 = new ZipEntry("Order/SellerDocuments/"+documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
-                    zos.putNextEntry(zipEntry2);
-                    bos.writeTo(zos);
-                }
             }
             // notes in table
             XWPFTable table = getTable(document,"Order Notes/Additional Documents");
@@ -912,50 +1015,91 @@ public class ContractGenerator {
         return document;
     }
 
-    private void createPPAPEntry(XWPFDocument document,ZipOutputStream zos,ClauseType clause) throws Exception{
+    private XWPFDocument createOrderAuxiliaryFiles(OrderType order,OrderResponseSimpleType orderResponse,ZipOutputStream zos,XWPFDocument document) throws Exception{
         try {
-            PpapResponseType ppapResponse = (PpapResponseType) DocumentPersistenceUtility.getUBLDocument(((DocumentClauseType) clause).getClauseDocumentRef().getID(), DocumentType.PPAPRESPONSE);
-
-            PpapRequestType ppapRequest = (PpapRequestType) DocumentPersistenceUtility.getUBLDocument(ppapResponse.getPpapDocumentReference().getID(),DocumentType.PPAPREQUEST);
-            Map<String,List<String>> map = new HashMap<>();
-            for(String documentType:ppapRequest.getDocumentType()){
-                map.put(documentType,new ArrayList<>());
-            }
-
-            for(DocumentReferenceType documentReference : ppapResponse.getRequestedDocument()){
-                byte[] bytes = binaryContentService.retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
-                ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
-                bos.write(bytes,0,bytes.length);
-
-                ZipEntry zipEntry2 = new ZipEntry("PPAP/PPAPDocuments/" +documentReference.getDocumentType()+"/"+documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
-                zos.putNextEntry(zipEntry2);
-                bos.writeTo(zos);
-
-                map.get(documentReference.getDocumentType()).add(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
-            }
-
-            // additional documents
+            List<DocumentReferenceType> orderAuxiliaryFiles = ProcessDocumentMetadataDAOUtility.getAuxiliaryFiles(order.getAdditionalDocumentReference());
+            List<DocumentReferenceType> orderResponseAuxiliaryFiles = null;
             // request
-            List<DocumentReferenceType> ppapRequestAuxiliaryFiles = ProcessDocumentMetadataDAOUtility.getAuxiliaryFiles(ppapRequest.getAdditionalDocumentReference());
-            for(DocumentReferenceType documentReference : ppapRequestAuxiliaryFiles){
+            for(DocumentReferenceType documentReference : orderAuxiliaryFiles){
                 byte[] bytes = binaryContentService.retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
                 ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
                 bos.write(bytes,0,bytes.length);
 
-                ZipEntry zipEntry2 = new ZipEntry("PPAP/BuyerDocuments/"+documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
+                ZipEntry zipEntry2 = new ZipEntry("Order/BuyerDocuments/"+documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
                 zos.putNextEntry(zipEntry2);
                 bos.writeTo(zos);
             }
             // response
-            List<DocumentReferenceType> ppapResponseAuxiliaryFiles = ProcessDocumentMetadataDAOUtility.getAuxiliaryFiles(ppapResponse.getAdditionalDocumentReference());
-            for(DocumentReferenceType documentReference : ppapResponseAuxiliaryFiles){
-                byte[] bytes = binaryContentService.retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
-                ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
-                bos.write(bytes,0,bytes.length);
+            if(orderResponse != null){
+                orderResponseAuxiliaryFiles = ProcessDocumentMetadataDAOUtility.getAuxiliaryFiles(orderResponse.getAdditionalDocumentReference());
+                for(DocumentReferenceType documentReference : orderResponseAuxiliaryFiles){
+                    byte[] bytes = binaryContentService.retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
+                    bos.write(bytes,0,bytes.length);
 
-                ZipEntry zipEntry2 = new ZipEntry("PPAP/SellerDocuments/"+documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
-                zos.putNextEntry(zipEntry2);
-                bos.writeTo(zos);
+                    ZipEntry zipEntry2 = new ZipEntry("Order/SellerDocuments/"+documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
+                    zos.putNextEntry(zipEntry2);
+                    bos.writeTo(zos);
+                }
+            }
+        }
+        catch (Exception e){
+            logger.error("Failed to create Order additional documents entry",e);
+            throw e;
+        }
+        return document;
+    }
+
+    private void createPPAPAuxiliaryFiles(ZipOutputStream zos,PpapRequestType ppapRequest,PpapResponseType ppapResponse)  throws Exception{
+        Map<String,List<String>> map = new HashMap<>();
+        for(String documentType:ppapRequest.getDocumentType()){
+            map.put(documentType,new ArrayList<>());
+        }
+
+        for(DocumentReferenceType documentReference : ppapResponse.getRequestedDocument()){
+            byte[] bytes = binaryContentService.retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
+            ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
+            bos.write(bytes,0,bytes.length);
+
+            ZipEntry zipEntry2 = new ZipEntry("PPAP/PPAPDocuments/" +documentReference.getDocumentType()+"/"+documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
+            zos.putNextEntry(zipEntry2);
+            bos.writeTo(zos);
+
+            map.get(documentReference.getDocumentType()).add(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
+        }
+
+        // additional documents
+        // request
+        List<DocumentReferenceType> ppapRequestAuxiliaryFiles = ProcessDocumentMetadataDAOUtility.getAuxiliaryFiles(ppapRequest.getAdditionalDocumentReference());
+        for(DocumentReferenceType documentReference : ppapRequestAuxiliaryFiles){
+            byte[] bytes = binaryContentService.retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
+            ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
+            bos.write(bytes,0,bytes.length);
+
+            ZipEntry zipEntry2 = new ZipEntry("PPAP/BuyerDocuments/"+documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
+            zos.putNextEntry(zipEntry2);
+            bos.writeTo(zos);
+        }
+        // response
+        List<DocumentReferenceType> ppapResponseAuxiliaryFiles = ProcessDocumentMetadataDAOUtility.getAuxiliaryFiles(ppapResponse.getAdditionalDocumentReference());
+        for(DocumentReferenceType documentReference : ppapResponseAuxiliaryFiles){
+            byte[] bytes = binaryContentService.retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
+            ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
+            bos.write(bytes,0,bytes.length);
+
+            ZipEntry zipEntry2 = new ZipEntry("PPAP/SellerDocuments/"+documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
+            zos.putNextEntry(zipEntry2);
+            bos.writeTo(zos);
+        }
+    }
+
+    private void fillPPAPTable(XWPFDocument document,PpapRequestType ppapRequest,PpapResponseType ppapResponse) throws Exception{
+        try {
+            List<DocumentReferenceType> ppapRequestAuxiliaryFiles = ProcessDocumentMetadataDAOUtility.getAuxiliaryFiles(ppapRequest.getAdditionalDocumentReference());
+            List<DocumentReferenceType> ppapResponseAuxiliaryFiles = ProcessDocumentMetadataDAOUtility.getAuxiliaryFiles(ppapResponse.getAdditionalDocumentReference());
+            Map<String,List<String>> map = new HashMap<>();
+            for(String documentType:ppapRequest.getDocumentType()){
+                map.put(documentType,new ArrayList<>());
             }
 
             XWPFTable table = getTable(document,"PPAP");
@@ -1052,13 +1196,13 @@ public class ContractGenerator {
         }
     }
 
-    private void createItemDetailsEntry(XWPFDocument document,ZipOutputStream zos,ClauseType clause,int id) throws IOException {
+    private void fillOrGenerateItemDetailsTable(XWPFDocument document,ItemInformationRequestType itemInformationRequest,ItemInformationResponseType itemDetails){
         try {
             XWPFTable table = getTable(document,"Item Information Request");
             XWPFTable noteAndDocumentTable = getTable(document,"Item Information Request Notes/Additional Documents");
             if(firstIIR){
                 firstIIR = false;
-                fillItemDetails(document,table,noteAndDocumentTable,zos,clause,id);
+                fillItemDetailsTable(table,noteAndDocumentTable,itemInformationRequest,itemDetails);
             }
             else{
                 CTTbl ctTbl = CTTbl.Factory.newInstance();
@@ -1078,7 +1222,7 @@ public class ContractGenerator {
                 clearCell(copyNoteAndDocumentTable.getRow(3).getCell(1));
                 clearCell(copyNoteAndDocumentTable.getRow(3).getCell(3));
 
-                fillItemDetails(document,copyTable,copyNoteAndDocumentTable,zos,clause,id);
+                fillItemDetailsTable(copyTable,copyNoteAndDocumentTable,itemInformationRequest,itemDetails);
                 int pos = document.getPosOfTable(getTable(document,"Item Information Request Notes/Additional Documents"));
                 document.insertTable(pos+1,copyTable);
                 document.insertTable(pos+2,copyNoteAndDocumentTable);
@@ -1092,10 +1236,7 @@ public class ContractGenerator {
         }
     }
 
-    private void createNegotiationEntry(XWPFDocument document,ClauseType clause,ZipOutputStream zos) throws Exception{
-        QuotationType quotation = (QuotationType) DocumentPersistenceUtility.getUBLDocument(((DocumentClauseType) clause).getClauseDocumentRef().getID(), DocumentType.QUOTATION);
-        RequestForQuotationType requestForQuotation = (RequestForQuotationType) DocumentPersistenceUtility.getUBLDocument(quotation.getRequestForQuotationDocumentReference().getID(),DocumentType.REQUESTFORQUOTATION);
-
+    private void createNegotiationAuxiliaryFiles(ZipOutputStream zos,RequestForQuotationType requestForQuotation, QuotationType quotation) throws Exception{
         // additional documents
         // request
         List<DocumentReferenceType> rfqAuxiliaryFiles = ProcessDocumentMetadataDAOUtility.getAuxiliaryFiles(requestForQuotation.getAdditionalDocumentReference());
@@ -1119,6 +1260,11 @@ public class ContractGenerator {
             zos.putNextEntry(zipEntry);
             bos.writeTo(zos);
         }
+    }
+
+    private void fillNegotiationTable(XWPFDocument document, int itemIndex,RequestForQuotationType requestForQuotation,QuotationType quotation){
+        List<DocumentReferenceType> rfqAuxiliaryFiles = ProcessDocumentMetadataDAOUtility.getAuxiliaryFiles(requestForQuotation.getAdditionalDocumentReference());
+        List<DocumentReferenceType> quotationAuxiliaryFiles = ProcessDocumentMetadataDAOUtility.getAuxiliaryFiles(quotation.getAdditionalDocumentReference());
         XWPFTable table = getTable(document,"Negotiation");
         int totalPriceExists = 0;
         try {
@@ -1129,10 +1275,10 @@ public class ContractGenerator {
                             String text = r.getText(0);
                             if(text != null){
                                 if(text.contains("$nego_price")){
-                                    BigDecimal value = quotation.getQuotationLine().get(0).getLineItem().getPrice().getPriceAmount().getValue();
+                                    BigDecimal value = quotation.getQuotationLine().get(itemIndex).getLineItem().getPrice().getPriceAmount().getValue();
                                     if(value != null) {
                                         text = text.replace("$nego_price",new DecimalFormat(".00").format(value)+" "+
-                                                quotation.getQuotationLine().get(0).getLineItem().getPrice().getPriceAmount().getCurrencyID());
+                                                quotation.getQuotationLine().get(itemIndex).getLineItem().getPrice().getPriceAmount().getCurrencyID());
                                         r.setText(text,0);
 
                                         totalPriceExists++;
@@ -1143,8 +1289,8 @@ public class ContractGenerator {
                                     }
                                 }
                                 if(text.contains("$nego_base")){
-                                    BigDecimal value = quotation.getQuotationLine().get(0).getLineItem().getPrice().getBaseQuantity().getValue();
-                                    String unit = quotation.getQuotationLine().get(0).getLineItem().getPrice().getBaseQuantity().getUnitCode();
+                                    BigDecimal value = quotation.getQuotationLine().get(itemIndex).getLineItem().getPrice().getBaseQuantity().getValue();
+                                    String unit = quotation.getQuotationLine().get(itemIndex).getLineItem().getPrice().getBaseQuantity().getUnitCode();
                                     if(value != null && unit != null){
                                         text = text.replace("$nego_base",new DecimalFormat(".00").format(value)+" "+unit);
                                         r.setText(text,0);
@@ -1157,10 +1303,10 @@ public class ContractGenerator {
                                     }
                                 }
                                 if(text.contains("$nego_quan")){
-                                    BigDecimal value = quotation.getQuotationLine().get(0).getLineItem().getQuantity().getValue();
+                                    BigDecimal value = quotation.getQuotationLine().get(itemIndex).getLineItem().getQuantity().getValue();
                                     if(value != null){
                                         text = text.replace("$nego_quan",new DecimalFormat(".00").format(value)+" "+
-                                                quotation.getQuotationLine().get(0).getLineItem().getQuantity().getUnitCode());
+                                                quotation.getQuotationLine().get(itemIndex).getLineItem().getQuantity().getUnitCode());
                                         r.setText(text,0);
 
                                         totalPriceExists++;
@@ -1172,8 +1318,8 @@ public class ContractGenerator {
                                 }
                                 if(text.contains("$nego_total")){
                                     if(totalPriceExists == 3){
-                                        text = text.replace("$nego_total",new DecimalFormat(".00").format(quotation.getQuotationLine().get(0).getLineItem().getPrice().getPriceAmount().getValue().divide(quotation.getQuotationLine().get(0).getLineItem().getPrice().getBaseQuantity().getValue(),2).multiply(quotation.getQuotationLine().get(0).getLineItem().getQuantity().getValue()))+
-                                                " "+quotation.getQuotationLine().get(0).getLineItem().getPrice().getPriceAmount().getCurrencyID());
+                                        text = text.replace("$nego_total",new DecimalFormat(".00").format(quotation.getQuotationLine().get(itemIndex).getLineItem().getPrice().getPriceAmount().getValue().divide(quotation.getQuotationLine().get(itemIndex).getLineItem().getPrice().getBaseQuantity().getValue(),2).multiply(quotation.getQuotationLine().get(itemIndex).getLineItem().getQuantity().getValue()))+
+                                                " "+quotation.getQuotationLine().get(itemIndex).getLineItem().getPrice().getPriceAmount().getCurrencyID());
                                         r.setText(text,0);
                                     }
                                     else {
@@ -1182,15 +1328,15 @@ public class ContractGenerator {
                                     }
                                 }
                                 if(text.contains("$nego_means")){
-                                    text = text.replace("$nego_means",quotation.getPaymentMeans().getPaymentMeansCode().getValue());
+                                    text = text.replace("$nego_means",quotation.getQuotationLine().get(itemIndex).getLineItem().getPaymentMeans().getPaymentMeansCode().getValue());
                                     r.setText(text,0);
                                 }
                                 if(text.contains("$nego_terms")){
-                                    text = text.replace("$nego_terms",getTradingTerms(quotation.getPaymentTerms().getTradingTerms()));
+                                    text = text.replace("$nego_terms",getTradingTerms(quotation.getQuotationLine().get(itemIndex).getLineItem().getPaymentTerms().getTradingTerms()));
                                     r.setText(text,0);
                                 }
                                 if(text.contains("$nego_incoterms")){
-                                    String incoterms = quotation.getQuotationLine().get(0).getLineItem().getDeliveryTerms().getIncoterms();
+                                    String incoterms = quotation.getQuotationLine().get(itemIndex).getLineItem().getDeliveryTerms().getIncoterms();
                                     if(incoterms != null){
                                         text = text.replace("$nego_incoterms",incoterms);
                                         r.setText(text,0);
@@ -1201,9 +1347,9 @@ public class ContractGenerator {
                                     }
                                 }
                                 if(text.contains("$nego_delPer")){
-                                    BigDecimal value = quotation.getQuotationLine().get(0).getLineItem().getDelivery().get(0).getRequestedDeliveryPeriod().getDurationMeasure().getValue();
+                                    BigDecimal value = quotation.getQuotationLine().get(itemIndex).getLineItem().getDelivery().get(0).getRequestedDeliveryPeriod().getDurationMeasure().getValue();
                                     if(value != null){
-                                        text = text.replace("$nego_delPer",new DecimalFormat("##").format(value)+" "+quotation.getQuotationLine().get(0).getLineItem().getDelivery().get(0).getRequestedDeliveryPeriod().getDurationMeasure().getUnitCode());
+                                        text = text.replace("$nego_delPer",new DecimalFormat("##").format(value)+" "+quotation.getQuotationLine().get(itemIndex).getLineItem().getDelivery().get(0).getRequestedDeliveryPeriod().getDurationMeasure().getUnitCode());
                                         r.setText(text,0);
                                     }
                                     else {
@@ -1213,23 +1359,23 @@ public class ContractGenerator {
 
                                 }
                                 if(text.contains("$nego_street")){
-                                    text = text.replace("$nego_street",quotation.getQuotationLine().get(0).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getStreetName());
+                                    text = text.replace("$nego_street",quotation.getQuotationLine().get(itemIndex).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getStreetName());
                                     r.setText(text,0);
                                 }
                                 if(text.contains("$nego_building")){
-                                    text = text.replace("$nego_building",quotation.getQuotationLine().get(0).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getBuildingNumber());
+                                    text = text.replace("$nego_building",quotation.getQuotationLine().get(itemIndex).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getBuildingNumber());
                                     r.setText(text,0);
                                 }
                                 if(text.contains("$nego_city")){
-                                    text = text.replace("$nego_city",quotation.getQuotationLine().get(0).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCityName());
+                                    text = text.replace("$nego_city",quotation.getQuotationLine().get(itemIndex).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCityName());
                                     r.setText(text,0);
                                 }
                                 if(text.contains("$nego_postal")){
-                                    text = text.replace("$nego_postal",quotation.getQuotationLine().get(0).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getPostalZone());
+                                    text = text.replace("$nego_postal",quotation.getQuotationLine().get(itemIndex).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getPostalZone());
                                     r.setText(text,0);
                                 }
                                 if(text.contains("$nego_country")){
-                                    String country = quotation.getQuotationLine().get(0).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCountry().getName().getValue();
+                                    String country = quotation.getQuotationLine().get(itemIndex).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCountry().getName().getValue();
                                     if(country == null){
                                         country = "";
                                     }
@@ -1237,7 +1383,7 @@ public class ContractGenerator {
                                     r.setText(text,0);
                                 }
                                 if(text.contains("$nego_specTerms")){
-                                    List<TextType> specialTerms = quotation.getQuotationLine().get(0).getLineItem().getDeliveryTerms().getSpecialTerms();
+                                    List<TextType> specialTerms = quotation.getQuotationLine().get(itemIndex).getLineItem().getDeliveryTerms().getSpecialTerms();
                                     if(specialTerms != null && specialTerms.size() > 0){
                                         text = text.replace("$nego_specTerms",specialTerms.get(0).getValue());
                                         r.setText(text,0);
@@ -1248,8 +1394,8 @@ public class ContractGenerator {
                                     }
                                 }
                                 if(text.contains("$nego_validity")){
-                                    BigDecimal value = quotation.getQuotationLine().get(0).getLineItem().getWarrantyValidityPeriod().getDurationMeasure().getValue();
-                                    String unit = quotation.getQuotationLine().get(0).getLineItem().getWarrantyValidityPeriod().getDurationMeasure().getUnitCode();
+                                    BigDecimal value = quotation.getQuotationLine().get(itemIndex).getLineItem().getWarrantyValidityPeriod().getDurationMeasure().getValue();
+                                    String unit = quotation.getQuotationLine().get(itemIndex).getLineItem().getWarrantyValidityPeriod().getDurationMeasure().getUnitCode();
                                     if(value != null && unit != null){
                                         text = text.replace("$nego_validity",new DecimalFormat("##").format(value)+" "+unit);
                                         r.setText(text,0);
@@ -1275,8 +1421,8 @@ public class ContractGenerator {
             // add data monitoring info
             // firstly, get data monitoring text
             String dataMonitoringText = "No";
-            if(requestForQuotation.isDataMonitoringRequested()){
-                if(quotation.isDataMonitoringPromised()){
+            if(requestForQuotation.getRequestForQuotationLine().get(itemIndex).getLineItem().isDataMonitoringRequested()){
+                if(quotation.getQuotationLine().get(itemIndex).getLineItem().isDataMonitoringRequested()){
                     dataMonitoringText = "Yes / Data monitoring service confirmed";
                 }
                 else {
@@ -1293,6 +1439,29 @@ public class ContractGenerator {
             dataMonitoringRow.getCell(0).getCTTc().addNewTcPr().addNewTcBorders().addNewRight().setVal(STBorder.NIL);
             dataMonitoringRow.getCell(1).getCTTc().addNewTcPr().addNewTcBorders().addNewLeft().setVal(STBorder.NIL);
 
+            // create rows for delivery dates
+            int rowIndex = 20;
+            XWPFTableRow deliveryDateRow = table.insertNewTableRow(rowIndex++);
+            run = deliveryDateRow.createCell().getParagraphs().get(0).createRun();
+            run.setBold(true);
+            run.setText("Delivery Dates");
+            deliveryDateRow.createCell().getParagraphs().get(0).createRun().setText("");
+            // remove the border between columns
+            deliveryDateRow.getCell(0).getCTTc().addNewTcPr().addNewTcBorders().addNewRight().setVal(STBorder.NIL);
+            deliveryDateRow.getCell(1).getCTTc().addNewTcPr().addNewTcBorders().addNewLeft().setVal(STBorder.NIL);
+
+            for (DeliveryType delivery : quotation.getQuotationLine().get(itemIndex).getLineItem().getDelivery()) {
+                XMLGregorianCalendar endDate = delivery.getRequestedDeliveryPeriod().getEndDate();
+                QuantityType quantity = delivery.getShipment().getGoodsItem().get(0).getQuantity();
+                if(endDate != null && quantity != null){
+                    XWPFTableRow row = table.insertNewTableRow(rowIndex++);
+                    row.createCell().getParagraphs().get(0).createRun().setText("Delivery Date : "+endDate.toString());
+                    row.createCell().getParagraphs().get(0).createRun().setText("Quantity : "+new DecimalFormat(".00").format(quantity.getValue())+" "+ quantity.getUnitCode());
+                    // remove the border between columns
+                    row.getCell(0).getCTTc().addNewTcPr().addNewTcBorders().addNewRight().setVal(STBorder.NIL);
+                    row.getCell(1).getCTTc().addNewTcPr().addNewTcBorders().addNewLeft().setVal(STBorder.NIL);
+                }
+            }
             // negotiation table 'Notes and Additional Documents' part
             // additional documents
             table = getTable(document,"Negotiation Notes/Additional Documents");
@@ -1337,18 +1506,11 @@ public class ContractGenerator {
 
     }
 
-    private void fillItemDetails(XWPFDocument document,XWPFTable table,XWPFTable noteAndDocumentTable,ZipOutputStream zos,ClauseType clause,int id) throws IOException {
+    private void createItemDetailsAuxiliaryFiles(ZipOutputStream zos, ItemInformationRequestType itemInformationRequest,ItemInformationResponseType itemDetails, int id) throws IOException {
         try {
-            ItemInformationResponseType itemDetails = (ItemInformationResponseType) DocumentPersistenceUtility.getUBLDocument(((DocumentClauseType) clause).getClauseDocumentRef().getID(), DocumentType.ITEMINFORMATIONRESPONSE);
-
-            ItemInformationRequestType itemInformationRequest = (ItemInformationRequestType) DocumentPersistenceUtility
-                    .getUBLDocument(itemDetails.getItemInformationRequestDocumentReference().getID(),DocumentType.ITEMINFORMATIONREQUEST);
             List<DocumentReferenceType> documentReferences = itemInformationRequest.getItemInformationRequestLine().get(0).getSalesItem().get(0).getItem().getItemSpecificationDocumentReference();
 
-            if(documentReferences.size() == 0){
-                table.getRow(2).getCell(1).getParagraphs().get(0).createRun().setText("-");
-            }
-            else {
+            if(documentReferences.size() != 0){
                 byte[] bytes = binaryContentService.retrieveContent(documentReferences.get(0).getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
                 ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
                 bos.write(bytes,0,bytes.length);
@@ -1356,7 +1518,58 @@ public class ContractGenerator {
                 ZipEntry zipEntry = new ZipEntry("ItemInformation/ItemInformationRequest"+id+"/TechnicalDataSheets/"+ documentReferences.get(0).getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
                 zos.putNextEntry(zipEntry);
                 bos.writeTo(zos);
+            }
 
+            // additional documents
+            List<DocumentReferenceType> itemInformationRequestAuxiliaryFiles = ProcessDocumentMetadataDAOUtility.getAuxiliaryFiles(itemInformationRequest.getAdditionalDocumentReference());
+            List<DocumentReferenceType> itemDetailsAuxiliaryFiles = ProcessDocumentMetadataDAOUtility.getAuxiliaryFiles(itemDetails.getAdditionalDocumentReference());
+            for(DocumentReferenceType documentReference : itemInformationRequestAuxiliaryFiles){
+                byte[] bytes = binaryContentService.retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
+                ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
+                bos.write(bytes,0,bytes.length);
+
+                ZipEntry zipEntry = new ZipEntry("ItemInformation/ItemInformationRequest"+id+"/BuyerDocuments/"+ documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
+                zos.putNextEntry(zipEntry);
+                bos.writeTo(zos);
+            }
+            // response
+            for(DocumentReferenceType documentReference : itemDetailsAuxiliaryFiles){
+                byte[] bytes = binaryContentService.retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
+                ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
+                bos.write(bytes,0,bytes.length);
+
+                ZipEntry zipEntry = new ZipEntry("ItemInformation/ItemInformationRequest"+id+"/SellerDocuments/"+ documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
+                zos.putNextEntry(zipEntry);
+                bos.writeTo(zos);
+            }
+
+            documentReferences = itemDetails.getItem().get(0).getItemSpecificationDocumentReference();
+
+            if(documentReferences.size() != 0){
+                byte[] bytes = binaryContentService.retrieveContent(documentReferences.get(0).getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
+                ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
+                bos.write(bytes,0,bytes.length);
+
+                ZipEntry zipEntry = new ZipEntry("ItemInformation/ItemInformationRequest"+id+"/TechnicalDataSheetResponses/"+documentReferences.get(0).getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
+                zos.putNextEntry(zipEntry);
+                bos.writeTo(zos);
+            }
+        }
+        catch (Exception e){
+            logger.error("Failed to fill item details",e);
+            throw e;
+        }
+
+    }
+
+    private void fillItemDetailsTable(XWPFTable table, XWPFTable noteAndDocumentTable, ItemInformationRequestType itemInformationRequest,ItemInformationResponseType itemDetails) {
+        try {
+            List<DocumentReferenceType> documentReferences = itemInformationRequest.getItemInformationRequestLine().get(0).getSalesItem().get(0).getItem().getItemSpecificationDocumentReference();
+
+            if(documentReferences.size() == 0){
+                table.getRow(2).getCell(1).getParagraphs().get(0).createRun().setText("-");
+            }
+            else {
                 XWPFRun run2 = table.getRow(2).getCell(1).getParagraphs().get(0).createRun();
                 run2.setText(documentReferences.get(0).getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
                 run2.setItalic(true);
@@ -1370,14 +1583,6 @@ public class ContractGenerator {
                 noteAndDocumentTable.getRow(noteAndDocumentTable.getNumberOfRows()-2).getCell(3).getParagraphs().get(0).createRun().setText("-");
             }
             for(DocumentReferenceType documentReference : itemInformationRequestAuxiliaryFiles){
-                byte[] bytes = binaryContentService.retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
-                ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
-                bos.write(bytes,0,bytes.length);
-
-                ZipEntry zipEntry = new ZipEntry("ItemInformation/ItemInformationRequest"+id+"/BuyerDocuments/"+ documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
-                zos.putNextEntry(zipEntry);
-                bos.writeTo(zos);
-
                 XWPFRun run5 = noteAndDocumentTable.getRow(noteAndDocumentTable.getNumberOfRows()-2).getCell(3).getParagraphs().get(0).createRun();
                 run5.setText(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName()+"\n");
                 run5.setItalic(true);
@@ -1387,14 +1592,6 @@ public class ContractGenerator {
                 noteAndDocumentTable.getRow(noteAndDocumentTable.getNumberOfRows()-1).getCell(3).getParagraphs().get(0).createRun().setText("-");
             }
             for(DocumentReferenceType documentReference : itemDetailsAuxiliaryFiles){
-                byte[] bytes = binaryContentService.retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
-                ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
-                bos.write(bytes,0,bytes.length);
-
-                ZipEntry zipEntry = new ZipEntry("ItemInformation/ItemInformationRequest"+id+"/SellerDocuments/"+ documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
-                zos.putNextEntry(zipEntry);
-                bos.writeTo(zos);
-
                 XWPFRun run6 = noteAndDocumentTable.getRow(noteAndDocumentTable.getNumberOfRows()-1).getCell(3).getParagraphs().get(0).createRun();
                 run6.setText(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName()+"\n");
                 run6.setItalic(true);
@@ -1406,14 +1603,6 @@ public class ContractGenerator {
                 table.getRow(3).getCell(1).getParagraphs().get(0).createRun().setText("-");
             }
             else {
-                byte[] bytes = binaryContentService.retrieveContent(documentReferences.get(0).getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
-                ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
-                bos.write(bytes,0,bytes.length);
-
-                ZipEntry zipEntry = new ZipEntry("ItemInformation/ItemInformationRequest"+id+"/TechnicalDataSheetResponses/"+documentReferences.get(0).getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
-                zos.putNextEntry(zipEntry);
-                bos.writeTo(zos);
-
                 XWPFRun run3 = table.getRow(3).getCell(1).getParagraphs().get(0).createRun();
                 run3.setText(documentReferences.get(0).getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
                 run3.setItalic(true);
@@ -1451,13 +1640,13 @@ public class ContractGenerator {
 
     }
 
-    private boolean checkTotalPriceExistsInOrder(OrderType order){
-        return order.getOrderLine().get(0).getLineItem().getPrice().getPriceAmount().getValue() != null &&
-                order.getOrderLine().get(0).getLineItem().getPrice().getBaseQuantity().getValue() !=null &&
-                order.getOrderLine().get(0).getLineItem().getQuantity().getValue() != null &&
-                order.getOrderLine().get(0).getLineItem().getPrice().getBaseQuantity().getUnitCode() != null &&
-                order.getOrderLine().get(0).getLineItem().getQuantity().getUnitCode() != null &&
-                order.getOrderLine().get(0).getLineItem().getPrice().getBaseQuantity().getUnitCode().contentEquals(order.getOrderLine().get(0).getLineItem().getQuantity().getUnitCode());
+    private boolean checkTotalPriceExistsInOrder(OrderLineType orderLine){
+        return orderLine.getLineItem().getPrice().getPriceAmount().getValue() != null &&
+                orderLine.getLineItem().getPrice().getBaseQuantity().getValue() !=null &&
+                orderLine.getLineItem().getQuantity().getValue() != null &&
+                orderLine.getLineItem().getPrice().getBaseQuantity().getUnitCode() != null &&
+                orderLine.getLineItem().getQuantity().getUnitCode() != null &&
+                orderLine.getLineItem().getPrice().getBaseQuantity().getUnitCode().contentEquals(orderLine.getLineItem().getQuantity().getUnitCode());
     }
 
     private String getTradingTerms(List<TradingTermType> tradingTerms){
@@ -1567,6 +1756,24 @@ public class ContractGenerator {
         }
         return date;
 
+    }
+
+    private static class TradingTermIndex{
+        private int index;
+        private String tradingTermId;
+
+        TradingTermIndex(int index, String tradingTermId) {
+            this.index = index;
+            this.tradingTermId = tradingTermId;
+        }
+
+        int getIndex() {
+            return index;
+        }
+
+        String getTradingTermId() {
+            return tradingTermId;
+        }
     }
 
 }

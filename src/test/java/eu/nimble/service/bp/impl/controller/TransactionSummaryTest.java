@@ -28,9 +28,9 @@ public class TransactionSummaryTest {
 
     @Test
     public void getTransactionSummaries() throws Exception {
-        List<TransactionSummary> transactionSummaries = ProcessDocumentMetadataDAOUtility.getTransactionSummaries("747","745","incoming",false,TestConfig.buyerPartyID);
+        List<TransactionSummary> transactionSummaries = ProcessDocumentMetadataDAOUtility.getTransactionSummaries("747",TestConfig.federationId,"745","incoming",false,TestConfig.buyerPartyID);
         Assert.assertEquals(3,transactionSummaries.size());
-        transactionSummaries = ProcessDocumentMetadataDAOUtility.getTransactionSummaries("1339",null,"outgoing",null,TestConfig.buyerPartyID);
+        transactionSummaries = ProcessDocumentMetadataDAOUtility.getTransactionSummaries("1339",TestConfig.federationId,null,"outgoing",null,TestConfig.buyerPartyID);
         Assert.assertEquals(16,transactionSummaries.size());
     }
 

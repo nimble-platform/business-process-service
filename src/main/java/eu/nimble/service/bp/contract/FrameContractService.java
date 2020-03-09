@@ -25,12 +25,12 @@ public class FrameContractService {
 
     private static final Logger logger = LoggerFactory.getLogger(FrameContractService.class);
 
-    public DigitalAgreementType createOrUpdateFrameContract(String sellerId, String buyerId, ItemType item, QuantityType duration, String quotationId) {
-        DigitalAgreementType frameContract = ContractPersistenceUtility.getFrameContractAgreementById(sellerId, buyerId, item.getManufacturersItemIdentification().getID());
+    public DigitalAgreementType createOrUpdateFrameContract(String sellerId, String buyerId, String sellerFederationId, String buyerFederationId,ItemType item, QuantityType duration, String quotationId) {
+        DigitalAgreementType frameContract = ContractPersistenceUtility.getFrameContractAgreementById(sellerId,sellerFederationId, buyerId,buyerFederationId, item.getManufacturersItemIdentification().getID());
         // create new frame contract
         if(frameContract == null) {
             frameContract = createDigitalAgreement(
-                    sellerId, buyerId, item, duration, quotationId);
+                    sellerId, buyerId,sellerFederationId,buyerFederationId, item, duration, quotationId);
 
         } else {
             frameContract = updateFrameContractDuration(
@@ -43,9 +43,9 @@ public class FrameContractService {
      * Tries to create a {@link DigitalAgreementType} with the given information.
      * @return the persisted {@link DigitalAgreementType} instance if everything went alright, otherwise throws a {@link eu.nimble.service.bp.exception.BusinessProcessException}
      */
-    public DigitalAgreementType createDigitalAgreement(String sellerId, String buyerId, ItemType item, QuantityType duration, String quotationId) {
-        PartyType sellerParty = PartyPersistenceUtility.getParty(sellerId, true);
-        PartyType buyerParty = PartyPersistenceUtility.getParty(buyerId, true);
+    public DigitalAgreementType createDigitalAgreement(String sellerId, String buyerId,String sellerFederationId, String buyerFederationId, ItemType item, QuantityType duration, String quotationId) {
+        PartyType sellerParty = PartyPersistenceUtility.getParty(sellerId, sellerFederationId,true);
+        PartyType buyerParty = PartyPersistenceUtility.getParty(buyerId, buyerFederationId,true);
 
         DigitalAgreementType frameContract = new DigitalAgreementType();
         frameContract.setItem(item);

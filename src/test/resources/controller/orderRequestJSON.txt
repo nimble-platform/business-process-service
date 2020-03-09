@@ -656,49 +656,50 @@
       "id": "e9f34f35-c4cb-4caf-b2d1-786ee11e5618"
     },
     {
-          "id": "978d9613-9103-41e1-bf90-30dc8dedbcba",
-          "clause": [
-            {
-              "id": "cd2c2b6e-a94c-4d71-9cd5-35b99a966ba5",
-              "note": [],
-              "type": "DOCUMENT",
-              "clauseDocumentRef": {
-                "id": "28068c78-79ed-4036-84cd-4cfb166b8996",
-                "uuid": null,
-                "documentType": "QUOTATION",
-                "attachment": null,
-                "validityPeriod": null
-              }
-            },
-            {
-              "id": "40771842-5dd5-4ca6-b24b-c7e1d462456e",
-              "note": [],
-              "type": "DOCUMENT",
-              "clauseDocumentRef": {
-                "id": "ece63f2f-11e8-4f81-89de-7ea4effbc865",
-                "uuid": null,
-                "documentType": "PPAPRESPONSE",
-                "attachment": null,
-                "validityPeriod": null
-              }
-            },
-            {
-              "id": "3155261a-4017-4b12-989a-ce38f775cd62",
-              "note": [],
-              "type": "DOCUMENT",
-              "clauseDocumentRef": {
-                "id": "e945ee11-1115-48ca-ba8f-3b4067c148f6",
-                "uuid": null,
-                "documentType": "ITEMINFORMATIONRESPONSE",
-                "attachment": null,
-                "validityPeriod": null
-              }
-            }
-          ]
+      "id": "978d9613-9103-41e1-bf90-30dc8dedbcba",
+      "clause": [
+        {
+          "id": "cd2c2b6e-a94c-4d71-9cd5-35b99a966ba5",
+          "note": [],
+          "type": "DOCUMENT",
+          "clauseDocumentRef": {
+            "id": "28068c78-79ed-4036-84cd-4cfb166b8996",
+            "uuid": null,
+            "documentType": "QUOTATION",
+            "attachment": null,
+            "validityPeriod": null
+          }
+        },
+        {
+          "id": "40771842-5dd5-4ca6-b24b-c7e1d462456e",
+          "note": [],
+          "type": "DOCUMENT",
+          "clauseDocumentRef": {
+            "id": "ece63f2f-11e8-4f81-89de-7ea4effbc865",
+            "uuid": null,
+            "documentType": "PPAPRESPONSE",
+            "attachment": null,
+            "validityPeriod": null
+          }
+        },
+        {
+          "id": "3155261a-4017-4b12-989a-ce38f775cd62",
+          "note": [],
+          "type": "DOCUMENT",
+          "clauseDocumentRef": {
+            "id": "e945ee11-1115-48ca-ba8f-3b4067c148f6",
+            "uuid": null,
+            "documentType": "ITEMINFORMATIONRESPONSE",
+            "attachment": null,
+            "validityPeriod": null
+          }
         }
+      ]
+    }
   ],
   "buyerCustomerParty": {
     "party": {
+      "federationInstanceID": "TEST_INSTANCE",
       "nace": [],
       "description": [],
       "brandName": [],
@@ -852,6 +853,7 @@
   },
   "sellerSupplierParty": {
     "party": {
+      "federationInstanceID": "TEST_INSTANCE",
       "nace": [],
       "description": [],
       "brandName": [],
@@ -1200,7 +1202,7 @@
       "lineItem": {
         "id": null,
         "quantity": {
-          "value": 1,
+          "value": 20,
           "unitCode": "item(s)",
           "unitCodeListID": null
         },
@@ -1548,7 +1550,7 @@
             }
           ],
           "manufacturerParty": {
-            "federationInstanceID": null,
+            "federationInstanceID": "TEST_INSTANCE",
             "nace": [],
             "description": [],
             "brandName": [],
@@ -3307,6 +3309,147 @@
             "lcpaoutput": null,
             "lcpainput": null
           }
+        },
+        "paymentMeans": {
+          "id": null,
+          "paymentMeansCode": {
+            "value": "Credit Card",
+            "name": "Credit Card",
+            "listID": "",
+            "uri": ""
+          },
+          "instructionNote": []
+        },
+        "paymentTerms": {
+          "paymentConditions": [],
+          "tradingTerms": [
+            {
+              "id": "Payment_In_Advance",
+              "description": [
+                {
+                  "value": "Payment in advance",
+                  "languageID": "en"
+                }
+              ],
+              "tradingTermFormat": "PIA",
+              "value": {
+                "value": [
+                  {
+                    "value": "true",
+                    "languageID": "en"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "End_of_month",
+              "description": [
+                {
+                  "value": "End of month",
+                  "languageID": "en"
+                }
+              ],
+              "tradingTermFormat": "EOM",
+              "value": {
+                "value": [
+                  {
+                    "value": "false",
+                    "languageID": "en"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "Cash_next_delivery",
+              "description": [
+                {
+                  "value": "Cash next delivery",
+                  "languageID": "en"
+                }
+              ],
+              "tradingTermFormat": "CND",
+              "value": {
+                "value": [
+                  {
+                    "value": "false",
+                    "languageID": "en"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "Cash_before_shipment",
+              "description": [
+                {
+                  "value": "Cash before shipment",
+                  "languageID": "en"
+                }
+              ],
+              "tradingTermFormat": "CBS",
+              "value": {
+                "value": [
+                  {
+                    "value": "false",
+                    "languageID": "en"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "Cash_on_delivery",
+              "description": [
+                {
+                  "value": "Cash on delivery",
+                  "languageID": "en"
+                }
+              ],
+              "tradingTermFormat": "COD",
+              "value": {
+                "value": [
+                  {
+                    "value": "false",
+                    "languageID": "en"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "Cash_with_order",
+              "description": [
+                {
+                  "value": "Cash with order",
+                  "languageID": "en"
+                }
+              ],
+              "tradingTermFormat": "CWO",
+              "value": {
+                "value": [
+                  {
+                    "value": "false",
+                    "languageID": "en"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "Cash_in_advance",
+              "description": [
+                {
+                  "value": "Cash in advance",
+                  "languageID": "en"
+                }
+              ],
+              "tradingTermFormat": "CIA",
+              "value": {
+                "value": [
+                  {
+                    "value": "false",
+                    "languageID": "en"
+                  }
+                ]
+              }
+            }
+          ]
         },
         "warrantyValidityPeriod": {
           "startDate": null,

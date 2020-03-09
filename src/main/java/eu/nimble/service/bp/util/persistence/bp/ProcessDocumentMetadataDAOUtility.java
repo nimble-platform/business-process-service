@@ -35,17 +35,24 @@ import java.util.concurrent.*;
  * Created by suat on 16-Oct-18.
  */
 public class ProcessDocumentMetadataDAOUtility {
+    /**
+     * The conditions for the queries (including %s placeholder) below are initialized during the query instantiation
+     */
+
     private static final String QUERY_GET_BY_DOCUMENT_ID = "SELECT pdm FROM ProcessDocumentMetadataDAO pdm WHERE pdm.documentID = :documentId";
     private static final String QUERY_GET_BY_PROCESS_INSTANCE_ID = "SELECT pdm FROM ProcessDocumentMetadataDAO pdm WHERE pdm.processInstanceID = :processInstanceId ORDER BY pdm.submissionDate ASC";
-    private static final String QUERY_GET_BY_RESPONDER_ID = "SELECT DISTINCT metadataDAO.processInstanceID FROM ProcessDocumentMetadataDAO metadataDAO WHERE metadataDAO.responderID = :responderId";
+    private static final String QUERY_GET_BY_RESPONDER_ID = "SELECT DISTINCT metadataDAO.processInstanceID FROM ProcessDocumentMetadataDAO metadataDAO WHERE metadataDAO.responderID = :responderId AND metadataDAO.responderFederationID = :federationId";
+    private static final String QUERY_GET_ALL_PROCESS_INSTANCE_ID = "SELECT DISTINCT metadataDAO.processInstanceID FROM ProcessDocumentMetadataDAO metadataDAO";
     private static final String QUERY_GET_BY_PARTY_ID = "SELECT pdm FROM ProcessDocumentMetadataDAO pdm WHERE pdm.initiatorID = :partyId OR pdm.responderID = :partyId";
+    private static final String QUERY_GET_METADATA_FOR_CORRESPONDING_DOCUMENT =
+            "SELECT docMetadata2 FROM ProcessDocumentMetadataDAO docMetadata, ProcessDocumentMetadataDAO docMetadata2" +
+                    " WHERE docMetadata.documentID = :documentId AND" +
+                    " docMetadata2.processInstanceID = docMetadata.processInstanceID AND" +
+                    " docMetadata2.documentID <> docMetadata.documentID";
 
-    /**
-     * The conditions for the queries below are initialized during the query instantiation
-     */
     private static final String QUERY_GET_TRANSACTION_COUNT = "SELECT count(*) FROM ProcessDocumentMetadataDAO documentMetadata %s";
     private static final String QUERY_GET_DOCUMENT_IDS = "SELECT documentMetadata.documentID FROM ProcessDocumentMetadataDAO documentMetadata %s";
-    private static final String QUERY_GET_GROUPED_TRANSACTIONS = "SELECT documentMetadata.initiatorID, documentMetadata.type, documentMetadata.status, count(*) FROM ProcessDocumentMetadataDAO documentMetadata %s";
+    private static final String QUERY_GET_GROUPED_TRANSACTIONS = "SELECT documentMetadata.initiatorID, documentMetadata.initiatorFederationID, documentMetadata.type, documentMetadata.status, count(*) FROM ProcessDocumentMetadataDAO documentMetadata %s";
     private static final String QUERY_GET_METADATA_AND_ARCHIVED_STATUS_BY_ARBITRARY_CONDITIONS = "" +
             "SELECT DISTINCT documentMetadata FROM" +
             " CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups pig join pig.processInstanceIDsItems pid," +
@@ -55,30 +62,60 @@ public class ProcessDocumentMetadataDAOUtility {
     private static final String QUERY_GET_METADATA_BY_ARBITRARY_CONDITIONS = "SELECT document FROM ProcessDocumentMetadataDAO document WHERE (%s)";
     private static final String QUERY_GET_METADATA_BY_PROCESS_INSTANCE_ID_AND_ARBITRARY_CONDITIONS = "SELECT documentMetadata FROM ProcessDocumentMetadataDAO documentMetadata WHERE documentMetadata.processInstanceID=:processInstanceId AND %s";
     private static final String QUERY_GET_UNSHIPPED_ORDER_IDENTIFIERS_FOR_ALL_PARTIES =
-            "SELECT DISTINCT order_.ID FROM" +
+            "SELECT DISTINCT order_.ID, order_.hjid FROM" +
                     " OrderType order_, " +
-                    " OrderResponseSimpleType orderResponse, " +
-                    " DespatchAdviceType despatchAdvice join despatchAdvice.orderReference despatchOrderRef" +
+                    " OrderResponseSimpleType orderResponse" +
             " WHERE" +
                     " orderResponse.orderReference.documentReference.ID = order_.ID" +
                     " AND orderResponse.acceptedIndicator = true" +
                     " AND order_.ID NOT IN " +
-                    "(SELECT despatchOrderRef2.documentReference.ID " +
-                    "FROM DespatchAdviceType despatchAdvice2 join despatchAdvice2.orderReference despatchOrderRef2)";
+                        "(SELECT despatchOrderRef2.documentReference.ID " +
+                        "FROM DespatchAdviceType despatchAdvice2 join despatchAdvice2.orderReference despatchOrderRef2)" +
+                    " ORDER BY order_.hjid DESC";
     private static final String QUERY_GET_UNSHIPPED_ORDER_IDENTIFIERS_FOR_SPECIFIC_PARTY =
-            "SELECT DISTINCT order_.ID FROM" +
+            "SELECT DISTINCT order_.ID, order_.hjid FROM" +
                     " OrderType order_ join order_.sellerSupplierParty.party.partyIdentification pid, " +
-                    " OrderResponseSimpleType orderResponse, " +
-                    " DespatchAdviceType despatchAdvice join despatchAdvice.orderReference despatchOrderRef" +
+                    " OrderResponseSimpleType orderResponse" +
             " WHERE" +
                     " pid.ID = :sellerPartyId" +
+                    " AND order_.sellerSupplierParty.party.federationInstanceID = :federationId" +
                     " AND orderResponse.orderReference.documentReference.ID = order_.ID" +
                     " AND orderResponse.acceptedIndicator = true" +
                     " AND order_.ID NOT IN " +
-                    "(SELECT despatchOrderRef2.documentReference.ID " +
-                    "FROM DespatchAdviceType despatchAdvice2 join despatchAdvice2.orderReference despatchOrderRef2)";
+                        "(SELECT despatchOrderRef2.documentReference.ID " +
+                        "FROM DespatchAdviceType despatchAdvice2 join despatchAdvice2.orderReference despatchOrderRef2)" +
+                    " ORDER BY order_.hjid DESC";
+    private static final String QUERY_GET_ORDERS_BELONG_TO_COMPLETED_COLLABORATIONS =
+            "SELECT metadata.documentID " +
+            "FROM ProcessDocumentMetadataDAO metadata " +
+            "WHERE metadata.type = 'ORDER' AND NOT EXISTS(" +
+                    "SELECT pig.ID " +
+                    "FROM ProcessInstanceGroupDAO pig join pig.processInstanceIDsItems idItems " +
+                    "WHERE metadata.processInstanceID = idItems.item AND pig.status != 'COMPLETED' " +
+                    ")";
+    private static final String QUERY_GET_REQUEST_FOR_QUOTATION_IDS_FOR_UNSHIPPED_ORDERS =
+            "SELECT distinct rfq.ID " +
+                    "FROM RequestForQuotationType rfq join rfq.additionalDocumentReference rfqReference " +
+                    "WHERE rfqReference.documentType LIKE 'unShippedOrder' AND rfqReference.ID IN :orderIds ";
+    private static final String QUERY_GET_ORDER_IDS_FOR_UNSHIPPED_ORDERS =
+            "SELECT distinct ord.ID " +
+                    "FROM OrderType ord join ord.additionalDocumentReference orderReference " +
+                    "WHERE orderReference.documentType LIKE 'unShippedOrder' AND orderReference.ID IN :orderIds";
 
     private static final Logger logger = LoggerFactory.getLogger(ProcessDocumentMetadataDAOUtility.class);
+
+
+    // returns the identifiers of documents which are used to start an associated process,i.e Negotiation or Order, for the unshipped orders
+    public static List<String> getAssociatedDocumentIDsForUnShippedOrders(List<String> unShippedOrderIds) {
+        GenericJPARepository catalogueRepository = new JPARepositoryFactory().forCatalogueRepository();
+        // get rfq ids
+        List<String> rfqIds = catalogueRepository.getEntities(QUERY_GET_REQUEST_FOR_QUOTATION_IDS_FOR_UNSHIPPED_ORDERS,new String[]{"orderIds"}, new Object[]{unShippedOrderIds});
+        // get order ids
+        List<String> orderIds = catalogueRepository.getEntities(QUERY_GET_ORDER_IDS_FOR_UNSHIPPED_ORDERS,new String[]{"orderIds"}, new Object[]{unShippedOrderIds});
+        // returns all ids
+        rfqIds.addAll(orderIds);
+        return rfqIds;
+    }
 
     public static ProcessDocumentMetadataDAO findByDocumentID(String documentId) {
         return findByDocumentID(documentId, new JPARepositoryFactory().forBpRepository(true));
@@ -100,12 +137,31 @@ public class ProcessDocumentMetadataDAOUtility {
         return findByProcessInstanceID(processInstanceId, new JPARepositoryFactory().forBpRepository(true));
     }
 
+    public static List<String> getAllProcessInstanceIds(GenericJPARepository repository) {
+        return repository.getEntities(QUERY_GET_ALL_PROCESS_INSTANCE_ID);
+    }
+
+    public static List<String> getAllProcessInstanceIds() {
+        return getAllProcessInstanceIds(new JPARepositoryFactory().forBpRepository(true));
+    }
+
+    public static List<String> getOrderIdsBelongToCompletedCollaborations() {
+        return new JPARepositoryFactory().forBpRepository().getEntities(QUERY_GET_ORDERS_BELONG_TO_COMPLETED_COLLABORATIONS);
+    }
+
     public static List<ProcessDocumentMetadataDAO> findByPartyID(String partyId) {
         return new JPARepositoryFactory().forBpRepository(true).getEntities(QUERY_GET_BY_PARTY_ID, new String[]{"partyId"}, new Object[]{partyId});
     }
 
-    public static List<String> getProcessInstanceIds(String responderId) {
-        return new JPARepositoryFactory().forBpRepository().getEntities(QUERY_GET_BY_RESPONDER_ID, new String[]{"responderId"}, new Object[]{responderId});
+    public static List<String> getProcessInstanceIds(String responderId, String federationId) {
+        return new JPARepositoryFactory().forBpRepository().getEntities(QUERY_GET_BY_RESPONDER_ID, new String[]{"responderId","federationId"}, new Object[]{responderId,federationId});
+    }
+
+    /**
+     * Given by a specific document id which has an associated ProcessDocumentMetadata, Retrieves the document metadata of the document associated to
+     */
+    public static ProcessDocumentMetadataDAO getMetadataForCorrespondingDocument(String initialDocumentId) {
+        return new JPARepositoryFactory().forBpRepository().getSingleEntity(QUERY_GET_METADATA_FOR_CORRESPONDING_DOCUMENT, new String[]{"documentId"}, new Object[]{initialDocumentId});
     }
 
     public static ProcessDocumentMetadataDAO getDocumentOfTheOtherParty(String processInstanceId, String thisPartyId) {
@@ -132,6 +188,19 @@ public class ProcessDocumentMetadataDAOUtility {
             return documentMetadata.getResponderID();
         } else {
             return documentMetadata.getInitiatorID();
+        }
+    }
+
+    public static String getTradingPartnerFederationId(String processInstanceId, String thisPartyId) {
+        ProcessDocumentMetadataDAO firstDocumentMetadataDAO = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(processInstanceId).get(0);
+        return getTradingPartnerFederationId(firstDocumentMetadataDAO, thisPartyId);
+    }
+
+    public static String getTradingPartnerFederationId(ProcessDocumentMetadataDAO documentMetadata, String thisPartyId) {
+        if(documentMetadata.getInitiatorID().contentEquals(thisPartyId)) {
+            return documentMetadata.getResponderFederationID();
+        } else {
+            return documentMetadata.getInitiatorFederationID();
         }
     }
 
@@ -181,25 +250,25 @@ public class ProcessDocumentMetadataDAOUtility {
         return resultSet;
     }
 
-    public static List<String> getDocumentIds(Integer partyId, List<String> documentTypes, String role, String startDateStr, String endDateStr, String status) {
+    public static List<String> getDocumentIds(Integer partyId,String federationId, List<String> documentTypes, String role, String startDateStr, String endDateStr, String status, Boolean belongsToCompletedCollaboration) {
         if(role == null) {
             role = RoleType.SELLER.toString();
         }
-        DocumentMetadataQuery query = getDocumentMetadataQuery(partyId, documentTypes, role, startDateStr, endDateStr, status, null, null, DocumentMetadataQueryType.DOCUMENT_IDS);
+        DocumentMetadataQuery query = getDocumentMetadataQuery(partyId, federationId,documentTypes, role, startDateStr, endDateStr, status, null, null, belongsToCompletedCollaboration, DocumentMetadataQueryType.DOCUMENT_IDS);
         List<String> documentIds = new JPARepositoryFactory().forBpRepository().getEntities(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray());
         return documentIds;
     }
 
-    public static int getTransactionCount(Integer partyId, List<String> documentTypes, String role, String startDateStr, String endDateStr, String status) {
+    public static int getTransactionCount(Integer partyId, String federationId,List<String> documentTypes, String role, String startDateStr, String endDateStr, String status) {
         if(role == null) {
             role = RoleType.SELLER.toString();
         }
-        DocumentMetadataQuery query = getDocumentMetadataQuery(partyId, documentTypes, role, startDateStr, endDateStr, status, null, null, DocumentMetadataQueryType.TOTAL_TRANSACTION_COUNT);
+        DocumentMetadataQuery query = getDocumentMetadataQuery(partyId, federationId,documentTypes, role, startDateStr, endDateStr, status, null, null, null, DocumentMetadataQueryType.TOTAL_TRANSACTION_COUNT);
         int count = ((Long) new JPARepositoryFactory().forBpRepository().getSingleEntity(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray())).intValue();
         return count;
     }
 
-    public static List<TransactionSummary> getTransactionSummaries(String partyId, String userId, String direction, Boolean archived, String bearerToken) {
+    public static List<TransactionSummary> getTransactionSummaries(String partyId, String federationId, String userId, String direction, Boolean archived, String bearerToken) {
         List<TransactionSummary> summaries = new ArrayList<>();
         ExecutorService threadPool = Executors.newCachedThreadPool();
 
@@ -213,7 +282,7 @@ public class ProcessDocumentMetadataDAOUtility {
                 }
             }
 
-            DocumentMetadataQuery query = getDocumentMetadataQuery(Integer.parseInt(partyId), null, role, null, null, null, userId, archived, DocumentMetadataQueryType.TRANSACTION_METADATA);
+            DocumentMetadataQuery query = getDocumentMetadataQuery(Integer.parseInt(partyId),federationId, null, role, null, null, null, userId, archived, null, DocumentMetadataQueryType.TRANSACTION_METADATA);
             List<ProcessDocumentMetadataDAO> metadataObjects = new JPARepositoryFactory().forBpRepository(true).getEntities(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray());
             Set<String> partyIds = new HashSet<>();
             Set<String> personIds = new HashSet<>();
@@ -352,17 +421,18 @@ public class ProcessDocumentMetadataDAOUtility {
         return personFutures;
     }
 
-    public static BusinessProcessCount getGroupTransactionCounts(Integer partyId, String startDateStr, String endDateStr, String role, String bearerToken) {
+    public static BusinessProcessCount getGroupTransactionCounts(Integer partyId,String federationId, String startDateStr, String endDateStr, String role, String bearerToken) {
         if(role == null) {
             role = RoleType.SELLER.toString();
         }
-        DocumentMetadataQuery query = getDocumentMetadataQuery(partyId, new ArrayList<>(), role, startDateStr, endDateStr, null, null, null, DocumentMetadataQueryType.GROUPED_TRANSACTION_COUNT);
+        DocumentMetadataQuery query = getDocumentMetadataQuery(partyId, federationId,new ArrayList<>(), role, startDateStr, endDateStr, null, null, null, null, DocumentMetadataQueryType.GROUPED_TRANSACTION_COUNT);
 
         List<Object> results = new JPARepositoryFactory().forBpRepository(true).getEntities(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray());
 
         BusinessProcessCount counts = new BusinessProcessCount();
         for (Object result : results) {
             Object[] resultItems = (Object[]) result;
+            String partyFederationId = (String) resultItems[1];
             PartyType partyType = null;
             try {
                 partyType = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken, (String) resultItems[0]);
@@ -371,12 +441,13 @@ public class ProcessDocumentMetadataDAOUtility {
                 logger.error("msg");
                 throw new RuntimeException(msg, e);
             }
-            counts.addCount((String) resultItems[0], resultItems[1].toString(), resultItems[2].toString(), (Long) resultItems[3], partyType.getPartyName().get(0).getName().getValue());
+            counts.addCount((String) resultItems[0], resultItems[2].toString(), resultItems[3].toString(), (Long) resultItems[4], partyType.getPartyName().get(0).getName().getValue());
         }
         return counts;
     }
 
     private static DocumentMetadataQuery getDocumentMetadataQuery(Integer partyId,
+                                                                  String federationId,
                                                                   List<String> documentTypes,
                                                                   String role,
                                                                   String startDateStr,
@@ -384,6 +455,7 @@ public class ProcessDocumentMetadataDAOUtility {
                                                                   String status,
                                                                   String userId,
                                                                   Boolean belongsToArchivedCollaborationGroup,
+                                                                  Boolean belongsToCompletedCollaboration,
                                                                   DocumentMetadataQueryType queryType) {
         DocumentMetadataQuery query = new DocumentMetadataQuery();
         List<String> parameterNames = query.parameterNames;
@@ -394,14 +466,42 @@ public class ProcessDocumentMetadataDAOUtility {
 
         if (partyId != null) {
             if(role != null) {
-                conditions += " where documentMetadata." + (role.equals(RoleType.BUYER.toString()) ? "initiatorID" : "responderID") + " = :partyId ";
+                if(federationId != null){
+                    if(role.equals(RoleType.BUYER.toString())){
+                        conditions += " where documentMetadata.initiatorID = :partyId AND documentMetadata.initiatorFederationID = :federationId";
+                    }
+                    else{
+                        conditions += " where documentMetadata.responderID = :partyId AND documentMetadata.responderFederationID = :federationId";
+                    }
+
+                    parameterNames.add("federationId");
+                    parameterValues.add(federationId);
+                }
+                else {
+                    conditions += " where documentMetadata." + (role.equals(RoleType.BUYER.toString()) ? "initiatorID" : "responderID") + " = :partyId ";
+                }
             } else {
-                conditions += " where (documentMetadata.initiatorID = :partyId OR documentMetadata.responderID = :partyId) ";
+                if(federationId != null){
+                    conditions += " where ((documentMetadata.initiatorID = :partyId AND documentMetadata.initiatorFederationID = :federationId) OR (documentMetadata.responderFederationID = :federationId AND documentMetadata.responderID = :partyId)) ";
+
+                    parameterNames.add("federationId");
+                    parameterValues.add(federationId);
+                }
+                else{
+                    conditions += " where (documentMetadata.initiatorID = :partyId OR documentMetadata.responderID = :partyId) ";
+                }
             }
 
             filterExists = true;
             parameterNames.add("partyId");
             parameterValues.add(partyId.toString());
+        }
+        else if(federationId != null){
+            conditions += " where (documentMetadata.initiatorFederationID = :federationId OR documentMetadata.responderFederationID = :federationId) ";
+
+            filterExists = true;
+            parameterNames.add("federationId");
+            parameterValues.add(federationId);
         }
 
         if (startDateStr != null || endDateStr != null) {
@@ -469,7 +569,7 @@ public class ProcessDocumentMetadataDAOUtility {
         }
 
         if (queryType.equals(DocumentMetadataQueryType.GROUPED_TRANSACTION_COUNT)) {
-            conditions += " group by documentMetadata.initiatorID, documentMetadata.type, documentMetadata.status";
+            conditions += " group by documentMetadata.initiatorID, documentMetadata.initiatorFederationID, documentMetadata.type, documentMetadata.status";
         } else if (queryType.equals(DocumentMetadataQueryType.TRANSACTION_METADATA)) {
             // check archived status
             if(belongsToArchivedCollaborationGroup != null) {
@@ -478,6 +578,18 @@ public class ProcessDocumentMetadataDAOUtility {
                 parameterNames.add("archived");
                 parameterValues.add(belongsToArchivedCollaborationGroup);
             }
+        } else if(queryType.equals(DocumentMetadataQueryType.DOCUMENT_IDS) && belongsToCompletedCollaboration){
+            if (!filterExists) {
+                conditions += " where ";
+            } else {
+                conditions += " and ";
+            }
+
+            conditions += "NOT EXISTS(" +
+                    "SELECT pig.ID " +
+                    "FROM ProcessInstanceGroupDAO pig join pig.processInstanceIDsItems idItems " +
+                    "WHERE documentMetadata.processInstanceID = idItems.item AND pig.status != 'COMPLETED' " +
+                    ")";
         }
 
         if (queryType.equals(DocumentMetadataQueryType.TOTAL_TRANSACTION_COUNT)) {
@@ -548,17 +660,24 @@ public class ProcessDocumentMetadataDAOUtility {
     }
 
     public static List<String> getUnshippedOrderIds() {
-        return getUnshippedOrderIds(null);
+        return getUnshippedOrderIds(null,null);
     }
 
-    public static List<String> getUnshippedOrderIds(String sellerPartyId) {
+    public static List<String> getUnshippedOrderIds(String sellerPartyId, String federationId) {
         GenericJPARepository repository = new JPARepositoryFactory().forCatalogueRepository();
-        List<String> results;
+        List<Object[]> dbResults;
         if(sellerPartyId != null) {
-            results = repository.getEntities(QUERY_GET_UNSHIPPED_ORDER_IDENTIFIERS_FOR_SPECIFIC_PARTY, new String[]{"sellerPartyId"}, new Object[]{sellerPartyId});
+            dbResults = repository.getEntities(QUERY_GET_UNSHIPPED_ORDER_IDENTIFIERS_FOR_SPECIFIC_PARTY, new String[]{"sellerPartyId","federationId"}, new Object[]{sellerPartyId,federationId});
         } else {
-            results = repository.getEntities(QUERY_GET_UNSHIPPED_ORDER_IDENTIFIERS_FOR_ALL_PARTIES);
+            dbResults = repository.getEntities(QUERY_GET_UNSHIPPED_ORDER_IDENTIFIERS_FOR_ALL_PARTIES);
         }
+        List<String> results = new ArrayList<>();
+        if(dbResults != null && dbResults.size() > 0) {
+            for(Object[] result : dbResults) {
+                results.add((String) result[0]);
+            }
+        }
+
         return results;
     }
 

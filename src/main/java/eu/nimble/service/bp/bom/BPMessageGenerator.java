@@ -16,6 +16,7 @@ import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
 import eu.nimble.service.bp.swagger.model.ProcessVariables;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
+import eu.nimble.service.model.ubl.commonbasiccomponents.AmountType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.CodeType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.QuantityType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.TextType;
@@ -32,13 +33,14 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.util.*;
 
 public class BPMessageGenerator {
 
     private final static Logger logger = LoggerFactory.getLogger(BPMessageGenerator.class);
 
-    public static ProcessInstanceInputMessage createBPMessageForBOM(BillOfMaterialItem billOfMaterialItem, Boolean useFrameContract, PartyType buyerParty, String creatorUserId, String bearerToken) throws Exception {
+    public static ProcessInstanceInputMessage createBPMessageForBOM(BillOfMaterialItem billOfMaterialItem, Boolean useFrameContract, PartyType buyerParty, String creatorUserId,String initiatorFederationId, String responderFederationId, String bearerToken) throws Exception {
         // get catalogue line
         CatalogueLineType catalogueLine = CataloguePersistenceUtility.getCatalogueLine(billOfMaterialItem.getCatalogueUuid(),billOfMaterialItem.getlineId());
         // get seller negotiation settings
@@ -47,7 +49,7 @@ public class BPMessageGenerator {
         // if there is a valid frame contract and useFrameContract is True, then create an order for the line item using the details of frame contract
         // otherwise, start a negotiation process for the item
         if (useFrameContract) {
-            DigitalAgreementType digitalAgreement = ContractPersistenceUtility.getFrameContractAgreementById(catalogueLine.getGoodsItem().getItem().getManufacturerParty().getPartyIdentification().get(0).getID(), buyerParty.getPartyIdentification().get(0).getID(), billOfMaterialItem.getlineId());
+            DigitalAgreementType digitalAgreement = ContractPersistenceUtility.getFrameContractAgreementById(catalogueLine.getGoodsItem().getItem().getManufacturerParty().getPartyIdentification().get(0).getID(),responderFederationId, buyerParty.getPartyIdentification().get(0).getID(),initiatorFederationId, billOfMaterialItem.getlineId());
 
             if (digitalAgreement != null) {
                 // check whether frame contract is valid or not
@@ -58,17 +60,17 @@ public class BPMessageGenerator {
                     // create an order using the frame contract
                     OrderType order = createOrder(quotation, buyerParty, sellerNegotiationSettings.getCompany());
 
-                    return BPMessageGenerator.createProcessInstanceInputMessage(order, catalogueLine.getGoodsItem().getItem(), creatorUserId,"",bearerToken);
+                    return BPMessageGenerator.createProcessInstanceInputMessage(order, Arrays.asList(catalogueLine.getGoodsItem().getItem()), creatorUserId,"",bearerToken);
                 }
             }
         }
 
         RequestForQuotationType requestForQuotation = createRequestForQuotation(catalogueLine, billOfMaterialItem.getquantity(), sellerNegotiationSettings,buyerParty, bearerToken);
 
-        return BPMessageGenerator.createProcessInstanceInputMessage(requestForQuotation, catalogueLine.getGoodsItem().getItem(), creatorUserId,"",bearerToken);
+        return BPMessageGenerator.createProcessInstanceInputMessage(requestForQuotation, Arrays.asList(catalogueLine.getGoodsItem().getItem()), creatorUserId,"",bearerToken);
     }
 
-    public static ProcessInstanceInputMessage createProcessInstanceInputMessage(IDocument document, ItemType item, String creatorUserId,String processInstanceId,String bearerToken) throws Exception {
+    public static ProcessInstanceInputMessage createProcessInstanceInputMessage(IDocument document, List<ItemType> items, String creatorUserId,String processInstanceId,String bearerToken) throws Exception {
         // get corresponding process type
         String processId = ClassProcessTypeMap.getProcessType(document.getClass());
 
@@ -76,7 +78,7 @@ public class BPMessageGenerator {
         PartyType responderParty;
         PartyType initiatorParty;
         // for Fulfilment, it's vice versa
-        if(processId.contentEquals("Fulfilment")){
+        if(processId.contentEquals(ClassProcessTypeMap.CAMUNDA_PROCESS_ID_FULFILMENT)){
             responderParty = PartyPersistenceUtility.getParty(bearerToken, document.getBuyerParty());
             initiatorParty = PartyPersistenceUtility.getParty(bearerToken, document.getSellerParty());
         }
@@ -96,13 +98,22 @@ public class BPMessageGenerator {
                 creatorUserId = responderParty.getPerson().get(0).getID();
             }
         }
-        // get related product categories
+        // get related product categories for each product
         List<String> relatedProductCategories = new ArrayList<>();
-        for (CommodityClassificationType commodityClassificationType : item.getCommodityClassification()) {
-            if (!relatedProductCategories.contains(commodityClassificationType.getItemClassificationCode().getName())) {
-                relatedProductCategories.add(commodityClassificationType.getItemClassificationCode().getName());
+        for (ItemType item : items) {
+            for (CommodityClassificationType commodityClassificationType : item.getCommodityClassification()) {
+                if (!relatedProductCategories.contains(commodityClassificationType.getItemClassificationCode().getName())) {
+                    relatedProductCategories.add(commodityClassificationType.getItemClassificationCode().getName());
+                }
             }
         }
+
+        // get related products
+        List<String> relatedProducts = new ArrayList<>();
+        for (ItemType item : items) {
+            relatedProducts.add(item.getName().get(0).getValue());
+        }
+
         // serialize the document
         String documentAsString = JsonSerializationUtility.getObjectMapper().writeValueAsString(document);
 
@@ -120,7 +131,7 @@ public class BPMessageGenerator {
         processVariables.setCreatorUserID(creatorUserId);
         processVariables.setInitiatorID(initiatorParty.getPartyIdentification().get(0).getID());
         processVariables.setResponderID(responderParty.getPartyIdentification().get(0).getID());
-        processVariables.setRelatedProducts(Collections.singletonList(item.getName().get(0).getValue()));
+        processVariables.setRelatedProducts(relatedProducts);
         processVariables.setRelatedProductCategories(relatedProductCategories);
 
         // create Process instance input message
@@ -146,45 +157,63 @@ public class BPMessageGenerator {
         OrderLineType orderLine = new OrderLineType();
         orderLine.setLineItem(quotation.getQuotationLine().get(0).getLineItem());
 
-        ContractType contract = new ContractType();
-        contract.setID(UUID.randomUUID().toString());
-        contract.setClause(quotation.getTermOrCondition());
+        List<ContractType> contracts = new ArrayList<>();
+        for (QuotationLineType quotationLine : quotation.getQuotationLine()) {
+            ContractType contract = new ContractType();
+            contract.setID(UUID.randomUUID().toString());
+            contract.setClause(quotationLine.getLineItem().getClause());
+
+            contracts.add(contract);
+        }
 
         order.setID(UUID.randomUUID().toString());
         order.setBuyerCustomerParty(customerParty);
         order.setSellerSupplierParty(supplierParty);
         order.setOrderLine(Collections.singletonList(orderLine));
         order.getOrderLine().get(0).getLineItem().getDeliveryTerms().getDeliveryLocation().setAddress(requestForQuotation.getRequestForQuotationLine().get(0).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress());
-        order.setPaymentMeans(quotation.getPaymentMeans());
-        order.setPaymentTerms(quotation.getPaymentTerms());
-        order.setContract(Collections.singletonList(contract));
+        order.setContract(contracts);
 
         return order;
     }
 
-    public static RequestForQuotationType createRequestForQuotation(CatalogueLineType catalogueLine, QuantityType quantity, NegotiationSettings sellerNegotiationSettings,PartyType buyerParty, String bearerToken) throws IOException {
+    public static RequestForQuotationType createRequestForQuotation(CatalogueLineType catalogueLine, QuantityType quantity, NegotiationSettings sellerNegotiationSettings,PartyType buyerParty, String bearerToken) throws Exception {
+        return createRequestForQuotation(catalogueLine,quantity,sellerNegotiationSettings,buyerParty,null,null,bearerToken);
+    }
+
+    public static RequestForQuotationType createRequestForQuotation(CatalogueLineType catalogueLine, QuantityType quantity, NegotiationSettings sellerNegotiationSettings,PartyType buyerParty,String precedingDocumentId,BigDecimal pricePerProduct, String bearerToken) throws Exception {
         PartyType sellerParty = sellerNegotiationSettings.getCompany();
 
         // create request for quotation
         RequestForQuotationType requestForQuotation = new RequestForQuotationType();
-
-        RequestForQuotationLineType requestForQuotationLine = new RequestForQuotationLineType();
-        requestForQuotationLine.setLineItem(createLineItem(catalogueLine,quantity,sellerNegotiationSettings,buyerParty));
-
-        CustomerPartyType customerParty = new CustomerPartyType();
-        customerParty.setParty(PartyPersistenceUtility.getParty(buyerParty));
-
-        SupplierPartyType supplierParty = new SupplierPartyType();
-        supplierParty.setParty(PartyPersistenceUtility.getParty(sellerParty));
-
-        PaymentTermsType paymentTermsType = new PaymentTermsType();
-        paymentTermsType.setTradingTerms(getPaymentTerms(sellerNegotiationSettings.getPaymentTerms().size() > 0 ? sellerNegotiationSettings.getPaymentTerms().get(0) : ""));
 
         CodeType paymentMeansCode = new CodeType();
         paymentMeansCode.setValue(sellerNegotiationSettings.getPaymentMeans().size() > 0 ? sellerNegotiationSettings.getPaymentMeans().get(0) : "");
 
         PaymentMeansType paymentMeansType = new PaymentMeansType();
         paymentMeansType.setPaymentMeansCode(paymentMeansCode);
+
+        PaymentTermsType paymentTermsType = new PaymentTermsType();
+        paymentTermsType.setTradingTerms(getPaymentTerms(sellerNegotiationSettings.getPaymentTerms().size() > 0 ? sellerNegotiationSettings.getPaymentTerms().get(0) : ""));
+
+        RequestForQuotationLineType requestForQuotationLine = new RequestForQuotationLineType();
+        requestForQuotationLine.setLineItem(createLineItem(catalogueLine,quantity,sellerNegotiationSettings,buyerParty,pricePerProduct));
+        requestForQuotationLine.getLineItem().setDataMonitoringRequested(false);
+        requestForQuotationLine.getLineItem().setPaymentMeans(paymentMeansType);
+        requestForQuotationLine.getLineItem().setPaymentTerms(paymentTermsType);
+        // if seller has some T&Cs, use them, otherwise use the default T&Cs
+        if (sellerParty.getPurchaseTerms() != null && sellerParty.getPurchaseTerms().getTermOrCondition().size() > 0) {
+            requestForQuotationLine.getLineItem().setClause(sellerParty.getPurchaseTerms().getTermOrCondition());
+        } else {
+            ContractGenerator contractGenerator = new ContractGenerator();
+            List<ClauseType> clauses = contractGenerator.getTermsAndConditions(sellerParty.getPartyIdentification().get(0).getID(),buyerParty.getPartyIdentification().get(0).getID(),buyerParty.getFederationInstanceID(), sellerNegotiationSettings.getIncoterms().size() > 0 ? sellerNegotiationSettings.getIncoterms().get(0) : "", sellerNegotiationSettings.getPaymentTerms().size() > 0 ? sellerNegotiationSettings.getPaymentTerms().get(0) : "", bearerToken);
+            requestForQuotationLine.getLineItem().setClause(clauses);
+        }
+
+        CustomerPartyType customerParty = new CustomerPartyType();
+        customerParty.setParty(PartyPersistenceUtility.getParty(buyerParty));
+
+        SupplierPartyType supplierParty = new SupplierPartyType();
+        supplierParty.setParty(PartyPersistenceUtility.getParty(sellerParty));
 
         PeriodType periodType = new PeriodType();
 
@@ -194,28 +223,81 @@ public class BPMessageGenerator {
         String uuid = UUID.randomUUID().toString();
         requestForQuotation.setID(uuid);
         requestForQuotation.setNote(Collections.singletonList(""));
-        requestForQuotation.setDataMonitoringRequested(false);
         requestForQuotation.setBuyerCustomerParty(customerParty);
         requestForQuotation.setSellerSupplierParty(supplierParty);
         requestForQuotation.setDelivery(deliveryType);
         requestForQuotation.setRequestForQuotationLine(Collections.singletonList(requestForQuotationLine));
-        requestForQuotation.setPaymentTerms(paymentTermsType);
-        requestForQuotation.setPaymentMeans(paymentMeansType);
-        requestForQuotation.setRequestForQuotationLine(Collections.singletonList(requestForQuotationLine));
-
-        // if seller has some T&Cs, use them, otherwise use the default T&Cs
-        if (sellerParty.getPurchaseTerms() != null && sellerParty.getPurchaseTerms().getTermOrCondition().size() > 0) {
-            requestForQuotation.setTermOrCondition(sellerParty.getPurchaseTerms().getTermOrCondition());
-        } else {
-            ContractGenerator contractGenerator = new ContractGenerator();
-            List<ClauseType> clauses = contractGenerator.getTermsAndConditions(null, null, sellerParty.getPartyIdentification().get(0).getID(), buyerParty.getPartyIdentification().get(0).getID(), sellerNegotiationSettings.getIncoterms().size() > 0 ? sellerNegotiationSettings.getIncoterms().get(0) : "", sellerNegotiationSettings.getPaymentTerms().size() > 0 ? sellerNegotiationSettings.getPaymentTerms().get(0) : "", bearerToken);
-            requestForQuotation.setTermOrCondition(clauses);
+        if(precedingDocumentId != null){
+            DocumentReferenceType documentReference = new DocumentReferenceType();
+            documentReference.setDocumentType("previousDocument");
+            documentReference.setID(precedingDocumentId);
+            requestForQuotation.setAdditionalDocumentReference(Collections.singletonList(documentReference));
         }
 
         return requestForQuotation;
     }
 
-    private static LineItemType createLineItem(CatalogueLineType catalogueLine,QuantityType quantity,NegotiationSettings sellerNegotiationSettings, PartyType buyerParty){
+    public static OrderType createOrder(CatalogueLineType catalogueLine, QuantityType quantity, NegotiationSettings sellerNegotiationSettings,PartyType buyerParty,String precedingDocumentId,BigDecimal pricePerProduct, String bearerToken) throws Exception {
+        PartyType sellerParty = sellerNegotiationSettings.getCompany();
+
+        // create order
+        OrderType order = new OrderType();
+
+        CodeType paymentMeansCode = new CodeType();
+        paymentMeansCode.setValue(sellerNegotiationSettings.getPaymentMeans().size() > 0 ? sellerNegotiationSettings.getPaymentMeans().get(0) : "");
+
+        PaymentMeansType paymentMeansType = new PaymentMeansType();
+        paymentMeansType.setPaymentMeansCode(paymentMeansCode);
+
+        PaymentTermsType paymentTermsType = new PaymentTermsType();
+        paymentTermsType.setTradingTerms(getPaymentTerms(sellerNegotiationSettings.getPaymentTerms().size() > 0 ? sellerNegotiationSettings.getPaymentTerms().get(0) : ""));
+
+        OrderLineType orderLine = new OrderLineType();
+        orderLine.setLineItem(createLineItem(catalogueLine,quantity,sellerNegotiationSettings,buyerParty,pricePerProduct));
+        orderLine.getLineItem().setDataMonitoringRequested(false);
+        orderLine.getLineItem().setPaymentMeans(paymentMeansType);
+        orderLine.getLineItem().setPaymentTerms(paymentTermsType);
+
+        ContractType contract = new ContractType();
+        contract.setID(UUID.randomUUID().toString());
+        // if seller has some T&Cs, use them, otherwise use the default T&Cs
+        if (sellerParty.getPurchaseTerms() != null && sellerParty.getPurchaseTerms().getTermOrCondition().size() > 0) {
+            contract.setClause(sellerParty.getPurchaseTerms().getTermOrCondition());
+        } else {
+            ContractGenerator contractGenerator = new ContractGenerator();
+            List<ClauseType> clauses = contractGenerator.getTermsAndConditions(sellerParty.getPartyIdentification().get(0).getID(), buyerParty.getPartyIdentification().get(0).getID(),buyerParty.getFederationInstanceID(), sellerNegotiationSettings.getIncoterms().size() > 0 ? sellerNegotiationSettings.getIncoterms().get(0) : "", sellerNegotiationSettings.getPaymentTerms().size() > 0 ? sellerNegotiationSettings.getPaymentTerms().get(0) : "", bearerToken);
+            contract.setClause(clauses);
+        }
+        order.setContract(Collections.singletonList(contract));
+
+        CustomerPartyType customerParty = new CustomerPartyType();
+        customerParty.setParty(PartyPersistenceUtility.getParty(buyerParty));
+
+        SupplierPartyType supplierParty = new SupplierPartyType();
+        supplierParty.setParty(PartyPersistenceUtility.getParty(sellerParty));
+
+        PeriodType periodType = new PeriodType();
+
+        DeliveryType deliveryType = new DeliveryType();
+        deliveryType.setRequestedDeliveryPeriod(periodType);
+
+        String uuid = UUID.randomUUID().toString();
+        order.setID(uuid);
+        order.setNote(Collections.singletonList(""));
+        order.setBuyerCustomerParty(customerParty);
+        order.setSellerSupplierParty(supplierParty);
+        order.setOrderLine(Collections.singletonList(orderLine));
+        if(precedingDocumentId != null){
+            DocumentReferenceType documentReference = new DocumentReferenceType();
+            documentReference.setDocumentType("previousDocument");
+            documentReference.setID(precedingDocumentId);
+            order.setAdditionalDocumentReference(Collections.singletonList(documentReference));
+        }
+
+        return order;
+    }
+
+    private static LineItemType createLineItem(CatalogueLineType catalogueLine, QuantityType quantity, NegotiationSettings sellerNegotiationSettings, PartyType buyerParty, BigDecimal pricePerProduct){
         LineReferenceType lineReference = new LineReferenceType();
         lineReference.setLineID(catalogueLine.getGoodsItem().getItem().getManufacturersItemIdentification().getID());
 
@@ -225,8 +307,12 @@ public class BPMessageGenerator {
         PeriodType warranty = new PeriodType();
         warranty.setDurationMeasure(catalogueLine.getWarrantyValidityPeriod().getDurationMeasure());
 
+        ShipmentType shipment = new ShipmentType();
+        shipment.setGoodsItem(Arrays.asList(new GoodsItemType()));
+
         DeliveryType delivery = new DeliveryType();
         delivery.setRequestedDeliveryPeriod(requestedDeliveryPeriod);
+        delivery.setShipment(shipment);
 
         LocationType location = new LocationType();
 
@@ -247,14 +333,31 @@ public class BPMessageGenerator {
         DeliveryTermsType deliveryTerms = new DeliveryTermsType();
         deliveryTerms.setDeliveryLocation(location);
         deliveryTerms.setIncoterms(sellerNegotiationSettings.getIncoterms().size() > 0 ? sellerNegotiationSettings.getIncoterms().get(0):null);
+        // Price
+        QuantityType baseQuantity = new QuantityType();
+        baseQuantity.setUnitCode(catalogueLine.getRequiredItemLocationQuantity().getPrice().getBaseQuantity().getUnitCode());
+        AmountType amount = new AmountType();
+        amount.setCurrencyID(catalogueLine.getRequiredItemLocationQuantity().getPrice().getPriceAmount().getCurrencyID());
+        if(pricePerProduct == null){
+            baseQuantity.setValue(catalogueLine.getRequiredItemLocationQuantity().getPrice().getBaseQuantity().getValue());
+            amount.setValue(catalogueLine.getRequiredItemLocationQuantity().getPrice().getPriceAmount().getValue());
+        }
+        else {
+            baseQuantity.setValue(BigDecimal.ONE);
+            amount.setValue(pricePerProduct);
+        }
 
+        PriceType price = new PriceType();
+        price.setBaseQuantity(baseQuantity);
+        price.setPriceAmount(amount);
+        // Price end
 
         LineItemType lineItem = new LineItemType();
         lineItem.setQuantity(quantity);
         lineItem.setItem(catalogueLine.getGoodsItem().getItem());
         lineItem.setDeliveryTerms(deliveryTerms);
         lineItem.setDelivery(Collections.singletonList(delivery));
-        lineItem.setPrice(catalogueLine.getRequiredItemLocationQuantity().getPrice());
+        lineItem.setPrice(price);
         lineItem.setWarrantyValidityPeriod(warranty);
 
         return lineItem;

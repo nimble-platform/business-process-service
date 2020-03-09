@@ -31,6 +31,8 @@ public class DocumentPersistenceUtility {
     private static final String QUERY_GET_ORDER_RESPONSE_ID = "SELECT orderResponse.ID FROM OrderResponseSimpleType orderResponse WHERE orderResponse.orderReference.documentReference.ID = :documentId";
     private static final String QUERY_GET_ORDER_RESPONSE_BY_ORDER_ID = "SELECT orderResponse FROM OrderResponseSimpleType orderResponse WHERE orderResponse.orderReference.documentReference.ID = :documentId";
     private static final String QUERY_GET_DOCUMENT = "SELECT document FROM %s document WHERE document.ID = :documentId";
+    private static final String QUERY_GET_ADDITIONAL_DOCUMENT_TYPES_FROM_RFQ = "SELECT doc.ID, doc.documentType FROM RequestForQuotationType rfq join rfq.additionalDocumentReference doc WHERE rfq.ID = :documentId";
+    private static final String QUERY_GET_ADDITIONAL_DOCUMENT_TYPES_FROM_IIR = "SELECT doc.ID, doc.documentType FROM ItemInformationRequestType iir join iir.additionalDocumentReference doc WHERE iir.ID = :documentId";
 
     public static List<String> getOrderIds(String partyId, String itemId) {
         return new JPARepositoryFactory().forCatalogueRepository().getEntities(QUERY_GET_ORDER_IDS_FOR_PARTY, new String[]{"partyId", "itemId"}, new Object[]{partyId, itemId});
@@ -110,5 +112,19 @@ public class DocumentPersistenceUtility {
             return null;
         }
         return getUBLDocument(documentId, processDocumentMetadataDAO.getType());
+    }
+
+    /**
+     * @return string tuples including the (additional document id - additional document type) information associated to an {@link eu.nimble.service.model.ubl.iteminformationrequest.ItemInformationRequestType}
+     */
+    public static List<Object> getAdditionalDocumentTypesFromIir(String iirId) {
+        return new JPARepositoryFactory().forCatalogueRepository().getEntities(QUERY_GET_ADDITIONAL_DOCUMENT_TYPES_FROM_IIR, new String[]{"documentId"}, new Object[]{iirId});
+    }
+
+    /**
+     * @return string tuples including the (additional document id - additional document type) information associated to an {@link eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType}
+     */
+    public static List<Object> getAdditionalDocumentTypesFromRfq(String rfqId) {
+        return new JPARepositoryFactory().forCatalogueRepository().getEntities(QUERY_GET_ADDITIONAL_DOCUMENT_TYPES_FROM_RFQ, new String[]{"documentId"}, new Object[]{rfqId});
     }
 }

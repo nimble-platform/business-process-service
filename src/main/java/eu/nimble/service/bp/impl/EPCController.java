@@ -5,15 +5,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
 import eu.nimble.service.bp.model.tt.OrderEPC;
-import eu.nimble.service.bp.util.HttpResponseUtil;
+import eu.nimble.service.bp.util.SchedulerService;
 import eu.nimble.service.bp.util.persistence.catalogue.CataloguePersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.CatalogueLineType;
 import eu.nimble.service.model.ubl.order.OrderType;
+import eu.nimble.utility.ExecutionContext;
+import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.JsonSerializationUtility;
+import eu.nimble.utility.exception.NimbleException;
+import eu.nimble.utility.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.validation.IValidationUtil;
-import eu.nimble.utility.validation.ValidationUtil;
 import feign.Response;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -25,13 +28,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -44,6 +45,8 @@ public class EPCController {
 
     @Autowired
     private IValidationUtil validationUtil;
+    @Autowired
+    private ExecutionContext executionContext;
 
     @ApiOperation(value = "",notes = "Gets product information as CatalogueLine for the specified EPC code. First, the corresponding order" +
             " is fetched for the specified code from the data channel service and then, the CatalogueLine is retrieved for the product" +
@@ -59,12 +62,16 @@ public class EPCController {
             method = RequestMethod.GET)
     public ResponseEntity getCatalogueLineForEPCCode(@ApiParam(value = "The electronic product code for which the track & tracing details are requested", required = true) @RequestParam(value = "epc", required = true) String epc,
                                                      @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
-        logger.info("Getting track & tracing details for epc: {}", epc);
+        // set request log of ExecutionContext
+        String requestLog = String.format("Getting track & tracing details for epc: %s", epc);
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
 
         try {
             // validate role
-            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
-                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+            if(!validationUtil.validateRole(bearerToken, executionContext.getUserRoles(),RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+                throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
             Response response = SpringBridge.getInstance().getDataChannelClient().getEPCCodesForOrder(bearerToken, epc);
@@ -72,16 +79,14 @@ public class EPCController {
             try {
                 responseBody = HttpResponseUtil.extractBodyFromFeignClientResponse(response);
             } catch (IOException e) {
-                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog(String.format("Failed to retrieve epc codes for code: %s", epc), e, HttpStatus.INTERNAL_SERVER_ERROR);
+                throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_FAILED_TO_RETRIEVE_EPC.toString(), Arrays.asList(epc),e);
             }
 
             ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
             List<OrderEPC> epcCodesList = objectMapper.readValue(responseBody.toString(),new TypeReference<List<OrderEPC>>(){});
 
             if(epcCodesList.size() <= 0){
-                String msg = "The epc: %s is not used in any orders.";
-                logger.error(String.format(msg, epc));
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(String.format(msg, epc));
+                throw new NimbleException(NimbleExceptionMessageCode.BAD_REQUEST_NOT_USED_IN_ANY_ORDER.toString(), Arrays.asList(epc));
             }
 
             // get order id
@@ -96,9 +101,7 @@ public class EPCController {
             return ResponseEntity.ok(JsonSerializationUtility.getObjectMapper().writeValueAsString(line));
 
         } catch (Exception e) {
-            String msg = "Unexpected error while getting CatalogueLine for the epc: %s";
-            logger.error(String.format(msg, epc),e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(String.format(msg, epc));
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_GET_CATALOGUE_LINE_FOR_EPC.toString(),Arrays.asList(epc),e);
         }
     }
 
@@ -113,19 +116,21 @@ public class EPCController {
             produces = {"application/json"},
             method = RequestMethod.GET)
     public ResponseEntity getEPCCodesBelongsToProduct(@ApiParam(value = "The identifier of the published product (catalogueLine.hjid)", required = true) @RequestParam(value = "productId", required = true) Long publishedProductID,
-                                                      @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
-        logger.info("Getting epc codes for productId: {}", publishedProductID);
+                                                      @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) throws Exception {
+        // set request log of ExecutionContext
+        String requestLog = String.format("Getting epc codes for productId: %s", publishedProductID);
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
         try {
             // validate role
-            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES)) {
-                return eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog("Invalid role", HttpStatus.UNAUTHORIZED);
+            if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+                throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
             Object[] partyIdAndManufacturerItemId = CataloguePersistenceUtility.getCatalogueLinePartyIdAndManufacturersItemIdentification(publishedProductID);
             if(partyIdAndManufacturerItemId == null){
-                String msg = "There is no catalogue line for hjid : %d";
-                logger.error(String.format(msg,publishedProductID));
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(String.format(msg,publishedProductID));
+                throw new NimbleException(NimbleExceptionMessageCode.NOT_FOUND_NO_CATALOGUE_LINE_FOR_HJID.toString(),Arrays.asList(publishedProductID.toString()));
             }
 
             List<String> epcCodes = new ArrayList<>();
@@ -144,9 +149,41 @@ public class EPCController {
             return ResponseEntity.status(HttpStatus.OK).body(epcCodes);
         }
         catch (Exception e){
-            String msg = "Unexpected error while getting the epc codes for productId: %d";
-            logger.error(String.format(msg,publishedProductID),e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(String.format(msg,publishedProductID));
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_GET_EPC_BELONGS_TO_PRODUCT.toString(),Arrays.asList(publishedProductID.toString()),e);
         }
+    }
+
+    @Autowired
+    private SchedulerService schedulerService;
+
+    @ApiOperation(value = "",notes = "Updates the cron expression of the scheduler")
+    @RequestMapping(value = "/t-t/cron-expression",
+            produces = {"application/json"},
+            method = RequestMethod.PUT)
+    public ResponseEntity setCronExpressionOfScheduler(@ApiParam(value = "The cron expression used to update execution time of scheduler" ,required=true ) @RequestBody String cronExpression,
+                                                       @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
+        // set request log of ExecutionContext
+        String requestLog = "Request to set cron expression of scheduler";
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
+        schedulerService.setCronExpression(cronExpression);
+        logger.info("Completed the request to set cron expression of scheduler");
+        return ResponseEntity.ok(null);
+    }
+
+    @ApiOperation(value = "",notes = "Gets the cron expression of the scheduler")
+    @RequestMapping(value = "/t-t/cron-expression",
+            produces = {"application/json"},
+            method = RequestMethod.GET)
+    public ResponseEntity getCronExpressionOfScheduler(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
+        // set request log of ExecutionContext
+        String requestLog = "Request to get cron expression of scheduler";
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
+        String cronExpression = schedulerService.getCronExpression();
+        logger.info("Completed the request to get cron expression of scheduler");
+        return ResponseEntity.ok(cronExpression);
     }
 }

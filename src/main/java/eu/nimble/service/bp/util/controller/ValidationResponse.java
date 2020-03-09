@@ -7,7 +7,6 @@ import org.springframework.http.ResponseEntity;
  */
 public class ValidationResponse {
     private Object validatedObject;
-    private ResponseEntity invalidResponse;
 
     public Object getValidatedObject() {
         return validatedObject;
@@ -15,14 +14,6 @@ public class ValidationResponse {
 
     public void setValidatedObject(Object validatedObject) {
         this.validatedObject = validatedObject;
-    }
-
-    public ResponseEntity getInvalidResponse() {
-        return invalidResponse;
-    }
-
-    public void setInvalidResponse(ResponseEntity invalidResponse) {
-        this.invalidResponse = invalidResponse;
     }
 }
 

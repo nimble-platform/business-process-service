@@ -1,11 +1,13 @@
 package eu.nimble.service.bp.util.spring;
 
 import eu.nimble.common.rest.datachannel.IDataChannelClient;
+import eu.nimble.common.rest.delegate.IDelegateClient;
 import eu.nimble.common.rest.identity.IIdentityClientTyped;
 import eu.nimble.service.bp.config.BusinessProcessPersistenceConfig;
 import eu.nimble.service.bp.config.GenericConfig;
 import eu.nimble.service.bp.contract.FrameContractService;
 import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
+import feign.Response;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -32,6 +34,8 @@ public class SpringBridge implements ApplicationContextAware {
     private FrameContractService frameContractService;
     @Autowired
     private IDataChannelClient dataChannelClient;
+    @Autowired
+    private IDelegateClient delegateClient;
 
     public static SpringBridge getInstance() {
         return applicationContext.getBean(SpringBridge.class);
@@ -65,5 +69,26 @@ public class SpringBridge implements ApplicationContextAware {
 
     public IDataChannelClient getDataChannelClient() {
         return dataChannelClient;
+    }
+
+    public IDelegateClient getDelegateClient() {
+        return delegateClient;
+    }
+
+    public String getFederationId() {
+        return getGenericConfig().getFederationInstanceId();
+    }
+
+    public boolean isDelegateServiceRunning(){
+        try {
+            Response response = delegateClient.getFederationId();
+            if(response != null && response.status() == 200){
+                return true;
+            }
+        }
+        catch (Exception e){
+            return false;
+        }
+        return false;
     }
 }

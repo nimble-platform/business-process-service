@@ -144,6 +144,7 @@
 			<xsd:element name="ID" type="xsd:string" maxOccurs="1"/>
 			<xsd:element name="Name" type="xsd:string"/>
 			<xsd:element name="partyID" type="xsd:string"/>
+			<xsd:element name="federationID" type="xsd:string"/>
 			<!-- TODO do not use string-based references, use the object itself as a reference -->
 			<!-- if the referred item is deleted the reference becomes obselete -->
 			<!-- Otherwise we need to define a foreign key constraint in the database -->
@@ -157,20 +158,7 @@
 			<!-- see the temp element for proper referencing -->
 			<!-- first try to use manytomany annotation, see the second temp !!! -->
 			<xsd:element name="dataChannelId" type="xsd:string"/>
-            <xsd:element name="precedingProcessInstanceGroup" minOccurs="0" type="ProcessInstanceGroupDAO">
-                <xsd:annotation>
-                    <xsd:appinfo>
-                        <hj:one-to-one merge="false">
-                            <orm:cascade>
-                                <orm:cascade-detach/>
-                                <orm:cascade-persist/>
-                                <orm:cascade-merge/>
-                                <orm:cascade-refresh/>
-                            </orm:cascade>
-                        </hj:one-to-one>
-                    </xsd:appinfo>
-                </xsd:annotation>
-            </xsd:element>
+			<xsd:element name="precedingProcessInstanceGroupMetadata" minOccurs="0" type="FederatedCollaborationGroupMetadataDAO"/>
 			<!--<xsd:element name="temp" type="AssociatedProcessInstanceGroup" maxOccurs="unbounded"/>-->
 			<!--<xsd:element name="temp" type="ProcessInstanceGroupDAO" maxOccurs="unbounded">-->
 				<!--<xsd:annotation>-->
@@ -199,6 +187,7 @@
 		<xsd:restriction base="xsd:token">
 			<xsd:enumeration value="INPROGRESS"/>
 			<xsd:enumeration value="CANCELLED"/>
+			<xsd:enumeration value="COMPLETED"/>
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:complexType name="CollaborationGroupDAO">
@@ -208,6 +197,7 @@
 			<xsd:element name="archived" type="xsd:boolean"/>
 			<xsd:element name="status" type="CollaborationStatus"/>
 			<xsd:element name="isProject" type="xsd:boolean"/>
+			<xsd:element name="federatedCollaborationGroupMetadatas" type="FederatedCollaborationGroupMetadataDAO" maxOccurs="unbounded"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	<xsd:simpleType name="CollaborationStatus">
@@ -215,6 +205,12 @@
 			<xsd:enumeration value="INPROGRESS"/>
 		</xsd:restriction>
 	</xsd:simpleType>
+	<xsd:complexType name="FederatedCollaborationGroupMetadataDAO">
+		<xsd:sequence>
+			<xsd:element name="ID" type="xsd:string"/>
+			<xsd:element name="federationID" type="xsd:string"/>
+		</xsd:sequence>
+	</xsd:complexType>
 	<xsd:complexType name="AssociatedProcessInstanceGroup">
 		<xsd:sequence>
 			<xsd:element name="processInstances" type="ProcessInstanceGroupDAO" minOccurs="1" maxOccurs="1">
@@ -252,7 +248,9 @@
 			<xsd:element name="processInstanceID" type="xsd:string"/>
 			<xsd:element name="initiatorID" type="xsd:string"/>
 			<xsd:element name="responderID" type="xsd:string"/>
-            <xsd:element name="creatorUserID" type="xsd:string"/>
+			<xsd:element name="initiatorFederationID" type="xsd:string"/>
+			<xsd:element name="responderFederationID" type="xsd:string"/>
+			<xsd:element name="creatorUserID" type="xsd:string"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	<!--xsd:complexType name="ProcessDocumentContentDAO">

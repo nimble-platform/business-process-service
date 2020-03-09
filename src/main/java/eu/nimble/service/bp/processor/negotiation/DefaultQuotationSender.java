@@ -4,14 +4,15 @@ import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import eu.nimble.service.bp.application.IBusinessProcessApplication;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceGroupDAO;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
-import eu.nimble.service.bp.util.HttpResponseUtil;
 import eu.nimble.service.bp.util.persistence.bp.ExecutionConfigurationDAOUtility;
 import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceGroupDAOUtility;
 import eu.nimble.service.bp.util.serialization.MixInIgnoreProperties;
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import eu.nimble.service.bp.util.spring.SpringBridge;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.QuotationLineType;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
+import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import feign.Response;
@@ -47,7 +48,6 @@ public class DefaultQuotationSender  implements JavaDelegate {
         String processContextId = variables.get("processContextId").toString();
         String bearerToken = (String) variables.get("bearer_token");
         QuotationType quotation = (QuotationType) variables.get("quotation");
-        String productName = quotation.getQuotationLine().get(0).getLineItem().getItem().getName().get(0).getValue();
 
         // get application execution configuration
         ExecutionConfiguration executionConfiguration = ExecutionConfigurationDAOUtility.getExecutionConfiguration(seller,
@@ -67,7 +67,8 @@ public class DefaultQuotationSender  implements JavaDelegate {
             businessProcessApplication.sendDocument(processContextId,processInstanceId, seller, buyer, quotation);
 
             // create the data channel
-            createDataChannel(quotation.getDocumentStatusCode().getName(),quotation.isDataMonitoringPromised(), bearerToken, buyer, seller, productName, processInstanceId, processContextId);
+            // TODO: this method creates a data channel only for one of the products included in the negotiation. Update it later
+            createDataChannel(quotation.getDocumentStatusCode().getName(),quotation.getQuotationLine(), bearerToken, buyer, seller, processInstanceId, processContextId);
         } else if(executionType == ExecutionConfiguration.ExecutionTypeEnum.MICROSERVICE) {
             // TODO: How to call a microservice
         } else {
@@ -85,50 +86,48 @@ public class DefaultQuotationSender  implements JavaDelegate {
      *  - there is no data channel created for the process instance groups which contain the specified process instance
      *  - data monitoring is promised and status of the negotiation is not equal to 'Rejected'
      */
-    private void createDataChannel(String status, Boolean dataMonitoringPromised, String bearerToken, String buyerId, String sellerId, String productName, String processInstanceId, String processContextId){
+    private void createDataChannel(String status, List<QuotationLineType> quotationLines, String bearerToken, String buyerId, String sellerId,String processInstanceId, String processContextId){
         // get the process instance groups containing the given process instance
         List<ProcessInstanceGroupDAO> processInstanceGroupDAOs = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAOs(processInstanceId, BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(processContextId).getBpRepository());
-        // check whether there is data channel in the group or not
-        for(ProcessInstanceGroupDAO processInstanceGroupDAO: processInstanceGroupDAOs){
-            if(processInstanceGroupDAO.getDataChannelId() != null){
-                return;
+
+        for (QuotationLineType quotationLine : quotationLines) {
+            boolean createDataChannel = !status.contentEquals("Rejected") && quotationLine.getLineItem().isDataMonitoringRequested();
+            if(!createDataChannel) {
+                continue;
             }
-        }
 
-        boolean createDataChannel = !status.contentEquals("Rejected") && dataMonitoringPromised;
-        if(!createDataChannel) {
-            return;
-        }
+            String productName = quotationLine.getLineItem().getItem().getName().get(0).getValue();
 
-        logger.info("Creating data channel for processInstanceId: {}, buyerId: {}, sellerId: {}", processInstanceId, buyerId, sellerId);
+            logger.info("Creating data channel for processInstanceId: {}, buyerId: {}, sellerId: {}", processInstanceId, buyerId, sellerId);
 
-        try {
-            // create the request
-            CreateChannel.Request request = new CreateChannel.Request(buyerId, sellerId, String.format("Data channel for product %s", productName), processInstanceId);
-            String serializedRequest = JsonSerializationUtility.getObjectMapper().writeValueAsString(request);
+            try {
+                // create the request
+                CreateChannel.Request request = new CreateChannel.Request(buyerId, sellerId, String.format("Data channel for product %s", productName), processInstanceId,"");
+                String serializedRequest = JsonSerializationUtility.getObjectMapper().writeValueAsString(request);
 
-            Response response = SpringBridge.getInstance().getDataChannelClient().createChannel(bearerToken,serializedRequest);
-            String responseBody = HttpResponseUtil.extractBodyFromFeignClientResponse(response);
+                Response response = SpringBridge.getInstance().getDataChannelClient().createChannel(bearerToken,serializedRequest);
+                String responseBody = HttpResponseUtil.extractBodyFromFeignClientResponse(response);
 
-            if(response.status() != 200){
-                logger.error("Error from data channel service for processInstanceId: {}, buyerId: {}, sellerId: {}. Response code: {}", processInstanceId, buyerId, sellerId, response.status());
-            }
-            else{
-                logger.info("Created data channel for processInstanceId: {}, buyerId: {}, sellerId: {} successfully", processInstanceId, buyerId, sellerId);
+                if(response.status() != 200){
+                    logger.error("Error from data channel service for processInstanceId: {}, buyerId: {}, sellerId: {}. Response code: {}", processInstanceId, buyerId, sellerId, response.status());
+                }
+                else{
+                    logger.info("Created data channel for processInstanceId: {}, buyerId: {}, sellerId: {} successfully", processInstanceId, buyerId, sellerId);
 
-                GenericJPARepository repo = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(processContextId).getBpRepository();
+                    GenericJPARepository repo = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(processContextId).getBpRepository();
 
-                CreateChannel.Response channelResponse = JsonSerializationUtility.getObjectMapper().readValue(responseBody,CreateChannel.Response.class);
-                // set data channel id for each process instance group
-                for (ProcessInstanceGroupDAO processInstanceGroupDAO : processInstanceGroupDAOs) {
-                    processInstanceGroupDAO.setDataChannelId(channelResponse.getChannelID());
-                    // update process instance group dao
-                    repo.updateEntity(processInstanceGroupDAO);
+                    CreateChannel.Response channelResponse = JsonSerializationUtility.getObjectMapper().readValue(responseBody,CreateChannel.Response.class);
+                    // set data channel id for each process instance group
+                    for (ProcessInstanceGroupDAO processInstanceGroupDAO : processInstanceGroupDAOs) {
+                        processInstanceGroupDAO.setDataChannelId(channelResponse.getChannelID());
+                        // update process instance group dao
+                        repo.updateEntity(processInstanceGroupDAO);
+                    }
                 }
             }
-        }
-        catch (Exception e){
-            logger.error("Failed to create data channel for processInstanceId: {}, buyerId: {}, sellerId: {}", processInstanceId, buyerId, sellerId, e);
+            catch (Exception e){
+                logger.error("Failed to create data channel for processInstanceId: {}, buyerId: {}, sellerId: {}", processInstanceId, buyerId, sellerId, e);
+            }
         }
 
     }

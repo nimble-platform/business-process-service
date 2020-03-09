@@ -18,7 +18,6 @@
     "listURI": ""
   },
   "lineCountNumeric": 1,
-  "dataMonitoringPromised": true,
   "requestForQuotationDocumentReference": {
     "id": "8b9461be-eab6-456c-89c3-841950c9ee07",
     "documentType": null,
@@ -26,7 +25,7 @@
   },
   "buyerCustomerParty": {
     "party": {
-      "federationInstanceID": null,
+      "federationInstanceID": "TEST_INSTANCE",
       "nace": [],
       "description": [],
       "brandName": [],
@@ -202,7 +201,7 @@
   },
   "sellerSupplierParty": {
     "party": {
-      "federationInstanceID": null,
+      "federationInstanceID": "TEST_INSTANCE",
       "nace": [],
       "description": [],
       "brandName": [],
@@ -1929,11 +1928,153 @@
     {
       "lineItem": {
         "id": null,
+        "paymentMeans": {
+          "id": null,
+          "paymentMeansCode": {
+            "value": "Credit Card",
+            "name": "Credit Card",
+            "listID": "",
+            "uri": ""
+          },
+          "instructionNote": []
+        },
+        "paymentTerms": {
+          "paymentConditions": [],
+          "tradingTerms": [
+            {
+              "id": "Payment_In_Advance",
+              "description": [
+                {
+                  "value": "Payment in advance",
+                  "languageID": "en"
+                }
+              ],
+              "tradingTermFormat": "PIA",
+              "value": {
+                "value": [
+                  {
+                    "value": "true",
+                    "languageID": "en"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "End_of_month",
+              "description": [
+                {
+                  "value": "End of month",
+                  "languageID": "en"
+                }
+              ],
+              "tradingTermFormat": "EOM",
+              "value": {
+                "value": [
+                  {
+                    "value": "false",
+                    "languageID": "en"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "Cash_next_delivery",
+              "description": [
+                {
+                  "value": "Cash next delivery",
+                  "languageID": "en"
+                }
+              ],
+              "tradingTermFormat": "CND",
+              "value": {
+                "value": [
+                  {
+                    "value": "false",
+                    "languageID": "en"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "Cash_before_shipment",
+              "description": [
+                {
+                  "value": "Cash before shipment",
+                  "languageID": "en"
+                }
+              ],
+              "tradingTermFormat": "CBS",
+              "value": {
+                "value": [
+                  {
+                    "value": "false",
+                    "languageID": "en"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "Cash_on_delivery",
+              "description": [
+                {
+                  "value": "Cash on delivery",
+                  "languageID": "en"
+                }
+              ],
+              "tradingTermFormat": "COD",
+              "value": {
+                "value": [
+                  {
+                    "value": "false",
+                    "languageID": "en"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "Cash_with_order",
+              "description": [
+                {
+                  "value": "Cash with order",
+                  "languageID": "en"
+                }
+              ],
+              "tradingTermFormat": "CWO",
+              "value": {
+                "value": [
+                  {
+                    "value": "false",
+                    "languageID": "en"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "Cash_in_advance",
+              "description": [
+                {
+                  "value": "Cash in advance",
+                  "languageID": "en"
+                }
+              ],
+              "tradingTermFormat": "CIA",
+              "value": {
+                "value": [
+                  {
+                    "value": "false",
+                    "languageID": "en"
+                  }
+                ]
+              }
+            }
+          ]
+        },
         "quantity": {
           "value": 1,
           "unitCode": "item(s)",
           "unitCodeListID": null
         },
+        "dataMonitoringRequested":true,
         "deliveryTerms": {
           "id": null,
           "incoterms": null,
@@ -2268,7 +2409,7 @@
             }
           ],
           "manufacturerParty": {
-            "federationInstanceID": null,
+            "federationInstanceID": "TEST_INSTANCE",
             "nace": [],
             "description": [],
             "brandName": [],

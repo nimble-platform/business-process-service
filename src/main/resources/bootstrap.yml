@@ -4,6 +4,7 @@ spring:
   application:
     # the name of the application represents the global identifier of this microservice.
     name: business-process-service
+    url: ${BUSINESS_PROCESS_SERVICE_URL}
   cloud:
     config:
       uri: ${CONFIG_SERVER_URI:http://localhost:8888}
@@ -42,21 +43,21 @@ spring:
     remove-abandoned: false #making this false since some of the queries take too much time and abandoning connections causes an error in such cases
     log-abandoned: true
     initial-size: 3
-    max-active: 6
+    max-active: 55
     max-idle: 3
     min-idle: 3
     max-wait: 90000
-    time-between-eviction-runs-millis: 60000
-    min-evictable-idle-time-millis: 3600000
+    time-between-eviction-runs-millis: 30000
+    min-evictable-idle-time-millis: 60000
     validation-query: "SELECT 1;" # Validation query must be set in order to test connections
   kafka:
-      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
-      consumer:
-        group-id: business-process-service${KAFKA_CONSUMER_GROUP_ID_SUFFIX:}
-      properties:
-        sasl:
-          jaas:
-            config: ${KAFKA_JAAS_CONFIG}
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    consumer:
+      group-id: business-process-service${KAFKA_CONSUMER_GROUP_ID_SUFFIX:}
+    properties:
+      sasl:
+        jaas:
+          config: ${KAFKA_JAAS_CONFIG}
   mail:
     debug: false  # disable printing email to log output
     host: ${SMTP_HOST:localhost}
@@ -171,31 +172,41 @@ camunda:
       id: kermit
       password: superSecret
 
+efactory:
+  logstash:
+    url: ${EFACTORY_LOGSTASH_URL:}
+
 nimble:
   binary-content:
       url: BusinessProcessBinaryContentUri
   cors_enabled: false
   identity:
-    url: ${IDENTITY_SERVICE_URL:http://nimble-staging.salzburgresearch.at/identity}
+    url: ${IDENTITY_SERVICE_URL}
+  keycloak:
+    public-key: ${KEYCLOAK_PUBLIC_KEY}
   data-channel:
-    url: ${DATA_CHANNEL_SERVICE_URL:http://nimble-staging.salzburgresearch.at/data-channel}
+    url: ${DATA_CHANNEL_SERVICE_URL}
   frontend:
-    url: ${FRONTEND_URL:http://nimble-staging.salzburgresearch.at/frontend/}
+    url: ${FRONTEND_URL}
+  tracking-analysis:
+    url: ${TRACKING_ANALYSIS_SERVICE_URL:http://nimble-dev.ikap.biba.uni-bremen.de/tracking-analysis}
+  delegate-service:
+    url: ${DELEGATE_SERVICE_URL:}
+  federation-instance-id: ${FEDERATION_INSTANCE_ID}
   kafka:
       topics:
-        businessProcessUpdates: ${KAFKA_TOPIC_BUSINESS_PROCESS_UPDATES:business-process-updates-staging}
+        businessProcessUpdates: ${KAFKA_TOPIC_BUSINESS_PROCESS_UPDATES}
   check-entity-ids: ${CHECK_ENTITY_IDS:false}
-  platformHost: ${BUSINESS_PROCESS_SERVICE_URL:http://localhost:8081}
 hystrix:
   command:
     default:
       execution:
         isolation:
           thread:
-            timeoutInMilliseconds: 10000
+            timeoutInMilliseconds: 300000
   threadpool:
     default:
-      coreSize: 20
+      coreSize: 300
       maxQueueSize: -1
 
 build:
@@ -315,12 +326,14 @@ persistence:
 
 
 ################################################################################################
-################################### LOCAL DEV CONFIG ###########################################
+################################### TEST CONFIG ###########################################
 ################################################################################################
 
 ---
 
 spring:
+  application:
+    url: http://localhost:8081
   profiles: test
   # Local h2 database
   datasource:
@@ -345,13 +358,13 @@ spring:
       password:
       driver-class: org.h2.Driver
   kafka:
-      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+      bootstrap-servers:
       consumer:
-        group-id: business-process-service${KAFKA_CONSUMER_GROUP_ID_SUFFIX:}
+        group-id:
       properties:
         sasl:
           jaas:
-            config: ${KAFKA_JAAS_CONFIG}
+            config:
   h2:
     console:
       enabled: true
@@ -381,13 +394,13 @@ camunda:
 nimble:
   cors_enabled: true
   identity:
-    url: ${IDENTITY_SERVICE_URL:http://nimble-staging.salzburgresearch.at/identity}
+    url:
   data-channel:
-    url: ${DATA_CHANNEL_SERVICE_URL:http://nimble-staging.salzburgresearch.at/data-channel}
+    url:
   frontend:
-    url: ${FRONTEND_URL:http://nimble-staging.salzburgresearch.at/frontend/}
-  kafka:
-      topics:
-        businessProcessUpdates: ${KAFKA_TOPIC_BUSINESS_PROCESS_UPDATES:business-process-updates-staging}
+    url:
+  delegate-service:
+    url:
+  federation-instance-id: TEST_INSTANCE
 build:
   version: 5.0.0-Staging

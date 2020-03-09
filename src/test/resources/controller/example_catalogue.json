@@ -4,7 +4,7 @@
   "name": null,
   "issueDate": null,
   "providerParty": {
-    "federationInstanceID": null,
+    "federationInstanceID": "TEST_INSTANCE",
     "nace": [],
     "description": [],
     "brandName": [],
@@ -362,7 +362,7 @@
           ],
           "additionalItemProperty": [],
           "manufacturerParty": {
-            "federationInstanceID": null,
+            "federationInstanceID": "TEST_INSTANCE",
             "nace": [],
             "description": [],
             "brandName": [],
@@ -800,7 +800,7 @@
           ],
           "additionalItemProperty": [],
           "manufacturerParty": {
-            "federationInstanceID": null,
+            "federationInstanceID": "TEST_INSTANCE",
             "nace": [],
             "description": [],
             "brandName": [],
@@ -1274,7 +1274,7 @@
           ],
           "additionalItemProperty": [],
           "manufacturerParty": {
-            "federationInstanceID": null,
+            "federationInstanceID": "TEST_INSTANCE",
             "nace": [],
             "description": [],
             "brandName": [],
@@ -1712,7 +1712,7 @@
           ],
           "additionalItemProperty": [],
           "manufacturerParty": {
-            "federationInstanceID": null,
+            "federationInstanceID": "TEST_INSTANCE",
             "nace": [],
             "description": [],
             "brandName": [],
@@ -2186,7 +2186,7 @@
           ],
           "additionalItemProperty": [],
           "manufacturerParty": {
-            "federationInstanceID": null,
+            "federationInstanceID": "TEST_INSTANCE",
             "nace": [],
             "description": [],
             "brandName": [],

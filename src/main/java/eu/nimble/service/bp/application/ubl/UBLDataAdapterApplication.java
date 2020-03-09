@@ -51,7 +51,7 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
 
     @Override
     public void saveDocument(String businessContextId,String processInstanceId, String initiatorID, String responderID, String creatorUserID,
-                            Object document, List<String> relatedProducts, List<String> relatedProductCategories) {
+                             Object document, List<String> relatedProducts, List<String> relatedProductCategories, String initiatorFederationId,String responderFederationId) {
         ProcessDocumentMetadata documentMetadata = new ProcessDocumentMetadata();
         boolean initialDocument = BusinessProcessUtility.isInitialDocument(document.getClass());
         DocumentType documentType = DocumentEnumClassMapper.getDocumentTypeForClass(document.getClass());
@@ -59,6 +59,8 @@ public class UBLDataAdapterApplication implements IBusinessProcessApplication {
 
         documentMetadata.setInitiatorID(initiatorID);
         documentMetadata.setResponderID(responderID);
+        documentMetadata.setInitiatorFederationId(initiatorFederationId);
+        documentMetadata.setResponderFederationId(responderFederationId);
         documentMetadata.setProcessInstanceID(processInstanceId);
         documentMetadata.setCreatorUserID(creatorUserID);
         documentMetadata.setSubmissionDate(DateUtility.convert(submissionDate));

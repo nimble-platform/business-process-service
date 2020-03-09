@@ -4,13 +4,12 @@ import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
 import eu.nimble.service.bp.model.hyperjaxb.RoleType;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.utility.DateUtility;
-import eu.nimble.utility.HttpResponseUtil;
+import eu.nimble.utility.exception.NimbleException;
+import eu.nimble.utility.exception.NimbleExceptionMessageCode;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.ProcessEngines;
 import org.camunda.bpm.engine.RepositoryService;
 import org.camunda.bpm.engine.repository.ProcessDefinition;
-import org.springframework.boot.logging.LogLevel;
-import org.springframework.http.HttpStatus;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,7 +19,7 @@ import java.util.List;
  * Created by suat on 07-Jun-18.
  */
 public class InputValidatorUtil {
-    public static ValidationResponse checkBusinessProcessType(String bpType, boolean nullable) {
+    public static ValidationResponse checkBusinessProcessType(String bpType, boolean nullable) throws NimbleException {
         ValidationResponse validationResponse = new ValidationResponse();
         if(permitNull(bpType, nullable)) {
             return validationResponse;
@@ -39,12 +38,12 @@ public class InputValidatorUtil {
         }
 
         if (!validBpType) {
-            validationResponse.setInvalidResponse(HttpResponseUtil.createResponseEntityAndLog(String.format("Invalid business process type: %s", bpType), HttpStatus.BAD_REQUEST));
+            throw new NimbleException(NimbleExceptionMessageCode.BAD_REQUEST_INVALID_BUSINESS_PROCESS_TYPE.toString(),Arrays.asList(bpType));
         }
         return validationResponse;
     }
 
-    public static ValidationResponse checkDocumentType(String documentType, boolean nullable) {
+    public static ValidationResponse checkDocumentType(String documentType, boolean nullable) throws NimbleException {
         ValidationResponse validationResponse = new ValidationResponse();
         if(permitNull(documentType, nullable)) {
             return validationResponse;
@@ -55,28 +54,24 @@ public class InputValidatorUtil {
 
         documentType = documentType.toUpperCase();
         if (!documentTypes.contains(documentType)) {
-            validationResponse.setInvalidResponse(HttpResponseUtil.createResponseEntityAndLog(String.format("Invalid document type: %s", documentType), HttpStatus.BAD_REQUEST));
+            throw new NimbleException(NimbleExceptionMessageCode.BAD_REQUEST_INVALID_DOCUMENT_TYPE.toString(),Arrays.asList(documentType));
         } else {
             validationResponse.setValidatedObject(documentType.toUpperCase());
         }
         return validationResponse;
     }
 
-    public static ValidationResponse checkDate(String dateStr, boolean nullable) {
-        ValidationResponse validationResponse = new ValidationResponse();
+    public static void checkDate(String dateStr, boolean nullable) throws NimbleException {
         if(permitNull(dateStr, nullable)) {
-            return validationResponse;
+            return;
         }
 
-        if(DateUtility.isValidDate(dateStr)) {
-            return validationResponse;
-        } else {
-            validationResponse.setInvalidResponse(HttpResponseUtil.createResponseEntityAndLog(String.format("Invalid date: %s", dateStr), null, HttpStatus.BAD_REQUEST, LogLevel.INFO));
-            return validationResponse;
+        if(!DateUtility.isValidDate(dateStr)) {
+            throw new NimbleException(NimbleExceptionMessageCode.BAD_REQUEST_INVALID_DATE.toString(),Arrays.asList(dateStr));
         }
     }
 
-    public static ValidationResponse checkRole(String role, boolean nullable) {
+    public static ValidationResponse checkRole(String role, boolean nullable) throws NimbleException {
         ValidationResponse validationResponse = new ValidationResponse();
         if(permitNull(role, nullable)) {
             return validationResponse;
@@ -87,12 +82,11 @@ public class InputValidatorUtil {
             validationResponse.setValidatedObject(role);
             return validationResponse;
         } else {
-            validationResponse.setInvalidResponse(HttpResponseUtil.createResponseEntityAndLog(String.format("Invalid role: %s", role), null, HttpStatus.BAD_REQUEST, LogLevel.INFO));
-            return validationResponse;
+            throw new NimbleException(NimbleExceptionMessageCode.BAD_REQUEST_INVALID_ROLE.toString(),Arrays.asList(role));
         }
     }
 
-    public static ValidationResponse checkStatus(String status, boolean nullable) {
+    public static ValidationResponse checkStatus(String status, boolean nullable) throws NimbleException {
         ValidationResponse validationResponse = new ValidationResponse();
         if(permitNull(status, nullable)) {
             return validationResponse;
@@ -107,8 +101,7 @@ public class InputValidatorUtil {
             return validationResponse;
 
         } else {
-            validationResponse.setInvalidResponse(HttpResponseUtil.createResponseEntityAndLog(String.format("Invalid status: %s", status), null, HttpStatus.BAD_REQUEST, LogLevel.INFO));
-            return validationResponse;
+            throw new NimbleException(NimbleExceptionMessageCode.BAD_REQUEST_INVALID_STATUS.toString(),Arrays.asList(status));
         }
     }
 

@@ -3,10 +3,12 @@ package eu.nimble.service.bp.impl.controller;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.model.dashboard.CollaborationGroupResponse;
+import eu.nimble.service.bp.model.hyperjaxb.GroupStatus;
 import eu.nimble.service.bp.swagger.model.CollaborationGroup;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroup;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupFilter;
+import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.utility.JsonSerializationUtility;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
@@ -26,6 +28,7 @@ import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -45,7 +48,7 @@ public class ProcessInstanceGroupControllerTest {
     private final String partyId = "706";
     private static String processInstanceGroupId1;
     private static String processInstanceGroupIIR1;
-    private final int test1_expectedValue = 8;
+    private final int test1_expectedValue = 9;
     private final int test2_expectedValue = 1;
 
     /**
@@ -58,13 +61,16 @@ public class ProcessInstanceGroupControllerTest {
      * - Retrieve a process instance group (the one created for the transport service order) and delete it
      * - Delete also the associated process instance group
      * - Filter the process instance groups based for a specific party and its role
-     * - Check whether a collaboration is finished
+     * - Finish a collaboration
+     * - Check whether a collaboration is finished,
+     * - Check the status of a Process Instance Group representing a completed collaboration
      */
 
     @Test
     public void test01_getCollaborationGroups() throws Exception {
         MockHttpServletRequestBuilder request = get("/collaboration-groups")
                 .header("Authorization", TestConfig.initiatorPersonId)
+                .header("federationId",TestConfig.federationId)
                 .param("partyId", partyId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
@@ -126,6 +132,7 @@ public class ProcessInstanceGroupControllerTest {
     public void test06_getProcessInstanceGroupFilters() throws Exception {
         MockHttpServletRequestBuilder request = get("/process-instance-groups/filters")
                 .header("Authorization", TestConfig.responderPersonId)
+                .header("federationId",TestConfig.federationId)
                 .param("collaborationRole", "SELLER")
                 .param("partyId", "706");
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -137,11 +144,29 @@ public class ProcessInstanceGroupControllerTest {
     }
 
     @Test
-    public void test07_checkCollaborationFinished() throws Exception{
+    public void test07_finishCollaboration() throws Exception{
+        MockHttpServletRequestBuilder request = post("/process-instance-groups/"+ BusinessProcessWorkflowTests.sellerProcessInstanceGroupID+"/finish")
+                .header("Authorization", TestConfig.responderPersonId);
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+    }
+
+    @Test
+    public void test08_checkCollaborationFinished() throws Exception{
         MockHttpServletRequestBuilder request = get("/process-instance-groups/"+ BusinessProcessWorkflowTests.sellerProcessInstanceGroupID+"/finished")
                 .header("Authorization", TestConfig.responderPersonId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
 
         Assert.assertEquals("true",mvcResult.getResponse().getContentAsString());
+    }
+
+    @Test
+    public void test09_checkProcessInstanceGroupStatus() throws Exception {
+        MockHttpServletRequestBuilder request = get("/process-instance-groups/" + BusinessProcessExecutionTest.buyerProcessInstanceGroupID)
+                .header("Authorization", TestConfig.initiatorPersonId);
+        MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
+
+        ProcessInstanceGroup processInstanceGroup = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ProcessInstanceGroup.class);
+
+        Assert.assertSame(GroupStatus.COMPLETED.value(), processInstanceGroup.getStatus().toString());
     }
 }

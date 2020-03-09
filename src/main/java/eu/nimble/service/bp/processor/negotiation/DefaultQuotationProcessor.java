@@ -8,9 +8,9 @@ import eu.nimble.service.bp.util.serialization.MixInIgnoreProperties;
 import eu.nimble.service.bp.swagger.model.ExecutionConfiguration;
 import eu.nimble.service.bp.swagger.model.ProcessConfiguration;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ItemType;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.QuotationLineType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.TradingTermType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.QuantityType;
-import eu.nimble.service.model.ubl.digitalagreement.DigitalAgreementType;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.utility.JsonSerializationUtility;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
@@ -43,6 +43,8 @@ public class DefaultQuotationProcessor  implements JavaDelegate {
         String seller = variables.get("initiatorID").toString();
         String creatorUserID = variables.get("creatorUserID").toString();
         String processContextId = variables.get("processContextId").toString();
+        String initiatorFederationId = variables.get("initiatorFederationId").toString();
+        String responderFederationId = variables.get("responderFederationId").toString();
         List<String> relatedProducts = (List<String>) variables.get("relatedProducts");
         List<String> relatedProductCategories = (List<String>) variables.get("relatedProductCategories");
         QuotationType quotation = (QuotationType) variables.get("quotation");
@@ -62,7 +64,7 @@ public class DefaultQuotationProcessor  implements JavaDelegate {
             IBusinessProcessApplication businessProcessApplication = (IBusinessProcessApplication) instance;
 
             // NOTE: Pay attention to the direction of the document. Here it is from seller to buyer
-            businessProcessApplication.saveDocument(processContextId,processInstanceId, seller, buyer,creatorUserID, quotation, relatedProducts, relatedProductCategories);
+            businessProcessApplication.saveDocument(processContextId,processInstanceId, seller, buyer,creatorUserID, quotation, relatedProducts, relatedProductCategories, initiatorFederationId, responderFederationId);
 
             // check the conditions related to frame contracts
             createOrUpdateFrameContract(quotation);
@@ -78,29 +80,30 @@ public class DefaultQuotationProcessor  implements JavaDelegate {
      * Creates frame contract if the quotation includes a term related to frame contract duration and if the quotation
      * is accepted. If there exists a frame contract already update its duration if it's changed.
      */
-    private DigitalAgreementType createOrUpdateFrameContract(QuotationType quotation) {
-        TradingTermType frameContractDurationTerm = getFrameContractTerm(quotation);
-        // there is no terms regarding the frame contract duration
-        if(frameContractDurationTerm == null) {
-            return null;
+    private void createOrUpdateFrameContract(QuotationType quotation) {
+
+        // if the quotation is rejected, do not create/update the frame contract
+        if(quotation.getDocumentStatusCode().getName().contentEquals("Rejected")){
+            return;
         }
 
         String sellerId = quotation.getSellerSupplierParty().getParty().getPartyIdentification().get(0).getID();
+        String sellerFederationId = quotation.getSellerSupplierParty().getParty().getFederationInstanceID();
         String buyerId = quotation.getBuyerCustomerParty().getParty().getPartyIdentification().get(0).getID();
-        ItemType item = quotation.getQuotationLine().get(0).getLineItem().getItem();
-        QuantityType duration = frameContractDurationTerm.getValue().getValueQuantity().get(0);
+        String buyerFederationId = quotation.getBuyerCustomerParty().getParty().getFederationInstanceID();
 
-        DigitalAgreementType frameContract = SpringBridge.getInstance().getFrameContractService().createOrUpdateFrameContract(sellerId, buyerId, item, duration, quotation.getID());
-        return frameContract;
-    }
+        for (QuotationLineType quotationLine: quotation.getQuotationLine()) {
+            List<TradingTermType> tradingTermTypes = quotationLine.getLineItem().getTradingTerms();
+            for(TradingTermType term : tradingTermTypes) {
+                if (term.getID().contentEquals("FRAME_CONTRACT_DURATION")) {
+                    ItemType item = quotationLine.getLineItem().getItem();
+                    QuantityType duration = term.getValue().getValueQuantity().get(0);
 
-    private TradingTermType getFrameContractTerm(QuotationType quotation) {
-        List<TradingTermType> tradingTerms = quotation.getTradingTerms();
-        for(TradingTermType term : tradingTerms) {
-            if (term.getID().contentEquals("FRAME_CONTRACT_DURATION")) {
-                return term;
+                    SpringBridge.getInstance().getFrameContractService().createOrUpdateFrameContract(sellerId, buyerId,sellerFederationId,buyerFederationId, item, duration, quotation.getID());
+                    break;
+                }
             }
         }
-        return null;
     }
+
 }

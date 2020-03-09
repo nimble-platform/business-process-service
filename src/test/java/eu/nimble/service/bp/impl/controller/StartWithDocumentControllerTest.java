@@ -45,6 +45,8 @@ public class StartWithDocumentControllerTest {
 
         MockHttpServletRequestBuilder request = post("/process-document")
                 .header("Authorization", TestConfig.responderPersonId)
+                .header("initiatorFederationId",TestConfig.federationId)
+                .header("responderFederationId",TestConfig.federationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isBadRequest()).andReturn();
@@ -56,6 +58,8 @@ public class StartWithDocumentControllerTest {
 
         MockHttpServletRequestBuilder request = post("/process-document")
                 .header("Authorization", TestConfig.responderPersonId)
+                .header("initiatorFederationId",TestConfig.federationId)
+                .header("responderFederationId",TestConfig.federationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
@@ -67,6 +71,8 @@ public class StartWithDocumentControllerTest {
 
         MockHttpServletRequestBuilder request = post("/process-document")
                 .header("Authorization", TestConfig.responderPersonId)
+                .header("initiatorFederationId",TestConfig.federationId)
+                .header("responderFederationId",TestConfig.federationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(inputMessageAsString);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isInternalServerError()).andReturn();
