@@ -255,9 +255,7 @@ public class EmailSenderUtil implements IEmailSenderUtil {
             String productName = processDocumentMetadataDAO.getRelatedProducts().get(0);
 
             List<PersonType> personTypeList = respondingParty.getPerson();
-            for (PersonType p : personTypeList) {
-                emailList.add(p.getContact().getElectronicMail());
-            }
+
             respondingPartyName = respondingParty.getPartyName().get(0).getName().getValue();
             initiatingPartyName = initiatingParty.getPartyName().get(0).getName().getValue();
 
@@ -289,9 +287,19 @@ public class EmailSenderUtil implements IEmailSenderUtil {
             if (initiatorIsBuyer) {
                 buyerParty = initiatingParty;
                 sellerParty = respondingParty;
+                for (PersonType p : personTypeList) {
+                    if (p.getRole().contains("sales_officer") || p.getRole().contains("monitor")) {
+                        emailList.add(p.getContact().getElectronicMail());
+                    }
+                }
             }else {
                 buyerParty = respondingParty;
                 sellerParty = initiatingParty;
+                for (PersonType p : personTypeList) {
+                    if (p.getRole().contains("purchaser") || p.getRole().contains("monitor")) {
+                        emailList.add(p.getContact().getElectronicMail());
+                    }
+                }
             }
 
             String url = EMPTY_TEXT;
