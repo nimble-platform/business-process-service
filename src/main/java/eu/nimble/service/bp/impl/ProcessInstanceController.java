@@ -19,7 +19,6 @@ import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
-import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.commonbasiccomponents.BinaryObjectType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.TextType;
@@ -32,7 +31,6 @@ import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
 import eu.nimble.utility.serialization.JsonSerializer;
 import eu.nimble.utility.serialization.MixInIgnoreType;
 import eu.nimble.utility.validation.IValidationUtil;
-import feign.Response;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -398,50 +396,6 @@ public class ProcessInstanceController {
             if(iDocument == null){
                 return null;
             }
-            List<PartyNameType> sellerPartyNames = null;
-            List<PartyNameType> buyerPartyNames = null;
-
-            try {
-                // get parties
-                List<PartyType> parties = new ArrayList<>();
-                List<String> partyIds = new ArrayList<>();
-                partyIds.add(iDocument.getSellerPartyId());
-
-                List<String> federationIds = new ArrayList<>();
-                federationIds.add(iDocument.getSellerParty().getFederationInstanceID());
-
-                // seller and buyer are in the same instance
-                if(iDocument.getBuyerParty().getFederationInstanceID().contentEquals(SpringBridge.getInstance().getFederationId())){
-                    partyIds.add(iDocument.getBuyerPartyId());
-                    federationIds.add(iDocument.getBuyerParty().getFederationInstanceID());
-
-                    federationIds.add(iDocument.getSellerParty().getFederationInstanceID());
-                    federationIds.add(iDocument.getBuyerParty().getFederationInstanceID());
-                    // get parties
-                    parties = PartyPersistenceUtility.getParties(bearerToken, partyIds,federationIds);
-                }
-                // seller and buyer are in different instances
-                else{
-                    PartyType sellerParty = PartyPersistenceUtility.getParties(bearerToken, partyIds,federationIds).get(0);
-                    Response response = SpringBridge.getInstance().getDelegateClient().getParty(bearerToken,Long.parseLong(iDocument.getBuyerPartyId()),false,iDocument.getBuyerParty().getFederationInstanceID());
-                    PartyType buyerParty = objectMapper.readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),PartyType.class);
-
-                    parties = Arrays.asList(sellerParty,buyerParty);
-                }
-                // get seller and buyer party names
-                for (PartyType party : parties) {
-                    if(party.getPartyIdentification().get(0).getID().contentEquals(iDocument.getSellerPartyId())){
-                        sellerPartyNames = party.getPartyName();
-                    }
-                    else if(party.getPartyIdentification().get(0).getID().contentEquals(iDocument.getBuyerPartyId())){
-                        buyerPartyNames = party.getPartyName();
-                    }
-                }
-            } catch (IOException e) {
-                String msg = String.format("Failed to get parties while retrieving document : %s", documentId);
-                logger.error(msg);
-                throw new RuntimeException(msg, e);
-            }
 
             // product details which will be included in the response
             List<String> catalogIds = new ArrayList<>();
@@ -468,10 +422,8 @@ public class ProcessInstanceController {
                     ",\"areProductsDeleted\":" + objectMapper.writeValueAsString(areProductsDeleted) +
                     ",\"buyerPartyId\":\""+ iDocument.getBuyerPartyId() +
                     "\",\"buyerPartyFederationId\":\""+ iDocument.getBuyerParty().getFederationInstanceID() +
-                    "\",\"buyerPartyName\":"+objectMapper.writeValueAsString(buyerPartyNames)+
-                    ",\"sellerPartyId\":\""+ iDocument.getSellerPartyId()+
-                    "\",\"sellerPartyFederationId\":\""+ iDocument.getSellerParty().getFederationInstanceID() +
-                    "\",\"sellerPartyName\":"+objectMapper.writeValueAsString(sellerPartyNames)+"}";
+                    "\",\"sellerPartyId\":\""+ iDocument.getSellerPartyId()+
+                    "\",\"sellerPartyFederationId\":\""+ iDocument.getSellerParty().getFederationInstanceID() +"\"}";
         });
     }
 
