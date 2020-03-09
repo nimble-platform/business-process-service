@@ -22,6 +22,7 @@ import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.commonbasiccomponents.BinaryObjectType;
+import eu.nimble.service.model.ubl.commonbasiccomponents.TextType;
 import eu.nimble.service.model.ubl.document.IDocument;
 import eu.nimble.utility.*;
 import eu.nimble.utility.exception.NimbleException;
@@ -442,15 +443,28 @@ public class ProcessInstanceController {
                 throw new RuntimeException(msg, e);
             }
 
-            List<ItemType> items = iDocument.getItemTypes();
+            // product details which will be included in the response
+            List<String> catalogIds = new ArrayList<>();
+            List<String> lineIds = new ArrayList<>();
+            List<List<TextType>> productNames = new ArrayList<>();
+            List<Boolean> isTransportService = new ArrayList<>();
+
             List<Boolean> areProductsDeleted = new ArrayList<>();
-            // get catalogue line to check whether the product is deleted or not
-            for (ItemType item : items) {
-                CatalogueLineType catalogueLine = CataloguePersistenceUtility.getCatalogueLine(item.getCatalogueDocumentReference().getID(), item.getManufacturersItemIdentification().getID(),false);
-                areProductsDeleted.add(catalogueLine == null);
+
+            for (ItemType item : iDocument.getItemTypes()) {
+                // check the existence of product
+                areProductsDeleted.add(!CataloguePersistenceUtility.checkCatalogueLineExistence(item.getCatalogueDocumentReference().getID(), item.getManufacturersItemIdentification().getID()));
+
+                catalogIds.add(item.getCatalogueDocumentReference().getID());
+                lineIds.add(item.getManufacturersItemIdentification().getID());
+                productNames.add(item.getName());
+                isTransportService.add(item.getTransportationServiceDetails() != null);
             }
 
-            return  "{\"items\":"+objectMapper.writeValueAsString(items) +
+            return  "{\"items\":"+ "{\"catalogIds\":"+objectMapper.writeValueAsString(catalogIds) +
+                        ",\"lineIds\":" + objectMapper.writeValueAsString(lineIds) +
+                        ",\"productNames\":" + objectMapper.writeValueAsString(productNames) +
+                        ",\"isTransportService\":"+ objectMapper.writeValueAsString(isTransportService) +"}" +
                     ",\"areProductsDeleted\":" + objectMapper.writeValueAsString(areProductsDeleted) +
                     ",\"buyerPartyId\":\""+ iDocument.getBuyerPartyId() +
                     "\",\"buyerPartyFederationId\":\""+ iDocument.getBuyerParty().getFederationInstanceID() +
