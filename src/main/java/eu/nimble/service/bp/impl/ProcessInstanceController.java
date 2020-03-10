@@ -401,7 +401,6 @@ public class ProcessInstanceController {
             List<String> catalogIds = new ArrayList<>();
             List<String> lineIds = new ArrayList<>();
             List<List<TextType>> productNames = new ArrayList<>();
-            List<Boolean> isTransportService = new ArrayList<>();
 
             List<Boolean> areProductsDeleted = new ArrayList<>();
 
@@ -412,13 +411,11 @@ public class ProcessInstanceController {
                 catalogIds.add(item.getCatalogueDocumentReference().getID());
                 lineIds.add(item.getManufacturersItemIdentification().getID());
                 productNames.add(item.getName());
-                isTransportService.add(item.getTransportationServiceDetails() != null);
             }
 
             return  "{\"items\":"+ "{\"catalogIds\":"+objectMapper.writeValueAsString(catalogIds) +
                         ",\"lineIds\":" + objectMapper.writeValueAsString(lineIds) +
-                        ",\"productNames\":" + objectMapper.writeValueAsString(productNames) +
-                        ",\"isTransportService\":"+ objectMapper.writeValueAsString(isTransportService) +"}" +
+                        ",\"productNames\":" + objectMapper.writeValueAsString(productNames) + "}" +
                     ",\"areProductsDeleted\":" + objectMapper.writeValueAsString(areProductsDeleted) +
                     ",\"buyerPartyId\":\""+ iDocument.getBuyerPartyId() +
                     "\",\"buyerPartyFederationId\":\""+ iDocument.getBuyerParty().getFederationInstanceID() +
