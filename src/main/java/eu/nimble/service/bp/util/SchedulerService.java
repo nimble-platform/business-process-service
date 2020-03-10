@@ -16,7 +16,7 @@ import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
 import eu.nimble.service.bp.model.tt.OrderEPC;
 import eu.nimble.service.bp.model.tt.OrderTrackingAnalysis;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
-import eu.nimble.service.bp.util.email.EmailSenderUtil;
+import eu.nimble.service.bp.util.email.IEmailSenderUtil;
 import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.util.spring.SpringBridge;
@@ -26,6 +26,7 @@ import eu.nimble.service.model.ubl.commonaggregatecomponents.OrderLineType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.BinaryObjectType;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
+import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.binary.BinaryContentService;
 import feign.Response;
@@ -53,7 +54,7 @@ public class SchedulerService implements SchedulingConfigurer {
 
     private final String trackingAnalysisToken = "Bearer eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJVU2VseVdBQzhWXzh3WTJIN3pVenNpN0dKWDRycEhHdzRkRGxRNGphYUhJIn0.eyJqdGkiOiIxZTdmYTIxYi05OGUwLTRiMmItODhiMy1lOTYzOWI4MjZhZjkiLCJleHAiOjE1NzM1NTk3MDEsIm5iZiI6MCwiaWF0IjoxNTczNTU5NjQxLCJpc3MiOiJodHRwOi8va2V5Y2xvYWs6ODA4MC9hdXRoL3JlYWxtcy9tYXN0ZXIiLCJhdWQiOiJuaW1ibGVfY2xpZW50Iiwic3ViIjoiYmE0MzBkOWEtMjdmOS00MzkwLTg4MTMtOTQ4YjgzYjQyMmUzIiwidHlwIjoiQmVhcmVyIiwiYXpwIjoibmltYmxlX2NsaWVudCIsImF1dGhfdGltZSI6MCwic2Vzc2lvbl9zdGF0ZSI6ImEzNGU0ODkwLTU2OWEtNDgyYi1hNjI2LTdjNGU3ZDUwODJmYyIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOltdLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsibmltYmxlX3VzZXIiLCJ1bWFfYXV0aG9yaXphdGlvbiIsInNhbGVzX29mZmljZXIiXX0sInJlc291cmNlX2FjY2VzcyI6eyJhY2NvdW50Ijp7InJvbGVzIjpbIm1hbmFnZS1hY2NvdW50IiwibWFuYWdlLWFjY291bnQtbGlua3MiLCJ2aWV3LXByb2ZpbGUiXX19LCJuYW1lIjoiUXVhbiBEZW5nIiwicHJlZmVycmVkX3VzZXJuYW1lIjoiZHF1MUBiaWJhLnVuaS1icmVtZW4uZGUiLCJnaXZlbl9uYW1lIjoiUXVhbiIsImZhbWlseV9uYW1lIjoiRGVuZyIsImVtYWlsIjoiZHF1MUBiaWJhLnVuaS1icmVtZW4uZGUifQ.ZecJbZIQorfdBixaXQJHnp-vhyjwCMbPDsmWILtO45L4fXYCJZ1Dg7yrqPenN4NNXXBO72HrQsDsc7FIjTKl4MGu2vZkvDx3JfQ1AbZChApdM7NIaFdu445g9TfdF3P_14YE8aKopwpQGpFuHu_QGHkDZwewUP-jWlrdTgDX4my_upivnXMnLdnjCVmr2ocn_a_S-WlxUmMqrz2H4kxPCBcTysJkjwX_0wWXN4k1LwHhBpEuq2A_movDXyHi2mSNG11L_NI1hx2koAahp8T_1yXXvwbPPd1l0w2hDCgjrTydAmJMcQeyEwyPMwc269M9OIwkJbIKF_5qOfLxuKpVsw";
     @Autowired
-    private EmailSenderUtil emailSenderUtil;
+    private IEmailSenderUtil emailSenderUtil;
 
     // every day at 6 am
     private String cronExpression = "0 0 6 ? * *";

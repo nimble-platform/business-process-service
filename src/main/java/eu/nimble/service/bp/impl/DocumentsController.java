@@ -16,6 +16,8 @@ import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtilit
 import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.document.IDocument;
+import eu.nimble.utility.ExecutionContext;
+import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.exception.NimbleException;
 import eu.nimble.utility.exception.NimbleExceptionMessageCode;
@@ -29,7 +31,6 @@ import org.camunda.bpm.engine.history.HistoricProcessInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -52,6 +53,8 @@ public class DocumentsController {
 
     @Autowired
     private IValidationUtil validationUtil;
+    @Autowired
+    private ExecutionContext executionContext;
 
     @ApiOperation(value = "", notes = "Retrieves the expected orders for a specific party or for all parties. " +
             "When an order contains some associated products, the seller should make orders for those products to complete the original order." +
@@ -71,9 +74,13 @@ public class DocumentsController {
             @ApiParam(value = "Identifier of the unshipped orders for which the associated documents will be retrieved", required = false) @RequestParam(value = "unShippedOrderIds", required = false) List<String> unShippedOrderIds
     ) throws Exception{
         try {
-            logger.info("Getting expected orders");
+            // set request log of ExecutionContext
+            String requestLog = "Getting expected orders";
+            executionContext.setRequestLog(requestLog);
+
+            logger.info(requestLog);
             // validate role
-            if (!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+            if (!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
             // unShippedOrderIds are given, so create expected orders for them
@@ -125,7 +132,7 @@ public class DocumentsController {
                 // if delegate service is running, use it to get ExpectedOrders
                 if(SpringBridge.getInstance().isDelegateServiceRunning()){
                     Response response = SpringBridge.getInstance().getDelegateClient().getExpectedOrders(bearerToken,forAll,unshippedOrderIds);
-                    String responseBody = eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response);
+                    String responseBody = HttpResponseUtil.extractBodyFromFeignClientResponse(response);
                     expectedOrdersForUnshippedOrder = JsonSerializationUtility.getObjectMapper().readValue(responseBody,new TypeReference<List<ExpectedOrder>>(){});
                 }
                 else {

@@ -8,6 +8,7 @@ import eu.nimble.service.bp.util.persistence.catalogue.PaymentPersistenceUtility
 import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.invoice.InvoiceType;
 import eu.nimble.service.model.ubl.order.OrderType;
+import eu.nimble.utility.ExecutionContext;
 import eu.nimble.utility.exception.NimbleException;
 import eu.nimble.utility.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.persistence.GenericJPARepository;
@@ -20,7 +21,6 @@ import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -37,6 +37,8 @@ public class PaymentController {
 
     @Autowired
     private IValidationUtil validationUtil;
+    @Autowired
+    private ExecutionContext executionContext;
 
     @ApiOperation(value = "",notes = "Checks whether the payment is done for the given order or not")
     @ApiResponses(value = {
@@ -48,9 +50,13 @@ public class PaymentController {
             method = RequestMethod.GET)
     public ResponseEntity isPaymentDone(@ApiParam(value = "Identifier of the order for which the payment is to be checked", required = true) @PathVariable(value = "orderId", required = true) String orderId,
                                         @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
-        logger.info("Incoming request to check whether the payment is done or not for order: {}", orderId);
+        // set request log of ExecutionContext
+        String requestLog = String.format("Incoming request to check whether the payment is done or not for order: %s", orderId);
+        executionContext.setRequestLog(requestLog);
 
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+        logger.info(requestLog);
+
+        if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 
@@ -75,9 +81,13 @@ public class PaymentController {
             method = RequestMethod.POST)
     public ResponseEntity paymentDone(@ApiParam(value = "Identifier of the order for which the payment is to be done", required = true) @PathVariable(value = "orderId", required = true) String orderId,
                                       @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
-        logger.info("Creating an Invoice for order: {}", orderId);
+        // set request log of ExecutionContext
+        String requestLog = String.format("Creating an Invoice for order: %s", orderId);
+        executionContext.setRequestLog(requestLog);
 
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+        logger.info(requestLog);
+
+        if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 

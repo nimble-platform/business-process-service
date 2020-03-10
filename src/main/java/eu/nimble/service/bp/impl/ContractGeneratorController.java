@@ -6,6 +6,7 @@ import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ClauseType;
 import eu.nimble.service.model.ubl.order.OrderType;
+import eu.nimble.utility.ExecutionContext;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.exception.NimbleException;
 import eu.nimble.utility.exception.NimbleExceptionMessageCode;
@@ -17,7 +18,6 @@ import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -34,6 +34,8 @@ public class ContractGeneratorController {
 
     @Autowired
     private IValidationUtil validationUtil;
+    @Autowired
+    private ExecutionContext executionContext;
 
     @CrossOrigin(origins = {"*"})
     @ApiOperation(value = "",notes = "Generates a contract bundle for the given order id")
@@ -49,9 +51,13 @@ public class ContractGeneratorController {
     public void generateContract(@ApiParam(value = "Identifier of the order for which the contract will be generated", required = true) @RequestParam(value = "orderId", required = true) String orderId,
                                  @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,HttpServletResponse response) throws Exception {
         try{
-            logger.info("Generating contract for the order with id : {}",orderId);
+            // set request log of ExecutionContext
+            String requestLog = String.format("Generating contract for the order with id : %s",orderId);
+            executionContext.setRequestLog(requestLog);
+
+            logger.info(requestLog);
             // validate role
-            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+            if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString(),true);
             }
 
@@ -89,11 +95,15 @@ public class ContractGeneratorController {
                                                 @ApiParam(value = "The selected trading term while negotiating.<br>Example:Cash_on_delivery") @RequestParam(value = "tradingTerm", required = false) String tradingTerm,
                                                 @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
                                                 @ApiParam(value = "" ,required=true ) @RequestHeader(value="initiatorFederationId", required=true) String initiatorFederationId) throws NimbleException {
-        logger.info("Generating Order Terms and Conditions clauses for seller party: {}, buyer party: {}",sellerPartyId, buyerPartyId);
+        // set request log of ExecutionContext
+        String requestLog = String.format("Generating Order Terms and Conditions clauses for seller party: %s, buyer party: %s",sellerPartyId, buyerPartyId);
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
 
         try {
             // validate role
-            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+            if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 

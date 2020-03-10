@@ -15,6 +15,11 @@ public class CataloguePersistenceUtility {
             " FROM CatalogueType cat join cat.providerParty party join party.person person" +
             " WHERE person.ID = :personId" +
                 " AND cat.ID = 'SHOPPING_CART'";
+    private static final String QUERY_CHECK_EXISTENCE_BY_ID = "SELECT COUNT(cl) FROM CatalogueLineType as cl, CatalogueType as c "
+            + " JOIN c.catalogueLine as clj"
+            + " WHERE c.UUID = :catalogueUuid "
+            + " AND cl.ID = :lineId "
+            + " AND clj.ID = cl.ID ";
 
     public static Object[] getCatalogueLinePartyIdAndManufacturersItemIdentification(Long hjid) {
         return new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(QUERY_SELECT_CAT_LINE_PARTY_ID_MANUFACTURER_ITEM_ID,
@@ -22,12 +27,13 @@ public class CataloguePersistenceUtility {
                 new Object[]{hjid});
     }
 
-    public static CatalogueLineType getCatalogueLine(String catalogueUuid, String lineId){
-        return getCatalogueLine(catalogueUuid, lineId, true);
+    public static Boolean checkCatalogueLineExistence(String catalogueUuid, String lineId) {
+        long lineExistence = new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(QUERY_CHECK_EXISTENCE_BY_ID, new String[]{"catalogueUuid", "lineId"}, new Object[]{catalogueUuid, lineId});
+        return lineExistence > 0;
     }
 
-    public static CatalogueLineType getCatalogueLine(String catalogueUuid, String lineId, Boolean lazyLoadingDisabled){
-        return new JPARepositoryFactory().forCatalogueRepository(lazyLoadingDisabled).getSingleEntity(QUERY_SELECT_LINE_BY_CATALOG_AND_LINE_IDS,
+    public static CatalogueLineType getCatalogueLine(String catalogueUuid, String lineId){
+        return new JPARepositoryFactory().forCatalogueRepository(true).getSingleEntity(QUERY_SELECT_LINE_BY_CATALOG_AND_LINE_IDS,
                 new String[]{"uuid","id"},
                 new Object[]{catalogueUuid,lineId});
     }

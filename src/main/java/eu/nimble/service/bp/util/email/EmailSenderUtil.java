@@ -7,6 +7,7 @@ import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtilit
 import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
+import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.email.EmailService;
 import feign.Response;
@@ -14,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.thymeleaf.context.Context;
 
@@ -26,7 +28,8 @@ import java.util.*;
  * Created by suat on 16-Oct-18.
  */
 @Component
-public class EmailSenderUtil {
+@Profile("!test")
+public class EmailSenderUtil implements IEmailSenderUtil {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final static String COLLABORATION_ROLE_BUYER = "BUYER";
@@ -65,7 +68,7 @@ public class EmailSenderUtil {
                 }
                 else{
                     Response response = SpringBridge.getInstance().getDelegateClient().getParty(bearerToken,partyIds,false,federationIds);
-                    parties = JsonSerializationUtility.getObjectMapper().readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),new TypeReference<List<PartyType>>() {
+                    parties = JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),new TypeReference<List<PartyType>>() {
                     });
                 }
                 for (PartyType partyType : parties) {
@@ -252,9 +255,7 @@ public class EmailSenderUtil {
             String productName = processDocumentMetadataDAO.getRelatedProducts().get(0);
 
             List<PersonType> personTypeList = respondingParty.getPerson();
-            for (PersonType p : personTypeList) {
-                emailList.add(p.getContact().getElectronicMail());
-            }
+
             respondingPartyName = respondingParty.getPartyName().get(0).getName().getValue();
             initiatingPartyName = initiatingParty.getPartyName().get(0).getName().getValue();
 
@@ -286,9 +287,19 @@ public class EmailSenderUtil {
             if (initiatorIsBuyer) {
                 buyerParty = initiatingParty;
                 sellerParty = respondingParty;
+                for (PersonType p : personTypeList) {
+                    if (p.getRole().contains("sales_officer") || p.getRole().contains("monitor")) {
+                        emailList.add(p.getContact().getElectronicMail());
+                    }
+                }
             }else {
                 buyerParty = respondingParty;
                 sellerParty = initiatingParty;
+                for (PersonType p : personTypeList) {
+                    if (p.getRole().contains("purchaser") || p.getRole().contains("monitor")) {
+                        emailList.add(p.getContact().getElectronicMail());
+                    }
+                }
             }
 
             String url = EMPTY_TEXT;
@@ -388,7 +399,7 @@ public class EmailSenderUtil {
         }
         else {
             Response response = SpringBridge.getInstance().getDelegateClient().getParty(bearerToken, Long.valueOf(partyId),false,federationId);
-            party = JsonSerializationUtility.getObjectMapper().readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),PartyType.class);
+            party = JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),PartyType.class);
         }
         return party;
     }
@@ -400,7 +411,7 @@ public class EmailSenderUtil {
         }
         else {
             Response response = SpringBridge.getInstance().getDelegateClient().getPerson(bearerToken, personId,federationId);
-            person = JsonSerializationUtility.getObjectMapper().readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),PersonType.class);
+            person = JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),PersonType.class);
         }
         return person;
     }

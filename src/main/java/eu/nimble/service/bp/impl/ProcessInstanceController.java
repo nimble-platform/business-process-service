@@ -19,13 +19,11 @@ import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
-import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.commonbasiccomponents.BinaryObjectType;
+import eu.nimble.service.model.ubl.commonbasiccomponents.TextType;
 import eu.nimble.service.model.ubl.document.IDocument;
-import eu.nimble.utility.Configuration;
-import eu.nimble.utility.JsonSerializationUtility;
-import eu.nimble.utility.LoggerUtils;
+import eu.nimble.utility.*;
 import eu.nimble.utility.exception.NimbleException;
 import eu.nimble.utility.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
@@ -33,7 +31,6 @@ import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
 import eu.nimble.utility.serialization.JsonSerializer;
 import eu.nimble.utility.serialization.MixInIgnoreType;
 import eu.nimble.utility.validation.IValidationUtil;
-import feign.Response;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -74,6 +71,9 @@ public class ProcessInstanceController {
     private IIdentityClientTyped iIdentityClientTyped;
     @Autowired
     private IValidationUtil validationUtil;
+    @Autowired
+    private ExecutionContext executionContext;
+
 
     @ApiOperation(value = "",notes = "Cancels the process instance with the given id")
     @ApiResponses(value = {
@@ -87,10 +87,14 @@ public class ProcessInstanceController {
             method = RequestMethod.POST)
     public ResponseEntity cancelProcessInstance(@ApiParam(value = "The identifier of the process instance to be cancelled", required = true) @PathVariable(value = "processInstanceId", required = true) String processInstanceId,
                                                 @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) throws NimbleException {
-        logger.debug("Cancelling process instance with id: {}",processInstanceId);
+        // set request log of ExecutionContext
+        String requestLog = String.format("Cancelling process instance with id: %s",processInstanceId);
+        executionContext.setRequestLog(requestLog);
+
+        logger.debug(requestLog);
 
         // validate role
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+        if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 
@@ -148,15 +152,17 @@ public class ProcessInstanceController {
                                                 @ApiParam(value = "Identifier of the process instance to be updated", required = true) @RequestParam(value = "processInstanceID") String processInstanceID,
                                                 @ApiParam(value = "Identifier of the user who updated the process instance", required = true) @RequestParam(value = "creatorUserID") String creatorUserID,
                                                 @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) throws NimbleException {
+        // set request log of ExecutionContext
+        String requestLog = String.format("Updating process instance with id: %s",processInstanceID);
+        executionContext.setRequestLog(requestLog);
 
-
-        logger.debug("Updating process instance with id: {}",processInstanceID);
+        logger.debug(requestLog);
 
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
 
         try {
             // validate role
-            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+            if(!validationUtil.validateRole(bearerToken, executionContext.getUserRoles(),RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
@@ -218,9 +224,13 @@ public class ProcessInstanceController {
                                   @ApiParam(value = "", required = true) @RequestHeader(value = "federationId", required = true) String federationId,
                                   @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) throws NimbleException {
         try {
-            logger.info("Getting rating status for process instance: {}, party: {}", processInstanceId, partyId);
+            // set request log of ExecutionContext
+            String requestLog = String.format("Getting rating status for process instance: %s, party: %s", processInstanceId, partyId);
+            executionContext.setRequestLog(requestLog);
+
+            logger.info(requestLog);
             // validate role
-            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+            if(!validationUtil.validateRole(bearerToken, executionContext.getUserRoles(),RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
@@ -247,9 +257,13 @@ public class ProcessInstanceController {
     public ResponseEntity getProcessInstanceIdForDocument(@ApiParam(value = "Identifier of the document", required = true) @PathVariable(value = "documentId", required = true) String documentId,
                                   @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) throws NimbleException {
         try {
-            logger.info("Getting process instance id for document: {}", documentId);
+            // set request log of ExecutionContext
+            String requestLog = String.format("Getting process instance id for document: %s", documentId);
+            executionContext.setRequestLog(requestLog);
+
+            logger.info(requestLog);
             // validate role
-            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+            if(!validationUtil.validateRole(bearerToken, executionContext.getUserRoles(),RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
@@ -280,11 +294,15 @@ public class ProcessInstanceController {
                                                              @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) throws NimbleException {
         ExecutorService executorService = null;
         try {
-            logger.info("Getting the details for process instance: {}", processInstanceId);
+            // set request log of ExecutionContext
+            String requestLog = String.format("Getting the details for process instance: %s", processInstanceId);
+            executionContext.setRequestLog(requestLog);
+
+            logger.info(requestLog);
             executorService = Executors.newCachedThreadPool();
 
             // validate role
-            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+            if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
@@ -297,8 +315,8 @@ public class ProcessInstanceController {
             List<HistoricVariableInstance> variableInstanceList = CamundaEngine.getVariableInstances(processInstanceId);
 
             Future<String> variableInstances = serializeObject(variableInstanceList, executorService);
-            Future<String> processInstance = serializeObject(CamundaEngine.getProcessInstance(processInstanceId), executorService);
-            Future<String> lastActivityInstance = serializeObject(CamundaEngine.getLastActivityInstance(processInstanceId), executorService);
+            Future<String> processInstanceState = serializeObject(CamundaEngine.getProcessInstance(processInstanceId).getState(), executorService);
+            Future<String> lastActivityInstanceStartTime = serializeObject(CamundaEngine.getLastActivityInstance(processInstanceId).getStartTime(), executorService);
 
 
             // get request and response document
@@ -326,8 +344,13 @@ public class ProcessInstanceController {
                 }
             }
 
+            // get the date of request and response
+            Future<String> requestDateFuture = getRequestDate(processInstanceId,executorService);
+            Future<String> responseDateFuture = getResponseDate(processInstanceId,executorService);;
             // get cancellation reason for the collaboration
             Future<String> cancellationReasonFuture = getCancellationReason(processInstanceId,executorService);
+            // get completion date for the collaboration
+            Future<String> completionDateFuture = getCompletionDate(processInstanceId,executorService);
             // get request creator and response creator user info
             Future<String> requestCreatorUser = null;
             Future<String> responseCreatorUser = null;
@@ -338,22 +361,23 @@ public class ProcessInstanceController {
                 responseCreatorUser = getCreatorUser(bearerToken,responseMetadata.getCreatorUserID(), executorService);
             }
 
-            ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
-
             String cancellationReason = cancellationReasonFuture.get();
+            String completionDate = completionDateFuture.get();
+            String requestDate = requestDateFuture.get();
+            String responseDate = responseDateFuture.get();
 
             JsonSerializer jsonSerializer = new JsonSerializer();
             jsonSerializer.put("requestDocument",requestDocument == null ? null: requestDocument.get());
             jsonSerializer.put("responseDocumentStatus",responseDocumentStatus == null ? null : responseDocumentStatus.get());
-            jsonSerializer.put("requestMetadata",objectMapper.writeValueAsString(requestMetadata));
-            jsonSerializer.put("responseMetadata",objectMapper.writeValueAsString(responseMetadata));
             jsonSerializer.put("variableInstance",variableInstances.get());
-            jsonSerializer.put("lastActivityInstance",lastActivityInstance.get());
-            jsonSerializer.put("processInstance",processInstance.get());
-            jsonSerializer.put("requestCreatorUser",requestCreatorUser == null ? null : requestCreatorUser.get());
-            jsonSerializer.put("responseCreatorUser",responseCreatorUser == null ? null : responseCreatorUser.get());
+            jsonSerializer.put("lastActivityInstanceStartTime","\""+lastActivityInstanceStartTime.get()+"\"");
+            jsonSerializer.put("processInstanceState",processInstanceState.get());
+            jsonSerializer.put("requestCreatorUser",requestCreatorUser == null ? null : "\""+requestCreatorUser.get()+"\"");
+            jsonSerializer.put("responseCreatorUser",responseCreatorUser == null ? null : "\""+ responseCreatorUser.get()+"\"");
             jsonSerializer.put("cancellationReason",cancellationReason == null ? null : "\""+cancellationReason+"\"");
-
+            jsonSerializer.put("completionDate",completionDate == null ? null : "\""+completionDate+"\"");
+            jsonSerializer.put("requestDate",requestDate == null ? null : "\""+requestDate+"\"");
+            jsonSerializer.put("responseDate",responseDate == null ? null : "\""+responseDate+"\"");
             logger.info("Retrieved the details for process instance: {}", processInstanceId);
             return ResponseEntity.ok(jsonSerializer.toString());
         } catch (Exception e) {
@@ -372,67 +396,31 @@ public class ProcessInstanceController {
             if(iDocument == null){
                 return null;
             }
-            List<PartyNameType> sellerPartyNames = null;
-            List<PartyNameType> buyerPartyNames = null;
 
-            try {
-                // get parties
-                List<PartyType> parties = new ArrayList<>();
-                List<String> partyIds = new ArrayList<>();
-                partyIds.add(iDocument.getSellerPartyId());
+            // product details which will be included in the response
+            List<String> catalogIds = new ArrayList<>();
+            List<String> lineIds = new ArrayList<>();
+            List<List<TextType>> productNames = new ArrayList<>();
 
-                List<String> federationIds = new ArrayList<>();
-                federationIds.add(iDocument.getSellerParty().getFederationInstanceID());
-
-                // seller and buyer are in the same instance
-                if(iDocument.getBuyerParty().getFederationInstanceID().contentEquals(SpringBridge.getInstance().getFederationId())){
-                    partyIds.add(iDocument.getBuyerPartyId());
-                    federationIds.add(iDocument.getBuyerParty().getFederationInstanceID());
-
-                    federationIds.add(iDocument.getSellerParty().getFederationInstanceID());
-                    federationIds.add(iDocument.getBuyerParty().getFederationInstanceID());
-                    // get parties
-                    parties = PartyPersistenceUtility.getParties(bearerToken, partyIds,federationIds);
-                }
-                // seller and buyer are in different instances
-                else{
-                    PartyType sellerParty = PartyPersistenceUtility.getParties(bearerToken, partyIds,federationIds).get(0);
-                    Response response = SpringBridge.getInstance().getDelegateClient().getParty(bearerToken,Long.parseLong(iDocument.getBuyerPartyId()),false,iDocument.getBuyerParty().getFederationInstanceID());
-                    PartyType buyerParty = objectMapper.readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),PartyType.class);
-
-                    parties = Arrays.asList(sellerParty,buyerParty);
-                }
-                // get seller and buyer party names
-                for (PartyType party : parties) {
-                    if(party.getPartyIdentification().get(0).getID().contentEquals(iDocument.getSellerPartyId())){
-                        sellerPartyNames = party.getPartyName();
-                    }
-                    else if(party.getPartyIdentification().get(0).getID().contentEquals(iDocument.getBuyerPartyId())){
-                        buyerPartyNames = party.getPartyName();
-                    }
-                }
-            } catch (IOException e) {
-                String msg = String.format("Failed to get parties while retrieving document : %s", documentId);
-                logger.error(msg);
-                throw new RuntimeException(msg, e);
-            }
-
-            List<ItemType> items = iDocument.getItemTypes();
             List<Boolean> areProductsDeleted = new ArrayList<>();
-            // get catalogue line to check whether the product is deleted or not
-            for (ItemType item : items) {
-                CatalogueLineType catalogueLine = CataloguePersistenceUtility.getCatalogueLine(item.getCatalogueDocumentReference().getID(), item.getManufacturersItemIdentification().getID(),false);
-                areProductsDeleted.add(catalogueLine == null);
+
+            for (ItemType item : iDocument.getItemTypes()) {
+                // check the existence of product
+                areProductsDeleted.add(!CataloguePersistenceUtility.checkCatalogueLineExistence(item.getCatalogueDocumentReference().getID(), item.getManufacturersItemIdentification().getID()));
+
+                catalogIds.add(item.getCatalogueDocumentReference().getID());
+                lineIds.add(item.getManufacturersItemIdentification().getID());
+                productNames.add(item.getName());
             }
 
-            return  "{\"items\":"+objectMapper.writeValueAsString(items) +
+            return  "{\"items\":"+ "{\"catalogIds\":"+objectMapper.writeValueAsString(catalogIds) +
+                        ",\"lineIds\":" + objectMapper.writeValueAsString(lineIds) +
+                        ",\"productNames\":" + objectMapper.writeValueAsString(productNames) + "}" +
                     ",\"areProductsDeleted\":" + objectMapper.writeValueAsString(areProductsDeleted) +
                     ",\"buyerPartyId\":\""+ iDocument.getBuyerPartyId() +
                     "\",\"buyerPartyFederationId\":\""+ iDocument.getBuyerParty().getFederationInstanceID() +
-                    "\",\"buyerPartyName\":"+objectMapper.writeValueAsString(buyerPartyNames)+
-                    ",\"sellerPartyId\":\""+ iDocument.getSellerPartyId()+
-                    "\",\"sellerPartyFederationId\":\""+ iDocument.getSellerParty().getFederationInstanceID() +
-                    "\",\"sellerPartyName\":"+objectMapper.writeValueAsString(sellerPartyNames)+"}";
+                    "\",\"sellerPartyId\":\""+ iDocument.getSellerPartyId()+
+                    "\",\"sellerPartyFederationId\":\""+ iDocument.getSellerParty().getFederationInstanceID() +"\"}";
         });
     }
 
@@ -449,13 +437,35 @@ public class ProcessInstanceController {
     }
 
     private Future<String> getCreatorUser(String bearerToken,String userId, ExecutorService threadPool){
-        return threadPool.submit(() -> JsonSerializationUtility.getObjectMapper().writeValueAsString(
-                PartyPersistenceUtility.getPerson(bearerToken,userId)
-        ));
+        return threadPool.submit(() -> {
+            PersonType person = PartyPersistenceUtility.getPerson(bearerToken,userId);
+            if(person != null){
+                return person.getFirstName() +" "+ person.getFamilyName();
+            }
+            return null;
+        });
     }
 
     private Future<String> getCancellationReason(String processInstanceId, ExecutorService threadPool){
         return threadPool.submit(() -> TrustPersistenceUtility.getCancellationReasonForCollaboration(processInstanceId));
+    }
+
+    private Future<String> getCompletionDate(String processInstanceId, ExecutorService threadPool){
+        return threadPool.submit(() -> TrustPersistenceUtility.getCompletionDateForCollaboration(processInstanceId));
+    }
+
+    private Future<String> getRequestDate(String processInstanceId, ExecutorService threadPool){
+        return threadPool.submit(() -> {
+            ProcessDocumentMetadata processDocumentMetadata = ProcessDocumentMetadataDAOUtility.getRequestMetadata(processInstanceId);
+            return processDocumentMetadata == null ? null : processDocumentMetadata.getSubmissionDate();
+        });
+    }
+
+    private Future<String> getResponseDate(String processInstanceId, ExecutorService threadPool){
+        return threadPool.submit(() -> {
+            ProcessDocumentMetadata processDocumentMetadata = ProcessDocumentMetadataDAOUtility.getResponseMetadata(processInstanceId);
+            return processDocumentMetadata == null ? null : processDocumentMetadata.getSubmissionDate();
+        });
     }
 
     private Future<String> serializeObject(Object object, ExecutorService threadPool){
@@ -477,8 +487,13 @@ public class ProcessInstanceController {
                                                           @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) throws NimbleException {
 
         try {
+            // set request log of ExecutionContext
+            String requestLog = String.format("Incoming request to get associated collaboration groups for process instance id:%s",processInstanceId);
+            executionContext.setRequestLog(requestLog);
+
+            logger.info(requestLog);
             // validate role
-            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+            if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
@@ -498,6 +513,7 @@ public class ProcessInstanceController {
                 throw new NimbleException(NimbleExceptionMessageCode.NOT_FOUND_NO_COLLABORATION_GROUP_FOR_PROCESS.toString(),Arrays.asList(processInstanceId));
             }
 
+            logger.info("Completed the request to get associated collaboration groups for process instance id:{}",processInstanceId);
             return ResponseEntity.status(HttpStatus.OK).body(HibernateSwaggerObjectMapper.convertCollaborationGroupDAO(collaborationGroup));
 
         } catch (Exception e) {
@@ -526,13 +542,16 @@ public class ProcessInstanceController {
         ByteArrayOutputStream tempOutputStream;
         
         try {
+            // set request log of ExecutionContext
+            String requestLog = String.format("Incoming request to export transactions. party id: %s, user id: %s, direction: %s", partyId, userId, direction);
+            executionContext.setRequestLog(requestLog);
             // validate role
-            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_TO_EXPORT_PROCESS_INSTANCE_DATA)) {
+            if(!validationUtil.validateRole(bearerToken, executionContext.getUserRoles(),RoleConfig.REQUIRED_ROLES_TO_EXPORT_PROCESS_INSTANCE_DATA)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString(),true);
             }
 
 
-            logger.info("Incoming request to export transactions. party id: {}, user id: {}, direction: {}", partyId, userId, direction);
+            logger.info(requestLog);
             List<TransactionSummary> transactions = ProcessDocumentMetadataDAOUtility.getTransactionSummaries(partyId, federationId,userId, direction, archived, bearerToken);
             ZipEntry zipEntry;
             tempOutputStream = null;

@@ -1,15 +1,10 @@
 package eu.nimble.service.bp.util.persistence.bp;
 
 import eu.nimble.service.bp.model.hyperjaxb.*;
-import eu.nimble.service.bp.swagger.model.Process;
-import eu.nimble.service.bp.util.ExecutionContext;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
-import eu.nimble.service.bp.model.hyperjaxb.*;
-import eu.nimble.service.bp.swagger.model.FederatedCollaborationGroupMetadata;
 import eu.nimble.utility.HibernateUtility;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
-import org.apache.tools.ant.taskdefs.Exec;
 
 import java.util.ArrayList;
 import java.util.Collections;

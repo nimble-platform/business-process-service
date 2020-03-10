@@ -3,13 +3,15 @@ package eu.nimble.service.bp.impl;
 import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.model.hyperjaxb.*;
 import eu.nimble.service.bp.swagger.model.ProcessInstance;
-import eu.nimble.service.bp.util.email.EmailSenderUtil;
+import eu.nimble.service.bp.util.email.IEmailSenderUtil;
 import eu.nimble.service.bp.util.persistence.bp.*;
 import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
 import eu.nimble.service.bp.swagger.api.ProcessInstanceGroupsApi;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroup;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupFilter;
 import eu.nimble.service.bp.util.spring.SpringBridge;
+import eu.nimble.utility.ExecutionContext;
+import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.exception.NimbleException;
 import eu.nimble.utility.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.persistence.GenericJPARepository;
@@ -43,19 +45,25 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
     @Autowired
     private DocumentController documentController;
     @Autowired
-    private EmailSenderUtil emailSenderUtil;
+    private IEmailSenderUtil emailSenderUtil;
     @Autowired
     private JPARepositoryFactory repoFactory;
     @Autowired
     private IValidationUtil validationUtil;
+    @Autowired
+    private ExecutionContext executionContext;
 
     @Override
     @ApiOperation(value = "", notes = "Deletes the process instance group")
     public ResponseEntity<Void> deleteProcessInstanceGroup(@ApiParam(value = "Identifier of the ProcessInstanceGroup to be deleted (processInstanceGroup.id)", required = true) @PathVariable("id") String id,
                                                            @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) throws NimbleException {
-        logger.debug("Deleting ProcessInstanceGroup ID: {}", id);
+        // set request log of ExecutionContext
+        String requestLog = String.format("Deleting ProcessInstanceGroup ID: %s", id);
+        executionContext.setRequestLog(requestLog);
+
+        logger.debug(requestLog);
         // validate role
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+        if(!validationUtil.validateRole(bearerToken, executionContext.getUserRoles(),RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 
@@ -75,9 +83,13 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
     @ApiOperation(value = "", notes = "Retrieves the process instance group specified with the ID")
     public ResponseEntity<ProcessInstanceGroup> getProcessInstanceGroup(@ApiParam(value = "Identifier of the ProcessInstanceGroup to be received (processInstanceGroup.id)", required = true) @PathVariable("id") String id,
                                                                         @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) {
-        logger.debug("Getting ProcessInstanceGroup: {}", id);
+        // set request log of ExecutionContext
+        String requestLog = String.format("Getting ProcessInstanceGroup: %s", id);
+        executionContext.setRequestLog(requestLog);
+
+        logger.debug(requestLog);
         // validate role
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+        if(!validationUtil.validateRole(bearerToken, executionContext.getUserRoles(),RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 
@@ -104,15 +116,19 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
             @ApiParam(value = "", required = true) @RequestHeader(value = "federationId", required = true) String federationId,
             @ApiParam(value = "Identify Project Or Not", defaultValue = "false") @RequestParam(value = "isProject", required = false, defaultValue = "false") Boolean isProject) {
 
-        // validate role
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
-            throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
-        }
-
-        logger.debug("Retrieving filters for partyId: {}, archived: {}, products: {}, categories: {}, parties: {}", partyId, archived,
+        // set request log of ExecutionContext
+        String requestLog = String.format("Retrieving filters for partyId: %s, archived: %s, products: %s, categories: %s, parties: %s", partyId, archived,
                 relatedProducts != null ? relatedProducts.toString() : "[]",
                 relatedProductCategories != null ? relatedProductCategories.toString() : "[]",
                 tradingPartnerIDs != null ? tradingPartnerIDs.toString() : "[]");
+        executionContext.setRequestLog(requestLog);
+
+        // validate role
+        if(!validationUtil.validateRole(bearerToken, executionContext.getUserRoles(),RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+            throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
+        }
+
+        logger.debug(requestLog);
         ProcessInstanceGroupFilter filters = null;
         try{
             filters = CollaborationGroupDAOUtility.getFilterDetails(partyId, federationId,collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, status, null, null, bearerToken,isProject);
@@ -134,8 +150,11 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
                                                  @ApiParam(value = "Identifier of the order response", required = false) @RequestParam(value = "orderResponseId", required = false) String orderResponseId,
                                                 @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
         try {
+            // set request log of ExecutionContext
+            String requestLog = String.format("Incoming request to get order document for process instance id: %s",processInstanceId);
+            executionContext.setRequestLog(requestLog);
             // validate role
-            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+            if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
@@ -170,11 +189,9 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
                     else{
                         Response response = SpringBridge.getInstance().getDelegateClient().getOrderDocument(bearerToken,processInstanceId,sourceOrderResponseId,federatedCollaborationGroupMetadataDAO.getFederationID());
                         if(response.status() == 200){
-                            orderJson = eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response);
+                            orderJson = HttpResponseUtil.extractBodyFromFeignClientResponse(response);
                         }
                     }
-                } else {
-                    orderJson = (String) documentController.getDocumentJsonContent(sourceOrderResponseId,bearerToken).getBody();
                 }
             }
 
@@ -206,9 +223,13 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
     public ResponseEntity finishCollaboration(@ApiParam(value = "Identifier of the process instance group to be finished", required = true) @PathVariable(value = "id", required = true) String id,
                                               @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
         try {
-            logger.debug("Finishing the collaboration for the group id: {}", id);
+            // set request log of ExecutionContext
+            String requestLog = String.format("Finishing the collaboration for the group id: %s", id);
+            executionContext.setRequestLog(requestLog);
+
+            logger.debug(requestLog);
             // validate role
-            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+            if(!validationUtil.validateRole(bearerToken, executionContext.getUserRoles(),RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
@@ -260,9 +281,13 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
                                               @ApiParam(value = "The cancellation reason", required = false, defaultValue = "") @RequestBody(required = false) String cancellationReason,
                                               @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) throws NimbleException {
         try {
-            logger.debug("Cancelling the collaboration for the group id: {}", id);
+            // set request log of ExecutionContext
+            String requestLog = String.format("Cancelling the collaboration for the group id: %s", id);
+            executionContext.setRequestLog(requestLog);
+
+            logger.debug(requestLog);
             // validate role
-            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+            if(!validationUtil.validateRole(bearerToken, executionContext.getUserRoles(),RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
@@ -334,10 +359,14 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
             method = RequestMethod.GET)
     public ResponseEntity<String> checkCollaborationFinished(@ApiParam(value = "The identifier of the process instance group to be checked",required = true) @PathVariable("id") String id,
                                                              @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) throws NimbleException {
-        logger.info("Checking whether the collaboration represented by process instance group {} is finished",id);
+        // set request log of ExecutionContext
+        String requestLog = String.format("Checking whether the collaboration represented by process instance group %s is finished",id);
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
 
         // validate role
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+        if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 
@@ -364,10 +393,13 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
             method = RequestMethod.GET)
     public ResponseEntity getProcessInstancesIncludedInTheGroup(@ApiParam(value = "Identifier of the process instance group to be checked", required = true) @PathVariable(value = "id", required = true) String id,
                                                                 @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) throws NimbleException {
+        // set request log of ExecutionContext
+        String requestLog = String.format("Retrieving process instances for the group id: %s", id);
+        executionContext.setRequestLog(requestLog);
 
-        logger.debug("Retrieving process instances for the group id: {}", id);
+        logger.debug(requestLog);
         // validate role
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+        if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 

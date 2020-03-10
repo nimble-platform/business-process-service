@@ -6,7 +6,7 @@ import eu.nimble.service.bp.model.hyperjaxb.*;
 import eu.nimble.service.bp.util.BusinessProcessEvent;
 import eu.nimble.service.bp.util.bp.BusinessProcessUtility;
 import eu.nimble.service.bp.util.camunda.CamundaEngine;
-import eu.nimble.service.bp.util.email.EmailSenderUtil;
+import eu.nimble.service.bp.util.email.IEmailSenderUtil;
 import eu.nimble.service.bp.util.persistence.bp.CollaborationGroupDAOUtility;
 import eu.nimble.service.bp.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceDAOUtility;
@@ -20,6 +20,7 @@ import eu.nimble.service.bp.swagger.model.ProcessInstance;
 import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
 import eu.nimble.service.bp.swagger.model.ProcessVariables;
 import eu.nimble.service.bp.swagger.model.Transaction;
+import eu.nimble.utility.ExecutionContext;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.LoggerUtils;
 import eu.nimble.utility.exception.NimbleException;
@@ -56,9 +57,11 @@ public class ContinueController implements ContinueApi {
     @Autowired
     private JPARepositoryFactory repoFactory;
     @Autowired
-    private EmailSenderUtil emailSenderUtil;
+    private IEmailSenderUtil emailSenderUtil;
     @Autowired
     private IValidationUtil validationUtil;
+    @Autowired
+    private ExecutionContext executionContext;
 
     @ApiIgnore
     @Override
@@ -83,6 +86,8 @@ public class ContinueController implements ContinueApi {
             @RequestHeader(value = "Authorization", required = true) String bearerToken,
             @ApiParam(value = "" ,required=true ) @RequestHeader(value="initiatorFederationId", required=true) String initiatorFederationId,
             @ApiParam(value = "" ,required=true ) @RequestHeader(value="responderFederationId", required=true) String responderFederationId) throws NimbleException {
+        // set request log of ExecutionContext
+        executionContext.setRequestLog(" $$$ Continue Process with ProcessInstanceInputMessage");
         try {
             logger.debug(" $$$ Continue Process with ProcessInstanceInputMessage {}", JsonSerializationUtility.getObjectMapperWithMixIn(ProcessVariables.class, MixInIgnoreProperties.class).writeValueAsString(body));
         } catch (JsonProcessingException e) {
@@ -96,7 +101,7 @@ public class ContinueController implements ContinueApi {
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
         try {
             // validate role
-            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_SALES)) {
+            if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_SALES)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 

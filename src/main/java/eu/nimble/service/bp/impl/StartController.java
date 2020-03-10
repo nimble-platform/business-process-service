@@ -10,7 +10,7 @@ import eu.nimble.service.bp.util.BusinessProcessEvent;
 import eu.nimble.service.bp.util.bp.BusinessProcessUtility;
 import eu.nimble.service.bp.util.bp.ClassProcessTypeMap;
 import eu.nimble.service.bp.util.camunda.CamundaEngine;
-import eu.nimble.service.bp.util.email.EmailSenderUtil;
+import eu.nimble.service.bp.util.email.IEmailSenderUtil;
 import eu.nimble.service.bp.util.persistence.bp.CollaborationGroupDAOUtility;
 import eu.nimble.service.bp.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceGroupDAOUtility;
@@ -27,6 +27,7 @@ import eu.nimble.service.bp.swagger.model.ProcessVariables;
 import eu.nimble.service.bp.swagger.model.Transaction;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
+import eu.nimble.utility.ExecutionContext;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.LoggerUtils;
 import eu.nimble.utility.exception.NimbleException;
@@ -62,11 +63,13 @@ public class StartController implements StartApi {
     @Autowired
     private JPARepositoryFactory repoFactory;
     @Autowired
-    private EmailSenderUtil emailSenderUtil;
+    private IEmailSenderUtil emailSenderUtil;
     @Autowired
     private CollaborationGroupsController collaborationGroupsController;
     @Autowired
     private IValidationUtil validationUtil;
+    @Autowired
+    private ExecutionContext executionContext;
 
     @Override
     @ApiOperation(value = "", notes = "Creates negotiations for the given bill of materials for the given party. If there is a frame contract between parties and useFrameContract parameter is set to true, " +
@@ -75,9 +78,13 @@ public class StartController implements StartApi {
     public ResponseEntity<String> createNegotiationsForBOM(@ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
                                                            @ApiParam(value = "Serialized form of bill of materials which are used to create request for quotations.", required = true) @RequestBody BillOfMaterial billOfMaterial,
                                                            @ApiParam(value = "If this parameter is true and a valid frame contract exists between parties, then an order is started for the product using the details of frame contract") @RequestParam(value = "useFrameContract", defaultValue = "false") Boolean useFrameContract) {
-        logger.info("Creating negotiations for bill of materials , useFrameContract: {}", useFrameContract);
+        // set request log of ExecutionContext
+        String requestLog = String.format("Creating negotiations for bill of materials , useFrameContract: %s", useFrameContract);
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
         // validate role
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES)) {
+        if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 
@@ -157,11 +164,13 @@ public class StartController implements StartApi {
             @RequestParam(value = "precedingOrderId", required = false) String precedingOrderId,
             @ApiParam(value = "Identifier of the Collaboration (i.e. collaborationGroup.hjid) which the ProcessInstanceGroup belongs to")
             @RequestParam(value = "collaborationGID", required = false) String collaborationGID) throws NimbleException {
+        // set request log of ExecutionContext
+        executionContext.setRequestLog(" $$$ Start Process with ProcessInstanceInputMessage");
 
         logger.debug(" $$$ Start Process with ProcessInstanceInputMessage {}", JsonSerializationUtility.serializeEntitySilentlyWithMixin(body, ProcessVariables.class, MixInIgnoreProperties.class));
 
         // validate role
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+        if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 

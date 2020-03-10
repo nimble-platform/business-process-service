@@ -6,7 +6,7 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
 /**
- * With this configuration the {@link RestServiceInterceptor} is injected to populate {@link eu.nimble.service.catalogue.util.ExecutionContext}s
+ * With this configuration the {@link RestServiceInterceptor} is injected to populate {@link eu.nimble.utility.ExecutionContext}s
  * for each REST call.
  *
  * Created by suat on 24-Jan-19.

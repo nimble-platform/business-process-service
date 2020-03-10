@@ -23,6 +23,7 @@ import eu.nimble.service.model.ubl.ppaprequest.PpapRequestType;
 import eu.nimble.service.model.ubl.ppapresponse.PpapResponseType;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
+import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.binary.BinaryContentService;
 import feign.Response;
@@ -129,7 +130,7 @@ public class ContractGenerator {
                 if(buyerPartyId != null){
                     if(!buyerFederationId.contentEquals(SpringBridge.getInstance().getFederationId())){
                         Response response = SpringBridge.getInstance().getDelegateClient().getParty(bearerToken,Long.parseLong(buyerPartyId),false,buyerFederationId);
-                        customerParty = objectMapper.readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),PartyType.class);
+                        customerParty = objectMapper.readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),PartyType.class);
                     }
                     else {
                         customerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,buyerPartyId);
@@ -459,7 +460,7 @@ public class ContractGenerator {
                                             }
                                         }
                                         if(text.contains("$country_id")){
-                                            if(orderLine.getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCountry().getName() != null){
+                                            if(orderLine.getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCountry().getName() != null && orderLine.getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCountry().getName().getValue() != null){
                                                 text = text.replace("$country_id",orderLine.getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCountry().getName().getValue());
                                                 r.setText(text,0);
                                             }
@@ -489,7 +490,7 @@ public class ContractGenerator {
                                             }
                                         }
                                         if(text.contains("$phone_supplier")){
-                                            if(!CollectionUtils.isEmpty(order.getSellerSupplierParty().getParty().getPerson()) && !order.getSellerSupplierParty().getParty().getPerson().get(0).getContact().getTelephone().contentEquals("")){
+                                            if(!CollectionUtils.isEmpty(order.getSellerSupplierParty().getParty().getPerson()) && order.getSellerSupplierParty().getParty().getPerson().get(0).getContact().getTelephone() != null && !order.getSellerSupplierParty().getParty().getPerson().get(0).getContact().getTelephone().contentEquals("")){
                                                 text = text.replace("$phone_supplier",order.getSellerSupplierParty().getParty().getPerson().get(0).getContact().getTelephone());
                                                 r.setText(text,0);
                                             }

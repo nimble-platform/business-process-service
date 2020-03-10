@@ -3,13 +3,15 @@ package eu.nimble.service.bp.impl;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.config.RoleConfig;
+import eu.nimble.service.bp.messaging.IKafkaSender;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.model.trust.NegotiationRatings;
 import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.PartyPersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
-import eu.nimble.service.bp.messaging.KafkaSender;
+import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
+import eu.nimble.utility.ExecutionContext;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.exception.NimbleException;
 import eu.nimble.utility.exception.NimbleExceptionMessageCode;
@@ -23,7 +25,6 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -43,9 +44,11 @@ public class TrustServiceController {
     private final Logger logger = LoggerFactory.getLogger(TrustServiceController.class);
 
     @Autowired
-    private KafkaSender kafkaSender;
+    private IKafkaSender kafkaSender;
     @Autowired
     private IValidationUtil validationUtil;
+    @Autowired
+    private ExecutionContext executionContext;
 
     @ApiOperation(value = "", notes = "Create rating and reviews for the company. A CompletedTaskType is created as a result" +
             "of this operation.")
@@ -65,13 +68,17 @@ public class TrustServiceController {
                                                 @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
                                                 @ApiParam(value = "", required = true) @RequestHeader(value = "federationId", required = true) String federationId) {
         try {
-            logger.info("Creating rating and reviews for the party with id: {} and process instance with id: {}", partyId, processInstanceID);
+            // set request log of ExecutionContext
+            String requestLog = String.format("Creating rating and reviews for the party with id: %s and process instance with id: %s", partyId, processInstanceID);
+            executionContext.setRequestLog(requestLog);
+
+            logger.info(requestLog);
             /**
              * CHECKS
              */
 
             // validate role
-            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+            if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
@@ -143,10 +150,18 @@ public class TrustServiceController {
             method = RequestMethod.GET)
     public ResponseEntity getRatingsSummary(@ApiParam(value = "Identifier of the party whose ratings will be received", required = true) @RequestParam(value = "partyId") String partyId,
                                             @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
-                                            @ApiParam(value = "" ,required=true ) @RequestHeader(value="federationId", required=true) String federationId){
-        logger.info("Getting ratings summary for the party with id: {}",partyId);
+                                            @ApiParam(value = "" ,required=false ) @RequestHeader(value="federationId", required=false) String federationId){
+        // set request log of ExecutionContext
+        String requestLog = String.format("Getting ratings summary for the party with id: %s",partyId);
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
+
+        // validate federation id header
+        federationId = validateFederationIdHeader(federationId);
+
         // validate role
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+        if(!validationUtil.validateRole(bearerToken, executionContext.getUserRoles(),RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 
@@ -172,11 +187,17 @@ public class TrustServiceController {
             method = RequestMethod.GET)
     public ResponseEntity listAllIndividualRatingsAndReviews(@ApiParam(value = "Identifier of the party whose individual ratings and reviews will be received", required = true) @RequestParam(value = "partyId") String partyId,
                                                              @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
-                                                             @ApiParam(value = "" ,required=true ) @RequestHeader(value="federationId", required=true) String federationId) throws Exception{
+                                                             @ApiParam(value = "" ,required=false ) @RequestHeader(value="federationId", required=false) String federationId) throws Exception{
         try {
-            logger.info("Getting all individual ratings and review for the party with id: {}",partyId);
+            // set request log of ExecutionContext
+            String requestLog = String.format("Getting all individual ratings and review for the party with id: %s",partyId);
+            executionContext.setRequestLog(requestLog);
+            // validate federation id header
+            federationId = validateFederationIdHeader(federationId);
+
+            logger.info(requestLog);
             // validate role
-            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+            if(!validationUtil.validateRole(bearerToken, executionContext.getUserRoles(),RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
@@ -245,6 +266,11 @@ public class TrustServiceController {
         return jsonResponse;
     }
 
-
+    private String validateFederationIdHeader(String federationIdHeader){
+        if(federationIdHeader == null){
+            federationIdHeader = SpringBridge.getInstance().getFederationId();
+        }
+        return federationIdHeader;
+    }
 
 }

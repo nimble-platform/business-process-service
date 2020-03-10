@@ -8,6 +8,8 @@ import eu.nimble.service.model.ubl.commonaggregatecomponents.CatalogueLineType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.QuantityType;
+import eu.nimble.utility.ExecutionContext;
+import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.exception.NimbleException;
 import eu.nimble.utility.exception.NimbleExceptionMessageCode;
@@ -21,7 +23,6 @@ import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -43,6 +44,8 @@ public class ShoppingCartController {
 
     @Autowired
     private IValidationUtil validationUtil;
+    @Autowired
+    private ExecutionContext executionContext;
 
     @ApiOperation(value = "", notes = "Creates an empty shopping cart for the user")
     @ApiResponses(value = {
@@ -53,10 +56,14 @@ public class ShoppingCartController {
             produces = {"application/json"},
             method = RequestMethod.GET)
     public ResponseEntity getShoppingCart(@ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) throws Exception{
-        logger.info("Incoming request to get shopping cart");
+        // set request log of ExecutionContext
+        String requestLog = "Incoming request to get shopping cart";
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
         try {
             // validate role
-            if (!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+            if (!validationUtil.validateRole(bearerToken, executionContext.getUserRoles(),RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
@@ -92,11 +99,15 @@ public class ShoppingCartController {
             produces = {"application/json"},
             method = RequestMethod.POST)
     public ResponseEntity createShoppingCart(@ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) throws Exception{
-        logger.info("Incoming request to create shopping cart");
+        // set request log of ExecutionContext
+        String requestLog = "Incoming request to create shopping cart";
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
         CatalogueType cartCatalogue;
         try {
             // validate role
-            if (!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+            if (!validationUtil.validateRole(bearerToken, executionContext.getUserRoles(),RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
@@ -151,9 +162,13 @@ public class ShoppingCartController {
                                                    @ApiParam(value = "Quantity of the product in the shopping cart", required = false, defaultValue = "1") @RequestParam(value = "quantity", required = false, defaultValue = "1") Integer quantity,
                                                    @ApiParam(value = "Identifier of the instance which the product belongs to", required = true) @RequestHeader(value = "federationId", required = false) String federationId) throws Exception {
         try {
-            logger.info("Incoming request to add product: {}, in {} quantity to the create shopping cart", productId, quantity);
+            // set request log of ExecutionContext
+            String requestLog = String.format("Incoming request to add product: %s, in %s quantity to the create shopping cart", productId, quantity);
+            executionContext.setRequestLog(requestLog);
+
+            logger.info(requestLog);
             // validate role
-            if (!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+            if (!validationUtil.validateRole(bearerToken, executionContext.getUserRoles(),RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
@@ -171,7 +186,7 @@ public class ShoppingCartController {
             CatalogueLineType originalProduct = null;
             if(federationId != null && !federationId.contentEquals(SpringBridge.getInstance().getFederationId())){
                 Response response = SpringBridge.getInstance().getDelegateClient().getCatalogLineByHjid(bearerToken,productId);
-                originalProduct = JsonSerializationUtility.getObjectMapper().readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),CatalogueLineType.class);
+                originalProduct = JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),CatalogueLineType.class);
             }
             else {
                 originalProduct = new JPARepositoryFactory().forCatalogueRepository(true).getSingleEntityByHjid(CatalogueLineType.class, productId);
@@ -225,9 +240,13 @@ public class ShoppingCartController {
     public ResponseEntity removeProductsFromShoppingCart(@ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
                                                         @ApiParam(value = "Hjid of the products to be deleted from the cart", required = true) @RequestParam(value = "productIds", required = true) List<Long> productIds) throws Exception {
         try {
-            logger.info("Incoming request to remove products from shopping cart: {}", productIds);
+            // set request log of ExecutionContext
+            String requestLog = String.format("Incoming request to remove products from shopping cart: %s", productIds);
+            executionContext.setRequestLog(requestLog);
+
+            logger.info(requestLog);
             // validate role
-            if (!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+            if (!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 

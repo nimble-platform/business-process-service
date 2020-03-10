@@ -15,6 +15,8 @@ import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtilit
 import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceGroupDAOUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
 import eu.nimble.service.bp.util.spring.SpringBridge;
+import eu.nimble.utility.ExecutionContext;
+import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.exception.NimbleException;
 import eu.nimble.utility.exception.NimbleExceptionMessageCode;
@@ -51,16 +53,22 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
     private JPARepositoryFactory repoFactory;
     @Autowired
     private IValidationUtil validationUtil;
+    @Autowired
+    private ExecutionContext executionContext;
 
     @Override
     @ApiOperation(value = "", notes = "Archives the collaboration group by setting the archive field of the specified CollaborationGroup and the included ProcessInstanceGroups.")
     public ResponseEntity archiveCollaborationGroup(@ApiParam(value = "Identifier of the collaboration group to be archived (collaborationGroup.hjid)", required = true) @PathVariable("id") String id,
                                                                         @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
     ) throws NimbleException {
-        logger.debug("Archiving CollaborationGroup: {}", id);
+        // set request log of ExecutionContext
+        String requestLog = String.format("Archiving CollaborationGroup: %s", id);
+        executionContext.setRequestLog(requestLog);
+
+        logger.debug(requestLog);
         try {
             // validate role
-            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+            if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
@@ -93,9 +101,13 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
     public ResponseEntity<Void> deleteCollaborationGroup(@ApiParam(value = "Identifier of the collaboration group to be deleted (collaborationGroup.hjid)", required = true) @PathVariable("id") String id,
                                                          @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
     ) throws NimbleException {
-        logger.debug("Deleting CollaborationGroup ID: {}", id);
+        // set request log of ExecutionContext
+        String requestLog = String.format("Deleting CollaborationGroup ID: %s", id);
+        executionContext.setRequestLog(requestLog);
+
+        logger.debug(requestLog);
         // validate role
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+        if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 
@@ -112,9 +124,13 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
     public ResponseEntity getCollaborationGroup(@ApiParam(value = "Identifier of the collaboration group to be received (collaborationGroup.hjid)", required = true) @PathVariable("id") String id,
                                                 @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
     ) throws NimbleException {
-        logger.debug("Getting CollaborationGroup: {}", id);
+        // set request log of ExecutionContext
+        String requestLog = String.format("Getting CollaborationGroup: %s", id);
+        executionContext.setRequestLog(requestLog);
+
+        logger.debug(requestLog);
         // validate role
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+        if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 
@@ -143,7 +159,7 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
                     else{
                         ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
                         Response response = SpringBridge.getInstance().getDelegateClient().getCollaborationGroup(bearerToken,federatedCollaborationGroupMetadata.getID(),federatedCollaborationGroupMetadata.getFederationID());
-                        federatedCollaborationGroup = objectMapper.readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),CollaborationGroup.class);
+                        federatedCollaborationGroup = objectMapper.readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),CollaborationGroup.class);
                     }
 
                     for (ProcessInstanceGroup associatedProcessInstanceGroup : federatedCollaborationGroup.getAssociatedProcessInstanceGroups()) {
@@ -175,10 +191,14 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
                                                  @ApiParam(value = "Role of the party in the collaboration.<br>Possible values:<ul><li>SELLER</li><li>BUYER</li></ul>") @RequestParam(value = "collaborationRole", required = false) String collaborationRole,
                                                  @ApiParam(value = "Identify Project Or Not", defaultValue = "false") @RequestParam(value = "isProject", required = false, defaultValue = "false") Boolean isProject,
                                                  @ApiParam(value = ""  ) @RequestHeader(value="federationId", required=false) String federationId) throws NimbleException {
-        logger.debug("Getting collaboration groups for party: {}", partyId);
+        // set request log of ExecutionContext
+        String requestLog = String.format("Getting collaboration groups for party: %s", partyId);
+        executionContext.setRequestLog(requestLog);
+
+        logger.debug(requestLog);
         try {
             // validate role
-            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+            if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
@@ -209,7 +229,7 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
                             else{
                                 ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
                                 Response response = SpringBridge.getInstance().getDelegateClient().getCollaborationGroup(bearerToken,federatedCollaborationGroupMetadata.getID(),federatedCollaborationGroupMetadata.getFederationID());
-                                cp = objectMapper.readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),CollaborationGroup.class);
+                                cp = objectMapper.readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),CollaborationGroup.class);
                             }
 
                             for (ProcessInstanceGroup associatedProcessInstanceGroup : cp.getAssociatedProcessInstanceGroups()) {
@@ -251,9 +271,13 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
     public ResponseEntity<CollaborationGroup> restoreCollaborationGroup(@ApiParam(value = "Identifier of the collaboration group to be restored (collaborationGroup.hjid)", required = true) @PathVariable("id") String id,
                                                                         @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
     ) throws NimbleException {
-        logger.debug("Restoring CollaborationGroup: {}", id);
+        // set request log of ExecutionContext
+        String requestLog = String.format("Restoring CollaborationGroup: %s", id);
+        executionContext.setRequestLog(requestLog);
+
+        logger.debug(requestLog);
         // validate role
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+        if(!validationUtil.validateRole(bearerToken, executionContext.getUserRoles(),RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 
@@ -276,9 +300,13 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
                                                              @ApiParam(value = "Value to be set as name of the collaboration group", required = true) @RequestParam(value = "groupName", required = true) String groupName,
                                                              @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
     ) throws NimbleException {
-        logger.debug("Updating name of the collaboration group :" + id);
+        // set request log of ExecutionContext
+        String requestLog = "Updating name of the collaboration group :" + id;
+        executionContext.setRequestLog(requestLog);
+
+        logger.debug(requestLog);
         // validate role
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+        if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 
@@ -303,9 +331,13 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
             @ApiParam(value = "Identifier of the base collaboration group ", required = true) @RequestParam("bcid") String bcid,
             @ApiParam(value = "", required = true) @RequestBody String cgidsAsString
     ) throws NimbleException {
-        logger.debug("Merging the collaboration groups {} to the base collaboration group {}",cgidsAsString,bcid);
+        // set request log of ExecutionContext
+        String requestLog = String.format("Merging the collaboration groups %s to the base collaboration group %s",cgidsAsString,bcid);
+        executionContext.setRequestLog(requestLog);
+
+        logger.debug(requestLog);
         // validate role
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+        if(!validationUtil.validateRole(bearerToken, executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 
@@ -380,7 +412,7 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
                         }
                         else{
                             Response response = SpringBridge.getInstance().getDelegateClient().getCollaborationGroup(bearerToken,federatedCollaborationGroupMetadataDAO.getID(),federatedCollaborationGroupMetadataDAO.getFederationID());
-                            collaborationGroup = objectMapper.readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),CollaborationGroup.class);
+                            collaborationGroup = objectMapper.readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),CollaborationGroup.class);
                         }
 
                         for (FederatedCollaborationGroupMetadata federatedCollaborationGroupMetadata : collaborationGroup.getFederatedCollaborationGroupMetadatas()) {
@@ -426,9 +458,13 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
                                                          @ApiParam(value = ""  ) @RequestHeader(value="federationId", required=true) String federationId,
                                                          @ApiParam(value = "Role of the party in the collaboration.<br>Possible values: <ul><li>SELLER</li><li>BUYER</li></ul>") @RequestParam(value = "collaborationRole", required = true,defaultValue = "SELLER") String collaborationRole,
                                                          @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) throws NimbleException {
-        logger.info("Checking whether all collaborations are finished for party {} and role {}",partyId,collaborationRole);
+        // set request log of ExecutionContext
+        String requestLog = String.format("Checking whether all collaborations are finished for party %s and role %s",partyId,collaborationRole);
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
         // validate role
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+        if(!validationUtil.validateRole(bearerToken, executionContext.getUserRoles(),RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 
@@ -459,10 +495,14 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
     public ResponseEntity getFederatedCollaborationGroup(@ApiParam(value = "The identifier of party", required = true) @RequestParam(value = "id",required = true) List<String> groupId,
                                                          @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestParam(value="federationId", required=true) List<String> federationId,
                                                          @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) throws NimbleException {
-        logger.info("Retrieving federated collaboration group");
+        // set request log of ExecutionContext
+        String requestLog = "Retrieving federated collaboration group";
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
 
         // validate role
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+        if(!validationUtil.validateRole(bearerToken, executionContext.getUserRoles(),RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 
@@ -493,7 +533,7 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
                             else{
                                 ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
                                 Response response = SpringBridge.getInstance().getDelegateClient().getCollaborationGroup(bearerToken,federatedCollaborationGroupMetadata.getID(),federatedCollaborationGroupMetadata.getFederationID());
-                                federatedCollaborationGroup = objectMapper.readValue(eu.nimble.service.bp.util.HttpResponseUtil.extractBodyFromFeignClientResponse(response),CollaborationGroup.class);
+                                federatedCollaborationGroup = objectMapper.readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),CollaborationGroup.class);
                             }
 
                             for (ProcessInstanceGroup associatedProcessInstanceGroup : federatedCollaborationGroup.getAssociatedProcessInstanceGroups()) {
@@ -526,10 +566,14 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
                                                                   @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestParam(value="partyId", required=true) String partyId,
                                                                    @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="federationId", required=true) String federationId,
                                                                   @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) throws NimbleException {
-        logger.info("Adding federated metadata to collaboration group for document {}",documentId);
+        // set request log of ExecutionContext
+        String requestLog = String.format("Adding federated metadata to collaboration group for document %s",documentId);
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
 
         // validate role
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+        if(!validationUtil.validateRole(bearerToken, executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 
@@ -567,10 +611,14 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
             method = RequestMethod.GET)
     public ResponseEntity unMergeCollaborationGroup(@ApiParam(value = "The identifier of party", required = true) @RequestParam(value = "groupId",required = true) String groupId,
                                                          @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) throws NimbleException {
-        logger.info("Unmerging collaboration group {}",groupId);
+        // set request log of ExecutionContext
+        String requestLog = String.format("Unmerging collaboration group %s",groupId);
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
 
         // validate role
-        if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+        if(!validationUtil.validateRole(bearerToken, executionContext.getUserRoles(),RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 

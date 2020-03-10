@@ -1,13 +1,19 @@
 package eu.nimble.service.bp.util.migration.r13;
 
+import eu.nimble.service.bp.config.RoleConfig;
+import eu.nimble.utility.ExecutionContext;
+import eu.nimble.utility.exception.NimbleException;
+import eu.nimble.utility.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
+import eu.nimble.utility.validation.IValidationUtil;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -30,6 +36,11 @@ public class R13MigrationController {
     private final int LIMIT = 100;
     private final int OFFSET = 1;
 
+    @Autowired
+    private IValidationUtil validationUtil;
+    @Autowired
+    private ExecutionContext executionContext;
+
     @ApiOperation(value = "", notes = "This script makes sure that each document has a unique identifier. It deletes the duplicate documents.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Deleted duplicate documents successfully"),
@@ -40,10 +51,16 @@ public class R13MigrationController {
             method = RequestMethod.DELETE)
     public ResponseEntity deleteDuplicateDocuments(@ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken
     ) {
-        logger.info("Incoming request to delete duplicate documents");
+        // set request log of ExecutionContext
+        String requestLog = "Incoming request to delete duplicate documents";
+        executionContext.setRequestLog(requestLog);
 
-        // check token
-        eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
+        logger.info(requestLog);
+
+        // validate role
+        if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+            throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
+        }
 
 
         GenericJPARepository repo = new JPARepositoryFactory().forCatalogueRepository(true);

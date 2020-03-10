@@ -14,6 +14,7 @@ import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.digitalagreement.DigitalAgreementType;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
+import eu.nimble.utility.ExecutionContext;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.exception.NimbleException;
 import eu.nimble.utility.exception.NimbleExceptionMessageCode;
@@ -27,7 +28,6 @@ import org.joda.time.Days;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -49,6 +49,8 @@ public class ContractController {
 
     @Autowired
     private IValidationUtil validationUtil;
+    @Autowired
+    private ExecutionContext executionContext;
 
 //    @ApiOperation(value = "",notes = "Retrieves the specified ClauseType")
 //    @ApiResponses(value = {
@@ -65,7 +67,7 @@ public class ContractController {
 //        try {
 //            logger.info("Getting clause with id: {}", clauseId);
 //            // check token
-//            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
+//            ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
 //            if (tokenCheck != null) {
 //                return tokenCheck;
 //            }
@@ -98,7 +100,7 @@ public class ContractController {
 //        try {
 //            logger.info("Updating clause with id: {}", clauseId);
 //            // check token
-//            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
+//            ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
 //            if (tokenCheck != null) {
 //                return tokenCheck;
 //            }
@@ -169,9 +171,13 @@ public class ContractController {
     public ResponseEntity constructContractForProcessInstances(@ApiParam(value = "The identifier of the ProcessInstance from which the processes would be considered while constructing the contract", required = true) @RequestParam(value = "processInstanceId") String processInstanceId,
                                                                @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) throws Exception {
         try {
-            logger.info("Constructing contract starting from the process instance: {}", processInstanceId);
+            // set request log of ExecutionContext
+            String requestLog = String.format("Constructing contract starting from the process instance: %s", processInstanceId);
+            executionContext.setRequestLog(requestLog);
+
+            logger.info(requestLog);
             // validate role
-            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+            if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
             // check existence and type of the process instance
@@ -204,9 +210,13 @@ public class ContractController {
                                                @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
     ) {
         try {
-            logger.info("Getting clauses for contract: {}", contractId);
+            // set request log of ExecutionContext
+            String requestLog = String.format("Getting clauses for contract: %s", contractId);
+            executionContext.setRequestLog(requestLog);
+
+            logger.info(requestLog);
             // validate role
-            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+            if(!validationUtil.validateRole(bearerToken, executionContext.getUserRoles(),RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
@@ -245,7 +255,7 @@ public class ContractController {
 //            PartyType party = SpringBridge.getInstance().getiIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
 //
 //            // check token
-//            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
+//            ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
 //            if (tokenCheck != null) {
 //                return tokenCheck;
 //            }
@@ -295,9 +305,13 @@ public class ContractController {
                                            @ApiParam(value = "Type of the clauses to be retrieved. If no type specified all the clauses are retrieved.", required = false) @RequestParam(value = "clauseType", required = false) eu.nimble.service.model.ubl.extension.ClauseType clauseType,
                                            @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) throws NimbleException {
         try {
-            logger.info("Getting clause for document: {}, type: {}", documentId, clauseType);
+            // set request log of ExecutionContext
+            String requestLog = String.format("Getting clause for document: %s, type: %s", documentId, clauseType);
+            executionContext.setRequestLog(requestLog);
+
+            logger.info(requestLog);
             // validate role
-            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+            if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
@@ -337,9 +351,13 @@ public class ContractController {
                                                       @ApiParam(value = "Identifier of the document referred by the clause", required = true) @RequestParam(value = "clauseDocumentId") String clauseDocumentId,
                                                       @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) throws Exception {
         try {
-            logger.info("Adding document clause to contract. Bounded-document id: {}, clause document id: {}", documentId, clauseDocumentId);
+            // set request log of ExecutionContext
+            String requestLog = String.format("Adding document clause to contract. Bounded-document id: %s, clause document id: %s", documentId, clauseDocumentId);
+            executionContext.setRequestLog(requestLog);
+
+            logger.info(requestLog);
             // validate role
-            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+            if(!validationUtil.validateRole(bearerToken, executionContext.getUserRoles(),RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
@@ -404,9 +422,13 @@ public class ContractController {
                                                             @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) throws NimbleException, IOException {
 
         try {
-            logger.info("Adding data monitoring clause to contract. Bounded-document id: {}", documentId);
+            // set request log of ExecutionContext
+            String requestLog = String.format("Adding data monitoring clause to contract. Bounded-document id: %s", documentId);
+            executionContext.setRequestLog(requestLog);
+
+            logger.info(requestLog);
             // validate role
-            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+            if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
@@ -484,7 +506,7 @@ public class ContractController {
 //        try {
 //            logger.info("Incoming request to save a DigitalAgreement instance");
 //            // check token
-//            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
+//            ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
 //            if (tokenCheck != null) {
 //                return tokenCheck;
 //            }
@@ -533,7 +555,7 @@ public class ContractController {
 //        try {
 //            logger.info("Incoming request to update a DigitalAgreement.");
 //            // check token
-//            ResponseEntity tokenCheck = eu.nimble.service.bp.util.HttpResponseUtil.checkToken(bearerToken);
+//            ResponseEntity tokenCheck = HttpResponseUtil.checkToken(bearerToken);
 //            if (tokenCheck != null) {
 //                return tokenCheck;
 //            }
@@ -582,9 +604,13 @@ public class ContractController {
                                                                   @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) throws Exception {
 
         try {
-            logger.info("Incoming request to retrieve a DigitalAgreement. hjid: {}", contractId);
+            // set request log of ExecutionContext
+            String requestLog = String.format("Incoming request to retrieve a DigitalAgreement. hjid: %s", contractId);
+            executionContext.setRequestLog(requestLog);
+
+            logger.info(requestLog);
             // validate role
-            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+            if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
@@ -615,9 +641,13 @@ public class ContractController {
                                                  @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) throws NimbleException {
 
         try {
-            logger.info("Incoming request to delete a DigitalAgreement. hjid: {}", contractId);
+            // set request log of ExecutionContext
+            String requestLog = String.format("Incoming request to delete a DigitalAgreement. hjid: %s", contractId);
+            executionContext.setRequestLog(requestLog);
+
+            logger.info(requestLog);
             // validate role
-            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+            if(!validationUtil.validateRole(bearerToken, executionContext.getUserRoles(),RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
@@ -654,9 +684,13 @@ public class ContractController {
                                                                    @ApiParam(value = "" ,required=true ) @RequestHeader(value="responderFederationId", required=true) String responderFederationId) throws Exception {
 
         try {
-            logger.info("Incoming request to retrieve a DigitalAgreement. seller id: {}, buyer id: {}, product hjids: {}", sellerId, buyerId, manufacturersItemIds);
+            // set request log of ExecutionContext
+            String requestLog = String.format("Incoming request to retrieve a DigitalAgreement. seller id: %s, buyer id: %s, product hjids: %s", sellerId, buyerId, manufacturersItemIds);
+            executionContext.setRequestLog(requestLog);
+
+            logger.info(requestLog);
             // validate role
-            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+            if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
@@ -697,9 +731,13 @@ public class ContractController {
                                                                   @ApiParam(value = "", required = true) @RequestHeader(value = "federationId", required = true) String federationId) {
 
         try {
-            logger.info("Incoming request to retrieve a DigitalAgreements for party: {}", partyId);
+            // set request log of ExecutionContext
+            String requestLog = String.format("Incoming request to retrieve a DigitalAgreements for party: %s", partyId);
+            executionContext.setRequestLog(requestLog);
+
+            logger.info(requestLog);
             // validate role
-            if(!validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+            if(!validationUtil.validateRole(bearerToken, executionContext.getUserRoles(),RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
