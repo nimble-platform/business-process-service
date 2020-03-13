@@ -355,15 +355,6 @@ public class ProcessInstanceController {
             Future<String> cancellationReasonFuture = getCancellationReason(processInstanceId,executorService);
             // get completion date for the collaboration
             Future<String> completionDateFuture = getCompletionDate(processInstanceId,executorService);
-            // get request creator and response creator user info
-            Future<String> requestCreatorUser = null;
-            Future<String> responseCreatorUser = null;
-            if(requestMetadata != null){
-                requestCreatorUser = getCreatorUser(bearerToken,requestMetadata.getCreatorUserID(), executorService);
-            }
-            if(responseMetadata != null){
-                responseCreatorUser = getCreatorUser(bearerToken,responseMetadata.getCreatorUserID(), executorService);
-            }
 
             String cancellationReason = cancellationReasonFuture.get();
             String completionDate = completionDateFuture.get();
@@ -376,8 +367,8 @@ public class ProcessInstanceController {
             jsonSerializer.put("variableInstance",variableInstances.get());
             jsonSerializer.put("lastActivityInstanceStartTime","\""+lastActivityInstanceStartTime.get()+"\"");
             jsonSerializer.put("processInstanceState",processInstanceState.get());
-            jsonSerializer.put("requestCreatorUser",requestCreatorUser == null ? null : "\""+requestCreatorUser.get()+"\"");
-            jsonSerializer.put("responseCreatorUser",responseCreatorUser == null ? null : "\""+ responseCreatorUser.get()+"\"");
+            jsonSerializer.put("requestCreatorUserId",requestMetadata == null ? null : "\""+requestMetadata.getCreatorUserID()+"\"");
+            jsonSerializer.put("responseCreatorUserId",responseMetadata == null ? null : "\""+ responseMetadata.getCreatorUserID()+"\"");
             jsonSerializer.put("cancellationReason",cancellationReason == null ? null : "\""+cancellationReason+"\"");
             jsonSerializer.put("completionDate",completionDate == null ? null : "\""+completionDate+"\"");
             jsonSerializer.put("requestDate",requestDate == null ? null : "\""+requestDate+"\"");
@@ -441,18 +432,6 @@ public class ProcessInstanceController {
 
             String documentStatus = iDocument.getDocumentStatus();
             return "{\"documentStatus\":\""+documentStatus+"\"}";
-        });
-    }
-
-    private Future<String> getCreatorUser(String bearerToken,String userId, ExecutorService threadPool){
-        return threadPool.submit(() -> {
-            long getCreatorUser = System.currentTimeMillis();
-            PersonType person = PartyPersistenceUtility.getPerson(bearerToken,userId);
-            logger.info("Get creator user took: {}",System.currentTimeMillis()-getCreatorUser);
-            if(person != null){
-                return person.getFirstName() +" "+ person.getFamilyName();
-            }
-            return null;
         });
     }
 
