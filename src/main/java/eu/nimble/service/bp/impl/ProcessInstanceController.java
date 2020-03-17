@@ -302,12 +302,16 @@ public class ProcessInstanceController {
             executorService = Executors.newCachedThreadPool();
 
             // validate role
+            long validationStartTime = System.currentTimeMillis();
             if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
+            logger.info("User role validation took: {}",System.currentTimeMillis()-validationStartTime);
 
             // check the existence of process instance
+            long getProcessInstanceDAOStartTime = System.currentTimeMillis();
             ProcessInstanceDAO instanceDAO = ProcessInstanceDAOUtility.getById(processInstanceId);
+            logger.info("Process instance dao took: {}",System.currentTimeMillis()-getProcessInstanceDAOStartTime);
             if(instanceDAO == null){
                 throw new NimbleException(NimbleExceptionMessageCode.NOT_FOUND_NO_PROCESS_INSTANCE.toString(),Arrays.asList(processInstanceId));
             }
@@ -351,15 +355,6 @@ public class ProcessInstanceController {
             Future<String> cancellationReasonFuture = getCancellationReason(processInstanceId,executorService);
             // get completion date for the collaboration
             Future<String> completionDateFuture = getCompletionDate(processInstanceId,executorService);
-            // get request creator and response creator user info
-            Future<String> requestCreatorUser = null;
-            Future<String> responseCreatorUser = null;
-            if(requestMetadata != null){
-                requestCreatorUser = getCreatorUser(bearerToken,requestMetadata.getCreatorUserID(), executorService);
-            }
-            if(responseMetadata != null){
-                responseCreatorUser = getCreatorUser(bearerToken,responseMetadata.getCreatorUserID(), executorService);
-            }
 
             String cancellationReason = cancellationReasonFuture.get();
             String completionDate = completionDateFuture.get();
@@ -372,8 +367,8 @@ public class ProcessInstanceController {
             jsonSerializer.put("variableInstance",variableInstances.get());
             jsonSerializer.put("lastActivityInstanceStartTime","\""+lastActivityInstanceStartTime.get()+"\"");
             jsonSerializer.put("processInstanceState",processInstanceState.get());
-            jsonSerializer.put("requestCreatorUser",requestCreatorUser == null ? null : "\""+requestCreatorUser.get()+"\"");
-            jsonSerializer.put("responseCreatorUser",responseCreatorUser == null ? null : "\""+ responseCreatorUser.get()+"\"");
+            jsonSerializer.put("requestCreatorUserId",requestMetadata == null ? null : "\""+requestMetadata.getCreatorUserID()+"\"");
+            jsonSerializer.put("responseCreatorUserId",responseMetadata == null ? null : "\""+ responseMetadata.getCreatorUserID()+"\"");
             jsonSerializer.put("cancellationReason",cancellationReason == null ? null : "\""+cancellationReason+"\"");
             jsonSerializer.put("completionDate",completionDate == null ? null : "\""+completionDate+"\"");
             jsonSerializer.put("requestDate",requestDate == null ? null : "\""+requestDate+"\"");
@@ -392,7 +387,9 @@ public class ProcessInstanceController {
     private Future<String> getRequestDocument(String documentId,String bearerToken, ExecutorService threadPool){
         return threadPool.submit(() -> {
             ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
+            long getIDocumentStartTime = System.currentTimeMillis();
             IDocument iDocument = (IDocument) DocumentPersistenceUtility.getUBLDocument(documentId);
+            logger.info("Get IDocument took: {}",System.currentTimeMillis()-getIDocumentStartTime);
             if(iDocument == null){
                 return null;
             }
@@ -426,7 +423,9 @@ public class ProcessInstanceController {
 
     private Future<String> getResponseDocumentStatus(String documentId, ExecutorService threadPool){
         return threadPool.submit(() -> {
+            long getResponseDocumentStartTime = System.currentTimeMillis();
             IDocument iDocument = (IDocument) DocumentPersistenceUtility.getUBLDocument(documentId);
+            logger.info("Get response document took: {}",System.currentTimeMillis()-getResponseDocumentStartTime);
             if(iDocument == null){
                 return null;
             }
@@ -436,40 +435,49 @@ public class ProcessInstanceController {
         });
     }
 
-    private Future<String> getCreatorUser(String bearerToken,String userId, ExecutorService threadPool){
+    private Future<String> getCancellationReason(String processInstanceId, ExecutorService threadPool){
         return threadPool.submit(() -> {
-            PersonType person = PartyPersistenceUtility.getPerson(bearerToken,userId);
-            if(person != null){
-                return person.getFirstName() +" "+ person.getFamilyName();
-            }
-            return null;
+            long getCancellationReason = System.currentTimeMillis();
+            String reason = TrustPersistenceUtility.getCancellationReasonForCollaboration(processInstanceId);
+            logger.info("Get cancellation reason took: {}",System.currentTimeMillis()-getCancellationReason);
+            return reason;
         });
     }
 
-    private Future<String> getCancellationReason(String processInstanceId, ExecutorService threadPool){
-        return threadPool.submit(() -> TrustPersistenceUtility.getCancellationReasonForCollaboration(processInstanceId));
-    }
-
     private Future<String> getCompletionDate(String processInstanceId, ExecutorService threadPool){
-        return threadPool.submit(() -> TrustPersistenceUtility.getCompletionDateForCollaboration(processInstanceId));
+        return threadPool.submit(() -> {
+            long getCompletionDate = System.currentTimeMillis();
+            String date = TrustPersistenceUtility.getCompletionDateForCollaboration(processInstanceId);
+            logger.info("Get completion date took: {}",System.currentTimeMillis()-getCompletionDate);
+            return date;
+        });
     }
 
     private Future<String> getRequestDate(String processInstanceId, ExecutorService threadPool){
         return threadPool.submit(() -> {
+            long getRequestDate = System.currentTimeMillis();
             ProcessDocumentMetadata processDocumentMetadata = ProcessDocumentMetadataDAOUtility.getRequestMetadata(processInstanceId);
+            logger.info("Get request date took: {}",System.currentTimeMillis()-getRequestDate);
             return processDocumentMetadata == null ? null : processDocumentMetadata.getSubmissionDate();
         });
     }
 
     private Future<String> getResponseDate(String processInstanceId, ExecutorService threadPool){
         return threadPool.submit(() -> {
+            long getResponseDate = System.currentTimeMillis();
             ProcessDocumentMetadata processDocumentMetadata = ProcessDocumentMetadataDAOUtility.getResponseMetadata(processInstanceId);
+            logger.info("Get response date took: {}",System.currentTimeMillis()-getResponseDate);
             return processDocumentMetadata == null ? null : processDocumentMetadata.getSubmissionDate();
         });
     }
 
     private Future<String> serializeObject(Object object, ExecutorService threadPool){
-        return threadPool.submit(() -> JsonSerializationUtility.getObjectMapper().writeValueAsString(object));
+        return threadPool.submit(() -> {
+            long serializeStartTime = System.currentTimeMillis();
+            String json = JsonSerializationUtility.getObjectMapper().writeValueAsString(object);
+            logger.info("Serialization of object took: {}",System.currentTimeMillis()-serializeStartTime);
+            return json;
+        });
     }
 
     @ApiOperation(value = "",notes = "Gets CollaborationGroup containing the specified process instance. The party information is derived from the given bearer token and " +

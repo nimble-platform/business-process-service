@@ -3,6 +3,7 @@ package eu.nimble.service.bp.util.spring;
 import eu.nimble.common.rest.datachannel.IDataChannelClient;
 import eu.nimble.common.rest.delegate.IDelegateClient;
 import eu.nimble.common.rest.identity.IIdentityClientTyped;
+import eu.nimble.service.bp.cache.CacheHelper;
 import eu.nimble.service.bp.config.BusinessProcessPersistenceConfig;
 import eu.nimble.service.bp.config.GenericConfig;
 import eu.nimble.service.bp.contract.FrameContractService;
@@ -36,6 +37,8 @@ public class SpringBridge implements ApplicationContextAware {
     private IDataChannelClient dataChannelClient;
     @Autowired
     private IDelegateClient delegateClient;
+    @Autowired
+    private CacheHelper cacheHelper;
 
     public static SpringBridge getInstance() {
         return applicationContext.getBean(SpringBridge.class);
@@ -77,6 +80,10 @@ public class SpringBridge implements ApplicationContextAware {
 
     public String getFederationId() {
         return getGenericConfig().getFederationInstanceId();
+    }
+
+    public CacheHelper getCacheHelper() {
+        return cacheHelper;
     }
 
     public boolean isDelegateServiceRunning(){

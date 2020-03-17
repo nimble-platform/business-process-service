@@ -165,20 +165,6 @@ public class PartyPersistenceUtility {
     }
 
     /**
-     * Retrieve the user with given id. The user info is taken from the identity-service if it exists or
-     * database directly.
-     * */
-    public static PersonType getPerson(String bearerToken, String userId) throws IOException {
-        // get Person info from the identity-service
-        PersonType person = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken,userId);
-        // if there is no such Person in the identity-service, take it from the database
-        if(person == null){
-            person = getPersonByID(userId);
-        }
-        return person;
-    }
-
-    /**
      * Retrieve the parties with the given ids. The party info is taken from the identity-service if it exists
      * or database directly.
      * */
