@@ -1,0 +1,18 @@
+<config
+        xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
+        xmlns='http://www.ehcache.org/v3'
+        xsi:schemaLocation="
+            http://www.ehcache.org/v3
+            http://www.ehcache.org/schema/ehcache-core-3.7.xsd">
+    <!-- Default cache template -->
+    <cache-template name="default">
+        <expiry>
+            <ttl unit="days">7</ttl>
+        </expiry>
+    </cache-template>
+
+    <!-- Caches-->
+    <cache alias="document" uses-template="default">
+        <heap unit="entries">250</heap>
+    </cache>
+</config>
