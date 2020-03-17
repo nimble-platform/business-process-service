@@ -10,6 +10,7 @@ import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtilit
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
+import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.document.IDocument;
 import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
 import eu.nimble.utility.JsonSerializationUtility;
@@ -43,7 +44,16 @@ public class DocumentPersistenceUtility {
     }
 
     public static OrderResponseSimpleType getOrderResponseDocumentByOrderId(String documentId) {
-        return new JPARepositoryFactory().forCatalogueRepository(true).getSingleEntity(QUERY_GET_ORDER_RESPONSE_BY_ORDER_ID, new String[]{"documentId"}, new Object[]{documentId});
+        // get document from cache
+        Object document = SpringBridge.getInstance().getCacheHelper().getDocument(documentId);
+        // if it does not exist in the cache, retrieve it from the database and update the cache
+        if(document == null){
+            document = new JPARepositoryFactory().forCatalogueRepository(true).getSingleEntity(QUERY_GET_ORDER_RESPONSE_BY_ORDER_ID, new String[]{"documentId"}, new Object[]{documentId});
+            // update the cache
+            SpringBridge.getInstance().getCacheHelper().putDocument(document);
+        }
+
+        return (OrderResponseSimpleType) document;
     }
 
     public static <T> T readDocument(DocumentType documentType, String content) {
@@ -65,6 +75,8 @@ public class DocumentPersistenceUtility {
         EntityIdAwareRepositoryWrapper repositoryWrapper = businessProcessContext.getEntityIdAwareRepository(partyId);
         DataIntegratorUtil.checkExistingParties(document,processContextId);
         repositoryWrapper.updateEntity(document);
+        // update the cache
+        SpringBridge.getInstance().getCacheHelper().putDocument(document);
     }
 
     public static void addDocumentWithMetadata(String processContextId, ProcessDocumentMetadata documentMetadata, Object document) {
@@ -78,6 +90,8 @@ public class DocumentPersistenceUtility {
             // remove binary content from the document
             EntityIdAwareRepositoryWrapper repositoryWrapper = businessProcessContext.getEntityIdAwareRepository(documentMetadata.getInitiatorID());
             repositoryWrapper.updateEntityForPersistCases(document);
+            // update the cache
+            SpringBridge.getInstance().getCacheHelper().putDocument(document);
         }
     }
 
@@ -90,6 +104,8 @@ public class DocumentPersistenceUtility {
             if (document != null) {
                 EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(processDocumentMetadataDAO.getInitiatorID());
                 repositoryWrapper.deleteEntity(document);
+                // remove document from the cache
+                SpringBridge.getInstance().getCacheHelper().removeDocument(document);
             }
 
             new JPARepositoryFactory().forBpRepository().deleteEntityByHjid(ProcessDocumentMetadataDAO.class, processDocumentMetadataDAO.getHjid());
@@ -100,8 +116,15 @@ public class DocumentPersistenceUtility {
         Class documentClass = DocumentEnumClassMapper.getDocumentClass(documentType);
         String hibernateEntityName = documentClass.getSimpleName();
         String query = String.format(QUERY_GET_DOCUMENT, hibernateEntityName);
-        IDocument document = new JPARepositoryFactory().forCatalogueRepository(true).getSingleEntity(query, new String[]{"documentId"}, new Object[]{documentID});
-        return document;
+        // get document from cache
+        Object document = SpringBridge.getInstance().getCacheHelper().getDocument(documentID);
+        // if it does not exist in the cache, retrieve it from the database and update the cache
+        if(document == null){
+            document = new JPARepositoryFactory().forCatalogueRepository(true).getSingleEntity(query, new String[]{"documentId"}, new Object[]{documentID});
+            // update the cache
+            SpringBridge.getInstance().getCacheHelper().putDocument(document);
+        }
+        return (IDocument) document;
     }
 
     public static IDocument getUBLDocument(String documentId) {
