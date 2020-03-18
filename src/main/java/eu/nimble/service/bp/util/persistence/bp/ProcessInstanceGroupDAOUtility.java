@@ -1,11 +1,21 @@
 package eu.nimble.service.bp.util.persistence.bp;
 
 import eu.nimble.service.bp.model.hyperjaxb.*;
+import eu.nimble.service.bp.swagger.model.ProcessInstanceGroup;
+import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupFilter;
+import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupResponse;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
+import eu.nimble.service.bp.util.persistence.catalogue.PartyPersistenceUtility;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyNameType;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.utility.HibernateUtility;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
+import org.apache.xpath.operations.Bool;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -15,6 +25,8 @@ import java.util.UUID;
  * Created by suat on 26-Mar-18.
  */
 public class ProcessInstanceGroupDAOUtility {
+
+    private static final Logger logger = LoggerFactory.getLogger(ProcessInstanceGroupDAOUtility.class);
 
     private static final String QUERY_GET_PROCESS_INSTANCE_GROUPS =
             "SELECT pig, max(doc.submissionDate) AS lastActivityTime, min(doc.submissionDate) AS firstActivityTime FROM" +
@@ -224,5 +236,275 @@ public class ProcessInstanceGroupDAOUtility {
 
     public static List<ProcessDocumentMetadataDAO> getDocumentMetadataInProcessInstanceGroup(String pigId) {
         return new JPARepositoryFactory().forBpRepository().getEntities(QUERY_GET_METADATAS_FOR_PROCESS_INSTANGE_GROUP, new String[]{"pigId"}, new Object[]{pigId});
+    }
+
+    public static ProcessInstanceGroupResponse getProcessInstanceGroupResponses(
+            String partyId,
+            String federationId,
+            String collaborationRole,
+            Boolean archived,
+            List<String> tradingPartnerIds,
+            List<String> relatedProductIds,
+            List<String> relatedProductCategories,
+            List<String> status,
+            int limit,
+            int offset,
+            Boolean isProject) {
+
+        CollaborationGroupDAOUtility.QueryData query = getGroupRetrievalQuery(ProcessInstanceGroupQueryType.GROUP, partyId, federationId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories, status, isProject);
+        List<Object> processInstanceGroups = new JPARepositoryFactory().forBpRepository(true).getEntities(query.getQuery(), query.getParameterNames().toArray(new String[query.getParameterNames().size()]), query.getParameterValues().toArray(), limit, offset);
+
+        List<ProcessInstanceGroup> pigList = new ArrayList<>();
+        List<String> cgIdList = new ArrayList<>();
+        for (Object groupResult : processInstanceGroups) {
+            Object[] resultItems = (Object[]) groupResult;
+            ProcessInstanceGroupDAO processInstanceGroupDAO = (ProcessInstanceGroupDAO) resultItems[0];
+            processInstanceGroupDAO.setLastActivityTime((String) resultItems[1]);
+            processInstanceGroupDAO.setFirstActivityTime((String) resultItems[2]);
+
+            pigList.add(HibernateSwaggerObjectMapper.convertProcessInstanceGroupDAO((ProcessInstanceGroupDAO) resultItems[0]));
+            cgIdList.add(((Long) resultItems[3]).toString());
+        }
+
+        ProcessInstanceGroupResponse response = new ProcessInstanceGroupResponse();
+        response.setGroups(pigList);
+        response.setCollaborationGroupIds(cgIdList);
+        return response;
+    }
+
+    public static ProcessInstanceGroupFilter getFilterDetails(
+            String partyId,
+            String federationId,
+            String collaborationRole,
+            Boolean archived,
+            List<String> tradingPartnerIds,
+            List<String> relatedProductIds,
+            List<String> relatedProductCategories,
+            List<String> status,
+            String startTime,
+            String endTime,
+            Boolean isProject,
+            String bearerToken) {
+
+        CollaborationGroupDAOUtility.QueryData query = getGroupRetrievalQuery(
+                ProcessInstanceGroupDAOUtility.ProcessInstanceGroupQueryType.FILTER, partyId, federationId,
+                collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories, status, isProject);
+
+        ProcessInstanceGroupFilter filter = new ProcessInstanceGroupFilter();
+        List<Object> resultSet = new JPARepositoryFactory().forBpRepository().getEntities(
+                query.getQuery(), query.getParameterNames().toArray(new String[query.getParameterNames().size()]), query.getParameterValues().toArray());
+        for (Object result : resultSet) {
+            List<Object> returnedColumns = (List<Object>) result;
+
+            //product
+            String resultColumn = (String) returnedColumns.get(0);
+            if (!filter.getRelatedProducts().contains(resultColumn)) {
+                filter.getRelatedProducts().add(resultColumn);
+            }
+
+            // product category
+            resultColumn = (String) returnedColumns.get(1);
+            if (resultColumn != null && !filter.getRelatedProductCategories().contains(resultColumn)) {
+                filter.getRelatedProductCategories().add(resultColumn);
+            }
+
+            // partner ids
+            // Don't know if the current party is initiator or responder. So, should find the trading partner's id
+            resultColumn = (String) returnedColumns.get(2);
+            String federationIdColumn = (String) returnedColumns.get(3);
+            if (resultColumn.contentEquals(partyId)) {
+                resultColumn = (String) returnedColumns.get(4);
+                federationIdColumn = (String) returnedColumns.get(5);
+            }
+            if (!filter.getTradingPartnerIDs().contains(resultColumn)) {
+                filter.getTradingPartnerIDs().add(resultColumn);
+                filter.getTradingPartnerFederationIds().add(federationIdColumn);
+            }
+
+            // status
+            GroupStatus groupStatus = (GroupStatus) returnedColumns.get(6);
+            if (!filter.getStatus().contains(ProcessInstanceGroupFilter.StatusEnum.valueOf(groupStatus.value()))) {
+                filter.getStatus().add(ProcessInstanceGroupFilter.StatusEnum.valueOf(groupStatus.value()));
+            }
+        }
+
+        List<PartyType> parties = null;
+        try {
+            if(filter.getTradingPartnerIDs().size() > 0){
+                parties = PartyPersistenceUtility.getParties(bearerToken, new ArrayList<>(filter.getTradingPartnerIDs()),new ArrayList<>(filter.getTradingPartnerFederationIds()));
+            }
+        } catch (IOException e) {
+            String msg = String.format("Failed to get parties while getting categories for party: %s, collaboration role: %s, archived: %B", partyId, collaborationRole, archived);
+            logger.error(msg);
+            throw new RuntimeException(msg, e);
+        }
+
+        // populate partners' names
+        if (parties != null) {
+            for (String tradingPartnerId : filter.getTradingPartnerIDs()) {
+                for (PartyType party : parties) {
+                    if (party.getPartyIdentification().get(0).getID().equals(tradingPartnerId)) {
+                        // check whether trading partner names array of filter contains any names of the party
+                        boolean partyExists = false;
+                        for(PartyNameType partyName : party.getPartyName()){
+                            if(filter.getTradingPartnerNames().contains(partyName.getName().getValue())){
+                                partyExists = true;
+                                break;
+                            }
+                        }
+
+                        if(!partyExists){
+                            filter.getTradingPartnerNames().add(party.getPartyName().get(0).getName().getValue());
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        return filter;
+    }
+
+    public static int getProcessInstanceGroupCount(
+            String partyId, String federationId, String collaborationRole, boolean archived, List<String> tradingPartnerIds,
+            List<String> relatedProductIds, List<String> relatedProductCategories, List<String> status, Boolean isProject) {
+
+        CollaborationGroupDAOUtility.QueryData query = getGroupRetrievalQuery(ProcessInstanceGroupQueryType.COUNT, partyId, federationId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories, status, isProject);
+        int count = ((Long) new JPARepositoryFactory().forBpRepository().getSingleEntity(query.getQuery(), query.getParameterNames().toArray(new String[query.getParameterValues().size()]), query.getParameterValues().toArray())).intValue();
+
+        return count;
+    }
+
+    private static CollaborationGroupDAOUtility.QueryData getGroupRetrievalQuery(
+            ProcessInstanceGroupDAOUtility.ProcessInstanceGroupQueryType queryType, String partyId, String federationId,
+            String collaborationRole, Boolean archived, List<String> tradingPartnerIds, List<String> relatedProductIds,
+            List<String> relatedProductCategories, List<String> status, Boolean isProject) {
+
+        String query = "";
+        if (queryType == ProcessInstanceGroupDAOUtility.ProcessInstanceGroupQueryType.FILTER) {
+            query += "select distinct new list(relProd.item, relCat.item, doc.initiatorID, doc.initiatorFederationID, doc.responderID, doc.responderFederationID, pig.status)";
+        } else if (queryType == ProcessInstanceGroupDAOUtility.ProcessInstanceGroupQueryType.COUNT) {
+            query += "select count(distinct pig)";
+        } else if (queryType == ProcessInstanceGroupDAOUtility.ProcessInstanceGroupQueryType.GROUP) {
+            query += "select pig, max(doc.submissionDate) as lastActivityTime, min(doc.submissionDate) as firstActivityTime, cg.hjid";
+        }
+
+        query += " from " +
+                "CollaborationGroupDAO cg join cg.associatedProcessInstanceGroups pig join pig.processInstanceIDsItems pid, " +
+                "ProcessInstanceDAO pi, " +
+                "ProcessDocumentMetadataDAO doc left join doc.relatedProductCategoriesItems relCat left join doc.relatedProductsItems relProd" +
+                " where " +
+                "pid.item = pi.processInstanceID and doc.processInstanceID = pi.processInstanceID";
+
+        CollaborationGroupDAOUtility.QueryData queryData = getGroupCriteria(
+                partyId, federationId,
+                collaborationRole,
+                archived,
+                tradingPartnerIds,
+                relatedProductIds,
+                relatedProductCategories,
+                status, isProject
+        );
+
+        // append the order condition
+        if (queryType == ProcessInstanceGroupQueryType.GROUP) {
+            String orderGroupCriteria = " group by pig.hjid, cg.hjid";
+            orderGroupCriteria += " order by lastActivityTime desc";
+            queryData.setQuery(queryData.getQuery() + orderGroupCriteria);
+        }
+
+        // concatenate the initial part with the group criteria
+        queryData.setQuery(query + queryData.getQuery());
+        return queryData;
+    }
+
+    public static CollaborationGroupDAOUtility.QueryData getGroupCriteria(
+            String partyId, String federationId, String collaborationRole, Boolean archived, List<String> tradingPartnerIds,
+            List<String> relatedProductIds, List<String> relatedProductCategories, List<String> status, Boolean isProject
+    ) {
+        CollaborationGroupDAOUtility.QueryData queryData = new CollaborationGroupDAOUtility.QueryData();
+        List<String> parameterNames = queryData.getParameterNames();
+        List<Object> parameterValues = queryData.getParameterValues();
+
+        String query = "";
+        if (relatedProductCategories != null && relatedProductCategories.size() > 0) {
+            query += " and (";
+            int i = 0;
+            for (; i < relatedProductCategories.size() - 1; i++) {
+                query += " relCat.item = :category" + i + " or";
+
+                parameterNames.add("category" + i);
+                parameterValues.add(relatedProductCategories.get(i));
+            }
+            query += " relCat.item = :category" + i + ")";
+
+            parameterNames.add("category" + i);
+            parameterValues.add(relatedProductCategories.get(i));
+        }
+        if (relatedProductIds != null && relatedProductIds.size() > 0) {
+            query += " and (";
+            int i = 0;
+            for (; i < relatedProductIds.size() - 1; i++) {
+                query += " relProd.item = :product" + i + " or";
+
+                parameterNames.add("product" + i);
+                parameterValues.add(relatedProductIds.get(i));
+            }
+            query += " relProd.item = :product" + i + ")";
+
+            parameterNames.add("product" + i);
+            parameterValues.add(relatedProductIds.get(i));
+        }
+        if (tradingPartnerIds != null && tradingPartnerIds.size() > 0) {
+            query += " and (";
+            int i = 0;
+            for (; i < tradingPartnerIds.size() - 1; i++) {
+                query += " (doc.initiatorID = :partner" + i + " or doc.responderID = :partner" + i + ") or";
+
+                parameterNames.add("partner" + i);
+                parameterValues.add(tradingPartnerIds.get(i));
+            }
+            query += " (doc.initiatorID = :partner" + i + " or doc.responderID = :partner" + i + "))";
+            parameterNames.add("partner" + i);
+            parameterValues.add(tradingPartnerIds.get(i));
+        }
+        if (status != null && status.size() > 0) {
+            query += " and (";
+            int i = 0;
+            for (; i < status.size() - 1; i++) {
+                query += " (pi.status = '" + ProcessInstanceStatus.valueOf(status.get(i)).toString() + "') or";
+            }
+            query += " (pi.status = '" + ProcessInstanceStatus.valueOf(status.get(i)).toString() + "'))";
+        }
+        if (archived != null) {
+            query += " and pig.archived = :archived";
+
+            parameterNames.add("archived");
+            parameterValues.add(archived);
+        }
+        if (partyId != null && federationId !=null) {
+            query += " and pig.partyID = :partyId and pig.federationID = :federationId";
+
+            parameterNames.add("partyId");
+            parameterNames.add("federationId");
+            parameterValues.add(partyId);
+            parameterValues.add(federationId);
+        }
+        if (collaborationRole != null) {
+            query += " and pig.collaborationRole = :role";
+
+            parameterNames.add("role");
+            parameterValues.add(collaborationRole);
+        }
+        if (isProject) {
+            query += " and cg.isProject = true";
+        }
+
+        queryData.setQuery(query);
+        return queryData;
+    }
+
+    public enum ProcessInstanceGroupQueryType {
+        GROUP, FILTER, COUNT
     }
 }

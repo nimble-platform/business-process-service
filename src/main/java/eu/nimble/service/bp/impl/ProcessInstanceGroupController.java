@@ -2,13 +2,11 @@ package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.model.hyperjaxb.*;
-import eu.nimble.service.bp.swagger.model.ProcessInstance;
+import eu.nimble.service.bp.swagger.api.ProcessInstanceGroupsApi;
+import eu.nimble.service.bp.swagger.model.*;
 import eu.nimble.service.bp.util.email.IEmailSenderUtil;
 import eu.nimble.service.bp.util.persistence.bp.*;
 import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
-import eu.nimble.service.bp.swagger.api.ProcessInstanceGroupsApi;
-import eu.nimble.service.bp.swagger.model.ProcessInstanceGroup;
-import eu.nimble.service.bp.swagger.model.ProcessInstanceGroupFilter;
 import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.utility.ExecutionContext;
 import eu.nimble.utility.HttpResponseUtil;
@@ -30,8 +28,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by suat on 06-Feb-18.
@@ -52,6 +49,50 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
     private IValidationUtil validationUtil;
     @Autowired
     private ExecutionContext executionContext;
+
+    @Override
+    public ResponseEntity<ProcessInstanceGroupResponse> getCollaborationGroups(
+            @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String authorization,
+            @ApiParam(value = "Identifier of the party as specified by the identity service (party.id)") @RequestParam(value = "partyId", required = false) String partyId,
+            @ApiParam(value = "Names of the products for which the collaboration activities are performed. If multiple product names to be provided, they should be comma-separated.") @RequestParam(value = "relatedProducts", required = false) List<String> relatedProducts,
+            @ApiParam(value = "Categories of the products.<br>For example: MDF raw,Split air conditioner") @RequestParam(value = "relatedProductCategories", required = false) List<String> relatedProductCategories,
+            @ApiParam(value = "Identifier (party id) of the corresponding trading partners") @RequestParam(value = "tradingPartnerIDs", required = false) List<String> tradingPartnerIDs,
+            @ApiParam(value = "Offset of the first result among the complete result set satisfying the given criteria", defaultValue = "0") @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset,
+            @ApiParam(value = "Number of results to be included in the result set", defaultValue = "10") @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit,
+            @ApiParam(value = "Whether the process instance group is archived or not", defaultValue = "false") @RequestParam(value = "archived", required = false, defaultValue = "false") Boolean archived,
+            @ApiParam(value = "Status of the process instance included in the group.<br>Possible values:<ul><li>INPROGRESS</li><li>WAITING</li><li>CANCELLED</li><li>COMPLETED</li></ul>") @RequestParam(value = "status", required = false) List<String> status,
+            @ApiParam(value = "Role of the party in the collaboration.<br>Possible values:<ul><li>SELLER</li><li>BUYER</li></ul>") @RequestParam(value = "collaborationRole", required = false) String collaborationRole,
+            @ApiParam(value = "Indicator whether the process instance groups are belong to a project type of collaborat'on group", defaultValue = "false") @RequestParam(value = "isProject", required = false, defaultValue = "false") Boolean isProject,
+            @ApiParam(value = ""  ) @RequestHeader(value="federationId", required=false) String federationId
+            ) {
+
+        // set request log of ExecutionContext
+        String requestLog = String.format("Incoming request to get process instance groups for party: %s", partyId);
+        executionContext.setRequestLog(requestLog);
+
+        logger.debug(requestLog);
+        try {
+            // validate role
+            if(!validationUtil.validateRole(authorization, executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+                throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
+            }
+
+            if(partyId != null && federationId == null){
+                throw new NimbleException(NimbleExceptionMessageCode.BAD_REQUEST_MISSING_PARTY_PARAMETERS.toString());
+            }
+
+            ProcessInstanceGroupResponse result = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupResponses(partyId,federationId, collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, status, limit, offset, isProject);
+            int totalCount = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupCount(partyId, federationId,collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, status, isProject);
+            result.setSize(totalCount);
+
+            ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(result);
+            logger.debug("Completed request to get process instance groups for party: {}", partyId);
+            return response;
+
+        } catch (Exception e) {
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_GET_PROCESS_INSTANCE_GROUPS.toString(),Arrays.asList(partyId),e);
+        }
+    }
 
     @Override
     @ApiOperation(value = "", notes = "Deletes the process instance group")
@@ -131,7 +172,7 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
         logger.debug(requestLog);
         ProcessInstanceGroupFilter filters = null;
         try{
-            filters = CollaborationGroupDAOUtility.getFilterDetails(partyId, federationId,collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, status, null, null, bearerToken,isProject);
+            filters = ProcessInstanceGroupDAOUtility.getFilterDetails(partyId, federationId,collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, status, null, null, isProject, bearerToken);
         }
         catch (Exception e){
             throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_GET_PROCESS_INSTANCE_GROUP_FILTERS.toString(),e);
