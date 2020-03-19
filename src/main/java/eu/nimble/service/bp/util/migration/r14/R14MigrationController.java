@@ -1,6 +1,7 @@
 package eu.nimble.service.bp.util.migration.r14;
 
 import eu.nimble.service.bp.config.RoleConfig;
+import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
@@ -75,7 +76,9 @@ public class R14MigrationController {
                 order.setPaymentTerms(null);
                 order.setPaymentMeans(null);
 
-                catalogueRepository.updateEntity(order);
+                order = catalogueRepository.updateEntity(order);
+                // update document cache
+                SpringBridge.getInstance().getCacheHelper().putDocument(order);
             }
 
             logger.info("Updating rfqs");
@@ -105,7 +108,9 @@ public class R14MigrationController {
                     rfq.getRequestForQuotationLine().get(0).getLineItem().getDelivery().get(0).getShipment().setTotalTransportHandlingUnitQuantity(null);
                 }
 
-                catalogueRepository.updateEntity(rfq);
+                rfq = catalogueRepository.updateEntity(rfq);
+                // update document cache
+                SpringBridge.getInstance().getCacheHelper().putDocument(rfq);
             }
 
             logger.info("Updating quotations");
@@ -130,7 +135,9 @@ public class R14MigrationController {
                 quotation.getTermOrCondition().clear();
                 quotation.getTradingTerms().clear();
 
-                catalogueRepository.updateEntity(quotation);
+                quotation = catalogueRepository.updateEntity(quotation);
+                // update document cache
+                SpringBridge.getInstance().getCacheHelper().putDocument(quotation);
             }
 
             logger.info("Updating transport execution plan requests");
@@ -142,7 +149,9 @@ public class R14MigrationController {
                 transportExecutionPlanRequest.getConsignment().get(0).getConsolidatedShipment().get(0).getGoodsItem().get(0).setQuantity(transportExecutionPlanRequest.getConsignment().get(0).getConsolidatedShipment().get(0).getTotalTransportHandlingUnitQuantity());
                 transportExecutionPlanRequest.getConsignment().get(0).getConsolidatedShipment().get(0).setTotalTransportHandlingUnitQuantity(null);
 
-                catalogueRepository.updateEntity(transportExecutionPlanRequest);
+                transportExecutionPlanRequest = catalogueRepository.updateEntity(transportExecutionPlanRequest);
+                // update document cache
+                SpringBridge.getInstance().getCacheHelper().putDocument(transportExecutionPlanRequest);
             }
 
             catalogueRepository.commit();
