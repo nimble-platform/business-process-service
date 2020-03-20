@@ -136,8 +136,9 @@ public class DocumentsController {
                     expectedOrdersForUnshippedOrder = JsonSerializationUtility.getObjectMapper().readValue(responseBody,new TypeReference<List<ExpectedOrder>>(){});
                 }
                 else {
-                    ResponseEntity responseEntity = getExpectedOrders(forAll,bearerToken,unShippedOrderIds);
-                    expectedOrdersForUnshippedOrder = (List<ExpectedOrder>) responseEntity.getBody();
+                    ResponseEntity responseEntity = getExpectedOrders(forAll,bearerToken,unshippedOrderIds);
+                    expectedOrdersForUnshippedOrder = JsonSerializationUtility.getObjectMapper().readValue(responseEntity.getBody().toString(),new TypeReference<List<ExpectedOrder>>() {
+                    });
                 }
                 // first, create ExpectedOrders for the ones having an associated process
                 for (ExpectedOrder expectedOrder : expectedOrdersForUnshippedOrder) {
