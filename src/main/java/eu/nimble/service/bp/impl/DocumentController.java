@@ -16,6 +16,7 @@ import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.model.ModelApiResponse;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
+import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
 import eu.nimble.service.model.ubl.order.ObjectFactory;
@@ -207,6 +208,8 @@ public class DocumentController {
 
             EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(partyId);
             document = repositoryWrapper.updateEntity(document);
+            // update document cache
+            SpringBridge.getInstance().getCacheHelper().putDocument(document);
 
             return ResponseEntity.ok(JsonSerializationUtility.getObjectMapper().writeValueAsString(document));
 

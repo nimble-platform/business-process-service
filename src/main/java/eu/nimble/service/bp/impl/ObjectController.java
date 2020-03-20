@@ -1,6 +1,8 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.config.RoleConfig;
+import eu.nimble.service.bp.util.bp.DocumentEnumClassMapper;
+import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.utility.ExecutionContext;
 import eu.nimble.utility.exception.NimbleException;
 import eu.nimble.utility.exception.NimbleExceptionMessageCode;
@@ -62,6 +64,13 @@ public class ObjectController {
             throw new NimbleException(NimbleExceptionMessageCode.NOT_FOUND_NO_CLASS.toString(), Arrays.asList(className),e);
         }
 
+        // if we delete a business process document, we need to remove it from the cache
+        if(DocumentEnumClassMapper.isBusinessProcessDocument(objectClass)){
+            // get document
+            Object document = new JPARepositoryFactory().forCatalogueRepository().getSingleEntityByHjid(objectClass,Long.parseLong(hjid));
+            // remove it from the cache
+            SpringBridge.getInstance().getCacheHelper().removeDocument(document);
+        }
         // delete the object
         new JPARepositoryFactory().forCatalogueRepository().deleteEntityByHjid(objectClass,Long.parseLong(hjid));
 
