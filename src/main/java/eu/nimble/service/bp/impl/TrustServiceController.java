@@ -6,7 +6,7 @@ import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.messaging.IKafkaSender;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.model.trust.NegotiationRatings;
-import eu.nimble.service.bp.util.email.EmailSenderUtil;
+import eu.nimble.service.bp.util.email.IEmailSenderUtil;
 import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.PartyPersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
@@ -51,7 +51,7 @@ public class TrustServiceController {
     @Autowired
     private ExecutionContext executionContext;
     @Autowired
-    private EmailSenderUtil emailSenderUtil;
+    private IEmailSenderUtil emailSenderUtil;
 
     @ApiOperation(value = "", notes = "Create rating and reviews for the company. A CompletedTaskType is created as a result" +
             "of this operation.")
