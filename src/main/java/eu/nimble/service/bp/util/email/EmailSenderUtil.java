@@ -46,6 +46,34 @@ public class EmailSenderUtil implements IEmailSenderUtil {
     @Value("${nimble.frontend.url}")
     private String frontEndURL;
 
+    public void notifyTrustScoreUpdate(String partyID, String federationID, String bearerToken) {
+        new Thread(() -> {
+            PartyType partyType = null;
+            try {
+                partyType = getParty(partyID,federationID,bearerToken);
+            } catch (IOException e) {
+                logger.error("Failed to get party with id: {} from identity service", partyID, e);
+                return;
+            }
+
+            List<PersonType> personTypeList = partyType.getPerson();
+            List<String> emailList = new ArrayList<>();
+            for (PersonType p : personTypeList) {
+                if (p.getRole().contains("sales_officer")) {
+                    emailList.add(p.getContact().getElectronicMail());
+                }
+            }
+
+            if (emailList.size() != 0) {
+                String subject = "Trust Score has been updated!";
+                Context context = new Context();
+                context.setVariable("partyName", partyType.getPartyName().get(0).getName().getValue());
+                context.setVariable("url", URL_TEXT + frontEndURL + "/#/user-mgmt/company-rating");
+                emailService.send(emailList.toArray(new String[0]), subject, "trust_update", context);
+            }
+        }).start();
+    }
+
     // email sender thread
     public void sendCollaborationStatusEmail(String bearerToken, ProcessInstanceGroupDAO groupDAO) {
         new Thread(() -> {
@@ -304,26 +332,28 @@ public class EmailSenderUtil implements IEmailSenderUtil {
 
             String url = EMPTY_TEXT;
 
-            if (showURL) {
-                if (processDocumentMetadataDAO.getResponderID().equals(String.valueOf(sellerParty.getPartyIdentification().get(0).getID()))) {
-                    if (processDocumentStatus.equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
-                        url = getDashboardUrl(COLLABORATION_ROLE_SELLER);
-                    }else {
-                        url = getDashboardUrl(COLLABORATION_ROLE_BUYER);
-                    }
-                } else if (processDocumentMetadataDAO.getResponderID().equals(String.valueOf(buyerParty.getPartyIdentification().get(0).getID()))) {
-                    if (processDocumentStatus.equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
-                        url = getDashboardUrl(COLLABORATION_ROLE_BUYER);
-                    }else {
-                        url = getDashboardUrl(COLLABORATION_ROLE_SELLER);
+            if (emailList.size() != 0) {
+                if (showURL) {
+                    if (processDocumentMetadataDAO.getResponderID().equals(String.valueOf(sellerParty.getPartyIdentification().get(0).getID()))) {
+                        if (processDocumentStatus.equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
+                            url = getDashboardUrl(COLLABORATION_ROLE_SELLER);
+                        }else {
+                            url = getDashboardUrl(COLLABORATION_ROLE_BUYER);
+                        }
+                    } else if (processDocumentMetadataDAO.getResponderID().equals(String.valueOf(buyerParty.getPartyIdentification().get(0).getID()))) {
+                        if (processDocumentStatus.equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
+                            url = getDashboardUrl(COLLABORATION_ROLE_BUYER);
+                        }else {
+                            url = getDashboardUrl(COLLABORATION_ROLE_SELLER);
+                        }
                     }
                 }
-            }
 
-            if (processDocumentStatus.equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
-                notifyPartyOnPendingCollaboration(emailList.toArray(new String[0]), initiatingPersonName, productName, initiatingPartyName, url, subject, respondingPartyName);
-            } else {
-                notifyPartyOnCollaboration(emailList.toArray(new String[0]), initiatingPersonName, productName, initiatingPartyName, url, subject, respondingPartyName);
+                if (processDocumentStatus.equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
+                    notifyPartyOnPendingCollaboration(emailList.toArray(new String[0]), initiatingPersonName, productName, initiatingPartyName, url, subject, respondingPartyName);
+                } else {
+                    notifyPartyOnCollaboration(emailList.toArray(new String[0]), initiatingPersonName, productName, initiatingPartyName, url, subject, respondingPartyName);
+                }
             }
         }).start();
     }

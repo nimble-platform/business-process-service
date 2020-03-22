@@ -6,6 +6,7 @@ import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.messaging.IKafkaSender;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.model.trust.NegotiationRatings;
+import eu.nimble.service.bp.util.email.EmailSenderUtil;
 import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.PartyPersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
@@ -49,6 +50,8 @@ public class TrustServiceController {
     private IValidationUtil validationUtil;
     @Autowired
     private ExecutionContext executionContext;
+    @Autowired
+    private EmailSenderUtil emailSenderUtil;
 
     @ApiOperation(value = "", notes = "Create rating and reviews for the company. A CompletedTaskType is created as a result" +
             "of this operation.")
@@ -130,6 +133,7 @@ public class TrustServiceController {
 
             // broadcast changes
             kafkaSender.broadcastRatingsUpdate(partyId, bearerToken);
+            emailSenderUtil.notifyTrustScoreUpdate(partyId, federationId, bearerToken);
 
             logger.info("Created rating and reviews for the party with id: {} and process instance with id: {}", partyId, processInstanceID);
             return ResponseEntity.ok(completedTaskType);
