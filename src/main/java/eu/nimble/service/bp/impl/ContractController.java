@@ -394,6 +394,8 @@ public class ContractController {
             try {
                 EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(party.getPartyIdentification().get(0).getID());
                 document = repositoryWrapper.updateEntity(document);
+                // update document cache
+                SpringBridge.getInstance().getCacheHelper().putDocument(document);
             } catch (Exception e) {
                 throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_FAILED_TO_ADD_CLAUSE.toString(),Arrays.asList(documentId, clauseDocumentId),e);
             }
@@ -453,6 +455,8 @@ public class ContractController {
             try {
                 EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(party.getPartyIdentification().get(0).getID());
                 document = repositoryWrapper.updateEntity(document);
+                // update document cache
+                SpringBridge.getInstance().getCacheHelper().putDocument(document);
             } catch (Exception e) {
                 throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_FAILED_TO_ADD_DATA_MONITORING_CLAUSE_TO_CONTRACT.toString(),Arrays.asList(documentId),e);
             }

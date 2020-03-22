@@ -19,9 +19,9 @@ import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
-import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.commonbasiccomponents.BinaryObjectType;
+import eu.nimble.service.model.ubl.commonbasiccomponents.TextType;
 import eu.nimble.service.model.ubl.document.IDocument;
 import eu.nimble.utility.*;
 import eu.nimble.utility.exception.NimbleException;
@@ -31,7 +31,6 @@ import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
 import eu.nimble.utility.serialization.JsonSerializer;
 import eu.nimble.utility.serialization.MixInIgnoreType;
 import eu.nimble.utility.validation.IValidationUtil;
-import feign.Response;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -303,12 +302,16 @@ public class ProcessInstanceController {
             executorService = Executors.newCachedThreadPool();
 
             // validate role
+            long validationStartTime = System.currentTimeMillis();
             if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
+            logger.info("User role validation took: {}",System.currentTimeMillis()-validationStartTime);
 
             // check the existence of process instance
+            long getProcessInstanceDAOStartTime = System.currentTimeMillis();
             ProcessInstanceDAO instanceDAO = ProcessInstanceDAOUtility.getById(processInstanceId);
+            logger.info("Process instance dao took: {}",System.currentTimeMillis()-getProcessInstanceDAOStartTime);
             if(instanceDAO == null){
                 throw new NimbleException(NimbleExceptionMessageCode.NOT_FOUND_NO_PROCESS_INSTANCE.toString(),Arrays.asList(processInstanceId));
             }
@@ -352,15 +355,6 @@ public class ProcessInstanceController {
             Future<String> cancellationReasonFuture = getCancellationReason(processInstanceId,executorService);
             // get completion date for the collaboration
             Future<String> completionDateFuture = getCompletionDate(processInstanceId,executorService);
-            // get request creator and response creator user info
-            Future<String> requestCreatorUser = null;
-            Future<String> responseCreatorUser = null;
-            if(requestMetadata != null){
-                requestCreatorUser = getCreatorUser(bearerToken,requestMetadata.getCreatorUserID(), executorService);
-            }
-            if(responseMetadata != null){
-                responseCreatorUser = getCreatorUser(bearerToken,responseMetadata.getCreatorUserID(), executorService);
-            }
 
             String cancellationReason = cancellationReasonFuture.get();
             String completionDate = completionDateFuture.get();
@@ -373,8 +367,8 @@ public class ProcessInstanceController {
             jsonSerializer.put("variableInstance",variableInstances.get());
             jsonSerializer.put("lastActivityInstanceStartTime","\""+lastActivityInstanceStartTime.get()+"\"");
             jsonSerializer.put("processInstanceState",processInstanceState.get());
-            jsonSerializer.put("requestCreatorUser",requestCreatorUser == null ? null : "\""+requestCreatorUser.get()+"\"");
-            jsonSerializer.put("responseCreatorUser",responseCreatorUser == null ? null : "\""+ responseCreatorUser.get()+"\"");
+            jsonSerializer.put("requestCreatorUserId",requestMetadata == null ? null : "\""+requestMetadata.getCreatorUserID()+"\"");
+            jsonSerializer.put("responseCreatorUserId",responseMetadata == null ? null : "\""+ responseMetadata.getCreatorUserID()+"\"");
             jsonSerializer.put("cancellationReason",cancellationReason == null ? null : "\""+cancellationReason+"\"");
             jsonSerializer.put("completionDate",completionDate == null ? null : "\""+completionDate+"\"");
             jsonSerializer.put("requestDate",requestDate == null ? null : "\""+requestDate+"\"");
@@ -393,77 +387,45 @@ public class ProcessInstanceController {
     private Future<String> getRequestDocument(String documentId,String bearerToken, ExecutorService threadPool){
         return threadPool.submit(() -> {
             ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
+            long getIDocumentStartTime = System.currentTimeMillis();
             IDocument iDocument = (IDocument) DocumentPersistenceUtility.getUBLDocument(documentId);
+            logger.info("Get IDocument took: {}",System.currentTimeMillis()-getIDocumentStartTime);
             if(iDocument == null){
                 return null;
             }
-            List<PartyNameType> sellerPartyNames = null;
-            List<PartyNameType> buyerPartyNames = null;
 
-            try {
-                // get parties
-                List<PartyType> parties = new ArrayList<>();
-                List<String> partyIds = new ArrayList<>();
-                partyIds.add(iDocument.getSellerPartyId());
+            // product details which will be included in the response
+            List<String> catalogIds = new ArrayList<>();
+            List<String> lineIds = new ArrayList<>();
+            List<List<TextType>> productNames = new ArrayList<>();
 
-                List<String> federationIds = new ArrayList<>();
-                federationIds.add(iDocument.getSellerParty().getFederationInstanceID());
-
-                // seller and buyer are in the same instance
-                if(iDocument.getBuyerParty().getFederationInstanceID().contentEquals(SpringBridge.getInstance().getFederationId())){
-                    partyIds.add(iDocument.getBuyerPartyId());
-                    federationIds.add(iDocument.getBuyerParty().getFederationInstanceID());
-
-                    federationIds.add(iDocument.getSellerParty().getFederationInstanceID());
-                    federationIds.add(iDocument.getBuyerParty().getFederationInstanceID());
-                    // get parties
-                    parties = PartyPersistenceUtility.getParties(bearerToken, partyIds,federationIds);
-                }
-                // seller and buyer are in different instances
-                else{
-                    PartyType sellerParty = PartyPersistenceUtility.getParties(bearerToken, partyIds,federationIds).get(0);
-                    Response response = SpringBridge.getInstance().getDelegateClient().getParty(bearerToken,Long.parseLong(iDocument.getBuyerPartyId()),false,iDocument.getBuyerParty().getFederationInstanceID());
-                    PartyType buyerParty = objectMapper.readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),PartyType.class);
-
-                    parties = Arrays.asList(sellerParty,buyerParty);
-                }
-                // get seller and buyer party names
-                for (PartyType party : parties) {
-                    if(party.getPartyIdentification().get(0).getID().contentEquals(iDocument.getSellerPartyId())){
-                        sellerPartyNames = party.getPartyName();
-                    }
-                    else if(party.getPartyIdentification().get(0).getID().contentEquals(iDocument.getBuyerPartyId())){
-                        buyerPartyNames = party.getPartyName();
-                    }
-                }
-            } catch (IOException e) {
-                String msg = String.format("Failed to get parties while retrieving document : %s", documentId);
-                logger.error(msg);
-                throw new RuntimeException(msg, e);
-            }
-
-            List<ItemType> items = iDocument.getItemTypes();
             List<Boolean> areProductsDeleted = new ArrayList<>();
-            // get catalogue line to check whether the product is deleted or not
-            for (ItemType item : items) {
-                CatalogueLineType catalogueLine = CataloguePersistenceUtility.getCatalogueLine(item.getCatalogueDocumentReference().getID(), item.getManufacturersItemIdentification().getID(),false);
-                areProductsDeleted.add(catalogueLine == null);
+
+            for (ItemType item : iDocument.getItemTypes()) {
+                // check the existence of product
+                areProductsDeleted.add(!CataloguePersistenceUtility.checkCatalogueLineExistence(item.getCatalogueDocumentReference().getID(), item.getManufacturersItemIdentification().getID()));
+
+                catalogIds.add(item.getCatalogueDocumentReference().getID());
+                lineIds.add(item.getManufacturersItemIdentification().getID());
+                productNames.add(item.getName());
             }
 
-            return  "{\"items\":"+objectMapper.writeValueAsString(items) +
+            return  "{\"items\":"+ "{\"catalogIds\":"+objectMapper.writeValueAsString(catalogIds) +
+                        ",\"lineIds\":" + objectMapper.writeValueAsString(lineIds) +
+                        ",\"productNames\":" + objectMapper.writeValueAsString(productNames) + "}" +
                     ",\"areProductsDeleted\":" + objectMapper.writeValueAsString(areProductsDeleted) +
                     ",\"buyerPartyId\":\""+ iDocument.getBuyerPartyId() +
                     "\",\"buyerPartyFederationId\":\""+ iDocument.getBuyerParty().getFederationInstanceID() +
-                    "\",\"buyerPartyName\":"+objectMapper.writeValueAsString(buyerPartyNames)+
-                    ",\"sellerPartyId\":\""+ iDocument.getSellerPartyId()+
-                    "\",\"sellerPartyFederationId\":\""+ iDocument.getSellerParty().getFederationInstanceID() +
-                    "\",\"sellerPartyName\":"+objectMapper.writeValueAsString(sellerPartyNames)+"}";
+                    "\",\"sellerPartyId\":\""+ iDocument.getSellerPartyId()+
+                    "\",\"sellerPartyFederationId\":\""+ iDocument.getSellerParty().getFederationInstanceID() +"\"}";
         });
     }
 
     private Future<String> getResponseDocumentStatus(String documentId, ExecutorService threadPool){
         return threadPool.submit(() -> {
+            long getResponseDocumentStartTime = System.currentTimeMillis();
             IDocument iDocument = (IDocument) DocumentPersistenceUtility.getUBLDocument(documentId);
+            logger.info("Get response document took: {}",System.currentTimeMillis()-getResponseDocumentStartTime);
             if(iDocument == null){
                 return null;
             }
@@ -473,40 +435,49 @@ public class ProcessInstanceController {
         });
     }
 
-    private Future<String> getCreatorUser(String bearerToken,String userId, ExecutorService threadPool){
+    private Future<String> getCancellationReason(String processInstanceId, ExecutorService threadPool){
         return threadPool.submit(() -> {
-            PersonType person = PartyPersistenceUtility.getPerson(bearerToken,userId);
-            if(person != null){
-                return person.getFirstName() +" "+ person.getFamilyName();
-            }
-            return null;
+            long getCancellationReason = System.currentTimeMillis();
+            String reason = TrustPersistenceUtility.getCancellationReasonForCollaboration(processInstanceId);
+            logger.info("Get cancellation reason took: {}",System.currentTimeMillis()-getCancellationReason);
+            return reason;
         });
     }
 
-    private Future<String> getCancellationReason(String processInstanceId, ExecutorService threadPool){
-        return threadPool.submit(() -> TrustPersistenceUtility.getCancellationReasonForCollaboration(processInstanceId));
-    }
-
     private Future<String> getCompletionDate(String processInstanceId, ExecutorService threadPool){
-        return threadPool.submit(() -> TrustPersistenceUtility.getCompletionDateForCollaboration(processInstanceId));
+        return threadPool.submit(() -> {
+            long getCompletionDate = System.currentTimeMillis();
+            String date = TrustPersistenceUtility.getCompletionDateForCollaboration(processInstanceId);
+            logger.info("Get completion date took: {}",System.currentTimeMillis()-getCompletionDate);
+            return date;
+        });
     }
 
     private Future<String> getRequestDate(String processInstanceId, ExecutorService threadPool){
         return threadPool.submit(() -> {
+            long getRequestDate = System.currentTimeMillis();
             ProcessDocumentMetadata processDocumentMetadata = ProcessDocumentMetadataDAOUtility.getRequestMetadata(processInstanceId);
+            logger.info("Get request date took: {}",System.currentTimeMillis()-getRequestDate);
             return processDocumentMetadata == null ? null : processDocumentMetadata.getSubmissionDate();
         });
     }
 
     private Future<String> getResponseDate(String processInstanceId, ExecutorService threadPool){
         return threadPool.submit(() -> {
+            long getResponseDate = System.currentTimeMillis();
             ProcessDocumentMetadata processDocumentMetadata = ProcessDocumentMetadataDAOUtility.getResponseMetadata(processInstanceId);
+            logger.info("Get response date took: {}",System.currentTimeMillis()-getResponseDate);
             return processDocumentMetadata == null ? null : processDocumentMetadata.getSubmissionDate();
         });
     }
 
     private Future<String> serializeObject(Object object, ExecutorService threadPool){
-        return threadPool.submit(() -> JsonSerializationUtility.getObjectMapper().writeValueAsString(object));
+        return threadPool.submit(() -> {
+            long serializeStartTime = System.currentTimeMillis();
+            String json = JsonSerializationUtility.getObjectMapper().writeValueAsString(object);
+            logger.info("Serialization of object took: {}",System.currentTimeMillis()-serializeStartTime);
+            return json;
+        });
     }
 
     @ApiOperation(value = "",notes = "Gets CollaborationGroup containing the specified process instance. The party information is derived from the given bearer token and " +
