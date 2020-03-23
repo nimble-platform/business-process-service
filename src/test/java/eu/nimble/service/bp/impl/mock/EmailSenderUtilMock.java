@@ -11,6 +11,11 @@ import java.util.Date;
 @Component
 public class EmailSenderUtilMock implements IEmailSenderUtil {
     @Override
+    public void notifyTrustScoreUpdate(String partyID, String federationID, String bearerToken) {
+
+    }
+
+    @Override
     public void sendCollaborationStatusEmail(String bearerToken, ProcessInstanceGroupDAO groupDAO) {
 
     }
