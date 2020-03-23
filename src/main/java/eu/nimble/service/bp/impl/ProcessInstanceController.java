@@ -14,7 +14,6 @@ import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtilit
 import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceDAOUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.CataloguePersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
-import eu.nimble.service.bp.util.persistence.catalogue.PartyPersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
@@ -320,7 +319,7 @@ public class ProcessInstanceController {
 
             Future<String> variableInstances = serializeObject(variableInstanceList, executorService);
             Future<String> processInstanceState = serializeObject(CamundaEngine.getProcessInstance(processInstanceId).getState(), executorService);
-            Future<String> lastActivityInstanceStartTime = serializeObject(CamundaEngine.getLastActivityInstance(processInstanceId).getStartTime(), executorService);
+            Future<String> lastActivityInstanceStartTime = serializeObject(CamundaEngine.getLastActivityInstanceStartTime(processInstanceId), executorService);
 
 
             // get request and response document
@@ -365,7 +364,7 @@ public class ProcessInstanceController {
             jsonSerializer.put("requestDocument",requestDocument == null ? null: requestDocument.get());
             jsonSerializer.put("responseDocumentStatus",responseDocumentStatus == null ? null : responseDocumentStatus.get());
             jsonSerializer.put("variableInstance",variableInstances.get());
-            jsonSerializer.put("lastActivityInstanceStartTime","\""+lastActivityInstanceStartTime.get()+"\"");
+            jsonSerializer.put("lastActivityInstanceStartTime",lastActivityInstanceStartTime.get());
             jsonSerializer.put("processInstanceState",processInstanceState.get());
             jsonSerializer.put("requestCreatorUserId",requestMetadata == null ? null : "\""+requestMetadata.getCreatorUserID()+"\"");
             jsonSerializer.put("responseCreatorUserId",responseMetadata == null ? null : "\""+ responseMetadata.getCreatorUserID()+"\"");

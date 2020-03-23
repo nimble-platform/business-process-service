@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.xml.transform.dom.DOMSource;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -282,8 +283,9 @@ public class CamundaEngine {
         return historyService.createHistoricVariableInstanceQuery().processInstanceId(processInstanceId).list();
     }
 
-    public static HistoricActivityInstance getLastActivityInstance(String processInstanceId){
-        return historyService.createHistoricActivityInstanceQuery().processInstanceId(processInstanceId).orderByHistoricActivityInstanceStartTime().desc().listPage(0,1).get(0);
+    public static String getLastActivityInstanceStartTime(String processInstanceId){
+        HistoricActivityInstance historicActivityInstance = historyService.createHistoricActivityInstanceQuery().processInstanceId(processInstanceId).orderByHistoricActivityInstanceStartTime().desc().listPage(0,1).get(0);
+        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ").format(historicActivityInstance.getStartTime());
     }
 
     public static HistoricProcessInstance getProcessInstance(String processInstanceId){
