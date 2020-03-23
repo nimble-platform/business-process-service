@@ -13,6 +13,7 @@ import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.exception.NimbleException;
 import eu.nimble.utility.exception.NimbleExceptionMessageCode;
+import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.validation.IValidationUtil;
 import feign.Response;
@@ -25,10 +26,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -226,6 +224,44 @@ public class ShoppingCartController {
             throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_ADD_PRODUCT_TO_SHOPPING_CART.toString(),Arrays.asList(productId.toString()),e);
         }
     }
+
+//    @ApiOperation(value = "", notes = "Increases the quantity of the specified product in the shopping cart")
+//    @ApiResponses(value = {
+//            @ApiResponse(code = 200, message = "Increased the quantity of the product in the shopping cart", response = CatalogueType.class),
+//            @ApiResponse(code = 400, message = "There is no product for the specified id"),
+//            @ApiResponse(code = 401, message = "Invalid user or role"),
+//            @ApiResponse(code = 412, message = "The client user does not have an associated shopping cart")
+//    })
+//    @RequestMapping(value = "/shopping-cart/{cartItemId}",
+//            produces = {"application/json"},
+//            method = RequestMethod.POST)
+//    public ResponseEntity increaseProductQuantityInShoppingCart(@ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
+//                                                   @ApiParam(value = "Hjid of the product", required = true) @PathVariable(value = "cartItemId", required = true) Long productId,
+//                                                   @ApiParam(value = "Increase amount", required = true, defaultValue = "1") @RequestParam(value = "quantity", required = true, defaultValue = "1") Integer quantity) throws Exception {
+//        try {
+//            // set request log of ExecutionContext
+//            String requestLog = String.format("Incoming request to increase the quantity of product product: %s, quantity: %s", productId, quantity);
+//            executionContext.setRequestLog(requestLog);
+//
+//            logger.info(requestLog);
+//            // validate role
+//            if (!validationUtil.validateRole(bearerToken, executionContext.getUserRoles(),RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+//                throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
+//            }
+//
+//            // fetch the and update catalogue line
+//            GenericJPARepository repository = new JPARepositoryFactory().forCatalogueRepository();
+//            CatalogueLineType cartProduct = new JPARepositoryFactory().forCatalogueRepository().getSingleEntityByHjid(CatalogueLineType.class, productId);
+//            cartProduct.getGoodsItem().getQuantity().setValue(new BigDecimal(cartProduct.getGoodsItem().getQuantity().getValue().toBigInteger().intValue() + quantity));
+//            repository.updateEntity(repository);
+//
+//            logger.info("Completed request to increase the quantity of product product: {}, quantity: {}", productId, quantity);
+//            return ResponseEntity.ok().build();
+//
+//        } catch (Exception e) {
+//            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_REMOVE_PRODUCTS_FROM_SHOPPING_CART.toString(), Collections.singletonList(productIds.toString()),e);
+//        }
+//    }
 
     @ApiOperation(value = "", notes = "Removes the specified products from the shopping cart")
     @ApiResponses(value = {

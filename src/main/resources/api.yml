@@ -862,6 +862,74 @@ paths:
           schema:
             $ref: '#/definitions/CollaborationGroupResponse'
 
+  /process-instance-groups:
+    get:
+      operationId: getCollaborationGroups
+      parameters:
+        - in: query
+          name: partyId
+          type: string
+          description: Identifier of the party
+        - in: query
+          name: relatedProducts
+          type: array
+          description: Related products
+        - in: query
+          name: relatedProductCategories
+          type: array
+          description: Related product categories
+        - in: query
+          name: tradingPartnerIDs
+          type: array
+          description: Identifier of the corresponsing trading partner ID
+        - in: query
+          name: offset
+          type: integer
+          description: Offset of the first result among the complete result set satisfying the given criteria
+          default: 0
+        - in: query
+          name: limit
+          type: integer
+          description: Number of results to be included in the result set
+          default: 10
+        - in: query
+          name: archived
+          type: boolean
+          default: false
+        - in: query
+          name: status
+          required: false
+          type: array
+          items:
+            type: string
+            enum:
+              - INPROGRESS
+              - CANCELLED
+              - COMPLETED
+        - in: query
+          name: collaborationRole
+          type: string
+          required: false
+        - in: query
+          name: isProject
+          type: boolean
+          default: false
+        - name: federationId
+          in: header
+          type: string
+          required: false
+        - name: Authorization
+          in: header
+          type: string
+          required: true
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Retrieved the groups successfully
+          schema:
+            $ref: '#/definitions/ProcessInstanceGroupResponse'
+
   /process-instance-groups/order-document:
     get:
       operationId: getOrderDocument
@@ -1287,8 +1355,22 @@ definitions:
         type: string
 
   CollaborationGroupResponse:
-    title: Process Instance Group Response
+    title: Collaboration Group Response
     type: object
+  ProcessInstanceGroupResponse:
+    title: Process Instance Group Response
+    properties:
+      groups:
+        type: array
+        items:
+          $ref: '#/definitions/ProcessInstanceGroup'
+      collaborationGroupIds:
+        type: array
+        items:
+          type: string
+      size:
+        type: integer
+
 
   GroupIdTuple:
     title: Group Id Tuple
@@ -1336,7 +1418,7 @@ definitions:
         items:
           type: string
           enum:
-          - STARTED
+          - INPROGRESS
           - CANCELLED
           - COMPLETED
 
