@@ -92,7 +92,7 @@ public class EmailSenderUtil implements IEmailSenderUtil {
                 List<PartyType> parties;
                 // parties in this instance
                 if(groupDAO.getFederationID().contentEquals(SpringBridge.getInstance().getFederationId()) && tradingPartnerFederationID.contentEquals(SpringBridge.getInstance().getFederationId())){
-                    parties = SpringBridge.getInstance().getiIdentityClientTyped().getParties(bearerToken,Arrays.asList(groupDAO.getFederationID(),tradingPartnerFederationID));
+                    parties = SpringBridge.getInstance().getiIdentityClientTyped().getParties(bearerToken,Arrays.asList(partyId,tradingPartnerId));
                 }
                 else{
                     Response response = SpringBridge.getInstance().getDelegateClient().getParty(bearerToken,partyIds,false,federationIds);
