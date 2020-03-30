@@ -105,12 +105,21 @@ public class StartWithDocumentController {
         if(bearerToken != null){
             // check token and get creator user id
             try {
-                PersonType creatorUser = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken);
-                if(creatorUser == null){
-                    throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_NO_USER_FOR_TOKEN.toString(), Arrays.asList(bearerToken));
+                if(executionContext.getOriginalBearerToken() == null){
+                    PersonType creatorUser = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken);
+                    if(creatorUser == null){
+                        throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_NO_USER_FOR_TOKEN.toString(), Arrays.asList(bearerToken));
+                    }
+                    // set creator user id
+                    creatorUserId = creatorUser.getID();
+                } else{
+                    Response response = SpringBridge.getInstance().getDelegateClient().getPersonViaToken(bearerToken, executionContext.getOriginalBearerToken(),executionContext.getClientFederationId());
+                    PersonType person = JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),PersonType.class);
+                    if(person == null){
+                        throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_NO_USER_FOR_TOKEN.toString(), Arrays.asList(executionContext.getOriginalBearerToken()));
+                    }
+                    creatorUserId = person.getID();
                 }
-                // set creator user id
-                creatorUserId = creatorUser.getID();
             } catch (IOException | NimbleException e) {
                 throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_FAILED_TO_GET_PERSON.toString(),e);
             }

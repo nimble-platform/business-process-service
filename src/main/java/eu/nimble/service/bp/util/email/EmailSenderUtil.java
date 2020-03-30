@@ -75,7 +75,7 @@ public class EmailSenderUtil implements IEmailSenderUtil {
     }
 
     // email sender thread
-    public void sendCollaborationStatusEmail(String bearerToken, ProcessInstanceGroupDAO groupDAO) {
+    public void sendCollaborationStatusEmail(String bearerToken,String originalBearerToken,String clientFederationId, ProcessInstanceGroupDAO groupDAO) {
         new Thread(() -> {
             // Collect the trading partner name
             String partyId = groupDAO.getPartyID();
@@ -134,7 +134,12 @@ public class EmailSenderUtil implements IEmailSenderUtil {
                 String personId = documentMetadataDAO.getCreatorUserID();
                 PersonType person;
                 try {
-                    person = iIdentityClientTyped.getPerson(bearerToken, personId);
+                    if(tradingPartnerFederationID.contentEquals(SpringBridge.getInstance().getFederationId())){
+                        person = iIdentityClientTyped.getPerson(bearerToken, personId);
+                    } else {
+                        Response response = SpringBridge.getInstance().getDelegateClient().getPerson(bearerToken,personId,tradingPartnerFederationID);
+                        person = JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),PersonType.class);
+                    }
                     toEmail = person.getContact().getElectronicMail();
                 } catch (IOException e) {
                     logger.error("Failed to send email for group: {} with status: {}", groupDAO.getID(), groupDAO.getStatus().toString());
@@ -150,7 +155,12 @@ public class EmailSenderUtil implements IEmailSenderUtil {
             PersonType person;
             String personName;
             try {
-                person = iIdentityClientTyped.getPerson(bearerToken);
+                if(originalBearerToken == null){
+                    person = iIdentityClientTyped.getPerson(bearerToken);
+                } else{
+                    Response response = SpringBridge.getInstance().getDelegateClient().getPersonViaToken(bearerToken, originalBearerToken,clientFederationId);
+                    person = JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),PersonType.class);
+                }
 
             } catch (IOException e) {
                 logger.error("Failed to send email for group: {} with status: {}", groupDAO.getID(), groupDAO.getStatus().toString());
@@ -240,7 +250,7 @@ public class EmailSenderUtil implements IEmailSenderUtil {
         }).start();
     }
 
-    public void sendActionPendingEmail(String bearerToken, String documentId) {
+    public void sendActionPendingEmail(String bearerToken, String originalBearerToken, String clientFederationId, String documentId) {
         new Thread(() -> {
             // Get ProcessDocumentMetadataDAO for the given document id
             ProcessDocumentMetadataDAO processDocumentMetadataDAO = ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId);
@@ -273,7 +283,12 @@ public class EmailSenderUtil implements IEmailSenderUtil {
             }
 
             try {
-                initiatingPerson = iIdentityClientTyped.getPerson(bearerToken);
+                if(originalBearerToken == null){
+                    initiatingPerson = iIdentityClientTyped.getPerson(bearerToken);
+                } else{
+                    Response response = SpringBridge.getInstance().getDelegateClient().getPersonViaToken(bearerToken,originalBearerToken,clientFederationId);
+                    initiatingPerson = JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),PersonType.class);
+                }
             } catch (IOException e) {
                 logger.error("Failed to get person with token: {} from identity service", bearerToken, e);
                 return;

@@ -1,5 +1,6 @@
 package eu.nimble.service.bp.util.persistence.bp;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentStatus;
@@ -7,6 +8,7 @@ import eu.nimble.service.bp.model.hyperjaxb.RoleType;
 import eu.nimble.service.bp.model.export.TransactionSummary;
 import eu.nimble.service.bp.model.statistics.BusinessProcessCount;
 import eu.nimble.service.bp.util.bp.BusinessProcessUtility;
+import eu.nimble.service.bp.util.bp.DocumentEnumClassMapper;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
@@ -18,9 +20,11 @@ import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
 import eu.nimble.service.model.ubl.document.IDocument;
 import eu.nimble.utility.DateUtility;
+import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
+import feign.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -284,8 +288,12 @@ public class ProcessDocumentMetadataDAOUtility {
 
             DocumentMetadataQuery query = getDocumentMetadataQuery(Integer.parseInt(partyId),federationId, null, role, null, null, null, userId, archived, null, DocumentMetadataQueryType.TRANSACTION_METADATA);
             List<ProcessDocumentMetadataDAO> metadataObjects = new JPARepositoryFactory().forBpRepository(true).getEntities(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray());
-            Set<String> partyIds = new HashSet<>();
-            Set<String> personIds = new HashSet<>();
+
+            List<String> partyIds = new ArrayList<>();
+            List<String> partyFederationIds = new ArrayList<>();
+
+            List<String> personIds = new ArrayList<>();
+            List<String> personFederationIds = new ArrayList<>();
             for (ProcessDocumentMetadataDAO documentMetadata : metadataObjects) {
                 TransactionSummary transactionSummary = new TransactionSummary();
 
@@ -297,12 +305,30 @@ public class ProcessDocumentMetadataDAOUtility {
                 if (partyRoleInTransaction.equals(RoleType.BUYER)) {
                     transactionSummary.setCompanyUserId(documentMetadata.getCreatorUserID());
                 }
-                personIds.add(documentMetadata.getCreatorUserID());
+
+                // get the creator user id and his federation id
+                boolean isInitialDocument = BusinessProcessUtility.isInitialDocument(DocumentEnumClassMapper.getDocumentClass(documentMetadata.getType()));
+                String creatorUserId = documentMetadata.getCreatorUserID();
+                String creatorFederationId = isInitialDocument ? documentMetadata.getInitiatorFederationID(): documentMetadata.getResponderFederationID();
+
+                // add person to the person list
+                int personIndex = personIds.indexOf(creatorUserId);
+                if(personIndex == -1 || !personFederationIds.get(personIndex).contentEquals(creatorFederationId)){
+                    personIds.add(creatorUserId);
+                    personFederationIds.add(creatorFederationId);
+                }
 
                 // set corresponding partner id
                 String tradingPartnerId = getTradingPartnerId(documentMetadata, partyId);
+                String tradingPartnerFederationId = getTradingPartnerFederationId(documentMetadata,partyId);
+
                 transactionSummary.setCorrespondingCompanyId(tradingPartnerId);
-                partyIds.add(tradingPartnerId);
+                // add party to the party list
+                int partyIndex = partyIds.indexOf(tradingPartnerId);
+                if(partyIndex == -1 || !partyFederationIds.get(partyIndex).contentEquals(tradingPartnerFederationId)){
+                    partyIds.add(tradingPartnerId);
+                    partyFederationIds.add(tradingPartnerFederationId);
+                }
 
                 // set direction
                 if (partyRoleInTransaction.equals(RoleType.BUYER)) {
@@ -336,8 +362,8 @@ public class ProcessDocumentMetadataDAOUtility {
             }
 
             // fetch and set company names
-            Future<List<PartyType>> partiesFuture = getParties(threadPool, partyIds, bearerToken);
-            List<Future<PersonType>> personFutures = getPersons(threadPool, personIds, bearerToken);
+            Future<List<PartyType>> partiesFuture = getParties(threadPool, partyIds, partyFederationIds,bearerToken);
+            List<Future<PersonType>> personFutures = getPersons(threadPool, personIds, personFederationIds,bearerToken);
 
             try {
                 List<PartyType> parties = partiesFuture.get();
@@ -393,10 +419,34 @@ public class ProcessDocumentMetadataDAOUtility {
         return auxiliaryFiles;
     }
 
-    private static Future<List<PartyType>> getParties(ExecutorService threadPool, Set<String> partyIds, String bearerToken) {
+    private static Future<List<PartyType>> getParties(ExecutorService threadPool, List<String> partyIds, List<String> federationIds, String bearerToken) {
         Callable<List<PartyType>> callable = () -> {
+            List<String> partyIdsForIdentityService = new ArrayList<>();
+            StringBuilder partyIdsForDelegateService = new StringBuilder();
+            List<String> partyFederationIdsForDelegateService = new ArrayList<>();
+
+            int size = federationIds.size();
+            for(int i = 0; i<size;i++){
+                if(federationIds.get(i).contentEquals(SpringBridge.getInstance().getFederationId())){
+                    partyIdsForIdentityService.add(partyIds.get(i));
+                } else{
+                    if(partyIdsForDelegateService.length() == 0){
+                        partyIdsForDelegateService.append(partyIds.get(i));
+                    } else{
+                        partyIdsForDelegateService.append(",").append(partyIds.get(i));
+                    }
+                    partyFederationIdsForDelegateService.add(federationIds.get(i));
+                }
+            }
             try {
-                return SpringBridge.getInstance().getiIdentityClientTyped().getParties(bearerToken, new ArrayList<>(partyIds));
+                List<PartyType> parties = new ArrayList<>();
+
+                Response response = SpringBridge.getInstance().getDelegateClient().getParty(bearerToken,partyIdsForDelegateService.toString(),false,partyFederationIdsForDelegateService);
+                parties.addAll(JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),new TypeReference<List<PartyType>>() {
+                }));
+
+                parties.addAll(SpringBridge.getInstance().getiIdentityClientTyped().getParties(bearerToken, new ArrayList<>(partyIdsForIdentityService)));
+                return parties;
             } catch (IOException e) {
                 logger.error("Failed to get parties while exporting transactions: {}", partyIds, e);
                 return new ArrayList<>();
@@ -405,14 +455,21 @@ public class ProcessDocumentMetadataDAOUtility {
         return threadPool.submit(callable);
     }
 
-    private static List<Future<PersonType>> getPersons(ExecutorService threadPool, Set<String> personIds, String bearerToken) {
+    private static List<Future<PersonType>> getPersons(ExecutorService threadPool, List<String> personIds, List<String> federationIds, String bearerToken) {
         List<Future<PersonType>> personFutures = new ArrayList<>();
-        for(String personId : personIds) {
+        int size = personIds.size();
+        for(int i = 0; i<size;i++) {
+            int finalI = i;
             Callable<PersonType> callable = () -> {
                 try {
-                    return SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken, personId);
+                    if(federationIds.get(finalI).contentEquals(SpringBridge.getInstance().getFederationId())){
+                        return SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken, personIds.get(finalI));
+                    } else{
+                        Response response = SpringBridge.getInstance().getDelegateClient().getPerson(bearerToken,personIds.get(finalI),federationIds.get(finalI));
+                        return JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),PersonType.class);
+                    }
                 } catch (IOException e) {
-                    logger.error("Failed to get person while exporting transactions: {}", personId, e);
+                    logger.error("Failed to get person while exporting transactions: {}", personIds.get(finalI), e);
                     return null;
                 }
             };

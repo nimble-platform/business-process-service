@@ -287,7 +287,7 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
 
             // create completed tasks for both parties
             String processInstanceID = groupDAO.getProcessInstanceIDs().get(groupDAO.getProcessInstanceIDs().size() - 1);
-            TrustPersistenceUtility.createCompletedTasksForBothParties(processInstanceID, bearerToken, "Completed",null);
+            TrustPersistenceUtility.createCompletedTasksForBothParties(processInstanceID, bearerToken, executionContext.getOriginalBearerToken(),executionContext.getClientFederationId(),"Completed",null);
 
             // update ProcessInstanceGroup status
             GenericJPARepository bpRepo = new JPARepositoryFactory().forBpRepository(true);
@@ -298,7 +298,7 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
             }
 
             // send email to the trading partner
-            emailSenderUtil.sendCollaborationStatusEmail(bearerToken, groupDAO);
+            emailSenderUtil.sendCollaborationStatusEmail(bearerToken,executionContext.getOriginalBearerToken(),executionContext.getClientFederationId(), groupDAO);
 
             logger.debug("Finished the collaboration for the group id: {} successfully", id);
             return ResponseEntity.ok(null);
@@ -378,10 +378,10 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
 
             // create completed tasks for both parties
             String processInstanceID = groupDAO.getProcessInstanceIDs().get(groupDAO.getProcessInstanceIDs().size() - 1);
-            TrustPersistenceUtility.createCompletedTasksForBothParties(processInstanceID, bearerToken, "Cancelled",cancellationReason);
+            TrustPersistenceUtility.createCompletedTasksForBothParties(processInstanceID, bearerToken, executionContext.getOriginalBearerToken(),executionContext.getClientFederationId(),"Cancelled",cancellationReason);
 
             // send email to the trading partner
-            emailSenderUtil.sendCollaborationStatusEmail(bearerToken, groupDAO);
+            emailSenderUtil.sendCollaborationStatusEmail(bearerToken,executionContext.getOriginalBearerToken(),executionContext.getClientFederationId(), groupDAO);
 
             logger.debug("Cancelled the collaboration for the group id: {} successfully", id);
             return ResponseEntity.ok(null);

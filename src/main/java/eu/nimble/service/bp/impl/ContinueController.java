@@ -130,7 +130,7 @@ public class ContinueController implements ContinueApi {
             CamundaEngine.continueProcessInstance(businessProcessContext.getId(), body,initiatorFederationId, responderFederationId, bearerToken);
 
             businessProcessContext.commitDbUpdates();
-            emailSenderUtil.sendActionPendingEmail(bearerToken, body.getVariables().getContentUUID());
+            emailSenderUtil.sendActionPendingEmail(bearerToken,executionContext.getOriginalBearerToken(),executionContext.getClientFederationId(), body.getVariables().getContentUUID());
 
             //mdc logging
             Map<String,String> logParamMap = new HashMap<String, String>();

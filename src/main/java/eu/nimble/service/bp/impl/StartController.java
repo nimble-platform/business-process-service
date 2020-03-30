@@ -284,7 +284,7 @@ public class StartController implements StartApi {
             }
 
             businessProcessContext.commitDbUpdates();
-            emailSenderUtil.sendActionPendingEmail(bearerToken, body.getVariables().getContentUUID());
+            emailSenderUtil.sendActionPendingEmail(bearerToken, executionContext.getOriginalBearerToken(),executionContext.getClientFederationId(),body.getVariables().getContentUUID());
             //mdc logging
             Map<String,String> logParamMap = new HashMap<String, String>();
             ProcessVariablesDAO processVariables = processInstanceInputMessageDAO.getVariables();

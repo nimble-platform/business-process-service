@@ -107,6 +107,30 @@ public class DelegateServiceClientMock implements IDelegateClient {
     }
 
     @Override
+    public Response getPersonViaToken(String bearerToken, String tokenToBeChecked, String delegateId) {
+        String response;
+        try {
+            PersonType personType = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(tokenToBeChecked);
+            response = JsonSerializationUtility.getObjectMapper().writeValueAsString(personType);
+        } catch (IOException e) {
+            response = null;
+        }
+        return Response.builder().headers(new HashMap<>()).status(HttpStatus.OK.value()).body(response,Charset.defaultCharset()).build();
+    }
+
+    @Override
+    public Response getPartyByPersonID(String bearerToken, String personId, String delegateId) {
+        String response;
+        try {
+            PartyType partyType = SpringBridge.getInstance().getiIdentityClientTyped().getPartyByPersonID(personId).get(0);
+            response = JsonSerializationUtility.getObjectMapper().writeValueAsString(partyType);
+        } catch (IOException e) {
+            response = null;
+        }
+        return Response.builder().headers(new HashMap<>()).status(HttpStatus.OK.value()).body(response,Charset.defaultCharset()).build();
+    }
+
+    @Override
     public Response getCollaborationGroup(String bearerToken,String id, String delegateId) {
         try {
             ResponseEntity responseEntity = collaborationGroupsController.getCollaborationGroup(id,bearerToken);

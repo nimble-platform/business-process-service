@@ -103,9 +103,20 @@ public class DocumentsController {
                 String partyId;
                 String federationId;
                 try {
-                    PersonType person = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken);
-                    // get party for the person
-                    PartyType party = SpringBridge.getInstance().getiIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
+                    PartyType party;
+                    if(executionContext.getOriginalBearerToken() == null){
+                        PersonType person = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken);
+                        // get party for the person
+                        party = SpringBridge.getInstance().getiIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
+                    } else{
+                        Response response = SpringBridge.getInstance().getDelegateClient().getPersonViaToken(bearerToken, executionContext.getOriginalBearerToken(),executionContext.getClientFederationId());
+                        PersonType person = JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),PersonType.class);
+
+                        response = SpringBridge.getInstance().getDelegateClient().getPartyByPersonID(bearerToken, person.getID(),executionContext.getClientFederationId());
+                        List<PartyType> partyTypes = JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),new TypeReference<List<PartyType>>() {
+                        });
+                        party = partyTypes.get(0);
+                    }
                     partyId = party.getPartyIdentification().get(0).getID();
                     federationId = party.getFederationInstanceID();
                 } catch (IOException e) {
