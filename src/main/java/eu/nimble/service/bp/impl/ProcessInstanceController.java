@@ -13,7 +13,6 @@ import eu.nimble.service.bp.util.persistence.bp.CollaborationGroupDAOUtility;
 import eu.nimble.service.bp.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceDAOUtility;
-import eu.nimble.service.bp.util.persistence.catalogue.CataloguePersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
@@ -401,12 +400,7 @@ public class ProcessInstanceController {
             List<String> lineIds = new ArrayList<>();
             List<List<TextType>> productNames = new ArrayList<>();
 
-            List<Boolean> areProductsDeleted = new ArrayList<>();
-
             for (ItemType item : iDocument.getItemTypes()) {
-                // check the existence of product
-                areProductsDeleted.add(!CataloguePersistenceUtility.checkCatalogueLineExistence(item.getCatalogueDocumentReference().getID(), item.getManufacturersItemIdentification().getID()));
-
                 catalogIds.add(item.getCatalogueDocumentReference().getID());
                 lineIds.add(item.getManufacturersItemIdentification().getID());
                 productNames.add(item.getName());
@@ -415,7 +409,6 @@ public class ProcessInstanceController {
             return  "{\"items\":"+ "{\"catalogIds\":"+objectMapper.writeValueAsString(catalogIds) +
                         ",\"lineIds\":" + objectMapper.writeValueAsString(lineIds) +
                         ",\"productNames\":" + objectMapper.writeValueAsString(productNames) + "}" +
-                    ",\"areProductsDeleted\":" + objectMapper.writeValueAsString(areProductsDeleted) +
                     ",\"buyerPartyId\":\""+ iDocument.getBuyerPartyId() +
                     "\",\"buyerPartyFederationId\":\""+ iDocument.getBuyerParty().getFederationInstanceID() +
                     "\",\"sellerPartyId\":\""+ iDocument.getSellerPartyId()+
