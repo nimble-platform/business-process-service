@@ -303,16 +303,12 @@ public class ProcessInstanceController {
             executorService = Executors.newCachedThreadPool();
 
             // validate role
-            long validationStartTime = System.currentTimeMillis();
             if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
-            logger.info("User role validation took: {}",System.currentTimeMillis()-validationStartTime);
 
             // check the existence of process instance
-            long getProcessInstanceDAOStartTime = System.currentTimeMillis();
             ProcessInstanceDAO instanceDAO = ProcessInstanceDAOUtility.getById(processInstanceId);
-            logger.info("Process instance dao took: {}",System.currentTimeMillis()-getProcessInstanceDAOStartTime);
             if(instanceDAO == null){
                 throw new NimbleException(NimbleExceptionMessageCode.NOT_FOUND_NO_PROCESS_INSTANCE.toString(),Arrays.asList(processInstanceId));
             }
@@ -388,9 +384,7 @@ public class ProcessInstanceController {
     private Future<String> getRequestDocument(String documentId,String bearerToken, ExecutorService threadPool){
         return threadPool.submit(() -> {
             ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
-            long getIDocumentStartTime = System.currentTimeMillis();
             IDocument iDocument = (IDocument) DocumentPersistenceUtility.getUBLDocument(documentId);
-            logger.info("Get IDocument took: {}",System.currentTimeMillis()-getIDocumentStartTime);
             if(iDocument == null){
                 return null;
             }
@@ -418,9 +412,7 @@ public class ProcessInstanceController {
 
     private Future<String> getResponseDocumentStatus(String documentId, ExecutorService threadPool){
         return threadPool.submit(() -> {
-            long getResponseDocumentStartTime = System.currentTimeMillis();
             IDocument iDocument = (IDocument) DocumentPersistenceUtility.getUBLDocument(documentId);
-            logger.info("Get response document took: {}",System.currentTimeMillis()-getResponseDocumentStartTime);
             if(iDocument == null){
                 return null;
             }
@@ -432,46 +424,33 @@ public class ProcessInstanceController {
 
     private Future<String> getCancellationReason(String processInstanceId, ExecutorService threadPool){
         return threadPool.submit(() -> {
-            long getCancellationReason = System.currentTimeMillis();
-            String reason = TrustPersistenceUtility.getCancellationReasonForCollaboration(processInstanceId);
-            logger.info("Get cancellation reason took: {}",System.currentTimeMillis()-getCancellationReason);
-            return reason;
+            return TrustPersistenceUtility.getCancellationReasonForCollaboration(processInstanceId);
         });
     }
 
     private Future<String> getCompletionDate(String processInstanceId, ExecutorService threadPool){
         return threadPool.submit(() -> {
-            long getCompletionDate = System.currentTimeMillis();
-            String date = TrustPersistenceUtility.getCompletionDateForCollaboration(processInstanceId);
-            logger.info("Get completion date took: {}",System.currentTimeMillis()-getCompletionDate);
-            return date;
+            return TrustPersistenceUtility.getCompletionDateForCollaboration(processInstanceId);
         });
     }
 
     private Future<String> getRequestDate(String processInstanceId, ExecutorService threadPool){
         return threadPool.submit(() -> {
-            long getRequestDate = System.currentTimeMillis();
             ProcessDocumentMetadata processDocumentMetadata = ProcessDocumentMetadataDAOUtility.getRequestMetadata(processInstanceId);
-            logger.info("Get request date took: {}",System.currentTimeMillis()-getRequestDate);
             return processDocumentMetadata == null ? null : processDocumentMetadata.getSubmissionDate();
         });
     }
 
     private Future<String> getResponseDate(String processInstanceId, ExecutorService threadPool){
         return threadPool.submit(() -> {
-            long getResponseDate = System.currentTimeMillis();
             ProcessDocumentMetadata processDocumentMetadata = ProcessDocumentMetadataDAOUtility.getResponseMetadata(processInstanceId);
-            logger.info("Get response date took: {}",System.currentTimeMillis()-getResponseDate);
             return processDocumentMetadata == null ? null : processDocumentMetadata.getSubmissionDate();
         });
     }
 
     private Future<String> serializeObject(Object object, ExecutorService threadPool){
         return threadPool.submit(() -> {
-            long serializeStartTime = System.currentTimeMillis();
-            String json = JsonSerializationUtility.getObjectMapper().writeValueAsString(object);
-            logger.info("Serialization of object took: {}",System.currentTimeMillis()-serializeStartTime);
-            return json;
+            return JsonSerializationUtility.getObjectMapper().writeValueAsString(object);
         });
     }
 
