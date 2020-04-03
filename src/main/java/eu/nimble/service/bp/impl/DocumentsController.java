@@ -185,19 +185,21 @@ public class DocumentsController {
                     for (String unshippedOrderId : unshippedOrderIds) {
                         // get document
                         IDocument iDocument = DocumentPersistenceUtility.getUBLDocument(unshippedOrderId);
-                        for (ItemType item : iDocument.getItemTypes()) {
-                            for (ItemPropertyType itemPropertyType : item.getAdditionalItemProperty()) {
-                                if(itemPropertyType.getAssociatedCatalogueLineID().size() > 0){
-                                    for (BigDecimal catalogueHjid : itemPropertyType.getAssociatedCatalogueLineID()) {
-                                        // we have this product in the map, therefore extend corresponding unshipped order ids with the new one
-                                        if(productOrderMap.containsKey(catalogueHjid)){
-                                            List<String> orderIds = productOrderMap.get(catalogueHjid);
-                                            orderIds.add(unshippedOrderId);
-                                            productOrderMap.put(catalogueHjid, orderIds);
-                                        }
-                                        // add product to map
-                                        else{
-                                            productOrderMap.put(catalogueHjid, new ArrayList<>(Arrays.asList(unshippedOrderId)));
+                        if(iDocument != null){
+                            for (ItemType item : iDocument.getItemTypes()) {
+                                for (ItemPropertyType itemPropertyType : item.getAdditionalItemProperty()) {
+                                    if(itemPropertyType.getAssociatedCatalogueLineID().size() > 0){
+                                        for (BigDecimal catalogueHjid : itemPropertyType.getAssociatedCatalogueLineID()) {
+                                            // we have this product in the map, therefore extend corresponding unshipped order ids with the new one
+                                            if(productOrderMap.containsKey(catalogueHjid)){
+                                                List<String> orderIds = productOrderMap.get(catalogueHjid);
+                                                orderIds.add(unshippedOrderId);
+                                                productOrderMap.put(catalogueHjid, orderIds);
+                                            }
+                                            // add product to map
+                                            else{
+                                                productOrderMap.put(catalogueHjid, new ArrayList<>(Arrays.asList(unshippedOrderId)));
+                                            }
                                         }
                                     }
                                 }
