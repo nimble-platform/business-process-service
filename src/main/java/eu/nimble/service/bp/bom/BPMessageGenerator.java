@@ -102,8 +102,8 @@ public class BPMessageGenerator {
         List<String> relatedProductCategories = new ArrayList<>();
         for (ItemType item : items) {
             for (CommodityClassificationType commodityClassificationType : item.getCommodityClassification()) {
-                if (!relatedProductCategories.contains(commodityClassificationType.getItemClassificationCode().getName())) {
-                    relatedProductCategories.add(commodityClassificationType.getItemClassificationCode().getName());
+                if (commodityClassificationType.getItemClassificationCode().getURI() != null && !commodityClassificationType.getItemClassificationCode().getListID().contentEquals("Default") && !relatedProductCategories.contains(commodityClassificationType.getItemClassificationCode().getURI())) {
+                    relatedProductCategories.add(commodityClassificationType.getItemClassificationCode().getURI());
                 }
             }
         }
