@@ -21,6 +21,7 @@ import eu.nimble.service.model.ubl.despatchadvice.DespatchAdviceType;
 import eu.nimble.service.model.ubl.receiptadvice.ReceiptAdviceType;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.utility.JsonSerializationUtility;
+import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,20 +65,20 @@ public class StatisticsPersistenceUtility {
     }
 
     public static List<FulfilmentStatistics> getFulfilmentStatistics(String orderId){
+        GenericJPARepository catalogRepository = new JPARepositoryFactory().forCatalogueRepository(true);
         // get lines for the given order id
         String query = "SELECT orderLine " +
                 "FROM OrderType orderType join orderType.orderLine orderLine " +
                 "WHERE orderType.ID = :orderId";
         List<String> parameterNames = Collections.singletonList("orderId");;
         List<Object> parameterValues = Collections.singletonList(orderId);
-        List<OrderLineType> orderLines = new JPARepositoryFactory().forCatalogueRepository(true).getEntities(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
+        List<OrderLineType> orderLines = catalogRepository.getEntities(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
 
-        // get dispatch and receipt advice pairs for the specified order
-        query = "select distinct despatchAdvice,receiptAdvice " +
-                "from DespatchAdviceType despatchAdvice join despatchAdvice.despatchLine despatchLine join despatchAdvice.orderReference orderReference," +
-                "ReceiptAdviceType receiptAdvice join receiptAdvice.receiptLine receiptLine join receiptAdvice.despatchDocumentReference despatchDocumentReference " +
-                "where despatchDocumentReference.ID = despatchAdvice.ID AND orderReference.documentReference.ID = :orderId";
-        List<Object[]> dispatchReceiptAdvicePairs = new JPARepositoryFactory().forCatalogueRepository(true).getEntities(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
+        // get dispatch advices for the specified order
+        query = "select despatchAdvice " +
+                "from DespatchAdviceType despatchAdvice join despatchAdvice.despatchLine despatchLine join despatchAdvice.orderReference orderReference " +
+                "where orderReference.documentReference.ID = :orderId";
+        List<DespatchAdviceType> dispatchAdvices = catalogRepository.getEntities(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray());
 
         // for each line item in the order, there should be a FulfilmentStatistics
         // we use the SortedMap to keep the order of lines
@@ -88,17 +89,17 @@ public class StatisticsPersistenceUtility {
             fulfilmentStatistic.setRequestedQuantity(orderLine.getLineItem().getQuantity().getValue());
             fulfilmentStatistic.setRejectedQuantity(BigDecimal.ZERO);
             fulfilmentStatistic.setDispatchedQuantity(BigDecimal.ZERO);
+            fulfilmentStatistic.setAcceptedQuantity(BigDecimal.ZERO);
             lineHjidFulfilmentStatisticsMap.put(orderLine.getHjid(),fulfilmentStatistic);
         }
 
-        for (Object[] result : dispatchReceiptAdvicePairs) {
-            DespatchAdviceType despatchAdvice = (DespatchAdviceType) result[0];
-            ReceiptAdviceType receiptAdvice = (ReceiptAdviceType) result[1];
+        for (DespatchAdviceType despatchAdvice : dispatchAdvices) {
+            // get corresponding receipt advice
+            ReceiptAdviceType receiptAdvice = DocumentPersistenceUtility.getReceiptAdviceByDispatchId(despatchAdvice.getID());
 
             int numberOfItems = despatchAdvice.getDespatchLine().size();
             for(int i = 0; i < numberOfItems; i++){
                 DespatchLineType despatchLineType = despatchAdvice.getDespatchLine().get(i);
-                ReceiptLineType receiptLineType = receiptAdvice.getReceiptLine().get(i);
 
                 Long lineHjid = Long.parseLong(despatchLineType.getOrderLineReference().getLineID());
 
@@ -108,12 +109,17 @@ public class StatisticsPersistenceUtility {
                 if(deliveredQuantity != null){
                     dispatchedQuantity = dispatchedQuantity.add(deliveredQuantity);
                 }
-                BigDecimal receiptLineRejectedQuantity = receiptLineType.getRejectedQuantity().getValue();
+                BigDecimal receiptLineRejectedQuantity = receiptAdvice != null ? receiptAdvice.getReceiptLine().get(i).getRejectedQuantity().getValue() : null;
                 if(receiptLineRejectedQuantity != null){
                     rejectedQuantity = rejectedQuantity.add(receiptLineRejectedQuantity);
                 }
-                lineHjidFulfilmentStatisticsMap.get(lineHjid).setDispatchedQuantity(lineHjidFulfilmentStatisticsMap.get(lineHjid).getDispatchedQuantity().add(dispatchedQuantity));
-                lineHjidFulfilmentStatisticsMap.get(lineHjid).setRejectedQuantity(lineHjidFulfilmentStatisticsMap.get(lineHjid).getRejectedQuantity().add(rejectedQuantity));
+                BigDecimal acceptedQuantity = receiptAdvice != null ? dispatchedQuantity.subtract(rejectedQuantity):BigDecimal.ZERO;
+
+                FulfilmentStatistics fulfilmentStatistics = lineHjidFulfilmentStatisticsMap.get(lineHjid);
+
+                fulfilmentStatistics.setDispatchedQuantity(fulfilmentStatistics.getDispatchedQuantity().add(dispatchedQuantity));
+                fulfilmentStatistics.setRejectedQuantity(fulfilmentStatistics.getRejectedQuantity().add(rejectedQuantity));
+                fulfilmentStatistics.setAcceptedQuantity(fulfilmentStatistics.getAcceptedQuantity().add(acceptedQuantity));
             }
         }
 

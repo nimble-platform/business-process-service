@@ -13,6 +13,7 @@ import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.document.IDocument;
 import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
+import eu.nimble.service.model.ubl.receiptadvice.ReceiptAdviceType;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.persistence.resource.EntityIdAwareRepositoryWrapper;
@@ -34,6 +35,7 @@ public class DocumentPersistenceUtility {
     private static final String QUERY_GET_DOCUMENT = "SELECT document FROM %s document WHERE document.ID = :documentId";
     private static final String QUERY_GET_ADDITIONAL_DOCUMENT_TYPES_FROM_RFQ = "SELECT doc.ID, doc.documentType FROM RequestForQuotationType rfq join rfq.additionalDocumentReference doc WHERE rfq.ID = :documentId";
     private static final String QUERY_GET_ADDITIONAL_DOCUMENT_TYPES_FROM_IIR = "SELECT doc.ID, doc.documentType FROM ItemInformationRequestType iir join iir.additionalDocumentReference doc WHERE iir.ID = :documentId";
+    private static final String QUERY_GET_RECEIPT_ADVICE_BY_DISPATCH_ID = "SELECT receiptAdvice FROM ReceiptAdviceType receiptAdvice join receiptAdvice.receiptLine receiptLine join receiptAdvice.despatchDocumentReference despatchDocumentReference WHERE despatchDocumentReference.ID = :dispatchId";
 
     public static List<String> getOrderIds(String partyId, String itemId) {
         return new JPARepositoryFactory().forCatalogueRepository().getEntities(QUERY_GET_ORDER_IDS_FOR_PARTY, new String[]{"partyId", "itemId"}, new Object[]{partyId, itemId});
@@ -45,6 +47,10 @@ public class DocumentPersistenceUtility {
 
     public static OrderResponseSimpleType getOrderResponseDocumentByOrderId(String documentId) {
         return new JPARepositoryFactory().forCatalogueRepository(true).getSingleEntity(QUERY_GET_ORDER_RESPONSE_BY_ORDER_ID, new String[]{"documentId"}, new Object[]{documentId});
+    }
+
+    public static ReceiptAdviceType getReceiptAdviceByDispatchId(String dispatchId) {
+        return new JPARepositoryFactory().forCatalogueRepository(true).getSingleEntity(QUERY_GET_RECEIPT_ADVICE_BY_DISPATCH_ID, new String[]{"dispatchId"}, new Object[]{dispatchId});
     }
 
     public static <T> T readDocument(DocumentType documentType, String content) {
