@@ -109,7 +109,7 @@ public class CollaborationGroupTest {
 
     @Test
     public void test02_archiveCollaborationGroup() throws Exception{
-        MockHttpServletRequestBuilder request = post("/collaboration-groups/"+collaborationGroupID+"/archive")
+        MockHttpServletRequestBuilder request = post("/collaboration-groups/"+StartControllerTest.sellerCollaborationGroupIdContainingOrder2+"/archive")
                 .header("Authorization", TestConfig.initiatorPersonId);
         MvcResult mvcResult = this.mockMvc.perform(request).andDo(print()).andExpect(status().isOk()).andReturn();
     }
