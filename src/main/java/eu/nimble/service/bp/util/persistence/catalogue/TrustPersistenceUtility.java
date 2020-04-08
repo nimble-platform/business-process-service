@@ -1,5 +1,6 @@
 package eu.nimble.service.bp.util.persistence.catalogue;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceDAO;
 import eu.nimble.service.bp.model.trust.NegotiationRatings;
@@ -12,8 +13,11 @@ import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.commonbasiccomponents.CodeType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.TextType;
 import eu.nimble.utility.DateUtility;
+import eu.nimble.utility.HttpResponseUtil;
+import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
+import feign.Response;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -148,7 +152,7 @@ public class TrustPersistenceUtility {
         new JPARepositoryFactory().forCatalogueRepository().updateEntity(qualifyingParty);
     }
 
-    public static void createCompletedTasksForBothParties(String processInstanceID,String bearerToken,String status, String comment) throws IOException {
+    public static void createCompletedTasksForBothParties(String processInstanceID,String bearerToken, String originalBearerToken, String clientFederationId,String status, String comment) throws IOException {
         List<ProcessDocumentMetadataDAO> processDocumentMetadatas = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(processInstanceID);
         ProcessDocumentMetadataDAO processDocumentMetadata = processDocumentMetadatas.get(0);
         String initiatorID = processDocumentMetadata.getInitiatorID();
@@ -160,10 +164,21 @@ public class TrustPersistenceUtility {
         String completionDate = DateUtility.convert(new DateTime());
 
         if(status.contentEquals("Cancelled")){
-            // we need to add the provided comment (cancellation reason) to the completed task of party who have not cancelled the collaboration
-            PersonType personCancelledTheProcess = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken);
-            // get the party which cancelled the collaboration
-            PartyType partyCancelledTheProcess = SpringBridge.getInstance().getiIdentityClientTyped().getPartyByPersonID(personCancelledTheProcess.getID()).get(0);
+            PartyType partyCancelledTheProcess;
+            if(originalBearerToken == null){
+                // we need to add the provided comment (cancellation reason) to the completed task of party who have not cancelled the collaboration
+                PersonType personCancelledTheProcess = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken);
+                // get the party which cancelled the collaboration
+                partyCancelledTheProcess = SpringBridge.getInstance().getiIdentityClientTyped().getPartyByPersonID(personCancelledTheProcess.getID()).get(0);
+            } else{
+                Response response = SpringBridge.getInstance().getDelegateClient().getPersonViaToken(bearerToken, originalBearerToken,clientFederationId);
+                PersonType person = JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),PersonType.class);
+
+                response = SpringBridge.getInstance().getDelegateClient().getPartyByPersonID(bearerToken, person.getID(),clientFederationId);
+                List<PartyType> partyTypes = JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),new TypeReference<List<PartyType>>() {
+                });
+                partyCancelledTheProcess = partyTypes.get(0);
+            }
 
             // initiator party cancelled the collaboration
             if(partyCancelledTheProcess.getPartyIdentification().get(0).getID().contentEquals(initiatorID) && partyCancelledTheProcess.getFederationInstanceID().contentEquals(initiatorFederationId)){

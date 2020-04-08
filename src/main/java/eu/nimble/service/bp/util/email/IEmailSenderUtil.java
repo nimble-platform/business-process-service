@@ -5,11 +5,13 @@ import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceGroupDAO;
 import java.util.Date;
 
 public interface IEmailSenderUtil {
-    void sendCollaborationStatusEmail(String bearerToken, ProcessInstanceGroupDAO groupDAO);
+    void notifyTrustScoreUpdate(String partyID, String federationID, String bearerToken);
+
+    void sendCollaborationStatusEmail(String bearerToken, String originalBearerToken, String clientFederationId,ProcessInstanceGroupDAO groupDAO);
 
     void sendNewDeliveryDateEmail(String bearerToken, Date newDeliveryDate, String buyerPartyId, String buyerPartyFederationId, String sellerFederationId, String processInstanceId);
 
-    void sendActionPendingEmail(String bearerToken, String documentId);
+    void sendActionPendingEmail(String bearerToken, String originalBearerToken, String clientFederationId,String documentId);
 
     void notifyPartyOnPendingCollaboration(String[] toEmail, String initiatingPersonName, String productName, String initiatingPartyName, String url, String subject, String respondingPartyName);
 

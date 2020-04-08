@@ -6,6 +6,7 @@ public class FulfilmentStatistics {
 
     private Long lineItemHjid;
     private BigDecimal dispatchedQuantity;
+    private BigDecimal acceptedQuantity;
     private BigDecimal rejectedQuantity;
     private BigDecimal requestedQuantity;
 
@@ -39,5 +40,13 @@ public class FulfilmentStatistics {
 
     public void setLineItemHjid(Long lineItemHjid) {
         this.lineItemHjid = lineItemHjid;
+    }
+
+    public BigDecimal getAcceptedQuantity() {
+        return acceptedQuantity;
+    }
+
+    public void setAcceptedQuantity(BigDecimal acceptedQuantity) {
+        this.acceptedQuantity = acceptedQuantity;
     }
 }

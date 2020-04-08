@@ -1,5 +1,6 @@
 package eu.nimble.service.bp.impl;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import eu.nimble.common.rest.identity.IIdentityClientTyped;
@@ -12,13 +13,12 @@ import eu.nimble.service.bp.util.persistence.bp.CollaborationGroupDAOUtility;
 import eu.nimble.service.bp.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceDAOUtility;
-import eu.nimble.service.bp.util.persistence.catalogue.CataloguePersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
-import eu.nimble.service.bp.util.persistence.catalogue.PartyPersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
+import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.commonbasiccomponents.BinaryObjectType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.TextType;
@@ -31,6 +31,7 @@ import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
 import eu.nimble.utility.serialization.JsonSerializer;
 import eu.nimble.utility.serialization.MixInIgnoreType;
 import eu.nimble.utility.validation.IValidationUtil;
+import feign.Response;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -302,16 +303,12 @@ public class ProcessInstanceController {
             executorService = Executors.newCachedThreadPool();
 
             // validate role
-            long validationStartTime = System.currentTimeMillis();
             if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
-            logger.info("User role validation took: {}",System.currentTimeMillis()-validationStartTime);
 
             // check the existence of process instance
-            long getProcessInstanceDAOStartTime = System.currentTimeMillis();
             ProcessInstanceDAO instanceDAO = ProcessInstanceDAOUtility.getById(processInstanceId);
-            logger.info("Process instance dao took: {}",System.currentTimeMillis()-getProcessInstanceDAOStartTime);
             if(instanceDAO == null){
                 throw new NimbleException(NimbleExceptionMessageCode.NOT_FOUND_NO_PROCESS_INSTANCE.toString(),Arrays.asList(processInstanceId));
             }
@@ -320,7 +317,7 @@ public class ProcessInstanceController {
 
             Future<String> variableInstances = serializeObject(variableInstanceList, executorService);
             Future<String> processInstanceState = serializeObject(CamundaEngine.getProcessInstance(processInstanceId).getState(), executorService);
-            Future<String> lastActivityInstanceStartTime = serializeObject(CamundaEngine.getLastActivityInstance(processInstanceId).getStartTime(), executorService);
+            Future<String> lastActivityInstanceStartTime = serializeObject(CamundaEngine.getLastActivityInstanceStartTime(processInstanceId), executorService);
 
 
             // get request and response document
@@ -365,7 +362,7 @@ public class ProcessInstanceController {
             jsonSerializer.put("requestDocument",requestDocument == null ? null: requestDocument.get());
             jsonSerializer.put("responseDocumentStatus",responseDocumentStatus == null ? null : responseDocumentStatus.get());
             jsonSerializer.put("variableInstance",variableInstances.get());
-            jsonSerializer.put("lastActivityInstanceStartTime","\""+lastActivityInstanceStartTime.get()+"\"");
+            jsonSerializer.put("lastActivityInstanceStartTime",lastActivityInstanceStartTime.get());
             jsonSerializer.put("processInstanceState",processInstanceState.get());
             jsonSerializer.put("requestCreatorUserId",requestMetadata == null ? null : "\""+requestMetadata.getCreatorUserID()+"\"");
             jsonSerializer.put("responseCreatorUserId",responseMetadata == null ? null : "\""+ responseMetadata.getCreatorUserID()+"\"");
@@ -387,9 +384,7 @@ public class ProcessInstanceController {
     private Future<String> getRequestDocument(String documentId,String bearerToken, ExecutorService threadPool){
         return threadPool.submit(() -> {
             ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
-            long getIDocumentStartTime = System.currentTimeMillis();
             IDocument iDocument = (IDocument) DocumentPersistenceUtility.getUBLDocument(documentId);
-            logger.info("Get IDocument took: {}",System.currentTimeMillis()-getIDocumentStartTime);
             if(iDocument == null){
                 return null;
             }
@@ -399,12 +394,7 @@ public class ProcessInstanceController {
             List<String> lineIds = new ArrayList<>();
             List<List<TextType>> productNames = new ArrayList<>();
 
-            List<Boolean> areProductsDeleted = new ArrayList<>();
-
             for (ItemType item : iDocument.getItemTypes()) {
-                // check the existence of product
-                areProductsDeleted.add(!CataloguePersistenceUtility.checkCatalogueLineExistence(item.getCatalogueDocumentReference().getID(), item.getManufacturersItemIdentification().getID()));
-
                 catalogIds.add(item.getCatalogueDocumentReference().getID());
                 lineIds.add(item.getManufacturersItemIdentification().getID());
                 productNames.add(item.getName());
@@ -413,7 +403,6 @@ public class ProcessInstanceController {
             return  "{\"items\":"+ "{\"catalogIds\":"+objectMapper.writeValueAsString(catalogIds) +
                         ",\"lineIds\":" + objectMapper.writeValueAsString(lineIds) +
                         ",\"productNames\":" + objectMapper.writeValueAsString(productNames) + "}" +
-                    ",\"areProductsDeleted\":" + objectMapper.writeValueAsString(areProductsDeleted) +
                     ",\"buyerPartyId\":\""+ iDocument.getBuyerPartyId() +
                     "\",\"buyerPartyFederationId\":\""+ iDocument.getBuyerParty().getFederationInstanceID() +
                     "\",\"sellerPartyId\":\""+ iDocument.getSellerPartyId()+
@@ -423,9 +412,7 @@ public class ProcessInstanceController {
 
     private Future<String> getResponseDocumentStatus(String documentId, ExecutorService threadPool){
         return threadPool.submit(() -> {
-            long getResponseDocumentStartTime = System.currentTimeMillis();
             IDocument iDocument = (IDocument) DocumentPersistenceUtility.getUBLDocument(documentId);
-            logger.info("Get response document took: {}",System.currentTimeMillis()-getResponseDocumentStartTime);
             if(iDocument == null){
                 return null;
             }
@@ -437,46 +424,33 @@ public class ProcessInstanceController {
 
     private Future<String> getCancellationReason(String processInstanceId, ExecutorService threadPool){
         return threadPool.submit(() -> {
-            long getCancellationReason = System.currentTimeMillis();
-            String reason = TrustPersistenceUtility.getCancellationReasonForCollaboration(processInstanceId);
-            logger.info("Get cancellation reason took: {}",System.currentTimeMillis()-getCancellationReason);
-            return reason;
+            return TrustPersistenceUtility.getCancellationReasonForCollaboration(processInstanceId);
         });
     }
 
     private Future<String> getCompletionDate(String processInstanceId, ExecutorService threadPool){
         return threadPool.submit(() -> {
-            long getCompletionDate = System.currentTimeMillis();
-            String date = TrustPersistenceUtility.getCompletionDateForCollaboration(processInstanceId);
-            logger.info("Get completion date took: {}",System.currentTimeMillis()-getCompletionDate);
-            return date;
+            return TrustPersistenceUtility.getCompletionDateForCollaboration(processInstanceId);
         });
     }
 
     private Future<String> getRequestDate(String processInstanceId, ExecutorService threadPool){
         return threadPool.submit(() -> {
-            long getRequestDate = System.currentTimeMillis();
             ProcessDocumentMetadata processDocumentMetadata = ProcessDocumentMetadataDAOUtility.getRequestMetadata(processInstanceId);
-            logger.info("Get request date took: {}",System.currentTimeMillis()-getRequestDate);
             return processDocumentMetadata == null ? null : processDocumentMetadata.getSubmissionDate();
         });
     }
 
     private Future<String> getResponseDate(String processInstanceId, ExecutorService threadPool){
         return threadPool.submit(() -> {
-            long getResponseDate = System.currentTimeMillis();
             ProcessDocumentMetadata processDocumentMetadata = ProcessDocumentMetadataDAOUtility.getResponseMetadata(processInstanceId);
-            logger.info("Get response date took: {}",System.currentTimeMillis()-getResponseDate);
             return processDocumentMetadata == null ? null : processDocumentMetadata.getSubmissionDate();
         });
     }
 
     private Future<String> serializeObject(Object object, ExecutorService threadPool){
         return threadPool.submit(() -> {
-            long serializeStartTime = System.currentTimeMillis();
-            String json = JsonSerializationUtility.getObjectMapper().writeValueAsString(object);
-            logger.info("Serialization of object took: {}",System.currentTimeMillis()-serializeStartTime);
-            return json;
+            return JsonSerializationUtility.getObjectMapper().writeValueAsString(object);
         });
     }
 
@@ -508,9 +482,19 @@ public class ProcessInstanceController {
             // get person using the given bearer token
             PartyType party;
             try {
-                PersonType person = iIdentityClientTyped.getPerson(bearerToken);
-                // get party for the person
-                party = iIdentityClientTyped.getPartyByPersonID(person.getID()).get(0);
+                if(executionContext.getOriginalBearerToken() == null){
+                    PersonType person = iIdentityClientTyped.getPerson(bearerToken);
+                    // get party for the person
+                    party = iIdentityClientTyped.getPartyByPersonID(person.getID()).get(0);
+                } else{
+                    Response response = SpringBridge.getInstance().getDelegateClient().getPersonViaToken(bearerToken, executionContext.getOriginalBearerToken(),executionContext.getClientFederationId());
+                    PersonType person = JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),PersonType.class);
+
+                    response = SpringBridge.getInstance().getDelegateClient().getPartyByPersonID(bearerToken, person.getID(),executionContext.getClientFederationId());
+                    List<PartyType> partyTypes = JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),new TypeReference<List<PartyType>>() {
+                    });
+                    party = partyTypes.get(0);
+                }
 
             } catch (IOException e) {
                 throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_FAILED_TO_GET_PARTY.toString(),Arrays.asList(bearerToken),e);

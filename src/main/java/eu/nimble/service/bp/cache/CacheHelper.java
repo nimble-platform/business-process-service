@@ -42,14 +42,18 @@ public class CacheHelper {
     }
 
     public void putDocument(Object document) {
-        IDocument iDocument = (IDocument) document;
-        documentCache.put(iDocument.getDocumentId(),document);
+        if(document != null){
+            IDocument iDocument = (IDocument) document;
+            documentCache.put(iDocument.getDocumentId(),document);
+        }
     }
 
     public void removeDocument(Object document) {
-        IDocument iDocument = (IDocument) document;
-        if(documentCache.containsKey(iDocument.getDocumentId())){
-            documentCache.remove(iDocument.getDocumentId(),document);
+        if(document != null){
+            IDocument iDocument = (IDocument) document;
+            if(documentCache.containsKey(iDocument.getDocumentId())){
+                documentCache.remove(iDocument.getDocumentId(),document);
+            }
         }
     }
 }

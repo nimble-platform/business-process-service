@@ -1,6 +1,7 @@
 package eu.nimble.service.bp.util.migration.r13;
 
 import eu.nimble.service.bp.config.RoleConfig;
+import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.utility.ExecutionContext;
 import eu.nimble.utility.exception.NimbleException;
 import eu.nimble.utility.exception.NimbleExceptionMessageCode;
@@ -76,6 +77,8 @@ public class R13MigrationController {
                     List<Object> documents = repo.getEntities(String.format(QUERY_GET_DOCUMENTS_BY_ID, tableName), new String[]{"id"}, new Object[]{id}, LIMIT, OFFSET);
                     for (Object document : documents) {
                         repo.deleteEntity(document);
+                        // remove document from cache
+                        SpringBridge.getInstance().getCacheHelper().removeDocument(document);
                     }
                 }
             }

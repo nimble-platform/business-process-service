@@ -1,6 +1,7 @@
 package eu.nimble.service.bp.config.interceptor;
 
 import eu.nimble.utility.ExecutionContext;
+import eu.nimble.utility.exception.AuthenticationException;
 import eu.nimble.utility.exception.NimbleException;
 import eu.nimble.utility.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.validation.IValidationUtil;
@@ -40,6 +41,10 @@ public class RestServiceInterceptor extends HandlerInterceptorAdapter {
     private final String CLAIMS_FIELD_REALM_ACCESS = "realm_access";
     private final String CLAIMS_FIELD_ROLES = "roles";
     private final String CLAIMS_FIELD_EMAIL = "email";
+    // headers
+    private final String ORIGINAL_AUTHORIZATION_HEADER = "originalAuthorizationHeader";
+    private final String CLIENT_FEDERATION_ID_HEADER = "clientFederationIdHeader";
+
     private final int MEGABYTE = 1024*1024;
 
     @Override
@@ -51,6 +56,7 @@ public class RestServiceInterceptor extends HandlerInterceptorAdapter {
         request.setAttribute("startTime", System.currentTimeMillis());
 
         String bearerToken = request.getHeader(HttpHeaders.AUTHORIZATION);
+        String originalBearerToken = request.getHeader(ORIGINAL_AUTHORIZATION_HEADER);
 
         Claims claims = null;
         // do not validate the token for swagger operations
@@ -66,6 +72,20 @@ public class RestServiceInterceptor extends HandlerInterceptorAdapter {
 
         // set token to the execution context
         executionContext.setBearerToken(bearerToken);
+
+        // if originalBearerToken exists,i.e it's a federated call, to check user roles properly,
+        // we use Claims of the originalBearerToken
+        if(originalBearerToken != null){
+            executionContext.setOriginalBearerToken(originalBearerToken);
+            executionContext.setClientFederationId(request.getHeader(CLIENT_FEDERATION_ID_HEADER));
+            try {
+                claims = iValidationUtil.getClaims(originalBearerToken);
+            } catch (AuthenticationException e) {
+                logger.error("RestServiceInterceptor.preHandle failed ",e);
+                throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_NO_USER_FOR_TOKEN.toString(), Arrays.asList(bearerToken),e);
+            }
+        }
+
         // set user email and available roles to the execution context
         if(claims != null){
             String email = (String) claims.get(CLAIMS_FIELD_EMAIL);

@@ -65,4 +65,18 @@ public class DocumentEnumClassMapper {
         logger.warn(msg);
         throw new RuntimeException(msg);
     }
+
+    public static boolean isBusinessProcessDocument(Class klass) {
+        // although documentClassEnumMap contains CatalogueType.class, it's not a business process document type
+        // therefore,we check it first
+        if(Objects.equals(klass, CatalogueType.class)){
+            return false;
+        }
+        for (Map.Entry entry : documentClassEnumMap.entrySet()) {
+            if (Objects.equals(klass, entry.getValue())) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

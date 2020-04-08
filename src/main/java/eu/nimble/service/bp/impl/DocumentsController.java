@@ -103,9 +103,20 @@ public class DocumentsController {
                 String partyId;
                 String federationId;
                 try {
-                    PersonType person = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken);
-                    // get party for the person
-                    PartyType party = SpringBridge.getInstance().getiIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
+                    PartyType party;
+                    if(executionContext.getOriginalBearerToken() == null){
+                        PersonType person = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken);
+                        // get party for the person
+                        party = SpringBridge.getInstance().getiIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
+                    } else{
+                        Response response = SpringBridge.getInstance().getDelegateClient().getPersonViaToken(bearerToken, executionContext.getOriginalBearerToken(),executionContext.getClientFederationId());
+                        PersonType person = JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),PersonType.class);
+
+                        response = SpringBridge.getInstance().getDelegateClient().getPartyByPersonID(bearerToken, person.getID(),executionContext.getClientFederationId());
+                        List<PartyType> partyTypes = JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),new TypeReference<List<PartyType>>() {
+                        });
+                        party = partyTypes.get(0);
+                    }
                     partyId = party.getPartyIdentification().get(0).getID();
                     federationId = party.getFederationInstanceID();
                 } catch (IOException e) {
@@ -136,8 +147,9 @@ public class DocumentsController {
                     expectedOrdersForUnshippedOrder = JsonSerializationUtility.getObjectMapper().readValue(responseBody,new TypeReference<List<ExpectedOrder>>(){});
                 }
                 else {
-                    ResponseEntity responseEntity = getExpectedOrders(forAll,bearerToken,unShippedOrderIds);
-                    expectedOrdersForUnshippedOrder = (List<ExpectedOrder>) responseEntity.getBody();
+                    ResponseEntity responseEntity = getExpectedOrders(forAll,bearerToken,unshippedOrderIds);
+                    expectedOrdersForUnshippedOrder = JsonSerializationUtility.getObjectMapper().readValue(responseEntity.getBody().toString(),new TypeReference<List<ExpectedOrder>>() {
+                    });
                 }
                 // first, create ExpectedOrders for the ones having an associated process
                 for (ExpectedOrder expectedOrder : expectedOrdersForUnshippedOrder) {
@@ -173,19 +185,21 @@ public class DocumentsController {
                     for (String unshippedOrderId : unshippedOrderIds) {
                         // get document
                         IDocument iDocument = DocumentPersistenceUtility.getUBLDocument(unshippedOrderId);
-                        for (ItemType item : iDocument.getItemTypes()) {
-                            for (ItemPropertyType itemPropertyType : item.getAdditionalItemProperty()) {
-                                if(itemPropertyType.getAssociatedCatalogueLineID().size() > 0){
-                                    for (BigDecimal catalogueHjid : itemPropertyType.getAssociatedCatalogueLineID()) {
-                                        // we have this product in the map, therefore extend corresponding unshipped order ids with the new one
-                                        if(productOrderMap.containsKey(catalogueHjid)){
-                                            List<String> orderIds = productOrderMap.get(catalogueHjid);
-                                            orderIds.add(unshippedOrderId);
-                                            productOrderMap.put(catalogueHjid, orderIds);
-                                        }
-                                        // add product to map
-                                        else{
-                                            productOrderMap.put(catalogueHjid, new ArrayList<>(Arrays.asList(unshippedOrderId)));
+                        if(iDocument != null){
+                            for (ItemType item : iDocument.getItemTypes()) {
+                                for (ItemPropertyType itemPropertyType : item.getAdditionalItemProperty()) {
+                                    if(itemPropertyType.getAssociatedCatalogueLineID().size() > 0){
+                                        for (BigDecimal catalogueHjid : itemPropertyType.getAssociatedCatalogueLineID()) {
+                                            // we have this product in the map, therefore extend corresponding unshipped order ids with the new one
+                                            if(productOrderMap.containsKey(catalogueHjid)){
+                                                List<String> orderIds = productOrderMap.get(catalogueHjid);
+                                                orderIds.add(unshippedOrderId);
+                                                productOrderMap.put(catalogueHjid, orderIds);
+                                            }
+                                            // add product to map
+                                            else{
+                                                productOrderMap.put(catalogueHjid, new ArrayList<>(Arrays.asList(unshippedOrderId)));
+                                            }
                                         }
                                     }
                                 }

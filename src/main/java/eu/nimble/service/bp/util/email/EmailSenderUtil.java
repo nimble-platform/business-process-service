@@ -46,8 +46,36 @@ public class EmailSenderUtil implements IEmailSenderUtil {
     @Value("${nimble.frontend.url}")
     private String frontEndURL;
 
+    public void notifyTrustScoreUpdate(String partyID, String federationID, String bearerToken) {
+        new Thread(() -> {
+            PartyType partyType = null;
+            try {
+                partyType = getParty(partyID,federationID,bearerToken);
+            } catch (IOException e) {
+                logger.error("Failed to get party with id: {} from identity service", partyID, e);
+                return;
+            }
+
+            List<PersonType> personTypeList = partyType.getPerson();
+            List<String> emailList = new ArrayList<>();
+            for (PersonType p : personTypeList) {
+                if (p.getRole().contains("sales_officer")) {
+                    emailList.add(p.getContact().getElectronicMail());
+                }
+            }
+
+            if (emailList.size() != 0) {
+                String subject = "Trust Score has been updated!";
+                Context context = new Context();
+                context.setVariable("partyName", partyType.getPartyName().get(0).getName().getValue());
+                context.setVariable("url", URL_TEXT + frontEndURL + "/#/user-mgmt/company-rating");
+                emailService.send(emailList.toArray(new String[0]), subject, "trust_update", context);
+            }
+        }).start();
+    }
+
     // email sender thread
-    public void sendCollaborationStatusEmail(String bearerToken, ProcessInstanceGroupDAO groupDAO) {
+    public void sendCollaborationStatusEmail(String bearerToken,String originalBearerToken,String clientFederationId, ProcessInstanceGroupDAO groupDAO) {
         new Thread(() -> {
             // Collect the trading partner name
             String partyId = groupDAO.getPartyID();
@@ -64,7 +92,7 @@ public class EmailSenderUtil implements IEmailSenderUtil {
                 List<PartyType> parties;
                 // parties in this instance
                 if(groupDAO.getFederationID().contentEquals(SpringBridge.getInstance().getFederationId()) && tradingPartnerFederationID.contentEquals(SpringBridge.getInstance().getFederationId())){
-                    parties = SpringBridge.getInstance().getiIdentityClientTyped().getParties(bearerToken,Arrays.asList(groupDAO.getFederationID(),tradingPartnerFederationID));
+                    parties = SpringBridge.getInstance().getiIdentityClientTyped().getParties(bearerToken,Arrays.asList(partyId,tradingPartnerId));
                 }
                 else{
                     Response response = SpringBridge.getInstance().getDelegateClient().getParty(bearerToken,partyIds,false,federationIds);
@@ -106,7 +134,12 @@ public class EmailSenderUtil implements IEmailSenderUtil {
                 String personId = documentMetadataDAO.getCreatorUserID();
                 PersonType person;
                 try {
-                    person = iIdentityClientTyped.getPerson(bearerToken, personId);
+                    if(tradingPartnerFederationID.contentEquals(SpringBridge.getInstance().getFederationId())){
+                        person = iIdentityClientTyped.getPerson(bearerToken, personId);
+                    } else {
+                        Response response = SpringBridge.getInstance().getDelegateClient().getPerson(bearerToken,personId,tradingPartnerFederationID);
+                        person = JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),PersonType.class);
+                    }
                     toEmail = person.getContact().getElectronicMail();
                 } catch (IOException e) {
                     logger.error("Failed to send email for group: {} with status: {}", groupDAO.getID(), groupDAO.getStatus().toString());
@@ -122,7 +155,12 @@ public class EmailSenderUtil implements IEmailSenderUtil {
             PersonType person;
             String personName;
             try {
-                person = iIdentityClientTyped.getPerson(bearerToken);
+                if(originalBearerToken == null){
+                    person = iIdentityClientTyped.getPerson(bearerToken);
+                } else{
+                    Response response = SpringBridge.getInstance().getDelegateClient().getPersonViaToken(bearerToken, originalBearerToken,clientFederationId);
+                    person = JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),PersonType.class);
+                }
 
             } catch (IOException e) {
                 logger.error("Failed to send email for group: {} with status: {}", groupDAO.getID(), groupDAO.getStatus().toString());
@@ -212,7 +250,7 @@ public class EmailSenderUtil implements IEmailSenderUtil {
         }).start();
     }
 
-    public void sendActionPendingEmail(String bearerToken, String documentId) {
+    public void sendActionPendingEmail(String bearerToken, String originalBearerToken, String clientFederationId, String documentId) {
         new Thread(() -> {
             // Get ProcessDocumentMetadataDAO for the given document id
             ProcessDocumentMetadataDAO processDocumentMetadataDAO = ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId);
@@ -245,7 +283,12 @@ public class EmailSenderUtil implements IEmailSenderUtil {
             }
 
             try {
-                initiatingPerson = iIdentityClientTyped.getPerson(bearerToken);
+                if(originalBearerToken == null){
+                    initiatingPerson = iIdentityClientTyped.getPerson(bearerToken);
+                } else{
+                    Response response = SpringBridge.getInstance().getDelegateClient().getPersonViaToken(bearerToken,originalBearerToken,clientFederationId);
+                    initiatingPerson = JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),PersonType.class);
+                }
             } catch (IOException e) {
                 logger.error("Failed to get person with token: {} from identity service", bearerToken, e);
                 return;
@@ -304,26 +347,28 @@ public class EmailSenderUtil implements IEmailSenderUtil {
 
             String url = EMPTY_TEXT;
 
-            if (showURL) {
-                if (processDocumentMetadataDAO.getResponderID().equals(String.valueOf(sellerParty.getPartyIdentification().get(0).getID()))) {
-                    if (processDocumentStatus.equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
-                        url = getDashboardUrl(COLLABORATION_ROLE_SELLER);
-                    }else {
-                        url = getDashboardUrl(COLLABORATION_ROLE_BUYER);
-                    }
-                } else if (processDocumentMetadataDAO.getResponderID().equals(String.valueOf(buyerParty.getPartyIdentification().get(0).getID()))) {
-                    if (processDocumentStatus.equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
-                        url = getDashboardUrl(COLLABORATION_ROLE_BUYER);
-                    }else {
-                        url = getDashboardUrl(COLLABORATION_ROLE_SELLER);
+            if (emailList.size() != 0) {
+                if (showURL) {
+                    if (processDocumentMetadataDAO.getResponderID().equals(String.valueOf(sellerParty.getPartyIdentification().get(0).getID()))) {
+                        if (processDocumentStatus.equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
+                            url = getDashboardUrl(COLLABORATION_ROLE_SELLER);
+                        }else {
+                            url = getDashboardUrl(COLLABORATION_ROLE_BUYER);
+                        }
+                    } else if (processDocumentMetadataDAO.getResponderID().equals(String.valueOf(buyerParty.getPartyIdentification().get(0).getID()))) {
+                        if (processDocumentStatus.equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
+                            url = getDashboardUrl(COLLABORATION_ROLE_BUYER);
+                        }else {
+                            url = getDashboardUrl(COLLABORATION_ROLE_SELLER);
+                        }
                     }
                 }
-            }
 
-            if (processDocumentStatus.equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
-                notifyPartyOnPendingCollaboration(emailList.toArray(new String[0]), initiatingPersonName, productName, initiatingPartyName, url, subject, respondingPartyName);
-            } else {
-                notifyPartyOnCollaboration(emailList.toArray(new String[0]), initiatingPersonName, productName, initiatingPartyName, url, subject, respondingPartyName);
+                if (processDocumentStatus.equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
+                    notifyPartyOnPendingCollaboration(emailList.toArray(new String[0]), initiatingPersonName, productName, initiatingPartyName, url, subject, respondingPartyName);
+                } else {
+                    notifyPartyOnCollaboration(emailList.toArray(new String[0]), initiatingPersonName, productName, initiatingPartyName, url, subject, respondingPartyName);
+                }
             }
         }).start();
     }

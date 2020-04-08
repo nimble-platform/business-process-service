@@ -1,5 +1,6 @@
 package eu.nimble.service.bp.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;
 import eu.nimble.service.bp.config.RoleConfig;
@@ -9,6 +10,7 @@ import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.invoice.InvoiceType;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.utility.ExecutionContext;
+import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.exception.NimbleException;
 import eu.nimble.utility.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.persistence.GenericJPARepository;
@@ -21,12 +23,10 @@ import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
 
@@ -80,6 +80,8 @@ public class PaymentController {
     @RequestMapping(value = "/paymentDone/{orderId}",
             method = RequestMethod.POST)
     public ResponseEntity paymentDone(@ApiParam(value = "Identifier of the order for which the payment is to be done", required = true) @PathVariable(value = "orderId", required = true) String orderId,
+                                      @ApiParam(value = "Identifier of the invoice", required = false) @RequestParam(value = "invoiceId", required = false) String invoiceId,
+                                      @ApiParam(value = "Tracking URL of the invoice", required = false) @RequestParam(value = "invoiceUrl", required = false) String invoiceUrl,
                                       @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
         // set request log of ExecutionContext
         String requestLog = String.format("Creating an Invoice for order: %s", orderId);
@@ -102,7 +104,7 @@ public class PaymentController {
         }
 
         GenericJPARepository catalogueRepository = new JPARepositoryFactory().forCatalogueRepository();
-        InvoiceType invoice = PaymentPersistenceUtility.createInvoiceForOrder(orderId);
+        InvoiceType invoice = PaymentPersistenceUtility.createInvoiceForOrder(orderId,invoiceId,invoiceUrl);
 
         catalogueRepository.persistEntity(invoice);
 
@@ -131,5 +133,46 @@ public class PaymentController {
 
         logger.info("Created an Invoice for order: {}", orderId);
         return ResponseEntity.ok(null);
+    }
+
+    @ApiOperation(value = "",notes = "Retrieves the invoice for the specified order")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Retrieved the invoice successfully"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 404, message = "There does not exist an order with the given id")
+    })
+    @RequestMapping(value = "/invoice/{orderId}",
+            method = RequestMethod.GET)
+    public ResponseEntity getInvoice(@ApiParam(value = "Identifier of the order for which the invoice is to be retrieved", required = true) @PathVariable(value = "orderId", required = true) String orderId,
+                                        @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) {
+        // set request log of ExecutionContext
+        String requestLog = String.format("Incoming request to retrieve invoice for order: %s", orderId);
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
+
+        if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+            throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
+        }
+
+        OrderType order = (OrderType) DocumentPersistenceUtility.getUBLDocument(orderId);
+        if(order == null){
+            throw new NimbleException(NimbleExceptionMessageCode.NOT_FOUND_ORDER.toString(), Arrays.asList(orderId));
+        }
+
+        InvoiceType invoice = PaymentPersistenceUtility.getInvoiceForOrder(orderId);
+
+        if(invoice == null){
+            throw new NimbleException(NimbleExceptionMessageCode.NOT_FOUND_INVOICE.toString(), Arrays.asList(orderId));
+        }
+        logger.info("Completed request to retrieve invoice for order: {}", orderId);
+
+        String serializedInvoice = null;
+        try {
+            serializedInvoice = JsonSerializationUtility.serializeEntity(invoice);
+        } catch (JsonProcessingException e) {
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_FAILED_TO_SERIALIZE_INVOICE.toString());
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(serializedInvoice);
     }
 }

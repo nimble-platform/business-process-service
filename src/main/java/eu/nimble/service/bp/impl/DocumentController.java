@@ -1,6 +1,7 @@
 package eu.nimble.service.bp.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import eu.nimble.common.rest.identity.IIdentityClientTyped;
 import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.model.hyperjaxb.CollaborationGroupDAO;
@@ -24,15 +25,13 @@ import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
 import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
-import eu.nimble.utility.Configuration;
-import eu.nimble.utility.ExecutionContext;
-import eu.nimble.utility.JAXBUtility;
-import eu.nimble.utility.JsonSerializationUtility;
+import eu.nimble.utility.*;
 import eu.nimble.utility.exception.NimbleException;
 import eu.nimble.utility.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.persistence.resource.EntityIdAwareRepositoryWrapper;
 import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
 import eu.nimble.utility.validation.IValidationUtil;
+import feign.Response;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -190,11 +189,21 @@ public class DocumentController {
             // get party id in order to validate the hjids
             String partyId;
             try {
-                // get person using the given bearer token
-                PersonType person = identityClient.getPerson(bearerToken);
-                // get party for the person
-                PartyType party = identityClient.getPartyByPersonID(person.getID()).get(0);
-                partyId = party.getPartyIdentification().get(0).getID();
+                if(executionContext.getOriginalBearerToken() != null){
+                    Response response = SpringBridge.getInstance().getDelegateClient().getPersonViaToken(bearerToken, executionContext.getOriginalBearerToken(),executionContext.getClientFederationId());
+                    PersonType person = JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),PersonType.class);
+
+                    response = SpringBridge.getInstance().getDelegateClient().getPartyByPersonID(bearerToken, person.getID(),executionContext.getClientFederationId());
+                    List<PartyType> partyTypes = JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),new TypeReference<List<PartyType>>() {
+                    });
+                    partyId = partyTypes.get(0).getPartyIdentification().get(0).getID();
+                } else{
+                    // get person using the given bearer token
+                    PersonType person = identityClient.getPerson(bearerToken);
+                    // get party for the person
+                    PartyType party = identityClient.getPartyByPersonID(person.getID()).get(0);
+                    partyId = party.getPartyIdentification().get(0).getID();
+                }
 
             } catch (IOException e) {
                 throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_FAILED_TO_GET_PARTY.toString(),Arrays.asList(bearerToken),e);

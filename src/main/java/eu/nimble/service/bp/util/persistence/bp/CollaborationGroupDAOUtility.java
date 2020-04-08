@@ -308,103 +308,103 @@ public class CollaborationGroupDAOUtility {
         return count;
     }
 
-    public static ProcessInstanceGroupFilter getFilterDetails(
-            String partyId,
-            String federationId,
-            String collaborationRole,
-            Boolean archived,
-            List<String> tradingPartnerIds,
-            List<String> relatedProductIds,
-            List<String> relatedProductCategories,
-            List<String> status,
-            String startTime,
-            String endTime,
-            String bearerToken,
-            Boolean isProject) {
-
-        QueryData query = null;
-        if(isProject){
-            query = getGroupRetrievalQuery(GroupQueryType.PROJECTFILTER, partyId, federationId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories, status, startTime, endTime);
-
-        }else{
-            query = getGroupRetrievalQuery(GroupQueryType.FILTER, partyId, federationId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories, status, startTime, endTime);
-
-        }
-        ProcessInstanceGroupFilter filter = new ProcessInstanceGroupFilter();
-        List<Object> resultSet = new JPARepositoryFactory().forBpRepository().getEntities(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray());
-        for (Object result : resultSet) {
-            List<Object> returnedColumns = (List<Object>) result;
-
-            //product
-            String resultColumn = (String) returnedColumns.get(0);
-            if (!filter.getRelatedProducts().contains(resultColumn)) {
-                filter.getRelatedProducts().add(resultColumn);
-            }
-
-            // product category
-            resultColumn = (String) returnedColumns.get(1);
-            if (resultColumn != null && !filter.getRelatedProductCategories().contains(resultColumn)) {
-                filter.getRelatedProductCategories().add(resultColumn);
-            }
-
-            // partner ids
-            // Don't know if the current party is initiator or responder. So, should find the trading partner's id
-            resultColumn = (String) returnedColumns.get(2);
-            String federationIdColumn = (String) returnedColumns.get(3);
-            if (resultColumn.contentEquals(partyId)) {
-                resultColumn = (String) returnedColumns.get(4);
-                federationIdColumn = (String) returnedColumns.get(5);
-            }
-            if (!filter.getTradingPartnerIDs().contains(resultColumn)) {
-                filter.getTradingPartnerIDs().add(resultColumn);
-                filter.getTradingPartnerFederationIds().add(federationIdColumn);
-            }
-
-
-
-            // status
-            ProcessInstanceStatus processInstanceStatus = (ProcessInstanceStatus) returnedColumns.get(6);
-            if (!filter.getStatus().contains(ProcessInstanceGroupFilter.StatusEnum.valueOf(processInstanceStatus.value()))) {
-                filter.getStatus().add(ProcessInstanceGroupFilter.StatusEnum.valueOf(processInstanceStatus.value()));
-            }
-        }
-
-        List<PartyType> parties = null;
-        try {
-            if(filter.getTradingPartnerIDs().size() > 0){
-                parties = PartyPersistenceUtility.getParties(bearerToken, new ArrayList<>(filter.getTradingPartnerIDs()),new ArrayList<>(filter.getTradingPartnerFederationIds()));
-            }
-        } catch (IOException e) {
-            String msg = String.format("Failed to get parties while getting categories for party: %s, collaboration role: %s, archived: %B", partyId, collaborationRole, archived);
-            logger.error(msg);
-            throw new RuntimeException(msg, e);
-        }
-
-        // populate partners' names
-        if (parties != null) {
-            for (String tradingPartnerId : filter.getTradingPartnerIDs()) {
-                for (PartyType party : parties) {
-                    if (party.getPartyIdentification().get(0).getID().equals(tradingPartnerId)) {
-                        // check whether trading partner names array of filter contains any names of the party
-                        boolean partyExists = false;
-                        for(PartyNameType partyName : party.getPartyName()){
-                            if(filter.getTradingPartnerNames().contains(partyName.getName().getValue())){
-                                partyExists = true;
-                                break;
-                            }
-                        }
-
-                        if(!partyExists){
-                            filter.getTradingPartnerNames().add(party.getPartyName().get(0).getName().getValue());
-                        }
-                        break;
-                    }
-                }
-            }
-        }
-
-        return filter;
-    }
+//    public static ProcessInstanceGroupFilter getFilterDetails(
+//            String partyId,
+//            String federationId,
+//            String collaborationRole,
+//            Boolean archived,
+//            List<String> tradingPartnerIds,
+//            List<String> relatedProductIds,
+//            List<String> relatedProductCategories,
+//            List<String> status,
+//            String startTime,
+//            String endTime,
+//            String bearerToken,
+//            Boolean isProject) {
+//
+//        QueryData query = null;
+//        if(isProject){
+//            query = getGroupRetrievalQuery(GroupQueryType.PROJECTFILTER, partyId, federationId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories, status, startTime, endTime);
+//
+//        }else{
+//            query = getGroupRetrievalQuery(GroupQueryType.FILTER, partyId, federationId, collaborationRole, archived, tradingPartnerIds, relatedProductIds, relatedProductCategories, status, startTime, endTime);
+//
+//        }
+//        ProcessInstanceGroupFilter filter = new ProcessInstanceGroupFilter();
+//        List<Object> resultSet = new JPARepositoryFactory().forBpRepository().getEntities(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray());
+//        for (Object result : resultSet) {
+//            List<Object> returnedColumns = (List<Object>) result;
+//
+//            //product
+//            String resultColumn = (String) returnedColumns.get(0);
+//            if (!filter.getRelatedProducts().contains(resultColumn)) {
+//                filter.getRelatedProducts().add(resultColumn);
+//            }
+//
+//            // product category
+//            resultColumn = (String) returnedColumns.get(1);
+//            if (resultColumn != null && !filter.getRelatedProductCategories().contains(resultColumn)) {
+//                filter.getRelatedProductCategories().add(resultColumn);
+//            }
+//
+//            // partner ids
+//            // Don't know if the current party is initiator or responder. So, should find the trading partner's id
+//            resultColumn = (String) returnedColumns.get(2);
+//            String federationIdColumn = (String) returnedColumns.get(3);
+//            if (resultColumn.contentEquals(partyId)) {
+//                resultColumn = (String) returnedColumns.get(4);
+//                federationIdColumn = (String) returnedColumns.get(5);
+//            }
+//            if (!filter.getTradingPartnerIDs().contains(resultColumn)) {
+//                filter.getTradingPartnerIDs().add(resultColumn);
+//                filter.getTradingPartnerFederationIds().add(federationIdColumn);
+//            }
+//
+//
+//
+//            // status
+//            ProcessInstanceStatus processInstanceStatus = (ProcessInstanceStatus) returnedColumns.get(6);
+//            if (!filter.getStatus().contains(ProcessInstanceGroupFilter.StatusEnum.valueOf(processInstanceStatus.value()))) {
+//                filter.getStatus().add(ProcessInstanceGroupFilter.StatusEnum.valueOf(processInstanceStatus.value()));
+//            }
+//        }
+//
+//        List<PartyType> parties = null;
+//        try {
+//            if(filter.getTradingPartnerIDs().size() > 0){
+//                parties = PartyPersistenceUtility.getParties(bearerToken, new ArrayList<>(filter.getTradingPartnerIDs()),new ArrayList<>(filter.getTradingPartnerFederationIds()));
+//            }
+//        } catch (IOException e) {
+//            String msg = String.format("Failed to get parties while getting categories for party: %s, collaboration role: %s, archived: %B", partyId, collaborationRole, archived);
+//            logger.error(msg);
+//            throw new RuntimeException(msg, e);
+//        }
+//
+//        // populate partners' names
+//        if (parties != null) {
+//            for (String tradingPartnerId : filter.getTradingPartnerIDs()) {
+//                for (PartyType party : parties) {
+//                    if (party.getPartyIdentification().get(0).getID().equals(tradingPartnerId)) {
+//                        // check whether trading partner names array of filter contains any names of the party
+//                        boolean partyExists = false;
+//                        for(PartyNameType partyName : party.getPartyName()){
+//                            if(filter.getTradingPartnerNames().contains(partyName.getName().getValue())){
+//                                partyExists = true;
+//                                break;
+//                            }
+//                        }
+//
+//                        if(!partyExists){
+//                            filter.getTradingPartnerNames().add(party.getPartyName().get(0).getName().getValue());
+//                        }
+//                        break;
+//                    }
+//                }
+//            }
+//        }
+//
+//        return filter;
+//    }
 
     private static QueryData getGroupRetrievalQuery(
             GroupQueryType queryType,
@@ -531,9 +531,25 @@ public class CollaborationGroupDAOUtility {
         GROUP, FILTER, SIZE,PROJECTSIZE,PROJECT,PROJECTFILTER
     }
 
-    private static class QueryData {
+    public static class QueryData {
         private String query;
         private List<String> parameterNames = new ArrayList<>();
         private List<Object> parameterValues = new ArrayList<>();
+
+        public String getQuery() {
+            return query;
+        }
+
+        public void setQuery(String query) {
+            this.query = query;
+        }
+
+        public List<String> getParameterNames() {
+            return parameterNames;
+        }
+
+        public List<Object> getParameterValues() {
+            return parameterValues;
+        }
     }
 }

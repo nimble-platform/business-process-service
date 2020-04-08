@@ -11,7 +11,12 @@ import java.util.Date;
 @Component
 public class EmailSenderUtilMock implements IEmailSenderUtil {
     @Override
-    public void sendCollaborationStatusEmail(String bearerToken, ProcessInstanceGroupDAO groupDAO) {
+    public void notifyTrustScoreUpdate(String partyID, String federationID, String bearerToken) {
+
+    }
+
+    @Override
+    public void sendCollaborationStatusEmail(String bearerToken, String originalBearerToken, String clientFederationId, ProcessInstanceGroupDAO groupDAO) {
 
     }
 
@@ -21,7 +26,7 @@ public class EmailSenderUtilMock implements IEmailSenderUtil {
     }
 
     @Override
-    public void sendActionPendingEmail(String bearerToken, String documentId) {
+    public void sendActionPendingEmail(String bearerToken, String originalBearerToken, String clientFederationId, String documentId) {
 
     }
 
