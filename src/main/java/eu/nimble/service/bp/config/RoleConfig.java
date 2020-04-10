@@ -38,11 +38,7 @@ public class RoleConfig {
                     NimbleRole.MONITOR,
                     NimbleRole.EFACTORY_USER};
     public static final NimbleRole[] REQUIRED_ROLES_ADMIN =
-            {NimbleRole.COMPANY_ADMIN,
-                    NimbleRole.EXTERNAL_REPRESENTATIVE,
-                    NimbleRole.INITIAL_REPRESENTATIVE,
-                    NimbleRole.LEGAL_REPRESENTATIVE,
-                    NimbleRole.EFACTORY_USER};
+            {NimbleRole.PLATFORM_MANAGER};
     public static final NimbleRole[] REQUIRED_ROLES_TO_EXPORT_PROCESS_INSTANCE_DATA =
             {NimbleRole.COMPANY_ADMIN,
                     NimbleRole.EXTERNAL_REPRESENTATIVE,
