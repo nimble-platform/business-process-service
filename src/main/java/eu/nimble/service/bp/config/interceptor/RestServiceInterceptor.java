@@ -3,7 +3,7 @@ package eu.nimble.service.bp.config.interceptor;
 import eu.nimble.utility.ExecutionContext;
 import eu.nimble.utility.exception.AuthenticationException;
 import eu.nimble.utility.exception.NimbleException;
-import eu.nimble.utility.exception.NimbleExceptionMessageCode;
+import eu.nimble.service.bp.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.validation.IValidationUtil;
 import io.jsonwebtoken.Claims;
 import org.slf4j.Logger;
