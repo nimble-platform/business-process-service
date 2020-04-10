@@ -25,11 +25,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import springfox.documentation.annotations.ApiIgnore;
-
 import java.util.*;
 
-@ApiIgnore
 @Controller
 public class R17MigrationController {
 
@@ -58,8 +55,8 @@ public class R17MigrationController {
         logger.info(requestLog);
 
         // validate role
-        if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
-            throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
+        if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_ADMIN)) {
+            throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_UPDATE_CATEGORY_FILTER.toString());
         }
 
         GenericJPARepository businessProcessRepository = new JPARepositoryFactory().forBpRepository(true);
