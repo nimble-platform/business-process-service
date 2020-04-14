@@ -16,7 +16,7 @@ import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.utility.ExecutionContext;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.exception.NimbleException;
-import eu.nimble.utility.exception.NimbleExceptionMessageCode;
+import eu.nimble.service.bp.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.validation.IValidationUtil;
 import io.swagger.annotations.*;
 import org.slf4j.Logger;

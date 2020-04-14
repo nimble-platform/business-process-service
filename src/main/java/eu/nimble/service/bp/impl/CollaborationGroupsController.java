@@ -19,7 +19,7 @@ import eu.nimble.utility.ExecutionContext;
 import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.exception.NimbleException;
-import eu.nimble.utility.exception.NimbleExceptionMessageCode;
+import eu.nimble.service.bp.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.validation.IValidationUtil;
@@ -78,8 +78,8 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
                 throw new NimbleException(NimbleExceptionMessageCode.NOT_FOUND_NO_COLLABORATION_GROUP.toString(),Arrays.asList(id));
             }
 
-            // check whether the group is archiable or not
-            boolean isArchivable = CollaborationGroupDAOUtility.isCollaborationGroupArchivable(collaborationGroupDAO.getHjid());
+            // check whether the group is archivable or not
+            boolean isArchivable = CollaborationGroupDAOUtility.isCollaborationGroupArchivable(HibernateSwaggerObjectMapper.convertCollaborationGroupDAO(collaborationGroupDAO));
             if (!isArchivable) {
                 throw new NimbleException(NimbleExceptionMessageCode.NOT_ACCEPTABLE_NOT_ARCHIVABLE.toString(),Arrays.asList(id));
             }
@@ -210,10 +210,8 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
             int totalSize = CollaborationGroupDAOUtility.getCollaborationGroupSize(partyId, federationId,collaborationRole, archived, tradingPartnerIDs, relatedProducts, relatedProductCategories, status, null, null,isProject);
             logger.debug(" There are {} collaboration groups in total", results.size());
             List<CollaborationGroup> collaborationGroups = new ArrayList<>();
-            List<Long> groupHjids = new ArrayList<>();
             for (CollaborationGroupDAO result : results) {
                 collaborationGroups.add(HibernateSwaggerObjectMapper.convertCollaborationGroupDAO(result));
-                groupHjids.add(result.getHjid());
             }
 
             for (CollaborationGroup collaborationGroup : collaborationGroups) {
@@ -247,14 +245,9 @@ public class CollaborationGroupsController implements CollaborationGroupsApi{
             groupResponse.setCollaborationGroups(collaborationGroups);
             groupResponse.setSize(totalSize);
 
-            // get archiveable statuses
-            Map<Long, Set<ProcessInstanceStatus>> archiveableStatuses = CollaborationGroupDAOUtility.getCollaborationProcessInstanceStatusesForCollaborationGroups(groupHjids);
-            for(Map.Entry<Long, Set<ProcessInstanceStatus>> e : archiveableStatuses.entrySet()) {
-                for(CollaborationGroup collaborationGroup : groupResponse.getCollaborationGroups()) {
-                    if(e.getKey() == Long.parseLong(collaborationGroup.getID())) {
-                        collaborationGroup.setIsArchiveable(CollaborationGroupDAOUtility.doesProcessInstanceStatusesMeetArchivingConditions(new ArrayList<>(e.getValue())));
-                    }
-                }
+            // set archiveable statuses of collaboration groups
+            for (CollaborationGroup collaborationGroup : collaborationGroups) {
+                collaborationGroup.setIsArchiveable(CollaborationGroupDAOUtility.isCollaborationGroupArchivable(collaborationGroup));
             }
 
             ResponseEntity response = ResponseEntity.status(HttpStatus.OK).body(groupResponse);

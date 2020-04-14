@@ -5,7 +5,7 @@ import eu.nimble.service.bp.model.hyperjaxb.RoleType;
 import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.utility.DateUtility;
 import eu.nimble.utility.exception.NimbleException;
-import eu.nimble.utility.exception.NimbleExceptionMessageCode;
+import eu.nimble.service.bp.exception.NimbleExceptionMessageCode;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.ProcessEngines;
 import org.camunda.bpm.engine.RepositoryService;
