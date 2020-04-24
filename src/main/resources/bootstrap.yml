@@ -196,6 +196,8 @@ nimble:
   delegate-service:
     url: ${DELEGATE_SERVICE_URL:}
   federation-instance-id: ${FEDERATION_INSTANCE_ID}
+  feign-client:
+    timeout: ${FEIGN_CLIENT_TIMEOUT:120000}
   kafka:
       topics:
         businessProcessUpdates: ${KAFKA_TOPIC_BUSINESS_PROCESS_UPDATES}
