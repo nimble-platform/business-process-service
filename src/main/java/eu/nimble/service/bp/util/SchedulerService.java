@@ -55,6 +55,8 @@ public class SchedulerService implements SchedulingConfigurer {
     private final String trackingAnalysisToken = "Bearer eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJVU2VseVdBQzhWXzh3WTJIN3pVenNpN0dKWDRycEhHdzRkRGxRNGphYUhJIn0.eyJqdGkiOiIxZTdmYTIxYi05OGUwLTRiMmItODhiMy1lOTYzOWI4MjZhZjkiLCJleHAiOjE1NzM1NTk3MDEsIm5iZiI6MCwiaWF0IjoxNTczNTU5NjQxLCJpc3MiOiJodHRwOi8va2V5Y2xvYWs6ODA4MC9hdXRoL3JlYWxtcy9tYXN0ZXIiLCJhdWQiOiJuaW1ibGVfY2xpZW50Iiwic3ViIjoiYmE0MzBkOWEtMjdmOS00MzkwLTg4MTMtOTQ4YjgzYjQyMmUzIiwidHlwIjoiQmVhcmVyIiwiYXpwIjoibmltYmxlX2NsaWVudCIsImF1dGhfdGltZSI6MCwic2Vzc2lvbl9zdGF0ZSI6ImEzNGU0ODkwLTU2OWEtNDgyYi1hNjI2LTdjNGU3ZDUwODJmYyIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOltdLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsibmltYmxlX3VzZXIiLCJ1bWFfYXV0aG9yaXphdGlvbiIsInNhbGVzX29mZmljZXIiXX0sInJlc291cmNlX2FjY2VzcyI6eyJhY2NvdW50Ijp7InJvbGVzIjpbIm1hbmFnZS1hY2NvdW50IiwibWFuYWdlLWFjY291bnQtbGlua3MiLCJ2aWV3LXByb2ZpbGUiXX19LCJuYW1lIjoiUXVhbiBEZW5nIiwicHJlZmVycmVkX3VzZXJuYW1lIjoiZHF1MUBiaWJhLnVuaS1icmVtZW4uZGUiLCJnaXZlbl9uYW1lIjoiUXVhbiIsImZhbWlseV9uYW1lIjoiRGVuZyIsImVtYWlsIjoiZHF1MUBiaWJhLnVuaS1icmVtZW4uZGUifQ.ZecJbZIQorfdBixaXQJHnp-vhyjwCMbPDsmWILtO45L4fXYCJZ1Dg7yrqPenN4NNXXBO72HrQsDsc7FIjTKl4MGu2vZkvDx3JfQ1AbZChApdM7NIaFdu445g9TfdF3P_14YE8aKopwpQGpFuHu_QGHkDZwewUP-jWlrdTgDX4my_upivnXMnLdnjCVmr2ocn_a_S-WlxUmMqrz2H4kxPCBcTysJkjwX_0wWXN4k1LwHhBpEuq2A_movDXyHi2mSNG11L_NI1hx2koAahp8T_1yXXvwbPPd1l0w2hDCgjrTydAmJMcQeyEwyPMwc269M9OIwkJbIKF_5qOfLxuKpVsw";
     @Autowired
     private IEmailSenderUtil emailSenderUtil;
+    @Autowired
+    private CredentialsUtil credentialsUtil;
 
     // every day at 6 am
     private String cronExpression = "0 0 6 ? * *";
@@ -85,7 +87,7 @@ public class SchedulerService implements SchedulingConfigurer {
                 List<String> unshippedOrderIds = ProcessDocumentMetadataDAOUtility.getUnshippedOrderIds();
                 // get EPC codes for those order ids
                 ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
-                Response response = SpringBridge.getInstance().getDataChannelClient().getEPCCodesForOrders(StartWithDocumentController.token, unshippedOrderIds);
+                Response response = SpringBridge.getInstance().getDataChannelClient().getEPCCodesForOrders(credentialsUtil.getBearerToken(), unshippedOrderIds);
                 List<OrderEPC> epcCodes;
                 try {
                     String responseBody = HttpResponseUtil.extractBodyFromFeignClientResponse(response);
@@ -150,7 +152,7 @@ public class SchedulerService implements SchedulingConfigurer {
 
                                 // send an email to buyer if the seller misses the promised delivery date
                                 if(minPromisedDeliveryDate != null && maxEstimatedDeliveryDate.compareTo(minPromisedDeliveryDate) > 0){
-                                    emailSenderUtil.sendNewDeliveryDateEmail(StartWithDocumentController.token,maxEstimatedDeliveryDate,order.getBuyerPartyId(),order.getBuyerParty().getFederationInstanceID(),order.getSellerParty().getFederationInstanceID(),processDocumentMetadata.getProcessInstanceID());
+                                    emailSenderUtil.sendNewDeliveryDateEmail(credentialsUtil.getBearerToken(),maxEstimatedDeliveryDate,order.getBuyerPartyId(),order.getBuyerParty().getFederationInstanceID(),order.getSellerParty().getFederationInstanceID(),processDocumentMetadata.getProcessInstanceID());
                                 }
                             }
 

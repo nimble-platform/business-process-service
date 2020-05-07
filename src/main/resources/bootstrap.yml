@@ -196,6 +196,8 @@ nimble:
   delegate-service:
     url: ${DELEGATE_SERVICE_URL:}
   federation-instance-id: ${FEDERATION_INSTANCE_ID}
+  # TODO: Retrieve the default token from Keycloak for business-process service client
+  default-token: ${BUSINESS_PROCESS_SERVICE_DEFAULT_TOKEN:}
   kafka:
       topics:
         businessProcessUpdates: ${KAFKA_TOPIC_BUSINESS_PROCESS_UPDATES}
