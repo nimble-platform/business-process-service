@@ -172,6 +172,21 @@ public class EPCController {
         return ResponseEntity.ok(null);
     }
 
+    @ApiOperation(value = "",notes = "Deletes the cron expression of the scheduler, i.e, stops the scheduler")
+    @RequestMapping(value = "/t-t/cron-expression",
+            produces = {"application/json"},
+            method = RequestMethod.DELETE)
+    public ResponseEntity deleteCronExpressionOfScheduler(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken){
+        // set request log of ExecutionContext
+        String requestLog = "Request to delete cron expression of scheduler";
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
+        schedulerService.setCronExpression(null);
+        logger.info("Completed the request to delete cron expression of scheduler");
+        return ResponseEntity.ok(null);
+    }
+
     @ApiOperation(value = "",notes = "Gets the cron expression of the scheduler")
     @RequestMapping(value = "/t-t/cron-expression",
             produces = {"application/json"},
