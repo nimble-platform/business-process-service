@@ -157,8 +157,7 @@ public class SchedulerService implements SchedulingConfigurer {
                             }
 
                         } catch (Exception e) {
-                            logger.error("Failed to get expected production end date for order {} while running cron job",epcCode.getOrderId());
-                            return;
+                            logger.error("Failed to get expected production end date for order {} while running cron job",epcCode.getOrderId(),e);
                         }
                     }
                 }
