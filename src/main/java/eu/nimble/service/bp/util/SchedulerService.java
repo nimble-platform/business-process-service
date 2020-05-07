@@ -179,8 +179,10 @@ public class SchedulerService implements SchedulingConfigurer {
     public void setCronExpression(String cronExpression) {
         this.cronExpression = cronExpression;
         scheduledFuture.cancel(true);
-
-        this.schedule();
+        // if no cron expression is specified, do not start scheduler
+        if(this.cronExpression != null){
+            this.schedule();
+        }
     }
 
     // helper functions
