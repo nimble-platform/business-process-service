@@ -489,6 +489,26 @@
                             </execution>
                         </executions>
                     </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>1.6.0</version>
+                        <executions>
+                            <execution>
+                                <phase>process-classes</phase>
+                                <goals>
+                                    <goal>java</goal>
+                                </goals>
+                                <configuration>
+                                    <mainClass>eu.nimble.service.bp.util.GenerateSourceUtil</mainClass>
+                                    <arguments>
+                                        <argument>${project.basedir}/src/main/java/eu/nimble/service/bp/model/hyperjaxb</argument>
+                                        <argument></argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
                 </plugins>
             </build>
         </profile>
