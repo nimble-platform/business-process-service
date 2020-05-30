@@ -1,8 +1,8 @@
-Dear NIMBLE user,
+Dear [(${platformName})] user,
 
 [(${tradingPartnerPerson})] from [(${tradingPartner})] has cancelled the process for [(${product})].
 
-You can see the status of your collaboration via the NIMBLE dashboard.
+You can see the status of your collaboration via the [(${platformName})] dashboard.
 
 Sincerely,
-NIMBLE Notification Service
+[(${platformName})] Notification Service

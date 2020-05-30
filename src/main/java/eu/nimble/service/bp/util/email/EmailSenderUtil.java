@@ -45,6 +45,8 @@ public class EmailSenderUtil implements IEmailSenderUtil {
 
     @Value("${nimble.frontend.url}")
     private String frontEndURL;
+    @Value("${spring.mail.platformName}")
+    private String platformName;
 
     public void notifyTrustScoreUpdate(String partyID, String federationID, String bearerToken) {
         new Thread(() -> {
@@ -69,6 +71,7 @@ public class EmailSenderUtil implements IEmailSenderUtil {
                 Context context = new Context();
                 context.setVariable("partyName", partyType.getPartyName().get(0).getName().getValue());
                 context.setVariable("url", URL_TEXT + frontEndURL + "/#/user-mgmt/company-rating");
+                context.setVariable("platformName",platformName);
                 emailService.send(emailList.toArray(new String[0]), subject, "trust_update", context);
             }
         }).start();
@@ -182,13 +185,14 @@ public class EmailSenderUtil implements IEmailSenderUtil {
         context.setVariable("tradingPartnerPerson", tradingPartnerPersonName);
         context.setVariable("tradingPartner", tradingPartnerName);
         context.setVariable("product", productName);
+        context.setVariable("platformName",platformName);
 
         if(status.equals(GroupStatus.CANCELLED)){
-            subject = "NIMBLE: Business process cancelled";
+            subject = platformName + ": Business process cancelled";
             template = "cancelled_collaboration";
         }
         else{
-            subject = "NIMBLE: Business process finished";
+            subject = platformName + ": Business process finished";
             template = "finished_collaboration";
         }
 
@@ -304,25 +308,25 @@ public class EmailSenderUtil implements IEmailSenderUtil {
 
             DocumentType documentType = processDocumentMetadataDAO.getType();
             if (documentType.equals(DocumentType.ITEMINFORMATIONREQUEST)) {
-                subject = "NIMBLE: Information Requested for " + productName + " from " + initiatingPartyName;
+                subject = platformName + ": Information Requested for " + productName + " from " + initiatingPartyName;
             }else if(documentType.equals(DocumentType.REQUESTFORQUOTATION)) {
-                subject = "NIMBLE: Quotation Requested for " + productName + " from " + initiatingPartyName;
+                subject = platformName + ": Quotation Requested for " + productName + " from " + initiatingPartyName;
             }else if(documentType.equals(DocumentType.ORDER)) {
-                subject = "NIMBLE: Order Received for " + productName + " from " + initiatingPartyName;
+                subject = platformName + ": Order Received for " + productName + " from " + initiatingPartyName;
             }else if(documentType.equals(DocumentType.RECEIPTADVICE)) {
-                subject = "NIMBLE: Receipt Advice Received for " + productName + " from " + initiatingPartyName;
+                subject = platformName + ": Receipt Advice Received for " + productName + " from " + initiatingPartyName;
             }else if (processDocumentMetadataDAO.getType().equals(DocumentType.ITEMINFORMATIONRESPONSE)){
                 initiatorIsBuyer = false;
-                subject = "NIMBLE: Information Received for " + productName + " from " + initiatingPartyName;
+                subject = platformName + ": Information Received for " + productName + " from " + initiatingPartyName;
             }else if (processDocumentMetadataDAO.getType().equals(DocumentType.QUOTATION)){
                 initiatorIsBuyer = false;
-                subject = "NIMBLE: Quotation Received for " + productName + " from " + initiatingPartyName;
+                subject = platformName + ": Quotation Received for " + productName + " from " + initiatingPartyName;
             } else if (processDocumentMetadataDAO.getType().equals(DocumentType.ORDERRESPONSESIMPLE)){
                 initiatorIsBuyer = false;
-                subject = "NIMBLE: Order Response for " + productName + " from " + initiatingPartyName;
+                subject = platformName + ": Order Response for " + productName + " from " + initiatingPartyName;
             }else if (processDocumentMetadataDAO.getType().equals(DocumentType.DESPATCHADVICE)){
                 initiatorIsBuyer = false;
-                subject = "NIMBLE: Dispatch Advice Received for " + productName + " from " + initiatingPartyName;
+                subject = platformName + ": Dispatch Advice Received for " + productName + " from " + initiatingPartyName;
             }else {
                 showURL = false;
             }
@@ -394,13 +398,14 @@ public class EmailSenderUtil implements IEmailSenderUtil {
         context.setVariable("initiatingPartyName", initiatingPartyName);
         context.setVariable("respondingPartyName", respondingPartyName);
         context.setVariable("product", productName);
+        context.setVariable("platformName",platformName);
 
         if (!url.isEmpty()) {
             context.setVariable("url", url);
         }
 
         if (subject.equals(EMPTY_TEXT)) {
-            subject = "NIMBLE: Action Required for the Business Process";
+            subject = platformName + ": Action Required for the Business Process";
         }
 
         emailService.send(toEmail, subject, "action_pending", context);
@@ -414,13 +419,14 @@ public class EmailSenderUtil implements IEmailSenderUtil {
         context.setVariable("initiatingPartyName", initiatingPartyName);
         context.setVariable("respondingPartyName", respondingPartyName);
         context.setVariable("product", productName);
+        context.setVariable("platformName",platformName);
 
         if (!url.isEmpty()) {
             context.setVariable("url", url);
         }
 
         if (subject.equals(EMPTY_TEXT)) {
-            subject = "NIMBLE: Transition of the Business Process";
+            subject = platformName + ": Transition of the Business Process";
         }
 
         emailService.send(toEmail, subject, "continue_colloboration", context);
@@ -433,8 +439,9 @@ public class EmailSenderUtil implements IEmailSenderUtil {
         context.setVariable("expectedDeliveryDate", expectedDeliveryDate);
         context.setVariable("product", productName);
         context.setVariable("url", url);
+        context.setVariable("platformName",platformName);
 
-        emailService.send(new String[]{toEmail}, "NIMBLE: New Delivery Date", "new_delivery_date", context);
+        emailService.send(new String[]{toEmail}, platformName + ": New Delivery Date", "new_delivery_date", context);
     }
 
     private PartyType getParty(String partyId,String federationId,String bearerToken) throws IOException {
