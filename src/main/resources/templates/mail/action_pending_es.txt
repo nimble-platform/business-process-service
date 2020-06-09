@@ -1,0 +1,9 @@
+Estimado [(${respondingPartyName})],
+
+Se requiere accion para el producto [(${product})], solicitado por [(${initiatingPersonName})] de la empresa [(${initiatingPartyName})].
+
+Puede ver el estado de su colaboración a través del panel de control en [(${platformName})].
+[(${url})]
+
+Atentamente,
+[(${platformName})] Servicio de notificaciones

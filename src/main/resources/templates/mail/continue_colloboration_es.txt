@@ -1,0 +1,9 @@
+Estimado [(${respondingPartyName})],
+
+[(${initiatingPersonName})] de [(${initiatingPartyName})] ha continuado el proceso por el producto [(${product})].
+
+Puede ver el estado de su colaboración a través del panel de control de [(${platformName})].
+[(${url})]
+
+Atentamente,
+[(${platformName})] Servicio de notificaciones.

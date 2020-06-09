@@ -1,8 +1,0 @@
-Dear NIMBLE user,
-
-[(${tradingPartnerPerson})] from [(${tradingPartner})] has finished the process for [(${product})].
-
-You can see the status of your collaboration via the NIMBLE dashboard.
-
-Sincerely,
-NIMBLE Notification Service

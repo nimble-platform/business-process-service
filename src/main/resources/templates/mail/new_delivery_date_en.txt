@@ -6,4 +6,4 @@ You can see the process details via the following link:
 [(${url})]
 
 Sincerely,
-NIMBLE Notification Service
+[(${platformName})] Notification Service

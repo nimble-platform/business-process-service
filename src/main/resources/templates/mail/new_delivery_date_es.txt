@@ -1,0 +1,9 @@
+Estimado [(${respondingPartyName})],
+
+La fecha de entrega para [(${product})] ha cambiado. La nueva fecha de entrega es [(${expectedDeliveryDate})].
+
+Puede ver los detalles del proceso a través del siguiente enlace:
+[(${url})]
+
+Atentamente,
+[(${platformName})] Servicio de notificaciones.

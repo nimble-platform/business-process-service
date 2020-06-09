@@ -1,9 +1,0 @@
-Dear [(${partyName})],
-
-Your trust score has been updated.
-
-You can see the current trust score via the NIMBLE dashboard.
-[(${url})]
-
-Sincerely,
-NIMBLE Notification Service

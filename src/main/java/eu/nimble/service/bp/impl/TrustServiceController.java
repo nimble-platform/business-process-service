@@ -133,7 +133,7 @@ public class TrustServiceController {
 
             // broadcast changes
             kafkaSender.broadcastRatingsUpdate(partyId, bearerToken);
-            emailSenderUtil.notifyTrustScoreUpdate(partyId, federationId, bearerToken);
+            emailSenderUtil.notifyTrustScoreUpdate(partyId, federationId, bearerToken,executionContext.getLanguageId());
 
             logger.info("Created rating and reviews for the party with id: {} and process instance with id: {}", partyId, processInstanceID);
             return ResponseEntity.ok(completedTaskType);
