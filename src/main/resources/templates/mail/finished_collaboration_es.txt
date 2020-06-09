@@ -1,0 +1,8 @@
+Estimado usuario de [(${platformName})],
+
+[(${tradingPartnerPerson})] de [(${tradingPartner})] ha terminado el proceso para [(${product})].
+
+Puede ver el estado de su colaboración a través del panel de control de [(${platformName})].
+
+Atentamente,
+[(${platformName})] Servicio de notificaciones.

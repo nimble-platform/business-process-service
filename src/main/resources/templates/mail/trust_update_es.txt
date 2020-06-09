@@ -1,0 +1,9 @@
+Estimado [(${partyName})],
+
+Su puntuacion de confianza ha sido actualizada.
+
+Puede ver su puntuacion de confianza actual a través del panel de control en [(${platformName})].
+[(${url})]
+
+Atentamente,
+[(${platformName})] Servicio de notificaciones.

@@ -298,7 +298,7 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
             }
 
             // send email to the trading partner
-            emailSenderUtil.sendCollaborationStatusEmail(bearerToken,executionContext.getOriginalBearerToken(),executionContext.getClientFederationId(), groupDAO);
+            emailSenderUtil.sendCollaborationStatusEmail(bearerToken,executionContext.getOriginalBearerToken(),executionContext.getClientFederationId(), groupDAO,executionContext.getLanguageId());
 
             logger.debug("Finished the collaboration for the group id: {} successfully", id);
             return ResponseEntity.ok(null);
@@ -381,7 +381,7 @@ public class ProcessInstanceGroupController implements ProcessInstanceGroupsApi 
             TrustPersistenceUtility.createCompletedTasksForBothParties(processInstanceID, bearerToken, executionContext.getOriginalBearerToken(),executionContext.getClientFederationId(),"Cancelled",cancellationReason);
 
             // send email to the trading partner
-            emailSenderUtil.sendCollaborationStatusEmail(bearerToken,executionContext.getOriginalBearerToken(),executionContext.getClientFederationId(), groupDAO);
+            emailSenderUtil.sendCollaborationStatusEmail(bearerToken,executionContext.getOriginalBearerToken(),executionContext.getClientFederationId(), groupDAO,executionContext.getLanguageId());
 
             logger.debug("Cancelled the collaboration for the group id: {} successfully", id);
             return ResponseEntity.ok(null);

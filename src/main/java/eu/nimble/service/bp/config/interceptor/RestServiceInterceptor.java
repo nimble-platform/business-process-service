@@ -72,6 +72,8 @@ public class RestServiceInterceptor extends HandlerInterceptorAdapter {
 
         // set token to the execution context
         executionContext.setBearerToken(bearerToken);
+        // set language id
+        executionContext.setLanguageId(request.getLocale().getLanguage());
 
         // if originalBearerToken exists,i.e it's a federated call, to check user roles properly,
         // we use Claims of the originalBearerToken

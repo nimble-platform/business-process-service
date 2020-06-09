@@ -47,8 +47,10 @@ public class EmailSenderUtil implements IEmailSenderUtil {
     private String frontEndURL;
     @Value("${spring.mail.platformName}")
     private String platformName;
+    @Value("${spring.mail.languages}")
+    private String mailTemplateLanguages;
 
-    public void notifyTrustScoreUpdate(String partyID, String federationID, String bearerToken) {
+    public void notifyTrustScoreUpdate(String partyID, String federationID, String bearerToken, String language) {
         new Thread(() -> {
             PartyType partyType = null;
             try {
@@ -72,13 +74,13 @@ public class EmailSenderUtil implements IEmailSenderUtil {
                 context.setVariable("partyName", partyType.getPartyName().get(0).getName().getValue());
                 context.setVariable("url", URL_TEXT + frontEndURL + "/#/user-mgmt/company-rating");
                 context.setVariable("platformName",platformName);
-                emailService.send(emailList.toArray(new String[0]), subject, "trust_update", context);
+                emailService.send(emailList.toArray(new String[0]), subject, getTemplateName("trust_update",language), context);
             }
         }).start();
     }
 
     // email sender thread
-    public void sendCollaborationStatusEmail(String bearerToken,String originalBearerToken,String clientFederationId, ProcessInstanceGroupDAO groupDAO) {
+    public void sendCollaborationStatusEmail(String bearerToken,String originalBearerToken,String clientFederationId, ProcessInstanceGroupDAO groupDAO, String language) {
         new Thread(() -> {
             // Collect the trading partner name
             String partyId = groupDAO.getPartyID();
@@ -172,12 +174,12 @@ public class EmailSenderUtil implements IEmailSenderUtil {
             }
             personName = new StringBuilder("").append(person.getFirstName()).append(" ").append(person.getFamilyName()).toString();
 
-            notifyPartyOnCollaborationStatus(toEmail, personName, productNames.toString(), party.getPartyName().get(0).getName().getValue(),groupDAO.getStatus());
+            notifyPartyOnCollaborationStatus(toEmail, personName, productNames.toString(), party.getPartyName().get(0).getName().getValue(),groupDAO.getStatus(),language);
             logger.info("Collaboration status mail sent to: {} for group: {} with status: {}", toEmail, groupDAO.getID(), groupDAO.getStatus().toString());
         }).start();
     }
 
-    private void notifyPartyOnCollaborationStatus(String toEmail, String tradingPartnerPersonName, String productName, String tradingPartnerName, GroupStatus status){
+    private void notifyPartyOnCollaborationStatus(String toEmail, String tradingPartnerPersonName, String productName, String tradingPartnerName, GroupStatus status, String language){
         Context context = new Context();
         String subject;
         String template;
@@ -189,11 +191,11 @@ public class EmailSenderUtil implements IEmailSenderUtil {
 
         if(status.equals(GroupStatus.CANCELLED)){
             subject = platformName + ": Business process cancelled";
-            template = "cancelled_collaboration";
+            template = getTemplateName("cancelled_collaboration",language);
         }
         else{
             subject = platformName + ": Business process finished";
-            template = "finished_collaboration";
+            template = getTemplateName("finished_collaboration",language);
         }
 
         emailService.send(new String[]{toEmail}, subject, template, context);
@@ -254,7 +256,7 @@ public class EmailSenderUtil implements IEmailSenderUtil {
         }).start();
     }
 
-    public void sendActionPendingEmail(String bearerToken, String originalBearerToken, String clientFederationId, String documentId) {
+    public void sendActionPendingEmail(String bearerToken, String originalBearerToken, String clientFederationId, String documentId,String language) {
         new Thread(() -> {
             // Get ProcessDocumentMetadataDAO for the given document id
             ProcessDocumentMetadataDAO processDocumentMetadataDAO = ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId);
@@ -369,9 +371,9 @@ public class EmailSenderUtil implements IEmailSenderUtil {
                 }
 
                 if (processDocumentStatus.equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
-                    notifyPartyOnPendingCollaboration(emailList.toArray(new String[0]), initiatingPersonName, productName, initiatingPartyName, url, subject, respondingPartyName);
+                    notifyPartyOnPendingCollaboration(emailList.toArray(new String[0]), initiatingPersonName, productName, initiatingPartyName, url, subject, respondingPartyName,language);
                 } else {
-                    notifyPartyOnCollaboration(emailList.toArray(new String[0]), initiatingPersonName, productName, initiatingPartyName, url, subject, respondingPartyName);
+                    notifyPartyOnCollaboration(emailList.toArray(new String[0]), initiatingPersonName, productName, initiatingPartyName, url, subject, respondingPartyName,language);
                 }
             }
         }).start();
@@ -391,7 +393,7 @@ public class EmailSenderUtil implements IEmailSenderUtil {
     }
 
     public void notifyPartyOnPendingCollaboration(String[] toEmail, String initiatingPersonName, String productName,
-                                                  String initiatingPartyName, String url, String subject, String respondingPartyName) {
+                                                  String initiatingPartyName, String url, String subject, String respondingPartyName, String language) {
         Context context = new Context();
 
         context.setVariable("initiatingPersonName", initiatingPersonName);
@@ -408,11 +410,11 @@ public class EmailSenderUtil implements IEmailSenderUtil {
             subject = platformName + ": Action Required for the Business Process";
         }
 
-        emailService.send(toEmail, subject, "action_pending", context);
+        emailService.send(toEmail, subject, getTemplateName("action_pending",language), context);
     }
 
     public void notifyPartyOnCollaboration(String[] toEmail, String initiatingPersonName, String productName, String initiatingPartyName,
-                                           String url, String subject, String respondingPartyName) {
+                                           String url, String subject, String respondingPartyName, String language) {
         Context context = new Context();
 
         context.setVariable("initiatingPersonName", initiatingPersonName);
@@ -429,7 +431,7 @@ public class EmailSenderUtil implements IEmailSenderUtil {
             subject = platformName + ": Transition of the Business Process";
         }
 
-        emailService.send(toEmail, subject, "continue_colloboration", context);
+        emailService.send(toEmail, subject, getTemplateName("continue_colloboration",language), context);
     }
 
     public void notifyPartyOnNewDeliveryDate(String toEmail,String productName, String respondingPartyName, String expectedDeliveryDate, String url) {
@@ -441,7 +443,8 @@ public class EmailSenderUtil implements IEmailSenderUtil {
         context.setVariable("url", url);
         context.setVariable("platformName",platformName);
 
-        emailService.send(new String[]{toEmail}, platformName + ": New Delivery Date", "new_delivery_date", context);
+        List<String> languages = Arrays.asList(mailTemplateLanguages.split(","));
+        emailService.send(new String[]{toEmail}, platformName + ": New Delivery Date", getTemplateName("new_delivery_date",languages.get(0)), context);
     }
 
     private PartyType getParty(String partyId,String federationId,String bearerToken) throws IOException {
@@ -466,5 +469,13 @@ public class EmailSenderUtil implements IEmailSenderUtil {
             person = JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),PersonType.class);
         }
         return person;
+    }
+
+    private String getTemplateName(String templateName,String language){
+        List<String> languages = Arrays.asList(mailTemplateLanguages.split(","));
+        if(languages.contains(language)){
+            return String.format("%s_%s",templateName,language);
+        }
+        return String.format("%s_%s",templateName,languages.get(0));
     }
 }
