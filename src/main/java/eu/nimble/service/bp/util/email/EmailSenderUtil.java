@@ -450,10 +450,10 @@ public class EmailSenderUtil implements IEmailSenderUtil {
     private PartyType getParty(String partyId,String federationId,String bearerToken) throws IOException {
         PartyType party = null;
         if(federationId.contentEquals(SpringBridge.getInstance().getFederationId())){
-            party = iIdentityClientTyped.getParty(bearerToken, partyId);
+            party = iIdentityClientTyped.getParty(bearerToken, partyId,true);
         }
         else {
-            Response response = SpringBridge.getInstance().getDelegateClient().getParty(bearerToken, Long.valueOf(partyId),false,federationId);
+            Response response = SpringBridge.getInstance().getDelegateClient().getParty(bearerToken, Long.valueOf(partyId),true,federationId);
             party = JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),PartyType.class);
         }
         return party;
