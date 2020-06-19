@@ -2,6 +2,7 @@ package eu.nimble.service.bp.util.email;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import eu.nimble.common.rest.identity.IIdentityClientTyped;
+import eu.nimble.service.bp.exception.NimbleExceptionMessageCode;
 import eu.nimble.service.bp.model.hyperjaxb.*;
 import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.util.spring.SpringBridge;
@@ -15,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.thymeleaf.context.Context;
@@ -39,6 +41,8 @@ public class EmailSenderUtil implements IEmailSenderUtil {
 
     @Autowired
     private EmailService emailService;
+    @Autowired
+    private MessageSource messageSource;
 
     @Autowired
     private IIdentityClientTyped iIdentityClientTyped;
@@ -69,7 +73,7 @@ public class EmailSenderUtil implements IEmailSenderUtil {
             }
 
             if (emailList.size() != 0) {
-                String subject = "Trust Score has been updated!";
+                String subject = getMailSubject(NimbleExceptionMessageCode.MAIL_SUBJECT_TRUST_SCORE_UPDATED,language, new ArrayList<>());
                 Context context = new Context();
                 context.setVariable("partyName", partyType.getPartyName().get(0).getName().getValue());
                 context.setVariable("url", URL_TEXT + frontEndURL + "/#/user-mgmt/company-rating");
@@ -190,11 +194,11 @@ public class EmailSenderUtil implements IEmailSenderUtil {
         context.setVariable("platformName",platformName);
 
         if(status.equals(GroupStatus.CANCELLED)){
-            subject = platformName + ": Business process cancelled";
+            subject = getMailSubject(NimbleExceptionMessageCode.MAIL_SUBJECT_BUSINESS_PROCESS_CANCELLED,language,Arrays.asList(platformName));
             template = getTemplateName("cancelled_collaboration",language);
         }
         else{
-            subject = platformName + ": Business process finished";
+            subject = getMailSubject(NimbleExceptionMessageCode.MAIL_SUBJECT_BUSINESS_PROCESS_FINISHED,language,Arrays.asList(platformName));
             template = getTemplateName("finished_collaboration",language);
         }
 
@@ -310,25 +314,25 @@ public class EmailSenderUtil implements IEmailSenderUtil {
 
             DocumentType documentType = processDocumentMetadataDAO.getType();
             if (documentType.equals(DocumentType.ITEMINFORMATIONREQUEST)) {
-                subject = platformName + ": Information Requested for " + productName + " from " + initiatingPartyName;
+                subject = getMailSubject(NimbleExceptionMessageCode.MAIL_SUBJECT_INFORMATION_REQUESTED, language, Arrays.asList(platformName,productName,initiatingPartyName));
             }else if(documentType.equals(DocumentType.REQUESTFORQUOTATION)) {
-                subject = platformName + ": Quotation Requested for " + productName + " from " + initiatingPartyName;
+                subject = getMailSubject(NimbleExceptionMessageCode.MAIL_SUBJECT_QUOTATION_REQUESTED, language, Arrays.asList(platformName,productName,initiatingPartyName));
             }else if(documentType.equals(DocumentType.ORDER)) {
-                subject = platformName + ": Order Received for " + productName + " from " + initiatingPartyName;
+                subject = getMailSubject(NimbleExceptionMessageCode.MAIL_SUBJECT_ORDER_RECEIVED, language, Arrays.asList(platformName,productName,initiatingPartyName));
             }else if(documentType.equals(DocumentType.RECEIPTADVICE)) {
-                subject = platformName + ": Receipt Advice Received for " + productName + " from " + initiatingPartyName;
+                subject = getMailSubject(NimbleExceptionMessageCode.MAIL_SUBJECT_RECEIPT_ADVICE_RECEIVED, language, Arrays.asList(platformName,productName,initiatingPartyName));
             }else if (processDocumentMetadataDAO.getType().equals(DocumentType.ITEMINFORMATIONRESPONSE)){
                 initiatorIsBuyer = false;
-                subject = platformName + ": Information Received for " + productName + " from " + initiatingPartyName;
+                subject = getMailSubject(NimbleExceptionMessageCode.MAIL_SUBJECT_INFORMATION_RECEIVED, language, Arrays.asList(platformName,productName,initiatingPartyName));
             }else if (processDocumentMetadataDAO.getType().equals(DocumentType.QUOTATION)){
                 initiatorIsBuyer = false;
-                subject = platformName + ": Quotation Received for " + productName + " from " + initiatingPartyName;
+                subject = getMailSubject(NimbleExceptionMessageCode.MAIL_SUBJECT_QUOTATION_RECEIVED, language, Arrays.asList(platformName,productName,initiatingPartyName));
             } else if (processDocumentMetadataDAO.getType().equals(DocumentType.ORDERRESPONSESIMPLE)){
                 initiatorIsBuyer = false;
-                subject = platformName + ": Order Response for " + productName + " from " + initiatingPartyName;
+                subject = getMailSubject(NimbleExceptionMessageCode.MAIL_SUBJECT_ORDER_RESPONSE, language, Arrays.asList(platformName,productName,initiatingPartyName));
             }else if (processDocumentMetadataDAO.getType().equals(DocumentType.DESPATCHADVICE)){
                 initiatorIsBuyer = false;
-                subject = platformName + ": Dispatch Advice Received for " + productName + " from " + initiatingPartyName;
+                subject = getMailSubject(NimbleExceptionMessageCode.MAIL_SUBJECT_DISPATCH_ADVICE_RECEIVED, language, Arrays.asList(platformName,productName,initiatingPartyName));
             }else {
                 showURL = false;
             }
@@ -407,7 +411,7 @@ public class EmailSenderUtil implements IEmailSenderUtil {
         }
 
         if (subject.equals(EMPTY_TEXT)) {
-            subject = platformName + ": Action Required for the Business Process";
+            subject = getMailSubject(NimbleExceptionMessageCode.MAIL_SUBJECT_ACTION_REQUIRED,language,Arrays.asList(platformName));
         }
 
         emailService.send(toEmail, subject, getTemplateName("action_pending",language), context);
@@ -428,7 +432,7 @@ public class EmailSenderUtil implements IEmailSenderUtil {
         }
 
         if (subject.equals(EMPTY_TEXT)) {
-            subject = platformName + ": Transition of the Business Process";
+            subject = getMailSubject(NimbleExceptionMessageCode.MAIL_SUBJECT_BUSINESS_PROCESS_TRANSITION,language,Arrays.asList(platformName));
         }
 
         emailService.send(toEmail, subject, getTemplateName("continue_colloboration",language), context);
@@ -444,7 +448,8 @@ public class EmailSenderUtil implements IEmailSenderUtil {
         context.setVariable("platformName",platformName);
 
         List<String> languages = Arrays.asList(mailTemplateLanguages.split(","));
-        emailService.send(new String[]{toEmail}, platformName + ": New Delivery Date", getTemplateName("new_delivery_date",languages.get(0)), context);
+        String subject = getMailSubject(NimbleExceptionMessageCode.MAIL_SUBJECT_DELIVERY_DATE, languages.get(0),Arrays.asList(platformName));
+        emailService.send(new String[]{toEmail},subject , getTemplateName("new_delivery_date",languages.get(0)), context);
     }
 
     private PartyType getParty(String partyId,String federationId,String bearerToken) throws IOException {
@@ -477,5 +482,12 @@ public class EmailSenderUtil implements IEmailSenderUtil {
             return String.format("%s_%s",templateName,language);
         }
         return String.format("%s_%s",templateName,languages.get(0));
+    }
+
+    private String getMailSubject(NimbleExceptionMessageCode messageCode, String language, List<String> parameters){
+        List<String> languages = Arrays.asList(mailTemplateLanguages.split(","));
+        String mailSubjectLanguage = languages.contains(language) ? language :languages.get(0) ;
+        Locale locale = new Locale(mailSubjectLanguage);
+        return this.messageSource.getMessage(messageCode.toString(), parameters.toArray(), locale);
     }
 }
