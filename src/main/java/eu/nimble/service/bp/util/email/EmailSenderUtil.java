@@ -122,15 +122,22 @@ public class EmailSenderUtil implements IEmailSenderUtil {
                 return;
             }
 
+            // get process metadata
+            ProcessDocumentMetadataDAO processDocumentMetadataDAO = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(groupDAO.getProcessInstanceIDs().get(0)).get(0);
             // collect product name
-            List<String> productNameList = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(groupDAO.getProcessInstanceIDs().get(0)).get(0).getRelatedProducts();
+            List<String> productNameList = processDocumentMetadataDAO.getRelatedProducts();
             StringBuilder productNames = new StringBuilder("");
             for (int i = 0; i < productNameList.size() - 1; i++) {
                 productNames.append(productNameList.get(i)).append(", ");
             }
             productNames.append(productNameList.get(productNameList.size() - 1));
 
-
+            // get dashboard url for the trading partner
+            boolean isTradingPartnerBuyer = processDocumentMetadataDAO.getInitiatorID().contentEquals(tradingPartnerId) && processDocumentMetadataDAO.getInitiatorFederationID().contentEquals(tradingPartnerFederationID);
+            if(processDocumentMetadataDAO.getType().equals(DocumentType.DESPATCHADVICE) || processDocumentMetadataDAO.getType().equals(DocumentType.RECEIPTADVICE)){
+                isTradingPartnerBuyer = !isTradingPartnerBuyer;
+            }
+            String url = getDashboardUrl(isTradingPartnerBuyer ? COLLABORATION_ROLE_BUYER : COLLABORATION_ROLE_SELLER);
             // Try to identify the recipient email
             //
             // If there are more than one instances in the group, simply select the first process instance and
@@ -177,13 +184,12 @@ public class EmailSenderUtil implements IEmailSenderUtil {
                 return;
             }
             personName = new StringBuilder("").append(person.getFirstName()).append(" ").append(person.getFamilyName()).toString();
-
-            notifyPartyOnCollaborationStatus(toEmail, personName, productNames.toString(), party.getPartyName().get(0).getName().getValue(),groupDAO.getStatus(),language);
+            notifyPartyOnCollaborationStatus(toEmail, personName, productNames.toString(), party.getPartyName().get(0).getName().getValue(),groupDAO.getStatus(),url,language);
             logger.info("Collaboration status mail sent to: {} for group: {} with status: {}", toEmail, groupDAO.getID(), groupDAO.getStatus().toString());
         }).start();
     }
 
-    private void notifyPartyOnCollaborationStatus(String toEmail, String tradingPartnerPersonName, String productName, String tradingPartnerName, GroupStatus status, String language){
+    private void notifyPartyOnCollaborationStatus(String toEmail, String tradingPartnerPersonName, String productName, String tradingPartnerName, GroupStatus status,String url, String language){
         Context context = new Context();
         String subject;
         String template;
@@ -192,6 +198,10 @@ public class EmailSenderUtil implements IEmailSenderUtil {
         context.setVariable("tradingPartner", tradingPartnerName);
         context.setVariable("product", productName);
         context.setVariable("platformName",platformName);
+
+        if (!url.isEmpty()) {
+            context.setVariable("url", url);
+        }
 
         if(status.equals(GroupStatus.CANCELLED)){
             subject = getMailSubject(NimbleExceptionMessageCode.MAIL_SUBJECT_BUSINESS_PROCESS_CANCELLED,language,Arrays.asList(platformName));
