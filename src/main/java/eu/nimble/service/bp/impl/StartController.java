@@ -36,6 +36,7 @@ import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
 import eu.nimble.utility.validation.IValidationUtil;
+import eu.nimble.utility.validation.NimbleRole;
 import feign.Response;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -169,8 +170,9 @@ public class StartController implements StartApi {
 
         logger.debug(" $$$ Start Process with ProcessInstanceInputMessage {}", JsonSerializationUtility.serializeEntitySilentlyWithMixin(body, ProcessVariables.class, MixInIgnoreProperties.class));
 
+        NimbleRole[] requiredRoles = body.getVariables().getProcessID().contentEquals(ClassProcessTypeMap.CAMUNDA_PROCESS_ID_FULFILMENT) ? RoleConfig.REQUIRED_ROLES_SALES:RoleConfig.REQUIRED_ROLES_PURCHASES;
         // validate role
-        if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+        if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), requiredRoles)) {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 

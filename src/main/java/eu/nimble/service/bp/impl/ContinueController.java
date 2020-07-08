@@ -5,6 +5,7 @@ import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.model.hyperjaxb.*;
 import eu.nimble.service.bp.util.BusinessProcessEvent;
 import eu.nimble.service.bp.util.bp.BusinessProcessUtility;
+import eu.nimble.service.bp.util.bp.ClassProcessTypeMap;
 import eu.nimble.service.bp.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.util.email.IEmailSenderUtil;
 import eu.nimble.service.bp.util.persistence.bp.CollaborationGroupDAOUtility;
@@ -28,6 +29,7 @@ import eu.nimble.service.bp.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
 import eu.nimble.utility.validation.IValidationUtil;
+import eu.nimble.utility.validation.NimbleRole;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
@@ -100,8 +102,9 @@ public class ContinueController implements ContinueApi {
 
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(null);
         try {
+            NimbleRole[] requiredRoles = body.getVariables().getProcessID().contentEquals(ClassProcessTypeMap.CAMUNDA_PROCESS_ID_FULFILMENT) ? RoleConfig.REQUIRED_ROLES_PURCHASES:RoleConfig.REQUIRED_ROLES_SALES;
             // validate role
-            if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_SALES)) {
+            if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), requiredRoles)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
             }
 
