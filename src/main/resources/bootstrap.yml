@@ -180,8 +180,9 @@ camunda:
       password: superSecret
 
 efactory:
-  logstash:
-    url: ${EFACTORY_LOGSTASH_URL:}
+  service-registry:
+    accountancy-service:
+      url: ${EFACTORY_SERVICE_REGISTRY_ACCOUNTANCY_SERVICE:}
 
 nimble:
   binary-content:

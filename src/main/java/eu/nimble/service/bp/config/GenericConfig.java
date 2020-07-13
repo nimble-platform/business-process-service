@@ -1,8 +1,6 @@
 package eu.nimble.service.bp.config;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.stereotype.Component;
 
 /**
@@ -17,9 +15,6 @@ public class GenericConfig {
     @Value("${nimble.tracking-analysis.url}")
     private String trackingAnalysisServiceUrl;
 
-    @Value("${efactory.logstash.url}")
-    private String efactoryLogstashUrl;
-
     @Value("${nimble.delegate-service.url}")
     private String delegateServiceUrl;
 
@@ -28,10 +23,6 @@ public class GenericConfig {
 
     public String getDataChannelServiceUrl() {
         return dataChannelServiceUrl;
-    }
-
-    public String getEfactoryLogstashUrl() {
-        return efactoryLogstashUrl;
     }
 
     public String getTrackingAnalysisServiceUrl() {
