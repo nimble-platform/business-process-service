@@ -1,12 +1,13 @@
 package eu.nimble.service.bp.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.common.base.Strings;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;
 import eu.nimble.service.bp.config.RoleConfig;
+import eu.nimble.service.bp.util.eFactory.AccountancyService;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.PaymentPersistenceUtility;
-import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.invoice.InvoiceType;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.utility.ExecutionContext;
@@ -39,6 +40,8 @@ public class PaymentController {
     private IValidationUtil validationUtil;
     @Autowired
     private ExecutionContext executionContext;
+    @Autowired
+    private AccountancyService accountancyService;
 
     @ApiOperation(value = "",notes = "Checks whether the payment is done for the given order or not")
     @ApiResponses(value = {
@@ -109,8 +112,8 @@ public class PaymentController {
         catalogueRepository.persistEntity(invoice);
 
 //        if(validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_TO_LOG_PAYMENTS)){
-            String logstashUrl = SpringBridge.getInstance().getGenericConfig().getEfactoryLogstashUrl();
-            if(logstashUrl.contentEquals("")){
+            String logstashUrl = accountancyService.getAccountancyServiceLogstashEndpoint();
+            if(Strings.isNullOrEmpty(logstashUrl)){
                 logger.info("Could not send payment log since no url set for efactory logstash");
             }
             else {
