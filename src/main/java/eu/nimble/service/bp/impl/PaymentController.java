@@ -30,6 +30,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 @Controller
 public class PaymentController {
@@ -112,25 +113,11 @@ public class PaymentController {
         catalogueRepository.persistEntity(invoice);
 
 //        if(validationUtil.validateRole(bearerToken, RoleConfig.REQUIRED_ROLES_TO_LOG_PAYMENTS)){
-            String logstashUrl = accountancyService.getAccountancyServiceLogstashEndpoint();
-            if(Strings.isNullOrEmpty(logstashUrl)){
-                logger.info("Could not send payment log since no url set for efactory logstash");
-            }
-            else {
-                try {
-                    String body = PaymentPersistenceUtility.createJSONBodyForPayment(order);
-                    logger.info("Body:{}",body);
-                    HttpResponse<String> response = Unirest.post(logstashUrl)
-                            .header("Content-Type", "application/json")
-                            .header("accept", "*/*")
-                            .body(body)
-                            .asString();
-                    if(response.getStatus() != 200 && response.getStatus() != 204){
-                        throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_SEND_PAYMENT_LOG.toString(),Arrays.asList(logstashUrl,orderId));
-                    }
-                } catch (Exception e) {
-                    throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_SEND_PAYMENT_LOG.toString(),Arrays.asList(logstashUrl,orderId),e);
-                }
+            String body = PaymentPersistenceUtility.createJSONBodyForPayment(order);
+            try {
+                accountancyService.sendPaymentLog(body,orderId);
+            } catch (Exception e) {
+                throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_SEND_PAYMENT_LOG.toString(), Collections.singletonList(orderId),e);
             }
 //        }
 
