@@ -1,5 +1,6 @@
 package eu.nimble.service.bp.impl.mock;
 
+import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentStatus;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceGroupDAO;
 import eu.nimble.service.bp.util.email.IEmailSenderUtil;
 import org.springframework.context.annotation.Profile;
@@ -31,17 +32,13 @@ public class EmailSenderUtilMock implements IEmailSenderUtil {
     }
 
     @Override
-    public void notifyPartyOnPendingCollaboration(String[] toEmail, String initiatingPersonName, String productName, String initiatingPartyName, String url, String subject, String respondingPartyName, String language) {
-
-    }
-
-    @Override
-    public void notifyPartyOnCollaboration(String[] toEmail, String initiatingPersonName, String productName, String initiatingPartyName, String url, String subject, String respondingPartyName, String language) {
-
-    }
-
-    @Override
     public void notifyPartyOnNewDeliveryDate(String toEmail, String productName, String respondingPartyName, String expectedDeliveryDate, String url) {
 
     }
+
+    @Override
+    public void notifyPartyOnBusinessProcess(String[] toEmail, String initiatingPersonName, String productName, String initiatingPartyName, String url, String subject, String respondingPartyName, String language, ProcessDocumentStatus processDocumentStatus) {
+
+    }
+
 }

@@ -384,11 +384,7 @@ public class EmailSenderUtil implements IEmailSenderUtil {
                     }
                 }
 
-                if (processDocumentStatus.equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
-                    notifyPartyOnPendingCollaboration(emailList.toArray(new String[0]), initiatingPersonName, productName, initiatingPartyName, url, subject, respondingPartyName,language);
-                } else {
-                    notifyPartyOnCollaboration(emailList.toArray(new String[0]), initiatingPersonName, productName, initiatingPartyName, url, subject, respondingPartyName,language);
-                }
+                notifyPartyOnBusinessProcess(emailList.toArray(new String[0]), initiatingPersonName, productName, initiatingPartyName, url, subject, respondingPartyName,language,processDocumentStatus);
             }
         }).start();
     }
@@ -406,8 +402,8 @@ public class EmailSenderUtil implements IEmailSenderUtil {
         return URL_TEXT + frontEndURL + "/#/bpe/bpe-exec/" + processInstanceId + "/" + sellerFederationId;
     }
 
-    public void notifyPartyOnPendingCollaboration(String[] toEmail, String initiatingPersonName, String productName,
-                                                  String initiatingPartyName, String url, String subject, String respondingPartyName, String language) {
+    public void notifyPartyOnBusinessProcess(String[] toEmail, String initiatingPersonName, String productName, String initiatingPartyName,
+                                           String url, String subject, String respondingPartyName, String language, ProcessDocumentStatus processDocumentStatus) {
         Context context = new Context();
 
         context.setVariable("initiatingPersonName", initiatingPersonName);
@@ -420,32 +416,19 @@ public class EmailSenderUtil implements IEmailSenderUtil {
             context.setVariable("url", url);
         }
 
-        if (subject.equals(EMPTY_TEXT)) {
-            subject = getMailSubject(NimbleExceptionMessageCode.MAIL_SUBJECT_ACTION_REQUIRED,language,Arrays.asList(platformName));
-        }
+        String templateName = "continue_colloboration";
+        String mailSubject = getMailSubject(NimbleExceptionMessageCode.MAIL_SUBJECT_BUSINESS_PROCESS_TRANSITION,language, Collections.singletonList(platformName));
 
-        emailService.send(toEmail, subject, getTemplateName("action_pending",language), context);
-    }
-
-    public void notifyPartyOnCollaboration(String[] toEmail, String initiatingPersonName, String productName, String initiatingPartyName,
-                                           String url, String subject, String respondingPartyName, String language) {
-        Context context = new Context();
-
-        context.setVariable("initiatingPersonName", initiatingPersonName);
-        context.setVariable("initiatingPartyName", initiatingPartyName);
-        context.setVariable("respondingPartyName", respondingPartyName);
-        context.setVariable("product", productName);
-        context.setVariable("platformName",platformName);
-
-        if (!url.isEmpty()) {
-            context.setVariable("url", url);
+        if (processDocumentStatus.equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
+            templateName = "action_pending";
+            mailSubject = getMailSubject(NimbleExceptionMessageCode.MAIL_SUBJECT_ACTION_REQUIRED,language, Collections.singletonList(platformName));
         }
 
         if (subject.equals(EMPTY_TEXT)) {
-            subject = getMailSubject(NimbleExceptionMessageCode.MAIL_SUBJECT_BUSINESS_PROCESS_TRANSITION,language,Arrays.asList(platformName));
+            subject = mailSubject;
         }
 
-        emailService.send(toEmail, subject, getTemplateName("continue_colloboration",language), context);
+        emailService.send(toEmail, subject, getTemplateName(templateName,language), context);
     }
 
     public void notifyPartyOnNewDeliveryDate(String toEmail,String productName, String respondingPartyName, String expectedDeliveryDate, String url) {
