@@ -12,7 +12,7 @@ import java.util.Date;
 @Component
 public class EmailSenderUtilMock implements IEmailSenderUtil {
     @Override
-    public void notifyTrustScoreUpdate(String partyID, String federationID, String bearerToken, String language) {
+    public void sendTrustScoreUpdateEmail(String partyID, String federationID, String bearerToken, String language) {
 
     }
 
@@ -27,7 +27,7 @@ public class EmailSenderUtilMock implements IEmailSenderUtil {
     }
 
     @Override
-    public void sendActionPendingEmail(String bearerToken, String originalBearerToken, String clientFederationId, String documentId, String language) {
+    public void sendBusinessProcessStatusEmail(String bearerToken, String originalBearerToken, String clientFederationId, String documentId, String language) {
 
     }
 
