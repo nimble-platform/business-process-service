@@ -347,7 +347,7 @@ public class EmailSenderUtil implements IEmailSenderUtil {
             List<PersonType> personTypeList = partyType.getPerson();
             List<String> emailList = new ArrayList<>();
             for (PersonType p : personTypeList) {
-                if (p.getRole().contains(NimbleRole.SALES_OFFICER.toString())) {
+                if (p.getRole().contains(NimbleRole.SALES_OFFICER.toString()) || p.getRole().contains(NimbleRole.MONITOR.toString())) {
                     emailList.add(p.getContact().getElectronicMail());
                 }
             }
