@@ -72,10 +72,10 @@ public class EmailSenderUtil implements IEmailSenderUtil {
                 List<PartyType> parties;
                 // parties in this instance
                 if(groupDAO.getFederationID().contentEquals(SpringBridge.getInstance().getFederationId()) && tradingPartnerFederationID.contentEquals(SpringBridge.getInstance().getFederationId())){
-                    parties = SpringBridge.getInstance().getiIdentityClientTyped().getParties(bearerToken,Arrays.asList(partyId,tradingPartnerId));
+                    parties = SpringBridge.getInstance().getiIdentityClientTyped().getParties(bearerToken,Arrays.asList(partyId,tradingPartnerId),true);
                 }
                 else{
-                    Response response = SpringBridge.getInstance().getDelegateClient().getParty(bearerToken,partyIds,false,federationIds);
+                    Response response = SpringBridge.getInstance().getDelegateClient().getParty(bearerToken,partyIds,true,federationIds);
                     parties = JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),new TypeReference<List<PartyType>>() {
                     });
                 }
@@ -103,44 +103,15 @@ public class EmailSenderUtil implements IEmailSenderUtil {
             }
             productNames.append(productNameList.get(productNameList.size() - 1));
 
-            // get dashboard url for the trading partner
+            // check whether the trading partner is buyer or not
             boolean isTradingPartnerBuyer = processDocumentMetadataDAO.getInitiatorID().contentEquals(tradingPartnerId) && processDocumentMetadataDAO.getInitiatorFederationID().contentEquals(tradingPartnerFederationID);
             if(processDocumentMetadataDAO.getType().equals(DocumentType.DESPATCHADVICE) || processDocumentMetadataDAO.getType().equals(DocumentType.RECEIPTADVICE)){
                 isTradingPartnerBuyer = !isTradingPartnerBuyer;
             }
+            // get dashboard url for the trading partner
             String url = getDashboardUrl(isTradingPartnerBuyer ? COLLABORATION_ROLE_BUYER : COLLABORATION_ROLE_SELLER);
-            // Try to identify the recipient email
-            //
-            // If there are more than one instances in the group, simply select the first process instance and
-            // use the creatorID of the document created by the trading party. Otherwise, use the email of the first
-            // person associated with the trading partner
-            String toEmail;
-            if (groupDAO.getProcessInstanceIDs().size() > 1) {
-                ProcessDocumentMetadataDAO documentMetadataDAO = ProcessDocumentMetadataDAOUtility.getDocumentOfTheOtherParty(groupDAO.getProcessInstanceIDs().get(0), partyId);
-                // get person via the identity client
-                String personId = documentMetadataDAO.getCreatorUserID();
-                PersonType person;
-                try {
-                    if(tradingPartnerFederationID.contentEquals(SpringBridge.getInstance().getFederationId())){
-                        person = iIdentityClientTyped.getPerson(bearerToken, personId);
-                    } else {
-                        Response response = SpringBridge.getInstance().getDelegateClient().getPerson(bearerToken,personId,tradingPartnerFederationID);
-                        person = JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),PersonType.class);
-                    }
-                    toEmail = person.getContact().getElectronicMail();
-                } catch (IOException e) {
-                    logger.error("Failed to send email for group: {} with status: {}", groupDAO.getID(), groupDAO.getStatus().toString());
-                    logger.error("Failed to get person with id: {} from identity service", personId, e);
-                    return;
-                }
-
-            } else {
-                toEmail = tradingPartner.getPerson().get(0).getContact().getElectronicMail();
-            }
-
             // collect name of the person cancelling the collaboration
             PersonType person;
-            String personName;
             try {
                 if(originalBearerToken == null){
                     person = iIdentityClientTyped.getPerson(bearerToken);
@@ -154,8 +125,31 @@ public class EmailSenderUtil implements IEmailSenderUtil {
                 logger.error("Failed to get person with token: {} from identity service", bearerToken, e);
                 return;
             }
-            personName = new StringBuilder("").append(person.getFirstName()).append(" ").append(person.getFamilyName()).toString();
-            notifyPartyOnCollaborationStatus(toEmail, personName, productNames.toString(), party.getPartyName().get(0).getName().getValue(),groupDAO.getStatus(),url,language);
+            String personName = String.format("%s %s",person.getFirstName(),person.getFamilyName());
+            // populate toEmail and toEmailTradingPartner lists
+            List<String> toEmail = new ArrayList<>();
+            List<String> toEmailTradingPartner = new ArrayList<>();
+
+            String tradingPartnerRequiredRole = NimbleRole.SALES_OFFICER.getName();
+            String requiredRole = NimbleRole.PURCHASER.getName();
+            if(isTradingPartnerBuyer){
+                tradingPartnerRequiredRole = NimbleRole.PURCHASER.getName() ;
+                requiredRole = NimbleRole.SALES_OFFICER.getName() ;
+            }
+
+            for (PersonType p : tradingPartner.getPerson()) {
+                if (p.getRole().contains(tradingPartnerRequiredRole) || p.getRole().contains(NimbleRole.MONITOR.getName())) {
+                    toEmailTradingPartner.add(p.getContact().getElectronicMail());
+                }
+            }
+
+            for (PersonType p : party.getPerson()) {
+                if (p.getRole().contains(requiredRole) || p.getRole().contains(NimbleRole.MONITOR.getName())) {
+                    toEmail.add(p.getContact().getElectronicMail());
+                }
+            }
+
+            notifyPartyOnCollaborationStatus(toEmail.toArray(new String[0]), toEmailTradingPartner.toArray(new String[0]), personName, productNames.toString(), party.getPartyName().get(0).getName().getValue(),groupDAO.getStatus(),url,language);
             logger.info("Collaboration status mail sent to: {} for group: {} with status: {}", toEmail, groupDAO.getID(), groupDAO.getStatus().toString());
         }).start();
     }
@@ -296,7 +290,7 @@ public class EmailSenderUtil implements IEmailSenderUtil {
                 buyerParty = initiatingParty;
                 sellerParty = respondingParty;
                 for (PersonType p : personTypeList) {
-                    if (p.getRole().contains(NimbleRole.SALES_OFFICER.toString()) || p.getRole().contains(NimbleRole.MONITOR.toString())) {
+                    if (p.getRole().contains(NimbleRole.SALES_OFFICER.getName()) || p.getRole().contains(NimbleRole.MONITOR.getName())) {
                         emailList.add(p.getContact().getElectronicMail());
                     }
                 }
@@ -304,7 +298,7 @@ public class EmailSenderUtil implements IEmailSenderUtil {
                 buyerParty = respondingParty;
                 sellerParty = initiatingParty;
                 for (PersonType p : personTypeList) {
-                    if (p.getRole().contains(NimbleRole.PURCHASER.toString()) || p.getRole().contains(NimbleRole.MONITOR.toString())) {
+                    if (p.getRole().contains(NimbleRole.PURCHASER.getName()) || p.getRole().contains(NimbleRole.MONITOR.getName())) {
                         emailList.add(p.getContact().getElectronicMail());
                     }
                 }
@@ -347,7 +341,7 @@ public class EmailSenderUtil implements IEmailSenderUtil {
             List<PersonType> personTypeList = partyType.getPerson();
             List<String> emailList = new ArrayList<>();
             for (PersonType p : personTypeList) {
-                if (p.getRole().contains(NimbleRole.SALES_OFFICER.toString()) || p.getRole().contains(NimbleRole.MONITOR.toString())) {
+                if (p.getRole().contains(NimbleRole.SALES_OFFICER.getName()) || p.getRole().contains(NimbleRole.MONITOR.getName())) {
                     emailList.add(p.getContact().getElectronicMail());
                 }
             }
@@ -363,7 +357,7 @@ public class EmailSenderUtil implements IEmailSenderUtil {
         }).start();
     }
 
-    private void notifyPartyOnCollaborationStatus(String toEmail, String tradingPartnerPersonName, String productName, String tradingPartnerName, GroupStatus status,String url, String language){
+    private void notifyPartyOnCollaborationStatus(String[] toEmail,String[] toEmailTradingPartner, String tradingPartnerPersonName, String productName, String tradingPartnerName, GroupStatus status,String url, String language){
         Context context = new Context();
         String subject;
         String template;
@@ -386,7 +380,20 @@ public class EmailSenderUtil implements IEmailSenderUtil {
             template = getTemplateName("finished_collaboration",language);
         }
 
-        emailService.send(new String[]{toEmail}, subject, template, context);
+        if(toEmail.length > 0){
+            try{
+                emailService.send(toEmail, subject, template, context);
+            } catch (Exception e){
+                logger.error("Failed to send email for {} to notify collaboration status",toEmail,e);
+            }
+        }
+        if(toEmailTradingPartner.length > 0){
+            try{
+                emailService.send(toEmailTradingPartner, subject, template, context);
+            } catch (Exception e){
+                logger.error("Failed to send email for {} to notify collaboration status",toEmailTradingPartner,e);
+            }
+        }
     }
 
     public void notifyPartyOnBusinessProcess(String[] toEmail, String initiatingPersonName, String productName, String initiatingPartyName,

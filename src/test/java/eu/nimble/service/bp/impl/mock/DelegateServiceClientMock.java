@@ -86,7 +86,7 @@ public class DelegateServiceClientMock implements IDelegateClient {
     public Response getParty(String bearerToken, String partyIds,boolean includeRoles,List<String> delegateIds) {
         String response;
         try {
-            List<PartyType> parties = SpringBridge.getInstance().getiIdentityClientTyped().getParties(bearerToken, Arrays.asList(partyIds.split(",")));
+            List<PartyType> parties = SpringBridge.getInstance().getiIdentityClientTyped().getParties(bearerToken, Arrays.asList(partyIds.split(",")),false);
             response = JsonSerializationUtility.getObjectMapper().writeValueAsString(parties);
         } catch (IOException e) {
             response = null;
