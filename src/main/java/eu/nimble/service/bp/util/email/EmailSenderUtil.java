@@ -11,6 +11,7 @@ import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
 import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.email.EmailService;
+import eu.nimble.utility.validation.NimbleRole;
 import feign.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -295,7 +296,7 @@ public class EmailSenderUtil implements IEmailSenderUtil {
                 buyerParty = initiatingParty;
                 sellerParty = respondingParty;
                 for (PersonType p : personTypeList) {
-                    if (p.getRole().contains("sales_officer") || p.getRole().contains("monitor")) {
+                    if (p.getRole().contains(NimbleRole.SALES_OFFICER.toString()) || p.getRole().contains(NimbleRole.MONITOR.toString())) {
                         emailList.add(p.getContact().getElectronicMail());
                     }
                 }
@@ -303,7 +304,7 @@ public class EmailSenderUtil implements IEmailSenderUtil {
                 buyerParty = respondingParty;
                 sellerParty = initiatingParty;
                 for (PersonType p : personTypeList) {
-                    if (p.getRole().contains("purchaser") || p.getRole().contains("monitor")) {
+                    if (p.getRole().contains(NimbleRole.PURCHASER.toString()) || p.getRole().contains(NimbleRole.MONITOR.toString())) {
                         emailList.add(p.getContact().getElectronicMail());
                     }
                 }
@@ -346,7 +347,7 @@ public class EmailSenderUtil implements IEmailSenderUtil {
             List<PersonType> personTypeList = partyType.getPerson();
             List<String> emailList = new ArrayList<>();
             for (PersonType p : personTypeList) {
-                if (p.getRole().contains("sales_officer")) {
+                if (p.getRole().contains(NimbleRole.SALES_OFFICER.toString())) {
                     emailList.add(p.getContact().getElectronicMail());
                 }
             }
