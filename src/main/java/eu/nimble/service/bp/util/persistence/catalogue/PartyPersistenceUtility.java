@@ -171,7 +171,7 @@ public class PartyPersistenceUtility {
     public static List<PartyType> getParties(String bearerToken, List<String> partyIds, List<String> federationIds) throws IOException {
         List<PartyType> parties = new ArrayList<>();
 
-        List<PartyType> identityParties = SpringBridge.getInstance().getiIdentityClientTyped().getParties(bearerToken,partyIds);
+        List<PartyType> identityParties = SpringBridge.getInstance().getiIdentityClientTyped().getParties(bearerToken,partyIds,false);
         // check whether there are parties which are not available in the identity-service
         if(identityParties != null){
             // update the party id list

@@ -5,6 +5,20 @@
       {
         "value": "Purchase Order Terms and Conditions\n\nThe following Purchase Order Terms and Conditions (“Terms”) is duly executed by both parties, these Terms provide $seller_id (“Seller”) with the guidelines and legal stipulations of your purchase order (“Order”) with the $buyer_id (“Purchaser”) for the goods and/or services that are described on the Purchase Order.\n\n",
         "languageID": "en"
+      },
+      {
+        "value": "Términos y condiciones de la orden de compra\n\nLos siguientes términos y condiciones de órdenes de compra (“Términos”)  son debidamente ejecutadas por ambas partes, estos Términos proporcionan $seller_id (“Vendedor”)  con las pautas y estipulaciones legales de su orden de compra (“Pedido”)  con $buyer_id (“Comprador”)  para los bienes y / o servicios que se describen en la Orden de compra.\n\n",
+        "languageID": "es"
+      }
+    ],
+    "clauseTitle": [
+      {
+        "value": "PURCHASE ORDER TERMS AND CONDITIONS",
+        "languageID": "en"
+      },
+      {
+        "value": "TÉRMINOS Y CONDICIONES DE LA ORDEN DE COMPRA",
+        "languageID": "es"
       }
     ],
     "tradingTerms": [
@@ -47,6 +61,20 @@
       {
         "value": "1. ACCEPTANCE AND TERMS AND CONDITIONS: Seller accepts this Order and any amendments by signing the acceptance copy of the Order and returning it to Purchaser promptly. Even without such written acknowledgment, Seller's full or partial performance under this Order will constitute acceptance of these Terms. By acceptance of this Order, Seller agrees to be bound by, and to comply with all these Terms, which include any supplements to it, and all specifications and other documents referred to in this Order. These Terms apply to everything listed in this Order and constitute Purchaser's offer to Seller, which Purchaser may revoke at any time prior to Seller’s acceptance. This Order is not an acceptance by Purchaser of any offer to sell, any quotation, or any proposal. Reference in this Order to any such offer to sell, quotation, or proposal will not constitute a modification of any of these Terms. Terms and conditions different from or in addition to these Terms, whether contained in any acknowledgment of this Order, or with delivery of any goods or services under this Order, or otherwise, will not be binding on Purchaser, whether or not they would materially alter this Order, and Purchaser hereby rejects them. These Terms may be modified only by a written document signed by duly authorized representatives of Purchaser and Seller.\n\n",
         "languageID": "en"
+      },
+      {
+        "value": "1. ACEPTACIÓN , TÉRMINOS Y CONDICIONES: El Vendedor acepta este Pedido y cualquier enmienda al firmar la copia de aceptación del Pedido y se compromete a enviar la al Comprador de inmediato. Incluso sin dicho reconocimiento por escrito, el desempeño total o parcial del Vendedor en virtud de este Pedido constituirá la aceptación de estos Términos. Al aceptar este Pedido, el Vendedor acepta cumplir con todos estos Términos, que incluyen cualquier suplemento, todas las especificaciones y otros documentos mencionados en este Pedido. Estos Términos se aplican a todo lo enumerado en este Pedido y constituyen la oferta del Comprador al Vendedor, el Comprador puede revocar en cualquier momento antes de la aceptación del Vendedor. Este Pedido no es una aceptación por parte del Comprador de ninguna oferta de venta, cotización o propuesta. La referencia en este Pedido a cualquier oferta de venta, cotización o propuesta no constituirá una modificación de ninguno de estos Términos.Los términos y condiciones diferentes o adicionales a estos Términos, ya sea que estén contenidos en cualquier reconocimiento de este Pedido, o con la entrega de cualquier producto o servicio bajo este Pedido, o de otra manera, no serán vinculantes para el Comprador, ya sea que alteren materialmente o no esta Orden, y el Comprador la rechaza por la presente. Estos Términos sólo pueden modificarse mediante un documento escrito firmado por representantes debidamente autorizados del Comprador y el Vendedor.\n\n",
+        "languageID": "es"
+      }
+    ],
+    "clauseTitle": [
+      {
+        "value": "ACCEPTANCE AND TERMS AND CONDITIONS",
+        "languageID": "en"
+      },
+      {
+        "value": "ACEPTACIÓN , TÉRMINOS Y CONDICIONES",
+        "languageID": "es"
       }
     ],
     "tradingTerms": []
@@ -57,6 +85,20 @@
       {
         "value": "2. DEFAULT: Time is of the essence of this Order. Purchaser may by written notice of default to Seller (a) terminate all or any part of this Order if Seller fails to perform, or so fails to make progress as to endanger performance of this Order in accordance with its terms, and does not cure such failure within a period of $action_day days (or such longer period as Purchaser may authorize in writing) after receipt of notice from Purchaser specifying such failure; and (b) procure, on such terms as it will deem appropriate, goods or services similar to those so terminated. Seller will continue performance of this Order to the extent not terminated and will be liable to Purchaser for any excess costs for such similar goods or services. As an alternate remedy, and in lieu of termination for default, Purchaser, at its sole discretion, may elect to extend the delivery schedule and/or waive other deficiencies in Seller's performance, in which case an equitable reduction in the Order price will be negotiated. If Seller for any reason anticipates difficulty in complying with the required delivery date, or in meeting any of the other requirements of this Order, Seller will promptly notify Purchaser in writing. If Seller does not comply with Purchaser's delivery schedule, Purchaser may require delivery by fastest way and charges resulting from the premium transportation must be fully prepaid and absorbed by Seller. The rights and remedies of Purchaser provided in this Section 2 will not be exclusive and are in addition to any other rights and remedies provided by the Uniform Commercial Code, by law, at equity or under this Order.\n\n",
         "languageID": "en"
+      },
+      {
+        "value": "2. POR DEFECTO: El tiempo es lo esencial de esta Orden. El Comprador puede, mediante notificación escrita al Vendedor (a), rescindir todo o parte de este Pedido si el Vendedor no cumple o no avanza poniendo peligro el cumplimiento de este Pedido de acuerdo con sus términos y no se corrige dentro de un período de $action_day days (o un período más largo que el Comprador pueda autorizar por escrito) después de recibir una notificación del Comprador especificando tal error ; y (b) obtener, en los términos que considere apropiados, bienes o servicios similares a los terminados. El Vendedor continuará la ejecución de este Pedido en la medida en que no se rescinda y será responsable ante el Comprador por cualquier exceso de costos por dichos bienes o servicios similares. Como alternativa, y en lugar de la terminación por incumplimiento, el Comprador, a su exclusivo criterio, puede optar por extender el tiempo de entrega y / o renunciar a otras deficiencias en el desempeño del Vendedor, en cuyo caso se negociará una reducción equitativa en el precio del Pedido. Si el Vendedor por alguna razón anticipa dificultades para cumplir con la fecha de entrega requerida, o para cumplir con cualquiera de los otros requisitos de este Pedido, el Vendedor lo notificará inmediatamente al Comprador por escrito. Si el Vendedor no cumple con el cronograma de entrega del Comprador, el Comprador puede exigir la entrega de la manera más rápida y los cargos resultantes del transporte premium deben ser pagados por completo y asumidos por el Vendedor. Los derechos y recursos del Comprador provistos en esta Sección 2 no serán exclusivos y se sumarán a otros derechos y recursos provistos por el Código Comercial Uniforme, por ley, en equidad o bajo esta Orden.\n\n",
+        "languageID": "es"
+      }
+    ],
+    "clauseTitle": [
+      {
+        "value": "DEFAULT",
+        "languageID": "en"
+      },
+      {
+        "value": "POR DEFECTO",
+        "languageID": "es"
       }
     ],
     "tradingTerms": [
@@ -83,6 +125,20 @@
       {
         "value": "3. PRICE: This Order must not be filled at a price higher than shown on the Purchase Order. If no price is set forth on the front of the Order, the goods or services will be billed at the price last quoted or at the prevailing market price, whichever is lower, and, in any event, goods and services ordered under this Order will not be billed at a higher price than last quoted or charged without Purchaser's specific written authorization. Purchaser will be entitled at all times to set off any amount owed at any time by Seller or any of its affiliates to Purchaser or any of its affiliates against any amount payable at any time by Purchaser in connection with this Order. No extra charges of any kind will be allowed unless specifically agreed to in writing by the Purchaser. All applicable taxes arising out of transactions contemplated by the Order will be borne by Seller except as otherwise specified by the parties in writing. If Seller reduces its prices for such goods and/or services during the term of this Order, Seller shall correspondingly reduce the prices of goods and/or services sold thereafter to Purchaser under this Order.\n\n",
         "languageID": "en"
+      },
+      {
+        "value": "3. PRECIO:Esta orden no debe completarse a un precio superior al que se muestra en la orden de compra. Si no se establece un precio en la Orden, los bienes o servicios se facturan al último precio cotizado o al precio de mercado vigente, el que sea más bajo, y, en cualquier caso, los bienes y servicios pedidos bajo esta Orden no se facturará a un precio superior al último cotizado o cobrado sin la autorización específica por escrito del Comprador.\nEl Comprador estará autorizado en cualquier momento a deducir la cantidad contraída por el Vendedor, o cualquiera de sus afiliaciones al Comprador, o cualquiera de sus afiliaciones contra cualquier cantidad pagadera por el Comprador en este Pedido. No se permitirán cargos adicionales de ningún tipo a menos que el Comprador lo acuerde específicamente por escrito. El Vendedor correrá con todos los impuestos aplicables que surjan de las transacciones contempladas en el Pedido, salvo que las partes especifiquen lo contrario por escrito.Si el Vendedor reduce los precios de dichos bienes y / o servicios durante el plazo de este Pedido, el Vendedor reducirá los precios de los bienes y / o servicios vendidos posteriormente al Comprador en virtud de este Pedido.\n\n",
+        "languageID": "es"
+      }
+    ],
+    "clauseTitle": [
+      {
+        "value": "PRICE",
+        "languageID": "en"
+      },
+      {
+        "value": "PRECIO",
+        "languageID": "es"
       }
     ],
     "tradingTerms": []
@@ -93,6 +149,20 @@
       {
         "value": "4. INVOICES, PAYMENT, AND TAXES: \n(a) Invoices shall be rendered on completion of services or delivery of goods and shall contain the Purchase Order Number, item number, description of goods or services, quantities, unit prices, date(s) rendered and total purchase price. Each invoice must refer to one, and only one, purchase order.\n(b) Invoices for contingent workers must contain all of the above where applicable and include a copy of the Seller’s time tracking document for each contingent worker for the time period being billed.\n(c) Payment shall be made on the terms of $payment_id . Cash discount periods shall be computed from either the date of actual delivery of the goods or the date an acceptable invoice is received, whichever is later. All claims for money due or to become due from Purchaser shall be subject to deduction by Purchaser for any setoff or counterclaim arising out of this or any other of Purchaser's Orders with Seller.\n(d) Seller recognizes that Purchaser will be treated as a tax exempt entity, and Purchaser will provide Seller with its exemption certificate on request. All invoices of Seller to Purchaser shall exclude taxes that are excludable under Purchaser’s tax exempt status.\n",
         "languageID": "en"
+      },
+      {
+        "value": "4. FACTURAS, PAGO E IMPUESTOS: \n(a) Las facturas se entregarán al finalizar los servicios o la entrega de los bienes y contendrán el Número de orden de compra, el número de artículo, la descripción de los bienes o servicios, las cantidades, los precios unitarios, las fechas de entrega y el precio total de compra. Cada factura debe referirse a una, y solo una, orden de compra.\n(b) Las facturas contingentes para trabajadores deben contener todo lo anterior, cuando corresponda, e incluir una copia del documento de seguimiento del tiempo del Vendedor para cada trabajador contingente para el período de facturación.\n(c) El pago se realizará en los términos de $payment_id . Los períodos de descuento se calcularán a partir de la fecha de entrega real de los bienes o de la fecha en que se reciba una factura aceptable, lo que ocurra más tarde. Todas las reclamaciones de dinero vencidas o por vencer del Comprador estarán sujetas a la deducción por parte del Comprador por cualquier compensación o contrademanda que surja de este o cualquier otro Pedido del Comprador con el Vendedor.\n(d) El Vendedor reconoce que el Comprador será tratado como una entidad exenta de impuestos, y el Comprador proporcionará al Vendedor certificado de exención a solicitud. Todas las facturas del Vendedor al Comprador excluirán los impuestos que son excluibles bajo el estado exento de impuestos del Comprador.\n",
+        "languageID": "es"
+      }
+    ],
+    "clauseTitle": [
+      {
+        "value": "INVOICES, PAYMENT, AND TAXES",
+        "languageID": "en"
+      },
+      {
+        "value": "FACTURAS, PAGO E IMPUESTOS",
+        "languageID": "es"
       }
     ],
     "tradingTerms": [
@@ -124,6 +194,20 @@
       {
         "value": "5. PACKAGING: All goods must be packaged in the manner specified by Purchaser and shipped in the manner and by the route and carrier designated by Purchaser. If Purchaser does not specify the manner in which the goods must be packaged, Seller shall package the goods so as to avoid any damage in transit. If Purchaser does not specify the manner of shipment, route, or carrier, Seller shall ship the goods at the lowest possible transportation rates, consistent with Seller's obligation to meet the delivery schedule set forth in this Order.\n\n",
         "languageID": "en"
+      },
+      {
+        "value": "5. EMBALAJE: Todos los productos deben ser empaquetados de la manera especificada por el Comprador y enviados de la manera y por la ruta y el transportista designado por el Comprador.Si el Comprador no especifica la forma en que deben empaquetarse las mercancías, el Vendedor deberá empacar las mercancías para evitar daños en tránsito. Si el Comprador no especifica la forma de envío, ruta o transportista, el Vendedor enviará los productos con las tarifas de transporte más bajas posibles, de acuerdo con la obligación del Vendedor a cumplir con el cronograma de entrega establecido en este Pedido.\n\n",
+        "languageID": "es"
+      }
+    ],
+    "clauseTitle": [
+      {
+        "value": "PACKAGING",
+        "languageID": "en"
+      },
+      {
+        "value": "EMBALAJE",
+        "languageID": "es"
       }
     ],
     "tradingTerms": []
@@ -134,6 +218,20 @@
       {
         "value": "6. INSPECTION: All goods and services will be subject to inspection and test by Purchaser at all times and places, including the period of manufacture and in any event prior to final acceptance. Final acceptance or rejection of the goods or services will be made as promptly as practical after delivery except as otherwise provided in this Order, but failure to inspect and accept or reject goods or services or failure to detect defects by inspection, will neither relieve Seller from responsibility for such goods or services as are not in accordance with this Order nor impose liabilities on Purchaser for them. Purchaser's payment for the goods shall not constitute its acceptance of the goods. Goods rejected and goods supplied in excess of quantities ordered may be returned to the Seller at Seller’s expense. Payment, if any, made for any goods rejected hereunder shall be promptly refunded by Seller. Seller will provide and maintain an inspection and process control system acceptable to Purchaser covering the goods and services ordered. Records of all inspection work by Seller will be kept complete and available to Purchaser during the performance of this Order and for $inspection_id after Seller's completion of this Order. If any of the goods or services are found at any time to be defective in material or workmanship, or otherwise not in conformity with the requirements of this Order, including any applicable drawings and specifications, then Purchaser, in addition to such other rights and remedies it may have by contract or by law or equity, at its sole discretion may reject and return such goods at Seller's expense, require Seller to inspect the goods and remove nonconforming goods and/or require Seller to replace nonconforming goods or services with conforming goods or services. If Seller fails to make the necessary inspection, removal, and replacement in a time and manner satisfactory to Purchaser, Purchaser may at its option inspect and sort the goods; Seller will pay any related costs.\n\n",
         "languageID": "en"
+      },
+      {
+        "value": "6. INSPECCIÓN: Todos los bienes y servicios estarán sujetos a inspección y prueba por parte del Comprador en todo momento y lugar, incluido el período de fabricación y, en cualquier caso, antes de la aceptación final. La aceptación final o el rechazo de los bienes o servicios se realizarán tan pronto como sea posible después de la entrega, salvo que se indique lo contrario en este Pedido, pero la falta de inspección y aceptación o rechazo de bienes o servicios o la falta de detección de defectos por inspección, tampoco exentara al Vendedor de responsabilidad por los bienes o servicios que no estén conformes al  acuerdo de este Pedido ni impongan responsabilidades al Comprador por ellos. El pago del comprador por los bienes no constituirá la aceptación de los bienes. Los bienes rechazados y los bienes suministrados en exceso de las cantidades pedidas pueden devolverse al Vendedor a cargo del Vendedor. El pago, si lo hubiera, de los bienes rechazados en virtud del presente será reembolsado de inmediato por el Vendedor. El vendedor proporcionará y mantendrá un sistema de inspección y control de procesos aceptable para el Comprador que cubra los bienes y servicios pedidos. Los registros realizados de todos los trabajos de inspección por el Vendedor se mantendrán completos y disponibles para el Comprador durante la ejecución de este Pedido y por $inspección_id después de que el Vendedor complete este Pedido. Si en algún momento se detecta que alguno de los bienes o servicios es defectuoso en material o mano de obra, o que no cumple con los requisitos de este pedido, incluidos los esquemas y especificaciones aplicables, entonces el Comprador, además de los derechos y recursos mencionados  puede tener por contrato o por ley o equidad, con su propio criterio puede rechazar y devolver dichos bienes a cargo del vendedor, exigir al vendedor que inspeccione los bienes y eliminar los bienes no conformes y / o exigir al vendedor que reemplace los bienes o servicios no conformes con bienes o servicios. Si el Vendedor no realiza la inspección, eliminación y reemplazo necesarios de manera satisfactoria para el Comprador, el Comprador puede, inspeccionar y clasificar los productos; El vendedor pagará los cargos asociados.\n\n",
+        "languageID": "es"
+      }
+    ],
+    "clauseTitle": [
+      {
+        "value": "INSPECTION",
+        "languageID": "en"
+      },
+      {
+        "value": "INSPECCIÓN",
+        "languageID": "es"
       }
     ],
     "tradingTerms": [
@@ -164,6 +262,20 @@
       {
         "value": "7. WARRANTIES: Seller represents and warrants that (a) all goods and services are free of any claim of any nature by any third person and that Seller will convey clear title to Purchaser, (b) all services are performed in a manner acceptable in the industry and in accordance with generally accepted standards, are free from all defects, are fit for the particular purposes for which they are acquired, and are provided in strict accordance with the specifications or other requirements (including performance specifications) approved or adopted by Purchaser, (c) all goods sold will be of merchantable quality, free from all defects in design, workmanship and materials, and fit for the particular purposes for which they are purchased and that the goods and services are provided in strict accordance with the specifications, samples, drawings, designs or other requirements (including performance specifications) approved or adopted by Purchaser, (d) the prices for the goods or services sold to Purchaser under this Order are not less favorable than those currently extended to any other customer for the same or similar goods and/or services in equal or lesser quantities, and (e) Seller shall not act in any fashion or take any action that will render Purchaser liable for a violation of any applicable anti-bribery legislation which prohibits the offering, giving, or promising to offer or give or receiving, directly or indirectly, money or anything of value to any third party to assist it, them or Purchaser in retaining or obtaining business or in procuring the goods or services. Purchaser's inspection, test, acceptance, or use of the goods shall not affect Seller's obligations under these warranties. Seller shall replace or correct, at Purchaser's option and at Seller's cost, defects of any goods not conforming to these warranties. If Seller fails to correct defects in or replace nonconforming goods within $warranty_seller_id  from the date the Purchaser notifies Seller of the defect or defects, Purchaser may, on $warranty_buyer_id prior written notice to Seller, either (i) make such corrections or replace such goods and charge Seller for all costs incurred by Purchaser, or (ii) revoke its acceptance of the goods in which event Seller shall be obligated to refund the purchase price and make all necessary arrangements, at Seller's cost, for the return of the goods to Seller. All warranties of Seller herein or that are implied by law shall survive any inspection, delivery, acceptance, or payment by Purchaser. Any attempt by Seller to limit, disclaim, or restrict these warranties or any remedies of Purchaser, by acknowledgment or otherwise, in accepting or performing this Order, will be null, void, and ineffective without Purchaser's written consent.\n",
         "languageID": "en"
+      },
+      {
+        "value": "7. GARANTÍAS: El Vendedor declara y garantiza que (a) todos los bienes y servicios están libres de cualquier reclamo, de cualquier forma por parte de un tercero y que el Vendedor proporcionará un título claro al Comprador, (b) todos los servicios se realizan de una manera conforme a la industria y de acuerdo con las normas generalmente aceptadas, no tendrán defectos, son aptos para los fines particulares para los que fueron adquiridos y se prestan en estricta conformidad con las especificaciones o otros requisitos (incluidas las especificaciones de rendimiento) aprobados o adoptados por el Comprador, (c) todos los bienes vendidos serán de calidad comercial, sin  defectos de diseño, la ejecución de trabajo y materiales serán aptos para los fines particulares para los que se compran y que los bienes y servicios se prestan estrictamente de acuerdo con las especificaciones, muestras , esquemas, diseños u otros requisitos (incluidas las especificaciones de rendimiento) aprobados o adoptados por el Comprador, (d) los precios de los bienes o servicios vendidos al Comprador en virtud de este Pedido no son menos favorables que los que actualmente se aplican a cualquier otro cliente por los mismos o similares bienes y / o servicios en cantidades iguales o menores, y\n(e) El Vendedor no actuará de ninguna manera ni tomará ninguna medida que haga responsable al Comprador por una violación de cualquier legislación antisoborno aplicable que prohíba la oferta, entrega o promesa de ofrecer o dar o recibir, directa o indirectamente, dinero o cualquier cosa de valor para cualquier tercero que lo ayude, a ellos o al Comprador a retener u obtener negocios o a adquirir los bienes o servicios. La inspección del Comprador, prueba, aceptación o uso de los bienes no afectará las obligaciones del Vendedor en virtud de estas garantías. El Vendedor reemplazará o corregirá, la opción del Comprador y el cargo del Vendedor, los defectos de cualquier producto que no cumpla con estas garantías. Si el Vendedor no corrige los defectos o no reemplaza los bienes no conformes dentro de $warranty_seller_id a partir de la fecha en que el Comprador notifica al Vendedor sobre el defecto o defectos, el Comprador puede, en  $warranty_buyer_id, notificación previa por escrito al Vendedor, ya sea (i) hacer correcciones o reemplazar dichos bienes y cobrar al Vendedor todos los cargos incurridos por el Comprador, o (ii) anular la aceptación de los bienes, en cuyo caso el Vendedor estará obligado a reembolsar el precio de compra y hacer todas las gestiones necesarias, al cargo del Vendedor, para la devolución de los bienes al Vendedor. Todas las garantías del Vendedor en este documento o que están implícitas por ley deben superar a cualquier inspección, entrega, aceptación o pago por parte del Comprador. Cualquier intento por parte del Vendedor de limitar, rechazar o restringir estas garantías o cualquier recurso del Comprador, mediante reconocimiento o de otro modo, al aceptar o realizar este Pedido, será nulo, e ineficaz sin el consentimiento por escrito del Comprador.\n",
+        "languageID": "es"
+      }
+    ],
+    "clauseTitle": [
+      {
+        "value": "WARRANTIES",
+        "languageID": "en"
+      },
+      {
+        "value": "GARANTÍAS",
+        "languageID": "es"
       }
     ],
     "tradingTerms": [
@@ -213,6 +325,20 @@
       {
         "value": "8. INDEMNIFICATION: Seller shall indemnify and hold Purchaser and its affiliates harmless and, on Purchaser’s request, shall defend each of them from and against any or all third party claims, demands, litigation, or proceedings of whatever kind, whether based upon negligence, breach of express or implied warranty, strict liability, infringement of intellectual property rights, or any other theory, and from and against all direct, indirect, special, exemplary, incidental or consequential damages of every kind whatsoever, arising out of, by reason of, or in any way connected with the goods and/or services, the design, manner of preparation, manufacture, construction, completion, or delivery or non-delivery of any goods and/or services by Seller, any breach by Seller of any of its obligations hereunder, or any other act, omission or negligence of Seller or any of Seller's employees, workers, servants, agents, subcontractors, or suppliers. Seller shall, on request, pay or reimburse Purchaser or any other party entitled to indemnification hereunder for all costs and expenses, including attorneys' fees, as incurred by Purchaser or such other party in connection with any such claim, demand, litigation, proceeding, loss, or damage. In addition, for infringement claims, Seller will, at its own expense and at Purchaser’s option, either procure for Purchaser the right to continue using the allegedly infringing item, replace it with a non-infringing equivalent, or remove it and refund the purchase price and the transportation and installation costs thereof.\n\n",
         "languageID": "en"
+      },
+      {
+        "value": "8. INDEMNIZACIÓN: El Vendedor indemnizará y mantendrá al Comprador y sus afiliados indemnes y a solicitud del Comprador, defenderá a cada uno de ellos y contra cualquiera o todos los reclamos, demandas, litigios o procedimientos de terceros de cualquier tipo, ya sea por negligencia, incumplimiento expreso o garantía implícita, responsabilidad estricta, infracción de los derechos de propiedad intelectual, o cualquier otra teoría y contra todos los daños directos, indirectos, especiales, ejemplares, incidentales o consecuentes daños de todo tipo, que surjan de, por razón o en cualquier forma relacionada con los bienes y / o servicios, el diseño, la forma de preparación, fabricación, construcción, finalización o entrega o no entrega de cualquier bien y / o servicio por parte del Vendedor, cualquier incumplimiento por parte del Vendedor de cualquiera de sus obligaciones en virtud del presente, o cualquier otro acto, omisión o negligencia del Vendedor o cualquiera de los empleados, trabajadores, servidores, agentes, subcontratistas o proveedores del Vendedor. El Vendedor deberá, previa solicitud, pagar o reembolsar al Comprador o cualquier otra parte con derecho a indemnización en virtud del presente por todos los costos y gastos, incluidos los honorarios de abogados, en los que incurra el Comprador o dicha otra parte en relación con cualquier reclamo, demanda, litigio, procedimiento, Pérdida o daño.\nAdemás, para reclamos por infracción, el Vendedor, a su cargo y elección del Comprador, le  proporcionará el derecho de continuar usando el artículo presuntamente defectuoso, lo reemplazará con un producto equivalente, o lo removerá y reembolsará el precio de compra y los gastos de transporte e instalación de los mismos.\n\n",
+        "languageID": "es"
+      }
+    ],
+    "clauseTitle": [
+      {
+        "value": "INDEMNIFICATION",
+        "languageID": "en"
+      },
+      {
+        "value": "INDEMNIZACIÓN",
+        "languageID": "es"
       }
     ],
     "tradingTerms": []
@@ -223,6 +349,20 @@
       {
         "value": "9. LIMITATION OF LIABILITY: PURCHASER'S AGGREGATE LIABILITY ARISING FROM OR RELATING TO THIS ORDER IS LIMITED TO THE AMOUNT PAID BY PURCHASER FOR THE GOODS AND/OR SERVICES. TO THE MAXIMUM EXTENT ALLOWABLE UNDER APPLICABLE LAW, PURCHASER SHALL NOT BE LIABLE UNDER THIS ORDER FOR ANY SPECIAL, INCIDENTAL, CONSEQUENTIAL, INDIRECT, OR PUNITIVE DAMAGES INCLUDING, WITHOUT LIMITATION, LOST REVENUES EVEN IF PURCHASER HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.\n\n",
         "languageID": "en"
+      },
+      {
+        "value": "9. LIMITACIÓN DE RESPONSABILIDAD: LA RESPONSABILIDAD AÑADIDA DEL COMPRADOR DERIVADA O RELACIONADA CON ESTE PEDIDO SE LIMITA A LA CANTIDAD PAGADA POR EL COMPRADOR POR LOS BIENES Y / O SERVICIOS. EN LA MEDIDA MÁXIMA PERMITIDA BAJO LA LEY APLICABLE, EL COMPRADOR NO SERÁ RESPONSABLE EN ESTE PEDIDO POR NINGÚN DAÑO ESPECIAL, INCIDENTAL, CONSECUENTE, INDIRECTO O PUNITIVO, INCLUYENDO, SIN LIMITACIÓN, LOS INGRESOS PERDIDOS INCLUSO SI EL COMPRADOR HA SIDO ACONSEJADO SOBRE LA POSIBILIDAD DE ESTOS DAÑOS.\n\n",
+        "languageID": "es"
+      }
+    ],
+    "clauseTitle": [
+      {
+        "value": "LIMITATION OF LIABILITY",
+        "languageID": "en"
+      },
+      {
+        "value": "LIMITACIÓN DE RESPONSABILIDAD",
+        "languageID": "es"
       }
     ],
     "tradingTerms": []
@@ -233,6 +373,20 @@
       {
         "value": "10. PURCHASER'S PROPERTY: Tangible or intangible property of any nature furnished to Seller by Purchaser or specifically paid for in whole or in part by Purchaser, and any replacements or attachments, are the property of Purchaser and, unless otherwise agreed in writing by Purchaser, will be used by Seller solely to render services or provide goods to Purchaser. Seller will not substitute any property or take any action inconsistent with Purchaser's ownership of such property. While in Seller's custody or control such property will be held at Seller's risk, will be kept insured by Seller at its expense for its replacement cost with loss payable to Purchaser, and will be subject to removal at Purchaser's written request, in which event Seller will prepare such property for shipment and redelivery to Purchaser in the same condition as originally received by Seller, reasonable wear and tear excepted, all at Seller's expense.\n\n",
         "languageID": "en"
+      },
+      {
+        "value": "10. PROPIEDAD DEL COMPRADOR: Los bienes tangibles o intangibles de cualquier naturaleza proporcionados al Vendedor por el Comprador o pagados específicamente en su totalidad o en parte por el Comprador, y cualquier reemplazo o anexo, son propiedad del Comprador y, a menos que el Comprador acuerde lo contrario por escrito, será utilizado por el Vendedor únicamente para prestar servicios o proporcionar bienes al Comprador. El Vendedor no sustituirá ninguna propiedad ni tomará ninguna acción incompatible con la propiedad del Comprador de dicha propiedad. Mientras esté bajo la custodia o el control del Vendedor, dicha propiedad se mantendrá a cargo del Vendedor, el Vendedor la mantendrá asegurada a su cargo y la se hará cargo de su repuesto en caso de pérdida pagando al Comprador, y estará sujeta a la eliminación por solicitud escrita del Comprador, en cuyo caso el Vendedor preparara dicha propiedad para su envío al Comprador en la misma condición en que la recibió originalmente el Vendedor, salvo el desgaste razonable, todo a cargo del Vendedor.\n\n",
+        "languageID": "es"
+      }
+    ],
+    "clauseTitle": [
+      {
+        "value": "PURCHASER'S PROPERTY",
+        "languageID": "en"
+      },
+      {
+        "value": "PROPIEDAD DEL COMPRADOR",
+        "languageID": "es"
       }
     ],
     "tradingTerms": []
@@ -243,6 +397,20 @@
       {
         "value": "11. CHANGES: At all times Purchaser will have the right to make changes to this Order, including changes to drawings, designs, configurations, specifications, quantities, methods of shipment or packing and delivery schedules or location of delivery. If any such changes cause an increase or decrease in the cost of or the time required for the performance of any work under this Order, an equitable adjustment will be made in the contract price or delivery schedule, or both, and this Order will be modified in writing accordingly. Nothing in this Section, including any disagreement with Purchaser as to any claimed adjustment, will excuse Seller from proceeding with this Order as changed. Any claim by the Seller for adjustment under this Section 11 must be in a detailed writing and delivered to Purchaser within $change_id after the date Seller receives notification of change. Any change will be authorized only by a duly executed amendment to this Order. Information, such as technical information or guidance provided to Seller by representatives of Purchaser, will not be construed as a change within the meaning of this Section. If Seller considers that the conduct of any of Purchaser's employees has constituted a change under this Order, Seller will immediately notify Purchaser's Central Procurement Office, in writing, as to the nature of the change and any proposed adjustment, which will then be subject to this Section 11.\n\n",
         "languageID": "en"
+      },
+      {
+        "value": "11. CAMBIOS: En todo momento, el Comprador tendrá derecho a realizar cambios en este Pedido, incluidos los cambios en los planos, diseños, configuraciones, especificaciones, cantidades, métodos de envío o embalaje y horarios de entrega o ubicación de entrega. Si dichos cambios causan un aumento o disminución en el coste el tiempo requerido para la realización de cualquier trabajo en virtud de este Pedido, se realizará un ajuste equitativo en el precio del contrato o el calendario de entrega, o ambos, y este Pedido se modificará por escrito en consecuencia. Nada en esta Sección, incluido cualquier desacuerdo con el Comprador en cuanto a cualquier ajuste reclamado, eximirá al Vendedor de continuar con este Pedido si se modificó. Cualquier reclamo del Vendedor para el ajuste bajo esta Sección 11 debe presentarse por escrito y entregarse al Comprador dentro de $change_id después de la fecha en que el Vendedor recibe la notificación del cambio. Cualquier cambio será autorizado solo por una corrección debidamente ejecutada para el Pedido. La información, como la información técnica o la guía proporcionada al Vendedor por los representantes del Comprador, no se interpretará como un cambio en el sentido de esta Sección. Si el Vendedor considera que la conducta de cualquiera de los empleados del Comprador ha constituido un cambio bajo esta Orden, el Vendedor notificará inmediatamente a la Oficina Central de Adquisiciones del Comprador, por escrito, sobre la naturaleza del cambio y cualquier ajuste propuesto, que luego estará sujeta a esta Sección 11.\n\n",
+        "languageID": "es"
+      }
+    ],
+    "clauseTitle": [
+      {
+        "value": "CHANGES",
+        "languageID": "en"
+      },
+      {
+        "value": "CAMBIOS",
+        "languageID": "es"
       }
     ],
     "tradingTerms": [
@@ -273,6 +441,20 @@
       {
         "value": "12. COMPLIANCE WITH LAWS: Seller represents and warrants that it is in compliance with and all goods and/or services supplied hereunder have been produced or provided in compliance with the applicable provisions of all federal, state, or local laws or ordinances and all related lawful orders, rules and regulations. Seller shall comply with any provisions, representations, or agreements, or contractual clauses required to be included or incorporated by reference or operation of law in any Order. Seller shall be required to obtain and pay for any license, permit, inspection or listing by any public body or certification organization required in connection with the manufacture, performance, completion or delivery of any good and/or service.\n\n",
         "languageID": "en"
+      },
+      {
+        "value": "12. CUMPLIMIENTO DE LAS LEYES: El Vendedor declara y garantiza que cumple y que todos los bienes y / o servicios suministrados a continuación se han producido o proporcionado de conformidad con las disposiciones aplicables de todas las leyes u ordenanzas federales, estatales o locales y todos los pedidos, normas y reglamentos legales relacionados. El Vendedor deberá cumplir con cualquier disposición, modelo, acuerdo o cláusula contractual que deba incluirse o incorporarse por referencia u operación legal en cualquier Pedido. El vendedor deberá obtener y pagar cualquier licencia, permiso, inspección o listado por parte de cualquier organismo público u organización de certificación requerida en relación con la fabricación, el desempeño, la finalización o la entrega de cualquier bien y / o servicio.\n\n",
+        "languageID": "es"
+      }
+    ],
+    "clauseTitle": [
+      {
+        "value": "COMPLIANCE WITH LAWS",
+        "languageID": "en"
+      },
+      {
+        "value": "CUMPLIMIENTO DE LAS LEYES",
+        "languageID": "es"
       }
     ],
     "tradingTerms": []
@@ -283,6 +465,20 @@
       {
         "value": "13. CONFIDENTIAL OR PROPRIETARY INFORMATION: Notwithstanding any document marking to the contrary, any knowledge or information that the Seller has disclosed or may later disclose to Purchaser, and which in any way relates to the goods or services covered by this Order will not, unless otherwise specifically agreed to in writing by Purchaser, be deemed to be confidential or proprietary information, and will be acquired by Purchaser, free from any restrictions. Seller will not transmit to Purchaser any sensitive personal information, including, but not limited to, identified health information, financial information, social security numbers, biometrics or other personally identified or identifiable information of like sensitivity. Seller will keep confidential any technical, process, economic, or other information derived from drawings, specifications and other data furnished by Purchaser in connection with this Order (in whatever form or format) and will not divulge, export, or use, directly or indirectly, such information for the benefit of any other party without obtaining Purchaser's prior written consent. Except as required for the efficient performance of this Order, Seller will not use such information or make copies or permit copies to be made of such drawings, specifications, or other data without the prior written consent of Purchaser. If any reproduction is made with prior consent, this notice will be provided. Upon completion or termination of this Order, Seller will promptly return to Purchaser all materials incorporating any such information and any copies, except for one record copy. Seller agrees that no acknowledgment or other information concerning this Order and the goods or services provided will be made public by Seller without the prior written agreement of Purchaser.\n\n",
         "languageID": "en"
+      },
+      {
+        "value": "13. INFORMACIÓN CONFIDENCIAL O PROPIEDAD: A pesar de cualquier documento que indique lo contrario, cualquier conocimiento o información que el Vendedor haya revelado o que luego pueda revelar al Comprador, y que de alguna manera se relacione con los bienes o servicios cubiertos por esta Orden, no lo hará, a menos que se acuerde específicamente por escrito Comprador, se considerará información confidencial o de propiedad exclusiva, y será adquirido por el Comprador, sin restricciones. El Vendedor no transmitirá al Comprador ninguna información personal sensible, incluida, entre otras, información sobre salud, información financiera, números de seguridad social, datos biométricos u otra información personalmente identificada o identificable de similar sensibilidad. El Vendedor mantendrá la confidencialidad de cualquier información técnica, de proceso, económica o de otro tipo derivada de esquemas, especificaciones y otros datos proporcionados por el Comprador en relación con este Pedido (en cualquier forma o formato) y no divulgará, exportará ni utilizará, directa o indirectamente , dicha información para el beneficio de cualquier otra parte sin obtener el consentimiento previo por escrito del Comprador. Salvo lo requerido para el desempeño eficiente de este Pedido, el Vendedor no utilizará dicha información ni hará copias ni permitirá que se realicen copias de dichos esquemas , especificaciones u otros datos sin el consentimiento previo por escrito del Comprador. Si alguna reproducción se realiza con consentimiento previo, se proporcionará este aviso. Una vez finalizado o finalizado este Pedido, el Vendedor devolverá de inmediato al Comprador todos los materiales que incorporen dicha información y cualquier copia, excepto una copia de registro. El Vendedor acepta que no hará público ningún reconocimiento u otra información relacionada con este Pedido y los bienes o servicios proporcionados sin el previo consentimiento por escrito del Comprador.\n\n",
+        "languageID": "es"
+      }
+    ],
+    "clauseTitle": [
+      {
+        "value": "CONFIDENTIAL OR PROPRIETARY INFORMATION",
+        "languageID": "en"
+      },
+      {
+        "value": "INFORMACIÓN CONFIDENCIAL O PROPIEDAD",
+        "languageID": "es"
       }
     ],
     "tradingTerms": []
@@ -293,6 +489,20 @@
       {
         "value": "14. WORK ON PURCHASER'S PREMISES: If Seller's work under this Order requires Seller to be on the premises of Purchaser or at Purchaser’s direction, Seller will take all necessary precautions to prevent any injury to persons or damage to property, including following any rules, procedures or other requirements of Purchaser.\n\n",
         "languageID": "en"
+      },
+      {
+        "value": "14. TRABAJOS EN LAS INSTALACIONES DEL COMPRADOR: Si el trabajo del Vendedor en virtud de este Pedido requiere que el Vendedor se encuentre en las instalaciones del Comprador o bajo la dirección del Comprador, el Vendedor tomará todas las precauciones necesarias para evitar cualquier daño a las personas o daños a la propiedad, incluido el cumplimiento de las normas, procedimientos u otros requisitos del Comprador.\n\n",
+        "languageID": "es"
+      }
+    ],
+    "clauseTitle": [
+      {
+        "value": "WORK ON PURCHASER'S PREMISES",
+        "languageID": "en"
+      },
+      {
+        "value": "TRABAJOS EN LAS INSTALACIONES DEL COMPRADOR",
+        "languageID": "es"
       }
     ],
     "tradingTerms": []
@@ -303,6 +513,20 @@
       {
         "value": "15. INSURANCE: Seller will maintain Comprehensive General Liability (including Contractual Liability coverage insuring the liabilities assumed in these Terms), Automobile Liability and Employers' Liability insurance with limits as reasonably required by Purchaser, as well as appropriate Workers' Compensation insurance as will protect Seller from all claims under any applicable workers' compensation and occupational disease acts. At Purchaser's request, Seller will furnish to Purchaser a Certificate of Insurance completed by its insurance carrier(s) certifying that the required insurance coverage is in effect, with waiver of subrogation, naming Purchaser as an additional insured, and containing a covenant that such coverage and will not be canceled or materially changed until $insurance_id after prior written notice has been delivered to the Purchaser.\n\n",
         "languageID": "en"
+      },
+      {
+        "value": "15. SEGURO: El Vendedor mantendrá la Responsabilidad General Completa (incluida la cobertura de Responsabilidad Contractual que asegura las responsabilidades asumidas en estos Términos), el seguro de Responsabilidad Automóvil y Seguro de responsabilidad civil del empleador con los límites razonablemente requeridos por el Comprador, así como el seguro de Compensación de Trabajadores apropiado que protegerá al Vendedor de todos los reclamos bajo cualquier ley de compensación laboral y enfermedad ocupacional aplicable. A solicitud del Comprador, el Vendedor le proporcionará al Comprador un Certificado de seguro completado por su (s) compañía (s) de seguros que certifica que la cobertura de seguro requerida está vigente, con renuncia a la subrogación, nombrando al Comprador como un asegurado adicional, conteniendo un convenio de que dicha cobertura y no se cancelará ni cambiará materialmente hasta que $insurance_id después de que se haya entregado una notificación previa por escrito al Comprador.\n\n",
+        "languageID": "es"
+      }
+    ],
+    "clauseTitle": [
+      {
+        "value": "INSURANCE",
+        "languageID": "en"
+      },
+      {
+        "value": "SEGURO",
+        "languageID": "es"
       }
     ],
     "tradingTerms": [
@@ -333,6 +557,20 @@
       {
         "value": "16. TERMINATION: Purchaser may terminate all or any part of this Order for convenience at any time by written notice to Seller. Upon such termination, Purchaser's liability will be limited to reasonable termination charges mutually agreed by Seller and Purchaser, provided that Seller must specify any proposed charges in writing within $termination_id after termination. This Order shall terminate automatically, without notice, if Seller becomes insolvent or the subject of any proceeding under the laws relating to bankruptcy or the relief of debtors.\n\n",
         "languageID": "en"
+      },
+      {
+        "value": "16. TERMINACIÓN: El Comprador puede rescindir todo o parte de este Pedido por conveniencia en cualquier momento mediante notificación por escrito al Vendedor. Tras dicha rescisión, la responsabilidad del Comprador se limitará a los cargos razonables de rescisión acordados mutuamente por el Vendedor y el Comprador, siempre que el Vendedor especifique los cargos propuestos por escrito dentro de $termination_id después de la rescisión. Esta Orden terminará automáticamente, sin previo aviso, si el Vendedor se declara insolvente o sujeto a cualquier procedimiento bajo las leyes relacionadas con la bancarrota o el rescate de los deudores.\n\n",
+        "languageID": "es"
+      }
+    ],
+    "clauseTitle": [
+      {
+        "value": "TERMINATION",
+        "languageID": "en"
+      },
+      {
+        "value": "TERMINACIÓN",
+        "languageID": "es"
       }
     ],
     "tradingTerms": [
@@ -363,6 +601,20 @@
       {
         "value": "17. GOVERNMENT CONTRACTS: If this Order bears a government contract number on the face of this Order, Seller shall comply with all pertinent provisions of said government contract and pertinent executive orders and directives to the extent that they apply to the subject matter of this Order and all such pertinent contract provisions, orders and directives are hereby incorporated by reference into this Order. A copy of the government contract's pertinent terms and conditions will be given to Seller on request.\n\n",
         "languageID": "en"
+      },
+      {
+        "value": "17. CONTRATOS GUBERNAMENTALES: Si este Pedido lleva un número de contrato gubernamental, el Vendedor deberá cumplir con todas las disposiciones pertinentes de dicho contrato gubernamental, las órdenes ejecutivas y directivas pertinentes en la medida en que se apliquen al objeto del Pedido y  todas las provisiones de contrato, las órdenes y directivas se incorporan aquí por referencia en este Pedido. Se le proporcionará una copia de los  términos y condiciones del contrato gubernamental, si el Vendedor lo solicita.\n\n",
+        "languageID": "es"
+      }
+    ],
+    "clauseTitle": [
+      {
+        "value": "GOVERNMENT CONTRACTS",
+        "languageID": "en"
+      },
+      {
+        "value": "CONTRATOS GUBERNAMENTALES",
+        "languageID": "es"
       }
     ],
     "tradingTerms": []
@@ -373,6 +625,20 @@
       {
         "value": "18. MISCELLANEOUS: \n(a) NON-ASSIGNMENT: Assignment of this Order or any interest in it or any payment due or to become due under it, without the written consent of the Purchaser, will be void. An assignment will be deemed to include not only a transfer of this Order or such interest or payment to another party but also a change in control of Seller, whether by transfer of stock or assets, merger, consolidation, or otherwise.\n\n(b) TRANSPORTATION: All the prices are established as $incoterms_id  , unless otherwise specifically provided on the front of this Order. Title and risk of loss shall not pass to Purchaser until delivery of the goods to the location designated on the face of this Order and acceptance by Purchaser. If Purchaser rightfully rejects the goods, receives a non-conforming tender, or revokes its acceptance, risk of loss and title shall be deemed to have remained with Seller. The responsibility for freight damaged merchandise will be assumed by Seller. No charges for unauthorized transportation will be allowed. Any unauthorized shipment, which will result in excess transportation charges, must be fully prepaid by the Seller. Seller will not declare any value on such materials shipped via $shipment_id. Seller will release rail or truck shipments at the lowest released valuation permitted in the governing tariff or classification. \n(c) ANTICIPATION OF DELIVERY SCHEDULE: Unless otherwise agreed in writing, Seller will not make material commitments or production arrangements in excess of the amount or in advance of the time necessary to meet Purchaser's delivery schedule. Goods shipped to Purchaser in advance of schedule may be returned to Seller at Seller's expense.\n(d) SELLER'S INVENTORY: Purchaser will have no obligation to request quotations or place Orders with Seller, both of which will be in Purchaser's sole discretion. Purchaser acting in its sole discretion will determine the actual quantity of goods or services to be purchased. The quantity of goods or services, if any, specified in forecasts supplied by Purchaser from time to time, or otherwise, is an estimate only. Seller bears sole responsibility for managing Seller's raw material, work in process, and inventory, and Purchaser will have no liability with respect thereto (whether upon termination of this Order or otherwise) other than in connection with termination as provided in Section 16.\n(e) FORCE MAJEURE: Purchaser may delay delivery and/or acceptance occasioned by causes beyond its control.\n(f) REMEDIES: Each of the rights and remedies reserved to Purchaser in this Order shall be cumulative and additional to any other remedies provided in law or equity. No delay or failure by Purchaser in the exercise of any right or remedy shall affect any such right or remedy and no action taken or omitted by Purchaser shall be deemed to be a waiver of any such right or remedy.\n(g) PUBLICITY: Seller will not use Purchaser's name or logo in publicity, advertising, or similar activity, except with Purchaser's prior written consent. Seller will not disclose the existence of this Order or any of its respective terms to any third party without Purchaser's prior written consent.\n(h) DOCUMENTATION: It is agreed that all technical documentation and other literature necessary for the proper use of the goods or services will be provided to Purchaser with the goods or services, unless otherwise directed by Purchaser, and its cost is included in the price.\n(i) GOVERNING LAW: This Order, these Terms, and all related transactions, will be interpreted under and governed by the laws of the $buyer_country without regard to its conflict of law principles. \n(j) DISPUTE RESOLUTION: Disputes arising under this Agreement will be resolved by the parties through good faith negotiations in the ordinary course of business. Any dispute not so resolved will be submitted for binding arbitration, at the written request of either party, before a single arbitrator $arbitrator_id  at another location as mutually agreed. Selection of the arbitrator will be by mutual agreement of the parties or, failing agreement within $agreement_id days, $failed_agreement pursuant to its then-current rules. The amount and responsibility for payment of arbitration costs will be one of the issues decided by the arbitrator, whose decision will be in accordance with the terms and conditions of this Agreement. No damages excluded by or in excess of the damage limitations set forth in this Agreement shall be awarded. During any such arbitration, the parties will continue diligent performance of this Agreement. The arbitrator will render a written decision stating reasons therefore in reasonable detail within $decision_id days after the respondent receives the Commencement Letter. The provisions of this section, and any award issued by an arbitrator, may be enforced by either party in any court of competent jurisdiction. Arbitration is the exclusive remedy for disputes arising under this Agreement; the parties hereby waive their rights to bring a lawsuit to resolve a dispute arising under this Agreement. \n(k) SURVIVAL: Seller’s obligations under Sections 6, 7, 8, 9, 10, 12, 13, and 18 (f), (i), (j), (k), (l), (o), and (q) will survive any termination of this Order.\n(l) WAIVER; MODIFICATION: No claim or right arising out of a breach of this Order can be discharged in whole or in part by a waiver or renunciation of the claim or right unless supported by consideration and in a writing signed by the aggrieved party. The failure of Purchaser to enforce at any time or for any period of time any of the provisions hereof will not be construed to be a waiver of such provisions or of the right of Purchaser thereafter to enforce each and every such provision. This Order can be modified or rescinded only by a writing signed by authorized representatives from both parties. \n(m) NOTICES: All notices, consents, waivers, and other communications required or permitted to be given pursuant to this Order, shall be in writing and shall be deemed to have been delivered either (i) on the delivery date, if personally delivered, or if delivered by confirmed facsimile or e-mail, (ii) one (1) business day after delivery to any national overnight courier directing delivery on the next business day, receipt requested, or (iii) three (3) business days after deposit in the Country or Origin  mail, registered or certified mail, return receipt requested, with adequate postage affixed thereto. All notices to Purchaser shall be sent to the $notices_id ,to the attention of the Central Procurement Office (CPO), and to Seller at its address as set forth in this Order, or at such other address as either party may designate in writing to the other party.\n(n) ETHICS HOTLINE: The SELLER is committed to conducting its business in an ethical and legal manner. SELLER employees are bound to comply with the Seller’s ethical conduct policy, including complying with all laws, disclosing any conflict of interest, and otherwise acting in a manner that places the Seller’s interests above any personal interest. If you would like to make a report regarding possible unethical behavior of an SELLER employee, please contact the Seller’s third-party Ethics Hotline at $seller_tel or online $seller_website. A report may be made on an anonymous basis. All reports are treated confidentially. We are committed to non-retaliation against any individual who makes a report.\n(o) SEVERABILITY: If any provision of this Order shall be held or deemed to be or shall, in fact, be illegal, inoperative or unenforceable, this provision shall not affect any other provision or provisions contained in this Order. \n(p) PARAGRAPH TITLES: The paragraph titles are solely for convenience of reference and shall not affect the meaning or construction of any provision of this Order.\n(q) ENTIRE AGREEMENT: This Order, with such documents as are expressly incorporated by reference, is intended by the parties as a final expression of their agreement with respect to such terms as are included in it, and is intended also as a complete and exclusive statement of the terms of their agreement. No course of prior dealings between the parties and no usage of the trade will be relevant to determine the meaning of this agreement even though the accepting or acquiescing party has knowledge of the nature of the performance and opportunity for objection.\n\n",
         "languageID": "en"
+      },
+      {
+        "value": "18. VARIOS: \n(a) NO ASIGNACIÓN: La asignación de este Pedido o cualquier interés en él o cualquier pago adeudado o vencido en virtud del mismo, sin el consentimiento por escrito del Comprador, será nulo. Se considerará que una asignación incluye no sólo una transferencia de este Pedido o dicho interés o pago a otra parte, sino también un cambio en el control del Vendedor, ya sea por transferencia de acciones o activos, fusión, consolidación o de otra manera.\n(b) TRANSPORTE: Todos los precios se establecen como $incoterms_id , a menos que se especifique lo contrario en el Pedido. El titular de propiedad y el riesgo de pérdida no se transferirán al Comprador hasta la entrega de los bienes en la ubicación designada en el presente pedido y la aceptación del Comprador. Si el Comprador rechaza legítimamente los bienes, recibe una oferta no conforme o rechaza su aceptación, se considerará que el Vendedor sigue siendo el titular de la propiedad y es responsable de su pérdida. El vendedor asumirá la responsabilidad de la mercancía dañada por el flete. No se permitirán cargos por transporte no autorizado. Cualquier envío no autorizado, que obtenga cargos de transporte excesivos, debe ser pagado completamente por el Vendedor. El vendedor no declarará ningún valor en dichos materiales enviados a través de $dispatch_id . El vendedor realizara los envíos por ferrocarril o camión con la valoración más baja permitida en la tarifa o clasificación vigente.\n(c) ANTICIPACIÓN DEL PROGRAMA DE ENTREGA: A menos que se acuerde lo contrario por escrito, el Vendedor no hará compromisos materiales o preparativos  que excedan la cantidad o antes del tiempo necesario para cumplir con el cronograma de entrega del Comprador.\n(d) INVENTARIO DEL VENDEDOR: El Comprador no tendrá la obligación de solicitar cotizaciones o realizar Pedidos con el Vendedor, ambos serán a discreción exclusiva del Comprador. El Comprador que actúan según criterio determinará la cantidad real de bienes o servicios que se comprarán. La cantidad de bienes o servicios, si los hay, son especificados en  pronósticos proporcionadas por el Comprador, en otro caso, es solo una estimación. El Vendedor es el único responsable de administrar la materia prima, el trabajo en proceso y el inventario del Vendedor, y el Comprador no tendrá ninguna responsabilidad con respecto al mismo (ya sea al finalizar este Pedido o de otro modo) que no sea en relación con la terminación según lo dispuesto en la Sección 16.\n(e) FUERZA MAYOR: El Comprador puede retrasar la entrega y / o aceptación ocasionada por causas ajenas a su voluntad.\n(f) RECURSOS: Cada uno de los derechos y recursos reservados al Comprador en este Pedido será acumulativo y adicional a cualquier otro recurso previsto en la ley o el patrimonio. Ningún retraso o incumplimiento por parte del Comprador en el ejercicio de cualquier derecho o recurso afectará a dicho derecho o recurso y ninguna acción tomada u omitida por el Comprador se considerará como una renuncia a dicho derecho o recurso.\n(g) PUBLICIDAD: el Vendedor no utilizará el nombre o logotipo del Comprador en publicidad, propaganda o actividad similar, excepto con el consentimiento previo por escrito del Comprador. El Vendedor no revelará la existencia de este Pedido o cualquiera de sus términos respectivos a ningún tercero sin el consentimiento previo por escrito del Comprador.\n(h) DOCUMENTACIÓN: Se acuerda que toda la documentación técnica y otra literatura necesaria para el uso adecuado de los bienes o servicios se proporcionará al Comprador con los bienes o servicios, a menos que el Comprador indique lo contrario, y su costo está incluido en el precio .\n(i) LEY APLICABLE: Este Pedido, Términos y todas las transacciones relacionadas se interpretarán y regirán por las leyes de  $buyer_country  sin considerar conflicto de principios de derecho.\n(j) RESOLUCIÓN DE CONTROVERSIAS: Las disputas que surjan de este Acuerdo serán resueltas por las partes a través de negociaciones de buena fe en el curso ordinario de los negocios. Cualquier disputa no resuelta se someterá a arbitraje vinculante, a solicitud escrita de cualquiera de las partes, ante un solo árbitro $arbitrator_id en otra ubicación, según lo acordado mutuamente. La selección del árbitro será por acuerdo mutuo de las partes o, en caso de incumplimiento dentro de los $agreement_id días, $ failed_agreement de conformidad con sus normas vigentes en ese momento. El cantidad y la responsabilidad por el pago de los costos de arbitraje será uno de los asuntos decididos por el árbitro, cuya decisión estará de acuerdo con los términos y condiciones de este Acuerdo. No se recompensará daños excluidos o en exceso de las limitaciones de daños establecidos por este Acuerdo. Durante dicho arbitraje, las partes continuarán con el cumplimiento diligente de este Acuerdo. El árbitro emitirá una decisión por escrito indicando los motivos con detalles razonables dentro de $decision_id días después de que el demandado reciba la Carta de Inicio. Cualquiera de las partes puede hacer cumplir las disposiciones de esta sección, y cualquier laudo emitido por un árbitro, en cualquier tribunal de jurisdicción competente. El arbitraje es el remedio exclusivo para disputas que surjan bajo este Acuerdo; Por el presente, las partes renuncian a sus derechos de presentar una demanda para resolver una disputa que surja en virtud de este Acuerdo.\n(k) CONTINUACIÓN DE OBLIGACIONES: Las obligaciones del Vendedor según las Secciones 6, 7, 8, 9, 10, 12, 13 y 18 (f), (i), (j), (k), (l), (o) y (q)  se mantendrán a pesar de cualquier finalización de ese pedido.\n(l) RENUNCIA; MODIFICACIÓN: Ningún reclamo o derecho que surja de un incumplimiento de este Pedido puede ser dado de baja en su totalidad o en parte por una renuncia o renuncia al reclamo o derecho a menos que esté respaldado por la consideración y en un escrito firmado por la parte perjudicada. El hecho de que el Comprador no haga cumplir en cualquier momento o por un período de tiempo cualquiera de las disposiciones del presente no se interpretará como una renuncia a tales disposiciones o el derecho del Comprador de hacer cumplir cada una de dichas disposiciones. Este pedido puede ser modificado o anulado solo por escrito firmado por representantes autorizados de ambas partes.\n(m) AVISOS: Todos los avisos, consentimientos, exenciones y otras comunicaciones requeridas o permitidas de conformidad con este Pedido, se harán por escrito y se considerarán entregadas (i) en la fecha de entrega, si se entregó personalmente, o si se entregó por fax o correo electrónico confirmado, (ii) un (1) día hábil después de la entrega a cualquier servicio de mensajería nacional que dirija la entrega al siguiente día hábil, con el recibo solicitado, o (iii) tres (3) días hábiles después del depósito en el correo del País u Origen, correo certificado, se requiere el acuse de recibo, con el franqueo adecuado adjunto al mismo. Todos los avisos al Comprador se enviarán a $notices_id, a la atención de la Oficina Central de Adquisiciones (CPO) y al Vendedor en su dirección como se establece en este Pedido, o en cualquier otra dirección que cualquiera de las partes designe por escrito a la otra parte.\n(n) LÍNEA DIRECTA DE ÉTICA: El Vendedor se compromete a realizar sus negocios de manera ética y legal. Los empleados del VENDEDOR están obligados a cumplir con la política de conducta ética del Vendedor, incluido el cumplimiento de todas las leyes, revelar cualquier conflicto de intereses y actuar de una manera que coloque los intereses del Vendedor por encima de cualquier interés personal. Si desea hacer un informe sobre el posible comportamiento poco ético de un empleado del VENDEDOR, por favor comuníquese con la línea directa ética del vendedor en $seller_tel o en línea $seller_website. Se puede hacer un informe de forma anónima. Todos los informes son tratados de forma confidencial. Estamos comprometidos a no tomar represalias contra ninguna persona que presente un informe.\n(o) SEPARABILIDAD: si alguna disposición de este Pedido se considera, de hecho, ilegal, inoperante o inaplicable, esta disposición no afectará a ninguna otra disposición o disposiciones contenidas en esta Orden.\n(p) TÍTULOS DEL PÁRRAFO: Los títulos de los párrafos son únicamente para referencia y no afectarán el significado o la construcción de ninguna disposición de este Pedido.\n(q) ACUERDO COMPLETO: Este Pedido, con los documentos que se incorporan expresamente por referencia, está destinado a las partes como una expresión final de su acuerdo con respecto a los términos incluidos en el y está incluido también como completa y exclusiva declaración de los términos y su acuerdo. Ningún trato previo entre las partes y ningún uso comercial serán relevantes para determinar la intención de este acuerdo incluso si la parte que acepta tiene conocimiento de la naturaleza del rendimiento y la oportunidad de objeción.\n\n",
+        "languageID": "es"
+      }
+    ],
+    "clauseTitle": [
+      {
+        "value": "MISCELLANEOUS",
+        "languageID": "en"
+      },
+      {
+        "value": "VARIOS",
+        "languageID": "es"
       }
     ],
     "tradingTerms": [

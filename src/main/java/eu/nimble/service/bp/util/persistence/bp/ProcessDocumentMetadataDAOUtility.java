@@ -445,7 +445,7 @@ public class ProcessDocumentMetadataDAOUtility {
                 parties.addAll(JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),new TypeReference<List<PartyType>>() {
                 }));
 
-                parties.addAll(SpringBridge.getInstance().getiIdentityClientTyped().getParties(bearerToken, new ArrayList<>(partyIdsForIdentityService)));
+                parties.addAll(SpringBridge.getInstance().getiIdentityClientTyped().getParties(bearerToken, new ArrayList<>(partyIdsForIdentityService),false));
                 return parties;
             } catch (IOException e) {
                 logger.error("Failed to get parties while exporting transactions: {}", partyIds, e);

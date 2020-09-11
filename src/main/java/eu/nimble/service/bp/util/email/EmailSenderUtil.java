@@ -11,6 +11,7 @@ import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
 import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.email.EmailService;
+import eu.nimble.utility.validation.NimbleRole;
 import feign.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,36 +55,6 @@ public class EmailSenderUtil implements IEmailSenderUtil {
     @Value("${spring.mail.languages}")
     private String mailTemplateLanguages;
 
-    public void notifyTrustScoreUpdate(String partyID, String federationID, String bearerToken, String language) {
-        new Thread(() -> {
-            PartyType partyType = null;
-            try {
-                partyType = getParty(partyID,federationID,bearerToken);
-            } catch (IOException e) {
-                logger.error("Failed to get party with id: {} from identity service", partyID, e);
-                return;
-            }
-
-            List<PersonType> personTypeList = partyType.getPerson();
-            List<String> emailList = new ArrayList<>();
-            for (PersonType p : personTypeList) {
-                if (p.getRole().contains("sales_officer")) {
-                    emailList.add(p.getContact().getElectronicMail());
-                }
-            }
-
-            if (emailList.size() != 0) {
-                String subject = getMailSubject(NimbleExceptionMessageCode.MAIL_SUBJECT_TRUST_SCORE_UPDATED,language, new ArrayList<>());
-                Context context = new Context();
-                context.setVariable("partyName", partyType.getPartyName().get(0).getName().getValue());
-                context.setVariable("url", URL_TEXT + frontEndURL + "/#/user-mgmt/company-rating");
-                context.setVariable("platformName",platformName);
-                emailService.send(emailList.toArray(new String[0]), subject, getTemplateName("trust_update",language), context);
-            }
-        }).start();
-    }
-
-    // email sender thread
     public void sendCollaborationStatusEmail(String bearerToken,String originalBearerToken,String clientFederationId, ProcessInstanceGroupDAO groupDAO, String language) {
         new Thread(() -> {
             // Collect the trading partner name
@@ -101,10 +72,10 @@ public class EmailSenderUtil implements IEmailSenderUtil {
                 List<PartyType> parties;
                 // parties in this instance
                 if(groupDAO.getFederationID().contentEquals(SpringBridge.getInstance().getFederationId()) && tradingPartnerFederationID.contentEquals(SpringBridge.getInstance().getFederationId())){
-                    parties = SpringBridge.getInstance().getiIdentityClientTyped().getParties(bearerToken,Arrays.asList(partyId,tradingPartnerId));
+                    parties = SpringBridge.getInstance().getiIdentityClientTyped().getParties(bearerToken,Arrays.asList(partyId,tradingPartnerId),true);
                 }
                 else{
-                    Response response = SpringBridge.getInstance().getDelegateClient().getParty(bearerToken,partyIds,false,federationIds);
+                    Response response = SpringBridge.getInstance().getDelegateClient().getParty(bearerToken,partyIds,true,federationIds);
                     parties = JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),new TypeReference<List<PartyType>>() {
                     });
                 }
@@ -132,44 +103,15 @@ public class EmailSenderUtil implements IEmailSenderUtil {
             }
             productNames.append(productNameList.get(productNameList.size() - 1));
 
-            // get dashboard url for the trading partner
+            // check whether the trading partner is buyer or not
             boolean isTradingPartnerBuyer = processDocumentMetadataDAO.getInitiatorID().contentEquals(tradingPartnerId) && processDocumentMetadataDAO.getInitiatorFederationID().contentEquals(tradingPartnerFederationID);
             if(processDocumentMetadataDAO.getType().equals(DocumentType.DESPATCHADVICE) || processDocumentMetadataDAO.getType().equals(DocumentType.RECEIPTADVICE)){
                 isTradingPartnerBuyer = !isTradingPartnerBuyer;
             }
+            // get dashboard url for the trading partner
             String url = getDashboardUrl(isTradingPartnerBuyer ? COLLABORATION_ROLE_BUYER : COLLABORATION_ROLE_SELLER);
-            // Try to identify the recipient email
-            //
-            // If there are more than one instances in the group, simply select the first process instance and
-            // use the creatorID of the document created by the trading party. Otherwise, use the email of the first
-            // person associated with the trading partner
-            String toEmail;
-            if (groupDAO.getProcessInstanceIDs().size() > 1) {
-                ProcessDocumentMetadataDAO documentMetadataDAO = ProcessDocumentMetadataDAOUtility.getDocumentOfTheOtherParty(groupDAO.getProcessInstanceIDs().get(0), partyId);
-                // get person via the identity client
-                String personId = documentMetadataDAO.getCreatorUserID();
-                PersonType person;
-                try {
-                    if(tradingPartnerFederationID.contentEquals(SpringBridge.getInstance().getFederationId())){
-                        person = iIdentityClientTyped.getPerson(bearerToken, personId);
-                    } else {
-                        Response response = SpringBridge.getInstance().getDelegateClient().getPerson(bearerToken,personId,tradingPartnerFederationID);
-                        person = JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),PersonType.class);
-                    }
-                    toEmail = person.getContact().getElectronicMail();
-                } catch (IOException e) {
-                    logger.error("Failed to send email for group: {} with status: {}", groupDAO.getID(), groupDAO.getStatus().toString());
-                    logger.error("Failed to get person with id: {} from identity service", personId, e);
-                    return;
-                }
-
-            } else {
-                toEmail = tradingPartner.getPerson().get(0).getContact().getElectronicMail();
-            }
-
             // collect name of the person cancelling the collaboration
             PersonType person;
-            String personName;
             try {
                 if(originalBearerToken == null){
                     person = iIdentityClientTyped.getPerson(bearerToken);
@@ -183,36 +125,33 @@ public class EmailSenderUtil implements IEmailSenderUtil {
                 logger.error("Failed to get person with token: {} from identity service", bearerToken, e);
                 return;
             }
-            personName = new StringBuilder("").append(person.getFirstName()).append(" ").append(person.getFamilyName()).toString();
-            notifyPartyOnCollaborationStatus(toEmail, personName, productNames.toString(), party.getPartyName().get(0).getName().getValue(),groupDAO.getStatus(),url,language);
+            String personName = String.format("%s %s",person.getFirstName(),person.getFamilyName());
+            // populate toEmail and toEmailTradingPartner lists
+            List<String> toEmail = new ArrayList<>();
+            List<String> toEmailTradingPartner = new ArrayList<>();
+
+            String tradingPartnerRequiredRole = NimbleRole.SALES_OFFICER.getName();
+            String requiredRole = NimbleRole.PURCHASER.getName();
+            if(isTradingPartnerBuyer){
+                tradingPartnerRequiredRole = NimbleRole.PURCHASER.getName() ;
+                requiredRole = NimbleRole.SALES_OFFICER.getName() ;
+            }
+
+            for (PersonType p : tradingPartner.getPerson()) {
+                if (p.getRole().contains(tradingPartnerRequiredRole) || p.getRole().contains(NimbleRole.MONITOR.getName())) {
+                    toEmailTradingPartner.add(p.getContact().getElectronicMail());
+                }
+            }
+
+            for (PersonType p : party.getPerson()) {
+                if (p.getRole().contains(requiredRole) || p.getRole().contains(NimbleRole.MONITOR.getName())) {
+                    toEmail.add(p.getContact().getElectronicMail());
+                }
+            }
+
+            notifyPartyOnCollaborationStatus(toEmail.toArray(new String[0]), toEmailTradingPartner.toArray(new String[0]), personName, productNames.toString(), party.getPartyName().get(0).getName().getValue(),groupDAO.getStatus(),url,language);
             logger.info("Collaboration status mail sent to: {} for group: {} with status: {}", toEmail, groupDAO.getID(), groupDAO.getStatus().toString());
         }).start();
-    }
-
-    private void notifyPartyOnCollaborationStatus(String toEmail, String tradingPartnerPersonName, String productName, String tradingPartnerName, GroupStatus status,String url, String language){
-        Context context = new Context();
-        String subject;
-        String template;
-
-        context.setVariable("tradingPartnerPerson", tradingPartnerPersonName);
-        context.setVariable("tradingPartner", tradingPartnerName);
-        context.setVariable("product", productName);
-        context.setVariable("platformName",platformName);
-
-        if (!url.isEmpty()) {
-            context.setVariable("url", url);
-        }
-
-        if(status.equals(GroupStatus.CANCELLED)){
-            subject = getMailSubject(NimbleExceptionMessageCode.MAIL_SUBJECT_BUSINESS_PROCESS_CANCELLED,language,Arrays.asList(platformName));
-            template = getTemplateName("cancelled_collaboration",language);
-        }
-        else{
-            subject = getMailSubject(NimbleExceptionMessageCode.MAIL_SUBJECT_BUSINESS_PROCESS_FINISHED,language,Arrays.asList(platformName));
-            template = getTemplateName("finished_collaboration",language);
-        }
-
-        emailService.send(new String[]{toEmail}, subject, template, context);
     }
 
     public void sendNewDeliveryDateEmail(String bearerToken, Date newDeliveryDate, String buyerPartyId,String buyerPartyFederationId,String sellerFederationId, String processInstanceId) {
@@ -270,7 +209,7 @@ public class EmailSenderUtil implements IEmailSenderUtil {
         }).start();
     }
 
-    public void sendActionPendingEmail(String bearerToken, String originalBearerToken, String clientFederationId, String documentId,String language) {
+    public void sendBusinessProcessStatusEmail(String bearerToken, String originalBearerToken, String clientFederationId, String documentId, String language) {
         new Thread(() -> {
             // Get ProcessDocumentMetadataDAO for the given document id
             ProcessDocumentMetadataDAO processDocumentMetadataDAO = ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId);
@@ -351,7 +290,7 @@ public class EmailSenderUtil implements IEmailSenderUtil {
                 buyerParty = initiatingParty;
                 sellerParty = respondingParty;
                 for (PersonType p : personTypeList) {
-                    if (p.getRole().contains("sales_officer") || p.getRole().contains("monitor")) {
+                    if (p.getRole().contains(NimbleRole.SALES_OFFICER.getName()) || p.getRole().contains(NimbleRole.MONITOR.getName())) {
                         emailList.add(p.getContact().getElectronicMail());
                     }
                 }
@@ -359,7 +298,7 @@ public class EmailSenderUtil implements IEmailSenderUtil {
                 buyerParty = respondingParty;
                 sellerParty = initiatingParty;
                 for (PersonType p : personTypeList) {
-                    if (p.getRole().contains("purchaser") || p.getRole().contains("monitor")) {
+                    if (p.getRole().contains(NimbleRole.PURCHASER.getName()) || p.getRole().contains(NimbleRole.MONITOR.getName())) {
                         emailList.add(p.getContact().getElectronicMail());
                     }
                 }
@@ -384,30 +323,81 @@ public class EmailSenderUtil implements IEmailSenderUtil {
                     }
                 }
 
-                if (processDocumentStatus.equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
-                    notifyPartyOnPendingCollaboration(emailList.toArray(new String[0]), initiatingPersonName, productName, initiatingPartyName, url, subject, respondingPartyName,language);
-                } else {
-                    notifyPartyOnCollaboration(emailList.toArray(new String[0]), initiatingPersonName, productName, initiatingPartyName, url, subject, respondingPartyName,language);
-                }
+                notifyPartyOnBusinessProcess(emailList.toArray(new String[0]), initiatingPersonName, productName, initiatingPartyName, url, subject, respondingPartyName,language,processDocumentStatus);
             }
         }).start();
     }
 
-    private String getDashboardUrl(String collaborationRole) {
-        if (COLLABORATION_ROLE_SELLER.equals(collaborationRole)) {
-            return URL_TEXT + frontEndURL + "/#/dashboard?tab=SALES";
-        } else if (COLLABORATION_ROLE_BUYER.equals(collaborationRole)) {
-            return URL_TEXT + frontEndURL + "/#/dashboard?tab=PUCHASES";
+    public void sendTrustScoreUpdateEmail(String partyID, String federationID, String bearerToken, String language) {
+        new Thread(() -> {
+            PartyType partyType = null;
+            try {
+                partyType = getParty(partyID,federationID,bearerToken);
+            } catch (IOException e) {
+                logger.error("Failed to get party with id: {} from identity service", partyID, e);
+                return;
+            }
+
+            List<PersonType> personTypeList = partyType.getPerson();
+            List<String> emailList = new ArrayList<>();
+            for (PersonType p : personTypeList) {
+                if (p.getRole().contains(NimbleRole.SALES_OFFICER.getName()) || p.getRole().contains(NimbleRole.MONITOR.getName())) {
+                    emailList.add(p.getContact().getElectronicMail());
+                }
+            }
+
+            if (emailList.size() != 0) {
+                String subject = getMailSubject(NimbleExceptionMessageCode.MAIL_SUBJECT_TRUST_SCORE_UPDATED,language, new ArrayList<>());
+                Context context = new Context();
+                context.setVariable("partyName", partyType.getPartyName().get(0).getName().getValue());
+                context.setVariable("url", URL_TEXT + frontEndURL + "/#/user-mgmt/company-rating");
+                context.setVariable("platformName",platformName);
+                emailService.send(emailList.toArray(new String[0]), subject, getTemplateName("trust_update",language), context);
+            }
+        }).start();
+    }
+
+    private void notifyPartyOnCollaborationStatus(String[] toEmail,String[] toEmailTradingPartner, String tradingPartnerPersonName, String productName, String tradingPartnerName, GroupStatus status,String url, String language){
+        Context context = new Context();
+        String subject;
+        String template;
+
+        context.setVariable("tradingPartnerPerson", tradingPartnerPersonName);
+        context.setVariable("tradingPartner", tradingPartnerName);
+        context.setVariable("product", productName);
+        context.setVariable("platformName",platformName);
+
+        if (!url.isEmpty()) {
+            context.setVariable("url", url);
         }
-        return EMPTY_TEXT;
+
+        if(status.equals(GroupStatus.CANCELLED)){
+            subject = getMailSubject(NimbleExceptionMessageCode.MAIL_SUBJECT_BUSINESS_PROCESS_CANCELLED,language,Arrays.asList(platformName));
+            template = getTemplateName("cancelled_collaboration",language);
+        }
+        else{
+            subject = getMailSubject(NimbleExceptionMessageCode.MAIL_SUBJECT_BUSINESS_PROCESS_FINISHED,language,Arrays.asList(platformName));
+            template = getTemplateName("finished_collaboration",language);
+        }
+
+        if(toEmail.length > 0){
+            try{
+                emailService.send(toEmail, subject, template, context);
+            } catch (Exception e){
+                logger.error("Failed to send email for {} to notify collaboration status",toEmail,e);
+            }
+        }
+        if(toEmailTradingPartner.length > 0){
+            try{
+                emailService.send(toEmailTradingPartner, subject, template, context);
+            } catch (Exception e){
+                logger.error("Failed to send email for {} to notify collaboration status",toEmailTradingPartner,e);
+            }
+        }
     }
 
-    private String getProcessUrl(String processInstanceId,String sellerFederationId) {
-        return URL_TEXT + frontEndURL + "/#/bpe/bpe-exec/" + processInstanceId + "/" + sellerFederationId;
-    }
-
-    public void notifyPartyOnPendingCollaboration(String[] toEmail, String initiatingPersonName, String productName,
-                                                  String initiatingPartyName, String url, String subject, String respondingPartyName, String language) {
+    public void notifyPartyOnBusinessProcess(String[] toEmail, String initiatingPersonName, String productName, String initiatingPartyName,
+                                           String url, String subject, String respondingPartyName, String language, ProcessDocumentStatus processDocumentStatus) {
         Context context = new Context();
 
         context.setVariable("initiatingPersonName", initiatingPersonName);
@@ -420,32 +410,19 @@ public class EmailSenderUtil implements IEmailSenderUtil {
             context.setVariable("url", url);
         }
 
-        if (subject.equals(EMPTY_TEXT)) {
-            subject = getMailSubject(NimbleExceptionMessageCode.MAIL_SUBJECT_ACTION_REQUIRED,language,Arrays.asList(platformName));
-        }
+        String templateName = "continue_colloboration";
+        String mailSubject = getMailSubject(NimbleExceptionMessageCode.MAIL_SUBJECT_BUSINESS_PROCESS_TRANSITION,language, Collections.singletonList(platformName));
 
-        emailService.send(toEmail, subject, getTemplateName("action_pending",language), context);
-    }
-
-    public void notifyPartyOnCollaboration(String[] toEmail, String initiatingPersonName, String productName, String initiatingPartyName,
-                                           String url, String subject, String respondingPartyName, String language) {
-        Context context = new Context();
-
-        context.setVariable("initiatingPersonName", initiatingPersonName);
-        context.setVariable("initiatingPartyName", initiatingPartyName);
-        context.setVariable("respondingPartyName", respondingPartyName);
-        context.setVariable("product", productName);
-        context.setVariable("platformName",platformName);
-
-        if (!url.isEmpty()) {
-            context.setVariable("url", url);
+        if (processDocumentStatus.equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
+            templateName = "action_pending";
+            mailSubject = getMailSubject(NimbleExceptionMessageCode.MAIL_SUBJECT_ACTION_REQUIRED,language, Collections.singletonList(platformName));
         }
 
         if (subject.equals(EMPTY_TEXT)) {
-            subject = getMailSubject(NimbleExceptionMessageCode.MAIL_SUBJECT_BUSINESS_PROCESS_TRANSITION,language,Arrays.asList(platformName));
+            subject = mailSubject;
         }
 
-        emailService.send(toEmail, subject, getTemplateName("continue_colloboration",language), context);
+        emailService.send(toEmail, subject, getTemplateName(templateName,language), context);
     }
 
     public void notifyPartyOnNewDeliveryDate(String toEmail,String productName, String respondingPartyName, String expectedDeliveryDate, String url) {
@@ -462,6 +439,7 @@ public class EmailSenderUtil implements IEmailSenderUtil {
         emailService.send(new String[]{toEmail},subject , getTemplateName("new_delivery_date",languages.get(0)), context);
     }
 
+    /* Helper Methods */
     private PartyType getParty(String partyId,String federationId,String bearerToken) throws IOException {
         PartyType party = null;
         if(federationId.contentEquals(SpringBridge.getInstance().getFederationId())){
@@ -499,5 +477,18 @@ public class EmailSenderUtil implements IEmailSenderUtil {
         String mailSubjectLanguage = languages.contains(language) ? language :languages.get(0) ;
         Locale locale = new Locale(mailSubjectLanguage);
         return this.messageSource.getMessage(messageCode.toString(), parameters.toArray(), locale);
+    }
+
+    private String getDashboardUrl(String collaborationRole) {
+        if (COLLABORATION_ROLE_SELLER.equals(collaborationRole)) {
+            return URL_TEXT + frontEndURL + "/#/dashboard?tab=SALES";
+        } else if (COLLABORATION_ROLE_BUYER.equals(collaborationRole)) {
+            return URL_TEXT + frontEndURL + "/#/dashboard?tab=PUCHASES";
+        }
+        return EMPTY_TEXT;
+    }
+
+    private String getProcessUrl(String processInstanceId,String sellerFederationId) {
+        return URL_TEXT + frontEndURL + "/#/bpe/bpe-exec/" + processInstanceId + "/" + sellerFederationId;
     }
 }
