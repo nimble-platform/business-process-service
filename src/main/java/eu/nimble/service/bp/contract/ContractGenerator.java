@@ -270,7 +270,7 @@ public class ContractGenerator {
                     XWPFParagraph paragraph = document.createParagraph();
                     // set the clause title
                     paragraph.createRun();
-                    paragraph.getRuns().get(0).setText(rowIndex+1+"."+clause.getID()+":\n");
+                    paragraph.getRuns().get(0).setText(rowIndex+1+"."+clause.getContent().get(0).getValue()+":\n");
                     paragraph.getRuns().get(0).setBold(true);
                     // set the content of clause
                     setClauseContent(clause.getContent().get(0).getValue(),paragraph,clause.getTradingTerms());
