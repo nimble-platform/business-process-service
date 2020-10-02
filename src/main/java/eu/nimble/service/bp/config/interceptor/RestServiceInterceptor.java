@@ -5,6 +5,7 @@ import eu.nimble.utility.exception.AuthenticationException;
 import eu.nimble.utility.exception.NimbleException;
 import eu.nimble.service.bp.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.validation.IValidationUtil;
+import eu.nimble.utility.validation.NimbleRole;
 import io.jsonwebtoken.Claims;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,9 +17,7 @@ import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.*;
 
 /**
  * This interceptor injects the bearer token into the {@link ExecutionContext} for each Rest call
@@ -47,6 +46,16 @@ public class RestServiceInterceptor extends HandlerInterceptorAdapter {
 
     private final int MEGABYTE = 1024*1024;
 
+    private static Set<String> excludedEndpoints = new HashSet<>();
+    static {
+        excludedEndpoints.add("/swagger-resources");
+        excludedEndpoints.add("/api-docs");
+        // error point is called by spring if the execution of the request is not successful
+        excludedEndpoints.add("/error");
+        // excluding these as they are required while getting product details when the user is not logged in
+        excludedEndpoints.add("/ratingsSummary");
+    }
+
     @Override
     public boolean preHandle (HttpServletRequest request, HttpServletResponse response, Object handler) {
         // log JVM memory stats
@@ -59,13 +68,14 @@ public class RestServiceInterceptor extends HandlerInterceptorAdapter {
         String originalBearerToken = request.getHeader(ORIGINAL_AUTHORIZATION_HEADER);
 
         Claims claims = null;
-        // do not validate the token for swagger operations
-        if(bearerToken != null && !(request.getServletPath().contains(swaggerPath) || request.getServletPath().contains(apiDocsPath))){
-            // validate token
-            try {
-                claims = iValidationUtil.validateToken(bearerToken);
-            } catch (Exception e) {
-                logger.error("RestServiceInterceptor.preHandle failed ",e);
+        try {
+            claims = iValidationUtil.validateToken(bearerToken);
+        } catch (Exception e) {
+            // do not throw an exception if the endpoint is among the excluded ones from authentication
+            if(!excludedEndpoints.stream().anyMatch(endpoint -> request.getServletPath().matches(endpoint))) {
+                executionContext.setUserRoles(Collections.singletonList(NimbleRole.COMPANY_ADMIN.getName()));
+                return true;
+            } else {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_NO_USER_FOR_TOKEN.toString(), Arrays.asList(bearerToken),e);
             }
         }
