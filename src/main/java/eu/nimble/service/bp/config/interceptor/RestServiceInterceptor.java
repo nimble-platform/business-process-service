@@ -72,7 +72,7 @@ public class RestServiceInterceptor extends HandlerInterceptorAdapter {
             claims = iValidationUtil.validateToken(bearerToken);
         } catch (Exception e) {
             // do not throw an exception if the endpoint is among the excluded ones from authentication
-            if(!excludedEndpoints.stream().anyMatch(endpoint -> request.getServletPath().matches(endpoint))) {
+            if(excludedEndpoints.stream().anyMatch(endpoint -> request.getServletPath().matches(endpoint))) {
                 executionContext.setUserRoles(Collections.singletonList(NimbleRole.COMPANY_ADMIN.getName()));
                 return true;
             } else {
