@@ -16,7 +16,7 @@ import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
 import eu.nimble.service.model.ubl.receiptadvice.ReceiptAdviceType;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
-import eu.nimble.utility.persistence.resource.EntityIdAwareRepositoryWrapper;
+import eu.nimble.utility.persistence.repository.BinaryContentAwareRepositoryWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,10 +66,10 @@ public class DocumentPersistenceUtility {
         }
     }
 
-    public static void updateDocument(String processContextId, Object document, String partyId) {
+    public static void updateDocument(String processContextId, Object document) {
         BusinessProcessContext businessProcessContext = BusinessProcessContextHandler.getBusinessProcessContextHandler().getBusinessProcessContext(processContextId);
 
-        EntityIdAwareRepositoryWrapper repositoryWrapper = businessProcessContext.getEntityIdAwareRepository(partyId);
+        BinaryContentAwareRepositoryWrapper repositoryWrapper = businessProcessContext.getEntityIdAwareRepository();
         DataIntegratorUtil.checkExistingParties(document,processContextId);
         document = repositoryWrapper.updateEntity(document);
         // update the cache
@@ -85,7 +85,7 @@ public class DocumentPersistenceUtility {
 
         if (document != null) {
             // remove binary content from the document
-            EntityIdAwareRepositoryWrapper repositoryWrapper = businessProcessContext.getEntityIdAwareRepository(documentMetadata.getInitiatorID());
+            BinaryContentAwareRepositoryWrapper repositoryWrapper = businessProcessContext.getEntityIdAwareRepository();
             document = repositoryWrapper.updateEntityForPersistCases(document);
             // update the cache
             SpringBridge.getInstance().getCacheHelper().putDocument(document);
@@ -99,7 +99,7 @@ public class DocumentPersistenceUtility {
             Object document = getUBLDocument(documentId, processDocumentMetadataDAO.getType());
 
             if (document != null) {
-                EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(processDocumentMetadataDAO.getInitiatorID());
+                BinaryContentAwareRepositoryWrapper repositoryWrapper = new BinaryContentAwareRepositoryWrapper();
                 repositoryWrapper.deleteEntity(document);
                 // remove document from the cache
                 SpringBridge.getInstance().getCacheHelper().removeDocument(document);

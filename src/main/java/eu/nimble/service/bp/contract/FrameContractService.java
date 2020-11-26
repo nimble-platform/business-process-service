@@ -6,7 +6,7 @@ import eu.nimble.service.bp.util.persistence.catalogue.PartyPersistenceUtility;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.service.model.ubl.commonbasiccomponents.QuantityType;
 import eu.nimble.service.model.ubl.digitalagreement.DigitalAgreementType;
-import eu.nimble.utility.persistence.resource.EntityIdAwareRepositoryWrapper;
+import eu.nimble.utility.persistence.repository.BinaryContentAwareRepositoryWrapper;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,8 +33,7 @@ public class FrameContractService {
                     sellerId, buyerId,sellerFederationId,buyerFederationId, item, duration, quotationId);
 
         } else {
-            frameContract = updateFrameContractDuration(
-                    sellerId, frameContract, duration, quotationId);
+            frameContract = updateFrameContractDuration(frameContract, duration, quotationId);
         }
         return frameContract;
     }
@@ -66,7 +65,7 @@ public class FrameContractService {
         frameContract.getParticipantParty().add(sellerParty);
         frameContract.getParticipantParty().add(buyerParty);
 
-        EntityIdAwareRepositoryWrapper repository = new EntityIdAwareRepositoryWrapper(sellerId);
+        BinaryContentAwareRepositoryWrapper repository = new BinaryContentAwareRepositoryWrapper();
         frameContract = repository.updateEntityForPersistCases(frameContract);
         return frameContract;
     }
@@ -74,14 +73,14 @@ public class FrameContractService {
     /**
      * Updates the duration of the frame contract duration
      */
-    public DigitalAgreementType updateFrameContractDuration(String sellerId, DigitalAgreementType frameContract, QuantityType duration, String quotationId) {
+    public DigitalAgreementType updateFrameContractDuration(DigitalAgreementType frameContract, QuantityType duration, String quotationId) {
         XMLGregorianCalendar[] gregorianDates = getStartAndEndDatesInGregorianFormat(duration);
         frameContract.getDigitalAgreementTerms().getValidityPeriod().setStartDate(gregorianDates[0]);
         frameContract.getDigitalAgreementTerms().getValidityPeriod().setEndDate(gregorianDates[1]);
 
         frameContract.getQuotationReference().setID(quotationId);
 
-        EntityIdAwareRepositoryWrapper repository = new EntityIdAwareRepositoryWrapper(sellerId);
+        BinaryContentAwareRepositoryWrapper repository = new BinaryContentAwareRepositoryWrapper();
         frameContract = repository.updateEntity(frameContract);
         return frameContract;
     }

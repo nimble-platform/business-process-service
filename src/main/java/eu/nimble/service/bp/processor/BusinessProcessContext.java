@@ -4,7 +4,7 @@ import eu.nimble.service.bp.swagger.model.ProcessInstanceInputMessage;
 import eu.nimble.service.bp.util.camunda.CamundaEngine;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
-import eu.nimble.utility.persistence.resource.EntityIdAwareRepositoryWrapper;
+import eu.nimble.utility.persistence.repository.BinaryContentAwareRepositoryWrapper;
 
 import java.util.Collections;
 
@@ -24,9 +24,9 @@ public class BusinessProcessContext {
     private GenericJPARepository bpRepository;
     // lazy loading disabled catalogue repository
     private GenericJPARepository catalogRepository;
-    private EntityIdAwareRepositoryWrapper entityIdAwareRepository;
+    private BinaryContentAwareRepositoryWrapper entityIdAwareRepository;
     /**
-     * The identifier of process instance which is started in {@link eu.nimble.service.bp.impl.StartController#startProcessInstance(String, ProcessInstanceInputMessage, String, String, String)} service
+     * The identifier of process instance which is started in {@link eu.nimble.service.bp.impl.StartController#startProcessInstance} service
      * We use this id to rollback the changes related to this process instance in Camunda.
      * */
     private String processInstanceId;
@@ -49,9 +49,9 @@ public class BusinessProcessContext {
         this.processInstanceId = processInstanceId;
     }
 
-    public EntityIdAwareRepositoryWrapper getEntityIdAwareRepository(String partyId) {
+    public BinaryContentAwareRepositoryWrapper getEntityIdAwareRepository() {
         if(entityIdAwareRepository == null){
-            entityIdAwareRepository = new EntityIdAwareRepositoryWrapper(partyId, getCatalogRepository());
+            entityIdAwareRepository = new BinaryContentAwareRepositoryWrapper(getCatalogRepository());
             entityIdAwareRepository.beginTransaction();
 
         }
