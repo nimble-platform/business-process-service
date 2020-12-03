@@ -68,6 +68,8 @@ public class StartWithDocumentController {
     @Autowired
     private DocumentController documentController;
     @Autowired
+    private ProcessInstanceGroupController processInstanceGroupController;
+    @Autowired
     private IValidationUtil validationUtil;
     @Autowired
     private ExecutionContext executionContext;
@@ -157,8 +159,9 @@ public class StartWithDocumentController {
          * Check whether the seller party exists or not
          * */
         String sellerPartyId = document.getSellerPartyId();
+        PartyType sellerParty = null;
         try {
-            PartyType sellerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,sellerPartyId);
+            sellerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,sellerPartyId);
 
             if(sellerParty == null){
                 throw new NimbleException(NimbleExceptionMessageCode.BAD_REQUEST_NO_PARTY.toString(),Arrays.asList(sellerPartyId));
@@ -280,6 +283,13 @@ public class StartWithDocumentController {
             processInstance = continueController.continueProcessInstance(processInstanceInputMessage,gid,collaborationGroup.getHjid().toString(),bearerToken,initiatorFederationId,responderFederationId).getBody();
             if(processInstance == null){
                 throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_COMPLETE_PROCESS.toString());
+            }
+            // Finish the collaboration if the following conditions are satisfied:
+            //  - The business process is negotiation which has an accepted response document.
+            //  - The seller party does not include Order step in its business workflow, that is, negotiation is the last step
+            if(processId.contentEquals(ClassProcessTypeMap.CAMUNDA_PROCESS_ID_NEGOTIATION) && document.getDocumentStatus().contentEquals("Accepted")
+                    && !sellerParty.getProcessID().contains(ClassProcessTypeMap.CAMUNDA_PROCESS_ID_ORDER)){
+                processInstanceGroupController.finishCollaboration(gid,bearerToken);
             }
 
             /**
