@@ -8,9 +8,11 @@ import eu.nimble.service.model.ubl.commonaggregatecomponents.CompletedTaskType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.QualifyingPartyType;
+import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
+import feign.Response;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -196,5 +198,21 @@ public class PartyPersistenceUtility {
     public static PartyType getParty(String bearerToken, PartyType partyType) throws IOException {
         PartyType party = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,partyType.getPartyIdentification().get(0).getID());
         return party == null ? partyType : party;
+    }
+
+    /**
+     * Retrieve the party info for the given party and federation id. Based on the given federation id, the party info is taken from the identity-service
+     * or it is taken from the delegate client
+     * */
+    public static PartyType getParty(String partyId,String federationId,String bearerToken) throws IOException {
+        PartyType party = null;
+        if(federationId.contentEquals(SpringBridge.getInstance().getFederationId())){
+            party = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken, partyId,true);
+        }
+        else {
+            Response response = SpringBridge.getInstance().getDelegateClient().getParty(bearerToken, Long.valueOf(partyId),true,federationId);
+            party = JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),PartyType.class);
+        }
+        return party;
     }
 }

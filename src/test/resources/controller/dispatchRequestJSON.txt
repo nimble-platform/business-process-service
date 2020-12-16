@@ -3730,7 +3730,7 @@
         }
       },
       "orderLineReference": {
-        "lineID":3432
+        "lineID": ORDER_LINE_HJID
       },
       "shipment": [
         {

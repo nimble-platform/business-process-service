@@ -1,10 +1,7 @@
 package eu.nimble.service.bp.impl;
 
 import eu.nimble.service.bp.config.RoleConfig;
-import eu.nimble.service.bp.model.statistics.BusinessProcessCount;
-import eu.nimble.service.bp.model.statistics.FulfilmentStatistics;
-import eu.nimble.service.bp.model.statistics.NonOrderedProducts;
-import eu.nimble.service.bp.model.statistics.OverallStatistics;
+import eu.nimble.service.bp.model.statistics.*;
 import eu.nimble.service.bp.util.bp.BusinessProcessUtility;
 import eu.nimble.service.bp.util.controller.InputValidatorUtil;
 import eu.nimble.service.bp.util.controller.ValidationResponse;
@@ -511,6 +508,37 @@ public class StatisticsController {
 
         logger.info("Retrieved fulfilment statistics for the order with id: {}",orderId);
         return ResponseEntity.ok(serializedResponse);
+    }
+
+    @ApiOperation(value = "",notes = "Gets the process document metadata summaries")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Retrieved the process document metadata summaries successfully",response = ProcessDocumentMetadataSummary.class,responseContainer = "List"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 500, message = "Unexpected error while getting the process document metadata summaries")
+    })
+    @RequestMapping(value = "/document-metadata",
+            produces = {"application/json"},
+            method = RequestMethod.GET)
+    public ResponseEntity getProcessDocumentMetadataSummaries(@ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken) throws NimbleException {
+
+        try {
+            // set request log of ExecutionContext
+            String requestLog = "Getting process document metadata summaries";
+            executionContext.setRequestLog(requestLog);
+
+            logger.info(requestLog);
+            // validate role
+            if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+                throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
+            }
+
+            List<ProcessDocumentMetadataSummary> summaries = ProcessDocumentMetadataDAOUtility.getProcessDocumentMetadataSummaries(bearerToken);
+            logger.info("Retrieved process document metadata summaries");
+            return ResponseEntity.ok().body(summaries);
+
+        } catch (Exception e) {
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_GET_PROCESS_DOCUMENT_METADATA_SUMMARIES.toString(),e);
+        }
     }
 
 
