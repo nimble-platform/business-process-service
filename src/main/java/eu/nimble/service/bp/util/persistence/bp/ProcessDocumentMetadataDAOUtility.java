@@ -7,9 +7,11 @@ import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentStatus;
 import eu.nimble.service.bp.model.hyperjaxb.RoleType;
 import eu.nimble.service.bp.model.export.TransactionSummary;
 import eu.nimble.service.bp.model.statistics.BusinessProcessCount;
+import eu.nimble.service.bp.model.statistics.ProcessDocumentMetadataSummary;
 import eu.nimble.service.bp.util.bp.BusinessProcessUtility;
 import eu.nimble.service.bp.util.bp.DocumentEnumClassMapper;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
+import eu.nimble.service.bp.util.persistence.catalogue.PartyPersistenceUtility;
 import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.bp.processor.BusinessProcessContext;
 import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
@@ -29,10 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.*;
 
 /**
@@ -714,6 +713,50 @@ public class ProcessDocumentMetadataDAOUtility {
             return null;
         }
         return HibernateSwaggerObjectMapper.createProcessDocumentMetadata(processDocumentDAO);
+    }
+
+    public static List<ProcessDocumentMetadataSummary> getProcessDocumentMetadataSummaries(String bearerToken) throws IOException {
+        List<ProcessDocumentMetadataSummary> summaries = new ArrayList<>();
+        // get all process document metadata dao
+        List<ProcessDocumentMetadataDAO> processDocumentMetadataDAOS = new JPARepositoryFactory().forBpRepository().getEntities(ProcessDocumentMetadataDAO.class);
+        // party name map
+        // the key is the concatenation of party id and federation id in the following format: <PARTY_ID>-<FEDERATION_ID>
+        Map<String,String> partyNameMap = new HashMap<>();
+        // create summaries
+        for (ProcessDocumentMetadataDAO processDocumentMetadataDAO : processDocumentMetadataDAOS) {
+            ProcessDocumentMetadataSummary summary = new ProcessDocumentMetadataSummary();
+            summary.setInitiatorPartyID(processDocumentMetadataDAO.getInitiatorID());
+            summary.setResponderPartyID(processDocumentMetadataDAO.getResponderID());
+            summary.setType(processDocumentMetadataDAO.getType().value());
+            summary.setStatus(processDocumentMetadataDAO.getStatus().value());
+            summary.setSubmissionDate(processDocumentMetadataDAO.getSubmissionDate());
+            // retrieve party names
+            String initiatorPartyNameKey = String.format("%s-%s",processDocumentMetadataDAO.getInitiatorID(),processDocumentMetadataDAO.getInitiatorFederationID());
+            String responderPartyNameKey = String.format("%s-%s",processDocumentMetadataDAO.getResponderID(),processDocumentMetadataDAO.getResponderFederationID());
+            String initiatorPartyName;
+            String responderPartyName;
+            if (partyNameMap.containsKey(initiatorPartyNameKey)) {
+                initiatorPartyName = partyNameMap.get(initiatorPartyNameKey);
+            } else{
+                PartyType initiatorParty = PartyPersistenceUtility.getParty(processDocumentMetadataDAO.getInitiatorID(),processDocumentMetadataDAO.getInitiatorFederationID(),bearerToken);
+                initiatorPartyName = initiatorParty.getPartyName().get(0).getName().getValue();
+                partyNameMap.put(initiatorPartyNameKey,initiatorPartyName);
+            }
+
+            if (partyNameMap.containsKey(responderPartyNameKey)) {
+                responderPartyName = partyNameMap.get(responderPartyNameKey);
+            } else{
+                PartyType responderParty = PartyPersistenceUtility.getParty(processDocumentMetadataDAO.getResponderID(),processDocumentMetadataDAO.getResponderFederationID(),bearerToken);
+                responderPartyName = responderParty.getPartyName().get(0).getName().getValue();
+                partyNameMap.put(responderPartyNameKey,initiatorPartyName);
+            }
+
+            summary.setInitiatorPartyName(initiatorPartyName);
+            summary.setResponderPartyName(responderPartyName);
+
+            summaries.add(summary);
+        }
+        return summaries;
     }
 
     public static List<String> getUnshippedOrderIds() {
