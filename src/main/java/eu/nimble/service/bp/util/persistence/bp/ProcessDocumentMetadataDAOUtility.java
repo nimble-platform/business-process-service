@@ -748,7 +748,7 @@ public class ProcessDocumentMetadataDAOUtility {
             } else{
                 PartyType responderParty = PartyPersistenceUtility.getParty(processDocumentMetadataDAO.getResponderID(),processDocumentMetadataDAO.getResponderFederationID(),bearerToken);
                 responderPartyName = responderParty.getPartyName().get(0).getName().getValue();
-                partyNameMap.put(responderPartyNameKey,initiatorPartyName);
+                partyNameMap.put(responderPartyNameKey,responderPartyName);
             }
 
             summary.setInitiatorPartyName(initiatorPartyName);
