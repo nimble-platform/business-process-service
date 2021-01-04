@@ -5,9 +5,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import eu.nimble.common.rest.identity.IIdentityClientTyped;
 import eu.nimble.service.bp.config.RoleConfig;
-import eu.nimble.service.bp.model.hyperjaxb.*;
-import eu.nimble.service.bp.util.BusinessProcessEvent;
+import eu.nimble.service.bp.exception.NimbleExceptionMessageCode;
 import eu.nimble.service.bp.model.export.TransactionSummary;
+import eu.nimble.service.bp.model.hyperjaxb.*;
+import eu.nimble.service.bp.processor.BusinessProcessContext;
+import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
+import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
+import eu.nimble.service.bp.util.BusinessProcessEvent;
 import eu.nimble.service.bp.util.camunda.CamundaEngine;
 import eu.nimble.service.bp.util.persistence.bp.CollaborationGroupDAOUtility;
 import eu.nimble.service.bp.util.persistence.bp.HibernateSwaggerObjectMapper;
@@ -15,21 +19,23 @@ import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtilit
 import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceDAOUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
-import eu.nimble.service.bp.processor.BusinessProcessContext;
-import eu.nimble.service.bp.processor.BusinessProcessContextHandler;
-import eu.nimble.service.bp.swagger.model.ProcessDocumentMetadata;
 import eu.nimble.service.bp.util.spring.SpringBridge;
-import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.DocumentReferenceType;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.ItemType;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.BinaryObjectType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.TextType;
 import eu.nimble.service.model.ubl.document.IDocument;
-import eu.nimble.utility.*;
+import eu.nimble.utility.ExecutionContext;
+import eu.nimble.utility.HttpResponseUtil;
+import eu.nimble.utility.JsonSerializationUtility;
+import eu.nimble.utility.LoggerUtils;
 import eu.nimble.utility.exception.NimbleException;
-import eu.nimble.service.bp.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
 import eu.nimble.utility.persistence.resource.ResourceValidationUtility;
 import eu.nimble.utility.serialization.JsonSerializer;
-import eu.nimble.utility.serialization.MixInIgnoreType;
+import eu.nimble.utility.serialization.ubl.IgnoreMixin;
 import eu.nimble.utility.validation.IValidationUtil;
 import feign.Response;
 import io.swagger.annotations.ApiOperation;
@@ -47,13 +53,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.*;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.concurrent.*;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -172,18 +178,12 @@ public class ProcessInstanceController {
                 throw new NimbleException(NimbleExceptionMessageCode.NOT_FOUND_NO_PROCESS_DOCUMENT_METADATA.toString(),Arrays.asList(processInstanceID));
             }
             Object document = DocumentPersistenceUtility.readDocument(documentType, content);
-            // validate the entity ids
-            boolean hjidsBelongToCompany = resourceValidationUtil.hjidsBelongsToParty(document, processDocumentMetadata.getInitiatorID(), Configuration.Standard.UBL.toString());
-            if(!hjidsBelongToCompany) {
-                throw new NimbleException(NimbleExceptionMessageCode.BAD_REQUEST_INVALID_IDENTIFIERS.toString(),Arrays.asList(content));
-            }
-
             ProcessInstanceDAO instanceDAO = ProcessInstanceDAOUtility.getById(processInstanceID,businessProcessContext.getBpRepository());
             // update creator user id of metadata
             processDocumentMetadata.setCreatorUserID(creatorUserID);
             ProcessDocumentMetadataDAOUtility.updateDocumentMetadata(businessProcessContext.getId(),processDocumentMetadata);
             // update the corresponding document
-            DocumentPersistenceUtility.updateDocument(businessProcessContext.getId(), document, processDocumentMetadata.getInitiatorID());
+            DocumentPersistenceUtility.updateDocument(businessProcessContext.getId(), document);
 
             businessProcessContext.commitDbUpdates();
             //mdc logging
@@ -577,7 +577,7 @@ public class ProcessInstanceController {
                     zipEntry = new ZipEntry(transaction.getExchangedDocumentId() + ".json");
                     zos.putNextEntry(zipEntry);
                     tempOutputStream = new ByteArrayOutputStream();
-                    JsonSerializationUtility.getObjectMapperWithMixIn(BinaryObjectType.class, MixInIgnoreType.class).writeValue(tempOutputStream, transaction.getExchangedDocument());
+                    JsonSerializationUtility.getObjectMapperWithMixIn(BinaryObjectType.class, IgnoreMixin.class).writeValue(tempOutputStream, transaction.getExchangedDocument());
                     tempOutputStream.writeTo(zos);
                     tempOutputStream.close();
                     zos.closeEntry();

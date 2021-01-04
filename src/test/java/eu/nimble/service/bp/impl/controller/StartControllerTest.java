@@ -13,7 +13,7 @@ import eu.nimble.service.bp.util.persistence.DataIntegratorUtil;
 import eu.nimble.service.model.ubl.catalogue.CatalogueType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.QuantityType;
 import eu.nimble.utility.JsonSerializationUtility;
-import eu.nimble.utility.persistence.resource.EntityIdAwareRepositoryWrapper;
+import eu.nimble.utility.persistence.repository.BinaryContentAwareRepositoryWrapper;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -80,7 +80,7 @@ public class StartControllerTest {
         String inputMessageAsString = IOUtils.toString(EPCControllerTest.class.getResourceAsStream(exampleCataloguePath));
         CatalogueType catalogue = JsonSerializationUtility.getObjectMapper().readValue(inputMessageAsString, CatalogueType.class);
         DataIntegratorUtil.checkExistingParties(catalogue);
-        EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(catalogue.getProviderParty().getPartyIdentification().get(0).getID());
+        BinaryContentAwareRepositoryWrapper repositoryWrapper = new BinaryContentAwareRepositoryWrapper();
         repositoryWrapper.updateEntityForPersistCases(catalogue);
     }
 
