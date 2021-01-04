@@ -320,9 +320,9 @@ public class BPMessageGenerator {
             location = buyerParty.getPurchaseTerms().getDeliveryTerms().get(0).getDeliveryLocation();
         }
         else{
-            TextType countryName = new TextType();
+            CodeType countryIdentificationCode = new CodeType();
             CountryType country = new CountryType();
-            country.setName(countryName);
+            country.setIdentificationCode(countryIdentificationCode);
 
             AddressType address = new AddressType();
 

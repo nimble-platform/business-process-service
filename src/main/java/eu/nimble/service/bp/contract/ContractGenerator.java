@@ -25,6 +25,7 @@ import eu.nimble.service.model.ubl.quotation.QuotationType;
 import eu.nimble.service.model.ubl.requestforquotation.RequestForQuotationType;
 import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.JsonSerializationUtility;
+import eu.nimble.utility.country.CountryUtil;
 import eu.nimble.utility.persistence.binary.BinaryContentService;
 import feign.Response;
 import org.apache.commons.collections.CollectionUtils;
@@ -194,9 +195,10 @@ public class ContractGenerator {
                                     tradingTermType.getValue().setValue(Collections.singletonList(text));
                                 }
                             }
-                            else if(tradingTermType.getID().contentEquals("$buyer_country") &&  customerParty != null && customerParty.getPostalAddress() != null && customerParty.getPostalAddress().getCountry() != null && customerParty.getPostalAddress().getCountry().getName() != null){
+                            else if(tradingTermType.getID().contentEquals("$buyer_country") &&  customerParty != null && customerParty.getPostalAddress() != null && customerParty.getPostalAddress().getCountry() != null
+                                    && customerParty.getPostalAddress().getCountry().getIdentificationCode() != null){
                                 CodeType code = new CodeType();
-                                code.setValue(customerParty.getPostalAddress().getCountry().getName().getValue());
+                                code.setValue(CountryUtil.getCountryNameByISOCode(customerParty.getPostalAddress().getCountry().getIdentificationCode().getValue()));
                                 code.setListID(country_list_id);
                                 tradingTermType.getValue().setValueCode(Collections.singletonList(code));
                             }
@@ -430,8 +432,8 @@ public class ContractGenerator {
                                             r.setText(text,0);
                                         }
                                         if(text.contains("$country_invoice_id")){
-                                            if(order.getBuyerCustomerParty().getParty().getPostalAddress().getCountry().getName() != null){
-                                                text = text.replace("$country_invoice_id",order.getBuyerCustomerParty().getParty().getPostalAddress().getCountry().getName().getValue());
+                                            if(order.getBuyerCustomerParty().getParty().getPostalAddress().getCountry().getIdentificationCode() != null){
+                                                text = text.replace("$country_invoice_id",CountryUtil.getCountryNameByISOCode(order.getBuyerCustomerParty().getParty().getPostalAddress().getCountry().getIdentificationCode().getValue()));
                                                 r.setText(text,0);
                                             }
                                             else {
@@ -460,8 +462,9 @@ public class ContractGenerator {
                                             }
                                         }
                                         if(text.contains("$country_id")){
-                                            if(orderLine.getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCountry().getName() != null && orderLine.getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCountry().getName().getValue() != null){
-                                                text = text.replace("$country_id",orderLine.getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCountry().getName().getValue());
+                                            if(orderLine.getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCountry().getIdentificationCode() != null
+                                                    && orderLine.getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCountry().getIdentificationCode().getValue() != null){
+                                                text = text.replace("$country_id",CountryUtil.getCountryNameByISOCode(orderLine.getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCountry().getIdentificationCode().getValue()));
                                                 r.setText(text,0);
                                             }
                                             else {
@@ -514,8 +517,8 @@ public class ContractGenerator {
                                             r.setText(text,0);
                                         }
                                         if(text.contains("$country_supplier")){
-                                            if(order.getSellerSupplierParty().getParty().getPostalAddress().getCountry().getName() != null){
-                                                text = text.replace("$country_supplier",order.getSellerSupplierParty().getParty().getPostalAddress().getCountry().getName().getValue());
+                                            if(order.getSellerSupplierParty().getParty().getPostalAddress().getCountry().getIdentificationCode() != null){
+                                                text = text.replace("$country_supplier",CountryUtil.getCountryNameByISOCode(order.getSellerSupplierParty().getParty().getPostalAddress().getCountry().getIdentificationCode().getValue()));
                                                 r.setText(text,0);
                                             }
                                             else {
@@ -1375,7 +1378,7 @@ public class ContractGenerator {
                                     r.setText(text,0);
                                 }
                                 if(text.contains("$nego_country")){
-                                    String country = quotation.getQuotationLine().get(itemIndex).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCountry().getName().getValue();
+                                    String country = CountryUtil.getCountryNameByISOCode(quotation.getQuotationLine().get(itemIndex).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCountry().getIdentificationCode().getValue());
                                     if(country == null){
                                         country = "";
                                     }
@@ -1672,7 +1675,7 @@ public class ContractGenerator {
     }
 
     private String constructAddress(String company_name,AddressType address){
-        String country = address.getCountry().getName().getValue();
+        String country = CountryUtil.getCountryNameByISOCode(address.getCountry().getIdentificationCode().getValue());
         if(country == null){
             country = "";
         }
