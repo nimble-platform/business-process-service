@@ -1378,9 +1378,9 @@ public class ContractGenerator {
                                     r.setText(text,0);
                                 }
                                 if(text.contains("$nego_country")){
-                                    String country = CountryUtil.getCountryNameByISOCode(quotation.getQuotationLine().get(itemIndex).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCountry().getIdentificationCode().getValue());
-                                    if(country == null){
-                                        country = "";
+                                    String country = "";
+                                    if(quotation.getQuotationLine().get(itemIndex).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCountry().getIdentificationCode() != null){
+                                        country =  CountryUtil.getCountryNameByISOCode(quotation.getQuotationLine().get(itemIndex).getLineItem().getDeliveryTerms().getDeliveryLocation().getAddress().getCountry().getIdentificationCode().getValue());
                                     }
                                     text = text.replace("$nego_country",country);
                                     r.setText(text,0);
