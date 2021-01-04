@@ -5,8 +5,8 @@ import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
 import eu.nimble.service.bp.contract.ContractGenerator;
 import eu.nimble.service.bp.model.dashboard.CollaborationGroupResponse;
 import eu.nimble.service.bp.swagger.model.*;
-import eu.nimble.service.bp.util.persistence.bp.CollaborationGroupDAOUtility;
 import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceGroupDAOUtility;
+import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ClauseType;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.utility.JsonSerializationUtility;
@@ -66,6 +66,10 @@ public class BusinessProcessExecutionTest {
     private final String partyID = "706";
     private final String productName = "QDeneme";
     private final String serviceName = "QService";
+    // fields for the dispatch request
+    private final String orderReferenceId = "146b213d-24a8-4645-a03f-193bc1a5d403";
+    private final String orderLineHjidPlaceholder = "ORDER_LINE_HJID";
+    // end of fields for the dispatch request
 
     public static String buyerProcessInstanceGroupID;
     public static String transportProviderProcessInstanceGroupID;
@@ -326,6 +330,9 @@ public class BusinessProcessExecutionTest {
 
     public void test15_DispatchRequest() throws Exception {
         String inputMessageAsString = IOUtils.toString(ProcessInstanceInputMessage.class.getResourceAsStream(dispatchRequestJSON));
+        // replace the placeholder with the order line hjid
+        OrderType order = (OrderType) DocumentPersistenceUtility.getUBLDocument(orderReferenceId, DocumentType.ORDER);
+        inputMessageAsString = inputMessageAsString.replace(orderLineHjidPlaceholder,order.getOrderLine().get(0).getHjid().toString());
 
         // start business process
         MockHttpServletRequestBuilder request = post("/process-document")

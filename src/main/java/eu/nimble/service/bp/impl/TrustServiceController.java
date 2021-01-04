@@ -11,6 +11,7 @@ import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtilit
 import eu.nimble.service.bp.util.persistence.catalogue.PartyPersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
 import eu.nimble.service.bp.util.spring.SpringBridge;
+import eu.nimble.service.bp.util.trust.TrustUtility;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.*;
 import eu.nimble.utility.ExecutionContext;
 import eu.nimble.utility.JsonSerializationUtility;
@@ -33,7 +34,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.math.BigDecimal;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -169,12 +170,19 @@ public class TrustServiceController {
             throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
         }
 
-        // check party
+        // check qualifying party
         QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingParty(partyId,federationId);
         if (qualifyingParty == null) {
             throw new NimbleException(NimbleExceptionMessageCode.BAD_REQUEST_NO_QUALIFYING_PARTY.toString(), Arrays.asList(partyId));
         }
-        JSONObject jsonResponse = createJSONResponse(qualifyingParty.getCompletedTask());
+        // retrieve the party
+        PartyType party = null;
+        try {
+            party = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,partyId);
+        } catch (IOException e) {
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_GET_RATINGS_SUMMARY.toString(), Arrays.asList(partyId));
+        }
+        JSONObject jsonResponse = TrustUtility.createRatingSummaryJson(qualifyingParty.getCompletedTask(),party.getProcessID());
         logger.info("Retrieved ratings summary for the party with id: {}",partyId);
         return ResponseEntity.ok(jsonResponse.toString());
     }
@@ -218,56 +226,6 @@ public class TrustServiceController {
         catch (Exception e){
             throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_LIST_ALL_INDIVIDUAL_RATINGS_AND_REVIEWS.toString(), Arrays.asList(partyId),e);
         }
-    }
-
-    private JSONObject createJSONResponse(List<CompletedTaskType> completedTasks){
-        // rating summary for the company
-        BigDecimal totalNumberOfRatings = BigDecimal.ZERO;
-        BigDecimal qualityOfNegotiationProcess = BigDecimal.ZERO;
-        BigDecimal qualityOfOrderingProcess = BigDecimal.ZERO;
-        BigDecimal responseTimeRating = BigDecimal.ZERO;
-        BigDecimal listingAccuracy = BigDecimal.ZERO;
-        BigDecimal conformanceToContractualTerms = BigDecimal.ZERO;
-        BigDecimal deliveryAndPackaging = BigDecimal.ZERO;
-        for(CompletedTaskType completedTask:completedTasks){
-            if(completedTask.getEvidenceSupplied().size() == 0){
-                continue;
-            }
-            else{
-                totalNumberOfRatings = totalNumberOfRatings.add(BigDecimal.ONE);
-            }
-            for(EvidenceSuppliedType evidenceSupplied:completedTask.getEvidenceSupplied()){
-                if(evidenceSupplied.getID().equals("QualityOfTheNegotiationProcess")){
-                    qualityOfNegotiationProcess = qualityOfNegotiationProcess.add(evidenceSupplied.getValueDecimal());
-                }
-                else if(evidenceSupplied.getID().equals("QualityOfTheOrderingProcess")){
-                    qualityOfOrderingProcess = qualityOfOrderingProcess.add(evidenceSupplied.getValueDecimal());
-                }
-                else if(evidenceSupplied.getID().equals("ResponseTime")){
-                    responseTimeRating = responseTimeRating.add(evidenceSupplied.getValueDecimal());
-                }
-                else if(evidenceSupplied.getID().equals("ProductListingAccuracy")){
-                    listingAccuracy = listingAccuracy.add(evidenceSupplied.getValueDecimal());
-                }
-                else if(evidenceSupplied.getID().equals("ConformanceToOtherAgreedTerms")){
-                    conformanceToContractualTerms = conformanceToContractualTerms.add(evidenceSupplied.getValueDecimal());
-                }
-                else if(evidenceSupplied.getID().equals("DeliveryAndPackaging")){
-                    deliveryAndPackaging = deliveryAndPackaging.add(evidenceSupplied.getValueDecimal());
-                }
-            }
-        }
-        // create JSON response
-        JSONObject jsonResponse = new JSONObject();
-        jsonResponse.put("totalNumberOfRatings",totalNumberOfRatings);
-        jsonResponse.put("qualityOfNegotiationProcess",qualityOfNegotiationProcess);
-        jsonResponse.put("qualityOfOrderingProcess",qualityOfOrderingProcess);
-        jsonResponse.put("responseTimeRating",responseTimeRating);
-        jsonResponse.put("listingAccuracy",listingAccuracy);
-        jsonResponse.put("conformanceToContractualTerms",conformanceToContractualTerms);
-        jsonResponse.put("deliveryAndPackaging",deliveryAndPackaging);
-
-        return jsonResponse;
     }
 
     private String validateFederationIdHeader(String federationIdHeader){

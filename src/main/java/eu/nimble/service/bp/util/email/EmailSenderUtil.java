@@ -5,6 +5,7 @@ import eu.nimble.common.rest.identity.IIdentityClientTyped;
 import eu.nimble.service.bp.exception.NimbleExceptionMessageCode;
 import eu.nimble.service.bp.model.hyperjaxb.*;
 import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
+import eu.nimble.service.bp.util.persistence.catalogue.PartyPersistenceUtility;
 import eu.nimble.service.bp.util.spring.SpringBridge;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
@@ -163,7 +164,7 @@ public class EmailSenderUtil implements IEmailSenderUtil {
             // trading partner of the party in this collaboration
             PartyType tradingPartner = null;
             try {
-                tradingPartner = getParty(buyerPartyId,buyerPartyFederationId,bearerToken);
+                tradingPartner = PartyPersistenceUtility.getParty(buyerPartyId,buyerPartyFederationId,bearerToken);
             } catch (IOException e) {
                 logger.error("Failed to send the new delivery date information to buyer party: {}", buyerPartyId);
                 logger.error("Failed to get party with id: {} from identity service", buyerPartyId, e);
@@ -229,11 +230,11 @@ public class EmailSenderUtil implements IEmailSenderUtil {
 
             try {
                 if (processDocumentStatus.equals(ProcessDocumentStatus.WAITINGRESPONSE)) {
-                    respondingParty = getParty(processDocumentMetadataDAO.getResponderID(),processDocumentMetadataDAO.getResponderFederationID(),bearerToken);
-                    initiatingParty = getParty(processDocumentMetadataDAO.getInitiatorID(),processDocumentMetadataDAO.getInitiatorFederationID(),bearerToken);
+                    respondingParty = PartyPersistenceUtility.getParty(processDocumentMetadataDAO.getResponderID(),processDocumentMetadataDAO.getResponderFederationID(),bearerToken);
+                    initiatingParty = PartyPersistenceUtility.getParty(processDocumentMetadataDAO.getInitiatorID(),processDocumentMetadataDAO.getInitiatorFederationID(),bearerToken);
                 }else {
-                    respondingParty = getParty(processDocumentMetadataDAO.getInitiatorID(),processDocumentMetadataDAO.getInitiatorFederationID(),bearerToken);
-                    initiatingParty = getParty(processDocumentMetadataDAO.getResponderID(),processDocumentMetadataDAO.getResponderFederationID(),bearerToken);
+                    respondingParty = PartyPersistenceUtility.getParty(processDocumentMetadataDAO.getInitiatorID(),processDocumentMetadataDAO.getInitiatorFederationID(),bearerToken);
+                    initiatingParty = PartyPersistenceUtility.getParty(processDocumentMetadataDAO.getResponderID(),processDocumentMetadataDAO.getResponderFederationID(),bearerToken);
                 }
 
             } catch (IOException e) {
@@ -332,7 +333,7 @@ public class EmailSenderUtil implements IEmailSenderUtil {
         new Thread(() -> {
             PartyType partyType = null;
             try {
-                partyType = getParty(partyID,federationID,bearerToken);
+                partyType = PartyPersistenceUtility.getParty(partyID,federationID,bearerToken);
             } catch (IOException e) {
                 logger.error("Failed to get party with id: {} from identity service", partyID, e);
                 return;
@@ -440,17 +441,6 @@ public class EmailSenderUtil implements IEmailSenderUtil {
     }
 
     /* Helper Methods */
-    private PartyType getParty(String partyId,String federationId,String bearerToken) throws IOException {
-        PartyType party = null;
-        if(federationId.contentEquals(SpringBridge.getInstance().getFederationId())){
-            party = iIdentityClientTyped.getParty(bearerToken, partyId,true);
-        }
-        else {
-            Response response = SpringBridge.getInstance().getDelegateClient().getParty(bearerToken, Long.valueOf(partyId),true,federationId);
-            party = JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),PartyType.class);
-        }
-        return party;
-    }
 
     private PersonType getPerson(String personId,String federationId,String bearerToken) throws IOException {
         PersonType person = null;
