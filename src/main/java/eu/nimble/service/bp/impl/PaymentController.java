@@ -1,13 +1,13 @@
 package eu.nimble.service.bp.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.common.base.Strings;
-import com.mashape.unirest.http.HttpResponse;
-import com.mashape.unirest.http.Unirest;
 import eu.nimble.service.bp.config.RoleConfig;
 import eu.nimble.service.bp.util.eFactory.AccountancyService;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.PaymentPersistenceUtility;
+import eu.nimble.service.bp.util.spring.SpringBridge;
+import eu.nimble.service.bp.util.stripe.StripeClient;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.invoice.InvoiceType;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.utility.ExecutionContext;
@@ -43,6 +43,8 @@ public class PaymentController {
     private ExecutionContext executionContext;
     @Autowired
     private AccountancyService accountancyService;
+    @Autowired
+    private StripeClient stripeClient;
 
     @ApiOperation(value = "",notes = "Checks whether the payment is done for the given order or not")
     @ApiResponses(value = {
@@ -164,5 +166,46 @@ public class PaymentController {
             throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_FAILED_TO_SERIALIZE_INVOICE.toString());
         }
         return ResponseEntity.status(HttpStatus.OK).body(serializedInvoice);
+    }
+
+    @ApiOperation(value = "",notes = "Creates a Stripe payment intent for the given order")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Created the payment intent successfully"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 404, message = "There does not exist an order with the given id"),
+            @ApiResponse(code = 500, message = "Unexpected error while creating the payment intent")
+    })
+    @RequestMapping(value = "/payment-intent/{orderId}",
+            method = RequestMethod.POST)
+    public ResponseEntity createPaymentIntent(@ApiParam(value = "Identifier of the order for which payment intent is to be created", required = true) @PathVariable(value = "orderId", required = true) String orderId,
+                                              @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken){
+        // set request log of ExecutionContext
+        String requestLog = String.format("Incoming request to create payment intent for order: %s", orderId);
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
+
+        if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
+            throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
+        }
+
+        try {
+            OrderType order = (OrderType) DocumentPersistenceUtility.getUBLDocument(orderId);
+            if(order == null){
+                throw new NimbleException(NimbleExceptionMessageCode.NOT_FOUND_ORDER.toString(), Collections.singletonList(orderId));
+            }
+            PartyType sellerParty = SpringBridge.getInstance().getiIdentityClientTyped().getParty(bearerToken,order.getSellerPartyId());
+            if(sellerParty == null){
+                throw new NimbleException(NimbleExceptionMessageCode.BAD_REQUEST_NO_PARTY.toString(), Collections.singletonList(order.getSellerPartyId()));
+            }
+            if(sellerParty.getStripeAccountId() == null){
+                throw new NimbleException(NimbleExceptionMessageCode.BAD_REQUEST_NO_STRIPE_ACCOUNT.toString());
+            }
+            String clientSecret = this.stripeClient.createPaymentIntent(sellerParty.getStripeAccountId(),order);
+            logger.info("Completed request to create payment intent for order: {}", orderId);
+            return ResponseEntity.ok(clientSecret);
+        } catch (Exception e){
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_CREATE_PAYMENT_INTENT.toString(), Collections.singletonList(orderId),e);
+        }
     }
 }
