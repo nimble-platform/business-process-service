@@ -6,13 +6,13 @@
 package eu.nimble.service.bp.util.camunda;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import eu.nimble.service.bp.util.bp.ClassProcessTypeMap;
 import eu.nimble.service.bp.util.serialization.MixInIgnoreProperties;
 import eu.nimble.service.bp.swagger.model.*;
 import eu.nimble.service.bp.swagger.model.Process;
 import eu.nimble.utility.DateUtility;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.XMLUtility;
+import eu.nimble.utility.bp.ClassProcessTypeMap;
 import org.camunda.bpm.engine.*;
 import org.camunda.bpm.engine.history.HistoricActivityInstance;
 import org.camunda.bpm.engine.history.HistoricProcessInstance;

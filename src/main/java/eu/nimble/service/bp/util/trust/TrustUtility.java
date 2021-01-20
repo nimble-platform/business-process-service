@@ -1,8 +1,8 @@
 package eu.nimble.service.bp.util.trust;
 
-import eu.nimble.service.bp.util.bp.ClassProcessTypeMap;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.CompletedTaskType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.EvidenceSuppliedType;
+import eu.nimble.utility.bp.ClassProcessTypeMap;
 import org.json.JSONObject;
 
 import java.math.BigDecimal;
