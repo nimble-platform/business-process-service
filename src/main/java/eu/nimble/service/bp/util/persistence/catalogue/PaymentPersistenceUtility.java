@@ -86,7 +86,7 @@ public class PaymentPersistenceUtility {
         json.put("sellerId",order.getSellerSupplierParty().getParty().getPartyIdentification().get(0).getID());
         json.put("action","PAYMENT");
         json.put("platform","NIMBLE");
-        json.put("originPlatform","EFACTORY");
+        json.put("originPlatform","EFPF");
         json.put("totalAmount",totalAmount);
         json.put("status","completed");
         json.put("@timestamp",timestamp);

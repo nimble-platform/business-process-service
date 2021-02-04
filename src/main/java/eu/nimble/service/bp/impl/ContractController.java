@@ -1,8 +1,8 @@
 package eu.nimble.service.bp.impl;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.nimble.service.bp.config.RoleConfig;
+import eu.nimble.service.bp.exception.NimbleExceptionMessageCode;
 import eu.nimble.service.bp.model.hyperjaxb.DocumentType;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentMetadataDAO;
 import eu.nimble.service.bp.model.hyperjaxb.ProcessInstanceDAO;
@@ -16,16 +16,16 @@ import eu.nimble.service.model.ubl.digitalagreement.DigitalAgreementType;
 import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.transportexecutionplanrequest.TransportExecutionPlanRequestType;
 import eu.nimble.utility.ExecutionContext;
-import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.exception.NimbleException;
-import eu.nimble.service.bp.exception.NimbleExceptionMessageCode;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
-import eu.nimble.utility.persistence.resource.EntityIdAwareRepositoryWrapper;
+import eu.nimble.utility.persistence.repository.BinaryContentAwareRepositoryWrapper;
 import eu.nimble.utility.validation.IValidationUtil;
-import feign.Response;
-import io.swagger.annotations.*;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.joda.time.DateTime;
 import org.joda.time.Days;
 import org.slf4j.Logger;
@@ -40,8 +40,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-
-import static eu.nimble.utility.HttpResponseUtil.createResponseEntityAndLog;
 
 /**
  * Created by suat on 25-Apr-18.
@@ -374,23 +372,6 @@ public class ContractController {
                 throw new NimbleException(NimbleExceptionMessageCode.NOT_FOUND_NO_PROCESS_DOCUMENT_METADATA.toString(),Arrays.asList(clauseDocumentId));
             }
 
-            String partyId;
-            if(executionContext.getOriginalBearerToken() == null){
-                // get person using the given bearer token
-                PersonType person = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken);
-                // get party for the person
-                PartyType party = SpringBridge.getInstance().getiIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
-                partyId = party.getPartyIdentification().get(0).getID();
-            } else{
-                Response response = SpringBridge.getInstance().getDelegateClient().getPersonViaToken(bearerToken, executionContext.getOriginalBearerToken(),executionContext.getClientFederationId());
-                PersonType person = JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),PersonType.class);
-
-                response = SpringBridge.getInstance().getDelegateClient().getPartyByPersonID(bearerToken, person.getID(),executionContext.getClientFederationId());
-                List<PartyType> partyTypes = JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),new TypeReference<List<PartyType>>() {
-                });
-                partyId = partyTypes.get(0).getPartyIdentification().get(0).getID();
-            }
-
             // get contract of the specified document
             Object document = DocumentPersistenceUtility.getUBLDocument(documentId, clauseDocumentMetadata.getType());
             ContractType contract = checkDocumentContract(document);
@@ -407,7 +388,7 @@ public class ContractController {
 
             // persist the update
             try {
-                EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(partyId);
+                BinaryContentAwareRepositoryWrapper repositoryWrapper = new BinaryContentAwareRepositoryWrapper();
                 document = repositoryWrapper.updateEntity(document);
                 // update document cache
                 SpringBridge.getInstance().getCacheHelper().putDocument(document);
@@ -452,23 +433,6 @@ public class ContractController {
             // check existence and type of the document bound to the contract
             validateDocumentExistence(documentId);
 
-            String partyId;
-            if(executionContext.getOriginalBearerToken() == null){
-                // get person using the given bearer token
-                PersonType person = SpringBridge.getInstance().getiIdentityClientTyped().getPerson(bearerToken);
-                // get party for the person
-                PartyType party = SpringBridge.getInstance().getiIdentityClientTyped().getPartyByPersonID(person.getID()).get(0);
-                partyId = party.getPartyIdentification().get(0).getID();
-            } else {
-                Response response = SpringBridge.getInstance().getDelegateClient().getPersonViaToken(bearerToken, executionContext.getOriginalBearerToken(),executionContext.getClientFederationId());
-                PersonType person = JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),PersonType.class);
-
-                response = SpringBridge.getInstance().getDelegateClient().getPartyByPersonID(bearerToken, person.getID(),executionContext.getClientFederationId());
-                List<PartyType> partyTypes = JsonSerializationUtility.getObjectMapper().readValue(HttpResponseUtil.extractBodyFromFeignClientResponse(response),new TypeReference<List<PartyType>>() {
-                });
-                partyId = partyTypes.get(0).getPartyIdentification().get(0).getID();
-            }
-
             // check contract of the document
             ProcessDocumentMetadataDAO documentMetadata = ProcessDocumentMetadataDAOUtility.findByDocumentID(documentId);
             Object document = DocumentPersistenceUtility.getUBLDocument(documentId, documentMetadata.getType());
@@ -480,7 +444,7 @@ public class ContractController {
 
             // persist the update
             try {
-                EntityIdAwareRepositoryWrapper repositoryWrapper = new EntityIdAwareRepositoryWrapper(partyId);
+                BinaryContentAwareRepositoryWrapper repositoryWrapper = new BinaryContentAwareRepositoryWrapper();
                 document = repositoryWrapper.updateEntity(document);
                 // update document cache
                 SpringBridge.getInstance().getCacheHelper().putDocument(document);
