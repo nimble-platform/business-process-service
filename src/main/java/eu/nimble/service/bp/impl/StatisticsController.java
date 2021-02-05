@@ -430,7 +430,7 @@ public class StatisticsController {
         if (partyId != null) {
             averageNegotiationTime = StatisticsPersistenceUtility.calculateAverageCollaborationTime(partyId,federationId,bearerToken,role);
         }else{
-            averageNegotiationTime = StatisticsPersistenceUtility.calculateAverageCollaborationTimeForPlatform(bearerToken,role);
+            averageNegotiationTime = StatisticsPersistenceUtility.calculateAverageCollaborationTimeForPlatform(role);
         }
         logger.info("Retrieved average negotiation time for the party with id: {}",partyId);
         return ResponseEntity.ok(averageNegotiationTime);

@@ -19,7 +19,6 @@ import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.QualifyingPartyType;
 import eu.nimble.service.model.ubl.despatchadvice.DespatchAdviceType;
 import eu.nimble.service.model.ubl.receiptadvice.ReceiptAdviceType;
-import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.utility.JsonSerializationUtility;
 import eu.nimble.utility.persistence.GenericJPARepository;
 import eu.nimble.utility.persistence.JPARepositoryFactory;
@@ -154,8 +153,7 @@ public class StatisticsPersistenceUtility {
         parameterNames.add("id" + (orderIds.size()-1));
         parameterValues.add(orderIds.get(orderIds.size()-1));
 
-        double tradingVolume = ((BigDecimal) new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray())).doubleValue();
-        return tradingVolume;
+        return ((BigDecimal) new JPARepositoryFactory().forCatalogueRepository().getSingleEntity(query, parameterNames.toArray(new String[parameterNames.size()]), parameterValues.toArray())).doubleValue();
     }
 
     public static NonOrderedProducts getNonOrderedProducts(String bearerToken,Integer partyId) throws IOException {
@@ -246,7 +244,6 @@ public class StatisticsPersistenceUtility {
         int numberOfCollaborations = 0;
         double totalTime = 0;
         QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingPartyType(partyID,federationId,bearerToken);
-        PartyType part =  qualifyingParty.getParty();
 
         for (CompletedTaskType completedTask:qualifyingParty.getCompletedTask()){
             if(completedTask.getPeriod().getEndDate() == null || completedTask.getPeriod().getEndTime() == null){
@@ -281,7 +278,7 @@ public class StatisticsPersistenceUtility {
         return totalTime/numberOfCollaborations;
     }
 
-    public static double calculateAverageCollaborationTimeForPlatform(String bearerToken, String role){
+    public static double calculateAverageCollaborationTimeForPlatform(String role){
         int numberOfCollaborations = 0;
         double totalTime = 0;
         List<CompletedTaskType> completedtasks = PartyPersistenceUtility.getCompletedTasks();
@@ -346,11 +343,6 @@ public class StatisticsPersistenceUtility {
 
     public static Map<Integer,Double> calculateAverageResponseTimeInMonths(String partyID,String federationId) throws Exception{
 
-        int numberOfResponses = 0;
-        double totalTime = 0;
-        int currentmonth = 0 ;
-        int currentyear = 0;
-
         List<String> processInstanceIDs;
 
         if(partyID != null){
@@ -362,8 +354,8 @@ public class StatisticsPersistenceUtility {
 
         Set<Integer> monthList = new HashSet<>();
 
-        currentmonth  = new GregorianCalendar().get(Calendar.MONTH);
-        currentyear = new GregorianCalendar().get(Calendar.YEAR);
+        int currentmonth  = new GregorianCalendar().get(Calendar.MONTH);
+        int currentyear = new GregorianCalendar().get(Calendar.YEAR);
 
         while(monthList.size() < 6){
             if(currentmonth < 0){
@@ -411,61 +403,14 @@ public class StatisticsPersistenceUtility {
             }
         }
 
-        int noOfMonths = monthList.size();
-
-        Iterator<Integer> itr = monthList.iterator();
-
-        while(itr.hasNext()){
-            int itra = itr.next();
-            if(storeResponseTime.containsKey(itra)){
-                double b = storeMonth.get(itra);
-                int aa = storeResponseTime.get(itra);
-                storeMonth.put(itra,(storeMonth.get(itra)/storeResponseTime.get(itra)));
-            }else{
-                storeMonth.put(itra,0.0) ;
+        for (int itra : monthList) {
+            if (storeResponseTime.containsKey(itra)) {
+                storeMonth.put(itra, (storeMonth.get(itra) / storeResponseTime.get(itra)));
+            } else {
+                storeMonth.put(itra, 0.0);
             }
         }
 
         return storeMonth;
-    }
-
-    private static class ItemKey{
-
-        private String catalogueId;
-        private String lineId;
-
-        public ItemKey(String catalogueId, String lineId) {
-            this.catalogueId = catalogueId;
-            this.lineId = lineId;
-        }
-
-        public String getCatalogueId() {
-            return catalogueId;
-        }
-
-        public void setCatalogueId(String catalogueId) {
-            this.catalogueId = catalogueId;
-        }
-
-        public String getLineId() {
-            return lineId;
-        }
-
-        public void setLineId(String lineId) {
-            this.lineId = lineId;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof ItemKey)) return false;
-            ItemKey key = (ItemKey) o;
-            return catalogueId.contentEquals(key.catalogueId) && lineId.contentEquals(key.lineId);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(catalogueId,lineId);
-        }
     }
 }
