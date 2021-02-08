@@ -436,6 +436,49 @@ public class StatisticsController {
         return ResponseEntity.ok(averageNegotiationTime);
     }
 
+    @ApiOperation(value = "Gets average collaboration time in months for the party in terms of days")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Retrieved average collaboration time for the party"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token")
+    })
+    @RequestMapping(value = "/collaboration-time-months",
+            produces = {"application/json"},
+            method = RequestMethod.GET)
+    public ResponseEntity getAverageCollaborationTimeForMonths(@ApiParam(value = "Identifier of the party as specified by the identity service",required = false) @RequestParam(value = "partyId",required = false) String partyId,
+                                                      @ApiParam(value = "Role of the party in the business process.<br>Possible values:<ul><li>SELLER</li><li>BUYER</li></ul>", defaultValue = "SELLER", required = false) @RequestParam(value = "role", required = false, defaultValue = "SELLER") String role,
+                                                      @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
+                                                      @ApiParam(value = "" ,required=false ) @RequestHeader(value="federationId", required=false) String federationId) throws NimbleException {
+        // set request log of ExecutionContext
+        String requestLog = String.format("Getting average collaboration time in months for the party with id: %s",partyId);
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
+
+        // validate federation id header
+        federationId = validateFederationIdHeader(federationId);
+
+        // validate role
+        if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+            throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
+        }
+        Map<Integer,Double>  averageNegotiationTime = null;
+
+        try {
+            if (partyId != null) {
+                averageNegotiationTime = StatisticsPersistenceUtility.calculateAverageCollaborationTimeInMonths(partyId,federationId,bearerToken,role);
+            }
+            else {
+                averageNegotiationTime = StatisticsPersistenceUtility.calculateAverageCollaborationTimeForPlatformInMonths(role);
+            }
+        }
+        catch (Exception e){
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_GET_COLLABORATION_TIME_IN_MONTHS.toString(),Arrays.asList(partyId),e);
+        }
+
+        logger.info("Retrieved average collaboration time in months for the party with id: {}",partyId);
+        return ResponseEntity.ok(averageNegotiationTime);
+    }
+
     @ApiOperation(value = "Gets statistics (average collaboration time,average response time,trading volume and number of transactions) for the party")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Retrieved statistics for the party",response = OverallStatistics.class),

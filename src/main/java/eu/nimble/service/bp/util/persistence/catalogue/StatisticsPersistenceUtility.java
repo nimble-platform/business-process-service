@@ -25,6 +25,7 @@ import eu.nimble.utility.persistence.JPARepositoryFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import java.io.IOException;
 import java.io.InputStream;
@@ -276,6 +277,113 @@ public class StatisticsPersistenceUtility {
             return 0.0;
         }
         return totalTime/numberOfCollaborations;
+    }
+
+    public static Map<Integer,Double> calculateAverageCollaborationTimeForPlatformInMonths(String role) throws DatatypeConfigurationException {
+        Set<MonthYear> monthYearSet = getMonthYearSetForLastSixMonths();
+
+        Map<Integer,Double> storeMonth = new HashMap<>();
+        Map<Integer,Integer> storeCollaborationTime = new HashMap<>();
+
+        List<CompletedTaskType> completedtasks = PartyPersistenceUtility.getCompletedTasks();
+        List<String> processInstanceIds = CollaborationGroupDAOUtility.getProcessInstanceIdsByCollborationRole(role);
+        Set set = new HashSet(processInstanceIds);
+
+        for(CompletedTaskType completedtask : completedtasks){
+            if(completedtask.getPeriod().getEndDate() == null || completedtask.getPeriod().getEndTime() == null){
+                continue;
+            }
+            int month = DatatypeFactory.newInstance().newXMLGregorianCalendar(String.valueOf(completedtask.getPeriod().getStartDate())).toGregorianCalendar().get(Calendar.MONTH);
+            int year = DatatypeFactory.newInstance().newXMLGregorianCalendar(String.valueOf(completedtask.getPeriod().getStartDate())).toGregorianCalendar().get(Calendar.YEAR);
+            if(set.contains(completedtask.getAssociatedProcessInstanceID()) && monthYearSet.contains(new MonthYear(month,year))){
+                Date startDate = completedtask.getPeriod().getStartDate().toGregorianCalendar().getTime();
+                Date endDate = completedtask.getPeriod().getEndDate().toGregorianCalendar().getTime();
+                Date startTime = completedtask.getPeriod().getStartTime().toGregorianCalendar().getTime();
+                Date endTime = completedtask.getPeriod().getEndTime().toGregorianCalendar().getTime();
+
+                double timeAll = 0;
+                int responseno = 0;
+
+                if (storeMonth.containsKey(month)) {
+                    timeAll = storeMonth.get(month);
+                    responseno = storeCollaborationTime.get(month);
+                }
+                timeAll += ((endDate.getTime()-startDate.getTime())+(endTime.getTime()-startTime.getTime()))/86400000.0;
+                responseno += 1;
+                storeMonth.put(month,timeAll);
+                storeCollaborationTime.put(month,responseno);
+            }
+        }
+
+        for (MonthYear monthYear : monthYearSet) {
+            int month = monthYear.getMonth();
+            if (storeCollaborationTime.containsKey(month)) {
+                storeMonth.put(month, (storeMonth.get(month) / storeCollaborationTime.get(month)));
+            } else {
+                storeMonth.put(month, 0.0);
+            }
+        }
+
+        return storeMonth;
+    }
+
+    public static Map<Integer,Double>  calculateAverageCollaborationTimeInMonths(String partyID,String federationId, String bearerToken, String role) throws DatatypeConfigurationException {
+
+        Set<MonthYear> monthYearSet = getMonthYearSetForLastSixMonths();
+
+        Map<Integer,Double> storeMonth = new HashMap<>();
+        Map<Integer,Integer> storeCollaborationTime = new HashMap<>();
+
+        QualifyingPartyType qualifyingParty = PartyPersistenceUtility.getQualifyingPartyType(partyID,federationId,bearerToken);
+
+        for (CompletedTaskType completedTask:qualifyingParty.getCompletedTask()){
+            if(completedTask.getPeriod().getEndDate() == null || completedTask.getPeriod().getEndTime() == null){
+                continue;
+            }
+
+            String processInstanceId = completedTask.getAssociatedProcessInstanceID();
+            CollaborationGroupDAO collaborationGroup = CollaborationGroupDAOUtility
+                    .getCollaborationGroupByProcessInstanceIdAndPartyId(processInstanceId, partyID,federationId);
+
+            if(collaborationGroup != null){
+                List<ProcessInstanceGroupDAO> processInstanceGroups =   collaborationGroup.getAssociatedProcessInstanceGroups();
+                for(ProcessInstanceGroupDAO pid :processInstanceGroups ){
+                    List<String> pidstrs = pid.getProcessInstanceIDs();
+                    for(String pidstr : pidstrs){
+                        int month = DatatypeFactory.newInstance().newXMLGregorianCalendar(String.valueOf(completedTask.getPeriod().getStartDate())).toGregorianCalendar().get(Calendar.MONTH);
+                        int year = DatatypeFactory.newInstance().newXMLGregorianCalendar(String.valueOf(completedTask.getPeriod().getStartDate())).toGregorianCalendar().get(Calendar.YEAR);
+                        if(pidstr.equals(processInstanceId) && pid.getCollaborationRole().equals(role) && monthYearSet.contains(new MonthYear(month,year))){
+                            Date startDate = completedTask.getPeriod().getStartDate().toGregorianCalendar().getTime();
+                            Date endDate = completedTask.getPeriod().getEndDate().toGregorianCalendar().getTime();
+                            Date startTime = completedTask.getPeriod().getStartTime().toGregorianCalendar().getTime();
+                            Date endTime = completedTask.getPeriod().getEndTime().toGregorianCalendar().getTime();
+
+                            double timeAll = 0;
+                            int responseno = 0;
+
+                            if (storeMonth.containsKey(month)) {
+                                timeAll = storeMonth.get(month);
+                                responseno = storeCollaborationTime.get(month);
+                            }
+                            timeAll += ((endDate.getTime()-startDate.getTime())+(endTime.getTime()-startTime.getTime()))/86400000.0;
+                            responseno += 1;
+                            storeMonth.put(month,timeAll);
+                            storeCollaborationTime.put(month,responseno);
+                        }
+                    }
+                }
+            }
+        }
+        for (MonthYear monthYear : monthYearSet) {
+            int month = monthYear.getMonth();
+            if (storeCollaborationTime.containsKey(month)) {
+                storeMonth.put(month, (storeMonth.get(month) / storeCollaborationTime.get(month)));
+            } else {
+                storeMonth.put(month, 0.0);
+            }
+        }
+
+        return storeMonth;
     }
 
     public static double calculateAverageCollaborationTimeForPlatform(String role){
