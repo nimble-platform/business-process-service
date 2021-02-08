@@ -352,19 +352,7 @@ public class StatisticsPersistenceUtility {
             processInstanceIDs =  CollaborationGroupDAOUtility.getProcessInstanceIds();
         }
 
-        Set<Integer> monthList = new HashSet<>();
-
-        int currentmonth  = new GregorianCalendar().get(Calendar.MONTH);
-        int currentyear = new GregorianCalendar().get(Calendar.YEAR);
-
-        while(monthList.size() < 6){
-            if(currentmonth < 0){
-                currentmonth = 11;
-            }
-
-            monthList.add(currentmonth);
-            currentmonth--;
-        }
+        Set<MonthYear> monthYearSet = getMonthYearSetForLastSixMonths();
 
         Map<Integer,Double> storeMonth = new HashMap<>();
         Map<Integer,Integer> storeResponseTime = new HashMap<>();
@@ -381,7 +369,7 @@ public class StatisticsPersistenceUtility {
             int month = DatatypeFactory.newInstance().newXMLGregorianCalendar(reqMetadata.getSubmissionDate()).toGregorianCalendar().get(Calendar.MONTH);
             int year = DatatypeFactory.newInstance().newXMLGregorianCalendar(reqMetadata.getSubmissionDate()).toGregorianCalendar().get(Calendar.YEAR);
 
-            if(monthList.contains(month) && year== currentyear) {
+            if(monthYearSet.contains(new MonthYear(month,year))){
                 Date startDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(reqMetadata.getSubmissionDate())
                         .toGregorianCalendar().getTime();
                 Date endDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(docMetadata.getSubmissionDate())
@@ -403,14 +391,76 @@ public class StatisticsPersistenceUtility {
             }
         }
 
-        for (int itra : monthList) {
-            if (storeResponseTime.containsKey(itra)) {
-                storeMonth.put(itra, (storeMonth.get(itra) / storeResponseTime.get(itra)));
+        for (MonthYear monthYear : monthYearSet) {
+            int month = monthYear.getMonth();
+            if (storeResponseTime.containsKey(month)) {
+                storeMonth.put(month, (storeMonth.get(month) / storeResponseTime.get(month)));
             } else {
-                storeMonth.put(itra, 0.0);
+                storeMonth.put(month, 0.0);
             }
         }
 
         return storeMonth;
+    }
+
+    /**
+     * Returns the set of {@link MonthYear} for the last six months
+     * */
+    private static Set<MonthYear> getMonthYearSetForLastSixMonths(){
+        Set<MonthYear> monthYearSet = new HashSet<>();
+
+        int currentMonth  = new GregorianCalendar().get(Calendar.MONTH);
+        int currentYear = new GregorianCalendar().get(Calendar.YEAR);
+
+        while(monthYearSet.size() < 6){
+            if(currentMonth < 0){
+                currentMonth = 11;
+                currentYear--;
+            }
+
+            monthYearSet.add(new MonthYear(currentMonth,currentYear));
+            currentMonth--;
+        }
+        return monthYearSet;
+    }
+
+    private static class MonthYear{
+
+        private int month;
+        private int year;
+
+        public MonthYear(int month, int year) {
+            this.month = month;
+            this.year = year;
+        }
+
+        public int getMonth() {
+            return month;
+        }
+
+        public void setMonth(int month) {
+            this.month = month;
+        }
+
+        public int getYear() {
+            return year;
+        }
+
+        public void setYear(int lineId) {
+            this.year = lineId;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof MonthYear)) return false;
+            MonthYear key = (MonthYear) o;
+            return month == key.month && year == key.year;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(month,year);
+        }
     }
 }
