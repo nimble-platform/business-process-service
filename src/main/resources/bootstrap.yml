@@ -213,7 +213,7 @@ nimble:
         businessProcessUpdates: ${KAFKA_TOPIC_BUSINESS_PROCESS_UPDATES}
   check-entity-ids: ${CHECK_ENTITY_IDS:false}
   stripe:
-    applicationFeePercentage: ${STRIPE_APPLICATION_FEE_PERCENTAGE:3}
+    applicationFeePercentage: ${STRIPE_APPLICATION_FEE_PERCENTAGE:6}
     secretKey: ${STRIPE_SECRET_KEY:}
 hystrix:
   command:
