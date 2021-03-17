@@ -21,6 +21,7 @@ import eu.nimble.service.model.ubl.commonaggregatecomponents.DocumentReferenceTy
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
 import eu.nimble.service.model.ubl.document.IDocument;
+import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
 import eu.nimble.utility.DateUtility;
 import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.JsonSerializationUtility;
@@ -33,11 +34,14 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by suat on 16-Oct-18.
  */
 public class ProcessDocumentMetadataDAOUtility {
+
+    private static final String COMPANY_TERMS_AND_CONDITIONS_DOCUMENT_TYPE = "COMPANY_TERMS_AND_CONDITIONS";
     /**
      * The conditions for the queries (including %s placeholder) below are initialized during the query instantiation
      */
@@ -411,11 +415,21 @@ public class ProcessDocumentMetadataDAOUtility {
     public static List<DocumentReferenceType> getAuxiliaryFiles(List<DocumentReferenceType> documentReferenceTypes){
         List<DocumentReferenceType> auxiliaryFiles = new ArrayList<>();
         for (DocumentReferenceType documentReferenceType : documentReferenceTypes) {
-            if(documentReferenceType.getAttachment() != null){
+            // skip the terms and conditions files
+            if(documentReferenceType.getAttachment() != null && (documentReferenceType.getDocumentType() == null || !documentReferenceType.getDocumentType().contentEquals(COMPANY_TERMS_AND_CONDITIONS_DOCUMENT_TYPE))){
                 auxiliaryFiles.add(documentReferenceType);
             }
         }
         return auxiliaryFiles;
+    }
+
+    /**
+     * Retrieves the terms and conditions files used in the order response.
+     * */
+    public static List<DocumentReferenceType> getTermsAndConditionsFiles(OrderResponseSimpleType orderResponse){
+        return orderResponse.getAdditionalDocumentReference().stream()
+                .filter(documentReferenceType -> documentReferenceType.getDocumentType() != null && documentReferenceType.getDocumentType().contentEquals(ProcessDocumentMetadataDAOUtility.COMPANY_TERMS_AND_CONDITIONS_DOCUMENT_TYPE))
+                .collect(Collectors.toList());
     }
 
     private static Future<List<PartyType>> getParties(ExecutorService threadPool, List<String> partyIds, List<String> federationIds, String bearerToken) {
