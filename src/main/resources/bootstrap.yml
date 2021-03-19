@@ -213,7 +213,12 @@ nimble:
         businessProcessUpdates: ${KAFKA_TOPIC_BUSINESS_PROCESS_UPDATES}
   check-entity-ids: ${CHECK_ENTITY_IDS:false}
   stripe:
-    applicationFeePercentage: ${STRIPE_APPLICATION_FEE_PERCENTAGE:6}
+    # Application fee is calculated using the following environment variables.
+    # It is equal to STRIPE_APPLICATION_FEE_PERCENTAGE% + STRIPE_APPLICATION_FEE_CONSTANT per successful charge.
+    # Note that Stripe application fee is 2.9% + 30¢ per successful charge, therefore, STRIPE_APPLICATION_FEE_PERCENTAGE
+    # should be greater than 2.9%.
+    applicationFeePercentage: ${STRIPE_APPLICATION_FEE_PERCENTAGE:5.9}
+    applicationFeeConstant: ${STRIPE_APPLICATION_FEE_CONSTANT:25} # in cents
     secretKey: ${STRIPE_SECRET_KEY:}
 hystrix:
   command:

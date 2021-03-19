@@ -22,6 +22,9 @@ public class StripeClient {
     @Value("${nimble.stripe.applicationFeePercentage}")
     private BigDecimal stripeApplicationFeePercentage;
 
+    @Value("${nimble.stripe.applicationFeeConstant}")
+    private BigDecimal stripeApplicationFeeConstant;
+
     @PostConstruct
     public void init() {
         Stripe.apiKey = stripeSecretKey;
@@ -41,7 +44,7 @@ public class StripeClient {
         // for more information, refer to https://stripe.com/docs/currencies#zero-decimal
         totalPrice = totalPrice.multiply(BigDecimal.valueOf(100));
         // calculate the application fee
-        BigDecimal applicationFee = totalPrice.multiply(stripeApplicationFeePercentage).divide(BigDecimal.valueOf(100));
+        BigDecimal applicationFee = calculateApplicationFee(totalPrice);
         // create the payment intent
         ArrayList paymentMethodTypes = new ArrayList();
         paymentMethodTypes.add("card");
@@ -56,5 +59,15 @@ public class StripeClient {
         params.put("transfer_data", transferDataParams);
         PaymentIntent paymentIntent = PaymentIntent.create(params);
         return paymentIntent.getClientSecret();
+    }
+
+    /**
+     * Calculates the application fee for the specified total price.
+     * It is equal to {@link stripeApplicationFeePercentage}% + {@link stripeApplicationFeeConstant} per successful charge.
+     * @param totalPrice the total price of order
+     * @return the application fee
+     * */
+    private BigDecimal calculateApplicationFee(BigDecimal totalPrice){
+        return totalPrice.multiply(stripeApplicationFeePercentage).divide(BigDecimal.valueOf(100)).add(stripeApplicationFeeConstant);
     }
 }
