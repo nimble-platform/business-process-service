@@ -584,6 +584,48 @@ public class StatisticsController {
         }
     }
 
+    @ApiOperation(value = "",notes = "Gets the total number of business processes for the companies. The number of business processes are broken down per company and its role in the business processes.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Retrieved the process breakdown by role successfully",response = int.class),
+            @ApiResponse(code = 400, message = "Invalid parameter"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 500, message = "Unexpected error while getting the process breakdown by role")
+    })
+    @RequestMapping(value = "/total-number/business-process/break-down/role",
+            produces = {"application/json"},
+            method = RequestMethod.GET)
+    public ResponseEntity getProcessCountBreakDownByRole(@ApiParam(value = "Offset of the first result among the complete result set satisfying the given criteria", defaultValue = "0") @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset,
+                                                          @ApiParam(value = "Number of results to be included in the result set", defaultValue = "10") @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit,
+                                                          @ApiParam(value = "Start date (DD-MM-YYYY) of the process", required = false) @RequestParam(value = "startDate", required = false) String startDateStr,
+                                                          @ApiParam(value = "End date (DD-MM-YYYY) of the process", required = false) @RequestParam(value = "endDate", required = false) String endDateStr,
+                                                          @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
+    ) throws NimbleException {
+        // set request log of ExecutionContext
+        String requestLog = String.format("Getting process breakdown by role");
+        executionContext.setRequestLog(requestLog);
+        try {
+            logger.info(requestLog);
+            // validate role
+            if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+                throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
+            }
+
+            // check start date
+            InputValidatorUtil.checkDate(startDateStr, true);
+
+            // check end date
+            InputValidatorUtil.checkDate(endDateStr, true);
+
+            PlatformCompanyProcessCount companyProcessCounts = ProcessDocumentMetadataDAOUtility.getProcessCountBreakDownByRole(offset,limit,startDateStr,endDateStr);
+
+            logger.info("Retrieved process breakdown by role");
+            return ResponseEntity.ok().body(companyProcessCounts);
+
+        } catch (Exception e) {
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_GET_PROCESS_COUNT_BREAKDOWN_BY_ROLE.toString(),Arrays.asList(startDateStr, endDateStr, limit.toString(),offset.toString()),e);
+        }
+    }
+
 
     private String validateFederationIdHeader(String federationIdHeader){
         if(federationIdHeader == null){
