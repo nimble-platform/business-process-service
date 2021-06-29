@@ -368,7 +368,7 @@ public class StatisticsController {
             @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
                                                           @ApiParam(value = "" ,required=false ) @RequestHeader(value="federationId", required=false) String federationId) throws NimbleException {
         // set request log of ExecutionContext
-        String requestLog = String.format("Getting average response time for the party with id: %s",partyId);
+        String requestLog = String.format("Getting average response time for months for the party with id: %s",partyId);
         executionContext.setRequestLog(requestLog);
 
         logger.info(requestLog);
@@ -396,7 +396,7 @@ public class StatisticsController {
             }
         }
 
-        logger.info("Retrieved average response time for the party with id: {}",partyId);
+        logger.info("Retrieved average response time for months for the party with id: {}",partyId);
         return ResponseEntity.ok(averageResponseTime);
     }
 
