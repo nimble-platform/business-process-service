@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.*;
 
 /**
  * Created by suat on 12-Jun-18.
@@ -427,10 +428,44 @@ public class StatisticsPersistenceUtility {
             processInstanceIDs =  CollaborationGroupDAOUtility.getProcessInstanceIds();
         }
 
-        for (String processInstanceID:processInstanceIDs){
+        ExecutorService executorService = null;
+
+        try {
+            // create a thread pool
+            executorService = Executors.newCachedThreadPool();
+
+            List<Future<Double>> futures = new ArrayList<>();
+            // calculate the average response time for all business processes
+            for (String processInstanceID:processInstanceIDs){
+                futures.add(getAverageResponseTimeOfProcess(processInstanceID,executorService));
+            }
+            // get the total time
+            for (Future<Double> future : futures) {
+                Double averageResponseTime = future.get();
+                if(averageResponseTime != null){
+                    numberOfResponses++;
+                    totalTime += averageResponseTime;
+                }
+            }
+        }
+        finally {
+            // close the thread pool
+            if(executorService != null && !executorService.isShutdown()) {
+                executorService.shutdown();
+            }
+        }
+
+        if(numberOfResponses == 0){
+            return 0.0;
+        }
+        return totalTime/numberOfResponses;
+    }
+
+    private static Future<Double> getAverageResponseTimeOfProcess(String processInstanceID, ExecutorService threadPool){
+        return threadPool.submit(() -> {
             List<ProcessDocumentMetadataDAO> processDocumentMetadataDAOS = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(processInstanceID);
             if (processDocumentMetadataDAOS.size() != 2){
-                continue;
+                return null;
             }
 
             ProcessDocumentMetadataDAO docMetadata = processDocumentMetadataDAOS.get(1);
@@ -439,14 +474,8 @@ public class StatisticsPersistenceUtility {
             Date startDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(reqMetadata.getSubmissionDate()).toGregorianCalendar().getTime();
             Date endDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(docMetadata.getSubmissionDate()).toGregorianCalendar().getTime();
 
-            numberOfResponses++;
-            totalTime += (endDate.getTime()-startDate.getTime())/86400000.0;
-        }
-
-        if(numberOfResponses == 0){
-            return 0.0;
-        }
-        return totalTime/numberOfResponses;
+            return (endDate.getTime()-startDate.getTime())/86400000.0;
+        });
     }
 
     public static Map<Integer,Double> calculateAverageResponseTimeInMonths(String partyID,String federationId) throws Exception{
@@ -465,37 +494,40 @@ public class StatisticsPersistenceUtility {
         Map<Integer,Double> storeMonth = new HashMap<>();
         Map<Integer,Integer> storeResponseTime = new HashMap<>();
 
-        for (String processInstanceID:processInstanceIDs){
-            List<ProcessDocumentMetadataDAO> processDocumentMetadataDAOS = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(processInstanceID);
-            if (processDocumentMetadataDAOS.size() != 2){
-                continue;
+        ExecutorService executorService = null;
+
+        try {
+            // create a thread pool
+            executorService = Executors.newCachedThreadPool();
+
+            List<Future<ProcessResponseTimeForMonth>> futures = new ArrayList<>();
+
+            for (String processInstanceID:processInstanceIDs){
+                futures.add(getProcessAverageTimeForMonth(processInstanceID,monthYearSet,executorService));
             }
 
-            ProcessDocumentMetadataDAO docMetadata = processDocumentMetadataDAOS.get(1);
-            ProcessDocumentMetadataDAO reqMetadata = processDocumentMetadataDAOS.get(0);
+            for (Future<ProcessResponseTimeForMonth> future : futures) {
+                ProcessResponseTimeForMonth processResponseTimeForMonth = future.get();
+                if(processResponseTimeForMonth != null){
+                    double timeAll = 0;
+                    int responseno = 0;
 
-            int month = DatatypeFactory.newInstance().newXMLGregorianCalendar(reqMetadata.getSubmissionDate()).toGregorianCalendar().get(Calendar.MONTH);
-            int year = DatatypeFactory.newInstance().newXMLGregorianCalendar(reqMetadata.getSubmissionDate()).toGregorianCalendar().get(Calendar.YEAR);
+                    if (storeMonth.containsKey(processResponseTimeForMonth.getMonthYear().getMonth())) {
+                        timeAll = storeMonth.get(processResponseTimeForMonth.getMonthYear().getMonth());
+                        responseno = storeResponseTime.get(processResponseTimeForMonth.getMonthYear().getMonth());
+                    }
 
-            if(monthYearSet.contains(new MonthYear(month,year))){
-                Date startDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(reqMetadata.getSubmissionDate())
-                        .toGregorianCalendar().getTime();
-                Date endDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(docMetadata.getSubmissionDate())
-                        .toGregorianCalendar().getTime();
-
-                double timeAll = 0;
-                int responseno = 0;
-
-                if (storeMonth.containsKey(month)) {
-                    timeAll = storeMonth.get(month);
-                    responseno = storeResponseTime.get(month);
+                    timeAll += processResponseTimeForMonth.getResponseTime();
+                    responseno += 1;
+                    storeMonth.put(processResponseTimeForMonth.getMonthYear().getMonth(),timeAll);
+                    storeResponseTime.put(processResponseTimeForMonth.getMonthYear().getMonth(),responseno);
                 }
-
-                timeAll += (endDate.getTime() - startDate.getTime()) / 86400000.0;
-                responseno += 1;
-                storeMonth.put(month,timeAll);
-                storeResponseTime.put(month,responseno);
-
+            }
+        }
+        finally {
+            // close the thread pool
+            if(executorService != null && !executorService.isShutdown()) {
+                executorService.shutdown();
             }
         }
 
@@ -511,6 +543,33 @@ public class StatisticsPersistenceUtility {
         return storeMonth;
     }
 
+    private static Future<ProcessResponseTimeForMonth> getProcessAverageTimeForMonth(String processInstanceID, Set<MonthYear> monthYearSet, ExecutorService threadPool){
+        return threadPool.submit(() -> {
+            List<ProcessDocumentMetadataDAO> processDocumentMetadataDAOS = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(processInstanceID);
+            if (processDocumentMetadataDAOS.size() != 2){
+                return null;
+            }
+
+            ProcessDocumentMetadataDAO docMetadata = processDocumentMetadataDAOS.get(1);
+            ProcessDocumentMetadataDAO reqMetadata = processDocumentMetadataDAOS.get(0);
+
+            int month = DatatypeFactory.newInstance().newXMLGregorianCalendar(reqMetadata.getSubmissionDate()).toGregorianCalendar().get(Calendar.MONTH);
+            int year = DatatypeFactory.newInstance().newXMLGregorianCalendar(reqMetadata.getSubmissionDate()).toGregorianCalendar().get(Calendar.YEAR);
+
+            MonthYear monthYear = new MonthYear(month,year);
+
+            if(monthYearSet.contains(monthYear)){
+                Date startDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(reqMetadata.getSubmissionDate())
+                        .toGregorianCalendar().getTime();
+                Date endDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(docMetadata.getSubmissionDate())
+                        .toGregorianCalendar().getTime();
+
+
+                return new ProcessResponseTimeForMonth(monthYear,(endDate.getTime() - startDate.getTime()) / 86400000.0);
+            }
+            return null;
+        });
+    }
     /**
      * Returns the set of {@link MonthYear} for the last six months
      * */
@@ -569,6 +628,33 @@ public class StatisticsPersistenceUtility {
         @Override
         public int hashCode() {
             return Objects.hash(month,year);
+        }
+    }
+
+    private static class ProcessResponseTimeForMonth {
+
+        private MonthYear monthYear;
+        private Double responseTime;
+
+        public ProcessResponseTimeForMonth(MonthYear monthYear, Double responseTime) {
+            this.monthYear = monthYear;
+            this.responseTime = responseTime;
+        }
+
+        public MonthYear getMonthYear() {
+            return monthYear;
+        }
+
+        public void setMonthYear(MonthYear monthYear) {
+            this.monthYear = monthYear;
+        }
+
+        public Double getResponseTime() {
+            return responseTime;
+        }
+
+        public void setResponseTime(Double responseTime) {
+            this.responseTime = responseTime;
         }
     }
 }
