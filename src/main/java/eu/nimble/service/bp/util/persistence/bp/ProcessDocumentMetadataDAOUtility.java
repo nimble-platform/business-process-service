@@ -7,6 +7,8 @@ import eu.nimble.service.bp.model.hyperjaxb.ProcessDocumentStatus;
 import eu.nimble.service.bp.model.hyperjaxb.RoleType;
 import eu.nimble.service.bp.model.export.TransactionSummary;
 import eu.nimble.service.bp.model.statistics.BusinessProcessCount;
+import eu.nimble.service.bp.model.statistics.CompanyProcessCount;
+import eu.nimble.service.bp.model.statistics.PlatformCompanyProcessCount;
 import eu.nimble.service.bp.model.statistics.ProcessDocumentMetadataSummary;
 import eu.nimble.service.bp.util.bp.BusinessProcessUtility;
 import eu.nimble.service.bp.util.bp.DocumentEnumClassMapper;
@@ -21,6 +23,7 @@ import eu.nimble.service.model.ubl.commonaggregatecomponents.DocumentReferenceTy
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
 import eu.nimble.service.model.ubl.document.IDocument;
+import eu.nimble.service.model.ubl.orderresponsesimple.OrderResponseSimpleType;
 import eu.nimble.utility.DateUtility;
 import eu.nimble.utility.HttpResponseUtil;
 import eu.nimble.utility.JsonSerializationUtility;
@@ -31,13 +34,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by suat on 16-Oct-18.
  */
 public class ProcessDocumentMetadataDAOUtility {
+
+    private static final String COMPANY_TERMS_AND_CONDITIONS_DOCUMENT_TYPE = "COMPANY_TERMS_AND_CONDITIONS";
     /**
      * The conditions for the queries (including %s placeholder) below are initialized during the query instantiation
      */
@@ -75,6 +82,26 @@ public class ProcessDocumentMetadataDAOUtility {
                         "(SELECT despatchOrderRef2.documentReference.ID " +
                         "FROM DespatchAdviceType despatchAdvice2 join despatchAdvice2.orderReference despatchOrderRef2)" +
                     " ORDER BY order_.hjid DESC";
+    private static final String QUERY_GET_PROCESS_COUNT_BREAKDOWN_BY_ROLE =
+            "select *" +
+                    " from (select buyer_stat.buyer_party_id,buyer_stat.buyerfederationId,seller_stat.seller_party_id,seller_stat.sellerFederationId,buyer_stat.buyer_count,seller_stat.seller_count," +
+                    " (coalesce (buyer_stat.buyer_count,0)+ coalesce(seller_stat.seller_count,0)) as total_count" +
+                    " from (select initiator_id as buyer_party_id,initiator_federation_id as buyerfederationId, count(initiator_id) as buyer_count from process_document_metadata_dao pdmd" +
+                    " %s" +
+                    " group by initiator_id,initiator_federation_id) buyer_stat " +
+                    " full join" +
+                    " (select responder_id as seller_party_id ,responder_federation_id as sellerFederationId, count(responder_id) as seller_count from process_document_metadata_dao pdmd" +
+                    " %s" +
+                    " group by responder_id, responder_federation_id) seller_stat" +
+                    " on buyer_stat.buyer_party_id = seller_stat.seller_party_id and buyer_stat.buyerfederationId = seller_stat.sellerFederationId) as party_name_count" +
+                    " order by total_count desc limit :limit offset :offset";
+
+    private static final String QUERY_GET_COMPANY_COUNT_INVOLVED_IN_BUSINESS_PROCESS =
+            "select count(distinct (initiator_id, initiator_federation_id))" +
+                    " from (select initiator_id, initiator_federation_id,submission_date from process_document_metadata_dao pdmd %s" +
+                    " union" +
+                    " select  responder_id , responder_federation_id,submission_date from process_document_metadata_dao pdmd %s) as companies ";
+
     private static final String QUERY_GET_UNSHIPPED_ORDER_IDENTIFIERS_FOR_SPECIFIC_PARTY =
             "SELECT DISTINCT order_.ID, order_.hjid FROM" +
                     " OrderType order_ join order_.sellerSupplierParty.party.partyIdentification pid, " +
@@ -262,6 +289,34 @@ public class ProcessDocumentMetadataDAOUtility {
         return documentIds;
     }
 
+    public static PlatformCompanyProcessCount getProcessCountBreakDownByRole(int offset, int limit, String startDateStr, String endDateStr){
+        // query to retrieve transaction counts for each company in the platform
+        DocumentMetadataQuery query = getProcessCountBreakDownByRoleMetadataQuery( startDateStr, endDateStr,DocumentMetadataQueryType.COMPANY_TRANSACTION_COUNT,offset,limit);
+        // query to retrieve total number of companies involved in the transactions
+        DocumentMetadataQuery companyCountQuery = getProcessCountBreakDownByRoleMetadataQuery( startDateStr, endDateStr,DocumentMetadataQueryType.COMPANY_COUNT_INVOLVED_IN_BUSINESS_PROCESS,null,null);
+        BigInteger companyCount = new JPARepositoryFactory().forBpRepository(true).getSingleEntity(companyCountQuery.query,
+                companyCountQuery.parameterNames.toArray(new String[companyCountQuery.parameterNames.size()]), companyCountQuery.parameterValues.toArray(), true);
+
+        List<Object> results = new JPARepositoryFactory().forBpRepository(true).getEntities(query.query, query.parameterNames.toArray(new String[query.parameterNames.size()]), query.parameterValues.toArray(), true);
+
+        List<CompanyProcessCount> companyProcessCounts = new ArrayList<>();
+        for (Object result : results) {
+            Object[] resultItems = (Object[]) result;
+            String buyerPartyId = (String) resultItems[0];
+            String buyerPartyFederationId = (String) resultItems[1];
+            String sellerPartyId = (String) resultItems[2];
+            String sellerPartyFederationId = (String) resultItems[3];
+            BigInteger buyerProcessCount = (BigInteger) resultItems[4];
+            BigInteger sellerProcessCount = (BigInteger) resultItems[5];
+
+            String partyId = buyerPartyId == null ? sellerPartyId : buyerPartyId;
+            String partyFederationId = buyerPartyFederationId == null ? sellerPartyFederationId: buyerPartyFederationId;
+
+            companyProcessCounts.add(new CompanyProcessCount(partyId,partyFederationId,buyerProcessCount == null ? BigInteger.ZERO: buyerProcessCount,sellerProcessCount == null ? BigInteger.ZERO : sellerProcessCount));
+        }
+        return new PlatformCompanyProcessCount(companyCount, companyProcessCounts);
+    }
+
     public static int getTransactionCount(Integer partyId, String federationId,List<String> documentTypes, String role, String startDateStr, String endDateStr, String status) {
         if(role == null) {
             role = RoleType.SELLER.toString();
@@ -411,11 +466,21 @@ public class ProcessDocumentMetadataDAOUtility {
     public static List<DocumentReferenceType> getAuxiliaryFiles(List<DocumentReferenceType> documentReferenceTypes){
         List<DocumentReferenceType> auxiliaryFiles = new ArrayList<>();
         for (DocumentReferenceType documentReferenceType : documentReferenceTypes) {
-            if(documentReferenceType.getAttachment() != null){
+            // skip the terms and conditions files
+            if(documentReferenceType.getAttachment() != null && (documentReferenceType.getDocumentType() == null || !documentReferenceType.getDocumentType().contentEquals(COMPANY_TERMS_AND_CONDITIONS_DOCUMENT_TYPE))){
                 auxiliaryFiles.add(documentReferenceType);
             }
         }
         return auxiliaryFiles;
+    }
+
+    /**
+     * Retrieves the terms and conditions files used in the order response.
+     * */
+    public static List<DocumentReferenceType> getTermsAndConditionsFiles(OrderResponseSimpleType orderResponse){
+        return orderResponse.getAdditionalDocumentReference().stream()
+                .filter(documentReferenceType -> documentReferenceType.getDocumentType() != null && documentReferenceType.getDocumentType().contentEquals(ProcessDocumentMetadataDAOUtility.COMPANY_TERMS_AND_CONDITIONS_DOCUMENT_TYPE))
+                .collect(Collectors.toList());
     }
 
     private static Future<List<PartyType>> getParties(ExecutorService threadPool, List<String> partyIds, List<String> federationIds, String bearerToken) {
@@ -500,6 +565,66 @@ public class ProcessDocumentMetadataDAOUtility {
             counts.addCount((String) resultItems[0], resultItems[2].toString(), resultItems[3].toString(), (Long) resultItems[4], partyType.getPartyName().get(0).getName().getValue());
         }
         return counts;
+    }
+
+    private static DocumentMetadataQuery getProcessCountBreakDownByRoleMetadataQuery(String startDateStr,
+                                                                                     String endDateStr,
+                                                                                     DocumentMetadataQueryType queryType,
+                                                                                     Integer offset,
+                                                                                     Integer limit){
+        DocumentMetadataQuery query = new DocumentMetadataQuery();
+        List<String> parameterNames = query.parameterNames;
+        List<Object> parameterValues = query.parameterValues;
+
+        String conditions = "where ";
+        // get initiating document for the business processes available in the platform
+        List<String> documentTypes =  new ArrayList<>();
+        // TODO: For all processes except Fulfilment, the initiator is the buyer party. Handle Fulfilment process properly.
+        List<Transaction.DocumentTypeEnum> initialDocuments = BusinessProcessUtility.getInitialDocumentsForAllProcesses();
+        initialDocuments.forEach(type -> documentTypes.add(String.format("type_ = '%s'",type.toString())));
+
+        conditions += String.format("(%s)",String.join(" OR ",documentTypes));
+
+        if (startDateStr != null || endDateStr != null) {
+
+            if (startDateStr != null && endDateStr != null) {
+                conditions += " and submission_date between :startTime and :endTime";
+
+                parameterNames.add("startTime");
+                parameterValues.add(DateUtility.transformInputDateToDbDate(startDateStr));
+                parameterNames.add("endTime");
+                parameterValues.add(DateUtility.transformInputDateToMaxDbDate(endDateStr));
+
+            } else if (startDateStr != null) {
+                conditions += " and submission_date >= :startTime";
+
+                parameterNames.add("startTime");
+                parameterValues.add(DateUtility.transformInputDateToDbDate(startDateStr));
+
+            } else {
+                conditions += " and submission_date <= :endTime";
+
+                parameterNames.add("endTime");
+                parameterValues.add(DateUtility.transformInputDateToMaxDbDate(endDateStr));
+            }
+        }
+
+        if(offset != null){
+            parameterNames.add("offset");
+            parameterValues.add(offset);
+        }
+
+        if(limit != null){
+            parameterNames.add("limit");
+            parameterValues.add(limit);
+        }
+
+        if(queryType.equals(DocumentMetadataQueryType.COMPANY_TRANSACTION_COUNT)){
+            query.query = String.format(QUERY_GET_PROCESS_COUNT_BREAKDOWN_BY_ROLE, conditions,conditions);
+        } else if(queryType.equals(DocumentMetadataQueryType.COMPANY_COUNT_INVOLVED_IN_BUSINESS_PROCESS)){
+            query.query = String.format(QUERY_GET_COMPANY_COUNT_INVOLVED_IN_BUSINESS_PROCESS, conditions,conditions);
+        }
+        return query;
     }
 
     private static DocumentMetadataQuery getDocumentMetadataQuery(Integer partyId,
@@ -797,7 +922,7 @@ public class ProcessDocumentMetadataDAOUtility {
     }
 
     private enum DocumentMetadataQueryType {
-        DOCUMENT_IDS, TOTAL_TRANSACTION_COUNT, GROUPED_TRANSACTION_COUNT, TRANSACTION_METADATA
+        DOCUMENT_IDS, TOTAL_TRANSACTION_COUNT, GROUPED_TRANSACTION_COUNT, TRANSACTION_METADATA, COMPANY_TRANSACTION_COUNT,COMPANY_COUNT_INVOLVED_IN_BUSINESS_PROCESS
     }
 
     private static class DocumentMetadataQuery {

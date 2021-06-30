@@ -62,6 +62,12 @@ public class RestServiceInterceptor extends HandlerInterceptorAdapter {
         // save the time as an Http attribute
         request.setAttribute("startTime", System.currentTimeMillis());
 
+        // add Company Admin role to execution context if the endpoint is among the excluded ones from authentication
+        if(excludedEndpoints.stream().anyMatch(endpoint -> request.getServletPath().matches(endpoint))) {
+            executionContext.setUserRoles(Collections.singletonList(NimbleRole.COMPANY_ADMIN.getName()));
+            return true;
+        }
+
         String bearerToken = request.getHeader(HttpHeaders.AUTHORIZATION);
         String originalBearerToken = request.getHeader(ORIGINAL_AUTHORIZATION_HEADER);
 
@@ -69,13 +75,7 @@ public class RestServiceInterceptor extends HandlerInterceptorAdapter {
         try {
             claims = iValidationUtil.validateToken(bearerToken);
         } catch (Exception e) {
-            // do not throw an exception if the endpoint is among the excluded ones from authentication
-            if(excludedEndpoints.stream().anyMatch(endpoint -> request.getServletPath().matches(endpoint))) {
-                executionContext.setUserRoles(Collections.singletonList(NimbleRole.COMPANY_ADMIN.getName()));
-                return true;
-            } else {
-                throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_NO_USER_FOR_TOKEN.toString(), Arrays.asList(bearerToken),e);
-            }
+            throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_NO_USER_FOR_TOKEN.toString(), Arrays.asList(bearerToken),e);
         }
 
         // set token to the execution context

@@ -368,7 +368,7 @@ public class StatisticsController {
             @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
                                                           @ApiParam(value = "" ,required=false ) @RequestHeader(value="federationId", required=false) String federationId) throws NimbleException {
         // set request log of ExecutionContext
-        String requestLog = String.format("Getting average response time for the party with id: %s",partyId);
+        String requestLog = String.format("Getting average response time for months for the party with id: %s",partyId);
         executionContext.setRequestLog(requestLog);
 
         logger.info(requestLog);
@@ -396,7 +396,7 @@ public class StatisticsController {
             }
         }
 
-        logger.info("Retrieved average response time for the party with id: {}",partyId);
+        logger.info("Retrieved average response time for months for the party with id: {}",partyId);
         return ResponseEntity.ok(averageResponseTime);
     }
 
@@ -430,9 +430,52 @@ public class StatisticsController {
         if (partyId != null) {
             averageNegotiationTime = StatisticsPersistenceUtility.calculateAverageCollaborationTime(partyId,federationId,bearerToken,role);
         }else{
-            averageNegotiationTime = StatisticsPersistenceUtility.calculateAverageCollaborationTimeForPlatform(bearerToken,role);
+            averageNegotiationTime = StatisticsPersistenceUtility.calculateAverageCollaborationTimeForPlatform(role);
         }
         logger.info("Retrieved average negotiation time for the party with id: {}",partyId);
+        return ResponseEntity.ok(averageNegotiationTime);
+    }
+
+    @ApiOperation(value = "Gets average collaboration time in months for the party in terms of days")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Retrieved average collaboration time for the party"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token")
+    })
+    @RequestMapping(value = "/collaboration-time-months",
+            produces = {"application/json"},
+            method = RequestMethod.GET)
+    public ResponseEntity getAverageCollaborationTimeForMonths(@ApiParam(value = "Identifier of the party as specified by the identity service",required = false) @RequestParam(value = "partyId",required = false) String partyId,
+                                                      @ApiParam(value = "Role of the party in the business process.<br>Possible values:<ul><li>SELLER</li><li>BUYER</li></ul>", defaultValue = "SELLER", required = false) @RequestParam(value = "role", required = false, defaultValue = "SELLER") String role,
+                                                      @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken,
+                                                      @ApiParam(value = "" ,required=false ) @RequestHeader(value="federationId", required=false) String federationId) throws NimbleException {
+        // set request log of ExecutionContext
+        String requestLog = String.format("Getting average collaboration time in months for the party with id: %s",partyId);
+        executionContext.setRequestLog(requestLog);
+
+        logger.info(requestLog);
+
+        // validate federation id header
+        federationId = validateFederationIdHeader(federationId);
+
+        // validate role
+        if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+            throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
+        }
+        Map<Integer,Double>  averageNegotiationTime = null;
+
+        try {
+            if (partyId != null) {
+                averageNegotiationTime = StatisticsPersistenceUtility.calculateAverageCollaborationTimeInMonths(partyId,federationId,bearerToken,role);
+            }
+            else {
+                averageNegotiationTime = StatisticsPersistenceUtility.calculateAverageCollaborationTimeForPlatformInMonths(role);
+            }
+        }
+        catch (Exception e){
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_GET_COLLABORATION_TIME_IN_MONTHS.toString(),Arrays.asList(partyId),e);
+        }
+
+        logger.info("Retrieved average collaboration time in months for the party with id: {}",partyId);
         return ResponseEntity.ok(averageNegotiationTime);
     }
 
@@ -538,6 +581,48 @@ public class StatisticsController {
 
         } catch (Exception e) {
             throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_GET_PROCESS_DOCUMENT_METADATA_SUMMARIES.toString(),e);
+        }
+    }
+
+    @ApiOperation(value = "",notes = "Gets the total number of business processes for the companies. The number of business processes are broken down per company and its role in the business processes.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Retrieved the process breakdown by role successfully",response = int.class),
+            @ApiResponse(code = 400, message = "Invalid parameter"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 500, message = "Unexpected error while getting the process breakdown by role")
+    })
+    @RequestMapping(value = "/total-number/business-process/break-down/role",
+            produces = {"application/json"},
+            method = RequestMethod.GET)
+    public ResponseEntity getProcessCountBreakDownByRole(@ApiParam(value = "Offset of the first result among the complete result set satisfying the given criteria", defaultValue = "0") @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset,
+                                                          @ApiParam(value = "Number of results to be included in the result set", defaultValue = "10") @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit,
+                                                          @ApiParam(value = "Start date (DD-MM-YYYY) of the process", required = false) @RequestParam(value = "startDate", required = false) String startDateStr,
+                                                          @ApiParam(value = "End date (DD-MM-YYYY) of the process", required = false) @RequestParam(value = "endDate", required = false) String endDateStr,
+                                                          @ApiParam(value = "The Bearer token provided by the identity service" ,required=true ) @RequestHeader(value="Authorization", required=true) String bearerToken
+    ) throws NimbleException {
+        // set request log of ExecutionContext
+        String requestLog = String.format("Getting process breakdown by role");
+        executionContext.setRequestLog(requestLog);
+        try {
+            logger.info(requestLog);
+            // validate role
+            if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+                throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
+            }
+
+            // check start date
+            InputValidatorUtil.checkDate(startDateStr, true);
+
+            // check end date
+            InputValidatorUtil.checkDate(endDateStr, true);
+
+            PlatformCompanyProcessCount companyProcessCounts = ProcessDocumentMetadataDAOUtility.getProcessCountBreakDownByRole(offset,limit,startDateStr,endDateStr);
+
+            logger.info("Retrieved process breakdown by role");
+            return ResponseEntity.ok().body(companyProcessCounts);
+
+        } catch (Exception e) {
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_GET_PROCESS_COUNT_BREAKDOWN_BY_ROLE.toString(),Arrays.asList(startDateStr, endDateStr, limit.toString(),offset.toString()),e);
         }
     }
 

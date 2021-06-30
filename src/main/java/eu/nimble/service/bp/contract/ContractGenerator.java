@@ -81,8 +81,14 @@ public class ContractGenerator {
     public void generateContract(OrderType order,ZipOutputStream zos) throws Exception{
         // get the order response
         OrderResponseSimpleType orderResponse = DocumentPersistenceUtility.getOrderResponseDocumentByOrderId(order.getID());
+        List<XWPFDocument> orderTermsAndConditions = null;
+        // the list of terms and conditions files used in the order
+        List<DocumentReferenceType> termsAndConditionsFiles = ProcessDocumentMetadataDAOUtility.getTermsAndConditionsFiles(orderResponse);
+        // if there is no file for the terms and conditions, create the standard T&Cs document using the order
+        if(termsAndConditionsFiles.size() == 0){
+            orderTermsAndConditions  = fillOrderTermsAndConditions(order);
+        }
 
-        List<XWPFDocument> orderTermsAndConditions = fillOrderTermsAndConditions(order);
         List<XWPFDocument> purchaseDetails = fillPurchaseDetails(order,orderResponse);
 
         getAndPopulateClauses(order,zos,purchaseDetails);
@@ -95,7 +101,6 @@ public class ContractGenerator {
         // then, we create entry names by combining the product name and count,i.e.,Product Name,Product Name_1,Product Name_2 etc.
         Map<String,Integer> productNamesCountMap = new HashMap<>();
         for (int i = 0; i<orderLineSize;i++) {
-            XWPFDocument orderTermsAndCondition = orderTermsAndConditions.get(i);
             XWPFDocument purchaseDetail = purchaseDetails.get(i);
             String productName = order.getOrderLine().get(i).getLineItem().getItem().getName().get(0).getValue();
             // update the map
@@ -104,7 +109,11 @@ public class ContractGenerator {
             int count = productNamesCountMap.get(productName);
             String entryName = count > 1  ? productName+"_"+count: productName;
             // create entries
-            addDocxToZipFile(entryName+"/Standard Purchase Order Terms and Conditions.pdf",orderTermsAndCondition,zos);
+            if(orderTermsAndConditions != null){
+                addDocxToZipFile(entryName+"/Standard Purchase Order Terms and Conditions.pdf",orderTermsAndConditions.get(i),zos);
+            } else{
+                createTermsAndConditionsFiles(termsAndConditionsFiles,zos,entryName);
+            }
             addDocxToZipFile(entryName+"/Company Purchase Details.pdf",purchaseDetail,zos);
         }
     }
@@ -288,6 +297,28 @@ public class ContractGenerator {
         }
 
         return documents;
+    }
+
+
+    /**
+     * Creates the entries for the given terms and conditions files.
+     * */
+    public void createTermsAndConditionsFiles(List<DocumentReferenceType> termsAndConditionsFiles,ZipOutputStream zos,String entryName) throws IOException {
+        try {
+            for(DocumentReferenceType documentReference : termsAndConditionsFiles){
+                byte[] bytes = binaryContentService.retrieveContent(documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getUri()).getValue();
+                ByteArrayOutputStream bos = new ByteArrayOutputStream(bytes.length);
+                bos.write(bytes,0,bytes.length);
+
+                ZipEntry zipEntry2 = new ZipEntry(entryName+"/"+documentReference.getAttachment().getEmbeddedDocumentBinaryObject().getFileName());
+                zos.putNextEntry(zipEntry2);
+                bos.writeTo(zos);
+            }
+        }
+        catch (Exception e){
+            logger.error("Failed to create terms and conditions entry",e);
+            throw e;
+        }
     }
 
     private void setClauseContent(String sectionText, XWPFParagraph paragraph, List<TradingTermType> tradingTerms){
