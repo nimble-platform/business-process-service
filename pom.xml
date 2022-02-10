@@ -203,7 +203,7 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>LATEST</version>
+            <version>42.2.25</version>
         </dependency>
 
         <!-- Hyperjaxb dependencies -->
@@ -585,7 +585,7 @@
                             <dependency>
                                 <groupId>org.postgresql</groupId>
                                 <artifactId>postgresql</artifactId>
-                                <version>LATEST</version>
+                                <version>42.2.25</version>
                             </dependency>
                         </dependencies>
 
