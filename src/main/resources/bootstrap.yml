@@ -204,10 +204,12 @@ nimble:
   # TODO: Retrieve the default token from Keycloak for business-process service client
   default-token: ${BUSINESS_PROCESS_SERVICE_DEFAULT_TOKEN:}
   oauth:
+    # Describes the settings for EFPF Keycloak
+    # It is used to retrieve an access token for Accountancy Service calls
     eFactoryClient:
-      clientId: ${OAUTH_EFACTORY_SERVICE_REGISTRY_CLIENT_ID:}
-      clientSecret: ${OAUTH_EFACTORY_SERVICE_REGISTRY_CLIENT_SECRET:}
-      accessTokenUri: ${OAUTH_EFACTORY_CLIENT_ACCESSTOKEN_URI:}
+      clientId: ${OAUTH_ACCOUNTANCY_SERVICE_REGISTRY_CLIENT_ID:}
+      clientSecret: ${OAUTH_ACCOUNTANCY_SERVICE_REGISTRY_CLIENT_SECRET:}
+      accessTokenUri: ${OAUTH_ACCOUNTANCY_SERVICE_CLIENT_ACCESSTOKEN_URI:}
   kafka:
       topics:
         businessProcessUpdates: ${KAFKA_TOPIC_BUSINESS_PROCESS_UPDATES}
