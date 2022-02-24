@@ -89,7 +89,7 @@ public class PaymentPersistenceUtility {
         json.put("originPlatform","EFPF");
         json.put("totalAmount",totalAmount);
         json.put("status","completed");
-        json.put("@timestamp",timestamp);
+//         json.put("@timestamp",timestamp);
         json.put("products",products);
         return json.toString();
     }
