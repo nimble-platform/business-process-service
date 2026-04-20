@@ -82,6 +82,86 @@ public class ProcessInstanceController {
     private ExecutionContext executionContext;
 
 
+    @ApiOperation(value = "",notes = "HCDP-04-02: Returns a lightweight summary (BP type, related products, partner name) for a single process instance. Used by the activity-monitor watchlist to show meaningful labels.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Returned the process summary successfully"),
+            @ApiResponse(code = 401, message = "Invalid token. No user was found for the provided token"),
+            @ApiResponse(code = 404, message = "No process metadata found for the given process instance id")
+    })
+    @RequestMapping(value = "/monitor/process-summary/{processInstanceID}",
+            produces = {"application/json"},
+            method = RequestMethod.GET)
+    public ResponseEntity getProcessSummary(@ApiParam(value = "The identifier of the process instance to summarise", required = true) @PathVariable(value = "processInstanceID", required = true) String processInstanceID,
+                                            @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
+                                            @ApiParam(value = "Federation id of the calling party (used to pick the partner ID/federation pair)") @RequestHeader(value = "callerPartyId", required = false) String callerPartyId,
+                                            @ApiParam(value = "Federation id of the calling party") @RequestHeader(value = "callerFederationId", required = false) String callerFederationId) throws NimbleException {
+        executionContext.setRequestLog(String.format("Fetching monitor process summary for processInstance: %s", processInstanceID));
+
+        if (!validationUtil.validateRole(bearerToken, executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_READ)) {
+            throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
+        }
+
+        try {
+            List<ProcessDocumentMetadataDAO> metadataList = ProcessDocumentMetadataDAOUtility.findByProcessInstanceID(processInstanceID);
+            if (metadataList == null || metadataList.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            }
+            // The list is ordered by submissionDate ASC — the first item is the originating document
+            // (REQUESTFORQUOTATION / ORDER / FULFILMENT etc.), which is the one we want for the label.
+            ProcessDocumentMetadataDAO first = metadataList.get(0);
+
+            Map<String, Object> summary = new LinkedHashMap<>();
+            summary.put("processInstanceID", first.getProcessInstanceID());
+            summary.put("type", first.getType() != null ? first.getType().value() : null);
+            summary.put("submissionDate", first.getSubmissionDate());
+            summary.put("status", first.getStatus() != null ? first.getStatus().value() : null);
+
+            // Related product names (already de-normalised on the BPE side at process start time).
+            List<String> products = first.getRelatedProducts() != null
+                    ? new ArrayList<>(first.getRelatedProducts())
+                    : Collections.<String>emptyList();
+            summary.put("products", products);
+
+            // Resolve the trading partner: pick whichever side ISN'T the caller. If the caller
+            // didn't pass their own partyId we just return both endpoints and let the UI choose.
+            String partnerId = null;
+            String partnerFederationId = null;
+            if (callerPartyId != null && callerPartyId.equals(first.getInitiatorID())) {
+                partnerId = first.getResponderID();
+                partnerFederationId = first.getResponderFederationID();
+            } else if (callerPartyId != null && callerPartyId.equals(first.getResponderID())) {
+                partnerId = first.getInitiatorID();
+                partnerFederationId = first.getInitiatorFederationID();
+            } else {
+                // fallback: assume the caller is the initiator
+                partnerId = first.getResponderID();
+                partnerFederationId = first.getResponderFederationID();
+            }
+            summary.put("partnerId", partnerId);
+
+            String partnerName = null;
+            try {
+                if (partnerId != null) {
+                    PartyType party = eu.nimble.service.bp.util.persistence.catalogue.PartyPersistenceUtility
+                            .getPartyByID(partnerId, partnerFederationId);
+                    if (party != null && party.getPartyName() != null && !party.getPartyName().isEmpty()
+                            && party.getPartyName().get(0).getName() != null) {
+                        partnerName = party.getPartyName().get(0).getName().getValue();
+                    }
+                }
+            } catch (Exception partnerLookupEx) {
+                logger.warn("Could not resolve partner name for partyId={} federation={}: {}",
+                        partnerId, partnerFederationId, partnerLookupEx.getMessage());
+            }
+            summary.put("partner", partnerName);
+
+            return ResponseEntity.ok(summary);
+        } catch (Exception e) {
+            logger.error("Failed to build monitor process summary for processInstance {}: {}", processInstanceID, e.getMessage(), e);
+            throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_CANCEL_PROCESS.toString(), Arrays.asList(processInstanceID), e);
+        }
+    }
+
     @ApiOperation(value = "",notes = "Cancels the process instance with the given id")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Cancelled the process instance successfully"),

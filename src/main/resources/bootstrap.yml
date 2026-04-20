@@ -4,7 +4,7 @@ spring:
   application:
     # the name of the application represents the global identifier of this microservice.
     name: business-process-service
-    url: ${BUSINESS_PROCESS_SERVICE_URL}
+    url: ${BUSINESS_PROCESS_SERVICE_URL:}
   cloud:
     config:
       uri: ${CONFIG_SERVER_URI:http://localhost:8888}
@@ -16,27 +16,27 @@ spring:
       # by disabling the service discovery the application/service can be started in "standalone mode".
       # service discovery is disabled by default and should be enabled (set to true) for the "cloud mode".
       # it can be set via an environment variable or the config server
-      enabled: ${discovery.enabled:${DISCOVERY_ENABLED:false}}
+      enabled: false
   datasource:
     camunda:
       url: jdbc:postgresql://${CAMUNDA_DB_HOST:localhost}:${CAMUNDA_DB_PORT:5432}/${CAMUNDA_DB_NAME:camunda}?currentSchema=public&ApplicationName=business-process-service-camundadb${APPLICATION_NAME_SUFFIX:}
       username: ${CAMUNDA_DB_USERNAME:postgres}
-      password: ${CAMUNDA_DB_PASSWORD:nimble}
+      password: ${CAMUNDA_DB_PASSWORD:postgres}
       driver-class: org.postgresql.Driver
     bpdb:
       url: jdbc:postgresql://${BUSINESS_PROCESS_DB_HOST:localhost}:${BUSINESS_PROCESS_DB_PORT:5432}/${BUSINESS_PROCESS_DB_NAME:businessprocessengine}?currentSchema=public&ApplicationName=business-process-service-businessprocessenginedb${APPLICATION_NAME_SUFFIX:}
       username: ${BUSINESS_PROCESS_DB_USERNAME:postgres}
-      password: ${BUSINESS_PROCESS_DB_PASSWORD:nimble}
+      password: ${BUSINESS_PROCESS_DB_PASSWORD:postgres}
       driver-class: org.postgresql.Driver
     ubldb:
       url: jdbc:postgresql://${UBL_DB_HOST:localhost}:${UBL_DB_HOST_PORT:5432}/${UBL_DB_NAME:ubldb}?currentSchema=public&ApplicationName=business-process-service-ubldb${APPLICATION_NAME_SUFFIX:}
       username: ${UBL_DB_USERNAME:postgres}
-      password: ${UBL_DB_PASSWORD:nimble}
+      password: ${UBL_DB_PASSWORD:postgres}
       driver-class: org.postgresql.Driver
     binarycontentdb:
       url: jdbc:postgresql://${BINARY_CONTENT_DB_HOST:localhost}:${BINARY_CONTENT_DB_PORT:5432}/${BINARY_CONTENT_DB_NAME:binarycontentdb}?currentSchema=public&ApplicationName=business-process-service-binarycontentdb${APPLICATION_NAME_SUFFIX:}
       username: ${BINARY_CONTENT_DB_USERNAME:postgres}
-      password: ${BINARY_CONTENT_DB_PASSWORD:nimble}
+      password: ${BINARY_CONTENT_DB_PASSWORD:postgres}
       driver-class: org.postgresql.Driver
     test-on-borrow: true
     test-while-idle: true
@@ -56,13 +56,13 @@ spring:
     jcache:
       config: classpath:ehcache.xml
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:}
     consumer:
       group-id: business-process-service${KAFKA_CONSUMER_GROUP_ID_SUFFIX:}
     properties:
       sasl:
         jaas:
-          config: ${KAFKA_JAAS_CONFIG}
+          config: ${KAFKA_JAAS_CONFIG:}
   mail:
     debug: false  # disable printing email to log output
     host: ${SMTP_HOST:localhost}
@@ -186,21 +186,21 @@ efactory:
 
 nimble:
   binary-content:
-      url: BusinessProcessBinaryContentUri
+    url: BusinessProcessBinaryContentUri
   cors_enabled: false
   identity:
-    url: ${IDENTITY_SERVICE_URL}
+    url: ${IDENTITY_SERVICE_URL:http://localhost:9096}
   keycloak:
-    public-key: ${KEYCLOAK_PUBLIC_KEY}
+    public-key: ${KEYCLOAK_PUBLIC_KEY:-----BEGIN PUBLIC KEY-----MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvSgL+UI5sZlaUPhL9YdnZBCTeBjlVBwWWYqL6g0XtRaZIg/VmkpKgOo42Pl96MdE+eNizQtYBxUjRc99uZu2L5pltX4VpYR6EVbKv83dlhooMRItYV+Q35oGvFjS765j/2dGARpzxKeBCVCGfhzxoOiCa7iI/HWDtedimdYkKod+lR7v0zpUa8afwb0lgCtyhnyoHLQBrYflLgYTgx48hkF9snlK5za7Z2Ym9LO1wxOIksFiiCkYzTuftqTaWk3G6vP2vn5S/q18QXpGJegwfU1kuYoeFKdx4nKT79VSlvmntgUmJURts/FBoqM/mCqTCWr2R3u5fdiw96XstKXRXQIDAQAB-----END PUBLIC KEY-----}
   data-channel:
-    url: ${DATA_CHANNEL_SERVICE_URL}
+    url: ${DATA_CHANNEL_SERVICE_URL:}
   frontend:
-    url: ${FRONTEND_URL}
+    url: ${FRONTEND_URL:}
   tracking-analysis:
     url: ${TRACKING_ANALYSIS_SERVICE_URL:http://nimble-dev.ikap.biba.uni-bremen.de/tracking-analysis}
   delegate-service:
     url: ${DELEGATE_SERVICE_URL:}
-  federation-instance-id: ${FEDERATION_INSTANCE_ID}
+  federation-instance-id: ${FEDERATION_INSTANCE_ID:staging}
   # TODO: Retrieve the default token from Keycloak for business-process service client
   default-token: ${BUSINESS_PROCESS_SERVICE_DEFAULT_TOKEN:}
   oauth:
@@ -211,8 +211,8 @@ nimble:
       clientSecret: ${OAUTH_ACCOUNTANCY_SERVICE_REGISTRY_CLIENT_SECRET:}
       accessTokenUri: ${OAUTH_ACCOUNTANCY_SERVICE_CLIENT_ACCESSTOKEN_URI:}
   kafka:
-      topics:
-        businessProcessUpdates: ${KAFKA_TOPIC_BUSINESS_PROCESS_UPDATES}
+    topics:
+      businessProcessUpdates: ${KAFKA_TOPIC_BUSINESS_PROCESS_UPDATES:}
   check-entity-ids: ${CHECK_ENTITY_IDS:false}
   stripe:
     # Application fee is calculated using the following environment variables.
@@ -383,13 +383,13 @@ spring:
       password:
       driver-class: org.h2.Driver
   kafka:
-      bootstrap-servers:
-      consumer:
-        group-id:
-      properties:
-        sasl:
-          jaas:
-            config:
+    bootstrap-servers:
+    consumer:
+      group-id:
+    properties:
+      sasl:
+        jaas:
+          config:
   h2:
     console:
       enabled: true

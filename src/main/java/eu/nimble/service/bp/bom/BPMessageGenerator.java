@@ -369,6 +369,11 @@ public class BPMessageGenerator {
             // read trading terms from the json file
             inputStream = BPMessageGenerator.class.getResourceAsStream("/tradingTerms/paymentTerms.json");
 
+            if (inputStream == null) {
+                logger.warn("paymentTerms.json not found on classpath at /tradingTerms/paymentTerms.json; returning empty trading terms list");
+                return tradingTerms;
+            }
+
             String fileContent = IOUtils.toString(inputStream);
 
             ObjectMapper objectMapper = JsonSerializationUtility.getObjectMapper();
@@ -387,7 +392,7 @@ public class BPMessageGenerator {
             }
         } catch (Exception e) {
             logger.error("Failed to create payment terms", e);
-            return null;
+            return tradingTerms; // return empty list, never null
         } finally {
             if (inputStream != null) {
                 try {
