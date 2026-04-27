@@ -43,6 +43,7 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.apache.commons.io.IOUtils;
+import org.camunda.bpm.engine.history.HistoricProcessInstance;
 import org.camunda.bpm.engine.history.HistoricVariableInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -121,6 +122,23 @@ public class ProcessInstanceController {
                     ? new ArrayList<>(first.getRelatedProducts())
                     : Collections.<String>emptyList();
             summary.put("products", products);
+
+            // HCDP-05-01 F2: delivery-tracking fields. Only meaningful when the originating
+            // document is a DespatchAdvice (i.e. this is a Fulfilment process).
+            // `submissionDate` already holds the despatch timestamp — no separate despatchDate.
+            boolean hasReceiptAdvice = false;
+            if (first.getType() == DocumentType.DESPATCHADVICE) {
+                for (ProcessDocumentMetadataDAO doc : metadataList) {
+                    if (doc.getType() == DocumentType.RECEIPTADVICE) {
+                        hasReceiptAdvice = true;
+                        break;
+                    }
+                }
+            }
+            summary.put("hasReceiptAdvice", hasReceiptAdvice);
+            // ETA lives on the preceding Transport_Execution_Plan (a separate process instance),
+            // not on the DespatchAdvice itself. Detection falls back to a 5-day threshold when null.
+            summary.put("eta", null);
 
             // Resolve the trading partner: pick whichever side ISN'T the caller. If the caller
             // didn't pass their own partyId we just return both endpoints and let the UI choose.
@@ -396,7 +414,8 @@ public class ProcessInstanceController {
             List<HistoricVariableInstance> variableInstanceList = CamundaEngine.getVariableInstances(processInstanceId);
 
             Future<String> variableInstances = serializeObject(variableInstanceList, executorService);
-            Future<String> processInstanceState = serializeObject(CamundaEngine.getProcessInstance(processInstanceId).getState(), executorService);
+            HistoricProcessInstance hpi = CamundaEngine.getProcessInstance(processInstanceId);
+            Future<String> processInstanceState = serializeObject(hpi != null ? hpi.getState() : null, executorService);
             Future<String> lastActivityInstanceStartTime = serializeObject(CamundaEngine.getLastActivityInstanceStartTime(processInstanceId), executorService);
 
 
@@ -475,8 +494,8 @@ public class ProcessInstanceController {
             List<List<TextType>> productNames = new ArrayList<>();
 
             for (ItemType item : iDocument.getItemTypes()) {
-                catalogIds.add(item.getCatalogueDocumentReference().getID());
-                lineIds.add(item.getManufacturersItemIdentification().getID());
+                catalogIds.add(item.getCatalogueDocumentReference() != null ? item.getCatalogueDocumentReference().getID() : null);
+                lineIds.add(item.getManufacturersItemIdentification() != null ? item.getManufacturersItemIdentification().getID() : null);
                 productNames.add(item.getName());
             }
 

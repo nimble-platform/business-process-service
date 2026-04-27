@@ -284,8 +284,9 @@ public class CamundaEngine {
     }
 
     public static String getLastActivityInstanceStartTime(String processInstanceId){
-        HistoricActivityInstance historicActivityInstance = historyService.createHistoricActivityInstanceQuery().processInstanceId(processInstanceId).orderByHistoricActivityInstanceStartTime().desc().listPage(0,1).get(0);
-        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ").format(historicActivityInstance.getStartTime());
+        List<HistoricActivityInstance> list = historyService.createHistoricActivityInstanceQuery().processInstanceId(processInstanceId).orderByHistoricActivityInstanceStartTime().desc().listPage(0,1);
+        if(list.isEmpty()) return null;
+        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ").format(list.get(0).getStartTime());
     }
 
     public static HistoricProcessInstance getProcessInstance(String processInstanceId){
