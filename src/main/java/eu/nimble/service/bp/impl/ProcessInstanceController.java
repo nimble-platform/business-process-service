@@ -17,13 +17,17 @@ import eu.nimble.service.bp.util.persistence.bp.CollaborationGroupDAOUtility;
 import eu.nimble.service.bp.util.persistence.bp.HibernateSwaggerObjectMapper;
 import eu.nimble.service.bp.util.persistence.bp.ProcessDocumentMetadataDAOUtility;
 import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceDAOUtility;
+import eu.nimble.service.bp.util.persistence.bp.ProcessInstanceGroupDAOUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.DocumentPersistenceUtility;
 import eu.nimble.service.bp.util.persistence.catalogue.TrustPersistenceUtility;
 import eu.nimble.service.bp.util.spring.SpringBridge;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.DeliveryType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.DocumentReferenceType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.ItemType;
+import eu.nimble.service.model.ubl.commonaggregatecomponents.OrderLineType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PartyType;
 import eu.nimble.service.model.ubl.commonaggregatecomponents.PersonType;
+import eu.nimble.service.model.ubl.order.OrderType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.BinaryObjectType;
 import eu.nimble.service.model.ubl.commonbasiccomponents.TextType;
 import eu.nimble.service.model.ubl.document.IDocument;
@@ -55,8 +59,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -140,6 +147,40 @@ public class ProcessInstanceController {
             // not on the DespatchAdvice itself. Detection falls back to a 5-day threshold when null.
             summary.put("eta", null);
 
+            // HCDP-05-03 F1: surface the earliest delivery deadline from the upstream
+            // ORDER document in the same PIG. Prefers requestedDeliveryPeriod.endDate
+            // when set; falls back to (orderSubmissionDate + durationMeasure) — the
+            // typical seed pattern in the HCDP demo. Null-guarded throughout — failure
+            // never propagates. Lets HCDP-05-03 Delivery Schedule render deadline
+            // columns and unlocks HCDP-05-01 Open Item #6 (ETA on In-Transit node).
+            String deadlineIso = null;
+            try {
+                List<ProcessInstanceGroupDAO> pigs = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAOs(processInstanceID);
+                if (pigs != null && !pigs.isEmpty()) {
+                    List<ProcessDocumentMetadataDAO> pigDocs = ProcessInstanceGroupDAOUtility
+                            .getDocumentMetadataInProcessInstanceGroup(pigs.get(0).getID());
+                    if (pigDocs != null) {
+                        for (ProcessDocumentMetadataDAO doc : pigDocs) {
+                            if (doc.getType() == DocumentType.ORDER && doc.getDocumentID() != null) {
+                                Object orderDoc = DocumentPersistenceUtility.getUBLDocument(doc.getDocumentID(), DocumentType.ORDER);
+                                if (orderDoc instanceof OrderType) {
+                                    Date deadline = findEarliestDeliveryDeadline(
+                                            (OrderType) orderDoc, doc.getSubmissionDate());
+                                    if (deadline != null) {
+                                        deadlineIso = formatIsoUtc(deadline);
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+            } catch (Exception deadlineEx) {
+                logger.warn("Could not resolve deadline for processInstance {}: {}",
+                        processInstanceID, deadlineEx.getMessage());
+            }
+            summary.put("deadline", deadlineIso);
+
             // Resolve the trading partner: pick whichever side ISN'T the caller. If the caller
             // didn't pass their own partyId we just return both endpoints and let the UI choose.
             String partnerId = null;
@@ -178,6 +219,99 @@ public class ProcessInstanceController {
             logger.error("Failed to build monitor process summary for processInstance {}: {}", processInstanceID, e.getMessage(), e);
             throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_CANCEL_PROCESS.toString(), Arrays.asList(processInstanceID), e);
         }
+    }
+
+    /**
+     * HCDP-05-03 F1: scan all order lines for the earliest delivery deadline.
+     * Prefers explicit {@code requestedDeliveryPeriod.endDate}; falls back to
+     * {@code orderSubmissionDate + requestedDeliveryPeriod.durationMeasure} when
+     * only the duration is set (the HCDP demo seed pattern). Returns null when
+     * neither signal is available on any line.
+     */
+    private Date findEarliestDeliveryDeadline(OrderType order, String orderSubmissionDateIso) {
+        if (order == null || order.getOrderLine() == null) {
+            return null;
+        }
+        Date submissionDate = parseSubmissionDate(orderSubmissionDateIso);
+        Date earliest = null;
+        for (OrderLineType orderLine : order.getOrderLine()) {
+            if (orderLine == null || orderLine.getLineItem() == null
+                    || orderLine.getLineItem().getDelivery() == null) {
+                continue;
+            }
+            for (DeliveryType delivery : orderLine.getLineItem().getDelivery()) {
+                if (delivery == null || delivery.getRequestedDeliveryPeriod() == null) {
+                    continue;
+                }
+                Date candidate = null;
+                XMLGregorianCalendar endDate = delivery.getRequestedDeliveryPeriod().getEndDate();
+                if (endDate != null) {
+                    candidate = endDate.toGregorianCalendar().getTime();
+                } else if (submissionDate != null
+                        && delivery.getRequestedDeliveryPeriod().getDurationMeasure() != null) {
+                    candidate = addDuration(submissionDate,
+                            delivery.getRequestedDeliveryPeriod().getDurationMeasure().getValue(),
+                            delivery.getRequestedDeliveryPeriod().getDurationMeasure().getUnitCode());
+                }
+                if (candidate != null && (earliest == null || candidate.before(earliest))) {
+                    earliest = candidate;
+                }
+            }
+        }
+        return earliest;
+    }
+
+    /** Add a UBL duration measure to a base date. Recognises the unit codes used
+     *  across the Nimble catalogue (see CatalogueLineCheckService for the master
+     *  list): {@code working day(s)} is the most common form for delivery periods,
+     *  treated here as calendar days for the demo (calendar/working diff is < 30%
+     *  for typical 5-15 day windows and acceptable for a schedule view). Returns
+     *  null when value or unit is missing/unrecognised. */
+    private Date addDuration(Date base, BigDecimal value, String unitCode) {
+        if (base == null || value == null || unitCode == null) return null;
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(base);
+        String unit = unitCode.toLowerCase().trim();
+        if (unit.startsWith("day") || unit.startsWith("working day")) {
+            cal.add(Calendar.DAY_OF_MONTH, value.intValue());
+        } else if (unit.startsWith("week")) {
+            cal.add(Calendar.DAY_OF_MONTH, value.intValue() * 7);
+        } else if (unit.startsWith("month")) {
+            cal.add(Calendar.MONTH, value.intValue());
+        } else if (unit.startsWith("year")) {
+            cal.add(Calendar.YEAR, value.intValue());
+        } else if (unit.startsWith("hour")) {
+            cal.add(Calendar.HOUR_OF_DAY, value.intValue());
+        } else {
+            return null;
+        }
+        return cal.getTime();
+    }
+
+    /** ProcessDocumentMetadataDAO.submissionDate has been observed in two formats
+     *  in the wild: Camunda style ("2026-04-26 06:09:53.767") and ISO 8601
+     *  ("2026-05-04T06:09:09.098+00:00"). Try both before giving up. */
+    private Date parseSubmissionDate(String iso) {
+        if (iso == null || iso.isEmpty()) return null;
+        String[] patterns = new String[] {
+            "yyyy-MM-dd HH:mm:ss.SSS",
+            "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+            "yyyy-MM-dd'T'HH:mm:ss.SSS",
+            "yyyy-MM-dd'T'HH:mm:ssXXX",
+            "yyyy-MM-dd'T'HH:mm:ss"
+        };
+        for (String pattern : patterns) {
+            try {
+                return new SimpleDateFormat(pattern).parse(iso);
+            } catch (Exception ignored) {}
+        }
+        return null;
+    }
+
+    /** Format a Date as an ISO 8601 string suitable for JS {@code new Date(iso)}. */
+    private String formatIsoUtc(Date d) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+        return sdf.format(d);
     }
 
     @ApiOperation(value = "",notes = "Cancels the process instance with the given id")
