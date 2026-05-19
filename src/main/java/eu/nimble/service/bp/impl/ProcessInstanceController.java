@@ -203,9 +203,20 @@ public class ProcessInstanceController {
                 if (partnerId != null) {
                     PartyType party = eu.nimble.service.bp.util.persistence.catalogue.PartyPersistenceUtility
                             .getPartyByID(partnerId, partnerFederationId);
-                    if (party != null && party.getPartyName() != null && !party.getPartyName().isEmpty()
-                            && party.getPartyName().get(0).getName() != null) {
-                        partnerName = party.getPartyName().get(0).getName().getValue();
+                    partnerName = extractPartyName(party);
+                    // Some seed parties land in UBL with identification rows but no party_name_type row,
+                    // so the local lookup returns a nameless PartyType. Identity-service is the source
+                    // of truth for company metadata — fall back to it so HCDP-04-02 / 05-01 / 05-03
+                    // labels render real partner names instead of "null".
+                    if (partnerName == null && partnerFederationId != null) {
+                        try {
+                            PartyType idParty = eu.nimble.service.bp.util.persistence.catalogue.PartyPersistenceUtility
+                                    .getParty(partnerId, partnerFederationId, bearerToken);
+                            partnerName = extractPartyName(idParty);
+                        } catch (Exception identityLookupEx) {
+                            logger.warn("Identity-service fallback for partner name failed for partyId={} federation={}: {}",
+                                    partnerId, partnerFederationId, identityLookupEx.getMessage());
+                        }
                     }
                 }
             } catch (Exception partnerLookupEx) {
@@ -219,6 +230,21 @@ public class ProcessInstanceController {
             logger.error("Failed to build monitor process summary for processInstance {}: {}", processInstanceID, e.getMessage(), e);
             throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_CANCEL_PROCESS.toString(), Arrays.asList(processInstanceID), e);
         }
+    }
+
+    /** Read the first non-empty party name off a PartyType, returning null when
+     *  the party has no name at all (e.g. partial seed where party_name_type row
+     *  is missing). Centralised so the UBL lookup and the identity-service
+     *  fallback in /monitor/process-summary share the same null-handling. */
+    private static String extractPartyName(PartyType party) {
+        if (party == null || party.getPartyName() == null || party.getPartyName().isEmpty()) {
+            return null;
+        }
+        if (party.getPartyName().get(0).getName() == null) {
+            return null;
+        }
+        String value = party.getPartyName().get(0).getName().getValue();
+        return (value == null || value.isEmpty()) ? null : value;
     }
 
     /**
