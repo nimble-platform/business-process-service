@@ -153,31 +153,45 @@ public class ProcessInstanceController {
             // typical seed pattern in the HCDP demo. Null-guarded throughout — failure
             // never propagates. Lets HCDP-05-03 Delivery Schedule render deadline
             // columns and unlocks HCDP-05-01 Open Item #6 (ETA on In-Transit node).
+            //
+            // M3 gate (HCDP-05-03 A1): only resolve when the ORIGINATING doc of this
+            // process is order-stage (ORDER) or fulfilment-stage (DESPATCHADVICE /
+            // RECEIPTADVICE). For RFQ / QUOTATION-only PIDs, the PIG may already carry
+            // a sibling ORDER whose deadline is unrelated to this RFQ's lifecycle —
+            // returning it would leak data the caller didn't earn through the
+            // originating doc type. classifyDeliveryRow in HCDP-05-03 already skips
+            // RFQ rows, but the API contract now matches that semantic.
             String deadlineIso = null;
-            try {
-                List<ProcessInstanceGroupDAO> pigs = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAOs(processInstanceID);
-                if (pigs != null && !pigs.isEmpty()) {
-                    List<ProcessDocumentMetadataDAO> pigDocs = ProcessInstanceGroupDAOUtility
-                            .getDocumentMetadataInProcessInstanceGroup(pigs.get(0).getID());
-                    if (pigDocs != null) {
-                        for (ProcessDocumentMetadataDAO doc : pigDocs) {
-                            if (doc.getType() == DocumentType.ORDER && doc.getDocumentID() != null) {
-                                Object orderDoc = DocumentPersistenceUtility.getUBLDocument(doc.getDocumentID(), DocumentType.ORDER);
-                                if (orderDoc instanceof OrderType) {
-                                    Date deadline = findEarliestDeliveryDeadline(
-                                            (OrderType) orderDoc, doc.getSubmissionDate());
-                                    if (deadline != null) {
-                                        deadlineIso = formatIsoUtc(deadline);
+            DocumentType originType = first.getType();
+            boolean deadlineApplicable = originType == DocumentType.ORDER
+                    || originType == DocumentType.DESPATCHADVICE
+                    || originType == DocumentType.RECEIPTADVICE;
+            if (deadlineApplicable) {
+                try {
+                    List<ProcessInstanceGroupDAO> pigs = ProcessInstanceGroupDAOUtility.getProcessInstanceGroupDAOs(processInstanceID);
+                    if (pigs != null && !pigs.isEmpty()) {
+                        List<ProcessDocumentMetadataDAO> pigDocs = ProcessInstanceGroupDAOUtility
+                                .getDocumentMetadataInProcessInstanceGroup(pigs.get(0).getID());
+                        if (pigDocs != null) {
+                            for (ProcessDocumentMetadataDAO doc : pigDocs) {
+                                if (doc.getType() == DocumentType.ORDER && doc.getDocumentID() != null) {
+                                    Object orderDoc = DocumentPersistenceUtility.getUBLDocument(doc.getDocumentID(), DocumentType.ORDER);
+                                    if (orderDoc instanceof OrderType) {
+                                        Date deadline = findEarliestDeliveryDeadline(
+                                                (OrderType) orderDoc, doc.getSubmissionDate());
+                                        if (deadline != null) {
+                                            deadlineIso = formatIsoUtc(deadline);
+                                        }
                                     }
+                                    break;
                                 }
-                                break;
                             }
                         }
                     }
+                } catch (Exception deadlineEx) {
+                    logger.warn("Could not resolve deadline for processInstance {}: {}",
+                            processInstanceID, deadlineEx.getMessage());
                 }
-            } catch (Exception deadlineEx) {
-                logger.warn("Could not resolve deadline for processInstance {}: {}",
-                        processInstanceID, deadlineEx.getMessage());
             }
             summary.put("deadline", deadlineIso);
 
