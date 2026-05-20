@@ -169,7 +169,9 @@ public class DocumentController {
     public ResponseEntity updateDocument(@ApiParam(value = "Serialized form of the document exchanged in the updated step of the business process", required = true) @RequestBody String content,
                                          @ApiParam(value = "Identifier of the document", required = true) @PathVariable(value = "documentID", required = true) String documentID,
                                          @ApiParam(value = "Type of the process instance document to be updated", required = true) @RequestParam(value = "documentType") DocumentType documentType,
-                                         @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken) throws NimbleException, JsonProcessingException {
+                                         @ApiParam(value = "The Bearer token provided by the identity service", required = true) @RequestHeader(value = "Authorization", required = true) String bearerToken,
+                                         @ApiParam(value = "Party id of the caller (must match initiator or responder of the document's process)") @RequestHeader(value = "callerPartyId", required = false) String callerPartyId,
+                                         @ApiParam(value = "Federation id of the caller (paired with callerPartyId for the participant check)") @RequestHeader(value = "callerFederationId", required = false) String callerFederationId) throws NimbleException, JsonProcessingException {
         try {
             // set request log of ExecutionContext
             String requestLog = String.format("Incoming request to update document for id: %s",documentID);
@@ -177,6 +179,34 @@ public class DocumentController {
             // validate role
             if(!validationUtil.validateRole(bearerToken,executionContext.getUserRoles(), RoleConfig.REQUIRED_ROLES_PURCHASES_OR_SALES_WRITE)) {
                 throw new NimbleException(NimbleExceptionMessageCode.UNAUTHORIZED_INVALID_ROLE.toString());
+            }
+
+            // BPE-SEC-01: party-ownership check. The role gate above only proves the
+            // bearer is *some* authenticated buyer/seller — without this the platform
+            // historically let any authenticated party PATCH any other party's UBL
+            // document (HCDP-05-04 spec §2.3 / §8.2 documented the gap). Caller must
+            // be the initiator OR the responder on the document's process metadata;
+            // headers carry the caller's party identity. Skip silently when the
+            // document is unknown (the existing 500 path handles that uniformly via
+            // INTERNAL_SERVER_ERROR_UPDATE_DOCUMENT below).
+            ProcessDocumentMetadataDAO meta = ProcessDocumentMetadataDAOUtility.findByDocumentID(documentID);
+            if (meta != null) {
+                boolean isInitiator = callerPartyId != null
+                        && callerPartyId.equals(meta.getInitiatorID())
+                        && callerFederationId != null
+                        && callerFederationId.equals(meta.getInitiatorFederationID());
+                boolean isResponder = callerPartyId != null
+                        && callerPartyId.equals(meta.getResponderID())
+                        && callerFederationId != null
+                        && callerFederationId.equals(meta.getResponderFederationID());
+                if (!isInitiator && !isResponder) {
+                    logger.warn("BPE-SEC-01: party-ownership rejection on /document/{} — callerPartyId={}/fed={} is neither initiator ({}/{}) nor responder ({}/{})",
+                            documentID, callerPartyId, callerFederationId,
+                            meta.getInitiatorID(), meta.getInitiatorFederationID(),
+                            meta.getResponderID(), meta.getResponderFederationID());
+                    throw new NimbleException(NimbleExceptionMessageCode.FORBIDDEN_NOT_DOCUMENT_PARTICIPANT.toString(),
+                            Arrays.asList(documentID));
+                }
             }
 
             Object document = DocumentPersistenceUtility.readDocument(documentType, content);
@@ -188,6 +218,10 @@ public class DocumentController {
 
             return ResponseEntity.ok(JsonSerializationUtility.getObjectMapper().writeValueAsString(document));
 
+        } catch (NimbleException ne) {
+            // Re-throw NimbleExceptions verbatim so FORBIDDEN_NOT_DOCUMENT_PARTICIPANT
+            // surfaces as 403 instead of being wrapped into an INTERNAL_SERVER_ERROR.
+            throw ne;
         } catch (Exception e) {
             throw new NimbleException(NimbleExceptionMessageCode.INTERNAL_SERVER_ERROR_UPDATE_DOCUMENT.toString(),Arrays.asList(documentID,documentType.value(), content),e);
         }
