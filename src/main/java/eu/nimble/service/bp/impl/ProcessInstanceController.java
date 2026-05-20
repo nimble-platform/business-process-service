@@ -181,8 +181,15 @@ public class ProcessInstanceController {
             }
             summary.put("deadline", deadlineIso);
 
-            // Resolve the trading partner: pick whichever side ISN'T the caller. If the caller
-            // didn't pass their own partyId we just return both endpoints and let the UI choose.
+            // Resolve the trading partner: pick whichever side ISN'T the caller. The
+            // callerPartyId / callerFederationId headers are how we know which side the
+            // caller is on — without them we cannot tell who the partner is, so we return
+            // both endpoint IDs unresolved (partnerId=null, partner=null) rather than
+            // guessing. The previous fallback ("assume caller is initiator") returned the
+            // caller's OWN companyName when called from the responder side, which produced
+            // the wrong partner label downstream. All known callers in frontend-service
+            // (MonitorService.getProcessSummary in monitor.service.ts) already send the
+            // headers; the soft-null contract here lets new callers fail safely instead.
             String partnerId = null;
             String partnerFederationId = null;
             if (callerPartyId != null && callerPartyId.equals(first.getInitiatorID())) {
@@ -192,9 +199,8 @@ public class ProcessInstanceController {
                 partnerId = first.getInitiatorID();
                 partnerFederationId = first.getInitiatorFederationID();
             } else {
-                // fallback: assume the caller is the initiator
-                partnerId = first.getResponderID();
-                partnerFederationId = first.getResponderFederationID();
+                logger.warn("getProcessSummary called without a resolvable callerPartyId header (provided='{}', initiator='{}', responder='{}'); returning null partner for process {}",
+                        callerPartyId, first.getInitiatorID(), first.getResponderID(), processInstanceID);
             }
             summary.put("partnerId", partnerId);
 
