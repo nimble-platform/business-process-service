@@ -106,17 +106,42 @@ public class StatisticsPersistenceUtility {
 
                 BigDecimal dispatchedQuantity = BigDecimal.ZERO;
                 BigDecimal rejectedQuantity = BigDecimal.ZERO;
-                BigDecimal deliveredQuantity = despatchLineType.getDeliveredQuantity().getValue();
+                // HCDP-05-02 F5 follow-up — guard against pre-HCDP-05-02 dispatch advices that
+                // omit deliveredQuantity entirely (would otherwise NPE on .getValue()).
+                BigDecimal deliveredQuantity = despatchLineType.getDeliveredQuantity() != null
+                        ? despatchLineType.getDeliveredQuantity().getValue()
+                        : null;
                 if(deliveredQuantity != null){
                     dispatchedQuantity = dispatchedQuantity.add(deliveredQuantity);
                 }
-                BigDecimal receiptLineRejectedQuantity = receiptAdvice != null ? receiptAdvice.getReceiptLine().get(i).getRejectedQuantity().getValue() : null;
+                // HCDP-05-02 F5 follow-up — tolerate partial receipts: the i-th line may be missing
+                // (size mismatch with despatch lines) or carry a null rejectedQuantity (legacy
+                // receipts saved before per-line nonconformity capture). Either case means
+                // "nothing rejected here yet" — must not 500 the whole statistics endpoint.
+                BigDecimal receiptLineRejectedQuantity = null;
+                if (receiptAdvice != null
+                        && receiptAdvice.getReceiptLine() != null
+                        && receiptAdvice.getReceiptLine().size() > i
+                        && receiptAdvice.getReceiptLine().get(i) != null
+                        && receiptAdvice.getReceiptLine().get(i).getRejectedQuantity() != null) {
+                    receiptLineRejectedQuantity = receiptAdvice.getReceiptLine().get(i).getRejectedQuantity().getValue();
+                }
                 if(receiptLineRejectedQuantity != null){
                     rejectedQuantity = rejectedQuantity.add(receiptLineRejectedQuantity);
                 }
                 BigDecimal acceptedQuantity = receiptAdvice != null ? dispatchedQuantity.subtract(rejectedQuantity):BigDecimal.ZERO;
 
                 FulfilmentStatistics fulfilmentStatistics = lineHjidFulfilmentStatisticsMap.get(lineHjid);
+                // HCDP-05-02 F5 follow-up — guard against orphan despatch lines whose
+                // OrderLineReference.lineID no longer matches any orderLine.hjid in the
+                // current order (e.g. after a re-seed that rebuilt the order with new
+                // hjids, or after an order edit). Skipping the line preserves the rest
+                // of the aggregate instead of 500-ing the whole statistics endpoint.
+                if (fulfilmentStatistics == null) {
+                    logger.warn("Skipping despatch line with orphan order_line hjid {} (order {}): no matching line in order",
+                            lineHjid, orderId);
+                    continue;
+                }
 
                 fulfilmentStatistics.setDispatchedQuantity(fulfilmentStatistics.getDispatchedQuantity().add(dispatchedQuantity));
                 fulfilmentStatistics.setRejectedQuantity(fulfilmentStatistics.getRejectedQuantity().add(rejectedQuantity));
